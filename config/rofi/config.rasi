@@ -125,3 +125,4 @@ textbox {
     padding: 8px 16px;
     background-color: transparent;
 }
+/* rice-rofi */ @theme "@HOME@/.config/rofi/shadows.rasi"

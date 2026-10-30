@@ -141,20 +141,54 @@ Item {
 
             T { kind: "title"; text: "Colors"; font.pixelSize: 16; font.bold: true }
 
-            SettingRow {
-                label: "Color mode"
-                desc: "How colors are taken from the wallpaper"
-                Seg {
-                    anchors.right: parent.right
-                    anchors.rightMargin: 16
-                    anchors.verticalCenter: parent.verticalCenter
-                    options: [
-                        { label: "Auto", value: "auto" },
-                        { label: "Grey", value: "grey" },
-                        { label: "Navy", value: "navy" }
-                    ]
-                    current: page.ctl.colorMode
-                    onChosen: function(v) { page.ctl.setColorMode(v) }
+            T {
+                width: parent.width
+                text: "Pick a color scheme. Auto takes colors from your wallpaper, the rest use fixed colors."
+                color: "#8a8a8a"
+                font.pixelSize: 12
+                wrapMode: Text.WordWrap
+            }
+
+            Flow {
+                width: parent.width
+                spacing: 10
+                Repeater {
+                    model: page.ctl.schemes
+                    delegate: Rectangle {
+                        readonly property bool on: page.ctl.colorMode === modelData.key
+                        width: 104
+                        height: 74
+                        radius: 14
+                        color: "#141414"
+                        border.width: on ? 2 : 1
+                        border.color: on ? "#F6F5F4" : (cMouse.containsMouse ? "#3a3a3a" : "#2a2a2a")
+                        Behavior on border.color { ColorAnimation { duration: 140 } }
+
+                        Rectangle {
+                            x: 8; y: 8
+                            width: parent.width - 16; height: 36
+                            radius: 9
+                            color: modelData.preview[0]
+                            border.width: 1
+                            border.color: Qt.rgba(1, 1, 1, 0.10)
+                            Rectangle { x: 7; y: 7; width: 30; height: 8; radius: 4; color: modelData.preview[1] }
+                            Rectangle { x: 7; y: 19; width: parent.width - 14; height: 9; radius: 4; color: modelData.preview[2]; opacity: 0.85 }
+                        }
+                        T {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            y: 50
+                            text: modelData.name
+                            font.pixelSize: 12
+                            font.bold: on
+                        }
+                        MouseArea {
+                            id: cMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: page.ctl.setColorMode(modelData.key)
+                        }
+                    }
                 }
             }
 

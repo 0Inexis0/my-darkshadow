@@ -133,7 +133,9 @@ FloatingWindow {
     function setColorMode(m) {
         colorMode = m
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-colors\" mode \"$1\"", "_", m])
-        status = "Colors: " + m
+        let nm = m
+        for (let i = 0; i < schemes.length; i++) if (schemes[i].key === m) nm = schemes[i].name
+        status = "Colors: " + nm + " (applying...)"
     }
 
     Process {
@@ -151,6 +153,16 @@ FloatingWindow {
         running: true
         stdout: StdioCollector {
             onStreamFinished: { try { win.st = JSON.parse(text) } catch (e) { } }
+        }
+    }
+
+    property var schemes: []
+    Process {
+        id: schemeProc
+        command: ["bash", "-c", "\"$HOME/.local/bin/rice-colors\" list"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: { try { win.schemes = JSON.parse(text) } catch (e) { } }
         }
     }
 

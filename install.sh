@@ -149,6 +149,11 @@ step_wire() {
       fi
     done
   fi
+  # color schemes: teach hyprquickpaper (if present) about the named schemes
+  if [ -f "$HOME/.config/quickshell/hyprquickpaper/commands.sh" ]; then
+    cp -n "$HOME/.config/quickshell/hyprquickpaper/commands.sh" "$HOME/.config/quickshell/hyprquickpaper/commands.sh.bak-schemes" 2>/dev/null || true
+    python3 "$ROOT/install/patches/colors-commands.py" "$HOME/.config/quickshell/hyprquickpaper/commands.sh" || true
+  fi
   # rofi theme + blur rule (Settings > Rofi)
   if command -v rofi >/dev/null 2>&1 && [ -x "$HOME/.local/bin/rice-rofi" ]; then
     "$HOME/.local/bin/rice-rofi" apply || true

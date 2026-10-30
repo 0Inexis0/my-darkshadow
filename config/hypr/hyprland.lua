@@ -465,6 +465,7 @@ hl.layer_rule({
 
 require("hyprland-gui")
 require("rice-settings")
+require("rice-rofi")
 require("rice-desktop")
 
 hl.layer_rule({
@@ -474,13 +475,6 @@ hl.layer_rule({
     ignore_alpha = 0.1,
 })
 
-
-hl.layer_rule({
-    name  = "rofi-blur",
-    match = { namespace = "rofi" },
-    blur = true,
-    ignore_alpha = 0.1,
-})
 
 hl.window_rule({
     name  = "nmtui-float-center",
@@ -494,3 +488,5 @@ hl.window_rule({
 
 -- rice-tooltip-blur: blur for waybar tooltips (popups)
 pcall(hl.config, { decoration = { blur = { popups = true, popups_ignorealpha = 0.2 } } })
+
+require("rice-keys")
