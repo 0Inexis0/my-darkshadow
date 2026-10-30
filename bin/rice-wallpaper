@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Wallpaper menu (SUPER + W). Uses waypaper if installed, otherwise a rofi list of your pictures.
+if command -v waypaper >/dev/null 2>&1; then
+  exec waypaper
+fi
+command -v rofi >/dev/null 2>&1 || { echo "rice-wallpaper: install waypaper or rofi" >&2; exit 1; }
+command -v awww >/dev/null 2>&1 || { echo "rice-wallpaper: awww not found" >&2; exit 1; }
+dir=""
+for d in "${WALLPAPER_DIR:-}" "$HOME/Pictures/Wallpapers" "$HOME/Wallpapers" "$HOME/Pictures"; do
+  [ -n "$d" ] && [ -d "$d" ] && { dir="$d"; break; }
+done
+[ -n "$dir" ] || { echo "rice-wallpaper: no wallpaper folder found" >&2; exit 1; }
+pick="$(find "$dir" -maxdepth 2 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.gif' \) -printf '%P\n' | sort | rofi -dmenu -i -p 'Wallpaper')"
+[ -n "$pick" ] && awww img "$dir/$pick"

@@ -5,7 +5,7 @@ set -Eeuo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 TOOLS=(hypr-set waybar-set waybar-preset waybar-reload waybar-autohide font-set desktop-set rice-settings
-       rice-colors rice-desktop rice-stats rice-sysline rice-nowplaying rice-weather rice-cava)
+       rice-colors rice-welcome rice-wallpaper rice-desktop rice-stats rice-sysline rice-nowplaying rice-weather rice-cava)
 CONFIG_DIRS=(hypr waybar swaync rofi)          # folders from ~/.config you want to publish
 EXCLUDE=(ui.json 'config.jsonc.save*' '*.bak*' '*.save*' '.first-backup' '*.png' '*.jpg' '*.jpeg' '*.webp' '*.gif')
 
@@ -21,7 +21,7 @@ tmpl() { # tmpl SRC DST
 }
 
 for t in "${TOOLS[@]}"; do [ -f "$HOME/.local/bin/$t" ] && tmpl "$HOME/.local/bin/$t" "$HERE/bin/$t"; done
-for q in rice-settings rice-desktop; do
+for q in rice-settings rice-desktop rice-welcome; do
   [ -d "$HOME/.config/quickshell/$q" ] || continue
   for f in "$HOME/.config/quickshell/$q"/*.qml; do [ -f "$f" ] && tmpl "$f" "$HERE/quickshell/$q/$(basename "$f")"; done
 done

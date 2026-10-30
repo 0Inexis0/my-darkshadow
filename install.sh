@@ -117,7 +117,14 @@ step_tools() {
 step_apps() {
   copy_tree "$ROOT/quickshell/rice-settings" "$HOME/.config/quickshell/rice-settings"
   copy_tree "$ROOT/quickshell/rice-desktop" "$HOME/.config/quickshell/rice-desktop"
+  copy_tree "$ROOT/quickshell/rice-welcome" "$HOME/.config/quickshell/rice-welcome"
   [ "$DRY_RUN" = 1 ] || rm -f "$HOME/.config/quickshell/rice-desktop/VisualizerWidget.qml"
+}
+
+step_lua() {
+  local f
+  for f in "$ROOT"/lua/*.lua; do [ -f "$f" ] && put "$f" "$HOME/.config/hypr/$(basename "$f")"; done
+  return 0
 }
 
 step_dots() {
@@ -135,7 +142,7 @@ step_wire() {
   [ -f "$HOME/.config/rice/.first-backup" ] || echo "$BK" >"$HOME/.config/rice/.first-backup"
   local lua="$HOME/.config/hypr/hyprland.lua" m
   if [ -f "$lua" ]; then
-    for m in rice-settings rice-desktop; do
+    for m in rice-settings rice-desktop rice-keys; do
       if [ -f "$HOME/.config/hypr/$m.lua" ] && ! grep -q "require(\"$m\")" "$lua"; then
         cp -n "$lua" "$BK/hyprland.lua.orig" 2>/dev/null || true
         printf '\nrequire("%s")\n' "$m" >>"$lua"
@@ -204,6 +211,7 @@ printf '\n'
 [ "${WANT[1]}" = 1 ] && task "Installing tools" step_tools
 [ "${WANT[2]}" = 1 ] && task "Installing Settings & desktop apps" step_apps
 [ "${WANT[3]}" = 1 ] && task "Installing dotfiles" step_dots
+task "Installing Hyprland keybinds" step_lua
 task "Wiring Hyprland, Waybar and the distro logo" step_wire
 
 miss="$(missing_cmds | tr '\n' ' ')"

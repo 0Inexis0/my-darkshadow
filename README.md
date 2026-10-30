@@ -47,6 +47,7 @@
 | **Hyprland** | gaps, borders, rounding, blur, shadows and animations from sliders, no config editing |
 | **Fonts** | one place to set the main and icon fonts |
 | **Notifications** | swaync with a button that opens Settings |
+| **Welcome window** | "Welcome to Shadow's Shell" greeting once per login; turn off with `rice-welcome off` or the link in the window |
 | **Installer** | interactive, backs up everything, supports Arch and NixOS |
 
 ## Keybinds
@@ -55,6 +56,7 @@
 | Keys | Action |
 | --- | --- |
 | `SUPER + U` | open **Settings** |
+| `SUPER + W` | wallpaper menu |
 | `SUPER + Q` | terminal |
 | `SUPER + E` | file manager |
 | `SUPER + R` | app menu |
@@ -106,4 +108,4 @@ See [docs/INSTALL.md](docs/INSTALL.md) and [docs/CUSTOMIZE.md](docs/CUSTOMIZE.md
 `./sync.sh` copies your current setup from this machine into the repo (paths become `@HOME@`, no username is stored) and scans for secrets.
 
 ## License
-MIT. See [LICENSE](LICENSE).
+Not chosen yet. Add a `LICENSE` file before sharing widely.
