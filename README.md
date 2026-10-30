@@ -1,6 +1,27 @@
-<h1 align="center">Shadow’s Shell</h1>
-<p align="center">A Hyprland rice with its own Quickshell settings app, Waybar, desktop widgets and a dock.<br>
-Made by <a href="https://www.tiktok.com/@shadoww.dev">shadoww.dev</a>.</p>
+<p align="center">
+  <img src="assets/banner.svg" alt="Shadow's Shell" width="100%">
+</p>
+
+<p align="center">
+  <b>A Hyprland rice with its own Quickshell settings app, Waybar, desktop widgets and a dock.</b><br>
+  Made by <a href="https://www.tiktok.com/@shadoww.dev">shadoww.dev</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/NixOS-supported-5277C3?style=for-the-badge&logo=nixos&logoColor=white" alt="NixOS">
+  <img src="https://img.shields.io/badge/Arch_Linux-supported-1793D1?style=for-the-badge&logo=archlinux&logoColor=white" alt="Arch Linux">
+  <img src="https://img.shields.io/badge/Hyprland-0.55-58E1FF?style=for-the-badge&logoColor=white" alt="Hyprland">
+  <img src="https://img.shields.io/badge/Quickshell-QML-8B7BFF?style=for-the-badge" alt="Quickshell">
+</p>
+
+<p align="center">
+  <a href="#install">Install</a> ·
+  <a href="#features">Features</a> ·
+  <a href="docs/INSTALL.md">Docs</a> ·
+  <a href="docs/CUSTOMIZE.md">Customize</a>
+</p>
+
+---
 
 ## Features
 - **Settings app** (`SUPER+U`): Waybar layout editor, bar styles (flat, floating, islands, one island), Hyprland options, desktop widgets, dock, lock screen, fonts, autostart.
