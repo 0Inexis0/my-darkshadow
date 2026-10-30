@@ -8,9 +8,10 @@ Item {
     property var ns: ({})
 
     function v(k, d) { return ns[k] !== undefined ? ns[k] : d }
+    function norm(value) { return value === "on" ? true : value === "off" ? false : value }
     function setv(key, value) {
         const n = Object.assign({}, ns)
-        n[key] = value
+        n[key] = page.norm(value)
         ns = n
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-notify\" set \"$1\" \"$2\"", "_", key, String(value)])
         page.ctl.status = "Applied"

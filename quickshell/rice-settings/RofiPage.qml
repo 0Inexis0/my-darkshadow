@@ -11,9 +11,10 @@ Item {
 
     function v(k, d) { return rs[k] !== undefined ? rs[k] : d }
 
+    function norm(value) { return value === "on" ? true : value === "off" ? false : value }
     function setv(key, value) {
         const n = Object.assign({}, rs)
-        n[key] = value
+        n[key] = page.norm(value)
         rs = n
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-rofi\" set \"$1\" \"$2\"", "_", key, String(value)])
         page.ctl.status = "Applied"
@@ -48,7 +49,7 @@ Item {
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
             onWheel: function(e) {
                 const max = Math.max(0, flick.contentHeight - flick.height)
-                flick.contentY = Math.max(0, Math.min(max, flick.contentY - e.angleDelta.y * 0.9))
+                flick.contentY = Math.max(0, Math.min(max, flick.contentY - e.angleDelta.y * 0.6))
             }
         }
 

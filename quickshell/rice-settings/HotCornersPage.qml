@@ -27,15 +27,18 @@ Item {
     ]
     function v(k, d) { return hc[k] !== undefined ? hc[k] : d }
     function nameOf(list, k) { for (let i = 0; i < list.length; i++) if (list[i].k === k) return list[i].n; return k }
+    function norm(value) { return value === "on" ? true : value === "off" ? false : value }
     function setv(key, value) {
-        const n = Object.assign({}, hc); n[key] = value; hc = n
+        const n = Object.assign({}, hc); n[key] = page.norm(value); hc = n
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-hotcorner\" set \"$1\" \"$2\"", "_", key, String(value)])
         page.ctl.status = "Applied"
+        reload.restart()
     }
     function setList(key, arr) {
         const n = Object.assign({}, hc); n[key] = arr; hc = n
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-hotcorner\" list \"$1\" \"$2\"", "_", key, arr.join(",")])
         page.ctl.status = "Applied"
+        reload.restart()
     }
     function moved(arr, i, j) { const a = arr.slice(); const t = a[i]; a[i] = a[j]; a[j] = t; return a }
     // enabled sections first (in their order), then the rest
@@ -398,5 +401,5 @@ Item {
             }
         }
     }
-    Timer { id: reload; interval: 500; onTriggered: cfgProc.running = true }
+    Timer { id: reload; interval: 600; onTriggered: cfgProc.running = true }
 }

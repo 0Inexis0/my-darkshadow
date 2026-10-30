@@ -10,9 +10,10 @@ Item {
     property date now: new Date()
 
     function v(k, d) { return ls[k] !== undefined ? ls[k] : d }
+    function norm(value) { return value === "on" ? true : value === "off" ? false : value }
     function setv(key, value) {
         const n = Object.assign({}, ls)
-        n[key] = value
+        n[key] = page.norm(value)
         ls = n
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-lock\" set \"$1\" \"$2\"", "_", key, String(value)])
         page.ctl.status = "Applied"
