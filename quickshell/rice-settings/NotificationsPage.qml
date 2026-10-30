@@ -52,49 +52,22 @@ Item {
                 font.bold: true
             }
 
-            Rectangle {
+            PopupMock {
                 id: mock
-                readonly property string st: page.v("style", "glass")
-                readonly property real op: page.v("opacity", 0.8)
-                readonly property string acc: page.v("accent", true) ? page.v("accent_color", "#d4d4d4") : "#F6F5F4"
+                readonly property string ps: page.v("popup_style", "match")
+                look: ps === "match" ? page.v("style", "glass") : ps
+                acc: page.v("accent", true) ? page.v("accent_color", "#d4d4d4") : "#F6F5F4"
+                onAcc: page.v("accent", true) ? page.v("on_accent", "#0d0d0d") : "#0d0d0d"
+                baseRadius: page.v("radius", 18) * 0.85
+                op: page.v("opacity", 0.8)
+                iconSize: Math.max(26, Math.min(46, page.v("icon_size", 40)))
                 width: Math.min(stage.width - 28, page.v("popup_width", 360) * 0.85)
-                height: page.v("compact", false) ? 66 : 78
-                radius: page.v("radius", 18) * 0.85
-                color: st === "solid" ? "#1e1e22" : Qt.rgba(0.07, 0.07, 0.08, st === "outline" ? op : Math.max(op, 0.6))
-                border.width: 1
-                border.color: st === "outline" ? acc : Qt.rgba(1, 1, 1, 0.09)
+                height: (look === "pill" || look === "minimal") ? 56 : (page.v("compact", false) ? 66 : 78)
                 x: page.v("pos_x", "right") === "left" ? 14 : (page.v("pos_x", "right") === "center" ? (stage.width - width) / 2 : stage.width - width - 14)
                 y: page.v("pos_y", "top") === "top" ? 14 : stage.height - height - 14
                 Behavior on x { NumberAnimation { duration: 280; easing.type: Easing.OutCubic } }
                 Behavior on y { NumberAnimation { duration: 280; easing.type: Easing.OutCubic } }
-                Behavior on radius { NumberAnimation { duration: 180 } }
-                Behavior on color { ColorAnimation { duration: 180 } }
-
-                Rectangle {
-                    id: ico
-                    readonly property int sz: Math.max(28, Math.min(48, page.v("icon_size", 40)))
-                    x: 12
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: sz; height: sz
-                    radius: Math.max(6, mock.radius * 0.5)
-                    color: mock.acc
-                    T { kind: "icon"; anchors.centerIn: parent; text: ""; font.pixelSize: ico.sz * 0.45; color: page.v("on_accent", "#0d0d0d") }
-                }
-                Column {
-                    anchors.left: ico.right
-                    anchors.leftMargin: 12
-                    anchors.right: parent.right
-                    anchors.rightMargin: 12
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 3
-                    Item {
-                        width: parent.width
-                        height: 16
-                        T { text: "Shadow's Shell"; font.pixelSize: 13; font.bold: true }
-                        T { anchors.right: parent.right; text: "now"; font.pixelSize: 10; color: "#9a9aa4" }
-                    }
-                    T { width: parent.width; text: "This is how your notifications look."; font.pixelSize: 11; color: "#9a9aa4"; elide: Text.ElideRight }
-                }
+                Behavior on height { NumberAnimation { duration: 180 } }
             }
         }
 
@@ -166,6 +139,66 @@ Item {
 
         // ---------- popups ----------
         SectionTitle { text: "Popups"; sub: "The small cards that appear when something arrives." }
+        Flow {
+            id: styles
+            width: parent.width
+            spacing: 10
+            Repeater {
+                model: [
+                    { k: "match", n: "Same as panel" }, { k: "glass", n: "Glass" }, { k: "solid", n: "Solid" },
+                    { k: "minimal", n: "Minimal" }, { k: "pill", n: "Pill" }, { k: "accent", n: "Accent bar" },
+                    { k: "glow", n: "Glow" }, { k: "island", n: "Island" }, { k: "light", n: "Light" }
+                ]
+                delegate: Rectangle {
+                    readonly property bool on: page.v("popup_style", "match") === modelData.k
+                    width: (styles.width - 20) / 3
+                    height: 96
+                    radius: 14
+                    color: "#141414"
+                    border.width: on ? 2 : 1
+                    border.color: on ? "#F6F5F4" : (sMouse.containsMouse ? "#3a3a3a" : "#2a2a2a")
+                    Behavior on border.color { ColorAnimation { duration: 140 } }
+                    Rectangle {
+                        x: 8; y: 8
+                        width: parent.width - 16; height: 56
+                        radius: 9
+                        clip: true
+                        gradient: Gradient {
+                            orientation: Gradient.Horizontal
+                            GradientStop { position: 0; color: "#2a2836" }
+                            GradientStop { position: 1; color: "#15161a" }
+                        }
+                        PopupMock {
+                            anchors.centerIn: parent
+                            width: parent.width - 16
+                            height: (look === "pill" || look === "minimal") ? 30 : 38
+                            look: modelData.k === "match" ? page.v("style", "glass") : modelData.k
+                            acc: page.v("accent", true) ? page.v("accent_color", "#d4d4d4") : "#F6F5F4"
+                            onAcc: page.v("on_accent", "#0d0d0d")
+                            baseRadius: Math.min(12, page.v("radius", 18) * 0.6)
+                            op: page.v("opacity", 0.8)
+                            iconSize: 22
+                            showBody: false
+                            fs: 0.8
+                        }
+                    }
+                    T {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        y: 70
+                        text: modelData.n
+                        font.pixelSize: 12
+                        font.bold: on
+                    }
+                    MouseArea {
+                        id: sMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: page.setv("popup_style", modelData.k)
+                    }
+                }
+            }
+        }
         SliderRow {
             label: "Width"
             from: 260; to: 600; step: 10; unit: " px"
@@ -189,7 +222,7 @@ Item {
         ToggleRow { label: "Show images"; desc: "Album covers, screenshots and avatars"; checked: page.v("images", true) === true; onToggled: function(x) { page.setv("images", x ? "on" : "off") } }
 
         // ---------- style ----------
-        SectionTitle { text: "Style" }
+        SectionTitle { text: "Notification center style"; sub: "Look of the panel. Popups use it too when their style is Same as panel." }
         SegRow {
             label: "Look"
             desc: "Glass is translucent, Solid is opaque, Outline uses the accent"

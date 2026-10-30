@@ -29,13 +29,14 @@ DEFAULTS = {
     "layout": "controls-top", "panel_width": 400, "panel_height": 780, "fit": False,
     "w_buttons": True, "w_media": True, "w_volume": False, "w_dnd": True, "w_title": True,
     "popup_width": 360, "timeout": 6, "critical_sticky": True, "icon_size": 40, "images": True,
-    "style": "glass", "opacity": 0.80, "radius": 18, "blur": True, "compact": False, "accent": True,
+    "style": "glass", "popup_style": "match", "opacity": 0.80, "radius": 18, "blur": True, "compact": False, "accent": True,
 }
 INTS = {"margin": (0, 60), "panel_width": (300, 700), "panel_height": (300, 1400), "popup_width": (260, 600),
         "timeout": (2, 30), "icon_size": (20, 72), "radius": (0, 32)}
 FLOATS = {"opacity": (0.3, 1.0)}
 CHOICES = {"pos_x": ["left", "center", "right"], "pos_y": ["top", "bottom"],
-           "layout": ["controls-top", "controls-bottom", "minimal"], "style": ["glass", "solid", "outline"]}
+           "layout": ["controls-top", "controls-bottom", "minimal"], "style": ["glass", "solid", "outline"],
+           "popup_style": ["match", "glass", "solid", "minimal", "pill", "accent", "glow", "island", "light"]}
 ORDER = {
     "controls-top": ["buttons-grid", "mpris", "volume", "dnd", "title", "notifications"],
     "controls-bottom": ["title", "dnd", "notifications", "mpris", "volume", "buttons-grid"],
@@ -316,8 +317,46 @@ def css(c):
 .widget-volume trough highlight {
   background: %(acc)s;
 }
+%(popupcss)s
 %(end)s
-""" % dict(v, begin=BEGIN, end=END)
+""" % dict(v, begin=BEGIN, end=END, popupcss=popup_css(c, acc, on_acc))
+
+
+def hex_rgba(h, a):
+    h = h.lstrip("#")
+    try:
+        return "rgba(%d, %d, %d, %.2f)" % (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16), a)
+    except Exception:
+        return "rgba(212, 212, 212, %.2f)" % a
+
+
+def popup_css(c, acc, on_acc):
+    """Extra look for the popups only (the notification center keeps the 'Look' setting)."""
+    st = c["popup_style"]
+    if st == "match":
+        return ""
+    P = ".floating-notifications .notification-row .notification-background .notification"
+    r = c["radius"]
+    rules = {
+        "glass":   "background: rgba(18, 18, 20, 0.62);\n  border: 1px solid rgba(255, 255, 255, 0.12);\n  border-radius: %dpx;" % r,
+        "solid":   "background: rgb(28, 28, 32);\n  border: 1px solid rgba(255, 255, 255, 0.06);\n  border-radius: %dpx;" % r,
+        "minimal": "background: rgba(12, 12, 14, 0.85);\n  border: none;\n  border-radius: 8px;\n  padding: 8px 10px;",
+        "pill":    "background: rgba(18, 18, 20, 0.90);\n  border: 1px solid rgba(255, 255, 255, 0.08);\n  border-radius: 999px;\n  padding: 6px 18px;",
+        "accent":  "background: rgba(18, 18, 20, 0.90);\n  border: 1px solid rgba(255, 255, 255, 0.06);\n  border-left: 4px solid %s;\n  border-radius: 10px;" % acc,
+        "glow":    "background: rgba(14, 14, 16, 0.90);\n  border: 1px solid %s;\n  border-radius: %dpx;\n  box-shadow: 0 0 16px %s;" % (acc, r, hex_rgba(acc, 0.45)),
+        "island":  "background: rgb(0, 0, 0);\n  border: none;\n  border-radius: 28px;\n  padding: 12px 18px;",
+        "light":   "background: rgba(246, 245, 244, 0.95);\n  border: 1px solid rgba(0, 0, 0, 0.08);\n  border-radius: %dpx;\n  color: #111111;" % r,
+    }
+    out = ["/* popup style: %s */" % st, "%s {\n  %s\n}" % (P, rules[st])]
+    if st == "pill":
+        out.append("%s .image, %s .app-icon {\n  border-radius: 999px;\n}" % (P, P))
+    if st == "minimal":
+        out.append("%s .summary {\n  font-size: 0.95em;\n}" % P)
+    if st == "light":
+        out.append("%s .summary {\n  color: #111111;\n}\n%s .body, %s .time {\n  color: #555555;\n}" % (P, P, P))
+        out.append(".floating-notifications .notification-row .notification-background .close-button {\n"
+                   "  background: rgba(0, 0, 0, 0.08);\n  color: #111111;\n}")
+    return "\n".join(out)
 
 
 def write_css(c):
