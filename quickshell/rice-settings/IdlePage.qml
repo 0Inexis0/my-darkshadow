@@ -50,13 +50,13 @@ Item {
             Rectangle {
                 id: pv
                 readonly property real s: height / 1080
-                readonly property bool left: page.v("layout", "center") === "left"
+                readonly property bool isLeft: page.v("layout", "center") === "left"
                 readonly property string st: page.v("clock", "big")
                 readonly property string acc: page.v("accent", "#d4d4d4")
                 readonly property var ys: st === "stacked" ? ({ avatar: 400, date: 30, greet: -6, input: -96, power: -190 })
                                         : st === "minimal" ? ({ avatar: 150, date: 0, greet: 50, input: -40, power: -140 })
                                         : ({ avatar: 310, date: 66, greet: 30, input: -50, power: -146 })
-                function px(w) { return left ? 110 * s : (width - w) / 2 }
+                function px(w) { return isLeft ? 110 * s : (width - w) / 2 }
                 function py(yoff, h) { return height / 2 - yoff * s - h / 2 }
                 function hhmm() {
                     const d = page.now
@@ -172,7 +172,7 @@ Item {
                 Row {
                     visible: page.v("power", true)
                     spacing: 90 * pv.s - 30 * 1.33 * pv.s
-                    x: pv.left ? 110 * pv.s : (pv.width - width) / 2
+                    x: pv.isLeft ? 110 * pv.s : (pv.width - width) / 2
                     y: pv.py(pv.ys.power, height)
                     Repeater {
                         model: ["󰍃", "󰐥", "󰤄", "󰜉"]
@@ -181,7 +181,7 @@ Item {
                 }
                 // bottom lines
                 Column {
-                    x: pv.left ? 110 * pv.s : (pv.width - width) / 2
+                    x: pv.isLeft ? 110 * pv.s : (pv.width - width) / 2
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: 24 * pv.s
                     spacing: 6 * pv.s
@@ -194,7 +194,7 @@ Item {
                         ]
                         delegate: T {
                             visible: page.v(modelData.k, false)
-                            anchors.horizontalCenter: pv.left ? undefined : parent.horizontalCenter
+                            anchors.horizontalCenter: pv.isLeft ? undefined : parent.horizontalCenter
                             text: modelData.t
                             font.pixelSize: 14 * 1.33 * pv.s
                             color: "#F6F5F4"; opacity: 0.75

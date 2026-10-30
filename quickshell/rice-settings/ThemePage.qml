@@ -26,7 +26,7 @@ Item {
                 anchors.leftMargin: 16
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 12
-                T { kind: "icon"; text: ""; font.pixelSize: 22; anchors.verticalCenter: parent.verticalCenter }
+                T { kind: "icon"; text: "\udb80\udfd8"; font.pixelSize: 22; anchors.verticalCenter: parent.verticalCenter }
                 Column {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 2

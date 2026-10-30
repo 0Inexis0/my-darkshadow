@@ -85,7 +85,7 @@ Item {
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
             onWheel: function(e) {
                 const max = Math.max(0, flick.contentHeight - flick.height)
-                flick.contentY = Math.max(0, Math.min(max, flick.contentY - e.angleDelta.y * 0.6))
+                flick.contentY = Math.max(0, Math.min(max, flick.contentY - e.angleDelta.y * 0.9))
             }
         }
 
@@ -182,7 +182,7 @@ Item {
                 bottomPadding: 6
                 Repeater {
                     model: [
-                        { i: "\uf53f", t: "Theme \u00b7 " + page.themeName() },
+                        { i: "\udb80\udfd8", t: "Theme \u00b7 " + page.themeName() },
                         { i: "\uf017", t: "Up " + page.uptime },
                         { i: "\uf17c", t: page.ctl.osName }
                     ]
@@ -252,7 +252,7 @@ Item {
                 spacing: 10
                 Repeater {
                     model: [
-                        { i: "\uf53f", t: "Theme", d: "Colors & schemes", p: 4 },
+                        { i: "\udb80\udfd8", t: "Theme", d: "Colors & schemes", p: 4 },
                         { i: "\uf03e", t: "Wallpaper", d: "Pick a new one", p: -1 },
                         { i: "\uf0f3", t: "Notifications", d: "Popups & panel", p: 5 },
                         { i: "\uf023", t: "Lock screen", d: "Idle & lock", p: 6 },

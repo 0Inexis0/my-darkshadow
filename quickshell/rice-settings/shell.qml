@@ -68,7 +68,7 @@ FloatingWindow {
         { name: "Waybar", icon: "\uf0c9" },
         { name: "Hyprland", icon: "\uf108" },
         { name: "Rofi", icon: "\uf002" },
-        { name: "Theme", icon: "\uf53f" },
+        { name: "Theme", icon: "\udb80\udfd8" },
         { name: "Notifications", icon: "\uf0f3" },
         { name: "Idle & Lockscreen", icon: "\uf023" },
         { name: "Desktop", icon: "\uf26c" },

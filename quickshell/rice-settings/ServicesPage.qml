@@ -68,7 +68,7 @@ Item {
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
             onWheel: function(e) {
                 const max = Math.max(0, flick.contentHeight - flick.height)
-                flick.contentY = Math.max(0, Math.min(max, flick.contentY - e.angleDelta.y * 0.6))
+                flick.contentY = Math.max(0, Math.min(max, flick.contentY - e.angleDelta.y * 0.9))
             }
         }
 
