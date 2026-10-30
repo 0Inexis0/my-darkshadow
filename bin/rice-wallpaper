@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
-# Wallpaper menu (SUPER + W). Uses waypaper if installed, otherwise a rofi list of your pictures.
+# Wallpaper menu (SUPER + W). Uses hyprquickpaper (Quickshell) if present, then waypaper, otherwise a rofi list of your pictures.
+qp="$HOME/.config/quickshell/hyprquickpaper"
+if [ -f "$qp/shell.qml" ] && command -v qs >/dev/null 2>&1; then
+  pgrep -f "quickshell/hyprquickpaper" >/dev/null && exit 0
+  exec qs -n -p "$qp"
+fi
 if command -v waypaper >/dev/null 2>&1; then
   exec waypaper
 fi
