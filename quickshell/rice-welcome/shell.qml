@@ -37,7 +37,7 @@ ShellRoot {
             id: card
             anchors.fill: parent
             radius: 28
-            color: Qt.rgba(0.07, 0.07, 0.08, 0.94)
+            color: Qt.rgba(0.07, 0.07, 0.08, 0.62)
             border.width: 1
             border.color: Qt.rgba(1, 1, 1, 0.09)
             opacity: 0
