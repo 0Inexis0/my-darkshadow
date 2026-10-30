@@ -23,11 +23,27 @@
 
 ---
 
+## Screenshot
+<p align="center">
+  <img src="assets/screenshot.png" alt="Shadow's Shell on NixOS" width="100%">
+</p>
+
 ## Features
-- **Settings app** (`SUPER+U`): Waybar layout editor, bar styles (flat, floating, islands, one island), Hyprland options, desktop widgets, dock, lock screen, fonts, autostart.
-- **Desktop widgets**: clock, calendar, weather, media player, resources, user card, audio visualizer. Drag them anywhere.
-- **Waybar** with presets, autohide, transparency, and a logo that matches your distro (Arch, NixOS, ...).
-- Works for **any username**: everything uses `$HOME` and `$USER`.
+**Settings app** (`SUPER+U`), seven pages: Home, Waybar, Hyprland, Desktop, Interface, Services, About.
+
+| Area | What you get |
+| --- | --- |
+| **Waybar** | layout editor (move modules between left, center and right), saved presets, position top or bottom, bar height, opacity |
+| **Bar styles** | Flat, Floating, Islands, **One island**; group styles None, Pills, Segmented |
+| **Autohide** | bar slides in when the pointer touches the screen edge |
+| **Distro logo** | NixOS logo on NixOS, Arch logo on Arch, and so on |
+| **Desktop widgets** | clock (big or small), calendar, weather, media player, resources (CPU, RAM, GPU), user card, audio visualizer; drag them anywhere |
+| **Dock** | pinned apps, hover to reveal, media player, tinted icons |
+| **Lock screen** | clock, resources and now-playing info |
+| **Hyprland** | gaps, borders, rounding, blur, shadows and animations from sliders, no config editing |
+| **Fonts** | one place to set the main and icon fonts |
+| **Notifications** | swaync with a button that opens Settings |
+| **Installer** | interactive, backs up everything, supports Arch and NixOS |
 
 ## Install
 ```bash
