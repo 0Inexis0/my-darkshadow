@@ -5,8 +5,8 @@ import QtQuick
 FloatingWindow {
     id: win
     title: "Rice Settings"
-    implicitWidth: 900
-    implicitHeight: 640
+    implicitWidth: 980
+    implicitHeight: 740
     color: "transparent"
     visible: true
     onVisibleChanged: if (!visible) Qt.quit()
@@ -68,6 +68,9 @@ FloatingWindow {
         { name: "Waybar", icon: "\uf0c9" },
         { name: "Hyprland", icon: "\uf108" },
         { name: "Rofi", icon: "\uf002" },
+        { name: "Theme", icon: "\uf53f" },
+        { name: "Notifications", icon: "\uf0f3" },
+        { name: "Idle & Lockscreen", icon: "\uf023" },
         { name: "Desktop", icon: "\uf26c" },
         { name: "Interface", icon: "\uf2d0" },
         { name: "Services", icon: "" },
@@ -210,7 +213,7 @@ FloatingWindow {
         Item {
             x: 16
             y: 10
-            width: 178
+            width: 206
             height: 48
 
             RoundImage {
@@ -253,9 +256,9 @@ FloatingWindow {
 
         Rectangle {
             x: 16
-            y: 72 + win.page * 60
-            width: 178
-            height: 50
+            y: 72 + win.page * 56
+            width: 206
+            height: 46
             radius: 14
             color: "#2a2a2a"
             Behavior on y { NumberAnimation { duration: 280; easing.type: Easing.OutCubic } }
@@ -264,19 +267,19 @@ FloatingWindow {
         Column {
             x: 16
             y: 72
-            width: 178
+            width: 206
             spacing: 10
 
             Repeater {
                 model: win.pages
                 delegate: Rectangle {
                     width: parent.width
-                    height: 50
+                    height: 46
                     radius: 14
                     color: win.page !== index && navMouse.containsMouse ? "#1a1a1a" : "transparent"
                     Behavior on color { ColorAnimation { duration: 150 } }
                     T { kind: "icon"; x: 18; anchors.verticalCenter: parent.verticalCenter; text: modelData.icon; font.pixelSize: 18 }
-                    T { x: 52; anchors.verticalCenter: parent.verticalCenter; text: modelData.name; font.pixelSize: 15; font.bold: win.page === index }
+                    T { x: 50; width: parent.width - 58; elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter; text: modelData.name; font.pixelSize: 14; font.bold: win.page === index }
                     MouseArea {
                         id: navMouse
                         anchors.fill: parent
@@ -288,12 +291,12 @@ FloatingWindow {
             }
         }
 
-        Rectangle { x: 204; y: 64; width: 1; height: parent.height - 96; color: "#222222" }
+        Rectangle { x: 232; y: 64; width: 1; height: parent.height - 96; color: "#222222" }
 
         Item {
-            x: 210
+            x: 238
             y: 60
-            width: parent.width - 210
+            width: parent.width - 238
             height: parent.height - 60
             clip: true
 
@@ -301,10 +304,13 @@ FloatingWindow {
             PageSlot { idx: 1; cur: win.page; WaybarPage { anchors.fill: parent; ctl: win } }
             PageSlot { idx: 2; cur: win.page; HyprlandPage { anchors.fill: parent; ctl: win } }
             PageSlot { idx: 3; cur: win.page; RofiPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 4; cur: win.page; DesktopPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 5; cur: win.page; InterfacePage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 6; cur: win.page; ServicesPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 7; cur: win.page; AboutPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 4; cur: win.page; ThemePage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 5; cur: win.page; NotificationsPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 6; cur: win.page; IdlePage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 7; cur: win.page; DesktopPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 8; cur: win.page; InterfacePage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 9; cur: win.page; ServicesPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 10; cur: win.page; AboutPage { anchors.fill: parent; ctl: win } }
         }
 
         T {

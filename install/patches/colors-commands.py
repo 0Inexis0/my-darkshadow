@@ -1,15 +1,17 @@
-import os,sys
-p=sys.argv[1]; s=open(p).read()
-if "rice-colors\" scheme" in s or "rice-colors scheme" in s:
-    print("commands.sh already patched"); sys.exit(0)
-old='''case "$(cat "$HOME/.config/rice/color-mode" 2>/dev/null)" in
+"""Teach hyprquickpaper/commands.sh about named color schemes and refresh hooks. Safe to run many times."""
+import sys
+
+p = sys.argv[1]
+s = open(p).read()
+changed = False
+old = '''case "$(cat "$HOME/.config/rice/color-mode" 2>/dev/null)" in
   grey) sat=0; lum=50 ;;
   navy) sat=0; lum=0 ;;
 esac
 
 if awk "BEGIN{exit !($sat < 12)}"; then
 '''
-new='''mode="$(cat "$HOME/.config/rice/color-mode" 2>/dev/null)"
+new = '''mode="$(cat "$HOME/.config/rice/color-mode" 2>/dev/null)"
 scheme=""
 case "$mode" in
   grey) sat=0; lum=50 ;;
@@ -19,12 +21,23 @@ case "$mode" in
 esac
 
 if [ -n "$scheme" ]; then
-  # named color scheme from Settings > Home > Colors: "<matugen type> <seed> <workspace marker>"
+  # named color scheme from Settings > Theme: "<matugen type> <seed> <workspace marker>"
   read -r stype seed ws <<<"$scheme"
   cmd=(matugen color hex "$seed" --type "$stype" -q)
 elif awk "BEGIN{exit !($sat < 12)}"; then
 '''
-if s.count(old)!=1:
-    print("commands.sh differs from the expected text, not patched"); sys.exit(2)
-open(p,'w').write(s.replace(old,new))
-print("patched")
+if "rice-colors\" scheme" not in s:
+    if s.count(old) != 1:
+        print("commands.sh differs from the expected text, schemes not added")
+    else:
+        s = s.replace(old, new)
+        changed = True
+hook = '"$HOME/.local/bin/rice-colors" refresh >/dev/null 2>&1 &'
+if hook not in s:
+    s = s.rstrip("\n") + "\n\n# recolor notifications and the lock screen (Shadow's Shell)\n" + hook + "\n"
+    changed = True
+if changed:
+    open(p, "w").write(s)
+    print("commands.sh updated")
+else:
+    print("commands.sh already up to date")

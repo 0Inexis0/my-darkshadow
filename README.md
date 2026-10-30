@@ -33,7 +33,7 @@
 </p>
 
 ## Features
-**Settings app** (`SUPER+U`), seven pages: Home, Waybar, Hyprland, Desktop, Interface, Services, About.
+**Settings app** (`SUPER+U`), eleven pages: Home, Waybar, Hyprland, Rofi, Theme, Notifications, Idle & Lockscreen, Desktop, Interface, Services, About.
 
 | Area | What you get |
 | --- | --- |
@@ -43,9 +43,10 @@
 | **Distro logo** | NixOS logo on NixOS, Arch logo on Arch, and so on |
 | **Desktop widgets** | clock (big or small), calendar, weather, media player, resources (CPU, RAM, GPU), user card, audio visualizer; drag them anywhere |
 | **Dock** | pinned apps, hover to reveal, media player, tinted icons |
-| **Lock screen** | clock, resources and now-playing info |
 | **Hyprland** | gaps, borders, rounding, blur, shadows and animations from sliders, no config editing |
-| **Color schemes** | 21 schemes in Home: Auto (from wallpaper), Grey, Navy, six monochrome (Mono, Slate, Stone, Steel, Ash, Ink) and twelve colors (Ocean, Sky, Teal, Mint, Forest, Lime, Gold, Sunset, Ember, Rose, Orchid, Violet) |
+| **Theme** | 21 color schemes: Auto and Grey from your wallpaper, six monochrome (Mono, Slate, Stone, Steel, Ash, Ink) and thirteen colors (Navy, Ocean, Sky, Teal, Mint, Forest, Lime, Gold, Sunset, Ember, Rose, Orchid, Violet). They recolor Waybar, borders, notifications and the lock screen |
+| **Notifications** | swaync popups and panel: position, layout, widgets (title, Do Not Disturb, media, volume, quick buttons), size, timeout, icon size, Glass / Solid / Outline look, opacity, radius, blur, live preview and a test button |
+| **Idle & Lockscreen** | lock, screen-off and sleep timers; lock screen with Big / Stacked / Minimal clock, center or left layout, greeting, avatar, Pill / Box / Line password field, power buttons, screenshot / wallpaper / color background and media, resources, weather and notification lines |
 | **Rofi** | 5 themes (Shadow, Graphite, Midnight, Rose, Paper), layouts list / grid / full-width bar, position top, center or bottom, width, rows, corner radius, transparency, blur, font size, icons |
 | **Fonts** | one place to set the main and icon fonts |
 | **Notifications** | swaync with a button that opens Settings |

@@ -26,3 +26,27 @@ rice-rofi reset          # defaults
 rice-rofi restore        # give back your original rofi and Hyprland files
 ```
 The theme is written to `~/.config/rofi/shadows.rasi` and loaded from `~/.config/rofi/config.rasi`. Your previous `@theme` lines are commented out (backup: `config.rasi.bak-rice-rofi`).
+
+## Theme
+```bash
+rice-colors list             # all schemes
+rice-colors mode ocean       # auto, grey, navy, mono, slate, stone, steel, ash, ink, ocean, sky, ...
+```
+
+## Notifications (swaync)
+```bash
+rice-notify set pos_x left|center|right
+rice-notify set layout controls-top|controls-bottom|minimal
+rice-notify set style glass|solid|outline
+rice-notify test             # send a test notification
+rice-notify restore          # give back your original swaync files
+```
+
+## Idle & Lockscreen (hypridle + hyprlock)
+```bash
+rice-lock set lock_after 5          # minutes, 0 = never
+rice-lock set suspend_after 30
+rice-lock set clock big|stacked|minimal
+rice-lock set background screenshot|wallpaper|color
+rice-lock restore                   # give back your original hyprlock.conf and hypridle.conf
+```

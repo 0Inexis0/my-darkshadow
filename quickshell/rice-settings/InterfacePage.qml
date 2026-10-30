@@ -94,32 +94,12 @@ Item {
                 onToggled: function(v) { page.ctl.dset("dock", "tint", v ? "on" : "off") }
             }
 
-            T { kind: "title"; text: "Lock screen"; font.pixelSize: 16; font.bold: true; topPadding: 14 }
             T {
                 width: parent.width
-                text: "Adds extra lines to your hyprlock screen."
+                topPadding: 14
+                text: "Lock screen options moved to Idle & Lockscreen."
                 color: "#8a8a8a"
                 font.pixelSize: 12
-                wrapMode: Text.WordWrap
-            }
-
-            ToggleRow {
-                label: "Show toolbars"
-                desc: "Date and uptime line at the bottom"
-                checked: page.lv("toolbars")
-                onToggled: function(v) { page.ctl.dset("lock", "toolbars", v ? "on" : "off") }
-            }
-            ToggleRow {
-                label: "Show widgets"
-                desc: "CPU, RAM and GPU usage"
-                checked: page.lv("widgets")
-                onToggled: function(v) { page.ctl.dset("lock", "widgets", v ? "on" : "off") }
-            }
-            ToggleRow {
-                label: "Show media player info"
-                desc: "Artist and title of the current track"
-                checked: page.lv("media")
-                onToggled: function(v) { page.ctl.dset("lock", "media", v ? "on" : "off") }
             }
         }
     }

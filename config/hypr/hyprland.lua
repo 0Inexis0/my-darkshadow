@@ -465,15 +465,9 @@ hl.layer_rule({
 
 require("hyprland-gui")
 require("rice-settings")
+require("rice-notify")
 require("rice-rofi")
 require("rice-desktop")
-
-hl.layer_rule({
-    name  = "swaync-blur",
-    match = { namespace = "^swaync-(control-center|notification-window)$" },
-    blur = true,
-    ignore_alpha = 0.1,
-})
 
 
 hl.window_rule({

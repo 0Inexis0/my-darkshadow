@@ -9,6 +9,44 @@ Item {
     readonly property string home: Quickshell.env("HOME")
     readonly property string user: Quickshell.env("USER")
     readonly property string faceUrl: "file://" + home + "/.face"
+    property date now: new Date()
+    property string uptime: ""
+    property int tip: 0
+    readonly property var tips: [
+        "Press SUPER + U anywhere to open these settings.",
+        "SUPER + W opens the wallpaper menu. The Auto theme follows your new wallpaper.",
+        "Drag the desktop widgets anywhere, their position is saved.",
+        "Pick a scheme in Theme to recolor the bar, borders, notifications and lock screen.",
+        "Try the One island bar style in Waybar for a floating look.",
+        "Idle & Lockscreen decides when the screen locks and when the computer sleeps.",
+        "Click your picture above to change it. It is also shown on the lock screen."
+    ]
+    function greeting() {
+        const h = now.getHours()
+        return h < 5 ? "Good night" : (h < 12 ? "Good morning" : (h < 18 ? "Good afternoon" : "Good evening"))
+    }
+    function themeName() {
+        const l = page.ctl.schemes || []
+        for (let i = 0; i < l.length; i++) if (l[i].key === page.ctl.colorMode) return l[i].name
+        return page.ctl.colorMode
+    }
+
+    Timer { interval: 15000; running: true; repeat: true; onTriggered: page.now = new Date() }
+    Timer { interval: 7000; running: true; repeat: true; onTriggered: tipFade.restart() }
+    Process {
+        id: upProc
+        command: ["bash", "-c", "cut -d. -f1 /proc/uptime"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const t = parseInt(text.trim())
+                if (isNaN(t)) return
+                const d = Math.floor(t / 86400), h = Math.floor(t % 86400 / 3600), m = Math.floor(t % 3600 / 60)
+                page.uptime = (d > 0 ? d + "d " : "") + (h > 0 ? h + "h " : "") + m + "m"
+            }
+        }
+    }
+    Timer { interval: 60000; running: true; repeat: true; onTriggered: upProc.running = true }
 
     Process {
         id: picker
@@ -124,69 +162,138 @@ Item {
                 }
             }
 
-            Row {
-                anchors.horizontalCenter: parent.horizontalCenter
-                spacing: 10
-                T { text: "\uf015"; font.pixelSize: 24; anchors.verticalCenter: parent.verticalCenter }
-                T { text: "Welcome back, " + page.user; font.pixelSize: 24; font.bold: true; anchors.verticalCenter: parent.verticalCenter }
-            }
-
             T {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: "Make your desktop feel like home."
+                text: page.greeting() + ", " + page.user
+                font.pixelSize: 26
+                font.bold: true
+            }
+            T {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: page.now.toLocaleDateString(Qt.locale("en_US"), "dddd, d MMMM") + "  \u00b7  " + page.now.toLocaleTimeString(Qt.locale("en_US"), "HH:mm")
                 color: "#8a8a8a"
                 font.pixelSize: 13
-                bottomPadding: 10
             }
 
-            T { kind: "title"; text: "Colors"; font.pixelSize: 16; font.bold: true }
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 8
+                topPadding: 2
+                bottomPadding: 6
+                Repeater {
+                    model: [
+                        { i: "\uf53f", t: "Theme \u00b7 " + page.themeName() },
+                        { i: "\uf017", t: "Up " + page.uptime },
+                        { i: "\uf17c", t: page.ctl.osName }
+                    ]
+                    delegate: Rectangle {
+                        visible: modelData.t.length > 3
+                        height: 30
+                        width: chip.implicitWidth + 26
+                        radius: 15
+                        color: "#141414"
+                        border.width: 1
+                        border.color: "#222222"
+                        Row {
+                            id: chip
+                            anchors.centerIn: parent
+                            spacing: 7
+                            T { kind: "icon"; text: modelData.i; font.pixelSize: 12; color: "#c8c8cc"; anchors.verticalCenter: parent.verticalCenter }
+                            T { text: modelData.t; font.pixelSize: 12; color: "#c8c8cc"; anchors.verticalCenter: parent.verticalCenter }
+                        }
+                    }
+                }
+            }
 
-            T {
+            Rectangle {
                 width: parent.width
-                text: "Pick a color scheme. Auto takes colors from your wallpaper, the rest use fixed colors."
-                color: "#8a8a8a"
-                font.pixelSize: 12
-                wrapMode: Text.WordWrap
+                height: 84
+                radius: 16
+                border.width: 1
+                border.color: "#222222"
+                gradient: Gradient {
+                    orientation: Gradient.Horizontal
+                    GradientStop { position: 0; color: "#1a1922" }
+                    GradientStop { position: 1; color: "#121214" }
+                }
+                Rectangle {
+                    id: bulb
+                    x: 18
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 46; height: 46; radius: 14
+                    color: Qt.rgba(1, 1, 1, 0.06)
+                    T { kind: "icon"; anchors.centerIn: parent; text: "\uf0eb"; font.pixelSize: 20 }
+                }
+                Column {
+                    id: tipCol
+                    anchors.left: bulb.right
+                    anchors.leftMargin: 14
+                    anchors.right: parent.right
+                    anchors.rightMargin: 18
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 4
+                    T { text: "Make yourself at home"; font.pixelSize: 14; font.bold: true }
+                    T { kind: "reading"; width: parent.width; text: page.tips[page.tip]; color: "#9a9aa4"; font.pixelSize: 12; wrapMode: Text.WordWrap }
+                }
+                SequentialAnimation {
+                    id: tipFade
+                    NumberAnimation { target: tipCol; property: "opacity"; to: 0; duration: 220 }
+                    ScriptAction { script: page.tip = (page.tip + 1) % page.tips.length }
+                    NumberAnimation { target: tipCol; property: "opacity"; to: 1; duration: 320 }
+                }
+                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: tipFade.restart() }
             }
+
+            T { kind: "title"; text: "Make it yours"; font.pixelSize: 16; font.bold: true; topPadding: 10 }
 
             Flow {
+                id: quick
                 width: parent.width
                 spacing: 10
                 Repeater {
-                    model: page.ctl.schemes
+                    model: [
+                        { i: "\uf53f", t: "Theme", d: "Colors & schemes", p: 4 },
+                        { i: "\uf03e", t: "Wallpaper", d: "Pick a new one", p: -1 },
+                        { i: "\uf0f3", t: "Notifications", d: "Popups & panel", p: 5 },
+                        { i: "\uf023", t: "Lock screen", d: "Idle & lock", p: 6 },
+                        { i: "\uf0c9", t: "Waybar", d: "Bar layout & style", p: 1 },
+                        { i: "\uf002", t: "Rofi", d: "App launcher", p: 3 }
+                    ]
                     delegate: Rectangle {
-                        readonly property bool on: page.ctl.colorMode === modelData.key
-                        width: 104
-                        height: 74
+                        width: (quick.width - 20) / 3
+                        height: 76
                         radius: 14
-                        color: "#141414"
-                        border.width: on ? 2 : 1
-                        border.color: on ? "#F6F5F4" : (cMouse.containsMouse ? "#3a3a3a" : "#2a2a2a")
-                        Behavior on border.color { ColorAnimation { duration: 140 } }
-
+                        color: qMouse.containsMouse ? "#1b1b1d" : "#141414"
+                        border.width: 1
+                        border.color: qMouse.containsMouse ? "#333333" : "#1f1f1f"
+                        Behavior on color { ColorAnimation { duration: 140 } }
                         Rectangle {
-                            x: 8; y: 8
-                            width: parent.width - 16; height: 36
-                            radius: 9
-                            color: modelData.preview[0]
-                            border.width: 1
-                            border.color: Qt.rgba(1, 1, 1, 0.10)
-                            Rectangle { x: 7; y: 7; width: 30; height: 8; radius: 4; color: modelData.preview[1] }
-                            Rectangle { x: 7; y: 19; width: parent.width - 14; height: 9; radius: 4; color: modelData.preview[2]; opacity: 0.85 }
+                            id: qi
+                            x: 14
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 40; height: 40; radius: 12
+                            color: Qt.rgba(1, 1, 1, 0.06)
+                            T { kind: "icon"; anchors.centerIn: parent; text: modelData.i; font.pixelSize: 17 }
                         }
-                        T {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            y: 50
-                            text: modelData.name
-                            font.pixelSize: 12
-                            font.bold: on
+                        Column {
+                            anchors.left: qi.right
+                            anchors.leftMargin: 12
+                            anchors.right: parent.right
+                            anchors.rightMargin: 10
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 2
+                            T { text: modelData.t; font.pixelSize: 13; font.bold: true; width: parent.width; elide: Text.ElideRight }
+                            T { kind: "reading"; text: modelData.d; font.pixelSize: 11; color: "#8a8a8a"; width: parent.width; elide: Text.ElideRight }
                         }
                         MouseArea {
-                            id: cMouse
+                            id: qMouse
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: page.ctl.setColorMode(modelData.key)
+                            onClicked: {
+                                if (modelData.p >= 0) page.ctl.page = modelData.p
+                                else Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-wallpaper\""])
+                            }
                         }
                     }
                 }
