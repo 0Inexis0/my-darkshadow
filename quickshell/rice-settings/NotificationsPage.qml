@@ -57,7 +57,7 @@ Item {
                 readonly property string ps: page.v("popup_style", "match")
                 look: ps === "match" ? page.v("style", "glass") : ps
                 acc: page.v("accent", true) ? page.v("accent_color", "#d4d4d4") : "#F6F5F4"
-                onAcc: page.v("accent", true) ? page.v("on_accent", "#0d0d0d") : "#0d0d0d"
+                accFg: page.v("accent", true) ? page.v("on_accent", "#0d0d0d") : "#0d0d0d"
                 baseRadius: page.v("radius", 18) * 0.85
                 op: page.v("opacity", 0.8)
                 iconSize: Math.max(26, Math.min(46, page.v("icon_size", 40)))
@@ -174,7 +174,7 @@ Item {
                             height: (look === "pill" || look === "minimal") ? 30 : 38
                             look: modelData.k === "match" ? page.v("style", "glass") : modelData.k
                             acc: page.v("accent", true) ? page.v("accent_color", "#d4d4d4") : "#F6F5F4"
-                            onAcc: page.v("on_accent", "#0d0d0d")
+                            accFg: page.v("on_accent", "#0d0d0d")
                             baseRadius: Math.min(12, page.v("radius", 18) * 0.6)
                             op: page.v("opacity", 0.8)
                             iconSize: 22

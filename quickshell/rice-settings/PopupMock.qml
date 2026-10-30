@@ -5,7 +5,7 @@ Item {
     id: m
     property string look: "glass"          // glass | solid | outline | minimal | pill | accent | glow | island | light
     property string acc: "#d4d4d4"
-    property string onAcc: "#0d0d0d"
+    property string accFg: "#0d0d0d"
     property real baseRadius: 18
     property real op: 0.8
     property real iconSize: 36
@@ -61,7 +61,7 @@ Item {
             width: Math.min(m.iconSize, parent.height - 12); height: width
             radius: m.look === "pill" || m.look === "island" ? width / 2 : Math.max(5, width * 0.3)
             color: m.acc
-            T { kind: "icon"; anchors.centerIn: parent; text: ""; font.pixelSize: ico.width * 0.45; color: m.onAcc }
+            T { kind: "icon"; anchors.centerIn: parent; text: ""; font.pixelSize: ico.width * 0.45; color: m.accFg }
         }
         Column {
             anchors.left: ico.right
