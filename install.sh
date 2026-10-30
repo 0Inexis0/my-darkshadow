@@ -149,6 +149,10 @@ step_wire() {
       fi
     done
   fi
+  # rofi theme + blur rule (Settings > Rofi)
+  if command -v rofi >/dev/null 2>&1 && [ -x "$HOME/.local/bin/rice-rofi" ]; then
+    "$HOME/.local/bin/rice-rofi" apply || true
+  fi
   # distro logo on Waybar (Arch logo on Arch, NixOS logo on NixOS, ...)
   if [ -f "$HOME/.config/waybar/config.jsonc" ] && [ -x "$HOME/.local/bin/waybar-set" ]; then
     "$HOME/.local/bin/waybar-set" distro-icon on || true

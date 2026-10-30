@@ -67,6 +67,7 @@ FloatingWindow {
         { name: "Home", icon: "\uf015" },
         { name: "Waybar", icon: "\uf0c9" },
         { name: "Hyprland", icon: "\uf108" },
+        { name: "Rofi", icon: "\uf002" },
         { name: "Desktop", icon: "\uf26c" },
         { name: "Interface", icon: "\uf2d0" },
         { name: "Services", icon: "" },
@@ -262,8 +263,8 @@ FloatingWindow {
                     radius: 14
                     color: win.page !== index && navMouse.containsMouse ? "#1a1a1a" : "transparent"
                     Behavior on color { ColorAnimation { duration: 150 } }
-                    T { kind: "icon"; x: 18; anchors.verticalCenter: parent.verticalCenter; text: modelData.icon; font.pixelSize: 16 }
-                    T { x: 52; anchors.verticalCenter: parent.verticalCenter; text: modelData.name; font.pixelSize: 13; font.bold: win.page === index }
+                    T { kind: "icon"; x: 18; anchors.verticalCenter: parent.verticalCenter; text: modelData.icon; font.pixelSize: 18 }
+                    T { x: 52; anchors.verticalCenter: parent.verticalCenter; text: modelData.name; font.pixelSize: 15; font.bold: win.page === index }
                     MouseArea {
                         id: navMouse
                         anchors.fill: parent
@@ -287,10 +288,11 @@ FloatingWindow {
             PageSlot { idx: 0; cur: win.page; HomePage { anchors.fill: parent; ctl: win } }
             PageSlot { idx: 1; cur: win.page; WaybarPage { anchors.fill: parent; ctl: win } }
             PageSlot { idx: 2; cur: win.page; HyprlandPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 3; cur: win.page; DesktopPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 4; cur: win.page; InterfacePage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 5; cur: win.page; ServicesPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 6; cur: win.page; AboutPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 3; cur: win.page; RofiPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 4; cur: win.page; DesktopPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 5; cur: win.page; InterfacePage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 6; cur: win.page; ServicesPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 7; cur: win.page; AboutPage { anchors.fill: parent; ctl: win } }
         }
 
         T {

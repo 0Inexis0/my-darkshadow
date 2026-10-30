@@ -45,6 +45,7 @@
 | **Dock** | pinned apps, hover to reveal, media player, tinted icons |
 | **Lock screen** | clock, resources and now-playing info |
 | **Hyprland** | gaps, borders, rounding, blur, shadows and animations from sliders, no config editing |
+| **Rofi** | 5 themes (Shadow, Graphite, Midnight, Rose, Paper), layouts list / grid / full-width bar, position top, center or bottom, width, rows, corner radius, transparency, blur, font size, icons |
 | **Fonts** | one place to set the main and icon fonts |
 | **Notifications** | swaync with a button that opens Settings |
 | **Welcome window** | "Welcome to Shadow's Shell" greeting once per login; turn off with `rice-welcome off` or the link in the window |
