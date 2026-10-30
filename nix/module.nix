@@ -18,6 +18,12 @@
     playerctl
     quickshell
     awww
+    wf-recorder
+    grim
+    slurp
+    wl-clipboard
+    libnotify
+    xdg-user-dirs
   ];
 
   fonts.packages = with pkgs; [

@@ -6,7 +6,7 @@ FloatingWindow {
     id: win
     title: "Rice Settings"
     implicitWidth: 980
-    implicitHeight: 740
+    implicitHeight: 790
     color: "transparent"
     visible: true
     onVisibleChanged: if (!visible) Qt.quit()
@@ -72,6 +72,7 @@ FloatingWindow {
         { name: "Notifications", icon: "\uf0f3" },
         { name: "Idle & Lockscreen", icon: "\uf023" },
         { name: "Desktop", icon: "\uf26c" },
+        { name: "Hot corners", icon: "\udb82\ude0b" },
         { name: "Interface", icon: "\uf2d0" },
         { name: "Services", icon: "" },
         { name: "About", icon: "" }
@@ -308,9 +309,10 @@ FloatingWindow {
             PageSlot { idx: 5; cur: win.page; NotificationsPage { anchors.fill: parent; ctl: win } }
             PageSlot { idx: 6; cur: win.page; IdlePage { anchors.fill: parent; ctl: win } }
             PageSlot { idx: 7; cur: win.page; DesktopPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 8; cur: win.page; InterfacePage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 9; cur: win.page; ServicesPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 10; cur: win.page; AboutPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 8; cur: win.page; HotCornersPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 9; cur: win.page; InterfacePage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 10; cur: win.page; ServicesPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 11; cur: win.page; AboutPage { anchors.fill: parent; ctl: win } }
         }
 
         T {

@@ -196,4 +196,8 @@ ShellRoot {
     VizStrip { active: root.on("visualizer"); barPos: root.barPos; barH: root.barH }
 
     Dock { dc: root.cfg.dock ? root.cfg.dock : ({}) }
+
+    // ---- hot corner (Settings > Hot corners)
+    HotCorner { }
+
 }

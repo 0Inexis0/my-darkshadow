@@ -33,7 +33,7 @@
 </p>
 
 ## Features
-**Settings app** (`SUPER+U`), eleven pages: Home, Waybar, Hyprland, Rofi, Theme, Notifications, Idle & Lockscreen, Desktop, Interface, Services, About.
+**Settings app** (`SUPER+U`), twelve pages: Home, Waybar, Hyprland, Rofi, Theme, Notifications, Idle & Lockscreen, Desktop, Hot corners, Interface, Services, About.
 
 | Area | What you get |
 | --- | --- |
@@ -41,6 +41,7 @@
 | **Bar styles** | Flat, Floating, Islands, **One island**; group styles None, Pills, Segmented |
 | **Autohide** | bar slides in when the pointer touches the screen edge |
 | **Distro logo** | NixOS logo on NixOS, Arch logo on Arch, and so on |
+| **Hot corner** | touch a screen corner for a panel with Keep Awake, screen recording, screenshots, quick toggles (Wi-Fi, Bluetooth, Do Not Disturb, Gaming mode, microphone, Settings) and now playing; sections, toggles, corner, look and animation are set in Settings > Hot corners |
 | **Desktop widgets** | clock (big or small), calendar, weather, media player, resources (CPU, RAM, GPU), user card, audio visualizer; drag them anywhere |
 | **Dock** | pinned apps, hover to reveal, media player, tinted icons |
 | **Hyprland** | gaps, borders, rounding, blur, shadows and animations from sliders, no config editing |

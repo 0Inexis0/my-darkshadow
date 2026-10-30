@@ -50,3 +50,13 @@ rice-lock set clock big|stacked|minimal
 rice-lock set background screenshot|wallpaper|color
 rice-lock restore                   # give back your original hyprlock.conf and hypridle.conf
 ```
+
+## Hot corner
+```bash
+rice-hotcorner set corner bottom-right|bottom-left|top-right|top-left
+rice-hotcorner list sections awake,record,shot,toggles,media
+rice-hotcorner list toggles wifi,bluetooth,dnd,gaming,mic,settings,wallpaper,lock
+rice-hotcorner open          # open the panel now (bind it to a key if you like)
+rice-hotcorner shot region   # screenshot of a region
+rice-hotcorner record full   # start recording (run "record stop" to stop)
+```
