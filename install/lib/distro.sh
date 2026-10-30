@@ -1,4 +1,5 @@
 # shellcheck shell=bash
+# shellcheck disable=SC2034,SC1112
 # Distro detection + package lists.
 
 DISTRO_ID=linux; DISTRO_NAME=Linux; DISTRO_LIKE=

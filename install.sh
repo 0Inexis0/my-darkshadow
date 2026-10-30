@@ -110,7 +110,7 @@ step_tools() {
   local f
   for f in "$ROOT"/bin/*; do [ -f "$f" ] && put "$f" "$HOME/.local/bin/$(basename "$f")"; done
   if ! printf '%s' ":$PATH:" | grep -q ":$HOME/.local/bin:"; then
-    warn "~/.local/bin is not in your PATH; add it in your shell config."
+    warn "\$HOME/.local/bin is not in your PATH; add it in your shell config."
   fi
 }
 
@@ -155,7 +155,7 @@ step_wire() {
 
 do_restore() {
   local last
-  last="$(ls -d "$HOME"/.config/shadows-shell-backup-* 2>/dev/null | sort | tail -n1 || true)"
+  last="$(find "$HOME/.config" -maxdepth 1 -type d -name 'shadows-shell-backup-*' 2>/dev/null | sort | tail -n1 || true)"
   [ -n "$last" ] || { fail "No backup found."; exit 1; }
   info "Newest backup: $last"
   confirm "Restore it over your current files?" || { warn "Cancelled."; exit 0; }

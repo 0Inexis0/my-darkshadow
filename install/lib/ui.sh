@@ -1,4 +1,5 @@
 # shellcheck shell=bash
+# shellcheck disable=SC2034,SC1112
 # Tiny terminal UI toolkit: colors, banner, spinner, arrow-key menus. No dependencies.
 
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
