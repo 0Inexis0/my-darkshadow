@@ -1,0 +1,116 @@
+import Quickshell
+import Quickshell.Io
+import QtQuick
+
+Column {
+    id: page
+    property var ctl
+    property var custom: []
+    property var active: []
+    spacing: 10
+
+    Process {
+        id: bindsProc
+        command: ["bash", "-c", "\"$HOME/.local/bin/hypr-set\" binds"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const j = JSON.parse(text)
+                    page.custom = j.custom
+                    page.active = j.active
+                } catch (e) { }
+            }
+        }
+    }
+
+    Timer { id: refresh; interval: 700; onTriggered: bindsProc.running = true }
+
+    T { text: "Custom keybinds"; font.pixelSize: 15; font.bold: true }
+    T {
+        width: parent.width
+        text: "Run any command with a key combination. Removing one takes effect after Reload Hyprland."
+        color: "#8a8a8a"
+        font.pixelSize: 12
+        wrapMode: Text.WordWrap
+    }
+
+    Repeater {
+        model: page.custom
+        delegate: Rectangle {
+            width: page.width
+            height: 44
+            radius: 10
+            color: "#141414"
+            T { x: 16; anchors.verticalCenter: parent.verticalCenter; text: modelData.keys; font.bold: true; font.pixelSize: 13 }
+            T {
+                x: 190
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width - 190 - 56
+                text: modelData.cmd
+                elide: Text.ElideRight
+                color: "#a0a0a0"
+                font.pixelSize: 12
+            }
+            Rectangle {
+                width: 28
+                height: 28
+                radius: 14
+                anchors.right: parent.right
+                anchors.rightMargin: 10
+                anchors.verticalCenter: parent.verticalCenter
+                color: delMouse.containsMouse ? "#3a2020" : "transparent"
+                T { anchors.centerIn: parent; text: "\u00d7"; font.pixelSize: 18 }
+                MouseArea {
+                    id: delMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: { page.ctl.hrun(["bind-del", index], "Removed (reload to apply)"); refresh.restart() }
+                }
+            }
+        }
+    }
+
+    T {
+        visible: page.custom.length === 0
+        text: "No custom keybinds yet."
+        color: "#8a8a8a"
+        font.pixelSize: 13
+    }
+
+    Row {
+        width: parent.width
+        spacing: 8
+        Field { id: keysField; width: 170; placeholder: "SUPER + X" }
+        Field {
+            id: cmdField
+            width: parent.width - 170 - addPill.width - 16
+            placeholder: "Command, e.g. kitty"
+            onAccepted: addPill.clicked()
+        }
+        Pill {
+            id: addPill
+            label: "Add"
+            onClicked: {
+                const k = keysField.text.trim()
+                const c = cmdField.text.trim()
+                if (k.length === 0 || c.length === 0) { page.ctl.status = "Type keys and a command"; return }
+                page.ctl.hrun(["bind-add", k, c], "Added: " + k)
+                keysField.text = ""
+                cmdField.text = ""
+                refresh.restart()
+            }
+        }
+    }
+
+    T { text: "Active keybinds"; font.pixelSize: 15; font.bold: true; topPadding: 12 }
+    Column {
+        width: parent.width
+        spacing: 3
+        Repeater {
+            model: page.active
+            delegate: T { width: parent.width; text: modelData; font.pixelSize: 11; color: "#a0a0a0"; elide: Text.ElideRight }
+        }
+    }
+}

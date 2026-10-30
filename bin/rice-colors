@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+f="$HOME/.config/rice/color-mode"
+case "$1" in
+  get) cat "$f" 2>/dev/null || echo auto; exit 0 ;;
+  mode) mkdir -p "$(dirname "$f")"; echo "$2" > "$f" ;;
+esac
+cur="$(cat "$HOME/.cache/hyprquickpaper-current" 2>/dev/null)"
+[ -f "$cur" ] && "$HOME/.config/quickshell/hyprquickpaper/commands.sh" "$cur"
+exit 0

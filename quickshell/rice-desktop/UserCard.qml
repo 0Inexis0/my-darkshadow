@@ -1,0 +1,41 @@
+import Quickshell
+import QtQuick
+
+Item {
+    id: uc
+    property date now: new Date()
+    readonly property string user: Quickshell.env("USER")
+    readonly property string face: "file://" + Quickshell.env("HOME") + "/.face"
+    function greeting() {
+        const h = now.getHours()
+        return h < 5 ? "Good Night" : (h < 12 ? "Good Morning" : (h < 18 ? "Good Afternoon" : "Good Evening"))
+    }
+    Timer { interval: 30000; running: true; repeat: true; onTriggered: uc.now = new Date() }
+
+    Card { anchors.fill: parent }
+
+    RoundImage {
+        id: av
+        x: 18
+        anchors.verticalCenter: parent.verticalCenter
+        width: 76
+        height: 76
+        cornerRadius: 20
+        source: uc.face
+    }
+    Column {
+        anchors.left: av.right
+        anchors.leftMargin: 16
+        anchors.right: parent.right
+        anchors.rightMargin: 16
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: 3
+        T { kind: "title"; text: "Hi, " + uc.user + "!"; font.pixelSize: 18; font.bold: true; width: parent.width; elide: Text.ElideRight }
+        T { text: uc.greeting(); font.pixelSize: 14; color: "#c8c8cc" }
+        T {
+            text: "Today · " + uc.now.toLocaleDateString(Qt.locale("en_US"), "dddd d MMM")
+            font.pixelSize: 11
+            color: "#8a8a8f"
+        }
+    }
+}

@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+dir="$HOME/.config/quickshell/rice-desktop"
+running() { pgrep -f "quickshell/rice-desktop" >/dev/null; }
+case "$1" in
+  start|ensure)
+    "$HOME/.local/bin/waybar-autohide" ensure >/dev/null 2>&1 &
+    running && exit 0
+    [ -f "$dir/shell.qml" ] || { echo "missing $dir/shell.qml" >&2; exit 1; }
+    "$HOME/.local/bin/desktop-set" state >/dev/null 2>&1
+    setsid -f qs -n -p "$dir" >/dev/null 2>&1
+    ;;
+  stop) pkill -f "quickshell/rice-desktop" ;;
+  restart)
+    pkill -f "quickshell/rice-desktop"
+    for _ in 1 2 3 4 5 6 7 8 9 10; do running || break; sleep 0.2; done
+    setsid -f qs -n -p "$dir" >/dev/null 2>&1
+    ;;
+  status) running && echo running || { echo stopped; exit 1; } ;;
+  *) echo "usage: rice-desktop start|stop|restart|ensure|status" >&2; exit 1 ;;
+esac

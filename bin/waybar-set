@@ -1,0 +1,484 @@
+#!/usr/bin/env python3
+import fcntl
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+
+HOME = os.path.expanduser("~")
+DIR = HOME + "/.config/waybar"
+CFG = DIR + "/config.jsonc"
+CSS = DIR + "/style.css"
+UI = DIR + "/ui.json"
+LEGACY = DIR + "/bar-ui.css"
+LOCK = DIR + "/.ui.lock"
+FONTS = HOME + "/.config/rice/fonts.json"
+
+ZONES = ["left", "center", "right"]
+ZKEY = {"left": "modules-left", "center": "modules-center", "right": "modules-right"}
+
+# top-level modules the layout editor can place: name -> (default zone, css selector)
+REG = {
+    "image#nix": ("left", "#image.nix"),
+    "group/ws": ("left", "#ws"),
+    "mpris": ("left", "#mpris"),
+    "wireplumber": ("right", "#wireplumber"),
+    "clock": ("right", "#clock"),
+    "group/apps": ("right", "#apps"),
+    "custom/notification": ("right", "#custom-notification"),
+    "custom/lock": ("right", "#custom-lock"),
+}
+SUBS = ["bluetooth", "tray", "network"]
+SUB_ORDER = ["bluetooth", "tray", "network"]
+SUB_SEL = ["#bluetooth", "#tray", "#network"]
+TOGGLES = ["mpris", "wireplumber", "custom/notification", "bluetooth", "tray", "network"]
+
+GEN = r"\n?/\* rice-ui \*/.*?/\* end-rice-ui \*/\n?"
+OLD_H = r"\n?/\* bar-height \*/.*?/\* end-bar-height \*/\n?"
+OLD_S = r"\n?/\* bar-style \*/.*?/\* end-bar-style \*/\n?"
+RGBA = r"rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([0-9.]+)\s*\)"
+
+
+def die(msg):
+    sys.stderr.write(msg + "\n")
+    sys.exit(1)
+
+
+def load():
+    return json.load(open(CFG))
+
+
+def atomic(path, text):
+    tmp = path + ".tmp"
+    with open(tmp, "w") as f:
+        f.write(text)
+    os.replace(tmp, path)
+
+
+def save(c):
+    atomic(CFG, json.dumps(c, indent=2, ensure_ascii=False) + "\n")
+
+
+def clamp(v, lo, hi):
+    return max(lo, min(hi, v))
+
+
+def zone_list(c, z):
+    v = c.get(ZKEY[z])
+    return v if isinstance(v, list) else []
+
+
+def set_zone(c, z, lst):
+    if lst:
+        c[ZKEY[z]] = lst
+    elif ZKEY[z] in c:
+        del c[ZKEY[z]]
+
+
+def zone_of(c, name):
+    for z in ZONES:
+        if name in zone_list(c, z):
+            return z
+    return None
+
+
+def has_def(c, name):
+    # plain modules such as clock/mpris may be configured without a block
+    return name in c or name in ("clock", "mpris", "wireplumber")
+
+
+def apps_list(c):
+    g = c.get("group/apps")
+    if isinstance(g, dict) and isinstance(g.get("modules"), list):
+        return g["modules"]
+    return None
+
+
+def toggle(name, on):
+    c = load()
+    if name in SUBS:
+        mods = apps_list(c)
+        if mods is None:
+            die("group/apps not found in config")
+        if on and name not in mods:
+            pos = 0
+            for prev in reversed(SUB_ORDER[:SUB_ORDER.index(name)]):
+                if prev in mods:
+                    pos = mods.index(prev) + 1
+                    break
+            mods.insert(pos, name)
+        elif (not on) and name in mods:
+            mods.remove(name)
+        save(c)
+        return
+    if name not in REG:
+        die("unknown module: " + name)
+    cur = zone_of(c, name)
+    if on and cur is None:
+        add(name, REG[name][0], c)
+    elif (not on) and cur is not None:
+        lst = zone_list(c, cur)
+        lst.remove(name)
+        set_zone(c, cur, lst)
+        save(c)
+
+
+def add(name, zone, c=None):
+    if zone not in ZONES:
+        die("unknown zone: " + zone)
+    if name not in REG:
+        die("unknown module: " + name)
+    own = c is None
+    if own:
+        c = load()
+    if not has_def(c, name):
+        die("module has no definition in config: " + name)
+    cur = zone_of(c, name)
+    if cur is not None:
+        lst = zone_list(c, cur)
+        lst.remove(name)
+        set_zone(c, cur, lst)
+    lst = zone_list(c, zone)
+    lst.append(name)
+    set_zone(c, zone, lst)
+    save(c)
+
+
+def remove(zone, name):
+    if zone not in ZONES:
+        die("unknown zone: " + zone)
+    c = load()
+    lst = zone_list(c, zone)
+    if name in lst:
+        lst.remove(name)
+        set_zone(c, zone, lst)
+        save(c)
+
+
+def move(zone, name, direction):
+    if zone not in ZONES:
+        die("unknown zone: " + zone)
+    c = load()
+    lst = zone_list(c, zone)
+    if name not in lst:
+        return
+    i = lst.index(name)
+    j = i - 1 if direction == "left" else i + 1
+    if 0 <= j < len(lst):
+        lst[i], lst[j] = lst[j], lst[i]
+        set_zone(c, zone, lst)
+        save(c)
+
+
+def window_block(s):
+    m = re.search(r"window#waybar\s*\{[^}]*\}", s, flags=re.S)
+    return m.group(0) if m else ""
+
+
+def base_rgb(s):
+    m = re.search(r"background:\s*([^;]+);", window_block(s))
+    if m:
+        v = m.group(1).strip()
+        r = re.match(r"rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)", v)
+        if r:
+            return tuple(int(x) for x in r.groups())
+        h = re.match(r"#([0-9a-fA-F]{6})", v)
+        if h:
+            x = h.group(1)
+            return tuple(int(x[i:i + 2], 16) for i in (0, 2, 4))
+    return (13, 13, 13)
+
+
+def guess_alpha(s):
+    if os.path.exists(LEGACY):
+        m = re.search(RGBA, open(LEGACY).read())
+        if m:
+            return float(m.group(4))
+    m = re.search(RGBA, window_block(s))
+    return float(m.group(4)) if m else 0.45
+
+
+def read_ui():
+    try:
+        u = json.load(open(UI))
+    except Exception:
+        u = {}
+    s = open(CSS).read()
+    if "alpha" not in u:
+        u["alpha"] = guess_alpha(s)
+    u["alpha"] = clamp(float(u["alpha"]), 0.1, 1.0)
+    u.setdefault("last", u["alpha"] if u["alpha"] < 0.99 else 0.45)
+    if u.get("style") not in ("flat", "floating", "islands", "island"):
+        u["style"] = "flat"
+    if u.get("position") not in ("top", "bottom"):
+        try:
+            p = load().get("position", "top")
+        except Exception:
+            p = "top"
+        u["position"] = p if p in ("top", "bottom") else "top"
+    if u.get("group") not in ("none", "pills", "segmented"):
+        u["group"] = None
+    u["autohide"] = u.get("autohide") is True
+    try:
+        u["island_width"] = int(clamp(float(u.get("island_width", 900)), 300, 3000))
+    except Exception:
+        u["island_width"] = 900
+    if "height" not in u:
+        h = re.search(r"/\* bar-height \*/\s*[^{]*\{\s*padding-top:\s*(\d+)px", s)
+        u["height"] = int(h.group(1)) if h else None
+    return u
+
+
+def eff_group(u):
+    if u["group"]:
+        return u["group"]
+    return "pills" if u["style"] == "islands" else "none"
+
+
+def fonts_css():
+    try:
+        f = json.load(open(FONTS))
+    except Exception:
+        return None
+    fam = [x for x in (f.get("main"), f.get("icons")) if x]
+    if not fam:
+        return None
+    names = ", ".join('"%s"' % x.replace('"', "") for x in fam)
+    return "window#waybar, window#waybar * {\n    font-family: " + names + ";\n}"
+
+
+def block(u, rgb, c):
+    col = "rgba(%d, %d, %d, %.2f)" % (rgb[0], rgb[1], rgb[2], u["alpha"])
+    brd, gcol = "#2a2a2a", col
+    if u["style"] == "island":
+        # one dark-grey island; any module group is only a barely visible lift, no outlines
+        col = "rgba(22, 22, 22, %.2f)" % u["alpha"]
+        gcol = "rgba(255, 255, 255, 0.05)"
+        brd = "rgba(255, 255, 255, 0.06)"
+    mods = ", ".join(v[1] for v in REG.values())
+    out = ["/* rice-ui */"]
+    fc = fonts_css()
+    if fc:
+        out.append(fc)
+    st = u["style"]
+    if st == "islands":
+        out.append("window#waybar {\n    background: transparent;\n    margin: 4px 8px;\n}")
+    elif st == "island":
+        # the whole bar is ONE pill: fixed width (config "width"), centered by waybar
+        out.append("window#waybar {\n    background: " + col + ";\n    margin: 0;\n"
+                   "    border-radius: 16px;\n    border: 1px solid " + brd + ";\n}")
+    elif st == "floating":
+        out.append("window#waybar {\n    background: " + col + ";\n    margin: 6px 10px;\n"
+                   "    border-radius: 12px;\n    border: 1px solid #2a2a2a;\n}")
+    else:
+        out.append("window#waybar {\n    background: " + col + ";\n}")
+    g = eff_group(u)
+    explicit = u["group"] is not None or st in ("islands", "island")
+    if g == "pills" and explicit:
+        out.append(mods + " {\n    background: " + gcol + ";\n    border: 1px solid " + ("transparent" if u["style"] == "island" else brd) + ";\n"
+                   "    border-radius: 10px;\n    margin: 0 3px;\n}")
+    elif g == "segmented" and explicit:
+        zs = [z for z in ZONES if zone_list(c, z)]
+        out.append(mods + " {\n    background: transparent;\n    border: none;\n"
+                   "    border-radius: 0;\n    margin: 0;\n}")
+        if zs:
+            sel = ", ".join("window#waybar .modules-" + z for z in zs)
+            out.append(sel + " {\n    background: " + gcol + ";\n    border: 1px solid " + ("transparent" if u["style"] == "island" else brd) + ";\n"
+                       "    border-radius: 12px;\n    margin: 0 3px;\n    padding: 0 4px;\n}")
+    elif g == "none" and explicit:
+        out.append(mods + " {\n    background: transparent;\n    border: none;\n"
+                   "    border-radius: 0;\n    margin: 0 3px;\n}")
+    h = u.get("height")
+    if h is not None:
+        sel = ", ".join([v[1] for v in REG.values()] + SUB_SEL)
+        out.append(sel + " {\n    padding-top: %dpx;\n    padding-bottom: %dpx;\n"
+                   "    margin-top: 0;\n    margin-bottom: 0;\n    min-height: 0;\n}" % (h, h))
+    out.append("tooltip {\n    background: rgba(18, 18, 18, 0.45);\n    border: 1px solid rgba(255, 255, 255, 0.12);\n"
+               "    border-radius: 12px;\n}\n\ntooltip label {\n    color: #F6F5F4;\n    padding: 2px 6px;\n}")
+    ps = u.get("power_size", 0)
+    if isinstance(ps, int) and ps > 0:
+        out.append("window#waybar #custom-lock {\n    font-size: %dpx;\n}" % ps)
+    pn = u.get("power_nudge", 0)
+    if isinstance(pn, int) and pn > 0:
+        out.append("window#waybar #custom-lock {\n    margin-right: %dpx;\n}" % pn)
+    out.append("/* end-rice-ui */")
+    return "\n" + "\n\n".join(out) + "\n"
+
+
+def apply(u):
+    for f in (CSS, CFG):
+        if not os.path.exists(f + ".bak-ui"):
+            shutil.copy(f, f + ".bak-ui")
+    s = open(CSS).read()
+    s = re.sub(GEN, "\n", s, flags=re.S)
+    s = re.sub(OLD_H, "\n", s, flags=re.S)
+    s = re.sub(OLD_S, "\n", s, flags=re.S)
+    s = s.replace('@import "bar-ui.css";\n', "")
+    s = s.replace("@bar_bg", "rgba(13, 13, 13, %.2f)" % u["alpha"])
+    c = load()
+    atomic(CSS, s.rstrip() + "\n" + block(u, base_rgb(s), c))
+    if os.path.exists(LEGACY):
+        os.remove(LEGACY)
+    c["position"] = u["position"]
+    # no calendar popup on the clock (survives preset switches because apply() runs after them)
+    if isinstance(c.get("clock"), dict):
+        c["clock"]["tooltip"] = False
+        c["clock"].pop("tooltip-format", None)
+    # one-island style: fixed width + gap to the screen edge; remove only what we set
+    if u["style"] == "island":
+        mk = "margin-top" if u["position"] == "top" else "margin-bottom"
+        for k in ("margin-top", "margin-bottom"):
+            if k != mk and u.get("island_applied"):
+                c.pop(k, None)
+        c["width"] = u["island_width"]
+        c[mk] = 6
+        u["island_applied"] = True
+        atomic(UI, json.dumps(u))
+    elif u.get("island_applied"):
+        for k in ("width", "margin-top", "margin-bottom"):
+            c.pop(k, None)
+        u["island_applied"] = False
+        atomic(UI, json.dumps(u))
+    # hidden bar releases its exclusive zone, so windows grow; showing it shrinks them again
+    if u["autohide"]:
+        c["start_hidden"] = True
+    else:
+        c.pop("start_hidden", None)
+    if c.get("exclusive") is False:
+        c.pop("exclusive")
+    save(c)
+
+
+def ui_update(**kw):
+    u = read_ui()
+    u.update(kw)
+    u["alpha"] = clamp(float(u["alpha"]), 0.1, 1.0)
+    if u["alpha"] < 0.99:
+        u["last"] = u["alpha"]
+    atomic(UI, json.dumps(u))
+    apply(u)
+
+
+def regen():
+    # layout changes alter which zones exist; refresh the css block if we own one
+    if os.path.exists(UI):
+        apply(read_ui())
+
+
+def state():
+    c = load()
+    u = read_ui()
+    out = {
+        "opacity": u["alpha"],
+        "transparent": u["alpha"] < 0.99,
+        "style": u["style"],
+        "island_width": u["island_width"],
+        "position": u["position"],
+        "group": eff_group(u),
+        "autohide": u["autohide"],
+        "height": u["height"] if u["height"] is not None else 4,
+    }
+    lay = {}
+    placed = set()
+    for z in ZONES:
+        lay[z] = [m for m in zone_list(c, z)]
+        placed.update(lay[z])
+    lay["available"] = [m for m in REG if m not in placed and has_def(c, m)]
+    out["layout"] = lay
+    for m in TOGGLES:
+        if m in SUBS:
+            ml = apps_list(c)
+            out[m] = bool(ml and m in ml)
+        else:
+            out[m] = m in placed
+    print(json.dumps(out))
+
+
+USAGE = ("usage: waybar-set state|reapply|opacity V|transparency on|off|position top|bottom|"
+         "autohide on|off|style flat|floating|islands|island|island-width N|power-nudge N|power-size N|group none|pills|segmented|height V|"
+         "layout-add ZONE MODULE|layout-remove ZONE MODULE|layout-move ZONE MODULE left|right|"
+         "toggle MODULE on|off")
+
+
+def arg(argv, n):
+    if len(argv) <= n:
+        die(USAGE)
+    return argv[n]
+
+
+def main(argv):
+    if len(argv) < 2:
+        die(USAGE)
+    cmd = argv[1]
+    if cmd == "state":
+        state()
+        return
+    os.makedirs(DIR, exist_ok=True)
+    lk = open(LOCK, "w")
+    fcntl.flock(lk, fcntl.LOCK_EX)
+    if cmd == "reapply":
+        if os.path.exists(UI):
+            apply(read_ui())
+    elif cmd == "autohide":
+        on = arg(argv, 2) == "on"
+        ui_update(autohide=on)
+        try:
+            subprocess.Popen([HOME + "/.local/bin/waybar-autohide", "start" if on else "stop"],
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+        except Exception:
+            pass
+    elif cmd == "fonts-apply":
+        ui_update()
+    elif cmd == "opacity":
+        ui_update(alpha=float(arg(argv, 2)))
+    elif cmd == "transparency":
+        if arg(argv, 2) == "on":
+            ui_update(alpha=read_ui().get("last", 0.45))
+        else:
+            ui_update(alpha=1.0)
+    elif cmd == "position":
+        v = arg(argv, 2)
+        if v not in ("top", "bottom"):
+            die("position: top|bottom")
+        ui_update(position=v)
+    elif cmd == "power-size":
+        ui_update(power_size=int(clamp(float(arg(argv, 2)), 0, 48)))
+    elif cmd == "power-nudge":
+        ui_update(power_nudge=int(clamp(float(arg(argv, 2)), 0, 80)))
+    elif cmd == "island-width":
+        ui_update(island_width=int(arg(argv, 2)))
+    elif cmd == "style":
+        v = arg(argv, 2)
+        if v not in ("flat", "floating", "islands", "island"):
+            die("style: flat|floating|islands|island")
+        if v == "islands" and read_ui()["group"] in (None, "none"):
+            ui_update(style=v, group="pills")
+        elif v == "island":
+            ui_update(style=v, group="none")
+        else:
+            ui_update(style=v)
+    elif cmd == "group":
+        v = arg(argv, 2)
+        if v not in ("none", "pills", "segmented"):
+            die("group: none|pills|segmented")
+        ui_update(group=v)
+    elif cmd == "height":
+        ui_update(height=int(clamp(float(arg(argv, 2)), 0, 20)))
+    elif cmd == "toggle":
+        toggle(arg(argv, 2), arg(argv, 3) == "on")
+        regen()
+    elif cmd == "layout-add":
+        add(arg(argv, 3), arg(argv, 2))
+        regen()
+    elif cmd == "layout-remove":
+        remove(arg(argv, 2), arg(argv, 3))
+        regen()
+    elif cmd == "layout-move":
+        move(arg(argv, 2), arg(argv, 3), arg(argv, 4))
+    else:
+        die("unknown command: " + cmd)
+
+
+main(sys.argv)

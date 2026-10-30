@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+out="$(curl -s -m 10 'wttr.in/?format=%C|%t|%l&m&lang=en')" || exit 1
+case "$out" in ""|*Unknown*|*"<"*|*"|"*"|"*"|"*) exit 1 ;; esac
+mkdir -p "$HOME/.cache/rice"
+printf '%s\n' "$out" > "$HOME/.cache/rice/weather.txt"
+printf '%s\n' "$out"

@@ -1,0 +1,102 @@
+import QtQuick
+
+Item {
+    id: cal
+    property date now: new Date()
+    property int off: 0
+    readonly property var days: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+
+    function sameDay(a, b) {
+        return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+    }
+    function monthStart() { return new Date(now.getFullYear(), now.getMonth() + off, 1) }
+    function title() { return monthStart().toLocaleDateString(Qt.locale("en_US"), "MMMM yyyy") }
+    function cells() {
+        const m = monthStart()
+        const lead = (m.getDay() + 6) % 7
+        const out = []
+        for (let i = 0; i < 42; i++) {
+            const c = new Date(m.getFullYear(), m.getMonth(), 1 - lead + i)
+            out.push({ d: c.getDate(), cur: c.getMonth() === m.getMonth(), today: sameDay(c, now) })
+        }
+        return out
+    }
+
+    Timer { interval: 30000; running: true; repeat: true; onTriggered: cal.now = new Date() }
+
+    Card { anchors.fill: parent }
+
+    Row {
+        id: head
+        x: 24
+        y: 20
+        width: parent.width - 48
+        T {
+            kind: "title"
+            text: cal.title()
+            font.pixelSize: 17
+            font.bold: true
+            width: parent.width - 76
+            anchors.verticalCenter: parent.verticalCenter
+        }
+        Repeater {
+            model: [{ g: "‹", d: -1 }, { g: "›", d: 1 }]
+            delegate: Rectangle {
+                width: 34
+                height: 34
+                radius: 17
+                color: navMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.14) : Qt.rgba(1, 1, 1, 0.07)
+                Behavior on color { ColorAnimation { duration: 140 } }
+                T { anchors.centerIn: parent; text: modelData.g; font.pixelSize: 18 }
+                MouseArea {
+                    id: navMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: cal.off += modelData.d
+                }
+            }
+        }
+    }
+
+    Grid {
+        id: grid
+        x: 24
+        y: 72
+        columns: 7
+        columnSpacing: 0
+        rowSpacing: 4
+        readonly property real cellW: (cal.width - 48) / 7
+
+        Repeater {
+            model: cal.days
+            delegate: Item {
+                width: grid.cellW
+                height: 24
+                T { anchors.centerIn: parent; text: modelData; font.pixelSize: 12; color: "#8a8a8f" }
+            }
+        }
+        Repeater {
+            model: cal.cells()
+            delegate: Item {
+                width: grid.cellW
+                height: 34
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: 32
+                    height: 32
+                    radius: 16
+                    color: modelData.today ? "#F6F5F4" : "transparent"
+                }
+                T {
+                    kind: "number"
+                    anchors.centerIn: parent
+                    text: modelData.d
+                    font.pixelSize: 13
+                    font.bold: modelData.today
+                    color: modelData.today ? "#0d0d0d" : (modelData.cur ? "#F6F5F4" : "#55555a")
+                }
+            }
+        }
+    }
+}
