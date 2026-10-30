@@ -225,6 +225,7 @@ confirm "Continue?" || { warn "Cancelled."; exit 0; }
 printf '\n'
 [ "${WANT[0]}" = 1 ] && step_deps
 [ "${WANT[1]}" = 1 ] && task "Installing tools" step_tools
+[ "${WANT[1]}" = 1 ] && task "Installing fonts (Inter, Rubik)" "$ROOT/bin/rice-fonts"
 [ "${WANT[2]}" = 1 ] && task "Installing Settings & desktop apps" step_apps
 [ "${WANT[3]}" = 1 ] && task "Installing dotfiles" step_dots
 task "Installing Hyprland keybinds" step_lua

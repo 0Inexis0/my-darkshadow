@@ -30,13 +30,17 @@ DEFAULTS = {
     "w_buttons": True, "w_media": True, "w_volume": False, "w_dnd": True, "w_title": True,
     "popup_width": 360, "timeout": 6, "critical_sticky": True, "icon_size": 40, "images": True,
     "style": "glass", "popup_style": "match", "opacity": 0.80, "radius": 18, "blur": True, "compact": False, "accent": True,
+    "colors": "graphite", "font": "sans", "font_size": 13, "popup_opacity": 0.85, "blur_popups": True,
+    "border": "subtle", "shadow": False,
 }
 INTS = {"margin": (0, 60), "panel_width": (300, 700), "panel_height": (300, 1400), "popup_width": (260, 600),
-        "timeout": (2, 30), "icon_size": (20, 72), "radius": (0, 32)}
-FLOATS = {"opacity": (0.3, 1.0)}
+        "timeout": (2, 30), "icon_size": (20, 72), "radius": (0, 32), "font_size": (10, 18)}
+FLOATS = {"opacity": (0.3, 1.0), "popup_opacity": (0.3, 1.0)}
 CHOICES = {"pos_x": ["left", "center", "right"], "pos_y": ["top", "bottom"],
            "layout": ["controls-top", "controls-bottom", "minimal"], "style": ["glass", "solid", "outline"],
-           "popup_style": ["match", "glass", "solid", "minimal", "pill", "accent", "glow", "island", "light"]}
+           "popup_style": ["match", "glass", "solid", "minimal", "pill", "accent", "glow", "island", "light"],
+           "colors": ["black", "graphite", "slate", "white", "tinted"], "font": ["sans", "rounded", "mono", "system"],
+           "border": ["subtle", "accent", "none"]}
 ORDER = {
     "controls-top": ["buttons-grid", "mpris", "volume", "dnd", "title", "notifications"],
     "controls-bottom": ["title", "dnd", "notifications", "mpris", "volume", "buttons-grid"],
@@ -96,12 +100,40 @@ def accent():
         return "#d4d4d4", "#0d0d0d"
 
 
-def font():
+FONT_STACKS = {
+    "sans": '"Inter", "Inter Variable", "Rubik", "Noto Sans", "Cantarell", "Symbols Nerd Font", "JetBrainsMono Nerd Font", sans-serif',
+    "rounded": '"Rubik", "Nunito", "Quicksand", "Inter", "Noto Sans", "Symbols Nerd Font", "JetBrainsMono Nerd Font", sans-serif',
+    "mono": '"JetBrainsMono Nerd Font", "JetBrains Mono", monospace',
+}
+
+
+def font(c):
+    if c["font"] in FONT_STACKS:
+        return FONT_STACKS[c["font"]]
     try:
         f = json.load(open(FONTS))
-        return (f.get("main") or "JetBrainsMono Nerd Font").replace('"', "")
+        return '"%s", "Symbols Nerd Font", sans-serif' % (f.get("main") or "Noto Sans").replace('"', "")
     except Exception:
-        return "JetBrainsMono Nerd Font"
+        return "sans-serif"
+
+
+def palette(c, acc):
+    """base surface rgb, text, secondary text, card overlay"""
+    k = c["colors"]
+    if k == "black":
+        return (0, 0, 0), "#F6F5F4", "#9a9aa4", "rgba(255, 255, 255, 0.07)"
+    if k == "slate":
+        return (24, 27, 34), "#EEF1F6", "#9aa4b5", "rgba(255, 255, 255, 0.06)"
+    if k == "white":
+        return (246, 245, 244), "#141414", "#5c5c64", "rgba(0, 0, 0, 0.05)"
+    if k == "tinted":
+        h = acc.lstrip("#")
+        try:
+            a = tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+        except Exception:
+            a = (212, 212, 212)
+        return tuple(int(14 + (x - 14) * 0.14) for x in a), "#F6F5F4", "#a8a8b4", "rgba(255, 255, 255, 0.07)"
+    return (18, 18, 20), "#F6F5F4", "#9a9aa4", "rgba(255, 255, 255, 0.06)"
 
 
 def backup_once(path, suf):
@@ -147,23 +179,72 @@ def write_config(c):
 # ---------------- style.css ----------------
 def css(c):
     acc, on_acc = accent() if c["accent"] else ("#F6F5F4", "#0d0d0d")
+    base, fg, dim, card0 = palette(c, acc)
+    light = c["colors"] == "white"
     op = c["opacity"]
+    pop = c["popup_opacity"]
     r = c["radius"]
     ri = max(r - 6, 4)
     pad = 8 if c["compact"] else 12
+
+    def bgc(a):
+        return "rgba(%d, %d, %d, %.2f)" % (base[0], base[1], base[2], a)
+
+    edge = "rgba(0, 0, 0, 0.10)" if light else "rgba(255, 255, 255, 0.09)"
+    if c["border"] == "accent":
+        edge = acc
+    elif c["border"] == "none":
+        edge = "transparent"
     if c["style"] == "solid":
-        bg, card, bd = "rgba(18, 18, 20, 1.0)", "rgba(30, 30, 34, 1.0)", "rgba(255, 255, 255, 0.06)"
+        bg, card, bd = bgc(1.0), ("rgba(0, 0, 0, 0.06)" if light else "rgba(255, 255, 255, 0.07)"), edge
     elif c["style"] == "outline":
-        bg, card, bd = "rgba(10, 10, 12, %.2f)" % op, "rgba(10, 10, 12, %.2f)" % op, acc
+        bg, card, bd = bgc(op), bgc(op), (acc if c["border"] != "none" else "transparent")
     else:
-        bg, card, bd = "rgba(18, 18, 20, %.2f)" % op, "rgba(255, 255, 255, 0.06)", "rgba(255, 255, 255, 0.09)"
-    popup = "rgba(18, 18, 20, %.2f)" % (1.0 if c["style"] == "solid" else max(op, 0.6))
-    v = dict(f=font(), acc=acc, onacc=on_acc, bg=bg, card=card, bd=bd, popup=popup, r=r, ri=ri, pad=pad,
-             pad2=pad // 2 + 2, fg="#F6F5F4", dim="#9a9aa4")
+        bg, card, bd = bgc(op), card0, edge
+    popup = bgc(1.0 if c["style"] == "solid" else pop)
+    shadow = ("0 2px 6px rgba(0, 0, 0, 0.30)" if c["shadow"] else "none")
+    v = dict(f=font(c), fs=c["font_size"], acc=acc, onacc=on_acc, bg=bg, card=card, bd=bd, popup=popup, r=r, ri=ri,
+             pad=pad, pad2=pad // 2 + 2, fg=fg, dim=dim, shadow=shadow,
+             btn=("rgba(0, 0, 0, 0.07)" if light else "rgba(255, 255, 255, 0.08)"),
+             fs1=c["font_size"] + 1, fs2=max(9, c["font_size"] - 2),
+             hover=("rgba(0, 0, 0, 0.04)" if light else "rgba(255, 255, 255, 0.04)"))
     return """%(begin)s
 /* generated by rice-notify (Settings > Notifications). Rules above stay, these win. */
 .control-center, .floating-notifications, .blank-window {
-  font-family: "%(f)s";
+  font-family: %(f)s;
+  font-size: %(fs)dpx;
+}
+/* strong selectors: beat a global "* { font-family }" from older themes */
+.control-center *, .floating-notifications * {
+  font-family: %(f)s;
+}
+.control-center label, .floating-notifications label {
+  font-size: %(fs)dpx;
+}
+.floating-notifications .notification-row .notification-background .notification .summary,
+.control-center .notification-row .notification-background .notification .summary {
+  font-size: %(fs1)dpx;
+}
+.floating-notifications .notification-row .notification-background .notification .time,
+.control-center .notification-row .notification-background .notification .time {
+  font-size: %(fs2)dpx;
+}
+/* clean wrappers: only the card itself has a background (no dark frame around popups) */
+.floating-notifications .notification-row,
+.floating-notifications .notification-row .notification-background,
+.floating-notifications .notification-row .notification-background .notification .notification-default-action,
+.floating-notifications .notification-row .notification-background .notification .notification-content,
+.control-center .notification-row,
+.control-center .notification-row .notification-background,
+.control-center .notification-row .notification-background .notification .notification-default-action,
+.control-center .notification-row .notification-background .notification .notification-content {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  outline: none;
+}
+.notification-row .notification-background .notification .notification-default-action:hover {
+  background: %(hover)s;
 }
 .blank-window, .floating-notifications {
   background: transparent;
@@ -199,6 +280,7 @@ def css(c):
 .floating-notifications .notification-row .notification-background .notification {
   background: %(popup)s;
   border-radius: %(r)dpx;
+  box-shadow: %(shadow)s;
 }
 .notification-row .notification-background .notification.critical {
   border: 1px solid rgba(255, 107, 107, 0.7);
@@ -219,7 +301,7 @@ def css(c):
   border-radius: %(ri)dpx;
 }
 .notification-row .notification-background .close-button {
-  background: rgba(255, 255, 255, 0.10);
+  background: %(btn)s;
   color: %(fg)s;
   border-radius: 100px;
   min-width: 22px;
@@ -231,7 +313,7 @@ def css(c):
 }
 .notification-row .notification-background .notification .notification-action {
   border-radius: %(ri)dpx;
-  background: rgba(255, 255, 255, 0.06);
+  background: %(btn)s;
 }
 .notification-row .notification-background .notification .notification-action:hover {
   background: %(acc)s;
@@ -249,7 +331,7 @@ def css(c):
   color: %(fg)s;
 }
 .widget-title > button {
-  background: rgba(255, 255, 255, 0.07);
+  background: %(btn)s;
   color: %(fg)s;
   border-radius: 100px;
   padding: 4px 14px;
@@ -296,7 +378,7 @@ def css(c):
   border-radius: %(ri)dpx;
 }
 .widget-buttons-grid > flowbox > flowboxchild > button {
-  background: rgba(255, 255, 255, 0.06);
+  background: %(btn)s;
   color: %(fg)s;
   border-radius: %(ri)dpx;
   border: none;
@@ -335,28 +417,43 @@ def popup_css(c, acc, on_acc):
     st = c["popup_style"]
     if st == "match":
         return ""
+    base, fg, dim, _ = palette(c, acc)
+    pop = c["popup_opacity"]
+
+    def bgc(a):
+        return "rgba(%d, %d, %d, %.2f)" % (base[0], base[1], base[2], a)
+
     P = ".floating-notifications .notification-row .notification-background .notification"
     r = c["radius"]
+    line = "rgba(0, 0, 0, 0.08)" if c["colors"] == "white" else "rgba(255, 255, 255, 0.10)"
     rules = {
-        "glass":   "background: rgba(18, 18, 20, 0.62);\n  border: 1px solid rgba(255, 255, 255, 0.12);\n  border-radius: %dpx;" % r,
-        "solid":   "background: rgb(28, 28, 32);\n  border: 1px solid rgba(255, 255, 255, 0.06);\n  border-radius: %dpx;" % r,
-        "minimal": "background: rgba(12, 12, 14, 0.85);\n  border: none;\n  border-radius: 8px;\n  padding: 8px 10px;",
-        "pill":    "background: rgba(18, 18, 20, 0.90);\n  border: 1px solid rgba(255, 255, 255, 0.08);\n  border-radius: 999px;\n  padding: 6px 18px;",
-        "accent":  "background: rgba(18, 18, 20, 0.90);\n  border: 1px solid rgba(255, 255, 255, 0.06);\n  border-left: 4px solid %s;\n  border-radius: 10px;" % acc,
-        "glow":    "background: rgba(14, 14, 16, 0.90);\n  border: 1px solid %s;\n  border-radius: %dpx;\n  box-shadow: 0 0 16px %s;" % (acc, r, hex_rgba(acc, 0.45)),
+        "glass":   "background: %s;\n  border: 1px solid %s;\n  border-radius: %dpx;" % (bgc(min(pop, 0.62)), line, r),
+        "solid":   "background: %s;\n  border: 1px solid %s;\n  border-radius: %dpx;" % (bgc(1.0), line, r),
+        "minimal": "background: %s;\n  border: none;\n  border-radius: 8px;\n  padding: 8px 10px;" % bgc(pop),
+        "pill":    "background: %s;\n  border: 1px solid %s;\n  border-radius: 999px;\n  padding: 6px 18px;" % (bgc(pop), line),
+        "accent":  "background: %s;\n  border: 1px solid %s;\n  border-left: 4px solid %s;\n  border-radius: 10px;" % (bgc(pop), line, acc),
+        "glow":    "background: %s;\n  border: 1px solid %s;\n  border-radius: %dpx;\n  box-shadow: 0 0 16px %s;" % (bgc(pop), acc, r, hex_rgba(acc, 0.45)),
         "island":  "background: rgb(0, 0, 0);\n  border: none;\n  border-radius: 28px;\n  padding: 12px 18px;",
-        "light":   "background: rgba(246, 245, 244, 0.95);\n  border: 1px solid rgba(0, 0, 0, 0.08);\n  border-radius: %dpx;\n  color: #111111;" % r,
+        "light":   "background: rgba(246, 245, 244, %.2f);\n  border: 1px solid rgba(0, 0, 0, 0.08);\n  border-radius: %dpx;" % (max(pop, 0.9), r),
     }
     out = ["/* popup style: %s */" % st, "%s {\n  %s\n}" % (P, rules[st])]
     if st == "pill":
         out.append("%s .image, %s .app-icon {\n  border-radius: 999px;\n}" % (P, P))
     if st == "minimal":
         out.append("%s .summary {\n  font-size: 0.95em;\n}" % P)
+    if st in ("light", "island"):
+        tf, td = ("#111111", "#555555") if st == "light" else ("#F6F5F4", "#9a9aa4")
+        out.append("%s .summary {\n  color: %s;\n}\n%s .body, %s .time {\n  color: %s;\n}" % (P, tf, P, P, td))
     if st == "light":
-        out.append("%s .summary {\n  color: #111111;\n}\n%s .body, %s .time {\n  color: #555555;\n}" % (P, P, P))
         out.append(".floating-notifications .notification-row .notification-background .close-button {\n"
                    "  background: rgba(0, 0, 0, 0.08);\n  color: #111111;\n}")
     return "\n".join(out)
+
+
+def strong(text):
+    # popups live in a window with both classes: ".floating-notifications.background".
+    # Using both makes our rules beat themes that use the same long selectors.
+    return text.replace(".floating-notifications .notification-row", ".floating-notifications.background .notification-row")
 
 
 def write_css(c):
@@ -365,15 +462,15 @@ def write_css(c):
     s = re.sub(r"\n?" + re.escape(BEGIN) + r".*?" + re.escape(END) + r"\n?", "\n", s, flags=re.S)
     os.makedirs(SW, exist_ok=True)
     tmp = SWCSS + ".tmp"
-    open(tmp, "w").write(s.rstrip() + "\n\n" + css(c))
+    open(tmp, "w").write(s.rstrip() + "\n\n" + strong(css(c)))
     os.replace(tmp, SWCSS)
 
 
 # ---------------- blur (Hyprland layer rules) ----------------
 def lua_text(c):
     out = ["-- generated by rice-notify (Settings > Notifications). Do not edit by hand.\n"]
-    if c["blur"]:
-        for ns in ("swaync-control-center", "swaync-notification-window"):
+    for ns, on in (("swaync-control-center", c["blur"]), ("swaync-notification-window", c["blur_popups"])):
+        if on:
             out.append('hl.layer_rule({\n    name  = "rice-%s-blur",\n    match = { namespace = "%s" },\n'
                        '    blur = true,\n    ignore_alpha = 0.1,\n})\n' % (ns, ns))
     return "".join(out)
@@ -419,7 +516,7 @@ def test():
     # plain D-Bus call, works without notify-send
     quiet(["busctl", "--user", "call", "org.freedesktop.Notifications", "/org/freedesktop/Notifications",
            "org.freedesktop.Notifications", "Notify", "susssasa{sv}i", "Shadow's Shell", "0",
-           "preferences-desktop-notification", "Hello from Shadow's Shell",
+           (HOME + "/.face") if os.path.exists(HOME + "/.face") else "dialog-information", "Hello from Shadow's Shell",
            "This is how your notifications look. Change them in Settings > Notifications.", "0", "0", "6000"])
 
 

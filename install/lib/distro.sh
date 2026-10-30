@@ -20,7 +20,7 @@ ARCH_PKGS=(
   hyprland hyprlock hypridle waybar swaync rofi cava curl jq python playerctl
   pipewire wireplumber xdg-desktop-portal-hyprland
   quickshell awww
-  ttf-jetbrains-mono-nerd ttf-nerd-fonts-symbols
+  ttf-jetbrains-mono-nerd ttf-nerd-fonts-symbols inter-font
 )
 
 # Commands the rice needs at runtime (used to report what is missing on any distro).

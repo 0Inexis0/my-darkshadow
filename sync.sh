@@ -5,7 +5,7 @@ set -Eeuo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 TOOLS=(hypr-set waybar-set waybar-preset waybar-reload waybar-autohide font-set desktop-set rice-settings
-       rice-colors rice-welcome rice-wallpaper rice-rofi rice-notify rice-lock rice-desktop rice-stats rice-sysline rice-nowplaying rice-weather rice-cava)
+       rice-colors rice-welcome rice-wallpaper rice-rofi rice-notify rice-lock rice-fonts rice-desktop rice-stats rice-sysline rice-nowplaying rice-weather rice-cava)
 CONFIG_DIRS=(hypr waybar swaync rofi)          # folders from ~/.config you want to publish
 EXCLUDE=(ui.json 'config.jsonc.save*' '*.bak*' '*.save*' '.first-backup' '*.png' '*.jpg' '*.jpeg' '*.webp' '*.gif')
 

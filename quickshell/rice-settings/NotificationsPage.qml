@@ -16,6 +16,9 @@ Item {
         page.ctl.status = "Applied"
         refresh.restart()
     }
+    function famFor(k) {
+        return k === "sans" ? "Inter" : k === "rounded" ? "Rubik" : k === "mono" ? "JetBrainsMono Nerd Font" : ""
+    }
     function tool(arg) { Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-notify\" \"$1\"", "_", arg]) }
 
     Process {
@@ -60,6 +63,12 @@ Item {
                 accFg: page.v("accent", true) ? page.v("on_accent", "#0d0d0d") : "#0d0d0d"
                 baseRadius: page.v("radius", 18) * 0.85
                 op: page.v("opacity", 0.8)
+                pop: page.v("popup_opacity", 0.85)
+                surface: page.v("colors", "graphite")
+                edge: page.v("border", "subtle")
+                shadowOn: page.v("shadow", false) === true
+                fam: page.famFor(page.v("font", "sans"))
+                fs: page.v("font_size", 13) / 13
                 iconSize: Math.max(26, Math.min(46, page.v("icon_size", 40)))
                 width: Math.min(stage.width - 28, page.v("popup_width", 360) * 0.85)
                 height: (look === "pill" || look === "minimal") ? 56 : (page.v("compact", false) ? 66 : 78)
@@ -177,6 +186,11 @@ Item {
                             accFg: page.v("on_accent", "#0d0d0d")
                             baseRadius: Math.min(12, page.v("radius", 18) * 0.6)
                             op: page.v("opacity", 0.8)
+                            pop: page.v("popup_opacity", 0.85)
+                            surface: page.v("colors", "graphite")
+                            edge: page.v("border", "subtle")
+                            shadowOn: false
+                            fam: page.famFor(page.v("font", "sans"))
                             iconSize: 22
                             showBody: false
                             fs: 0.8
@@ -222,6 +236,57 @@ Item {
         ToggleRow { label: "Show images"; desc: "Album covers, screenshots and avatars"; checked: page.v("images", true) === true; onToggled: function(x) { page.setv("images", x ? "on" : "off") } }
 
         // ---------- style ----------
+        SectionTitle { text: "Colors"; sub: "Base color of popups and the panel. Popup styles Island and Light keep their own." }
+        SegRow {
+            label: "Surface"
+            options: [{ label: "Black", value: "black" }, { label: "Graphite", value: "graphite" }, { label: "Slate", value: "slate" },
+                      { label: "White", value: "white" }, { label: "Tinted", value: "tinted" }]
+            current: page.v("colors", "graphite")
+            onChosen: function(x) { page.setv("colors", x) }
+        }
+        ToggleRow { label: "Accent color"; desc: "Buttons, switches and icons follow your Theme"; checked: page.v("accent", true) === true; onToggled: function(x) { page.setv("accent", x ? "on" : "off") } }
+        SegRow {
+            label: "Border"
+            desc: "Edge around popups and the panel"
+            options: [{ label: "Subtle", value: "subtle" }, { label: "Accent", value: "accent" }, { label: "None", value: "none" }]
+            current: page.v("border", "subtle")
+            onChosen: function(x) { page.setv("border", x) }
+        }
+        ToggleRow { label: "Shadow"; desc: "Small shadow under popups (off looks cleaner)"; checked: page.v("shadow", false) === true; onToggled: function(x) { page.setv("shadow", x ? "on" : "off") } }
+
+        SectionTitle { text: "Text" }
+        SegRow {
+            label: "Font"
+            desc: "Sans uses Inter, Rounded uses Rubik (they fall back if missing)"
+            options: [{ label: "Sans", value: "sans" }, { label: "Rounded", value: "rounded" }, { label: "Mono", value: "mono" }, { label: "System", value: "system" }]
+            current: page.v("font", "sans")
+            onChosen: function(x) { page.setv("font", x) }
+        }
+        SliderRow {
+            label: "Text size"
+            from: 10; to: 18; step: 1; unit: " px"
+            value: page.v("font_size", 13)
+            onCommitted: function(x) { page.setv("font_size", Math.round(x)) }
+        }
+
+        SectionTitle { text: "Transparency & blur"; sub: "Blur only shows where the surface is transparent." }
+        SliderRow {
+            label: "Popup opacity"
+            desc: "Lower is more see-through"
+            from: 0.3; to: 1.0; step: 0.02; decimals: 2
+            value: page.v("popup_opacity", 0.85)
+            onCommitted: function(x) { page.setv("popup_opacity", x.toFixed(2)) }
+        }
+        SliderRow {
+            label: "Panel opacity"
+            desc: "The notification center"
+            from: 0.3; to: 1.0; step: 0.02; decimals: 2
+            value: page.v("opacity", 0.8)
+            onCommitted: function(x) { page.setv("opacity", x.toFixed(2)) }
+        }
+        ToggleRow { label: "Blur popups"; desc: "Blur the desktop behind popups"; checked: page.v("blur_popups", true) === true; onToggled: function(x) { page.setv("blur_popups", x ? "on" : "off") } }
+        ToggleRow { label: "Blur panel"; desc: "Blur the desktop behind the notification center"; checked: page.v("blur", true) === true; onToggled: function(x) { page.setv("blur", x ? "on" : "off") } }
+
         SectionTitle { text: "Notification center style"; sub: "Look of the panel. Popups use it too when their style is Same as panel." }
         SegRow {
             label: "Look"
@@ -231,21 +296,12 @@ Item {
             onChosen: function(x) { page.setv("style", x) }
         }
         SliderRow {
-            label: "Opacity"
-            desc: "Lower is more transparent"
-            from: 0.3; to: 1.0; step: 0.02; decimals: 2
-            value: page.v("opacity", 0.8)
-            onCommitted: function(x) { page.setv("opacity", x.toFixed(2)) }
-        }
-        SliderRow {
             label: "Corner radius"
             from: 0; to: 32; step: 1; unit: " px"
             value: page.v("radius", 18)
             onCommitted: function(x) { page.setv("radius", Math.round(x)) }
         }
-        ToggleRow { label: "Blur"; desc: "Blur the desktop behind popups and the panel"; checked: page.v("blur", true) === true; onToggled: function(x) { page.setv("blur", x ? "on" : "off") } }
         ToggleRow { label: "Compact"; desc: "Less padding, more notifications on screen"; checked: page.v("compact", false) === true; onToggled: function(x) { page.setv("compact", x ? "on" : "off") } }
-        ToggleRow { label: "Accent color"; desc: "Buttons and switches follow your Theme"; checked: page.v("accent", true) === true; onToggled: function(x) { page.setv("accent", x ? "on" : "off") } }
 
         Row {
             spacing: 10
