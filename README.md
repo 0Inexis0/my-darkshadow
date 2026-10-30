@@ -45,6 +45,33 @@
 | **Notifications** | swaync with a button that opens Settings |
 | **Installer** | interactive, backs up everything, supports Arch and NixOS |
 
+## Keybinds
+`SUPER` is the main modifier.
+
+| Keys | Action |
+| --- | --- |
+| `SUPER + U` | open **Settings** |
+| `SUPER + Q` | terminal |
+| `SUPER + E` | file manager |
+| `SUPER + R` | app menu |
+| `ALT + Space` | app launcher (rofi) |
+| `SUPER + C` | close window |
+| `SUPER + V` | toggle floating |
+| `SUPER + P` | pseudo-tile |
+| `SUPER + J` | toggle split direction |
+| `SUPER + M` | exit Hyprland |
+| `SUPER + ←/→/↑/↓` | move focus |
+| `SUPER + 1 … 0` | go to workspace |
+| `SUPER + SHIFT + 1 … 0` | move window to workspace |
+| `SUPER + S` | show/hide scratchpad |
+| `SUPER + SHIFT + S` | move window to scratchpad |
+| `SUPER + scroll` | next/previous workspace |
+| `SUPER + left mouse` | drag window |
+| `SUPER + right mouse` | resize window |
+| `ALT + ]` / `ALT + [` | volume up / down |
+| `SUPER + F12` / `F11` / `F10` | volume up / down / mute (with on-screen display) |
+| media keys | play/pause, next, previous |
+
 ## Install
 ```bash
 git clone https://github.com/shadowww-dev/shadows-shell
