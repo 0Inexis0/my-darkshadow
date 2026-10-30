@@ -106,4 +106,4 @@ See [docs/INSTALL.md](docs/INSTALL.md) and [docs/CUSTOMIZE.md](docs/CUSTOMIZE.md
 `./sync.sh` copies your current setup from this machine into the repo (paths become `@HOME@`, no username is stored) and scans for secrets.
 
 ## License
-Not chosen yet. Add a `LICENSE` file before sharing widely.
+MIT. See [LICENSE](LICENSE).
