@@ -27,6 +27,10 @@
 <p align="center">
   <img src="assets/screenshot.png" alt="Shadow's Shell on NixOS" width="100%">
 </p>
+<p align="center">
+  <img src="assets/screenshot-settings.png" alt="The Settings app (SUPER+U)" width="100%"><br>
+  <sub>The Settings app, opened with <code>SUPER + U</code></sub>
+</p>
 
 ## Features
 **Settings app** (`SUPER+U`), seven pages: Home, Waybar, Hyprland, Desktop, Interface, Services, About.
