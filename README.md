@@ -33,7 +33,7 @@
 </p>
 
 ## Features
-**Settings app** (`SUPER+U`), fifteen pages: Home, Waybar, Bar layout, Hyprland, Dashboard, Rofi, Theme, Cursors, Notifications, Idle & Lockscreen, Desktop, Hot corners, Interface, Services, About.
+**Settings app** (`SUPER+U`), fourteen pages: Home, Waybar, Bar layout, Hyprland, Dashboard, Rofi, Theme, Cursors, Notifications, Idle & Lockscreen, Desktop, Hot corners, Interface, Services.
 
 | Area | What you get |
 | --- | --- |
@@ -43,14 +43,14 @@
 | **Distro logo** | NixOS logo on NixOS, Arch logo on Arch, and so on |
 | **Hot corner** | touch a screen corner for a panel with Keep Awake, screen recording, screenshots, quick toggles (Wi-Fi, Bluetooth, Do Not Disturb, Gaming mode, microphone, Settings) and now playing; sections, toggles, corner, look and animation are set in Settings > Hot corners |
 | **Desktop widgets** | clock, calendar, weather, music, resources (CPU, RAM, GPU), user card, battery and a see-through audio visualizer (Bars, Mirror, Wave, Dots); a widget editor on the desktop to add, move, resize and style them |
-| **Dashboard** | drops out of the middle of the bar: Dashboard (weather, calendar, usage, music), Wallpaper (big wallpaper cards, search, random), Performance (CPU, GPU, storage, network, memory, battery), About (your computer, distro, updates); grows out of the bar, cards you can remove, add, resize and move, looks Shadow, Graphite, Aurora and Frost |
+| **Dashboard** | slides up from the bottom of the screen (SUPER + ALT + D): Dashboard (weather, calendar, usage, music), Wallpaper (big wallpaper cards, search, random), Performance (CPU, GPU, storage, network, memory, battery), About (your computer, distro, updates); cards you can remove, add, resize and move, looks Shadow, Graphite, Aurora and Frost |
 | **Bar layout** | drag and drop Waybar modules between left, center and right, reorder the system icons, Battery module |
 | **Dock** | pinned apps, hover to reveal, media player, tinted icons |
 | **Hyprland** | gaps, borders, rounding, blur, shadows and animations from sliders, no config editing |
 | **Theme** | 21 color schemes: Auto and Grey from your wallpaper, six monochrome (Mono, Slate, Stone, Steel, Ash, Ink) and thirteen colors (Navy, Ocean, Sky, Teal, Mint, Forest, Lime, Gold, Sunset, Ember, Rose, Orchid, Violet). They recolor Waybar, borders, notifications and the lock screen |
 | **Notifications** | swaync popups and panel: position, layout, widgets (title, Do Not Disturb, media, volume, quick buttons), size, timeout, icon size, Glass / Solid / Outline look, opacity, radius, blur, live preview and a test button |
 | **Notification sounds** | six original sounds (Glass, Droplet, Chime, Bubble, Marimba, Aurora) or Off, with volume; silent during Do Not Disturb |
-| **Updates** | a notification when a new version is out ("Update is Available!"), version and Update now button in Settings > About, `rice-update` in a terminal |
+| **Updates** | a notification when a new version is out ("Update is Available!"), version and Update now button in the About tab of the dashboard, `rice-update` in a terminal |
 | **Idle & Lockscreen** | lock, screen-off and sleep timers; lock screen with Big / Stacked / Minimal clock, center or left layout, greeting, avatar, Pill / Box / Line password field, power buttons, screenshot / wallpaper / color background and media, resources, weather and notification lines |
 | **Rofi** | 5 themes (Shadow, Graphite, Midnight, Rose, Paper), layouts list / grid / full-width bar, position top, center or bottom, width, rows, corner radius, transparency, blur, font size, icons |
 | **Cursors** | Bibata, Hyprcursor themes (Rose Pine) and packs you can download in Settings: Catppuccin, Phinger; live preview |
@@ -90,7 +90,7 @@
 | `SUPER + SHIFT + R` | record a region (press again to stop) |
 | `SUPER + A` | open the hot corner panel |
 | `SUPER + ALT + W` | edit desktop widgets (add, move, resize, style) |
-| `SUPER + ALT + D` | dashboard (or point at the middle of the bar) |
+| `SUPER + ALT + D` | dashboard (slides up from the bottom) |
 | `SUPER + W` | wallpapers (Wallpaper tab of the dashboard) |
 
 ## Installation
@@ -123,7 +123,7 @@ Add `imports = [ ./path/to/shadows-shell/nix/module.nix ];` to `/etc/nixos/confi
 Every file the installer replaces is saved in `~/.config/darkshadows-shell-backup-<time>/`.
 
 ### Updating
-Run `rice-update` (or `./install.sh --update` in the repo), or press **Update now** in Settings > About or in the update notification.
+Run `rice-update` (or `./install.sh --update` in the repo), or press **Update now** in the About tab of the dashboard or in the update notification.
 
 ## Layout
 | Path | Contents |

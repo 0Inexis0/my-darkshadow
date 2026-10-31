@@ -3,8 +3,8 @@ import Quickshell.Io
 import Quickshell.Wayland
 import QtQuick
 
-// The dashboard. It grows out of the bar (point at the middle of its edge, SUPER + ALT + D, or
-// SUPER + W for wallpapers). Tabs: Dashboard, Wallpaper, Performance, About. Settings > Dashboard.
+// The dashboard. It slides up out of the bottom edge (SUPER + ALT + D, or SUPER + W for wallpapers).
+// Tabs: Dashboard, Wallpaper, Performance, About. Settings > Dashboard.
 PanelWindow {
     id: db
     property var cfg: ({ enabled: false })
@@ -30,12 +30,12 @@ PanelWindow {
 
     readonly property var tabs: cfg.tabs && cfg.tabs.length ? cfg.tabs : ["dashboard", "wallpaper", "performance", "about"]
     readonly property int curIdx: Math.max(0, tabs.indexOf(tab))
-    readonly property bool atTop: cfg.position !== "bottom"
+    readonly property bool atTop: false   // always at the bottom
     readonly property real sc: cfg.scale ? cfg.scale : 1
     readonly property real spd: cfg.speed ? cfg.speed : 1
-    readonly property string anim: cfg.animation ? cfg.animation : "morph"
+    readonly property string anim: cfg.animation === "fade" || cfg.animation === "none" ? cfg.animation : "slide"
     readonly property bool attach: cfg.attach !== false
-    readonly property bool barHere: !!cfg.bar && cfg.bar.position === cfg.position && !cfg.bar.autohide
+    readonly property bool barHere: !!cfg.bar && cfg.bar.position === "bottom" && !cfg.bar.autohide
     readonly property real barOff: barHere ? cfg.bar.height : 0
     readonly property real earR: attach ? 24 : 0
     readonly property real headH: 64
@@ -141,8 +141,15 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "rice-dashboard"
     WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-    mask: Region { item: (db.open || db.t > 0.02) ? whole : trigger }
+    mask: Region { item: (db.open || db.t > 0.02) ? whole : nothing }
     Item { id: whole; anchors.fill: parent }
+    Item { id: nothing; width: 0; height: 0 }
+
+    // wallpaper preview (Wallpaper tab): shown behind the desktop while you pick, dropped when you leave
+    property string previewPath: ""
+    property var wallsTab: null
+    Timer { id: previewDone; interval: 1600; onTriggered: db.previewPath = "" }
+    function keepPreview() { previewDone.restart() }
 
     NumberAnimation { id: tAnim; target: db; property: "t" }
     onOpenChanged: {
@@ -157,7 +164,7 @@ PanelWindow {
             const v = Object.assign({}, visited); v[tab] = true; visited = v
             loadAbout()
             keys.forceActiveFocus()
-        } else { leaveTimer.stop(); typing = false }
+        } else { leaveTimer.stop(); typing = false; if (!previewDone.running) previewPath = "" }
     }
     onTabChanged: { const v = Object.assign({}, visited); v[tab] = true; visited = v; if (tab === "wallpaper") editing = false }
 
@@ -223,7 +230,7 @@ PanelWindow {
     }
 
     // ---------------- staying open while the pointer is near ----------------
-    function inside() { return shellHover.hovered || bridgeHover.hovered || trigHover.hovered }
+    function inside() { return shellHover.hovered || bridgeHover.hovered }
     function pointerMoved() {
         if (shellHover.hovered) db.entered = true
         if (inside()) leaveTimer.stop()
@@ -233,8 +240,7 @@ PanelWindow {
         id: leaveTimer
         interval: 380
         onTriggered: {
-            if (db.inside() || db.cfg.close_on_leave === false || db.editing || db.typing) return
-            db.armed = !trigHover.hovered
+            if (db.inside() || db.cfg.close_on_leave === false || db.editing || db.typing || !db.entered) return
             db.close()
         }
     }
@@ -246,25 +252,6 @@ PanelWindow {
         onClicked: db.close()
     }
 
-    // the hot spot in the middle of the edge (the bar height when the bar is there)
-    Item {
-        id: trigger
-        readonly property real hh: db.cfg.hotspot === "edge" || !db.barHere ? 3 : Math.max(3, db.barOff)
-        width: db.cfg.trigger ? db.cfg.trigger : 260
-        height: hh
-        x: (db.width - width) / 2
-        y: db.atTop ? 0 : db.height - height
-        HoverHandler { id: trigHover; onHoveredChanged: db.pointerMoved() }
-        MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-            enabled: db.cfg.hover !== false
-            onEntered: if (db.armed && !db.open) openTimer.restart()
-            onExited: { openTimer.stop(); db.armed = true }
-            onClicked: { if (db.open) db.close(); else db.show("", true) }
-        }
-    }
-    Timer { id: openTimer; interval: Math.max(1, db.cfg.delay !== undefined ? db.cfg.delay : 150); onTriggered: if (!db.open) db.show("", true) }
 
     // between the edge and the panel: the bar itself counts as "near"
     Item {
@@ -284,6 +271,10 @@ PanelWindow {
         Keys.onPressed: function(e) {
             if (e.key === Qt.Key_Escape) { if (db.editing) db.editing = false; else db.close(); e.accepted = true }
             else if (db.typing) return
+            // Wallpaper tab: arrows move through the wallpapers (down / right = next, up / left = back), Enter sets it
+            else if (db.tab === "wallpaper" && db.wallsTab && (e.key === Qt.Key_Down || e.key === Qt.Key_Right)) { db.wallsTab.move(1); e.accepted = true }
+            else if (db.tab === "wallpaper" && db.wallsTab && (e.key === Qt.Key_Up || e.key === Qt.Key_Left)) { db.wallsTab.move(-1); e.accepted = true }
+            else if (db.tab === "wallpaper" && db.wallsTab && (e.key === Qt.Key_Return || e.key === Qt.Key_Enter)) { db.wallsTab.applySel(); e.accepted = true }
             else if (e.key === Qt.Key_Right || (e.key === Qt.Key_Tab && !(e.modifiers & Qt.ShiftModifier))) { db.tab = db.tabs[(db.curIdx + 1) % db.tabs.length]; e.accepted = true }
             else if (e.key === Qt.Key_Left || e.key === Qt.Key_Backtab) { db.tab = db.tabs[(db.curIdx - 1 + db.tabs.length) % db.tabs.length]; e.accepted = true }
             else if (e.key >= Qt.Key_1 && e.key <= Qt.Key_4 && e.key - Qt.Key_1 < db.tabs.length) { db.tab = db.tabs[e.key - Qt.Key_1]; e.accepted = true }
@@ -301,13 +292,14 @@ PanelWindow {
         transformOrigin: Item.TopLeft
         scale: db.sc
         visible: db.t > 0.003
+        clip: db.anim === "slide"
 
         // how much of it shows (Morph grows out of the bar, Slide comes down, Fade fades in)
         readonly property real e: db.t
-        readonly property real sw: db.anim === "morph" ? db.curW * (0.42 + 0.58 * e) : db.curW
-        readonly property real sh: db.anim === "morph" ? Math.max(1, db.curH * e) : db.curH
-        readonly property real slideY: db.anim === "slide" ? (1 - e) * -(db.curH + 30) * (db.atTop ? 1 : -1) : 0
-        opacity: db.anim === "fade" || db.anim === "slide" ? Math.min(1, e * 1.4) : Math.min(1, e * 4)
+        readonly property real sw: db.curW
+        readonly property real sh: db.curH
+        readonly property real slideY: db.anim === "slide" ? (1 - e) * (db.curH + 4) : 0
+        opacity: db.anim === "fade" ? e : (db.anim === "slide" ? Math.min(1, 0.4 + e) : 1)
 
         HoverHandler { id: shellHover; onHoveredChanged: db.pointerMoved() }
         MouseArea { x: (shell.width - shell.sw) / 2 - db.earR; y: db.atTop ? 0 : shell.height - shell.sh; width: shell.sw + 2 * db.earR; height: shell.sh }
@@ -398,8 +390,7 @@ PanelWindow {
                     height: db.curH
                     x: (clipBox.width - width) / 2
                     y: db.atTop ? 0 : clipBox.height - height
-                    opacity: db.anim === "morph" ? Math.max(0, (db.t - 0.35) / 0.65) : 1
-                    transform: Translate { y: db.anim === "morph" ? (1 - db.t) * -14 * (db.atTop ? 1 : -1) : 0 }
+                    opacity: 1
 
                     // ---------- tabs ----------
                     Item {

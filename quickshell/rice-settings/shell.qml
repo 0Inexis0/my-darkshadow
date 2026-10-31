@@ -92,8 +92,7 @@ FloatingWindow {
         { name: "Desktop", icon: "\uf26c" },
         { name: "Hot corners", icon: "\udb82\ude0b" },
         { name: "Interface", icon: "\uf2d0" },
-        { name: "Services", icon: "" },
-        { name: "About", icon: "" }
+        { name: "Services", icon: "" }
     ]
 
     readonly property string hyprTool: home + "/.local/bin/hypr-set"
@@ -361,19 +360,6 @@ FloatingWindow {
             }
         }
 
-        // fade at the bottom edge hints that the list scrolls
-        Rectangle {
-            x: 16
-            y: navFlick.y + navFlick.height - 28
-            width: 206
-            height: 28
-            visible: navFlick.contentY + navFlick.height < navFlick.contentHeight - 4
-            gradient: Gradient {
-                GradientStop { position: 0; color: Qt.rgba(0.05, 0.05, 0.05, 0) }
-                GradientStop { position: 1; color: Qt.rgba(0.05, 0.05, 0.05, 0.9) }
-            }
-        }
-
         Rectangle { x: 232; y: 64; width: 1; height: parent.height - 96; color: "#222222" }
 
         Item {
@@ -397,7 +383,6 @@ FloatingWindow {
             PageSlot { idx: 11; cur: win.page; HotCornersPage { anchors.fill: parent; ctl: win } }
             PageSlot { idx: 12; cur: win.page; InterfacePage { anchors.fill: parent; ctl: win } }
             PageSlot { idx: 13; cur: win.page; ServicesPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 14; cur: win.page; AboutPage { anchors.fill: parent; ctl: win } }
         }
 
         T {

@@ -13,6 +13,17 @@ Item {
     property string dir: ""
     property string query: ""
     readonly property var shown: query === "" ? all : all.filter(function(w) { return w.name.toLowerCase().indexOf(query.toLowerCase()) >= 0 })
+    property int sel: 0
+    Component.onCompleted: d.wallsTab = wp
+
+    // move the selection (arrows, wheel, buttons); the desktop shows a preview of it
+    function move(n) {
+        if (shown.length === 0) return
+        sel = Math.max(0, Math.min(shown.length - 1, sel + n))
+        previewTimer.restart()
+    }
+    function applySel() { if (shown.length > 0) apply(shown[sel].path) }
+    Timer { id: previewTimer; interval: 140; onTriggered: if (wp.shown[wp.sel]) wp.d.previewPath = wp.shown[wp.sel].path }
 
     Process {
         id: list
@@ -24,21 +35,20 @@ Item {
             }
         }
     }
+    onShownChanged: if (sel >= shown.length) sel = Math.max(0, shown.length - 1)
     onLiveChanged: { if (live) { list.running = true; search.text = ""; query = ""; wp.center() } else d.typing = false }
     // thumbnails are made in the background the first time: look again a bit later
     Timer { interval: 4000; running: wp.live; repeat: true; onTriggered: if (!list.running && wp.all.some(function(w) { return w.thumb === w.path })) list.running = true }
 
     function apply(path) {
         current = path
+        // keep showing it until the real wallpaper has changed underneath
+        d.previewPath = path
+        d.keepPreview()
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-dashboard\" wall \"$1\"", "_", path])
     }
     function center() {
-        for (let i = 0; i < shown.length; i++) if (shown[i].path === current) { car.positionViewAtIndex(i, ListView.Center); return }
-    }
-    function step(n) {
-        const target = Math.max(0, Math.min(car.contentWidth - car.width, car.contentX + n * (car.cardW + car.spacing)))
-        scrollAnim.to = target
-        scrollAnim.restart()
+        for (let i = 0; i < shown.length; i++) if (shown[i].path === current) { sel = i; car.positionViewAtIndex(i, ListView.Center); return }
     }
 
     // ---------- top row ----------
@@ -76,15 +86,17 @@ Item {
                     font.family: DashFont.sans
                     font.pixelSize: 13
                     clip: true
-                    onTextChanged: { wp.query = text; car.positionViewAtBeginning() }
+                    onTextChanged: { wp.query = text; wp.sel = 0; car.positionViewAtBeginning() }
                     onActiveFocusChanged: wp.d.typing = activeFocus
                     Keys.onEscapePressed: { if (text !== "") text = ""; else wp.d.close() }
-                    Keys.onReturnPressed: if (wp.shown.length > 0) wp.apply(wp.shown[0].path)
+                    Keys.onReturnPressed: wp.applySel()
+                    Keys.onDownPressed: wp.move(1)
+                    Keys.onUpPressed: wp.move(-1)
                 }
                 DText { visible: search.text === ""; x: 40; anchors.verticalCenter: parent.verticalCenter; text: "Search wallpapers"; font.pixelSize: 13; color: wp.p.onContainer; opacity: 0.55 }
                 MouseArea { anchors.fill: parent; cursorShape: Qt.IBeamCursor; onClicked: search.forceActiveFocus(); z: -1 }
             }
-            Pill { icon: "shuffle"; glyph: wp.d.md(0xF049D); text: "Random"; onClicked: if (wp.all.length) { const w = wp.all[Math.floor(Math.random() * wp.all.length)]; wp.apply(w.path); wp.center() } }
+            Pill { icon: "shuffle"; glyph: wp.d.md(0xF049D); text: "Random"; onClicked: if (wp.shown.length) { wp.sel = Math.floor(Math.random() * wp.shown.length); wp.applySel() } }
             Pill { icon: "folder_open"; glyph: wp.d.md(0xF024B); text: "Folder"; onClicked: if (wp.dir) { Quickshell.execDetached(["xdg-open", wp.dir]); wp.d.close() } }
         }
     }
@@ -96,20 +108,27 @@ Item {
         width: parent.width
         height: parent.height - y
         orientation: ListView.Horizontal
-        spacing: 14
+        spacing: 16
         clip: true
         model: wp.shown
-        boundsBehavior: Flickable.StopAtBounds
+        currentIndex: wp.sel
+        interactive: false
         readonly property real cardH: height - 30
         readonly property real cardW: cardH * 1.6
-        NumberAnimation { id: scrollAnim; target: car; property: "contentX"; duration: 380; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.05, 0.7, 0.1, 1, 1, 1] }
+        // the chosen card glides to the middle
+        highlightRangeMode: ListView.StrictlyEnforceRange
+        preferredHighlightBegin: (width - cardW) / 2
+        preferredHighlightEnd: (width + cardW) / 2
+        highlightMoveDuration: 420
+        highlightMoveVelocity: -1
+        // wheel: down = next (to the right), up = back
+        property real acc: 0
         WheelHandler {
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
             onWheel: function(e) {
-                const dlt = (Math.abs(e.angleDelta.x) > Math.abs(e.angleDelta.y) ? e.angleDelta.x : e.angleDelta.y)
-                const max = Math.max(0, car.contentWidth - car.width)
-                scrollAnim.to = Math.max(0, Math.min(max, (scrollAnim.running ? scrollAnim.to : car.contentX) - dlt * 1.4))
-                scrollAnim.restart()
+                car.acc += (Math.abs(e.angleDelta.y) >= Math.abs(e.angleDelta.x) ? -e.angleDelta.y : -e.angleDelta.x)
+                while (car.acc >= 100) { wp.move(1); car.acc -= 120 }
+                while (car.acc <= -100) { wp.move(-1); car.acc += 120 }
             }
         }
         delegate: Item {
@@ -117,20 +136,23 @@ Item {
             width: car.cardW
             height: car.height
             readonly property bool cur: modelData.path === wp.current
+            readonly property bool picked: index === wp.sel
+            opacity: picked ? 1 : 0.55
+            Behavior on opacity { NumberAnimation { duration: 260 } }
             Rectangle {
                 id: frame
                 width: parent.width
                 height: car.cardH
                 radius: 22
                 color: wp.p.container
-                border.width: wc.cur ? 3 : 0
+                border.width: wc.picked ? 3 : 0
                 border.color: wp.p.primary
-                scale: tm.pressed ? 0.97 : (tm.containsMouse ? 1.02 : 1)
-                Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                scale: tm.pressed ? 0.96 : (wc.picked ? 1 : (tm.containsMouse ? 0.92 : 0.88))
+                Behavior on scale { NumberAnimation { duration: 320; easing.type: Easing.OutCubic } }
                 RoundImage {
                     anchors.fill: parent
-                    anchors.margins: wc.cur ? 5 : 0
-                    cornerRadius: wc.cur ? 17 : 22
+                    anchors.margins: wc.picked ? 5 : 0
+                    cornerRadius: wc.picked ? 17 : 22
                     source: "file://" + modelData.thumb
                     fallback: ""
                 }
@@ -152,14 +174,14 @@ Item {
                     anchors.bottom: parent.bottom; anchors.bottomMargin: 14
                     width: setRow.implicitWidth + 24; height: 32; radius: 16
                     color: Qt.rgba(0, 0, 0, 0.55)
-                    opacity: tm.containsMouse && !wc.cur ? 1 : 0
+                    opacity: wc.picked && !wc.cur ? 1 : 0
                     Behavior on opacity { NumberAnimation { duration: 160 } }
                     Row {
                         id: setRow
                         anchors.centerIn: parent
                         spacing: 6
                         MIcon { name: "imagesmode"; glyph: wp.d.md(0xF02E9); size: 16; color: "#ffffff"; anchors.verticalCenter: parent.verticalCenter }
-                        DText { text: "Set wallpaper"; font.pixelSize: 12; font.weight: Font.Medium; color: "#ffffff"; anchors.verticalCenter: parent.verticalCenter }
+                        DText { text: "Enter or click to set"; font.pixelSize: 12; font.weight: Font.Medium; color: "#ffffff"; anchors.verticalCenter: parent.verticalCenter }
                     }
                 }
             }
@@ -171,15 +193,17 @@ Item {
                 elide: Text.ElideRight
                 text: modelData.name
                 font.pixelSize: 12
-                font.weight: wc.cur ? Font.DemiBold : Font.Normal
-                color: wc.cur ? wp.p.text : wp.p.sub
+                font.weight: wc.picked ? Font.DemiBold : Font.Normal
+                color: wc.picked ? wp.p.text : wp.p.sub
             }
-            MouseArea { id: tm; width: parent.width; height: car.cardH; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: wp.apply(modelData.path) }
+            // click: the chosen one is set, another one gets chosen (and previewed)
+            MouseArea { id: tm; width: parent.width; height: car.cardH; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                onClicked: { if (wc.picked) wp.applySel(); else { wp.sel = index; previewTimer.restart() } } }
         }
     }
     // arrows
-    Arrow { anchors.left: car.left; anchors.leftMargin: 10; y: car.y + car.cardH / 2 - height / 2; icon: "chevron_left"; glyph: wp.d.md(0xF0141); visible: car.contentX > 4; onClicked: wp.step(-2) }
-    Arrow { anchors.right: car.right; anchors.rightMargin: 10; y: car.y + car.cardH / 2 - height / 2; icon: "chevron_right"; glyph: wp.d.md(0xF0142); visible: car.contentX < car.contentWidth - car.width - 4; onClicked: wp.step(2) }
+    Arrow { anchors.left: car.left; anchors.leftMargin: 10; y: car.y + car.cardH / 2 - height / 2; icon: "chevron_left"; glyph: wp.d.md(0xF0141); visible: wp.sel > 0; onClicked: wp.move(-1) }
+    Arrow { anchors.right: car.right; anchors.rightMargin: 10; y: car.y + car.cardH / 2 - height / 2; icon: "chevron_right"; glyph: wp.d.md(0xF0142); visible: wp.sel < wp.shown.length - 1; onClicked: wp.move(1) }
     DText {
         visible: wp.all.length === 0
         anchors.centerIn: car

@@ -38,15 +38,15 @@ WAYBAR = HOME + "/.config/waybar"
 
 TABS = ["dashboard", "wallpaper", "performance", "about"]
 DEFAULTS = {
-    "enabled": True, "position": "top", "hover": True, "wallpaper_key": True, "style": "shadow",
+    "enabled": True, "position": "bottom", "hover": False, "wallpaper_key": True, "style": "shadow",
     "width": 1000, "scale": 1.0, "delay": 150, "trigger": 320, "close_on_leave": True, "speed": 1.0,
-    "tabs": list(TABS), "default_tab": "dashboard", "blur": True, "opacity": 0.9, "animation": "morph",
+    "tabs": list(TABS), "default_tab": "dashboard", "blur": True, "opacity": 0.9, "animation": "slide",
     "hotspot": "bar", "attach": True, "layouts": {},
 }
 INTS = {"width": (760, 1500), "delay": (0, 900), "trigger": (80, 900)}
 FLOATS = {"scale": (0.75, 1.4), "speed": (0.5, 2.0), "opacity": (0.35, 1.0)}
 CHOICES = {"position": ["top", "bottom"], "style": ["shadow", "graphite", "aurora", "frost"], "default_tab": TABS,
-           "animation": ["morph", "slide", "fade", "none"], "hotspot": ["bar", "edge"]}
+           "animation": ["slide", "fade", "none"], "hotspot": ["bar", "edge"]}
 OLD_STYLES = {"darkshadow": "shadow", "end4": "frost", "caelestia": "aurora"}
 BOOLS = ("enabled", "hover", "wallpaper_key", "close_on_leave", "blur", "attach")
 HYPR = HOME + "/.config/hypr"
@@ -66,6 +66,8 @@ def load():
         v = raw.get(k, d)
         if k == "style":
             v = OLD_STYLES.get(v, v)
+        if k == "animation" and v == "morph":
+            v = "slide"
         try:
             if k == "layouts":
                 c[k] = clean_layouts(v)
@@ -82,6 +84,7 @@ def load():
                 c[k] = t or list(TABS)
         except Exception:
             c[k] = d
+    c["position"] = "bottom"   # the dashboard always comes from the bottom
     return c
 
 

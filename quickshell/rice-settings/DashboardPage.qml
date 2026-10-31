@@ -64,18 +64,11 @@ Item {
                 GradientStop { position: 1; color: "#101117" }
             }
             // the bar and the panel hanging from its middle
-            Rectangle { x: 0; y: page.v("position", "top") === "top" ? 0 : parent.height - 14; width: parent.width; height: 14; color: Qt.rgba(0.04, 0.04, 0.05, 0.9) }
-            Rectangle {
-                anchors.horizontalCenter: parent.horizontalCenter
-                y: page.v("position", "top") === "top" ? 0 : parent.height - 3
-                width: 70; height: 3; radius: 1.5
-                color: "#F6F5F4"
-                SequentialAnimation on opacity { loops: Animation.Infinite; NumberAnimation { to: 0.3; duration: 900 } NumberAnimation { to: 1; duration: 900 } }
-            }
+
             DashMini {
                 id: hero
                 anchors.horizontalCenter: parent.horizontalCenter
-                y: page.v("position", "top") === "top" ? 24 : parent.height - height - 24
+                y: parent.height - height + 6
                 width: 300; height: 160
                 look: page.v("style", "shadow")
                 acc: page.v("accent", "#9ec9bd")
@@ -85,7 +78,7 @@ Item {
                 x: 20; anchors.verticalCenter: parent.verticalCenter
                 spacing: 4
                 T { text: "Dashboard"; font.pixelSize: 20; font.bold: true }
-                T { kind: "reading"; width: 170; wrapMode: Text.WordWrap; text: "Point at the middle of the " + page.v("position", "top") + " edge, or press SUPER + W for wallpapers."; font.pixelSize: 11; color: "#a0a0aa" }
+                T { kind: "reading"; width: 170; wrapMode: Text.WordWrap; text: "SUPER + ALT + D opens it from the bottom of the screen, SUPER + W opens Wallpaper."; font.pixelSize: 11; color: "#a0a0aa" }
             }
             Column {
                 anchors.right: parent.right; anchors.rightMargin: 20
@@ -141,7 +134,7 @@ Item {
 
         // ---------- appearance ----------
         SectionTitle { text: "Look" }
-        ToggleRow { label: "Grow out of the bar"; desc: "Flat edge against the bar with curved corners where they meet. Off: a floating card"; checked: page.v("attach", true) === true; onToggled: function(x) { page.setv("attach", x) } }
+        ToggleRow { label: "Grow out of the edge"; desc: "Flat against the bottom of the screen (or your bar) with curved corners where they meet. Off: a floating card"; checked: page.v("attach", true) === true; onToggled: function(x) { page.setv("attach", x) } }
         SliderRow {
             label: "Transparency"
             desc: "Lower is more see-through. Starts at the transparency of your bar"
@@ -152,9 +145,9 @@ Item {
         ToggleRow { label: "Blur"; desc: "Blur the desktop behind the dashboard"; checked: page.v("blur", true) === true; onToggled: function(x) { page.setv("blur", x) } }
         SegRow {
             label: "Animation"
-            desc: "Morph grows out of the bar, like Caelestia"
-            options: [{ label: "Morph", value: "morph" }, { label: "Slide", value: "slide" }, { label: "Fade", value: "fade" }, { label: "Off", value: "none" }]
-            current: page.v("animation", "morph")
+            desc: "Slide comes up out of the bottom edge"
+            options: [{ label: "Slide", value: "slide" }, { label: "Fade", value: "fade" }, { label: "Off", value: "none" }]
+            current: page.v("animation", "slide") === "morph" ? "slide" : page.v("animation", "slide")
             onChosen: function(x) { page.setv("animation", x) }
         }
 
@@ -170,37 +163,8 @@ Item {
         // ---------- behaviour ----------
         SectionTitle { text: "Opening" }
         ToggleRow { label: "Dashboard"; desc: "Turn the whole dashboard on or off"; checked: page.v("enabled", true) === true; onToggled: function(x) { page.setv("enabled", x) } }
-        SegRow {
-            label: "Position"
-            desc: "Drops down from the top or rises from the bottom"
-            options: [{ label: "Top", value: "top" }, { label: "Bottom", value: "bottom" }]
-            current: page.v("position", "top")
-            onChosen: function(x) { page.setv("position", x) }
-        }
-        ToggleRow { label: "Open from the middle of the bar"; desc: "Rest the pointer on the middle of the bar"; checked: page.v("hover", true) === true; onToggled: function(x) { page.setv("hover", x) } }
-        SegRow {
-            label: "Hot spot"
-            desc: "Whole bar height, or only the very edge of the screen (the bar stays clickable there)"
-            options: [{ label: "Whole bar", value: "bar" }, { label: "Edge only", value: "edge" }]
-            current: page.v("hotspot", "bar")
-            onChosen: function(x) { page.setv("hotspot", x) }
-        }
         ToggleRow { label: "SUPER + W opens Wallpaper"; desc: "Off: SUPER + W opens the old wallpaper picker"; checked: page.v("wallpaper_key", true) === true; onToggled: function(x) { page.setv("wallpaper_key", x) } }
-        ToggleRow { label: "Close when the pointer leaves"; desc: "Otherwise click outside or press Esc"; checked: page.v("close_on_leave", true) === true; onToggled: function(x) { page.setv("close_on_leave", x) } }
-        SliderRow {
-            label: "Hot spot width"
-            desc: "How much of the middle of the edge opens it"
-            from: 80; to: 900; step: 20; unit: " px"
-            value: page.v("trigger", 320)
-            onCommitted: function(x) { page.setv("trigger", Math.round(x)) }
-        }
-        SliderRow {
-            label: "Delay"
-            desc: "Wait before it opens, so passing by does nothing"
-            from: 0; to: 900; step: 20; unit: " ms"
-            value: page.v("delay", 150)
-            onCommitted: function(x) { page.setv("delay", Math.round(x)) }
-        }
+        ToggleRow { label: "Close when the pointer leaves"; desc: "After you have been inside it. Otherwise click outside or press Esc"; checked: page.v("close_on_leave", true) === true; onToggled: function(x) { page.setv("close_on_leave", x) } }
 
         SectionTitle { text: "Size & motion" }
         SliderRow {

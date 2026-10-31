@@ -1,5 +1,11 @@
 # Changelog
 
+## V2.31
+- Dashboard always slides up from the bottom, smooth and without flying around
+- Wallpaper tab: arrow down/up moves right/left, Enter sets it, live preview on the desktop (Esc brings the old one back)
+- Falling stars on the Settings home page
+- Cleaner Settings sidebar; About lives only in the dashboard now
+
 ## V2.30
 - Dashboard grows out of the bar (Morph animation) and changes size with each tab
 - Edit mode: remove, add, resize and move the cards of Dashboard, Performance and About
@@ -8,7 +14,7 @@
 - The dashboard and the hot corner stay open while the pointer rests on the bar or in the corner
 
 ## V2.20
-- Dashboard: point at the middle of the bar (or SUPER + ALT + D) for Dashboard, Wallpaper, Performance and About
+- Dashboard: SUPER + ALT + D for Dashboard, Wallpaper, Performance and About
 - SUPER + W opens the new Wallpaper tab: search, random, folder and color schemes
 - Three dashboard looks: End4, Caelestia and DarkShadow Shell (Settings > Dashboard)
 - Smoother page animations in Settings

@@ -24,7 +24,7 @@ NOTIFIED = CACHE + "/update-notified"
 RAW = "https://raw.githubusercontent.com/shadowww-dev/shadows-shell/main/VERSION"
 FIRST_WAIT = 45            # seconds after login
 EVERY = 15 * 60            # GitHub is asked every 15 minutes
-TICK = 30                  # a check from Settings > About is noticed within this many seconds
+TICK = 30                  # a check from the About tab of the dashboard is noticed within this many seconds
 APP = "DarkShadow's Shell"
 ICON = HOME + "/.local/share/rice/icon.png"
 
@@ -233,7 +233,7 @@ def watch():
                 seen = mtime(STATE)
                 maybe_notify(st)
             else:
-                # Settings > About (or rice-update check) found something: tell right away
+                # the About tab of the dashboard (or rice-update check) found something: tell right away
                 m = mtime(STATE)
                 if m and m != seen:
                     seen = m

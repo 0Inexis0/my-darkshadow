@@ -226,7 +226,8 @@ ShellRoot {
     EditorWindow { root: root }
 
     // ---- dashboard (middle of the bar edge, SUPER + W for wallpapers)
-    Dashboard { }
+    Dashboard { id: dash }
+    WallPreview { path: dash.previewPath }
 
     Dock { dc: root.cfg.dock ? root.cfg.dock : ({}) }
 
