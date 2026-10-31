@@ -1,0 +1,162 @@
+import Quickshell
+import Quickshell.Io
+import QtQuick
+
+Item {
+    id: page
+    property var ctl
+    property var cs: ({ theme: "", size: 24, themes: [] })
+    property string pick: ""          // theme shown in the preview (hovered or current)
+
+    readonly property var current: {
+        const id = pick.length > 0 ? pick : cs.theme
+        const l = cs.themes || []
+        for (let i = 0; i < l.length; i++) if (l[i].id === id) return l[i]
+        return l.length > 0 ? l[0] : null
+    }
+    function img(t, role) { return t && t.preview && t.preview[role] ? "file://" + t.preview[role] : "" }
+    function apply(id) {
+        const n = Object.assign({}, cs); n.theme = id; cs = n
+        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-cursor\" set \"$1\"", "_", id])
+        page.ctl.status = "Cursor: " + id.replace(/-/g, " ")
+    }
+
+    Process {
+        id: stateProc
+        command: ["bash", "-c", "\"$HOME/.local/bin/rice-cursor\" state"]
+        running: true
+        stdout: StdioCollector { onStreamFinished: { try { page.cs = JSON.parse(text) } catch (e) { } } }
+    }
+
+    PageScroll {
+        anchors.fill: parent
+
+        // ---------- preview ----------
+        Rectangle {
+            width: parent.width
+            height: 210
+            radius: 16
+            clip: true
+            border.width: 1
+            border.color: "#1f1f1f"
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0; color: "#1c1b24" }
+                GradientStop { position: 1; color: "#101114" }
+            }
+            T {
+                x: 22; y: 18
+                text: "Preview"
+                font.pixelSize: 12
+                color: "#8a8a94"
+            }
+            T {
+                x: 22; y: 36
+                text: page.current ? page.current.name : "No cursor themes found"
+                font.pixelSize: 20
+                font.bold: true
+            }
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 26
+                spacing: 34
+                Repeater {
+                    model: [{ r: "default", n: "Normal" }, { r: "pointer", n: "Link" }, { r: "text", n: "Text" },
+                            { r: "wait", n: "Busy" }, { r: "grab", n: "Move" }]
+                    delegate: Column {
+                        spacing: 10
+                        Item {
+                            width: 64; height: 64
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            Rectangle { anchors.fill: parent; radius: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+                            Image {
+                                anchors.centerIn: parent
+                                width: Math.min(56, page.cs.size * 1.4); height: width
+                                source: page.img(page.current, modelData.r)
+                                fillMode: Image.PreserveAspectFit
+                                smooth: true
+                                cache: false
+                            }
+                        }
+                        T { anchors.horizontalCenter: parent.horizontalCenter; text: modelData.n; font.pixelSize: 11; color: "#9a9aa4" }
+                    }
+                }
+            }
+        }
+
+        SectionTitle { text: "Size" }
+        SliderRow {
+            label: "Cursor size"
+            desc: "24 is normal, bigger is easier to see"
+            from: 16; to: 64; step: 2; unit: " px"
+            value: page.cs.size || 24
+            onCommitted: function(x) {
+                const n = Object.assign({}, page.cs); n.size = Math.round(x); page.cs = n
+                Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-cursor\" size \"$1\"", "_", String(Math.round(x))])
+                page.ctl.status = "Cursor size " + Math.round(x)
+            }
+        }
+
+        SectionTitle { text: "Themes"; sub: "Hover to preview, click to use. Applies to Hyprland and all apps." }
+        Flow {
+            id: grid
+            width: parent.width
+            spacing: 10
+            Repeater {
+                model: page.cs.themes || []
+                delegate: Rectangle {
+                    readonly property bool on: page.cs.theme === modelData.id
+                    width: (grid.width - 20) / 3
+                    height: 92
+                    radius: 14
+                    color: tm.containsMouse ? "#191919" : "#141414"
+                    border.width: on ? 2 : 1
+                    border.color: on ? "#F6F5F4" : (tm.containsMouse ? "#3a3a3a" : "#222222")
+                    Behavior on border.color { ColorAnimation { duration: 140 } }
+                    Row {
+                        x: 14; y: 14
+                        spacing: 10
+                        Image { width: 26; height: 26; fillMode: Image.PreserveAspectFit; source: page.img(modelData, "default") }
+                        Image { width: 26; height: 26; fillMode: Image.PreserveAspectFit; source: page.img(modelData, "pointer") }
+                        Image { width: 26; height: 26; fillMode: Image.PreserveAspectFit; source: page.img(modelData, "text") }
+                    }
+                    T {
+                        x: 14
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: 14
+                        width: parent.width - 40
+                        text: modelData.name
+                        font.pixelSize: 12
+                        font.bold: on
+                        elide: Text.ElideRight
+                    }
+                    Rectangle {
+                        visible: on
+                        anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 10
+                        width: 18; height: 18; radius: 9
+                        color: "#F6F5F4"
+                        T { anchors.centerIn: parent; text: "✓"; font.pixelSize: 11; font.bold: true; color: "#0d0d0d" }
+                    }
+                    MouseArea {
+                        id: tm
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onEntered: page.pick = modelData.id
+                        onExited: if (page.pick === modelData.id) page.pick = ""
+                        onClicked: page.apply(modelData.id)
+                    }
+                }
+            }
+        }
+        T {
+            visible: !(page.cs.themes && page.cs.themes.length > 0)
+            width: parent.width
+            text: "No cursor themes found. Install Bibata: bibata-cursor-theme-bin (Arch, AUR) or bibata-cursors (NixOS)."
+            color: "#e0a050"
+            font.pixelSize: 12
+            wrapMode: Text.WordWrap
+        }
+    }
+}

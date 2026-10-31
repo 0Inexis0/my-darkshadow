@@ -11,7 +11,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=install/lib/distro.sh
 . "$ROOT/install/lib/distro.sh"
 
-ASSUME_YES=0; DRY_RUN=0; MODE=install; SKIP_PKGS=0
+ASSUME_YES=0; DRY_RUN=0; MODE=install; SKIP_PKGS=0; PULLED=0
 usage() {
   cat <<U
 DarkShadow's Shell installer $VERSION
@@ -20,6 +20,7 @@ Usage: ./install.sh [options]
   -y, --yes          install everything, no questions
   -n, --dry-run      show what would happen, change nothing
       --no-packages  skip the package step
+      --update       get the newest version and update apps, scripts and packages (keeps your configs)
       --restore      put back the files from the newest backup
   -h, --help         this help
 U
@@ -30,6 +31,8 @@ for a in "$@"; do
     -n|--dry-run) DRY_RUN=1 ;;
     --no-packages) SKIP_PKGS=1 ;;
     --restore) MODE=restore ;;
+    --update) MODE=update ;;
+    --pulled) MODE=update; PULLED=1 ;;
     -h|--help) usage; exit 0 ;;
     *) fail "Unknown option: $a"; usage; exit 2 ;;
   esac
@@ -210,7 +213,8 @@ set_look() {
     gsettings set org.gnome.desktop.interface cursor-theme "$theme" || true
     gsettings set org.gnome.desktop.interface cursor-size 24 || true
   fi
-  [ "$IN_HYPR" = 1 ] && T=5 t hyprctl setcursor "$theme" 24
+  [ -f "$HOME/.config/rice/cursor.json" ] || { mkdir -p "$HOME/.config/rice"; echo '{"theme": "Bibata-Modern-Ice", "size": 24}' >"$HOME/.config/rice/cursor.json"; }
+  [ -x "$ROOT/bin/rice-cursor" ] && T=10 t "$ROOT/bin/rice-cursor" restore
   # Nautilus opens folders
   command -v xdg-mime >/dev/null 2>&1 && [ -f /usr/share/applications/org.gnome.Nautilus.desktop ] &&
     xdg-mime default org.gnome.Nautilus.desktop inode/directory
@@ -300,11 +304,13 @@ patch_colors() {
   python3 "$ROOT/install/patches/colors-commands.py" "$c"
 }
 fixup() { python3 "$ROOT/install/lib/fixup.py" >"$1"; }
+remember_repo() { mkdir -p "$HOME/.config/rice"; echo "$ROOT" >"$HOME/.config/rice/repo"; }
 first_backup() { mkdir -p "$HOME/.config/rice" "$HOME/.cache/rice"; [ -f "$HOME/.config/rice/.first-backup" ] || echo "$BK" >"$HOME/.config/rice/.first-backup"; }
 
 step_finish() {
   local T=25
   task "Remembering your backup folder" first_backup
+  task "Remembering where this copy lives (for updates)" remember_repo
   task "Loading the shell's modules in Hyprland" wire_hypr
   local fx; fx="$(mktemp)"
   task "Fitting the config to this computer" fixup "$fx"
@@ -316,6 +322,7 @@ step_finish() {
   command -v hyprlock >/dev/null 2>&1 && task "Lock screen and idle timers" t "$BIN/rice-lock" apply
   command -v rofi >/dev/null 2>&1 && task "Rofi theme" t "$BIN/rice-rofi" apply
   task "Hot corner" t "$BIN/rice-hotcorner" apply
+  [ -x "$BIN/desktop-set" ] && task "Dock blur" t "$BIN/desktop-set" dock-blur
   task "Theme colors for the wallpaper picker" patch_colors
   if [ "$IN_HYPR" = 1 ] && [ "$DRY_RUN" != 1 ]; then
     task "Reloading Hyprland" t hyprctl reload
@@ -354,15 +361,42 @@ if [ "$FAMILY" = arch ]; then h="$(aur_helper)"; kv "AUR" "${h:-none yet (yay ca
 [ "$DRY_RUN" = 1 ] && warn "Dry run: nothing will be changed."
 [ "$MODE" = restore ] && do_restore
 
+if [ "$MODE" = update ]; then
+  title "Update"
+  if [ "$PULLED" = 1 ]; then ok "Got the newest version"
+  elif [ -d "$ROOT/.git" ] && command -v git >/dev/null 2>&1; then
+    old="$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo ?)"
+    if [ "$DRY_RUN" = 1 ]; then info "would run: git pull"
+    elif git -C "$ROOT" pull --ff-only >>"$LOG" 2>&1; then
+      new="$(git -C "$ROOT" rev-parse --short HEAD)"
+      if [ "$old" = "$new" ]; then ok "Already the newest version ($new)"; else ok "Updated $old -> $new"
+        # the installer itself may have changed: start the new one
+        exec "$ROOT/install.sh" --update --pulled "$@"
+      fi
+    else
+      warn "git pull failed (local changes?). Continuing with the files you have."
+    fi
+  fi
+fi
+
+if [ "$MODE" = update ]; then
+  WANT=(1 0 0 1)
+  [ "$SKIP_PKGS" = 1 ] && WANT[0]=0
+  [ "$FAMILY" = arch ] || WANT[0]=0
+  if [ "$ASSUME_YES" != 1 ] && confirm "Also replace your config files (Hyprland, Waybar, ...) with the new ones? Your current ones are backed up."; then
+    WANT[2]=1
+  fi
+  MENU_CHOICE=99
+else
 menu_select "What would you like to do?" \
   "Install everything|recommended" \
   "Choose what to install|" \
   "Restore my previous files|from the last backup" \
   "Quit|"
 case "$MENU_CHOICE" in 2) do_restore ;; 3) exit 0 ;; esac
-
 WANT=(1 1 1 1)
 [ "$SKIP_PKGS" = 1 ] && WANT[0]=0
+fi
 if [ "$MENU_CHOICE" = 1 ]; then
   menu_multi "Choose what to install" \
     "Packages|Hyprland, Quickshell, Waybar, tools|${WANT[0]}" \
@@ -386,7 +420,9 @@ n=0
 if [ "${WANT[0]}" = 1 ]; then n=$((n + 1)); step "$n" "Packages" "Everything the desktop needs, from your package manager"; step_packages; fi
 if [ "${WANT[1]}" = 1 ]; then n=$((n + 1)); step "$n" "Fonts" "So text and icons look right"; step_fonts; fi
 if [ "${WANT[2]}" = 1 ]; then n=$((n + 1)); step "$n" "Config files" "Your old files are backed up first"; step_configs; fi
-if [ "${WANT[3]}" = 1 ]; then n=$((n + 1)); step "$n" "Apps and scripts" "Settings app, desktop widgets and the commands behind them"; step_apps; fi
+if [ "${WANT[3]}" = 1 ]; then n=$((n + 1)); step "$n" "Apps and scripts" "Settings app, desktop widgets and the commands behind them"; step_apps
+  [ "${WANT[2]}" = 1 ] || task "Hyprland add-ons (keybinds, hot corner)" copy_lua
+fi
 n=$((n + 1)); step "$n" "Finishing" "Theme, lock screen, notifications and hot corner"; step_finish
 
 # ------------------------------------------------------------------ summary
@@ -396,7 +432,8 @@ hr
 if [ "$DRY_RUN" = 1 ]; then
   printf '  %s%sDry run finished.%s Nothing was changed.\n' "$CB" "$CW" "$C0"
 else
-  printf '  %s%sDarkShadow'"'"'s Shell is installed.%s\n' "$CB" "$CW" "$C0"
+  if [ "$MODE" = update ]; then printf '  %s%sDarkShadow'"'"'s Shell is up to date.%s\n' "$CB" "$CW" "$C0"
+  else printf '  %s%sDarkShadow'"'"'s Shell is installed.%s\n' "$CB" "$CW" "$C0"; fi
 fi
 hr
 if [ -n "$miss" ]; then warn "Still missing: $miss"; else ok "All needed programs are installed"; fi

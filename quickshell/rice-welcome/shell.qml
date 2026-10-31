@@ -73,7 +73,7 @@ ShellRoot {
                 T {
                     anchors.horizontalCenter: parent.horizontalCenter
                     kind: "title"
-                    text: "Welcome to Shadow's Shell"
+                    text: "Welcome to DarkShadow's Shell"
                     font.pixelSize: 26
                     font.bold: true
                 }

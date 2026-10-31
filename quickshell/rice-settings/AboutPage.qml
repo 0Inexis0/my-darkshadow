@@ -108,7 +108,16 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 3
                 T { text: "Dotfiles"; font.pixelSize: 14 }
-                T { kind: "reading"; text: "Shadow's Shell"; color: "#8a8a8a"; font.pixelSize: 12 }
+                T { kind: "reading"; text: "DarkShadow's Shell"; color: "#8a8a8a"; font.pixelSize: 12 }
+            }
+            Btn {
+                anchors.right: parent.right
+                anchors.rightMargin: 44
+                anchors.verticalCenter: parent.verticalCenter
+                primary: true
+                text: "Update"
+                // opens a terminal so you can see the update and type your sudo password
+                onClicked: Quickshell.execDetached(["bash", "-c", "t=\"${TERMINAL:-kitty}\"; command -v \"$t\" >/dev/null || t=kitty; exec \"$t\" -e \"$HOME/.local/bin/rice-update\""])
             }
             T { kind: "icon"; anchors.right: parent.right; anchors.rightMargin: 18; anchors.verticalCenter: parent.verticalCenter; text: ""; color: "#8a8a8a" }
         }

@@ -264,8 +264,8 @@ Item {
                     model: [
                         { i: "\udb80\udfd8", t: "Theme", d: "Colors & schemes", p: 4 },
                         { i: "\uf03e", t: "Wallpaper", d: "Pick a new one", p: -1 },
-                        { i: "\uf0f3", t: "Notifications", d: "Popups & panel", p: 5 },
-                        { i: "\uf023", t: "Lock screen", d: "Idle & lock", p: 6 },
+                        { i: "\uf0f3", t: "Notifications", d: "Popups & panel", p: 6 },
+                        { i: "\uf023", t: "Lock screen", d: "Idle & lock", p: 7 },
                         { i: "\uf0c9", t: "Waybar", d: "Bar layout & style", p: 1 },
                         { i: "\uf002", t: "Rofi", d: "App launcher", p: 3 }
                     ]

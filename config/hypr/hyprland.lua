@@ -130,7 +130,7 @@ hl.config({
         shadow = {
             enabled      = true,
             range        = 12,
-            render_power = 10,
+            render_power = 4,
             color        = 0xee1a1a1a,
         },
 
@@ -451,13 +451,6 @@ hl.layer_rule({
 })
 
 hl.layer_rule({
-    name  = "rice-dock-blur",
-    match = { namespace = "rice-dock" },
-    blur = true,
-    ignore_alpha = 0.1,
-})
-
-hl.layer_rule({
     name  = "waybar-slide",
     match = { namespace = "waybar" },
     animation = "slide top",
@@ -465,6 +458,7 @@ hl.layer_rule({
 
 require("hyprland-gui")
 require("rice-settings")
+require("rice-dock")
 require("rice-hotcorner")
 require("rice-notify")
 require("rice-rofi")

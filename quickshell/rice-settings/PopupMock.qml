@@ -99,7 +99,7 @@ Item {
                 height: sum.implicitHeight
                 Text {
                     id: sum
-                    text: "Shadow's Shell"
+                    text: "DarkShadow's Shell"
                     font.family: m.fam.length > 0 ? m.fam : Fonts.family("main")
                     font.pixelSize: 13 * m.fs
                     font.bold: true

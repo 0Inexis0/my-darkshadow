@@ -99,6 +99,104 @@ Item {
             width: flick.width
             spacing: 10
 
+            // ---------- live preview of the bar ----------
+            Rectangle {
+                id: wprev
+                width: parent.width
+                height: 128
+                radius: 16
+                clip: true
+                border.width: 1
+                border.color: "#1f1f1f"
+                gradient: Gradient {
+                    GradientStop { position: 0; color: "#2a2740" }
+                    GradientStop { position: 1; color: "#12131a" }
+                }
+                readonly property var st: page.ctl.st || ({})
+                readonly property string style: st.style || "flat"
+                readonly property string grp: st.group || "none"
+                readonly property bool atTop: (st.position || "top") === "top"
+                readonly property real op: st.opacity !== undefined ? st.opacity : 0.9
+                readonly property int pad: st.height !== undefined ? st.height : 4
+                readonly property var lay: st.layout || ({ left: [], center: [], right: [] })
+                function chip(m) {
+                    if (m === "image#nix" || m === "custom/distro") return page.ctl.osGlyph()
+                    if (m === "group/ws") return "1  2  3  4"
+                    if (m === "mpris") return "󰎈  Song"
+                    if (m === "wireplumber") return "󰕾 50%"
+                    if (m === "clock") return "12:34"
+                    if (m === "group/apps") return "󰂯  󰖩"
+                    if (m === "custom/notification") return "󰂚"
+                    if (m === "custom/lock") return "󰐥"
+                    return "•"
+                }
+                // a small window, so the preview looks like a desktop
+                Rectangle { x: 60; y: wprev.atTop ? 56 : 18; width: wprev.width - 120; height: 52; radius: 10; color: Qt.rgba(1, 1, 1, 0.05) }
+
+                Rectangle {
+                    id: bar
+                    readonly property bool island: wprev.style === "island"
+                    readonly property bool floating: wprev.style === "floating"
+                    readonly property bool islands: wprev.style === "islands"
+                    width: island ? Math.min(wprev.width - 80, row.implicitWidth + 40) : wprev.width - (floating ? 24 : (islands ? 16 : 0))
+                    height: 26 + wprev.pad * 2
+                    x: (wprev.width - width) / 2
+                    y: wprev.atTop ? (floating || island ? 8 : (islands ? 6 : 0)) : wprev.height - height - (floating || island ? 8 : (islands ? 6 : 0))
+                    radius: island ? 14 : (floating ? 10 : 0)
+                    color: islands ? "transparent" : (island ? Qt.rgba(0.086, 0.086, 0.086, wprev.op) : Qt.rgba(0.05, 0.05, 0.05, wprev.op))
+                    border.width: (floating || island) ? 1 : 0
+                    border.color: Qt.rgba(1, 1, 1, 0.08)
+                    Behavior on y { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
+                    Behavior on width { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
+                    Behavior on radius { NumberAnimation { duration: 200 } }
+
+                    component Zone: Row {
+                        property var mods: []
+                        spacing: 4
+                        Repeater {
+                            model: mods
+                            delegate: Rectangle {
+                                readonly property bool boxed: wprev.grp === "pills" || (wprev.style === "islands")
+                                height: bar.height - 8
+                                width: lbl.implicitWidth + 16
+                                radius: wprev.grp === "pills" || (wprev.style === "islands") ? 8 : 0
+                                color: boxed ? Qt.rgba(0.05, 0.05, 0.05, Math.max(wprev.op, 0.5)) : "transparent"
+                                border.width: boxed ? 1 : 0
+                                border.color: "#2a2a2a"
+                                T { id: lbl; kind: "icon"; anchors.centerIn: parent; text: wprev.chip(modelData); font.pixelSize: 11 }
+                            }
+                        }
+                    }
+                    Item {
+                        id: row
+                        anchors.fill: parent
+                        anchors.leftMargin: 10
+                        anchors.rightMargin: 10
+                        implicitWidth: zl.implicitWidth + zc.implicitWidth + zr.implicitWidth + 40
+                        Rectangle {
+                            visible: wprev.grp === "segmented"
+                            anchors.fill: zl; anchors.margins: -3; radius: 9
+                            color: Qt.rgba(0.05, 0.05, 0.05, Math.max(wprev.op, 0.5)); border.width: 1; border.color: "#2a2a2a"
+                        }
+                        Rectangle {
+                            visible: wprev.grp === "segmented"
+                            anchors.fill: zr; anchors.margins: -3; radius: 9
+                            color: Qt.rgba(0.05, 0.05, 0.05, Math.max(wprev.op, 0.5)); border.width: 1; border.color: "#2a2a2a"
+                        }
+                        Zone { id: zl; mods: wprev.lay.left || []; anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter }
+                        Zone { id: zc; mods: wprev.lay.center || []; anchors.centerIn: parent }
+                        Zone { id: zr; mods: wprev.lay.right || []; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter }
+                    }
+                }
+                T {
+                    anchors.right: parent.right; anchors.rightMargin: 12
+                    y: wprev.atTop ? wprev.height - 22 : 8
+                    text: "Preview"
+                    font.pixelSize: 10
+                    color: "#7a7a84"
+                }
+            }
+
             T { kind: "title"; text: "Bar layout"; font.pixelSize: 16; font.bold: true }
             T {
                 width: parent.width

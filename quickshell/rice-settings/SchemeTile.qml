@@ -5,6 +5,7 @@ Rectangle {
     property var scheme: ({ key: "", name: "", preview: ["#111", "#888", "#eee"] })
     property bool selected: false
     signal picked(string key)
+    signal peek(string key, bool on)
     width: 104
     height: 76
     radius: 14
@@ -46,5 +47,7 @@ Rectangle {
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onClicked: t.picked(t.scheme.key)
+        onEntered: t.peek(t.scheme.key, true)
+        onExited: t.peek(t.scheme.key, false)
     }
 }

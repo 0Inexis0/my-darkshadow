@@ -24,6 +24,16 @@
     wl-clipboard
     libnotify
     xdg-user-dirs
+    pavucontrol
+    gnome-calendar
+    overskride
+    nautilus
+    btop
+    cmatrix
+    peaclock
+    fastfetch
+    papirus-icon-theme
+    bibata-cursors
   ];
 
   fonts.packages = with pkgs; [

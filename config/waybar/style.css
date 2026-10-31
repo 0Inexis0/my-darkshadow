@@ -259,6 +259,11 @@ window#waybar #bluetooth, window#waybar #tray, window#waybar #network {
     margin-right: 1px;
 }
 
+#custom-distro {
+    font-size: 16px;
+    padding: 0 8px;
+}
+
 window#waybar #custom-lock {
     font-size: 18px;
 }

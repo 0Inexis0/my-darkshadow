@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Update DarkShadow's Shell: newest version from GitHub, then apps, scripts and packages.
+repo="$(cat "$HOME/.config/rice/repo" 2>/dev/null)"
+[ -n "$repo" ] && [ -x "$repo/install.sh" ] || repo="$HOME/shadows-shell"
+if [ ! -x "$repo/install.sh" ]; then
+  echo "Could not find your copy of the repo. Clone it again:"
+  echo "  git clone https://github.com/shadowww-dev/shadows-shell ~/shadows-shell"
+  read -r -p "Press Enter to close" _
+  exit 1
+fi
+cd "$repo" || exit 1
+./install.sh --update "$@"
+echo
+read -r -p "Press Enter to close" _

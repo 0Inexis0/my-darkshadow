@@ -58,6 +58,117 @@ Item {
             width: flick.width
             spacing: 10
 
+            // ---------- live preview ----------
+            Rectangle {
+                id: rprev
+                width: parent.width
+                height: 230
+                radius: 16
+                clip: true
+                border.width: 1
+                border.color: "#1f1f1f"
+                gradient: Gradient {
+                    GradientStop { position: 0; color: "#2a2740" }
+                    GradientStop { position: 1; color: "#12131a" }
+                }
+                readonly property var th: (page.rs.themes && page.rs.themes[page.v("theme", "shadow")]) ? page.rs.themes[page.v("theme", "shadow")]
+                                          : ({ bg: "#0d0d0d", alt: "#1a1a1a", sel: "#F6F5F4", fg: "#F6F5F4" })
+                readonly property real sc: width / 1920 * 1.35
+                readonly property string lay: page.v("layout", "list")
+                readonly property string pos: page.v("position", "center")
+                readonly property real alpha: page.v("transparency", true) === true ? page.v("opacity", 0.82) : 1
+                function withAlpha(c, a) { const q = Qt.color(c); return Qt.rgba(q.r, q.g, q.b, a) }
+                function lum(c) { const q = Qt.color(c); return 0.299 * q.r + 0.587 * q.g + 0.114 * q.b }
+                readonly property color selFg: lum(th.sel) > 0.55 ? "#111111" : "#F6F5F4"
+                readonly property int rows: Math.min(5, page.v("lines", 8))
+
+                Rectangle { x: 50; y: 30; width: 220; height: 120; radius: 10; color: Qt.rgba(1, 1, 1, 0.05) }
+
+                Rectangle {
+                    id: win
+                    readonly property bool bar: rprev.lay === "bar"
+                    width: bar ? rprev.width : Math.min(rprev.width - 40, Math.max(rprev.lay === "grid" ? 720 : 360, page.v("width", 620)) * rprev.sc)
+                    height: bar ? 34 : body.implicitHeight + 20
+                    x: (rprev.width - width) / 2
+                    y: rprev.pos === "top" ? (bar ? 0 : 16) : rprev.pos === "bottom" ? rprev.height - height - (bar ? 0 : 16) : (rprev.height - height) / 2
+                    radius: bar ? 0 : page.v("radius", 18) * 0.7
+                    color: rprev.withAlpha(rprev.th.bg, rprev.alpha)
+                    border.width: 1
+                    border.color: Qt.rgba(1, 1, 1, 0.1)
+                    Behavior on y { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
+                    Behavior on width { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
+
+                    // full-width bar style
+                    Row {
+                        visible: win.bar
+                        anchors.fill: parent
+                        anchors.margins: 6
+                        spacing: 8
+                        Rectangle {
+                            width: parent.width * 0.22; height: parent.height; radius: 7
+                            color: rprev.withAlpha(rprev.th.alt, Math.min(1, rprev.alpha + 0.08))
+                            T { x: 8; anchors.verticalCenter: parent.verticalCenter; text: "Search"; font.pixelSize: 10; color: rprev.th.fg; opacity: 0.5 }
+                        }
+                        Repeater {
+                            model: ["Firefox", "Kitty", "Files", "Spotify", "Discord"]
+                            delegate: Rectangle {
+                                height: parent.height; width: bl.implicitWidth + 16; radius: 6
+                                color: index === 0 ? rprev.th.sel : "transparent"
+                                T { id: bl; anchors.centerIn: parent; text: modelData; font.pixelSize: 10; color: index === 0 ? rprev.selFg : rprev.th.fg }
+                            }
+                        }
+                    }
+
+                    Column {
+                        id: body
+                        visible: !win.bar
+                        x: 10; y: 10
+                        width: parent.width - 20
+                        spacing: 6
+                        Rectangle {
+                            width: parent.width; height: 26; radius: Math.max(4, win.radius - 4)
+                            color: rprev.withAlpha(rprev.th.alt, Math.min(1, rprev.alpha + 0.08))
+                            T { kind: "icon"; x: 9; anchors.verticalCenter: parent.verticalCenter; text: "󰍉"; font.pixelSize: 11; color: rprev.th.fg; opacity: 0.6 }
+                            T { x: 26; anchors.verticalCenter: parent.verticalCenter; text: "Search"; font.pixelSize: 10; color: rprev.th.fg; opacity: 0.5 }
+                        }
+                        // list
+                        Repeater {
+                            model: rprev.lay === "list" ? ["Firefox", "Kitty", "Files", "Spotify", "Discord"].slice(0, rprev.rows) : []
+                            delegate: Rectangle {
+                                width: body.width; height: 20; radius: Math.max(3, win.radius - 6)
+                                color: index === 0 ? rprev.th.sel : "transparent"
+                                Row {
+                                    x: 8; anchors.verticalCenter: parent.verticalCenter; spacing: 7
+                                    Rectangle { visible: page.v("icons", true) === true; width: 11; height: 11; radius: 3; color: ["#e06c75", "#61afef", "#e5c07b", "#98c379", "#c678dd"][index]; anchors.verticalCenter: parent.verticalCenter }
+                                    T { text: modelData; font.pixelSize: 10; color: index === 0 ? rprev.selFg : rprev.th.fg; anchors.verticalCenter: parent.verticalCenter }
+                                }
+                            }
+                        }
+                        // grid
+                        Grid {
+                            visible: rprev.lay === "grid"
+                            columns: 4
+                            spacing: 6
+                            Repeater {
+                                model: rprev.lay === "grid" ? 8 : 0
+                                delegate: Rectangle {
+                                    width: (body.width - 18) / 4; height: 40; radius: Math.max(3, win.radius - 6)
+                                    color: index === 0 ? rprev.th.sel : "transparent"
+                                    Rectangle { anchors.horizontalCenter: parent.horizontalCenter; y: 6; width: 16; height: 16; radius: 4; color: ["#e06c75", "#61afef", "#e5c07b", "#98c379", "#c678dd", "#56b6c2", "#d19a66", "#abb2bf"][index] }
+                                    Rectangle { anchors.horizontalCenter: parent.horizontalCenter; y: 28; width: parent.width * 0.5; height: 4; radius: 2; color: index === 0 ? rprev.selFg : rprev.th.fg; opacity: 0.6 }
+                                }
+                            }
+                        }
+                    }
+                }
+                T {
+                    anchors.right: parent.right; anchors.rightMargin: 12; anchors.top: parent.top; anchors.topMargin: 8
+                    text: "Preview"
+                    font.pixelSize: 10
+                    color: "#7a7a84"
+                }
+            }
+
             T { kind: "title"; text: "Theme"; font.pixelSize: 16; font.bold: true }
 
             Flow {

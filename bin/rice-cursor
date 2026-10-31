@@ -1,0 +1,193 @@
+#!/usr/bin/env python3
+"""rice-cursor: pick the mouse cursor theme (Settings > Cursors).
+
+  rice-cursor state                 themes, current theme and preview images as JSON
+  rice-cursor set THEME [SIZE]      use a theme everywhere (Hyprland, GTK 3/4, XWayland apps)
+  rice-cursor size SIZE             change only the size
+  rice-cursor restore               apply the saved choice again (runs at login)
+"""
+import configparser
+import json
+import os
+import shutil
+import struct
+import subprocess
+import sys
+import zlib
+
+HOME = os.path.expanduser("~")
+USER = os.environ.get("USER", "")
+CFG = HOME + "/.config/rice/cursor.json"
+CACHE = HOME + "/.cache/rice/cursors"
+DIRS = [HOME + "/.local/share/icons", HOME + "/.icons", "/usr/share/icons", "/usr/local/share/icons",
+        "/run/current-system/sw/share/icons", HOME + "/.nix-profile/share/icons",
+        "/etc/profiles/per-user/%s/share/icons" % USER]
+ROLES = {
+    "default": ["left_ptr", "default", "arrow"],
+    "pointer": ["pointer", "hand2", "pointing_hand", "hand1"],
+    "text": ["text", "xterm", "ibeam"],
+    "wait": ["wait", "watch", "left_ptr_watch", "progress"],
+    "grab": ["grabbing", "closedhand", "fleur", "grab", "move"],
+}
+DEFAULT = {"theme": "Bibata-Modern-Ice", "size": 24}
+
+
+def load():
+    try:
+        c = json.load(open(CFG))
+        return {"theme": str(c.get("theme") or DEFAULT["theme"]), "size": int(c.get("size") or 24)}
+    except Exception:
+        return dict(DEFAULT)
+
+
+def save(c):
+    os.makedirs(os.path.dirname(CFG), exist_ok=True)
+    json.dump(c, open(CFG, "w"))
+
+
+def themes():
+    found = {}
+    for d in DIRS:
+        if not os.path.isdir(d):
+            continue
+        for name in sorted(os.listdir(d)):
+            cur = os.path.join(d, name, "cursors")
+            if name in found or name == "default" or not os.path.isdir(cur):
+                continue
+            title = name
+            idx = os.path.join(d, name, "index.theme")
+            if os.path.isfile(idx):
+                cp = configparser.ConfigParser(interpolation=None, strict=False)
+                try:
+                    cp.read(idx)
+                    title = cp.get("Icon Theme", "Name", fallback=name)
+                except Exception:
+                    pass
+            found[name] = {"id": name, "name": title.replace("-", " "), "dir": cur}
+    return found
+
+
+# ---------- Xcursor -> PNG (no extra libraries) ----------
+def read_xcursor(path, want=32):
+    with open(path, "rb") as f:
+        data = f.read()
+    if data[:4] != b"Xcur":
+        return None
+    hsize, _ver, ntoc = struct.unpack_from("<III", data, 4)
+    imgs = []
+    for i in range(ntoc):
+        typ, sub, pos = struct.unpack_from("<III", data, hsize + i * 12)
+        if typ == 0xFFFD0002:
+            imgs.append((sub, pos))
+    if not imgs:
+        return None
+    size, pos = min(imgs, key=lambda t: (abs(t[0] - want), t[1]))
+    _h, _t, _s, _v, w, h, _xh, _yh, _d = struct.unpack_from("<IIIIIIIII", data, pos)
+    px = data[pos + 36: pos + 36 + w * h * 4]
+    return w, h, px
+
+
+def write_png(path, w, h, bgra):
+    rows = bytearray()
+    for y in range(h):
+        rows.append(0)
+        for x in range(w):
+            b, g, r, a = bgra[(y * w + x) * 4:(y * w + x) * 4 + 4]
+            if a and a < 255:  # un-premultiply
+                r, g, b = min(255, r * 255 // a), min(255, g * 255 // a), min(255, b * 255 // a)
+            rows += bytes((r, g, b, a))
+
+    def chunk(t, d):
+        return struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d) & 0xFFFFFFFF)
+    png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 6, 0, 0, 0)) \
+        + chunk(b"IDAT", zlib.compress(bytes(rows), 9)) + chunk(b"IEND", b"")
+    with open(path, "wb") as f:
+        f.write(png)
+
+
+def previews(t):
+    out = {}
+    dst = os.path.join(CACHE, t["id"])
+    for role, names in ROLES.items():
+        png = os.path.join(dst, role + ".png")
+        if os.path.isfile(png):
+            out[role] = png
+            continue
+        for n in names:
+            p = os.path.join(t["dir"], n)
+            if os.path.exists(p):
+                try:
+                    r = read_xcursor(os.path.realpath(p))
+                except Exception:
+                    r = None
+                if r:
+                    os.makedirs(dst, exist_ok=True)
+                    write_png(png, *r)
+                    out[role] = png
+                    break
+    return out
+
+
+# ---------- apply ----------
+def set_ini(path, values):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    lines = open(path).read().splitlines() if os.path.exists(path) else ["[Settings]"]
+    if not any(l.strip() == "[Settings]" for l in lines):
+        lines.insert(0, "[Settings]")
+    for k, v in values.items():
+        for i, l in enumerate(lines):
+            if l.split("=")[0].strip() == k:
+                lines[i] = "%s=%s" % (k, v)
+                break
+        else:
+            lines.insert(lines.index("[Settings]") + 1, "%s=%s" % (k, v))
+    open(path, "w").write("\n".join(lines) + "\n")
+
+
+def run(cmd):
+    if shutil.which(cmd[0]):
+        try:
+            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
+        except Exception:
+            pass
+
+
+def apply(c):
+    theme, size = c["theme"], c["size"]
+    os.makedirs(HOME + "/.icons/default", exist_ok=True)
+    open(HOME + "/.icons/default/index.theme", "w").write("[Icon Theme]\nName=Default\nInherits=%s\n" % theme)
+    for v in ("gtk-3.0", "gtk-4.0"):
+        set_ini("%s/.config/%s/settings.ini" % (HOME, v), {"gtk-cursor-theme-name": theme, "gtk-cursor-theme-size": size})
+    run(["gsettings", "set", "org.gnome.desktop.interface", "cursor-theme", theme])
+    run(["gsettings", "set", "org.gnome.desktop.interface", "cursor-size", str(size)])
+    run(["hyprctl", "setcursor", theme, str(size)])
+
+
+def main(a):
+    cmd = a[1] if len(a) > 1 else ""
+    c = load()
+    if cmd == "state":
+        ts = themes()
+        lst = []
+        for t in sorted(ts.values(), key=lambda t: (not t["id"].lower().startswith("bibata"), t["name"].lower())):
+            lst.append({"id": t["id"], "name": t["name"], "preview": previews(t)})
+        print(json.dumps({"theme": c["theme"], "size": c["size"], "themes": lst}))
+    elif cmd == "set" and len(a) > 2:
+        c["theme"] = a[2]
+        if len(a) > 3:
+            c["size"] = max(12, min(96, int(float(a[3]))))
+        save(c)
+        apply(c)
+    elif cmd == "size" and len(a) > 2:
+        c["size"] = max(12, min(96, int(float(a[2]))))
+        save(c)
+        apply(c)
+    elif cmd == "restore":
+        apply(c)
+    else:
+        sys.stderr.write(__doc__)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main(sys.argv)
