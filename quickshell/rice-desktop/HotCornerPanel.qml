@@ -43,7 +43,17 @@ Item {
         visible: pnl.showBg
         anchors.fill: parent
         radius: pnl.rad
-        color: Qt.rgba(0.07, 0.07, 0.08, pnl.cfg.opacity !== undefined ? pnl.cfg.opacity : 0.88)
+        color: {
+            const a = pnl.cfg.transparency === false ? 1 : (pnl.cfg.opacity !== undefined ? pnl.cfg.opacity : 0.9)
+            let r = 18, g = 18, b = 20
+            if (pnl.cfg.tint === true) {
+                const x = String(pnl.acc).replace("#", "")
+                r = 18 + (parseInt(x.substr(0, 2), 16) - 18) * 0.16
+                g = 18 + (parseInt(x.substr(2, 2), 16) - 18) * 0.16
+                b = 20 + (parseInt(x.substr(4, 2), 16) - 20) * 0.16
+            }
+            return Qt.rgba(r / 255, g / 255, b / 255, a)
+        }
         border.width: 1
         border.color: Qt.rgba(1, 1, 1, 0.08)
     }
@@ -128,7 +138,7 @@ Item {
     // ---------- building blocks ----------
     component HcCard: Rectangle {
         radius: pnl.inner
-        color: Qt.rgba(1, 1, 1, 0.05)
+        color: Qt.rgba(1, 1, 1, pnl.cfg.card_alpha !== undefined ? pnl.cfg.card_alpha : 0.05)
         border.width: 1
         border.color: Qt.rgba(1, 1, 1, 0.04)
     }

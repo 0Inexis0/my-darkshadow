@@ -21,6 +21,17 @@ FloatingWindow {
     property alias stateTimer: stateTimer
     property var dst: ({ widgets: {}, clock: {}, dock: {}, lock: {} })
     property string osName: "Linux"
+    property var osIds: ["linux"]
+    // distro logo from the Nerd Font "font logos" set (NixOS logo on NixOS, Arch logo on Arch, ...)
+    readonly property var osGlyphs: ({
+        nixos: "\uf313", arch: "\uf303", archarm: "\uf303", cachyos: "\uf303", endeavouros: "\uf322", manjaro: "\uf312",
+        garuda: "\uf303", ubuntu: "\uf31b", fedora: "\uf30a", debian: "\uf306", opensuse: "\uf314", gentoo: "\uf30d",
+        void: "\uf32e", alpine: "\uf300", linuxmint: "\uf30e", pop: "\uf32a"
+    })
+    function osGlyph() {
+        for (let i = 0; i < osIds.length; i++) if (osGlyphs[osIds[i]] !== undefined) return osGlyphs[osIds[i]]
+        return "\uf17c"
+    }
     readonly property string userName: Quickshell.env("USER")
 
     function dset(group, key, value) {
@@ -56,10 +67,14 @@ FloatingWindow {
 
     Process {
         id: osProc
-        command: ["bash", "-c", ". /etc/os-release 2>/dev/null; echo \"${NAME:-Linux}\""]
+        command: ["bash", "-c", ". /etc/os-release 2>/dev/null; printf '%s\\n%s\\n%s\\n' \"${NAME:-Linux}\" \"${ID:-linux}\" \"${ID_LIKE:-}\""]
         running: true
         stdout: StdioCollector {
-            onStreamFinished: { const t = text.trim(); if (t.length > 0) win.osName = t }
+            onStreamFinished: {
+                const p = text.split("\n")
+                if (p[0] && p[0].trim().length > 0) win.osName = p[0].trim()
+                win.osIds = ((p[1] || "") + " " + (p[2] || "")).trim().toLowerCase().split(/\s+/)
+            }
         }
     }
 
@@ -231,7 +246,12 @@ FloatingWindow {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 1
                 T { text: win.userName; font.pixelSize: 14; font.bold: true; width: parent.width; elide: Text.ElideRight }
-                T { text: win.osName; font.pixelSize: 11; color: "#8a8a8a"; width: parent.width; elide: Text.ElideRight }
+                Row {
+                    spacing: 5
+                    width: parent.width
+                    T { kind: "icon"; text: win.osGlyph(); font.pixelSize: 12; color: "#8a8a8a"; anchors.verticalCenter: parent.verticalCenter }
+                    T { text: win.osName; font.pixelSize: 11; color: "#8a8a8a"; width: parent.width - 20; elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter }
+                }
             }
         }
         Rectangle { x: 16; y: 62; width: parent.width - 32; height: 1; color: "#222222" }
@@ -255,40 +275,82 @@ FloatingWindow {
             }
         }
 
-        Rectangle {
-            x: 16
-            y: 72 + win.page * 56
-            width: 206
-            height: 46
-            radius: 14
-            color: "#2a2a2a"
-            Behavior on y { NumberAnimation { duration: 280; easing.type: Easing.OutCubic } }
-        }
-
-        Column {
+        // sidebar scrolls when the categories do not fit
+        Flickable {
+            id: navFlick
             x: 16
             y: 72
             width: 206
-            spacing: 10
+            height: parent.height - 72 - 34
+            contentWidth: width
+            contentHeight: navCol.height + 8
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            Behavior on contentY {
+                enabled: !navFlick.dragging && !navFlick.flicking
+                NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+            }
+            WheelHandler {
+                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                onWheel: function(e) {
+                    const max = Math.max(0, navFlick.contentHeight - navFlick.height)
+                    navFlick.contentY = Math.max(0, Math.min(max, navFlick.contentY - e.angleDelta.y * 0.9))
+                }
+            }
+            // keep the selected category visible
+            function reveal() {
+                const top = win.page * 56, bottom = top + 46
+                if (top < contentY) contentY = top
+                else if (bottom > contentY + height) contentY = Math.min(Math.max(0, contentHeight - height), bottom + 8 - height)
+            }
+            Connections { target: win; function onPageChanged() { navFlick.reveal() } }
 
-            Repeater {
-                model: win.pages
-                delegate: Rectangle {
-                    width: parent.width
-                    height: 46
-                    radius: 14
-                    color: win.page !== index && navMouse.containsMouse ? "#1a1a1a" : "transparent"
-                    Behavior on color { ColorAnimation { duration: 150 } }
-                    T { kind: "icon"; x: 18; anchors.verticalCenter: parent.verticalCenter; text: modelData.icon; font.pixelSize: 18 }
-                    T { x: 50; width: parent.width - 58; elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter; text: modelData.name; font.pixelSize: 14; font.bold: win.page === index }
-                    MouseArea {
-                        id: navMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: win.page = index
+            Rectangle {
+                y: win.page * 56
+                width: 206
+                height: 46
+                radius: 14
+                color: "#2a2a2a"
+                Behavior on y { NumberAnimation { duration: 280; easing.type: Easing.OutCubic } }
+            }
+
+            Column {
+                id: navCol
+                width: 206
+                spacing: 10
+
+                Repeater {
+                    model: win.pages
+                    delegate: Rectangle {
+                        width: parent.width
+                        height: 46
+                        radius: 14
+                        color: win.page !== index && navMouse.containsMouse ? "#1a1a1a" : "transparent"
+                        Behavior on color { ColorAnimation { duration: 150 } }
+                        T { kind: "icon"; x: 18; anchors.verticalCenter: parent.verticalCenter; text: modelData.icon; font.pixelSize: 18 }
+                        T { x: 50; width: parent.width - 58; elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter; text: modelData.name; font.pixelSize: 14; font.bold: win.page === index }
+                        MouseArea {
+                            id: navMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: win.page = index
+                        }
                     }
                 }
+            }
+        }
+
+        // fade at the bottom edge hints that the list scrolls
+        Rectangle {
+            x: 16
+            y: navFlick.y + navFlick.height - 28
+            width: 206
+            height: 28
+            visible: navFlick.contentY + navFlick.height < navFlick.contentHeight - 4
+            gradient: Gradient {
+                GradientStop { position: 0; color: Qt.rgba(0.05, 0.05, 0.05, 0) }
+                GradientStop { position: 1; color: Qt.rgba(0.05, 0.05, 0.05, 0.9) }
             }
         }
 

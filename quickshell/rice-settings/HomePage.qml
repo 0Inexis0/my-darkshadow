@@ -19,7 +19,17 @@ Item {
         "Pick a scheme in Theme to recolor the bar, borders, notifications and lock screen.",
         "Try the One island bar style in Waybar for a floating look.",
         "Idle & Lockscreen decides when the screen locks and when the computer sleeps.",
-        "Click your picture above to change it. It is also shown on the lock screen."
+        "Click your picture above to change it. It is also shown on the lock screen.",
+        "Touch the bottom-right corner of the screen for quick toggles, apps and wallpapers.",
+        "Type right away in the hot corner's Apps search and press Enter to launch.",
+        "Keep Awake in the hot corner stops the screen from locking during a movie.",
+        "Gaming mode turns off animations, blur and gaps. Click it again to bring them back.",
+        "Notifications has nine popup styles. Try Island or Accent bar.",
+        "Theme has 21 color schemes, from pure Mono to Ocean and Rose.",
+        "Rofi can open as a full-width bar at the bottom of the screen.",
+        "Lock screen clocks come in Big, Stacked and Minimal. Preview them in Idle & Lockscreen.",
+        "Run rice-notify test in a terminal to see a sample notification.",
+        "Everything here is also a command: waybar-set, rice-hotcorner, rice-lock, rice-notify."
     ]
     function greeting() {
         const h = now.getHours()
@@ -85,7 +95,7 @@ Item {
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
             onWheel: function(e) {
                 const max = Math.max(0, flick.contentHeight - flick.height)
-                flick.contentY = Math.max(0, Math.min(max, flick.contentY - e.angleDelta.y * 0.9))
+                flick.contentY = Math.max(0, Math.min(max, flick.contentY - e.angleDelta.y * 0.6))
             }
         }
 
@@ -184,7 +194,7 @@ Item {
                     model: [
                         { i: "\udb80\udfd8", t: "Theme \u00b7 " + page.themeName() },
                         { i: "\uf017", t: "Up " + page.uptime },
-                        { i: "\uf17c", t: page.ctl.osName }
+                        { i: page.ctl.osGlyph(), t: page.ctl.osName }
                     ]
                     delegate: Rectangle {
                         visible: modelData.t.length > 3

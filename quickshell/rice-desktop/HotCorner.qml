@@ -37,6 +37,18 @@ PanelWindow {
         tAnim.start()
     }
 
+    // panel surface: optional theme tint, transparency can be switched off
+    function bgColor() {
+        const a = hc.cfg.transparency === false ? 1 : (hc.cfg.opacity !== undefined ? hc.cfg.opacity : 0.9)
+        let r = 18, g = 18, b = 20
+        if (hc.cfg.tint === true && hc.st.accent) {
+            const x = String(hc.st.accent).replace("#", "")
+            r = 18 + (parseInt(x.substr(0, 2), 16) - 18) * 0.16
+            g = 18 + (parseInt(x.substr(2, 2), 16) - 18) * 0.16
+            b = 20 + (parseInt(x.substr(4, 2), 16) - 20) * 0.16
+        }
+        return Qt.rgba(r / 255, g / 255, b / 255, a)
+    }
     function refresh() { if (!stateProc.running) stateProc.running = true }
     function run(cmd, arg, closeFirst) {
         if (closeFirst) hc.open = false
@@ -170,7 +182,7 @@ PanelWindow {
         Rectangle {
             anchors.fill: parent
             radius: Math.min(panel.rad, Math.min(width, height) / 2)
-            color: Qt.rgba(0.07, 0.07, 0.08, hc.cfg.opacity !== undefined ? hc.cfg.opacity : 0.9)
+            color: hc.bgColor()
             border.width: 1
             border.color: Qt.rgba(1, 1, 1, 0.08)
         }

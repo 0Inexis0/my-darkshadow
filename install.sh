@@ -161,6 +161,8 @@ step_wire() {
   if command -v hyprlock >/dev/null 2>&1 && [ -x "$HOME/.local/bin/rice-lock" ]; then
     "$HOME/.local/bin/rice-lock" apply || true
   fi
+  # hot corner blur rule (Settings > Hot corners)
+  [ -x "$HOME/.local/bin/rice-hotcorner" ] && { "$HOME/.local/bin/rice-hotcorner" apply || true; }
   # rofi theme + blur rule (Settings > Rofi)
   if command -v rofi >/dev/null 2>&1 && [ -x "$HOME/.local/bin/rice-rofi" ]; then
     "$HOME/.local/bin/rice-rofi" apply || true

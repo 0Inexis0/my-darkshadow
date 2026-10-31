@@ -360,13 +360,27 @@ Item {
             value: page.v("radius", 26)
             onCommitted: function(x) { page.setv("radius", Math.round(x)) }
         }
+
+        // ---------- blur & transparency ----------
+        SectionTitle { text: "Blur & transparency"; sub: "Blur shows the desktop softly through the panel. It needs transparency." }
+        ToggleRow { label: "Blur"; desc: "Blur whatever is behind the panel"; checked: page.v("blur", true) === true; onToggled: function(x) { page.setv("blur", x ? "on" : "off") } }
+        ToggleRow { label: "Transparency"; desc: "Off makes the panel fully solid"; checked: page.v("transparency", true) === true; onToggled: function(x) { page.setv("transparency", x ? "on" : "off") } }
         SliderRow {
-            label: "Opacity"
-            desc: "Lower is more see-through (blur shows behind it)"
-            from: 0.4; to: 1.0; step: 0.02; decimals: 2
-            value: page.v("opacity", 0.88)
+            label: "Panel opacity"
+            desc: page.v("transparency", true) === true ? "Lower is more see-through" : "Turn on Transparency to use this"
+            from: 0.3; to: 1.0; step: 0.02; decimals: 2
+            value: page.v("opacity", 0.9)
+            opacity: page.v("transparency", true) === true ? 1 : 0.45
             onCommitted: function(x) { page.setv("opacity", x.toFixed(2)) }
         }
+        SliderRow {
+            label: "Card brightness"
+            desc: "How much the section cards stand out"
+            from: 0.0; to: 0.2; step: 0.01; decimals: 2
+            value: page.v("card_alpha", 0.05)
+            onCommitted: function(x) { page.setv("card_alpha", x.toFixed(2)) }
+        }
+        ToggleRow { label: "Theme tint"; desc: "Mix a little of your Theme color into the panel"; checked: page.v("tint", false) === true; onToggled: function(x) { page.setv("tint", x ? "on" : "off") } }
 
         // ---------- capture ----------
         SectionTitle { text: "Recording & screenshots"; sub: "Recordings go to Videos/Recordings, screenshots to Pictures/Screenshots." }
