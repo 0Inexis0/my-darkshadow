@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" viewBox="0 0 1280 420" role="img" aria-label="Shadow's Shell">
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" viewBox="0 0 1280 420" role="img" aria-label="DarkShadow's Shell">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#151515"/>
@@ -53,7 +53,7 @@
   <rect x="0.5" y="0.5" width="1279" height="419" rx="18" fill="none" stroke="#ffffff" stroke-opacity="0.08"/>
 
   <text x="640" y="196" text-anchor="middle" font-family="Inter, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
-        font-size="88" font-weight="700" letter-spacing="-2.5" fill="url(#title)">Shadow's Shell</text>
+        font-size="84" font-weight="700" letter-spacing="-2.5" fill="url(#title)">DarkShadow's Shell</text>
 
   <rect x="510" y="232" width="260" height="1" fill="url(#line)"/>
 

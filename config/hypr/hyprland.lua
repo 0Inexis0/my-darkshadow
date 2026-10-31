@@ -465,6 +465,7 @@ hl.layer_rule({
 
 require("hyprland-gui")
 require("rice-settings")
+require("rice-hotcorner")
 require("rice-notify")
 require("rice-rofi")
 require("rice-desktop")
@@ -484,3 +485,6 @@ hl.window_rule({
 pcall(hl.config, { decoration = { blur = { popups = true, popups_ignorealpha = 0.2 } } })
 
 require("rice-keys")
+
+-- must stay last: gaming mode overrides
+require("rice-gaming")

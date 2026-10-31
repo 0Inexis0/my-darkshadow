@@ -1,4 +1,4 @@
-# NixOS module: installs everything Shadow's Shell needs.
+# NixOS module: installs everything DarkShadow's Shell needs.
 # Dotfiles and apps are still installed per user with ./install.sh (pick "Tools", "Apps", "Dotfiles").
 # NOTE: written without access to a NixOS machine; if an attribute name changed in your nixpkgs, adjust it.
 { lib, pkgs, ... }:

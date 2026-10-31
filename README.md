@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner-mono.svg" alt="Shadow's Shell" width="100%">
+  <img src="assets/banner-dark.svg" alt="DarkShadow's Shell" width="100%">
 </p>
 
 <p align="center">
@@ -25,10 +25,10 @@
 
 ## Screenshot
 <p align="center">
-  <img src="assets/screenshot.png" alt="Shadow's Shell on NixOS" width="100%">
+  <img src="assets/screenshot.png" alt="DarkShadow's Shell on NixOS" width="100%">
 </p>
 <p align="center">
-  <img src="assets/screenshot-hotcorner.png" alt="The Settings app (SUPER+U)" width="100%"><br>
+  <img src="assets/screenshot-settings.png" alt="The Settings app (SUPER+U)" width="100%"><br>
   <sub>The Settings app (<code>SUPER + U</code>) and the hot corner panel</sub>
 </p>
 
@@ -51,7 +51,7 @@
 | **Rofi** | 5 themes (Shadow, Graphite, Midnight, Rose, Paper), layouts list / grid / full-width bar, position top, center or bottom, width, rows, corner radius, transparency, blur, font size, icons |
 | **Fonts** | one place to set the main and icon fonts |
 | **Notifications** | swaync with a button that opens Settings |
-| **Welcome window** | "Welcome to Shadow's Shell" greeting once per login; turn off with `rice-welcome off` or the link in the window |
+| **Welcome window** | "Welcome to DarkShadow's Shell" greeting once per login; turn off with `rice-welcome off` or the link in the window |
 | **Installer** | interactive, backs up everything, supports Arch and NixOS |
 
 ## Keybinds

@@ -23,7 +23,7 @@ shadows-shell.nixosModules.default
 Run `sudo nixos-rebuild switch`, then `./install.sh` and choose Tools, Apps and Dotfiles.
 
 ## Backups and undo
-Every file the installer replaces is copied to `~/.config/shadows-shell-backup-<time>/`. Undo with `./install.sh --restore`.
+Every file the installer replaces is copied to `~/.config/darkshadows-shell-backup-<time>/`. Undo with `./install.sh --restore`.
 
 ## Other distros
 The installer lists missing programs (Hyprland, Waybar, Quickshell `qs`, swaync, cava, rofi, jq, python3, awww, hyprlock). Install them with your package manager, then run `./install.sh`.

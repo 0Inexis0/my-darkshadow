@@ -1,52 +1,65 @@
 #!/usr/bin/env bash
-# Shadow's Shell installer: works for any user (everything uses $HOME / $USER).
-# Supports Arch-based distros (installs packages) and NixOS (prints/uses the module).
-set -Eeuo pipefail
+# DarkShadow's Shell installer.
+# Works for any user (everything uses $HOME / $USER). Arch-based distros get their packages
+# installed; NixOS gets the module to add; everything else gets a list of what to install.
+set -Euo pipefail
 
+VERSION="2.0"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=install/lib/ui.sh
 . "$ROOT/install/lib/ui.sh"
 # shellcheck source=install/lib/distro.sh
 . "$ROOT/install/lib/distro.sh"
 
-ASSUME_YES=0; DRY_RUN=0; MODE=install
+ASSUME_YES=0; DRY_RUN=0; MODE=install; SKIP_PKGS=0
 usage() {
   cat <<U
-Shadow's Shell installer
+DarkShadow's Shell installer $VERSION
 
 Usage: ./install.sh [options]
-  -y, --yes        accept defaults, no questions
-  -n, --dry-run    show what would happen, change nothing
-      --restore    restore the newest backup made by this installer
-  -h, --help       this help
+  -y, --yes          install everything, no questions
+  -n, --dry-run      show what would happen, change nothing
+      --no-packages  skip the package step
+      --restore      put back the files from the newest backup
+  -h, --help         this help
 U
 }
 for a in "$@"; do
   case "$a" in
     -y|--yes) ASSUME_YES=1 ;;
     -n|--dry-run) DRY_RUN=1 ;;
+    --no-packages) SKIP_PKGS=1 ;;
     --restore) MODE=restore ;;
     -h|--help) usage; exit 0 ;;
     *) fail "Unknown option: $a"; usage; exit 2 ;;
   esac
 done
 
-[ "$(id -u)" != 0 ] || [ -n "${SHADOWS_ALLOW_ROOT:-}" ] || { fail "Do not run this as root. It installs into your home directory."; exit 1; }
+if [ "$(id -u)" = 0 ] && [ -z "${SHADOWS_ALLOW_ROOT:-}" ]; then
+  fail "Run this as your normal user, not root. It installs into your home folder and asks for sudo when needed."
+  exit 1
+fi
 
 STAMP="$(date +%Y%m%d-%H%M%S)"
-BK="$HOME/.config/shadows-shell-backup-$STAMP"
-LOG="${TMPDIR:-/tmp}/shadows-shell-install-$STAMP.log"
+BK="$HOME/.config/darkshadows-shell-backup-$STAMP"
+LOG="${TMPDIR:-/tmp}/darkshadows-shell-install-$STAMP.log"
 : >"$LOG"
+IN_HYPR=0; [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && command -v hyprctl >/dev/null 2>&1 && IN_HYPR=1
+BIN="$HOME/.local/bin"
+SUDO_PID=""
+cleanup() { [ -n "$SUDO_PID" ] && kill "$SUDO_PID" 2>/dev/null; rm -f "${PKG_SPLIT:-}"; show_cursor; }
+trap cleanup EXIT
 
-# ---------- helpers ----------
-# put SRC DST : copy one file, replace @HOME@/@USER@, back up what it overwrites.
+# ------------------------------------------------------------------ helpers
+# put SRC DST: copy one file, fill in @HOME@/@USER@, back up what it replaces
 put() {
   local src="$1" dst="$2" rel
   [ "$DRY_RUN" = 1 ] && return 0
   if [ -e "$dst" ] || [ -L "$dst" ]; then
     rel="${dst#"$HOME"/}"
     mkdir -p "$BK/$(dirname "$rel")"
-    cp -a "$dst" "$BK/$rel"
+    cp -aL "$dst" "$BK/$rel" 2>/dev/null || true
+    [ -L "$dst" ] && rm -f "$dst"
   fi
   mkdir -p "$(dirname "$dst")"
   if grep -qI . "$src" 2>/dev/null; then
@@ -57,185 +70,277 @@ put() {
   [ -x "$src" ] && chmod +x "$dst"
   return 0
 }
-
 copy_tree() { # copy_tree SRC_DIR DST_DIR
   local src="$1" dst="$2" f
   [ -d "$src" ] || return 0
   while IFS= read -r -d '' f; do put "$f" "$dst/${f#"$src"/}"; done \
-    < <(find "$src" -type f ! -name '*.bak*' ! -name '.gitkeep' -print0)
+    < <(find -L "$src" -type f ! -name '*.bak*' ! -name '.gitkeep' -print0)
 }
-
 missing_cmds() {
   local c out=()
   for c in "${NEED_CMDS[@]}"; do command -v "$c" >/dev/null 2>&1 || out+=("$c"); done
-  printf '%s\n' "${out[@]:-}"
+  echo "${out[*]:-}"
+}
+# run a tool with a time limit so one stuck program can never freeze the installer
+t() { timeout "${T:-25}" "$@"; }
+# start something in the background, detached from the installer
+detach() { setsid -f "$@" >/dev/null 2>&1 </dev/null || true; }
+config_dirs() { local d; for d in "$ROOT"/config/*/; do [ -d "$d" ] && basename "$d"; done; }
+pretty_dir() {
+  case "$1" in
+    hypr) echo "Hyprland" ;; waybar) echo "Waybar" ;; swaync) echo "Notifications (swaync)" ;;
+    rofi) echo "Rofi" ;; matugen) echo "Matugen colors" ;; kitty) echo "Kitty terminal" ;;
+    fastfetch) echo "Fastfetch" ;; *) echo "$1" ;;
+  esac
 }
 
-# ---------- steps ----------
-step_deps() {
+# ------------------------------------------------------------------ steps
+sudo_keepalive() {
+  [ "$DRY_RUN" = 1 ] && return 0
+  info "Some steps need administrator rights (sudo)."
+  sudo -v || { fail "sudo failed, skipping packages"; return 1; }
+  ( while true; do sudo -n true 2>/dev/null; sleep 50; done ) &
+  SUDO_PID=$!
+}
+
+PKG_SPLIT="$(mktemp)"
+pkg_check() { # writes "repo NAME" / "aur NAME" lines for every package in ARCH_PKGS
+  local p
+  : >"$PKG_SPLIT"
+  for p in "${ARCH_PKGS[@]}"; do
+    if pacman -Si "$p" >/dev/null 2>&1; then echo "repo $p"; else echo "aur $p"; fi >>"$PKG_SPLIT"
+  done
+}
+pkg_load() {
+  REPO_PKGS=(); AUR_PKGS=()
+  local kind p
+  while read -r kind p; do
+    if [ "$kind" = repo ]; then REPO_PKGS+=("$p"); else AUR_PKGS+=("$p"); fi
+  done <"$PKG_SPLIT"
+}
+
+aur_helper() { command -v paru >/dev/null 2>&1 && { echo paru; return; }; command -v yay >/dev/null 2>&1 && echo yay; return 0; }
+
+install_yay() {
+  local d
+  d="$(mktemp -d)"
+  sudo pacman -S --needed --noconfirm git base-devel &&
+  git clone --depth 1 https://aur.archlinux.org/yay-bin.git "$d/yay-bin" &&
+  (cd "$d/yay-bin" && makepkg -si --noconfirm)
+  local rc=$?
+  rm -rf "$d"
+  return $rc
+}
+
+step_packages() {
   case "$FAMILY" in
     arch)
-      local repo=() aur=() p helper=
-      for p in "${ARCH_PKGS[@]}"; do
-        if pacman -Si "$p" >/dev/null 2>&1; then repo+=("$p"); else aur+=("$p"); fi
-      done
-      info "Installing ${#repo[@]} packages with pacman (sudo password may be asked)"
-      if [ "$DRY_RUN" = 1 ]; then info "pacman -S --needed ${repo[*]}"; else sudo pacman -S --needed --noconfirm "${repo[@]}"; fi
-      if [ "${#aur[@]}" -gt 0 ]; then
-        command -v paru >/dev/null && helper=paru
-        [ -z "$helper" ] && command -v yay >/dev/null && helper=yay
-        if [ -n "$helper" ]; then
-          info "Installing AUR packages with $helper: ${aur[*]}"
-          [ "$DRY_RUN" = 1 ] || "$helper" -S --needed "${aur[@]}"
-        else
-          warn "No AUR helper (paru/yay) found. Install these from the AUR yourself: ${aur[*]}"
+      sudo_keepalive || return 0
+      if [ "$DRY_RUN" = 1 ]; then
+        info "would install ${#ARCH_PKGS[@]} packages: ${ARCH_PKGS[*]}"; return 0
+      fi
+      task "Updating your system first (Arch needs this before new packages)" sudo pacman -Syu --noconfirm
+      task "Checking where each package comes from" pkg_check
+      pkg_load
+      note "${#REPO_PKGS[@]} from the official repositories, ${#AUR_PKGS[@]} from the AUR"
+      task "Installing ${#REPO_PKGS[@]} packages: desktop, shell, tools and fonts" \
+        sudo pacman -S --needed --noconfirm "${REPO_PKGS[@]}"
+      if [ "${#AUR_PKGS[@]}" -gt 0 ]; then
+        local helper; helper="$(aur_helper)"
+        if [ -z "$helper" ]; then
+          warn "These come from the AUR: ${AUR_PKGS[*]}"
+          if confirm "Install yay (AUR helper) to get them?"; then
+            task "Installing yay" install_yay && helper=yay
+          fi
         fi
+        if [ -n "$helper" ]; then
+          local extra=(--needed --noconfirm --sudoloop)
+          [ "$helper" = paru ] && extra+=(--skipreview)
+          task "Installing ${#AUR_PKGS[@]} AUR packages with $helper: ${AUR_PKGS[*]}" \
+            "$helper" -S "${extra[@]}" "${AUR_PKGS[@]}"
+        else
+          warn "Skipped AUR packages. Install them later: ${AUR_PKGS[*]}"
+        fi
+      fi
+      if pacman -Qi bluez >/dev/null 2>&1; then
+        task "Turning on the Bluetooth service" sudo systemctl enable --now bluetooth.service
       fi
       ;;
     nixos)
-      title "NixOS: packages are declared, not installed imperatively"
-      info "Add this repo's module to your configuration (see nix/README in docs/NIXOS.md):"
-      printf '\n    %simports = [ %s/nix/module.nix ];%s\n\n' "$CD" "$ROOT" "$C0"
-      info "or, with flakes: inputs.shadows-shell.url = \"github:shadowww-dev/shadows-shell\";"
-      info "then run: sudo nixos-rebuild switch"
+      info "NixOS installs packages from your system configuration, not from this script."
+      note "Add this line to /etc/nixos/configuration.nix:"
+      printf '\n        %simports = [ %s/nix/module.nix ];%s\n\n' "$CW" "$ROOT" "$C0"
+      note "or with flakes:  inputs.darkshadows-shell.url = \"github:shadowww-dev/shadows-shell\";"
+      note "then run:  sudo nixos-rebuild switch"
       ;;
     *)
-      warn "Unsupported distro ($DISTRO_NAME): install these yourself, then re-run:"
-      printf '    %s\n' "${NEED_CMDS[*]}"
+      warn "$DISTRO_NAME is not supported for automatic packages."
+      note "Install these with your package manager, then run ./install.sh again:"
+      note "${NEED_CMDS[*]}"
       ;;
   esac
 }
 
-step_tools() {
-  local f
-  for f in "$ROOT"/bin/*; do [ -f "$f" ] && put "$f" "$HOME/.local/bin/$(basename "$f")"; done
-  if ! printf '%s' ":$PATH:" | grep -q ":$HOME/.local/bin:"; then
-    warn "\$HOME/.local/bin is not in your PATH; add it in your shell config."
-  fi
+step_fonts() {
+  task "Inter and Rubik (interface fonts, from the web)" t 120 "$ROOT/bin/rice-fonts"
+  if fc-list 2>/dev/null | grep -qi "JetBrainsMono Nerd"; then ok "JetBrains Mono Nerd Font (icons) is installed"
+  else warn "JetBrains Mono Nerd Font is missing: icons will show as boxes"; fi
 }
+
+step_configs() {
+  local d n
+  n="$(config_dirs | wc -l)"
+  if [ "$n" = 0 ]; then warn "This copy has no config files (config/ is empty)"; return 0; fi
+  for d in $(config_dirs); do
+    task "$(pretty_dir "$d")  ->  ~/.config/$d" copy_tree "$ROOT/config/$d" "$HOME/.config/$d"
+  done
+  task "Hyprland add-ons (keybinds, hot corner, gaming mode)" copy_lua
+}
+copy_lua() { local f; for f in "$ROOT"/lua/*.lua; do [ -f "$f" ] && put "$f" "$HOME/.config/hypr/$(basename "$f")"; done; return 0; }
 
 step_apps() {
-  copy_tree "$ROOT/quickshell/rice-settings" "$HOME/.config/quickshell/rice-settings"
-  copy_tree "$ROOT/quickshell/rice-desktop" "$HOME/.config/quickshell/rice-desktop"
-  copy_tree "$ROOT/quickshell/rice-welcome" "$HOME/.config/quickshell/rice-welcome"
-  [ "$DRY_RUN" = 1 ] || rm -f "$HOME/.config/quickshell/rice-desktop/VisualizerWidget.qml"
+  local d n
+  n="$(find "$ROOT/bin" -maxdepth 1 -type f | wc -l)"
+  task "Helper scripts ($n)  ->  ~/.local/bin" copy_bins
+  for d in "$ROOT"/quickshell/*/; do
+    [ -d "$d" ] || continue
+    d="$(basename "$d")"
+    case "$d" in
+      rice-settings) n="Settings app" ;; rice-desktop) n="Desktop widgets, dock and hot corner" ;;
+      rice-welcome) n="Welcome screen" ;; hyprquickpaper) n="Wallpaper picker" ;; *) n="$d" ;;
+    esac
+    task "$n  ->  ~/.config/quickshell/$d" copy_tree "$ROOT/quickshell/$d" "$HOME/.config/quickshell/$d"
+  done
+  if ! printf '%s' ":$PATH:" | grep -q ":$HOME/.local/bin:"; then
+    warn "\$HOME/.local/bin is not in your PATH. Add it in your shell config (fish: fish_add_path \$HOME/.local/bin)"
+  fi
 }
+copy_bins() { local f; for f in "$ROOT"/bin/*; do [ -f "$f" ] && put "$f" "$BIN/$(basename "$f")"; done; return 0; }
 
-step_lua() {
-  local f
-  for f in "$ROOT"/lua/*.lua; do [ -f "$f" ] && put "$f" "$HOME/.config/hypr/$(basename "$f")"; done
+wire_hypr() {
+  local lua="$HOME/.config/hypr/hyprland.lua" m
+  [ -f "$lua" ] || return 0
+  for m in rice-settings rice-desktop rice-keys; do
+    if [ -f "$HOME/.config/hypr/$m.lua" ] && ! grep -q "^[[:space:]]*require(\"$m\")" "$lua"; then
+      printf '\nrequire("%s")\n' "$m" >>"$lua"
+    fi
+  done
   return 0
 }
-
-step_dots() {
-  local d
-  if ! ls -d "$ROOT"/config/*/ >/dev/null 2>&1; then
-    warn "config/ is empty in this checkout (run ./sync.sh on the source machine first)."
-    return 0
-  fi
-  for d in "$ROOT"/config/*/; do copy_tree "${d%/}" "$HOME/.config/$(basename "$d")"; done
+patch_colors() {
+  local c="$HOME/.config/quickshell/hyprquickpaper/commands.sh"
+  [ -f "$c" ] || { echo "no hyprquickpaper, skipped"; return 0; }
+  python3 "$ROOT/install/patches/colors-commands.py" "$c"
 }
+fixup() { python3 "$ROOT/install/lib/fixup.py" >"$1"; }
+first_backup() { mkdir -p "$HOME/.config/rice" "$HOME/.cache/rice"; [ -f "$HOME/.config/rice/.first-backup" ] || echo "$BK" >"$HOME/.config/rice/.first-backup"; }
 
-step_wire() {
-  [ "$DRY_RUN" = 1 ] && return 0
-  mkdir -p "$HOME/.config/rice" "$HOME/.cache/rice"
-  [ -f "$HOME/.config/rice/.first-backup" ] || echo "$BK" >"$HOME/.config/rice/.first-backup"
-  local lua="$HOME/.config/hypr/hyprland.lua" m
-  if [ -f "$lua" ]; then
-    for m in rice-settings rice-desktop rice-keys; do
-      if [ -f "$HOME/.config/hypr/$m.lua" ] && ! grep -q "require(\"$m\")" "$lua"; then
-        cp -n "$lua" "$BK/hyprland.lua.orig" 2>/dev/null || true
-        printf '\nrequire("%s")\n' "$m" >>"$lua"
-      fi
-    done
+step_finish() {
+  local T=25
+  task "Remembering your backup folder" first_backup
+  task "Loading the shell's modules in Hyprland" wire_hypr
+  local fx; fx="$(mktemp)"
+  task "Fitting the config to this computer" fixup "$fx"
+  grep -v '^nothing to fix$' "$fx" 2>/dev/null | while IFS= read -r line; do note "$line"; done
+  rm -f "$fx"
+  [ -f "$HOME/.config/waybar/config.jsonc" ] && task "Waybar: ${DISTRO_NAME} logo" t "$BIN/waybar-set" distro-icon on
+  [ -x "$BIN/desktop-set" ] && task "Desktop widgets settings" t "$BIN/desktop-set" state
+  command -v swaync >/dev/null 2>&1 && task "Notifications style" t "$BIN/rice-notify" apply
+  command -v hyprlock >/dev/null 2>&1 && task "Lock screen and idle timers" t "$BIN/rice-lock" apply
+  command -v rofi >/dev/null 2>&1 && task "Rofi theme" t "$BIN/rice-rofi" apply
+  task "Hot corner" t "$BIN/rice-hotcorner" apply
+  task "Theme colors for the wallpaper picker" patch_colors
+  if [ "$IN_HYPR" = 1 ] && [ "$DRY_RUN" != 1 ]; then
+    task "Reloading Hyprland" t hyprctl reload
+    task "Restarting Waybar and the desktop widgets" restart_shell
+  else
+    note "Hyprland is not running here, so nothing was reloaded. Everything starts on your next login."
   fi
-  # color schemes: teach hyprquickpaper (if present) about the named schemes
-  if [ -f "$HOME/.config/quickshell/hyprquickpaper/commands.sh" ]; then
-    cp -n "$HOME/.config/quickshell/hyprquickpaper/commands.sh" "$HOME/.config/quickshell/hyprquickpaper/commands.sh.bak-schemes" 2>/dev/null || true
-    python3 "$ROOT/install/patches/colors-commands.py" "$HOME/.config/quickshell/hyprquickpaper/commands.sh" || true
-  fi
-  # notifications (Settings > Notifications) and idle/lock screen (Settings > Idle & Lockscreen)
-  if command -v swaync-client >/dev/null 2>&1 && [ -x "$HOME/.local/bin/rice-notify" ]; then
-    "$HOME/.local/bin/rice-notify" apply || true
-  fi
-  if command -v hyprlock >/dev/null 2>&1 && [ -x "$HOME/.local/bin/rice-lock" ]; then
-    "$HOME/.local/bin/rice-lock" apply || true
-  fi
-  # hot corner blur rule (Settings > Hot corners)
-  [ -x "$HOME/.local/bin/rice-hotcorner" ] && { "$HOME/.local/bin/rice-hotcorner" apply || true; }
-  # rofi theme + blur rule (Settings > Rofi)
-  if command -v rofi >/dev/null 2>&1 && [ -x "$HOME/.local/bin/rice-rofi" ]; then
-    "$HOME/.local/bin/rice-rofi" apply || true
-  fi
-  # distro logo on Waybar (Arch logo on Arch, NixOS logo on NixOS, ...)
-  if [ -f "$HOME/.config/waybar/config.jsonc" ] && [ -x "$HOME/.local/bin/waybar-set" ]; then
-    "$HOME/.local/bin/waybar-set" distro-icon on || true
-  fi
-  [ -x "$HOME/.local/bin/desktop-set" ] && { "$HOME/.local/bin/desktop-set" state >/dev/null 2>&1 || true; "$HOME/.local/bin/desktop-set" lock-regen >/dev/null 2>&1 || true; }
-  command -v hyprctl >/dev/null 2>&1 && { hyprctl reload >/dev/null 2>&1 || true; }
-  [ -x "$HOME/.local/bin/waybar-reload" ] && { "$HOME/.local/bin/waybar-reload" >/dev/null 2>&1 || true; }
-  [ -x "$HOME/.local/bin/rice-desktop" ] && { "$HOME/.local/bin/rice-desktop" restart >/dev/null 2>&1 || true; }
+}
+restart_shell() {
+  pkill -x waybar 2>/dev/null; pkill -x .waybar-wrapped 2>/dev/null; sleep 0.3
+  command -v waybar >/dev/null 2>&1 && detach waybar
+  [ -x "$BIN/rice-desktop" ] && T=10 t "$BIN/rice-desktop" restart
   return 0
 }
 
 do_restore() {
   local last
-  last="$(find "$HOME/.config" -maxdepth 1 -type d -name 'shadows-shell-backup-*' 2>/dev/null | sort | tail -n1 || true)"
+  last="$(find "$HOME/.config" -maxdepth 1 -type d \( -name 'darkshadows-shell-backup-*' -o -name 'shadows-shell-backup-*' \) 2>/dev/null | sort | tail -n1 || true)"
   [ -n "$last" ] || { fail "No backup found."; exit 1; }
-  info "Newest backup: $last"
-  confirm "Restore it over your current files?" || { warn "Cancelled."; exit 0; }
+  title "Restore"
+  kv "Backup" "$last"
+  confirm "Put these files back over your current ones?" || { warn "Cancelled."; exit 0; }
   [ "$DRY_RUN" = 1 ] || cp -a "$last"/. "$HOME"/
   ok "Restored. Files that did not exist before the install were left in place."
   exit 0
 }
 
-# ---------- main ----------
+# ------------------------------------------------------------------ main
 banner
-info "User:    ${CB}$USER${C0}   Home: $HOME"
-info "System:  ${CB}$DISTRO_NAME${C0} ($FAMILY)"
+title "Your system"
+kv "User" "$USER  ($HOME)"
+kv "System" "$DISTRO_NAME"
+if [ "$IN_HYPR" = 1 ]; then kv "Session" "Hyprland is running (changes apply right away)"
+else kv "Session" "not in Hyprland (changes apply at next login)"; fi
+if [ "$FAMILY" = arch ]; then h="$(aur_helper)"; kv "AUR" "${h:-none yet (yay can be installed for you)}"; fi
 [ "$DRY_RUN" = 1 ] && warn "Dry run: nothing will be changed."
 [ "$MODE" = restore ] && do_restore
 
-menu_select "What do you want to do?" \
-  "Install everything (recommended)" \
-  "Choose components" \
-  "Restore the previous backup" \
-  "Quit"
-case "$MENU_CHOICE" in
-  2) do_restore ;;
-  3) exit 0 ;;
-esac
+menu_select "What would you like to do?" \
+  "Install everything|recommended" \
+  "Choose what to install|" \
+  "Restore my previous files|from the last backup" \
+  "Quit|"
+case "$MENU_CHOICE" in 2) do_restore ;; 3) exit 0 ;; esac
 
 WANT=(1 1 1 1)
+[ "$SKIP_PKGS" = 1 ] && WANT[0]=0
 if [ "$MENU_CHOICE" = 1 ]; then
-  menu_multi "Components" \
-    "Dependencies (packages)|1" \
-    "Tools → ~/.local/bin|1" \
-    "Settings & desktop apps (Quickshell)|1" \
-    "Dotfiles → ~/.config (Hyprland, Waybar, ...)|1"
+  menu_multi "Choose what to install" \
+    "Packages|Hyprland, Quickshell, Waybar, tools|${WANT[0]}" \
+    "Fonts|Inter, Rubik and Nerd Font icons|1" \
+    "Config files|Hyprland, Waybar, notifications, rofi|1" \
+    "Apps and scripts|Settings app, widgets, dock, hot corner|1"
   WANT=("${MENU_SEL[@]}")
 fi
 
-title "Summary"
-[ "${WANT[0]}" = 1 ] && info "Install dependencies for $DISTRO_NAME"
-[ "${WANT[1]}" = 1 ] && info "Install tools to ~/.local/bin"
-[ "${WANT[2]}" = 1 ] && info "Install Settings and desktop apps"
-[ "${WANT[3]}" = 1 ] && info "Install dotfiles to ~/.config"
-info "Existing files are backed up to ${CD}$BK${C0}"
-confirm "Continue?" || { warn "Cancelled."; exit 0; }
+title "Plan"
+[ "${WANT[0]}" = 1 ] && info "Install packages for $DISTRO_NAME"
+[ "${WANT[1]}" = 1 ] && info "Install fonts"
+[ "${WANT[2]}" = 1 ] && info "Copy config files into ~/.config"
+[ "${WANT[3]}" = 1 ] && info "Install the Settings app, widgets and helper scripts"
+info "Finish setup (theme, lock screen, notifications, hot corner)"
+note "Files that get replaced are saved in ${BK/#$HOME/~}"
+confirm "Start?" || { warn "Cancelled."; exit 0; }
 
-printf '\n'
-[ "${WANT[0]}" = 1 ] && step_deps
-[ "${WANT[1]}" = 1 ] && task "Installing tools" step_tools
-[ "${WANT[1]}" = 1 ] && task "Installing fonts (Inter, Rubik)" "$ROOT/bin/rice-fonts"
-[ "${WANT[2]}" = 1 ] && task "Installing Settings & desktop apps" step_apps
-[ "${WANT[3]}" = 1 ] && task "Installing dotfiles" step_dots
-task "Installing Hyprland keybinds" step_lua
-task "Wiring Hyprland, Waybar and the distro logo" step_wire
+STEP_TOTAL=$(( WANT[0] + WANT[1] + WANT[2] + WANT[3] + 1 ))
+n=0
+if [ "${WANT[0]}" = 1 ]; then n=$((n + 1)); step "$n" "Packages" "Everything the desktop needs, from your package manager"; step_packages; fi
+if [ "${WANT[1]}" = 1 ]; then n=$((n + 1)); step "$n" "Fonts" "So text and icons look right"; step_fonts; fi
+if [ "${WANT[2]}" = 1 ]; then n=$((n + 1)); step "$n" "Config files" "Your old files are backed up first"; step_configs; fi
+if [ "${WANT[3]}" = 1 ]; then n=$((n + 1)); step "$n" "Apps and scripts" "Settings app, desktop widgets and the commands behind them"; step_apps; fi
+n=$((n + 1)); step "$n" "Finishing" "Theme, lock screen, notifications and hot corner"; step_finish
 
-miss="$(missing_cmds | tr '\n' ' ')"
+# ------------------------------------------------------------------ summary
+miss="$(missing_cmds)"
 printf '\n'
-if [ -n "${miss// /}" ]; then warn "Still missing on PATH: $miss"; else ok "All required programs found."; fi
-ok "Done. Log: $LOG"
-[ -d "$BK" ] && info "Undo anytime with: ./install.sh --restore"
-info "Open Settings with SUPER+U, or log out and back in."
+hr
+if [ "$DRY_RUN" = 1 ]; then
+  printf '  %s%sDry run finished.%s Nothing was changed.\n' "$CB" "$CW" "$C0"
+else
+  printf '  %s%sDarkShadow'"'"'s Shell is installed.%s\n' "$CB" "$CW" "$C0"
+fi
+hr
+if [ -n "$miss" ]; then warn "Still missing: $miss"; else ok "All needed programs are installed"; fi
+if [ "$IN_HYPR" = 1 ] && [ "$DRY_RUN" != 1 ]; then
+  errs="$(t hyprctl configerrors 2>/dev/null | grep -v '^\s*$' | head -5 || true)"
+  if [ -n "$errs" ]; then warn "Hyprland reports config errors:"; printf '%s\n' "$errs" | sed 's/^/        /'; fi
+fi
+title "Next"
+if [ "$IN_HYPR" = 1 ]; then info "Press SUPER + U to open Settings"
+else info "Log out and pick Hyprland on the login screen (or type Hyprland on a TTY)"; info "Then press SUPER + U to open Settings"; fi
+info "Touch the bottom-right corner of the screen for the hot corner"
+[ -d "$BK" ] && info "Undo everything:  ./install.sh --restore"
+note "Full log: $LOG"
+printf '\n'
