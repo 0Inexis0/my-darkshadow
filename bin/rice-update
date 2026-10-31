@@ -4,7 +4,7 @@
   rice-update               install the newest version (runs ./install.sh --update in the repo)
   rice-update check [--json] [--offline]
                             compare your version with the newest one on GitHub
-  rice-update watch         background: checks after login and every hour, shows a notification
+  rice-update watch         background: checks after login and every 15 minutes, shows a notification
   rice-update notify        show the "Update is Available!" notification now (to try it)
 """
 import fcntl
@@ -22,8 +22,9 @@ CACHE = HOME + "/.cache/rice"
 STATE = CACHE + "/update.json"
 NOTIFIED = CACHE + "/update-notified"
 RAW = "https://raw.githubusercontent.com/shadowww-dev/shadows-shell/main/VERSION"
-FIRST_WAIT = 90            # seconds after login
-EVERY = 3600               # then every hour
+FIRST_WAIT = 45            # seconds after login
+EVERY = 15 * 60            # GitHub is asked every 15 minutes
+TICK = 30                  # a check from Settings > About is noticed within this many seconds
 APP = "DarkShadow's Shell"
 ICON = HOME + "/.local/share/rice/icon.png"
 
@@ -194,6 +195,27 @@ def notify_bg(st):
         os._exit(0)
 
 
+def maybe_notify(st):
+    """show the popup once per new version / new push"""
+    if not st or not st.get("update"):
+        return
+    try:
+        told = open(NOTIFIED).read().strip()
+    except OSError:
+        told = ""
+    tag = "%s %s" % (st.get("latest", ""), st.get("commit", ""))
+    if told != tag:
+        open(NOTIFIED, "w").write(tag)
+        notify_bg(st)
+
+
+def mtime(p):
+    try:
+        return os.path.getmtime(p)
+    except OSError:
+        return 0
+
+
 def watch():
     os.makedirs(CACHE, exist_ok=True)
     lk = open(CACHE + "/update-watch.lock", "w")
@@ -202,21 +224,23 @@ def watch():
     except OSError:
         return  # already running
     time.sleep(FIRST_WAIT)
+    last, seen = 0.0, 0.0
     while True:
         try:
-            st = check()
-            if st["update"]:
-                try:
-                    told = open(NOTIFIED).read().strip()
-                except OSError:
-                    told = ""
-                tag = "%s %s" % (st["latest"], st.get("commit", ""))
-                if told != tag:
-                    open(NOTIFIED, "w").write(tag)
-                    notify_bg(st)
+            if time.time() - last >= EVERY:
+                last = time.time()
+                st = check()
+                seen = mtime(STATE)
+                maybe_notify(st)
+            else:
+                # Settings > About (or rice-update check) found something: tell right away
+                m = mtime(STATE)
+                if m and m != seen:
+                    seen = m
+                    maybe_notify(json.load(open(STATE)))
         except Exception:
             pass
-        time.sleep(EVERY)
+        time.sleep(TICK)
 
 
 def run(args):
