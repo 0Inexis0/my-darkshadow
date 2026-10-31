@@ -90,7 +90,7 @@ pretty_dir() {
   case "$1" in
     hypr) echo "Hyprland" ;; waybar) echo "Waybar" ;; swaync) echo "Notifications (swaync)" ;;
     rofi) echo "Rofi" ;; matugen) echo "Matugen colors" ;; kitty) echo "Kitty terminal" ;;
-    fastfetch) echo "Fastfetch" ;; fish) echo "Fish shell" ;; *) echo "$1" ;;
+    fastfetch) echo "Fastfetch" ;; fish) echo "Fish shell" ;; waybar-presets) echo "Waybar presets" ;; *) echo "$1" ;;
   esac
 }
 
@@ -125,8 +125,8 @@ install_yay() {
   local d
   d="$(mktemp -d)"
   sudo pacman -S --needed --noconfirm git base-devel &&
-  git clone --depth 1 https://aur.archlinux.org/yay-bin.git "$d/yay-bin" &&
-  (cd "$d/yay-bin" && makepkg -si --noconfirm)
+  timeout 120 git clone --depth 1 https://aur.archlinux.org/yay-bin.git "$d/yay-bin" &&
+  (cd "$d/yay-bin" && makepkg -si --noconfirm --needed)
   local rc=$?
   rm -rf "$d"
   return $rc
@@ -143,21 +143,33 @@ step_packages() {
       task "Checking where each package comes from" pkg_check
       pkg_load
       note "${#REPO_PKGS[@]} from the official repositories, ${#AUR_PKGS[@]} from the AUR"
-      task "Installing ${#REPO_PKGS[@]} packages: desktop, shell, tools and fonts" \
-        sudo pacman -S --needed --noconfirm "${REPO_PKGS[@]}"
+      if ! task "Installing ${#REPO_PKGS[@]} packages: desktop, shell, tools and fonts" \
+           sudo pacman -S --needed --noconfirm "${REPO_PKGS[@]}"; then
+        # one package (a conflict, a typo upstream) must not stop all the others
+        warn "Installing them together failed, trying one by one"
+        local p failed=()
+        for p in "${REPO_PKGS[@]}"; do
+          pacman -Qi "$p" >/dev/null 2>&1 && continue
+          task "  $p" sudo pacman -S --needed --noconfirm "$p" || failed+=("$p")
+        done
+        [ "${#failed[@]}" -gt 0 ] && warn "Could not install: ${failed[*]} (see $LOG)"
+      fi
       if [ "${#AUR_PKGS[@]}" -gt 0 ]; then
         local helper; helper="$(aur_helper)"
         if [ -z "$helper" ]; then
           warn "These come from the AUR: ${AUR_PKGS[*]}"
           if confirm "Install yay (AUR helper) to get them?"; then
-            task "Installing yay" install_yay && helper=yay
+            info "Building yay. Its output is shown below, answer any question it asks."
+            if install_yay; then ok "yay is installed"; helper=yay; else fail "yay could not be built"; fi
           fi
         fi
         if [ -n "$helper" ]; then
           local extra=(--needed --noconfirm --sudoloop)
           [ "$helper" = paru ] && extra+=(--skipreview)
-          task "Installing ${#AUR_PKGS[@]} AUR packages with $helper: ${AUR_PKGS[*]}" \
-            "$helper" -S "${extra[@]}" "${AUR_PKGS[@]}"
+          info "Installing ${#AUR_PKGS[@]} AUR packages with $helper: ${AUR_PKGS[*]}"
+          note "AUR packages are built on your computer; their output is shown so nothing waits invisibly."
+          if "$helper" -S "${extra[@]}" "${AUR_PKGS[@]}"; then ok "AUR packages installed"
+          else warn "Some AUR packages failed. Try later: $helper -S ${AUR_PKGS[*]}"; fi
         else
           warn "Skipped AUR packages. Install them later: ${AUR_PKGS[*]}"
         fi
@@ -181,20 +193,54 @@ step_packages() {
   esac
 }
 
-set_cursor() {
-  local theme=Bibata-Modern-Ice
-  mkdir -p "$HOME/.icons/default"
+set_look() {
+  local theme=Bibata-Modern-Ice icons=Papirus-Dark gtk=adw-gtk3-dark f
+  [ -d /usr/share/themes/adw-gtk3-dark ] || gtk=Adwaita-dark
+  mkdir -p "$HOME/.icons/default" "$HOME/.config/gtk-3.0" "$HOME/.config/gtk-4.0"
   printf '[Icon Theme]\nName=Default\nInherits=%s\n' "$theme" >"$HOME/.icons/default/index.theme"
-  command -v gsettings >/dev/null 2>&1 && {
+  for f in "$HOME/.config/gtk-3.0/settings.ini" "$HOME/.config/gtk-4.0/settings.ini"; do
+    [ -f "$f" ] && cp -n "$f" "$f.bak-darkshadows" 2>/dev/null
+    printf '[Settings]\ngtk-application-prefer-dark-theme=1\ngtk-theme-name=%s\ngtk-icon-theme-name=%s\ngtk-cursor-theme-name=%s\ngtk-cursor-theme-size=24\ngtk-font-name=Inter 11\n' \
+      "$gtk" "$icons" "$theme" >"$f"
+  done
+  if command -v gsettings >/dev/null 2>&1; then
+    gsettings set org.gnome.desktop.interface color-scheme prefer-dark || true
+    gsettings set org.gnome.desktop.interface gtk-theme "$gtk" || true
+    gsettings set org.gnome.desktop.interface icon-theme "$icons" || true
     gsettings set org.gnome.desktop.interface cursor-theme "$theme" || true
     gsettings set org.gnome.desktop.interface cursor-size 24 || true
-  }
+  fi
   [ "$IN_HYPR" = 1 ] && T=5 t hyprctl setcursor "$theme" 24
+  # Nautilus opens folders
+  command -v xdg-mime >/dev/null 2>&1 && [ -f /usr/share/applications/org.gnome.Nautilus.desktop ] &&
+    xdg-mime default org.gnome.Nautilus.desktop inode/directory
   return 0
 }
+put_wallpapers() {
+  local dir f n=0
+  dir="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")/Wallpapers"
+  [ "$dir" = "/Wallpapers" ] && dir="$HOME/Pictures/Wallpapers"
+  mkdir -p "$dir"
+  for f in "$ROOT"/wallpapers/*; do
+    [ -f "$f" ] || continue
+    [ -e "$dir/$(basename "$f")" ] || { cp "$f" "$dir/"; n=$((n + 1)); }
+  done
+  # first start: use a wallpaper from the folder
+  if [ ! -s "$HOME/.cache/hyprquickpaper-current" ]; then
+    mkdir -p "$HOME/.cache"
+    f="$(find "$dir" -maxdepth 1 -type f \( -name '*.jpg' -o -name '*.png' \) | sort | head -n1)"
+    [ -n "$f" ] && echo "$f" >"$HOME/.cache/hyprquickpaper-current"
+  fi
+  echo "$n new wallpapers in $dir"
+}
+quiet_fish() {
+  mkdir -p "$HOME/.config/fish/conf.d"
+  printf '# DarkShadow'"'"'s Shell: no "Welcome to fish" message\nset -g fish_greeting\n' >"$HOME/.config/fish/conf.d/darkshadows.fish"
+}
 step_fonts() {
-  task "Inter and Rubik (interface fonts, from the web)" t 120 "$ROOT/bin/rice-fonts"
-  task "Bibata Modern Ice cursor" set_cursor
+  task "Inter and Rubik (interface fonts)" timeout 180 "$ROOT/bin/rice-fonts"
+  command -v fc-cache >/dev/null 2>&1 && task "Refreshing the font cache" timeout 120 fc-cache -f
+  task "Dark theme for apps, Papirus icons, Bibata cursor" set_look
   if fc-list 2>/dev/null | grep -qi "JetBrainsMono Nerd"; then ok "JetBrains Mono Nerd Font (icons) is installed"
   else warn "JetBrains Mono Nerd Font is missing: icons will show as boxes"; fi
 }
@@ -207,6 +253,8 @@ step_configs() {
     task "$(pretty_dir "$d")  ->  ~/.config/$d" copy_tree "$ROOT/config/$d" "$HOME/.config/$d"
   done
   task "Hyprland add-ons (keybinds, hot corner, gaming mode)" copy_lua
+  [ -d "$ROOT/wallpapers" ] && task "Wallpapers  ->  ~/Pictures/Wallpapers" put_wallpapers
+  task "Fish: no welcome message" quiet_fish
   if [ -d "$ROOT/config/fish" ] && command -v fish >/dev/null 2>&1 && [ "$(basename "${SHELL:-}")" != fish ]; then
     if [ "$ASSUME_YES" != 1 ] && confirm "Make fish your default shell? (the configs are made for it)"; then
       # chsh asks for your password, so it runs in the open (not behind a spinner)

@@ -11,6 +11,7 @@
     "group/ws",
     "mpris"
   ],
+  "modules-center": [],
   "modules-right": [
     "wireplumber",
     "clock",

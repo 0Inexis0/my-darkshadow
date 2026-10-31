@@ -17,11 +17,13 @@ esac
 
 # Arch packages, grouped so the installer can explain what it is doing.
 PKG_DESKTOP=(hyprland hyprlock hypridle xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent qt5-wayland qt6-wayland)
-PKG_SHELL=(quickshell waybar swaync rofi awww cava kitty fish fastfetch matugen)
+PKG_SHELL=(quickshell waybar swaync rofi awww cava kitty fish fastfetch nautilus matugen)
 PKG_TOOLS=(wf-recorder grim slurp wl-clipboard libnotify xdg-user-dirs jq curl python playerctl brightnessctl pamixer
-           swayosd imagemagick zenity networkmanager bluez bluez-utils pipewire pipewire-pulse wireplumber)
-PKG_FONTS=(ttf-jetbrains-mono-nerd ttf-nerd-fonts-symbols noto-fonts noto-fonts-emoji bibata-cursor-theme-bin)
-ARCH_PKGS=("${PKG_DESKTOP[@]}" "${PKG_SHELL[@]}" "${PKG_TOOLS[@]}" "${PKG_FONTS[@]}")
+           swayosd imagemagick zenity networkmanager bluez bluez-utils pipewire pipewire-pulse wireplumber
+           btop cmatrix peaclock)
+PKG_FONTS=(ttf-jetbrains-mono-nerd ttf-nerd-fonts-symbols noto-fonts noto-fonts-emoji inter-font)
+PKG_LOOK=(papirus-icon-theme gnome-themes-extra adw-gtk-theme bibata-cursor-theme-bin)
+ARCH_PKGS=("${PKG_DESKTOP[@]}" "${PKG_SHELL[@]}" "${PKG_TOOLS[@]}" "${PKG_FONTS[@]}" "${PKG_LOOK[@]}")
 
 # programs the desktop needs at runtime (shown at the end if something is missing)
 NEED_CMDS=(Hyprland hyprlock hypridle waybar qs swaync-client rofi awww matugen cava jq python3 grim slurp wl-copy wf-recorder notify-send)

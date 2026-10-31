@@ -217,28 +217,20 @@ tooltip label {
 }
 /* end-mpris-gap */
 
-
-
-
-
-/* tray-nudge */ window#waybar #tray { margin-left: 14px; margin-right: 14px; }
-
-/* apps-nudge */ window#waybar #apps { margin-left: 0; margin-right: 0; }
-
 /* rice-ui */
 
 window#waybar {
     background: rgba(13, 13, 13, 0.25);
 }
 
-#image.nix, #ws, #mpris, #wireplumber, #clock, #apps, #custom-notification, #custom-lock {
+#image.nix, #custom-distro, #ws, #mpris, #wireplumber, #clock, #apps, #custom-notification, #custom-lock {
     background: transparent;
     border: none;
     border-radius: 0;
     margin: 0 3px;
 }
 
-#image.nix, #ws, #mpris, #wireplumber, #clock, #apps, #custom-notification, #custom-lock, #bluetooth, #tray, #network {
+#image.nix, #custom-distro, #ws, #mpris, #wireplumber, #clock, #apps, #custom-notification, #custom-lock, #bluetooth, #tray, #network {
     padding-top: 2px;
     padding-bottom: 2px;
     margin-top: 0;
@@ -255,6 +247,16 @@ tooltip {
 tooltip label {
     color: #F6F5F4;
     padding: 2px 6px;
+}
+
+window#waybar #wireplumber, window#waybar #clock, window#waybar #apps, window#waybar #custom-notification, window#waybar #custom-lock {
+    margin-left: 3px;
+    margin-right: 3px;
+}
+
+window#waybar #bluetooth, window#waybar #tray, window#waybar #network {
+    margin-left: 1px;
+    margin-right: 1px;
 }
 
 window#waybar #custom-lock {

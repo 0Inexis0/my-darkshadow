@@ -8,11 +8,11 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TOOLS=(hypr-set waybar-set waybar-preset waybar-reload waybar-autohide font-set desktop-set rice-settings
        rice-colors rice-welcome rice-wallpaper rice-rofi rice-notify rice-lock rice-fonts rice-hotcorner
        rice-desktop rice-stats rice-sysline rice-nowplaying rice-weather rice-cava rice-media logout)
-CONFIG_DIRS=(hypr waybar swaync rofi matugen kitty fish fastfetch)    # folders from ~/.config to publish
+CONFIG_DIRS=(hypr waybar waybar-presets swaync rofi matugen kitty fish fastfetch)    # folders from ~/.config to publish
 SKIP_QS=(cache thumbs)                                  # quickshell folders that are not apps
 # small images (bar icons) are kept; anything over 1 MB is skipped below
 EXCLUDE=(ui.json 'config.jsonc.save*' '*.bak*' '*.save*' '.first-backup' '*.qslog' '*.log'
-         'rice-gaming.lua' 'rice-lock.conf' 'hyprland.lua.save' 'fish_variables' 'fish_history')
+         'rice-gaming.lua' 'rice-lock.conf' 'hyprland.lua.save' 'fish_variables' 'fish_history' 'darkshadows.fish')
 
 tmpl() { # tmpl SRC DST: follow symlinks, replace your home folder with @HOME@
   mkdir -p "$(dirname "$2")"

@@ -252,6 +252,17 @@ Item {
                 }
             }
 
+            SliderRow {
+                label: "Module spacing"
+                desc: "Gap between volume, clock, system icons and the buttons on the right"
+                from: 0; to: 16; step: 1; unit: " px"
+                value: page.ctl.st.spacing !== undefined ? page.ctl.st.spacing : 3
+                onCommitted: function(v) {
+                    page.ctl.setSt("spacing", Math.round(v))
+                    page.ctl.run(["spacing", Math.round(v)])
+                }
+            }
+
             T { kind: "title"; text: "Layouts"; font.pixelSize: 16; font.bold: true; topPadding: 14 }
             T {
                 width: parent.width

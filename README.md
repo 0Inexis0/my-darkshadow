@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <a href="#install">Install</a> ·
+  <a href="#installation">Install</a> ·
   <a href="#features">Features</a> ·
   <a href="docs/INSTALL.md">Docs</a> ·
   <a href="docs/CUSTOMIZE.md">Customize</a>
@@ -86,21 +86,33 @@
 | `SUPER + SHIFT + R` | record a region (press again to stop) |
 | `SUPER + A` | open the hot corner panel |
 
-## Install
+## Installation
+
+### Arch Linux (and CachyOS, EndeavourOS, Manjaro)
 ```bash
+sudo pacman -S --needed git base-devel
 git clone https://github.com/shadowww-dev/shadows-shell
 cd shadows-shell
 ./install.sh
 ```
-The installer is interactive (arrow keys + space). Useful flags: `--yes` (no questions), `--dry-run` (change nothing), `--restore` (undo with the last backup).
+The installer updates your system, installs every package (Hyprland, Quickshell, Waybar, swaync, rofi, kitty, fish, Nautilus, fonts, Papirus icons, Bibata cursor, btop, cava, fastfetch, cmatrix, peaclock and more), offers to install `yay` for the few AUR packages, copies the configs and sets everything up. Then log out and pick Hyprland.
 
-| System | What happens |
+### NixOS
+```bash
+git clone https://github.com/shadowww-dev/shadows-shell
+cd shadows-shell
+```
+Add `imports = [ ./path/to/shadows-shell/nix/module.nix ];` to `/etc/nixos/configuration.nix`, run `sudo nixos-rebuild switch`, then `./install.sh`.
+
+### Options
+| Flag | What it does |
 | --- | --- |
-| **Arch** and derivatives (CachyOS, EndeavourOS, Manjaro) | packages are installed with `pacman` (+ `paru`/`yay` for AUR) |
-| **NixOS** | add `nix/module.nix` (or the flake module) to your config, then `nixos-rebuild switch`; the installer does the rest |
-| other | the installer lists the programs you need |
+| `--yes` | install everything without questions |
+| `--dry-run` | show what would happen, change nothing |
+| `--no-packages` | skip the package step |
+| `--restore` | put back the files from the last backup |
 
-See [docs/INSTALL.md](docs/INSTALL.md) and [docs/CUSTOMIZE.md](docs/CUSTOMIZE.md).
+Every file the installer replaces is saved in `~/.config/darkshadows-shell-backup-<time>/`.
 
 ## Layout
 | Path | Contents |
@@ -109,6 +121,8 @@ See [docs/INSTALL.md](docs/INSTALL.md) and [docs/CUSTOMIZE.md](docs/CUSTOMIZE.md
 | `quickshell/` | Settings app (`rice-settings`) and widgets/dock (`rice-desktop`) |
 | `config/` | dotfiles installed to `~/.config` (Hyprland, Waybar, ...) |
 | `install/` | installer UI and distro detection |
+| `lua/` | Hyprland add-ons: keybinds, widgets autostart, hot corner |
+| `wallpapers/` | original wallpapers, copied to `~/Pictures/Wallpapers` |
 | `nix/`, `flake.nix` | NixOS module |
 | `.github/` | CI (shellcheck, dry-run install) and issue template |
 
