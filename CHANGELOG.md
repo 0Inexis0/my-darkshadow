@@ -1,5 +1,12 @@
 # Changelog
 
+## V2.50
+- New notification center "Deck": switches on top, power modes (Power saver, Balanced, Performance), notifications, volume and brightness, power buttons at the bottom
+- Floating or flat against the edge, left or right, resizable, blur and transparency; popups left, middle or right; live preview in Settings > Notifications
+- Desktop: Auto-hide widgets while windows are open (lighter on the computer)
+- Settings follows "Turn off all blur & transparency" too (the stars stay); bigger profile card in the sidebar
+- Wallpaper preview always shows the wallpaper you are on, and the widgets stay visible while you pick
+
 ## V2.40
 - Dashboard takes its colors from your wallpaper, like the hot corner
 - Desktop widgets: frosted glass with the blurred wallpaper behind them (Settings > Desktop > Blur behind widgets)

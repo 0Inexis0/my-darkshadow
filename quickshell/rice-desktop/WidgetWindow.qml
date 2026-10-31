@@ -23,6 +23,10 @@ PanelWindow {
     property bool draggable: true
     property bool passive: false  // never takes clicks (visualizer)
     property bool editing: false
+    // auto-hide (Settings > Desktop): fades out while windows are open, then the surface goes away
+    property bool hidden: false
+    property real fk: hidden ? 0 : 1
+    Behavior on fk { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
 
     // current look; the editor changes these while you drag
     property real px: defX
@@ -60,7 +64,7 @@ PanelWindow {
     onDefHChanged: adopt()
     Component.onCompleted: adopt()
 
-    visible: active
+    visible: active && fk > 0.01
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore
@@ -78,8 +82,9 @@ PanelWindow {
         y: w.py
         width: w.dispW
         height: w.dispH
-        opacity: w.op
-        Behavior on opacity { NumberAnimation { duration: 120 } }
+        opacity: w.op * w.fk
+        scale: 0.96 + 0.04 * w.fk
+        Behavior on opacity { enabled: !w.hidden && w.fk > 0.99; NumberAnimation { duration: 120 } }
 
         Item {
             id: inner

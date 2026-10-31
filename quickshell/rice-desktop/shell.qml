@@ -141,6 +141,18 @@ ShellRoot {
         onTriggered: { if (!lockProc.running) lockProc.running = true }
     }
 
+    // ---- auto-hide (Settings > Desktop): widgets fade out while windows are open on this screen
+    readonly property bool autoHide: cfg.autoHide === true
+    property bool busy: false
+    readonly property bool hideWidgets: autoHide && busy && !editing && !locked
+    Process {
+        id: busyProc
+        command: ["bash", "-c", "exec \"$HOME/.local/bin/rice-busy\" \"$1\"", "_", root.scr ? root.scr.name : ""]
+        running: root.autoHide
+        stdout: SplitParser { onRead: function(line) { root.busy = line.trim() === "1" } }
+        onRunningChanged: if (!running) root.busy = false
+    }
+
     // ---- clock
     WidgetWindow {
         id: clockWin
@@ -148,6 +160,7 @@ ShellRoot {
         wc: root.placement === "draggable" ? (root.cfg.clock ? root.cfg.clock : ({})) : ({})
         draggable: root.placement === "draggable"
         editing: root.editing
+        hidden: root.hideWidgets
         active: !!(root.cfg.clock && root.cfg.clock.enabled === true && (root.cfg.clock.onlyLocked !== true || root.locked || root.editing))
         bw: root.sw
         bh: root.sh
@@ -171,15 +184,15 @@ ShellRoot {
     // ---- widgets (positions, sizes and looks come from the widget editor)
     WidgetWindow {
         id: weatherWin
-        wid: "weather"; wc: root.wc("weather"); active: root.on("weather"); editing: root.editing
+        wid: "weather"; wc: root.wc("weather"); active: root.on("weather"); editing: root.editing; hidden: root.hideWidgets
         bw: root.sw; bh: root.sh; cw: 300; ch: 120; defX: 40; defY: 370
         onMoved: function(id, x, y) { root.savePos(id, x, y) }
         Component.onCompleted: root.reg(wid, weatherWin)
-        WeatherWidget { anchors.fill: parent; running: root.on("weather"); bg: weatherWin.bgv }
+        WeatherWidget { anchors.fill: parent; running: root.on("weather") && !root.hideWidgets; bg: weatherWin.bgv }
     }
     WidgetWindow {
         id: mediaWin
-        wid: "media"; wc: root.wc("media"); active: root.on("media"); editing: root.editing
+        wid: "media"; wc: root.wc("media"); active: root.on("media"); editing: root.editing; hidden: root.hideWidgets
         bw: root.sw; bh: root.sh; cw: 400; ch: 120; defX: root.sw - 440; defY: 60
         onMoved: function(id, x, y) { root.savePos(id, x, y) }
         Component.onCompleted: root.reg(wid, mediaWin)
@@ -187,7 +200,7 @@ ShellRoot {
     }
     WidgetWindow {
         id: calWin
-        wid: "calendar"; wc: root.wc("calendar"); active: root.on("calendar"); editing: root.editing
+        wid: "calendar"; wc: root.wc("calendar"); active: root.on("calendar"); editing: root.editing; hidden: root.hideWidgets
         bw: root.sw; bh: root.sh; cw: 340; ch: 340; defX: root.sw - 380; defY: 200
         onMoved: function(id, x, y) { root.savePos(id, x, y) }
         Component.onCompleted: root.reg(wid, calWin)
@@ -195,7 +208,7 @@ ShellRoot {
     }
     WidgetWindow {
         id: userWin
-        wid: "usercard"; wc: root.wc("usercard"); active: root.on("usercard"); editing: root.editing
+        wid: "usercard"; wc: root.wc("usercard"); active: root.on("usercard"); editing: root.editing; hidden: root.hideWidgets
         bw: root.sw; bh: root.sh; cw: 340; ch: 120; defX: root.sw - 380; defY: 560
         onMoved: function(id, x, y) { root.savePos(id, x, y) }
         Component.onCompleted: root.reg(wid, userWin)
@@ -203,29 +216,29 @@ ShellRoot {
     }
     WidgetWindow {
         id: resWin
-        wid: "resources"; wc: root.wc("resources"); active: root.on("resources"); editing: root.editing
+        wid: "resources"; wc: root.wc("resources"); active: root.on("resources"); editing: root.editing; hidden: root.hideWidgets
         bw: root.sw; bh: root.sh; cw: 160; ch: 380; defX: 40; defY: root.sh - 440
         onMoved: function(id, x, y) { root.savePos(id, x, y) }
         Component.onCompleted: root.reg(wid, resWin)
-        ResourcesWidget { anchors.fill: parent; running: root.on("resources"); bg: resWin.bgv }
+        ResourcesWidget { anchors.fill: parent; running: root.on("resources") && !root.hideWidgets; bg: resWin.bgv }
     }
     WidgetWindow {
         id: batWin
-        wid: "battery"; wc: root.wc("battery"); active: root.on("battery"); editing: root.editing
+        wid: "battery"; wc: root.wc("battery"); active: root.on("battery"); editing: root.editing; hidden: root.hideWidgets
         bw: root.sw; bh: root.sh; cw: 280; ch: 110; defX: 40; defY: 520
         onMoved: function(id, x, y) { root.savePos(id, x, y) }
         Component.onCompleted: root.reg(wid, batWin)
-        BatteryWidget { anchors.fill: parent; running: root.on("battery"); bg: batWin.bgv }
+        BatteryWidget { anchors.fill: parent; running: root.on("battery") && !root.hideWidgets; bg: batWin.bgv }
     }
     // audio visualizer: see-through, at the bottom of the screen by default, never takes clicks
     WidgetWindow {
         id: vizWin
-        wid: "visualizer"; wc: root.wc("visualizer"); active: root.on("visualizer"); editing: root.editing
+        wid: "visualizer"; wc: root.wc("visualizer"); active: root.on("visualizer"); editing: root.editing; hidden: root.hideWidgets
         free: true; passive: true
         bw: root.sw; bh: root.sh
         defW: root.sw; defH: 180; defX: 0; defY: root.sh - 180
         Component.onCompleted: root.reg(wid, vizWin)
-        VizWidget { anchors.fill: parent; running: root.on("visualizer"); style: vizWin.sty !== "" ? vizWin.sty : "bars"; flip: vizWin.flp }
+        VizWidget { anchors.fill: parent; running: root.on("visualizer") && !root.hideWidgets; style: vizWin.sty !== "" ? vizWin.sty : "bars"; flip: vizWin.flp }
     }
 
     EditorWindow { root: root }

@@ -2,8 +2,8 @@
   "widgets": {
     "weather": {
       "enabled": false,
-      "x": 883,
-      "y": 858
+      "x": 1565,
+      "y": 581
     },
     "media": {
       "enabled": false,
@@ -11,7 +11,7 @@
       "y": 871
     },
     "resources": {
-      "enabled": false,
+      "enabled": true,
       "x": 40,
       "y": 640
     },
@@ -21,15 +21,15 @@
       "y": 81
     },
     "calendar": {
-      "enabled": false,
-      "x": 1491,
+      "enabled": true,
+      "x": 1488,
       "y": 607
     },
     "visualizer": {
-      "enabled": false,
-      "x": 50,
+      "enabled": true,
+      "x": 0,
       "y": 1040,
-      "w": 1792,
+      "w": 1920,
       "h": 40,
       "style": "bars"
     },
@@ -74,5 +74,6 @@
     "media": false
   },
   "widgetBlur": true,
+  "autoHide": false,
   "editing": false
 }

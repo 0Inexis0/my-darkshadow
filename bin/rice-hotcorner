@@ -476,7 +476,10 @@ def main(argv):
     elif cmd == "wall":
         if arg and os.path.isfile(arg):
             if os.path.isfile(WALL_APPLY):
-                bg(["bash", WALL_APPLY, arg])         # wallpaper + colors (hyprquickpaper)
+                # wallpaper + colors (hyprquickpaper); some versions of its script restart Quickshell,
+                # so the desktop widgets are started again afterwards if they went away
+                bg(["bash", "-c", 'bash "$1" "$2"; sleep 1; pgrep -f "quickshell/rice-desktop" >/dev/null || setsid -f qs -n -p "$3" >/dev/null 2>&1',
+                    "_", WALL_APPLY, arg, HOME + "/.config/quickshell/rice-desktop"])
             else:
                 bg(["awww", "img", arg, "-t", "grow", "--transition-duration", "1"])
                 os.makedirs(os.path.dirname(WALL_CURRENT), exist_ok=True)

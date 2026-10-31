@@ -193,6 +193,10 @@ step_packages() {
           warn "Skipped AUR packages. Install them later: ${AUR_PKGS[*]}"
         fi
       fi
+      # power modes in the notification center (not when TLP or auto-cpufreq already manage power)
+      if pacman -Qi power-profiles-daemon >/dev/null 2>&1 && ! pacman -Qi tlp >/dev/null 2>&1 && ! pacman -Qi auto-cpufreq >/dev/null 2>&1; then
+        task "Turning on power modes (power-profiles-daemon)" sudo systemctl enable --now power-profiles-daemon.service
+      fi
       if pacman -Qi bluez >/dev/null 2>&1; then
         task "Turning on the Bluetooth service" sudo systemctl enable --now bluetooth.service
       fi

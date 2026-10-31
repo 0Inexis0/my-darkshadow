@@ -33,6 +33,15 @@ FloatingWindow {
         return "\uf17c"
     }
     readonly property string userName: Quickshell.env("USER")
+    // rice-effects: blur and transparency are off right now
+    property bool flat: false
+    Process {
+        id: flatProc
+        command: ["bash", "-c", "[ -e \"$HOME/.cache/rice/flat\" ] && echo 1 || echo 0"]
+        running: true
+        stdout: StdioCollector { onStreamFinished: win.flat = text.trim() === "1" }
+    }
+    Timer { interval: 1500; running: true; repeat: true; onTriggered: if (!flatProc.running) flatProc.running = true }
 
     function dset(group, key, value) {
         const d = JSON.parse(JSON.stringify(dst))
@@ -223,40 +232,95 @@ FloatingWindow {
     Rectangle {
         id: card
         anchors.fill: parent
-        color: Qt.rgba(0.05, 0.05, 0.05, 0.72)
+        // solid while blur and transparency are off (Settings > Services, or gaming mode); the stars stay
+        color: Qt.rgba(0.05, 0.05, 0.05, win.flat ? 1 : 0.72)
+        Behavior on color { ColorAnimation { duration: 300 } }
         focus: true
         Keys.onEscapePressed: Qt.quit()
         NumberAnimation on opacity { from: 0; to: 1; duration: 240; easing.type: Easing.OutCubic }
 
-        Item {
+        // ---------- you: a bigger profile card on top of the sidebar ----------
+        Rectangle {
+            id: profile
             x: 16
-            y: 10
+            y: 12
             width: 206
-            height: 48
-
-            RoundImage {
-                id: hAvatar
-                width: 40
-                height: 40
-                anchors.verticalCenter: parent.verticalCenter
-                source: "file://" + win.home + "/.face"
-            }
-            Column {
-                anchors.left: hAvatar.right
-                anchors.leftMargin: 10
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 1
-                T { text: win.userName; font.pixelSize: 14; font.bold: true; width: parent.width; elide: Text.ElideRight }
-                Row {
-                    spacing: 5
-                    width: parent.width
-                    T { kind: "icon"; text: win.osGlyph(); font.pixelSize: 12; color: "#8a8a8a"; anchors.verticalCenter: parent.verticalCenter }
-                    T { text: win.osName; font.pixelSize: 11; color: "#8a8a8a"; width: parent.width - 20; elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter }
+            height: 74
+            radius: 18
+            color: pfm.containsMouse ? "#181818" : "#131313"
+            border.width: 1
+            border.color: Qt.rgba(1, 1, 1, 0.06)
+            Behavior on color { ColorAnimation { duration: 160 } }
+            // soft light in the corner
+            Rectangle {
+                anchors.fill: parent
+                radius: parent.radius
+                gradient: Gradient {
+                    orientation: Gradient.Horizontal
+                    GradientStop { position: 0; color: Qt.rgba(1, 1, 1, 0.045) }
+                    GradientStop { position: 0.6; color: Qt.rgba(1, 1, 1, 0) }
                 }
             }
+            // avatar with a ring (your initial when there is no ~/.face)
+            Item {
+                id: av
+                x: 12
+                anchors.verticalCenter: parent.verticalCenter
+                width: 52
+                height: 52
+                Rectangle {
+                    anchors.fill: parent
+                    radius: width / 2
+                    gradient: Gradient {
+                        GradientStop { position: 0; color: "#F6F5F4" }
+                        GradientStop { position: 1; color: "#5a5a60" }
+                    }
+                    rotation: pfm.containsMouse ? 180 : 0
+                    Behavior on rotation { NumberAnimation { duration: 700; easing.type: Easing.OutCubic } }
+                }
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.margins: 2
+                    radius: width / 2
+                    color: "#1c1c1c"
+                    T { anchors.centerIn: parent; text: win.userName.length ? win.userName[0].toUpperCase() : "?"; font.pixelSize: 20; font.bold: true }
+                }
+                RoundImage {
+                    anchors.fill: parent
+                    anchors.margins: 3
+                    source: "file://" + win.home + "/.face"
+                }
+                scale: pfm.containsMouse ? 1.05 : 1
+                Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutBack } }
+            }
+            Column {
+                anchors.left: av.right
+                anchors.leftMargin: 12
+                anchors.right: parent.right
+                anchors.rightMargin: 10
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 5
+                T { kind: "title"; text: win.userName; font.pixelSize: 17; font.bold: true; width: parent.width; elide: Text.ElideRight }
+                // distro chip
+                Rectangle {
+                    width: Math.min(parent.width, osRow.implicitWidth + 16)
+                    height: 22
+                    radius: 11
+                    color: "#222224"
+                    Row {
+                        id: osRow
+                        x: 8
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 5
+                        T { kind: "icon"; text: win.osGlyph(); font.pixelSize: 12; color: "#d8d8dc"; anchors.verticalCenter: parent.verticalCenter }
+                        T { text: win.osName; font.pixelSize: 11; color: "#b8b8c0"; anchors.verticalCenter: parent.verticalCenter
+                            width: Math.min(implicitWidth, profile.width - 110); elide: Text.ElideRight }
+                    }
+                }
+            }
+            MouseArea { id: pfm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: win.page = 0 }
         }
-        Rectangle { x: 16; y: 62; width: parent.width - 32; height: 1; color: "#222222" }
+        Rectangle { x: 238; y: 58; width: parent.width - 254; height: 1; color: "#222222" }
 
         Rectangle {
             width: 30
@@ -281,9 +345,9 @@ FloatingWindow {
         Flickable {
             id: navFlick
             x: 16
-            y: 72
+            y: 98
             width: 206
-            height: parent.height - 72 - 34
+            height: parent.height - 98 - 34
             contentWidth: width
             contentHeight: navCol.height + 8
             clip: true

@@ -8,6 +8,7 @@ Item {
     property var ns: ({})
 
     function v(k, d) { return ns[k] !== undefined ? ns[k] : d }
+    readonly property bool deck: v("layout", "deck") === "deck"
     function norm(value) { return value === "on" ? true : value === "off" ? false : value }
     function setv(key, value) {
         const n = Object.assign({}, ns)
@@ -132,11 +133,11 @@ Item {
         }
 
         // ---------- position ----------
-        SectionTitle { text: "Position"; sub: "Where popups and the notification center appear." }
+        SectionTitle { text: "Position"; sub: "Where popups appear. The Deck notification center has its own side below." }
         SegRow {
             label: "Horizontal"
             desc: "Side of the screen"
-            options: [{ label: "Left", value: "left" }, { label: "Center", value: "center" }, { label: "Right", value: "right" }]
+            options: [{ label: "Left", value: "left" }, { label: "Middle", value: "center" }, { label: "Right", value: "right" }]
             current: page.v("pos_x", "right")
             onChosen: function(x) { page.setv("pos_x", x) }
         }
@@ -156,18 +157,39 @@ Item {
         }
 
         // ---------- panel ----------
-        SectionTitle { text: "Notification center"; sub: "The panel that opens from the bell in Waybar." }
+        SectionTitle { text: "Notification center"; sub: "The panel that opens from the bell in Waybar. Deck: switches and power modes on top, volume and power buttons at the bottom." }
+        NcMini {
+            visible: page.deck
+            width: Math.min(parent.width, 600)
+            x: (parent.width - width) / 2
+            ns: page.ns
+        }
         SegRow {
             label: "Layout"
-            desc: "Order of the controls"
-            options: [{ label: "Controls top", value: "controls-top" }, { label: "Controls bottom", value: "controls-bottom" }, { label: "Minimal", value: "minimal" }]
-            current: page.v("layout", "controls-top")
+            desc: "Deck is the new one"
+            options: [{ label: "Deck", value: "deck" }, { label: "Controls top", value: "controls-top" }, { label: "Controls bottom", value: "controls-bottom" }, { label: "Minimal", value: "minimal" }]
+            current: page.v("layout", "deck")
             onChosen: function(x) { page.setv("layout", x) }
+        }
+        SegRow {
+            visible: page.deck
+            label: "Side"
+            desc: "Where the notification center opens"
+            options: [{ label: "Left", value: "left" }, { label: "Right", value: "right" }]
+            current: page.v("cc_side", "right")
+            onChosen: function(x) { page.setv("cc_side", x) }
+        }
+        ToggleRow {
+            visible: page.deck
+            label: "Floating"
+            desc: "A gap all around and round corners. Off: flat against the screen edge, full height"
+            checked: page.v("cc_float", true) === true
+            onToggled: function(x) { page.setv("cc_float", x ? "on" : "off") }
         }
         SliderRow {
             label: "Width"
             from: 300; to: 700; step: 10; unit: " px"
-            value: page.v("panel_width", 400)
+            value: page.v("panel_width", 420)
             onCommitted: function(x) { page.setv("panel_width", Math.round(x)) }
         }
         ToggleRow {
@@ -180,16 +202,20 @@ Item {
             label: "Height"
             desc: "Used when full height is off"
             from: 300; to: 1400; step: 20; unit: " px"
-            value: page.v("panel_height", 780)
+            value: page.v("panel_height", 820)
             onCommitted: function(x) { page.setv("panel_height", Math.round(x)) }
         }
 
         SectionTitle { text: "Widgets"; sub: "What the notification center shows." }
+        ToggleRow { visible: page.deck; label: "Switches"; desc: "Wi-Fi, Bluetooth, Do Not Disturb, night light, keep awake"; checked: page.v("w_quick", true) === true; onToggled: function(x) { page.setv("w_quick", x ? "on" : "off") } }
+        ToggleRow { visible: page.deck; label: "Power modes"; desc: page.v("have_power_profiles", true) ? "Power saver, Balanced, Performance" : "Needs power-profiles-daemon (not found)"; checked: page.v("w_power", true) === true; onToggled: function(x) { page.setv("w_power", x ? "on" : "off") } }
+        ToggleRow { visible: page.deck; label: "Brightness"; desc: page.v("have_backlight", false) ? "Screen brightness" : "Only on screens with a backlight (laptops)"; checked: page.v("w_brightness", true) === true; onToggled: function(x) { page.setv("w_brightness", x ? "on" : "off") } }
+        ToggleRow { visible: page.deck; label: "Power buttons"; desc: "Lock, sleep, log out, restart, shut down (the last three ask first)"; checked: page.v("w_session", true) === true; onToggled: function(x) { page.setv("w_session", x ? "on" : "off") } }
         ToggleRow { label: "Title & Clear all"; desc: "Header with a button that clears everything"; checked: page.v("w_title", true) === true; onToggled: function(x) { page.setv("w_title", x ? "on" : "off") } }
-        ToggleRow { label: "Do Not Disturb"; desc: "Switch that silences popups"; checked: page.v("w_dnd", true) === true; onToggled: function(x) { page.setv("w_dnd", x ? "on" : "off") } }
+        ToggleRow { visible: !page.deck; label: "Do Not Disturb"; desc: "Switch that silences popups"; checked: page.v("w_dnd", true) === true; onToggled: function(x) { page.setv("w_dnd", x ? "on" : "off") } }
         ToggleRow { label: "Media player"; desc: "Cover, title and controls of what is playing"; checked: page.v("w_media", true) === true; onToggled: function(x) { page.setv("w_media", x ? "on" : "off") } }
-        ToggleRow { label: "Volume slider"; desc: "Output volume"; checked: page.v("w_volume", false) === true; onToggled: function(x) { page.setv("w_volume", x ? "on" : "off") } }
-        ToggleRow { label: "Quick buttons"; desc: "Power, Settings and your own buttons"; checked: page.v("w_buttons", true) === true; onToggled: function(x) { page.setv("w_buttons", x ? "on" : "off") } }
+        ToggleRow { label: "Volume slider"; desc: "Output volume"; checked: page.v("w_volume", true) === true; onToggled: function(x) { page.setv("w_volume", x ? "on" : "off") } }
+        ToggleRow { visible: !page.deck; label: "Quick buttons"; desc: "Power, Settings and your own buttons"; checked: page.v("w_buttons", true) === true; onToggled: function(x) { page.setv("w_buttons", x ? "on" : "off") } }
 
         // ---------- popups ----------
         SectionTitle { text: "Popups"; sub: "The small cards that appear when something arrives." }

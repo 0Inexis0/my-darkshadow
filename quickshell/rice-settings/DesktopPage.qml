@@ -170,6 +170,16 @@ Item {
             }
 
             ToggleRow {
+                label: "Auto-hide widgets"
+                desc: "Hide them while a window is open on the screen; they come back on an empty desktop. Lighter on the computer"
+                checked: page.ctl.dst.autoHide === true
+                onToggled: function(v) {
+                    const d = JSON.parse(JSON.stringify(page.ctl.dst)); d.autoHide = v; page.ctl.dst = d
+                    Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" auto-hide \"$1\"", "_", v ? "on" : "off"])
+                    page.ctl.status = "Auto-hide widgets " + (v ? "on" : "off")
+                }
+            }
+            ToggleRow {
                 label: "Blur behind widgets"
                 desc: "Frosted glass: the widgets take the colors of your wallpaper. Off: plain dark cards"
                 checked: page.ctl.dst.widgetBlur !== false

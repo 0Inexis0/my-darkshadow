@@ -25,7 +25,8 @@ DEFAULTS = {
              "opacity": 0.78, "blur": True,
              "apps": ["kitty", "org.gnome.Nautilus", "firefox", "spotify", "discord", "steam"]},
     "lock": {"toolbars": False, "widgets": False, "media": False},
-    "widgetBlur": True,      # blurred wallpaper behind the widget cards (Settings > Desktop > Widgets)
+    "widgetBlur": True,
+    "autoHide": False,       # widgets hide while windows are open (Settings > Desktop)      # blurred wallpaper behind the widget cards (Settings > Desktop > Widgets)
     "editing": False,
 }
 CHOICES = {"placement": ["draggable", "leastBusy", "mostBusy"], "style": ["digital", "cookie", "pixel"]}
@@ -189,7 +190,7 @@ def ensure_shell():
 def main(a):
     if len(a) < 2:
         die("usage: desktop-set state|widget ID on|off|pos ID X Y|geom ID X Y [SCALE] [W H]|wset ID KEY VAL|"
-            "reset-widget ID|edit on|off|toggle|clock KEY VAL|dock KEY VAL|lock KEY VAL|dock-blur|widgets-blur on|off|reset-pos")
+            "reset-widget ID|edit on|off|toggle|clock KEY VAL|dock KEY VAL|lock KEY VAL|dock-blur|widgets-blur on|off|auto-hide on|off|reset-pos")
     cmd = a[1]
     os.makedirs(DIR, exist_ok=True)
     lk = open(LOCK, "w")
@@ -234,6 +235,8 @@ def main(a):
         pass
     elif cmd == "widgets-blur":
         c["widgetBlur"] = tobool(a[2] if len(a) > 2 else "on")
+    elif cmd == "auto-hide":
+        c["autoHide"] = tobool(a[2] if len(a) > 2 else "on")
     elif cmd == "geom":
         # geom ID X Y [SCALE] [W H]
         if len(a) < 5:

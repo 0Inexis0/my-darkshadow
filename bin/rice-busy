@@ -1,0 +1,99 @@
+#!/usr/bin/env python3
+"""rice-busy: prints 1 while the screen has windows on it, 0 when the desktop is empty.
+
+  rice-busy [MONITOR]     MONITOR: name like DP-1 (default: the focused one)
+
+Listens to Hyprland's events and prints a line only when the answer changes. The desktop
+widgets use it for "Auto-hide widgets" (Settings > Desktop): they hide while windows are open.
+"""
+import json
+import os
+import socket
+import subprocess
+import sys
+import time
+
+EVENTS = (b"openwindow>>", b"closewindow>>", b"movewindow", b"workspace", b"focusedmon>>", b"activespecial",
+          b"changefloatingmode>>", b"moveworkspace", b"destroyworkspace", b"createworkspace", b"fullscreen>>")
+
+
+def hypr(what):
+    try:
+        r = subprocess.run(["hyprctl", "-j", what], capture_output=True, text=True, timeout=3)
+        return json.loads(r.stdout)
+    except Exception:
+        return None
+
+
+def busy(mon_name):
+    mons = hypr("monitors")
+    wss = hypr("workspaces")
+    if not mons or wss is None:
+        return False
+    mon = None
+    for m in mons:
+        if (mon_name and m.get("name") == mon_name) or (not mon_name and m.get("focused")):
+            mon = m
+    if mon is None:
+        mon = mons[0]
+    ids = {mon.get("activeWorkspace", {}).get("id")}
+    sp = mon.get("specialWorkspace", {}) or {}
+    if sp.get("id"):
+        ids.add(sp.get("id"))
+    return any(w.get("id") in ids and w.get("windows", 0) > 0 for w in wss)
+
+
+def sock_path():
+    run = os.environ.get("XDG_RUNTIME_DIR", "/run/user/%d" % os.getuid())
+    sig = os.environ.get("HYPRLAND_INSTANCE_SIGNATURE", "")
+    if not sig:
+        try:
+            sig = sorted(os.listdir(run + "/hypr"), key=lambda d: os.path.getmtime(run + "/hypr/" + d))[-1]
+        except Exception:
+            sig = ""
+    return "%s/hypr/%s/.socket2.sock" % (run, sig)
+
+
+def main():
+    mon = sys.argv[1] if len(sys.argv) > 1 else ""
+    last = None
+
+    def say():
+        nonlocal last
+        b = busy(mon)
+        if b != last:
+            last = b
+            print("1" if b else "0", flush=True)
+
+    say()
+    while True:
+        try:
+            s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            s.connect(sock_path())
+            buf = b""
+            s.settimeout(4)
+            while True:
+                try:
+                    data = s.recv(4096)
+                except socket.timeout:
+                    say()          # a check now and then, in case an event was missed
+                    continue
+                if not data:
+                    break
+                buf += data
+                lines = buf.split(b"\n")
+                buf = lines.pop()
+                if any(l.startswith(EVENTS) for l in lines):
+                    time.sleep(0.06)    # let Hyprland finish the change
+                    say()
+        except (OSError, ValueError):
+            pass
+        time.sleep(2)
+        say()
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except (KeyboardInterrupt, BrokenPipeError):
+        pass

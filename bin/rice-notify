@@ -26,8 +26,10 @@ BEGIN, END = "/* rice-notify */", "/* end-rice-notify */"
 
 DEFAULTS = {
     "pos_x": "right", "pos_y": "top", "margin": 10,
-    "layout": "controls-top", "panel_width": 400, "panel_height": 780, "fit": False,
-    "w_buttons": True, "w_media": True, "w_volume": False, "w_dnd": True, "w_title": True,
+    "layout": "deck", "panel_width": 420, "panel_height": 820, "fit": False,
+    "w_buttons": True, "w_media": True, "w_volume": True, "w_dnd": True, "w_title": True,
+    # the Deck notification center: side, floating or against the edge, and its rows
+    "cc_side": "right", "cc_float": True, "w_quick": True, "w_power": True, "w_brightness": True, "w_session": True,
     "popup_width": 360, "timeout": 6, "critical_sticky": True, "icon_size": 40, "images": True,
     "style": "glass", "popup_style": "match", "opacity": 0.80, "radius": 18, "blur": True, "compact": False, "accent": True,
     "colors": "graphite", "font": "sans", "font_size": 13, "popup_opacity": 0.85, "blur_popups": True,
@@ -39,17 +41,24 @@ INTS = {"margin": (0, 60), "panel_width": (300, 700), "panel_height": (300, 1400
         "sound_volume": (0, 100)}
 FLOATS = {"opacity": (0.3, 1.0), "popup_opacity": (0.3, 1.0)}
 CHOICES = {"pos_x": ["left", "center", "right"], "pos_y": ["top", "bottom"],
-           "layout": ["controls-top", "controls-bottom", "minimal"], "style": ["glass", "solid", "outline"],
+           "layout": ["deck", "controls-top", "controls-bottom", "minimal"], "style": ["glass", "solid", "outline"],
+           "cc_side": ["left", "right"],
            "popup_style": ["match", "glass", "solid", "minimal", "pill", "accent", "glow", "island", "light"],
            "colors": ["black", "graphite", "slate", "white", "tinted"], "font": ["sans", "rounded", "mono", "system"],
            "border": ["subtle", "accent", "none"],
            "sound": ["glass", "droplet", "chime", "bubble", "marimba", "aurora", "off"]}
 ORDER = {
+    # Deck: switches on top, power modes, notifications, media, volume and brightness, power buttons at the bottom
+    "deck": ["buttons-grid#quick", "buttons-grid#power", "title", "notifications", "mpris", "volume", "backlight",
+             "buttons-grid#session"],
     "controls-top": ["buttons-grid", "mpris", "volume", "dnd", "title", "notifications"],
     "controls-bottom": ["title", "dnd", "notifications", "mpris", "volume", "buttons-grid"],
     "minimal": ["title", "dnd", "notifications"],
 }
-WKEY = {"buttons-grid": "w_buttons", "mpris": "w_media", "volume": "w_volume", "dnd": "w_dnd", "title": "w_title"}
+WKEY = {"buttons-grid": "w_buttons", "mpris": "w_media", "volume": "w_volume", "dnd": "w_dnd", "title": "w_title",
+        "buttons-grid#quick": "w_quick", "buttons-grid#power": "w_power", "backlight": "w_brightness",
+        "buttons-grid#session": "w_session"}
+SVC = HOME + "/.local/bin/rice-services"
 
 
 def die(m):
@@ -83,6 +92,11 @@ def load():
                 c[k] = int(clamp(float(v), *INTS[k]))
             except Exception:
                 c[k] = d
+    # V2.50: the new Deck notification center replaces the old layouts once
+    if raw.get("v", 1) < 2:
+        c["layout"] = "deck"
+        c["w_volume"] = True
+    c["v"] = 2
     return c
 
 
@@ -153,21 +167,39 @@ def write_config(c):
     except Exception as e:
         die("swaync config.json is not valid JSON, not touching it: %s" % e)
     backup_once(SWCFG, ".bak-rice-notify")
-    j["positionX"] = c["pos_x"]
+    j["positionX"] = c["pos_x"]          # popups: left, center or right
     j["positionY"] = c["pos_y"]
-    for side in ("top", "bottom", "left", "right"):
-        j["control-center-margin-" + side] = c["margin"]
+    deck = c["layout"] == "deck"
+    if deck:
+        # the panel has its own side; floating = a gap all around, otherwise flat against the edge, full height
+        j["control-center-positionX"] = c["cc_side"]
+        j["control-center-positionY"] = "top"
+        gap = c["margin"] if c["cc_float"] else 0
+        for side in ("top", "bottom", "left", "right"):
+            j["control-center-margin-" + side] = gap
+        j["fit-to-screen"] = c["fit"] or not c["cc_float"]
+    else:
+        j.pop("control-center-positionX", None)
+        j.pop("control-center-positionY", None)
+        for side in ("top", "bottom", "left", "right"):
+            j["control-center-margin-" + side] = c["margin"]
+        j["fit-to-screen"] = c["fit"]
     j["control-center-width"] = c["panel_width"]
     j["control-center-height"] = c["panel_height"]
-    j["fit-to-screen"] = c["fit"]
     j["notification-window-width"] = c["popup_width"]
     j["timeout"] = c["timeout"]
     j["timeout-low"] = max(2, c["timeout"] // 2)
     j["timeout-critical"] = 0 if c["critical_sticky"] else c["timeout"]
     j["notification-icon-size"] = c["icon_size"]
     j["image-visibility"] = "when-available" if c["images"] else "never"
+    light = backlight_device()
+    have_pp = shutil.which("powerprofilesctl") is not None
     j["widgets"] = [w for w in ORDER[c["layout"]] if w == "notifications" or c[WKEY[w]]]
+    # hide rows this computer cannot use (no screen brightness on a desktop PC, no power-profiles-daemon)
+    j["widgets"] = [w for w in j["widgets"] if not (w == "backlight" and not light) and not (w == "buttons-grid#power" and not have_pp)]
     wc = j.setdefault("widget-config", {})
+    if deck:
+        wc.update(deck_widgets(c, light))
     wc.setdefault("title", {"text": "Notifications", "clear-all-button": True, "button-text": "Clear all"})
     wc.setdefault("dnd", {"text": "Do Not Disturb"})
     wc.setdefault("mpris", {"image-size": 56, "image-radius": 12})
@@ -187,6 +219,47 @@ def write_config(c):
     os.makedirs(SW, exist_ok=True)
     json.dump(j, open(tmp, "w"), indent=2, ensure_ascii=False)
     os.replace(tmp, SWCFG)
+
+
+def backlight_device():
+    try:
+        devs = sorted(os.listdir("/sys/class/backlight"))
+    except Exception:
+        devs = []
+    return devs[0] if devs else ""
+
+
+def deck_widgets(c, light):
+    """widget-config of the Deck: three rows of buttons (swaync buttons-grid) and the sliders"""
+    def tog(icon, key):
+        return {"label": icon, "type": "toggle", "active": False,
+                "command": "%s toggle %s" % (SVC, key), "update-command": "%s is %s" % (SVC, key)}
+
+    quick = [tog(chr(0xF05A9), "wifi"), tog(chr(0xF00AF), "bluetooth"), tog(chr(0xF009B), "dnd")]
+    if shutil.which("hyprsunset"):
+        quick.append(tog(chr(0xF0594), "nightlight"))
+    quick.append(tog(chr(0xF0176), "awake"))
+    if len(quick) < 5:
+        quick.append(tog(chr(0xF036C), "mic"))
+    power = [dict(tog(chr(0xF032A) + "  Saver", "profile:power-saver")),
+             dict(tog(chr(0xF05D1) + "  Balanced", "profile:balanced")),
+             dict(tog(chr(0xF04C5) + "  Performance", "profile:performance"))]
+    session = [{"label": chr(0xF033E), "command": SVC + " session lock"},
+               {"label": chr(0xF04B2), "command": SVC + " session suspend"},
+               {"label": chr(0xF0343), "command": SVC + " session logout"},
+               {"label": chr(0xF0709), "command": SVC + " session reboot"},
+               {"label": chr(0xF0425), "command": SVC + " session poweroff"}]
+    w = {
+        "buttons-grid#quick": {"buttons-per-row": len(quick), "actions": quick},
+        "buttons-grid#power": {"buttons-per-row": 3, "actions": power},
+        "buttons-grid#session": {"buttons-per-row": 5, "actions": session},
+        "title": {"text": "Notifications", "clear-all-button": True, "button-text": chr(0xF0A7A) + "  Clear"},
+        "volume": {"label": chr(0xF057E), "show-per-app": False},
+        "mpris": {"image-size": 52, "image-radius": 12},
+    }
+    if light:
+        w["backlight"] = {"label": chr(0xF00DF), "device": light, "subsystem": "backlight"}
+    return w
 
 
 # ---------------- style.css ----------------
@@ -413,8 +486,152 @@ def css(c):
   background: %(acc)s;
 }
 %(popupcss)s
+%(deckcss)s
 %(end)s
-""" % dict(v, begin=BEGIN, end=END, popupcss=popup_css(c, acc, on_acc))
+""" % dict(v, begin=BEGIN, end=END, popupcss=popup_css(c, acc, on_acc), deckcss=deck_css(c, v))
+
+
+def deck_css(c, v):
+    """The Deck notification center: rounded tiles, power modes, big soft sliders, power buttons at the bottom."""
+    if c["layout"] != "deck":
+        return ""
+    r = v["r"]
+    if c["cc_float"]:
+        rad = "%dpx" % r
+    else:
+        rad = ("%dpx 0 0 %dpx" % (r, r)) if c["cc_side"] == "right" else ("0 %dpx %dpx 0" % (r, r))
+    light = c["colors"] == "white"
+    tile = "rgba(0, 0, 0, 0.06)" if light else "rgba(255, 255, 255, 0.07)"
+    tile_h = "rgba(0, 0, 0, 0.10)" if light else "rgba(255, 255, 255, 0.12)"
+    track = "rgba(0, 0, 0, 0.10)" if light else "rgba(255, 255, 255, 0.10)"
+    return """/* ---- Deck ---- */
+.control-center {
+  border-radius: %(rad)s;
+  padding: 12px 10px;
+}
+.control-center .widget-buttons-grid {
+  background: transparent;
+  padding: 0;
+  margin: 3px 6px;
+  border-radius: 0;
+}
+.control-center .widget-buttons-grid > flowbox > flowboxchild {
+  padding: 3px;
+}
+.control-center .widget-buttons-grid > flowbox > flowboxchild > button {
+  background: %(tile)s;
+  color: %(fg)s;
+  border: none;
+  box-shadow: none;
+  border-radius: 16px;
+  min-height: 50px;
+  font-size: 1.45em;
+  transition: background 160ms ease, color 160ms ease;
+}
+.control-center .widget-buttons-grid > flowbox > flowboxchild > button:hover {
+  background: %(tileh)s;
+}
+.control-center .widget-buttons-grid > flowbox > flowboxchild > button:checked,
+.control-center .widget-buttons-grid > flowbox > flowboxchild > button:checked:hover {
+  background: %(acc)s;
+  color: %(onacc)s;
+}
+/* switches: big round-cornered squares */
+.control-center .widget-buttons-grid.quick > flowbox > flowboxchild > button {
+  min-height: 58px;
+  border-radius: 18px;
+  font-size: 1.6em;
+}
+/* power modes: one pill with three parts */
+.control-center .widget-buttons-grid.power {
+  background: %(tile)s;
+  border-radius: 100px;
+  padding: 4px;
+  margin: 6px 9px;
+}
+.control-center .widget-buttons-grid.power > flowbox > flowboxchild {
+  padding: 0 2px;
+}
+.control-center .widget-buttons-grid.power > flowbox > flowboxchild > button {
+  background: transparent;
+  min-height: 36px;
+  border-radius: 100px;
+  font-size: 1.0em;
+  font-weight: bold;
+  color: %(dim)s;
+}
+.control-center .widget-buttons-grid.power > flowbox > flowboxchild > button:hover {
+  color: %(fg)s;
+  background: transparent;
+}
+.control-center .widget-buttons-grid.power > flowbox > flowboxchild > button:checked {
+  background: %(acc)s;
+  color: %(onacc)s;
+}
+/* power buttons at the bottom: quieter, red on hover for the last one */
+.control-center .widget-buttons-grid.session {
+  margin-top: 8px;
+}
+.control-center .widget-buttons-grid.session > flowbox > flowboxchild > button {
+  min-height: 46px;
+  border-radius: 14px;
+  font-size: 1.3em;
+}
+.control-center .widget-buttons-grid.session > flowbox > flowboxchild:last-child > button:hover {
+  background: rgba(224, 80, 90, 0.85);
+  color: #ffffff;
+}
+.control-center .widget-title {
+  margin: 10px 12px 4px 12px;
+}
+.control-center .widget-title > label {
+  font-size: 1.05em;
+  font-weight: bold;
+  color: %(dim)s;
+}
+.control-center .widget-title > button {
+  padding: 3px 12px;
+  font-size: 0.9em;
+}
+/* volume and brightness: soft, thick sliders without a knob */
+.control-center .widget-volume,
+.control-center .widget-backlight {
+  background: %(tile)s;
+  border-radius: 16px;
+  margin: 3px 9px;
+  padding: 6px 14px;
+}
+.control-center .widget-volume label,
+.control-center .widget-backlight label {
+  font-size: 1.35em;
+  color: %(fg)s;
+  min-width: 26px;
+}
+.control-center .widget-volume trough,
+.control-center .widget-backlight trough {
+  min-height: 12px;
+  border-radius: 100px;
+  background: %(track)s;
+}
+.control-center .widget-volume highlight,
+.control-center .widget-backlight highlight {
+  min-height: 12px;
+  border-radius: 100px;
+  background: %(acc)s;
+}
+.control-center .widget-volume slider,
+.control-center .widget-backlight slider {
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+.control-center .widget-mpris {
+  margin: 3px 9px;
+}
+""" % dict(v, rad=rad, tile=tile, tileh=tile_h, track=track)
 
 
 def hex_rgba(h, a):
@@ -549,6 +766,9 @@ def main(argv):
         out = load()
         out["accent_color"], out["on_accent"] = accent()
         out["installed"] = shutil.which("swaync-client") is not None
+        out["have_power_profiles"] = shutil.which("powerprofilesctl") is not None
+        out["have_backlight"] = backlight_device() != ""
+        out["flat"] = flat()
         print(json.dumps(out))
         return
     if cmd == "test":

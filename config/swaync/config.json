@@ -29,17 +29,18 @@
   "hide-on-action": true,
   "script-fail-notify": false,
   "widgets": [
-    "buttons-grid",
-    "mpris",
-    "dnd",
+    "buttons-grid#quick",
     "title",
-    "notifications"
+    "notifications",
+    "mpris",
+    "volume",
+    "buttons-grid#session"
   ],
   "widget-config": {
     "title": {
       "text": "Notifications",
       "clear-all-button": true,
-      "button-text": "Clear"
+      "button-text": "󰩺  Clear"
     },
     "backlight": {
       "label": "󰃟"
@@ -52,7 +53,7 @@
       "text": "Notification"
     },
     "mpris": {
-      "image-size": 50,
+      "image-size": 52,
       "image-radius": 12
     },
     "buttons-grid": {
@@ -83,7 +84,99 @@
       ]
     },
     "volume": {
-      "label": "󰕾"
+      "label": "󰕾",
+      "show-per-app": false
+    },
+    "buttons-grid#quick": {
+      "buttons-per-row": 5,
+      "actions": [
+        {
+          "label": "󰖩",
+          "type": "toggle",
+          "active": false,
+          "command": "@HOME@/.local/bin/rice-services toggle wifi",
+          "update-command": "@HOME@/.local/bin/rice-services is wifi"
+        },
+        {
+          "label": "󰂯",
+          "type": "toggle",
+          "active": false,
+          "command": "@HOME@/.local/bin/rice-services toggle bluetooth",
+          "update-command": "@HOME@/.local/bin/rice-services is bluetooth"
+        },
+        {
+          "label": "󰂛",
+          "type": "toggle",
+          "active": false,
+          "command": "@HOME@/.local/bin/rice-services toggle dnd",
+          "update-command": "@HOME@/.local/bin/rice-services is dnd"
+        },
+        {
+          "label": "󰅶",
+          "type": "toggle",
+          "active": false,
+          "command": "@HOME@/.local/bin/rice-services toggle awake",
+          "update-command": "@HOME@/.local/bin/rice-services is awake"
+        },
+        {
+          "label": "󰍬",
+          "type": "toggle",
+          "active": false,
+          "command": "@HOME@/.local/bin/rice-services toggle mic",
+          "update-command": "@HOME@/.local/bin/rice-services is mic"
+        }
+      ]
+    },
+    "buttons-grid#power": {
+      "buttons-per-row": 3,
+      "actions": [
+        {
+          "label": "󰌪  Saver",
+          "type": "toggle",
+          "active": false,
+          "command": "@HOME@/.local/bin/rice-services toggle profile:power-saver",
+          "update-command": "@HOME@/.local/bin/rice-services is profile:power-saver"
+        },
+        {
+          "label": "󰗑  Balanced",
+          "type": "toggle",
+          "active": false,
+          "command": "@HOME@/.local/bin/rice-services toggle profile:balanced",
+          "update-command": "@HOME@/.local/bin/rice-services is profile:balanced"
+        },
+        {
+          "label": "󰓅  Performance",
+          "type": "toggle",
+          "active": false,
+          "command": "@HOME@/.local/bin/rice-services toggle profile:performance",
+          "update-command": "@HOME@/.local/bin/rice-services is profile:performance"
+        }
+      ]
+    },
+    "buttons-grid#session": {
+      "buttons-per-row": 5,
+      "actions": [
+        {
+          "label": "󰌾",
+          "command": "@HOME@/.local/bin/rice-services session lock"
+        },
+        {
+          "label": "󰒲",
+          "command": "@HOME@/.local/bin/rice-services session suspend"
+        },
+        {
+          "label": "󰍃",
+          "command": "@HOME@/.local/bin/rice-services session logout"
+        },
+        {
+          "label": "󰜉",
+          "command": "@HOME@/.local/bin/rice-services session reboot"
+        },
+        {
+          "label": "󰐥",
+          "command": "@HOME@/.local/bin/rice-services session poweroff"
+        }
+      ]
     }
   },
   "scripts": {
@@ -92,5 +185,7 @@
       "app-name": ".*",
       "run-on": "receive"
     }
-  }
+  },
+  "control-center-positionX": "right",
+  "control-center-positionY": "top"
 }

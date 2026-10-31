@@ -1,7 +1,7 @@
 # NixOS module: installs everything DarkShadow's Shell needs.
 # Dotfiles and apps are still installed per user with ./install.sh (pick "Tools", "Apps", "Dotfiles").
 # NOTE: written without access to a NixOS machine; if an attribute name changed in your nixpkgs, adjust it.
-{ lib, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 {
   programs.hyprland.enable = lib.mkDefault true;
 
@@ -52,6 +52,11 @@
 
   # battery and device charge for the Battery widget
   services.upower.enable = lib.mkDefault true;
+
+  # power modes in the notification center (Power saver, Balanced, Performance).
+  # Turned off automatically when you use TLP or auto-cpufreq, which do the same job.
+  services.power-profiles-daemon.enable = lib.mkDefault (
+    !(config.services.tlp.enable or false) && !(config.services.auto-cpufreq.enable or false));
 
   xdg.portal.enable = lib.mkDefault true;
 }

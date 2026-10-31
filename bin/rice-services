@@ -4,6 +4,10 @@
   rice-services state                     JSON for the settings app
   rice-services set KEY on|off            wifi bluetooth sound mic airplane network dnd awake nightlight
   rice-services unit NAME start|stop|restart
+  rice-services is KEY                    "true" / "false" (KEY, or profile:NAME), for the notification center
+  rice-services toggle KEY                flip a switch (the notification center buttons use this)
+  rice-services profile power-saver|balanced|performance|get
+  rice-services session lock|suspend|logout|reboot|poweroff   (the last three ask first)
 """
 import json
 import os
@@ -102,6 +106,8 @@ def state():
         "awake": awake_on(),
         "nightlight": night_on(),
     }
+    s["profile"] = profile_get()
+    s["have"]["powerprofilesctl"] = shutil.which("powerprofilesctl") is not None
     s["airplane"] = have["nmcli"] and not s["wifi"] and not s["bluetooth"] and out(["nmcli", "radio", "wwan"]) != "enabled"
     try:
         s["night_temp"] = int(open(NIGHT).read().strip() or 4500)
@@ -154,12 +160,93 @@ def setv(key, on):
         sys.exit("unknown switch: " + key)
 
 
+def is_on(key):
+    if key.startswith("profile:"):
+        return profile_get() == key.split(":", 1)[1]
+    f = {"wifi": wifi_on, "network": network_on, "bluetooth": bt_on, "dnd": dnd_on, "awake": awake_on, "nightlight": night_on,
+         "sound": lambda: not muted("@DEFAULT_AUDIO_SINK@"), "mic": lambda: not muted("@DEFAULT_AUDIO_SOURCE@")}.get(key)
+    try:
+        return bool(f()) if f else False
+    except Exception:
+        return False
+
+
+def profile_get():
+    if shutil.which("powerprofilesctl"):
+        return out(["powerprofilesctl", "get"]) or "balanced"
+    return ""
+
+
+def profile_set(name):
+    if name not in ("power-saver", "balanced", "performance"):
+        sys.exit("profile: power-saver|balanced|performance")
+    if not shutil.which("powerprofilesctl"):
+        bg(["notify-send", "-a", "DarkShadow's Shell", "Power modes need power-profiles-daemon",
+            "Install it (Arch: power-profiles-daemon, NixOS: services.power-profiles-daemon.enable)"])
+        return
+    r = run(["powerprofilesctl", "set", name], 10)
+    if r is None or r.returncode != 0:
+        bg(["notify-send", "-a", "DarkShadow's Shell", "Could not switch the power mode",
+            (r.stderr.strip() if r else "") or "Is power-profiles-daemon running?"])
+
+
+def confirm(question):
+    """a small yes / no menu (rofi); without rofi: yes"""
+    if not shutil.which("rofi"):
+        return True
+    try:
+        r = subprocess.run(["rofi", "-dmenu", "-i", "-p", question, "-l", "2", "-no-custom", "-theme-str", "window { width: 360px; }"],
+                           input="No\nYes\n", capture_output=True, text=True, timeout=60)
+        return r.stdout.strip() == "Yes"
+    except Exception:
+        return False
+
+
+def session(what):
+    run(["swaync-client", "-cp"])     # close the notification center first
+    if what == "lock":
+        if shutil.which("hyprlock"):
+            if out(["pidof", "hyprlock"]) == "":
+                bg(["hyprlock"])
+        else:
+            run(["loginctl", "lock-session"])
+    elif what == "suspend":
+        run(["systemctl", "suspend"], 10)
+    elif what == "logout":
+        if confirm("Log out?"):
+            run(["hyprctl", "dispatch", "exit"])
+    elif what == "reboot":
+        if confirm("Restart?"):
+            run(["systemctl", "reboot"], 10)
+    elif what == "poweroff":
+        if confirm("Shut down?"):
+            run(["systemctl", "poweroff"], 10)
+    else:
+        sys.exit("session: lock|suspend|logout|reboot|poweroff")
+
+
 def main(a):
     cmd = a[1] if len(a) > 1 else ""
     if cmd == "state":
         state()
     elif cmd == "set" and len(a) > 3:
         setv(a[2], a[3].lower() in ("1", "on", "true", "yes"))
+    elif cmd == "is" and len(a) > 2:
+        print("true" if is_on(a[2]) else "false")
+    elif cmd == "toggle" and len(a) > 2:
+        if a[2].startswith("profile:"):
+            # a power mode button: always switches to that mode (pressing the lit one keeps it)
+            profile_set(a[2].split(":", 1)[1])
+            return
+        st = os.environ.get("SWAYNC_TOGGLE_STATE", "")
+        setv(a[2], (st == "true") if st in ("true", "false") else not is_on(a[2]))
+    elif cmd == "profile" and len(a) > 2:
+        if a[2] == "get":
+            print(profile_get())
+        else:
+            profile_set(a[2])
+    elif cmd == "session" and len(a) > 2:
+        session(a[2])
     elif cmd == "night-temp" and len(a) > 2:
         t = max(2500, min(6500, int(float(a[2]))))
         os.makedirs(os.path.dirname(NIGHT), exist_ok=True)
