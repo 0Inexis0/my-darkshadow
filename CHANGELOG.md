@@ -1,5 +1,8 @@
 # Changelog
 
+## V2.52
+- Notification center: switches that are on have a white icon
+
 ## V2.51
 - Notification center: full screen height (floating keeps its gap) and a bit wider, no more scrolling
 

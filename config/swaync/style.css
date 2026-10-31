@@ -237,7 +237,12 @@
 .control-center .widget-buttons-grid > flowbox > flowboxchild > button:checked,
 .control-center .widget-buttons-grid > flowbox > flowboxchild > button:checked:hover {
   background: #004c6d;
-  color: #c7e7ff;
+  color: #ffffff;  /* switched on: white icon */
+}
+/* the icon of a switch that is on stays white, whatever older rules say */
+.control-center .widget-buttons-grid > flowbox > flowboxchild > button:checked label,
+.control-center .widget-buttons-grid > flowbox > flowboxchild > button:checked * {
+  color: #ffffff;
 }
 /* switches: big round-cornered squares */
 .control-center .widget-buttons-grid.quick > flowbox > flowboxchild > button {
@@ -269,7 +274,7 @@
 }
 .control-center .widget-buttons-grid.power > flowbox > flowboxchild > button:checked {
   background: #004c6d;
-  color: #c7e7ff;
+  color: #ffffff;  /* switched on: white icon */
 }
 /* power buttons at the bottom: quieter, red on hover for the last one */
 .control-center .widget-buttons-grid.session {
