@@ -1,5 +1,8 @@
 # Changelog
 
+## V2.51
+- Notification center: full screen height (floating keeps its gap) and a bit wider, no more scrolling
+
 ## V2.50
 - New notification center "Deck": switches on top, power modes (Power saver, Balanced, Performance), notifications, volume and brightness, power buttons at the bottom
 - Floating or flat against the edge, left or right, resizable, blur and transparency; popups left, middle or right; live preview in Settings > Notifications

@@ -189,13 +189,13 @@ Item {
         SliderRow {
             label: "Width"
             from: 300; to: 700; step: 10; unit: " px"
-            value: page.v("panel_width", 420)
+            value: page.v("panel_width", 440)
             onCommitted: function(x) { page.setv("panel_width", Math.round(x)) }
         }
         ToggleRow {
             label: "Full height"
-            desc: "Stretch the panel from the top to the bottom of the screen"
-            checked: page.v("fit", false) === true
+            desc: "From the top to the bottom of the screen (floating keeps the gap). Off: use the height below"
+            checked: page.v("fit", true) === true
             onToggled: function(x) { page.setv("fit", x ? "on" : "off") }
         }
         SliderRow {

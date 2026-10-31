@@ -26,7 +26,7 @@ BEGIN, END = "/* rice-notify */", "/* end-rice-notify */"
 
 DEFAULTS = {
     "pos_x": "right", "pos_y": "top", "margin": 10,
-    "layout": "deck", "panel_width": 420, "panel_height": 820, "fit": False,
+    "layout": "deck", "panel_width": 440, "panel_height": 820, "fit": True,
     "w_buttons": True, "w_media": True, "w_volume": True, "w_dnd": True, "w_title": True,
     # the Deck notification center: side, floating or against the edge, and its rows
     "cc_side": "right", "cc_float": True, "w_quick": True, "w_power": True, "w_brightness": True, "w_session": True,
@@ -96,7 +96,11 @@ def load():
     if raw.get("v", 1) < 2:
         c["layout"] = "deck"
         c["w_volume"] = True
-    c["v"] = 2
+    # V2.51: the Deck needs the room: full screen height (a gap all around when floating), a bit wider
+    if raw.get("v", 1) < 3:
+        c["fit"] = True
+        c["panel_width"] = max(c["panel_width"], 440)
+    c["v"] = 3
     return c
 
 
