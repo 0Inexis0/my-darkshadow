@@ -250,13 +250,13 @@ tooltip label {
 }
 
 window#waybar #wireplumber, window#waybar #clock, window#waybar #apps, window#waybar #custom-notification, window#waybar #custom-lock {
-    margin-left: 3px;
-    margin-right: 3px;
+    margin-left: 0px;
+    margin-right: 0px;
 }
 
 window#waybar #bluetooth, window#waybar #tray, window#waybar #network {
-    margin-left: 1px;
-    margin-right: 1px;
+    margin-left: 0px;
+    margin-right: 0px;
 }
 
 #custom-distro {

@@ -33,7 +33,7 @@
 </p>
 
 ## Features
-**Settings app** (`SUPER+U`), twelve pages: Home, Waybar, Hyprland, Rofi, Theme, Notifications, Idle & Lockscreen, Desktop, Hot corners, Interface, Services, About.
+**Settings app** (`SUPER+U`), thirteen pages: Home, Waybar, Hyprland, Rofi, Theme, Cursors, Notifications, Idle & Lockscreen, Desktop, Hot corners, Interface, Services, About.
 
 | Area | What you get |
 | --- | --- |
@@ -47,6 +47,8 @@
 | **Hyprland** | gaps, borders, rounding, blur, shadows and animations from sliders, no config editing |
 | **Theme** | 21 color schemes: Auto and Grey from your wallpaper, six monochrome (Mono, Slate, Stone, Steel, Ash, Ink) and thirteen colors (Navy, Ocean, Sky, Teal, Mint, Forest, Lime, Gold, Sunset, Ember, Rose, Orchid, Violet). They recolor Waybar, borders, notifications and the lock screen |
 | **Notifications** | swaync popups and panel: position, layout, widgets (title, Do Not Disturb, media, volume, quick buttons), size, timeout, icon size, Glass / Solid / Outline look, opacity, radius, blur, live preview and a test button |
+| **Notification sounds** | six original sounds (Glass, Droplet, Chime, Bubble, Marimba, Aurora) or Off, with volume; silent during Do Not Disturb |
+| **Updates** | a notification when a new version is out ("Update is Available!"), version and Update now button in Settings > About, `rice-update` in a terminal |
 | **Idle & Lockscreen** | lock, screen-off and sleep timers; lock screen with Big / Stacked / Minimal clock, center or left layout, greeting, avatar, Pill / Box / Line password field, power buttons, screenshot / wallpaper / color background and media, resources, weather and notification lines |
 | **Rofi** | 5 themes (Shadow, Graphite, Midnight, Rose, Paper), layouts list / grid / full-width bar, position top, center or bottom, width, rows, corner radius, transparency, blur, font size, icons |
 | **Fonts** | one place to set the main and icon fonts |
@@ -110,9 +112,13 @@ Add `imports = [ ./path/to/shadows-shell/nix/module.nix ];` to `/etc/nixos/confi
 | `--yes` | install everything without questions |
 | `--dry-run` | show what would happen, change nothing |
 | `--no-packages` | skip the package step |
+| `--update` | get the newest version and update apps and scripts (keeps your configs) |
 | `--restore` | put back the files from the last backup |
 
 Every file the installer replaces is saved in `~/.config/darkshadows-shell-backup-<time>/`.
+
+### Updating
+Run `rice-update` (or `./install.sh --update` in the repo), or press **Update now** in Settings > About or in the update notification.
 
 ## Layout
 | Path | Contents |
@@ -123,11 +129,15 @@ Every file the installer replaces is saved in `~/.config/darkshadows-shell-backu
 | `install/` | installer UI and distro detection |
 | `lua/` | Hyprland add-ons: keybinds, widgets autostart, hot corner |
 | `wallpapers/` | original wallpapers, copied to `~/Pictures/Wallpapers` |
+| `sounds/` | notification sounds (made by `install/tools/make-sounds.py`, CC0) |
+| `VERSION` | the current version, used by the update check |
 | `nix/`, `flake.nix` | NixOS module |
 | `.github/` | CI (shellcheck, dry-run install) and issue template |
 
 ## Maintainers
 `./sync.sh` copies your current setup from this machine into the repo (paths become `@HOME@`, no username is stored) and scans for secrets.
+
+To release a new version, put the new number in `VERSION` (for example `2.03`) and push. Everyone gets the update notification within a few hours.
 
 ## License
 Not chosen yet. Add a `LICENSE` file before sharing widely.

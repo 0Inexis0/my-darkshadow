@@ -76,11 +76,14 @@
     "show-passive-items": true
   },
   "bluetooth": {
-    "format": "",
-    "format-connected": "",
+    "format": "󰂯",
+    "format-connected": "󰂱",
     "tooltip-format": "{status}",
     "tooltip-format-connected": "{device_alias}",
-    "on-click": "overskride"
+    "on-click": "overskride",
+    "format-on": "󰂯",
+    "format-off": "󰂲",
+    "format-disabled": "󰂲"
   },
   "custom/notification": {
     "tooltip": false,

@@ -27,7 +27,7 @@ banner() {
   printf '\n  %s╭%s╮%s\n' "$CG3" "$top" "$C0"
   printf '  %s│%s %s%s%-*s%s %s│%s\n' "$CG3" "$C0" "$CB" "$CW" "$W" "D A R K S H A D O W ' S   S H E L L" "$C0" "$CG3" "$C0"
   printf '  %s│%s %s%-*s%s %s│%s\n' "$CG3" "$C0" "$CG2" "$W" "Hyprland  +  Quickshell  +  Waybar" "$C0" "$CG3" "$C0"
-  printf '  %s│%s %s%-*s%s %s│%s\n' "$CG3" "$C0" "$CG3" "$W" "installer ${VERSION:-}" "$C0" "$CG3" "$C0"
+  printf '  %s│%s %s%-*s%s %s│%s\n' "$CG3" "$C0" "$CG3" "$W" "installer  V${RICE_VERSION:-}" "$C0" "$CG3" "$C0"
   printf '  %s╰%s╯%s\n\n' "$CG3" "$bot" "$C0"
 }
 

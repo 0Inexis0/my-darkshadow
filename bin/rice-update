@@ -1,14 +1,215 @@
-#!/usr/bin/env bash
-# Update DarkShadow's Shell: newest version from GitHub, then apps, scripts and packages.
-repo="$(cat "$HOME/.config/rice/repo" 2>/dev/null)"
-[ -n "$repo" ] && [ -x "$repo/install.sh" ] || repo="$HOME/shadows-shell"
-if [ ! -x "$repo/install.sh" ]; then
-  echo "Could not find your copy of the repo. Clone it again:"
-  echo "  git clone https://github.com/shadowww-dev/shadows-shell ~/shadows-shell"
-  read -r -p "Press Enter to close" _
-  exit 1
-fi
-cd "$repo" || exit 1
-./install.sh --update "$@"
-echo
-read -r -p "Press Enter to close" _
+#!/usr/bin/env python3
+"""rice-update: updates for DarkShadow's Shell.
+
+  rice-update               install the newest version (runs ./install.sh --update in the repo)
+  rice-update check [--json] [--offline]
+                            compare your version with the newest one on GitHub
+  rice-update watch         background: checks after login and every few hours, shows a notification
+  rice-update notify        show the "Update is Available!" notification now (to try it)
+"""
+import fcntl
+import json
+import os
+import shutil
+import subprocess
+import sys
+import time
+
+HOME = os.path.expanduser("~")
+DIR = HOME + "/.config/rice"
+INSTALLED = DIR + "/version"
+CACHE = HOME + "/.cache/rice"
+STATE = CACHE + "/update.json"
+NOTIFIED = CACHE + "/update-notified"
+RAW = "https://raw.githubusercontent.com/shadowww-dev/shadows-shell/main/VERSION"
+FIRST_WAIT = 90            # seconds after login
+EVERY = 3 * 3600           # then every 3 hours
+APP = "DarkShadow's Shell"
+
+
+def repo():
+    try:
+        r = open(DIR + "/repo").read().strip()
+        if r and os.path.exists(r + "/install.sh"):
+            return r
+    except OSError:
+        pass
+    r = HOME + "/shadows-shell"
+    return r if os.path.exists(r + "/install.sh") else None
+
+
+def key(v):
+    """'2.02' < '2.1' == '2.10' < '3.0' (the part after the dot reads like decimals)"""
+    try:
+        major, _, minor = v.strip().lstrip("vV").partition(".")
+        return (int(major), float("0." + (minor or "0")))
+    except ValueError:
+        return (0, 0.0)
+
+
+def clean(v):
+    v = (v or "").strip().lstrip("vV")
+    return v if v and key(v) > (0, 0.0) else ""
+
+
+def installed():
+    try:
+        return clean(open(INSTALLED).read()) or "2.01"
+    except OSError:
+        return "2.01"   # installs from before versions existed
+
+
+def git(r, *a, timeout=25):
+    env = dict(os.environ, GIT_TERMINAL_PROMPT="0", GIT_ASKPASS="true", SSH_ASKPASS="true")
+    return subprocess.run(["git", "-C", r] + list(a), capture_output=True, text=True, timeout=timeout, env=env)
+
+
+def latest(offline=False):
+    """newest version: GitHub (through your repo's git remote), else the raw file, else your repo."""
+    r = repo()
+    found, err = [], ""
+    if r and os.path.isdir(r + "/.git") and shutil.which("git"):
+        try:
+            if not offline:
+                f = git(r, "fetch", "--quiet")
+                if f.returncode != 0:
+                    err = (f.stderr.strip().splitlines() or ["git fetch failed"])[-1]
+            refs = []
+            u = git(r, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}", timeout=5)
+            if u.returncode == 0 and u.stdout.strip():
+                refs.append(u.stdout.strip())
+            refs += ["origin/main", "origin/master"]
+            for ref in refs:
+                s = git(r, "show", ref + ":VERSION", timeout=5)
+                if s.returncode == 0 and clean(s.stdout):
+                    found.append(clean(s.stdout))
+                    break
+        except Exception as e:
+            err = str(e)
+    if not found and not offline and shutil.which("curl"):
+        try:
+            c = subprocess.run(["curl", "-fsSL", "--max-time", "15", RAW], capture_output=True, text=True, timeout=20)
+            if c.returncode == 0 and clean(c.stdout):
+                found.append(clean(c.stdout))
+                err = ""
+        except Exception as e:
+            err = err or str(e)
+    if r:
+        try:
+            found.append(clean(open(r + "/VERSION").read()))   # pulled but not installed yet
+        except OSError:
+            pass
+    found = [v for v in found if v]
+    return (max(found, key=key) if found else ""), err
+
+
+def check(offline=False):
+    have = installed()
+    new, err = latest(offline)
+    out = {"installed": have, "latest": new or have, "update": bool(new) and key(new) > key(have),
+           "checked": int(time.time()), "error": err if not new else ""}
+    os.makedirs(CACHE, exist_ok=True)
+    try:
+        json.dump(out, open(STATE, "w"))
+    except OSError:
+        pass
+    return out
+
+
+def terminal_update():
+    t = os.environ.get("TERMINAL") or "kitty"
+    if not shutil.which(t):
+        t = next((x for x in ("kitty", "foot", "alacritty", "wezterm", "konsole", "gnome-terminal") if shutil.which(x)), t)
+    subprocess.Popen([t, "-e", HOME + "/.local/bin/rice-update"], start_new_session=True,
+                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def notify(version):
+    """the popup; clicking it (or Update now) opens the update in a terminal"""
+    if not shutil.which("notify-send"):
+        return
+    icon = "system-software-update"
+    try:
+        r = subprocess.run(["notify-send", "-a", APP, "-i", icon, "-u", "normal", "-t", "15000",
+                            "-A", "default=Update now", "-A", "update=Update now", "-A", "later=Later",
+                            "--wait", "Update is Available!", "Update V" + version],
+                           capture_output=True, text=True, timeout=6 * 3600)
+        if r.stdout.strip() in ("default", "update"):
+            terminal_update()
+    except Exception:
+        pass
+
+
+def notify_bg(version):
+    if os.fork() == 0:
+        os.setsid()
+        notify(version)
+        os._exit(0)
+
+
+def watch():
+    os.makedirs(CACHE, exist_ok=True)
+    lk = open(CACHE + "/update-watch.lock", "w")
+    try:
+        fcntl.flock(lk, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        return  # already running
+    time.sleep(FIRST_WAIT)
+    while True:
+        try:
+            st = check()
+            if st["update"]:
+                try:
+                    told = open(NOTIFIED).read().strip()
+                except OSError:
+                    told = ""
+                if told != st["latest"]:
+                    open(NOTIFIED, "w").write(st["latest"])
+                    notify_bg(st["latest"])
+        except Exception:
+            pass
+        time.sleep(EVERY)
+
+
+def run(args):
+    r = repo()
+    if not r:
+        print("Could not find your copy of the repo. Clone it again:")
+        print("  git clone https://github.com/shadowww-dev/shadows-shell ~/shadows-shell")
+        input("Press Enter to close")
+        sys.exit(1)
+    os.chdir(r)
+    code = subprocess.call(["./install.sh", "--update"] + args)
+    print()
+    try:
+        input("Press Enter to close")
+    except EOFError:
+        pass
+    sys.exit(code)
+
+
+def main(a):
+    cmd = a[1] if len(a) > 1 else ""
+    if cmd == "check":
+        st = check(offline="--offline" in a)
+        if "--json" in a:
+            print(json.dumps(st))
+        elif st["update"]:
+            print("Update V%s is available (you have V%s). Run: rice-update" % (st["latest"], st["installed"]))
+        else:
+            print("Up to date: V%s%s" % (st["installed"], ("  (could not check: %s)" % st["error"]) if st["error"] else ""))
+    elif cmd == "watch":
+        watch()
+    elif cmd == "notify":
+        st = check(offline="--offline" in a)
+        notify_bg(st["latest"] if st["update"] else st["installed"])
+    elif cmd in ("", "run"):
+        run(a[2:])
+    elif cmd in ("-h", "--help", "help"):
+        print(__doc__)
+    else:
+        run(a[1:])   # pass flags like --no-packages on to install.sh
+
+
+if __name__ == "__main__":
+    main(sys.argv)

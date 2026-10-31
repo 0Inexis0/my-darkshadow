@@ -8,7 +8,7 @@ osd() { command -v swayosd-client >/dev/null 2>&1 && pgrep -x swayosd-server >/d
 vol() { wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null | awk '{printf "%d", $2 * 100}'; }
 show() { # show TITLE VALUE ICON
   command -v notify-send >/dev/null 2>&1 || return 0
-  notify-send -a "DarkShadow's Shell" -i "$3" -h "int:value:$2" -h string:x-canonical-private-synchronous:rice-media -t 1200 "$1" "$2%"
+  notify-send -a rice-media -i "$3" -h "int:value:$2" -h string:x-canonical-private-synchronous:rice-media -t 1200 "$1" "$2%"
 }
 case "${1:-}" in
   up)

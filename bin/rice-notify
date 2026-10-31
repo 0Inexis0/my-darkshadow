@@ -32,15 +32,18 @@ DEFAULTS = {
     "style": "glass", "popup_style": "match", "opacity": 0.80, "radius": 18, "blur": True, "compact": False, "accent": True,
     "colors": "graphite", "font": "sans", "font_size": 13, "popup_opacity": 0.85, "blur_popups": True,
     "border": "subtle", "shadow": False,
+    "sound": "glass", "sound_volume": 70,
 }
 INTS = {"margin": (0, 60), "panel_width": (300, 700), "panel_height": (300, 1400), "popup_width": (260, 600),
-        "timeout": (2, 30), "icon_size": (20, 72), "radius": (0, 32), "font_size": (10, 18)}
+        "timeout": (2, 30), "icon_size": (20, 72), "radius": (0, 32), "font_size": (10, 18),
+        "sound_volume": (0, 100)}
 FLOATS = {"opacity": (0.3, 1.0), "popup_opacity": (0.3, 1.0)}
 CHOICES = {"pos_x": ["left", "center", "right"], "pos_y": ["top", "bottom"],
            "layout": ["controls-top", "controls-bottom", "minimal"], "style": ["glass", "solid", "outline"],
            "popup_style": ["match", "glass", "solid", "minimal", "pill", "accent", "glow", "island", "light"],
            "colors": ["black", "graphite", "slate", "white", "tinted"], "font": ["sans", "rounded", "mono", "system"],
-           "border": ["subtle", "accent", "none"]}
+           "border": ["subtle", "accent", "none"],
+           "sound": ["glass", "droplet", "chime", "bubble", "marimba", "aurora", "off"]}
 ORDER = {
     "controls-top": ["buttons-grid", "mpris", "volume", "dnd", "title", "notifications"],
     "controls-bottom": ["title", "dnd", "notifications", "mpris", "volume", "buttons-grid"],
@@ -170,6 +173,16 @@ def write_config(c):
     wc.setdefault("mpris", {"image-size": 56, "image-radius": 12})
     wc.setdefault("volume", {"label": chr(0xF057E)})
     wc.setdefault("buttons-grid", {"actions": []})
+    # sound for new notifications: swaync runs rice-sound, which checks Do Not Disturb itself
+    scripts = j.get("scripts") if isinstance(j.get("scripts"), dict) else {}
+    scripts.pop("rice-sound", None)
+    if c["sound"] != "off":
+        scripts["rice-sound"] = {"exec": HOME + "/.local/bin/rice-sound notify", "app-name": ".*", "run-on": "receive"}
+    if scripts:
+        j["scripts"] = scripts
+    else:
+        j.pop("scripts", None)
+    j["script-fail-notify"] = False
     tmp = SWCFG + ".tmp"
     os.makedirs(SW, exist_ok=True)
     json.dump(j, open(tmp, "w"), indent=2, ensure_ascii=False)

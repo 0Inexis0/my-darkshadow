@@ -4,8 +4,9 @@
 # installed; NixOS gets the module to add; everything else gets a list of what to install.
 set -Euo pipefail
 
-VERSION="2.0"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+RICE_VERSION="$(tr -d ' \r\n' <"$ROOT/VERSION" 2>/dev/null || true)"; RICE_VERSION="${RICE_VERSION#[vV]}"; RICE_VERSION="${RICE_VERSION:-2.02}"
+HAVE_VERSION="$(tr -d ' \r\n' <"$HOME/.config/rice/version" 2>/dev/null || true)"; HAVE_VERSION="${HAVE_VERSION#[vV]}"
 # shellcheck source=install/lib/ui.sh
 . "$ROOT/install/lib/ui.sh"
 # shellcheck source=install/lib/distro.sh
@@ -14,7 +15,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ASSUME_YES=0; DRY_RUN=0; MODE=install; SKIP_PKGS=0; PULLED=0
 usage() {
   cat <<U
-DarkShadow's Shell installer $VERSION
+DarkShadow's Shell installer V$RICE_VERSION
 
 Usage: ./install.sh [options]
   -y, --yes          install everything, no questions
@@ -54,6 +55,19 @@ cleanup() { [ -n "$SUDO_PID" ] && kill "$SUDO_PID" 2>/dev/null; rm -f "${PKG_SPL
 trap cleanup EXIT
 
 # ------------------------------------------------------------------ helpers
+# ver_newer A B: true when version A is newer than B ("2.1" == "2.10" > "2.02")
+ver_newer() {
+  python3 - "$1" "$2" <<'PY' 2>/dev/null
+import sys
+def k(v):
+    a, _, b = v.strip().lstrip("vV").partition(".")
+    try:
+        return (int(a or 0), float("0." + (b or "0")))
+    except ValueError:
+        return (0, 0.0)
+sys.exit(0 if k(sys.argv[1]) > k(sys.argv[2]) else 1)
+PY
+}
 # put SRC DST: copy one file, fill in @HOME@/@USER@, back up what it replaces
 put() {
   local src="$1" dst="$2" rel
@@ -273,6 +287,7 @@ step_apps() {
   local d n
   n="$(find "$ROOT/bin" -maxdepth 1 -type f | wc -l)"
   task "Helper scripts ($n)  ->  ~/.local/bin" copy_bins
+  [ -d "$ROOT/sounds" ] && task "Notification sounds  ->  ~/.local/share/rice/sounds" copy_tree "$ROOT/sounds" "$HOME/.local/share/rice/sounds"
   for d in "$ROOT"/quickshell/*/; do
     [ -d "$d" ] || continue
     d="$(basename "$d")"
@@ -305,12 +320,14 @@ patch_colors() {
 }
 fixup() { python3 "$ROOT/install/lib/fixup.py" >"$1"; }
 remember_repo() { mkdir -p "$HOME/.config/rice"; echo "$ROOT" >"$HOME/.config/rice/repo"; }
+remember_version() { mkdir -p "$HOME/.config/rice"; echo "$RICE_VERSION" >"$HOME/.config/rice/version"; }
 first_backup() { mkdir -p "$HOME/.config/rice" "$HOME/.cache/rice"; [ -f "$HOME/.config/rice/.first-backup" ] || echo "$BK" >"$HOME/.config/rice/.first-backup"; }
 
 step_finish() {
   local T=25
   task "Remembering your backup folder" first_backup
   task "Remembering where this copy lives (for updates)" remember_repo
+  task "Version V$RICE_VERSION" remember_version
   task "Loading the shell's modules in Hyprland" wire_hypr
   local fx; fx="$(mktemp)"
   task "Fitting the config to this computer" fixup "$fx"
@@ -369,13 +386,21 @@ if [ "$MODE" = update ]; then
     if [ "$DRY_RUN" = 1 ]; then info "would run: git pull"
     elif git -C "$ROOT" pull --ff-only >>"$LOG" 2>&1; then
       new="$(git -C "$ROOT" rev-parse --short HEAD)"
-      if [ "$old" = "$new" ]; then ok "Already the newest version ($new)"; else ok "Updated $old -> $new"
-        # the installer itself may have changed: start the new one
+      if [ "$old" != "$new" ]; then
+        # new files from GitHub, maybe a new installer too: start the new one
         exec "$ROOT/install.sh" --update --pulled "$@"
       fi
     else
       warn "git pull failed (local changes?). Continuing with the files you have."
     fi
+  fi
+fi
+
+if [ "$MODE" = update ]; then
+  if ver_newer "$RICE_VERSION" "${HAVE_VERSION:-2.01}"; then
+    ok "Update V$RICE_VERSION  (you have V${HAVE_VERSION:-2.01})"
+  else
+    ok "You already have the newest version: V$RICE_VERSION"
   fi
 fi
 
@@ -432,8 +457,10 @@ hr
 if [ "$DRY_RUN" = 1 ]; then
   printf '  %s%sDry run finished.%s Nothing was changed.\n' "$CB" "$CW" "$C0"
 else
-  if [ "$MODE" = update ]; then printf '  %s%sDarkShadow'"'"'s Shell is up to date.%s\n' "$CB" "$CW" "$C0"
-  else printf '  %s%sDarkShadow'"'"'s Shell is installed.%s\n' "$CB" "$CW" "$C0"; fi
+  if [ "$MODE" = update ] && ver_newer "$RICE_VERSION" "${HAVE_VERSION:-2.01}"; then
+    printf '  %s%sDarkShadow'"'"'s Shell updated to V%s%s  (was V%s)\n' "$CB" "$CW" "$RICE_VERSION" "$C0" "${HAVE_VERSION:-2.01}"
+  elif [ "$MODE" = update ]; then printf '  %s%sDarkShadow'"'"'s Shell V%s%s  newest version, refreshed\n' "$CB" "$CW" "$RICE_VERSION" "$C0"
+  else printf '  %s%sDarkShadow'"'"'s Shell V%s is installed.%s\n' "$CB" "$CW" "$RICE_VERSION" "$C0"; fi
 fi
 hr
 if [ -n "$miss" ]; then warn "Still missing: $miss"; else ok "All needed programs are installed"; fi

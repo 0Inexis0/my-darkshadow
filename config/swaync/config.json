@@ -27,7 +27,7 @@
   "transition-time": 200,
   "hide-on-clear": false,
   "hide-on-action": true,
-  "script-fail-notify": true,
+  "script-fail-notify": false,
   "widgets": [
     "buttons-grid",
     "mpris",
@@ -84,6 +84,13 @@
     },
     "volume": {
       "label": "󰕾"
+    }
+  },
+  "scripts": {
+    "rice-sound": {
+      "exec": "@HOME@/.local/bin/rice-sound notify",
+      "app-name": ".*",
+      "run-on": "receive"
     }
   }
 }
