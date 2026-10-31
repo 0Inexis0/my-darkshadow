@@ -3,8 +3,8 @@ import Quickshell.Io
 import Quickshell.Wayland
 import QtQuick
 
-// The dashboard: point at the middle of the top (or bottom) edge, or press SUPER + W for wallpapers.
-// Tabs: Dashboard, Wallpaper, Performance, About. Settings > Dashboard.
+// The dashboard. It grows out of the bar (point at the middle of its edge, SUPER + ALT + D, or
+// SUPER + W for wallpapers). Tabs: Dashboard, Wallpaper, Performance, About. Settings > Dashboard.
 PanelWindow {
     id: db
     property var cfg: ({ enabled: false })
@@ -14,6 +14,9 @@ PanelWindow {
     property real t: 0
     property bool entered: false
     property bool byHover: false
+    property bool armed: true
+    property bool editing: false
+    property bool typing: false
     property string lastCmd: ""
     property bool cmdSeen: false
     property var visited: ({})
@@ -21,18 +24,33 @@ PanelWindow {
     property var disks: []
     readonly property var disk: disks.length > 0 ? disks[0] : null
     property var about: ({})
+    property var layouts: ({})
+    property var grids: ({})
+    property string toastText: ""
 
     readonly property var tabs: cfg.tabs && cfg.tabs.length ? cfg.tabs : ["dashboard", "wallpaper", "performance", "about"]
     readonly property int curIdx: Math.max(0, tabs.indexOf(tab))
     readonly property bool atTop: cfg.position !== "bottom"
     readonly property real sc: cfg.scale ? cfg.scale : 1
     readonly property real spd: cfg.speed ? cfg.speed : 1
-    readonly property real gapEdge: cfg.bar && cfg.bar.position === cfg.position && !cfg.bar.autohide ? cfg.bar.height + 8 : 12
-    readonly property real baseW: Math.min(cfg.width ? cfg.width : 1000, (db.width - 24) / sc)
-    readonly property real headH: 66
-    readonly property real bodyH: 330
+    readonly property string anim: cfg.animation ? cfg.animation : "morph"
+    readonly property bool attach: cfg.attach !== false
+    readonly property bool barHere: !!cfg.bar && cfg.bar.position === cfg.position && !cfg.bar.autohide
+    readonly property real barOff: barHere ? cfg.bar.height : 0
+    readonly property real earR: attach ? 24 : 0
+    readonly property real headH: 64
     readonly property real pad: 18
-    readonly property real baseH: headH + bodyH + pad
+    readonly property real trayH: editing && tab !== "wallpaper" ? 62 : 0
+    readonly property real baseW: cfg.width ? cfg.width : 1000
+    // every tab has its own size; the panel glides between them
+    function tabW(t) { return Math.min((db.width - 40) / sc - 2 * earR, baseW * ({ dashboard: 1.0, wallpaper: 1.18, performance: 1.04, about: 0.96 }[t] || 1)) }
+    function tabH(t) { return ({ dashboard: 330, wallpaper: 320, performance: 330, about: 300 }[t] || 330) }
+    readonly property real wantW: tabW(tab)
+    readonly property real wantH: headH + tabH(tab) + pad + trayH
+    property real curW: wantW
+    property real curH: wantH
+    Behavior on curW { NumberAnimation { duration: 460 / db.spd; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.05, 0.7, 0.1, 1, 1, 1] } }
+    Behavior on curH { NumberAnimation { duration: 460 / db.spd; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.05, 0.7, 0.1, 1, 1, 1] } }
 
     // ---------------- helpers for the tabs ----------------
     function md(cp) { return String.fromCodePoint(cp) }
@@ -56,7 +74,7 @@ PanelWindow {
         const dd = Math.floor(s / 86400), hh = Math.floor(s % 86400 / 3600), mm = Math.floor(s % 3600 / 60)
         return (dd ? dd + "d " : "") + (hh ? hh + "h " : "") + mm + "m"
     }
-    function close() { open = false }
+    function close() { open = false; editing = false }
     function show(which, hover) {
         tab = which && tabs.indexOf(which) >= 0 ? which : (cfg.default_tab && tabs.indexOf(cfg.default_tab) >= 0 ? cfg.default_tab : tabs[0])
         byHover = hover === true
@@ -64,8 +82,19 @@ PanelWindow {
         open = true
     }
     function loadAbout() { if (!aboutProc.running) aboutProc.running = true }
+    function registerGrid(tabId, g) { const n = Object.assign({}, grids); n[tabId] = g; grids = n }
+    function saveLayout(tabId, l) {
+        const n = Object.assign({}, layouts); n[tabId] = l; layouts = n
+        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-dashboard\" layout \"$1\" \"$2\"", "_", tabId, JSON.stringify(l)])
+    }
+    function resetLayout(tabId) {
+        const n = Object.assign({}, layouts); delete n[tabId]; layouts = n
+        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-dashboard\" reset-layout \"$1\"", "_", tabId])
+    }
+    function toast(m) { toastText = m; toastTimer.restart() }
+    Timer { id: toastTimer; interval: 2400; onTriggered: db.toastText = "" }
 
-    // ---------------- colors: three looks ----------------
+    // ---------------- looks ----------------
     function hx(c) {
         const s = String(c).replace("#", "")
         return [parseInt(s.substr(0, 2), 16) / 255, parseInt(s.substr(2, 2), 16) / 255, parseInt(s.substr(4, 2), 16) / 255]
@@ -75,25 +104,33 @@ PanelWindow {
         return Qt.rgba(x[0] * (1 - k) + y[0] * k, x[1] * (1 - k) + y[1] * k, x[2] * (1 - k) + y[2] * k, al === undefined ? 1 : al)
     }
     readonly property string acc: cfg.accent ? cfg.accent : "#9ec9bd"
-    readonly property string style: cfg.style ? cfg.style : "darkshadow"
-    readonly property var p: style === "end4" ? ({
-        // light Material You, tinted by your wallpaper colors
-        bg: mix(acc, "#ffffff", 0.9, 0.97), card: mix(acc, "#ffffff", 0.74), card2: mix(acc, "#ffffff", 0.64),
-        text: mix(acc, "#000000", 0.82), sub: mix(acc, "#000000", 0.55, 0.85), primary: mix(acc, "#000000", 0.42),
-        onPrimary: "#ffffff", container: mix(acc, "#ffffff", 0.52), onContainer: mix(acc, "#000000", 0.72),
-        line: "transparent", track: mix(acc, "#ffffff", 0.58), radius: 30, cardRadius: 26, tabStyle: "underline", dark: false
-    }) : style === "caelestia" ? ({
-        // dark tonal surfaces, big rounded shapes
-        bg: mix(acc, "#0f0f12", 0.9, 0.94), card: mix(acc, "#1b1b20", 0.86), card2: mix(acc, "#24242a", 0.8),
-        text: "#ebe6ee", sub: "#aaa4ae", primary: mix(acc, "#ffffff", 0.22), onPrimary: mix(acc, "#000000", 0.82),
-        container: mix(acc, "#1b1b20", 0.62), onContainer: mix(acc, "#ffffff", 0.72),
-        line: Qt.rgba(1, 1, 1, 0.05), track: Qt.rgba(1, 1, 1, 0.09), radius: 34, cardRadius: 24, tabStyle: "pill", dark: true
+    readonly property real op: cfg.opacity !== undefined ? cfg.opacity : 0.9
+    readonly property var barRgb: cfg.bar && cfg.bar.rgb && (cfg.bar.rgb[0] + cfg.bar.rgb[1] + cfg.bar.rgb[2]) < 200 ? cfg.bar.rgb : [12, 12, 14]
+    readonly property string style: cfg.style ? cfg.style : "shadow"
+    readonly property var p: style === "graphite" ? ({
+        // warm grey, soft and solid, your color as the accent
+        bg: Qt.rgba(0.11, 0.11, 0.122, op), solidBg: "#1c1c1f", card: Qt.rgba(1, 1, 1, 0.055), card2: Qt.rgba(1, 1, 1, 0.085),
+        text: "#ECECEE", sub: "#9a9aa3", primary: mix(acc, "#ffffff", 0.42), onPrimary: "#141416",
+        container: mix(acc, "#2a2a2e", 0.74), onContainer: mix(acc, "#ffffff", 0.62),
+        line: "transparent", track: Qt.rgba(1, 1, 1, 0.09), radius: 30, cardRadius: 22, tabStyle: "underline", dark: true, glow: false
+    }) : style === "aurora" ? ({
+        // deep and dark, tinted by your wallpaper colors, with a soft glow
+        bg: mix(acc, "#06060a", 0.88, op), solidBg: mix(acc, "#06060a", 0.88), card: mix(acc, "#16161c", 0.8, 0.72), card2: mix(acc, "#1e1e26", 0.72, 0.8),
+        text: "#EEEAF2", sub: "#a9a4b0", primary: mix(acc, "#ffffff", 0.2), onPrimary: mix(acc, "#000000", 0.85),
+        container: mix(acc, "#16161c", 0.55), onContainer: mix(acc, "#ffffff", 0.78),
+        line: Qt.rgba(1, 1, 1, 0.05), track: Qt.rgba(1, 1, 1, 0.09), radius: 34, cardRadius: 26, tabStyle: "pill", dark: true, glow: true
+    }) : style === "frost" ? ({
+        // light frosted glass
+        bg: Qt.rgba(0.965, 0.965, 0.972, op), solidBg: "#f6f6f8", card: Qt.rgba(0, 0, 0, 0.045), card2: Qt.rgba(0, 0, 0, 0.07),
+        text: "#18181b", sub: "#6b6b74", primary: "#18181b", onPrimary: "#ffffff",
+        container: Qt.rgba(0, 0, 0, 0.07), onContainer: "#18181b",
+        line: Qt.rgba(0, 0, 0, 0.05), track: Qt.rgba(0, 0, 0, 0.08), radius: 30, cardRadius: 22, tabStyle: "segment", dark: false, glow: false
     }) : ({
-        // DarkShadow: black glass, white accents
-        bg: Qt.rgba(0.05, 0.05, 0.06, 0.92), card: Qt.rgba(1, 1, 1, 0.045), card2: Qt.rgba(1, 1, 1, 0.075),
+        // Shadow: the color of your bar (black glass), white details
+        bg: Qt.rgba(barRgb[0] / 255, barRgb[1] / 255, barRgb[2] / 255, op), solidBg: "#0c0c0e", card: Qt.rgba(1, 1, 1, 0.05), card2: Qt.rgba(1, 1, 1, 0.08),
         text: "#F6F5F4", sub: "#8f8f98", primary: "#F6F5F4", onPrimary: "#0d0d0d",
         container: Qt.rgba(1, 1, 1, 0.1), onContainer: "#F6F5F4",
-        line: Qt.rgba(1, 1, 1, 0.07), track: Qt.rgba(1, 1, 1, 0.1), radius: 26, cardRadius: 18, tabStyle: "segment", dark: true
+        line: Qt.rgba(1, 1, 1, 0.07), track: Qt.rgba(1, 1, 1, 0.1), radius: 28, cardRadius: 20, tabStyle: "segment", dark: true, glow: false
     })
 
     // ---------------- window ----------------
@@ -111,7 +148,7 @@ PanelWindow {
     onOpenChanged: {
         tAnim.stop()
         tAnim.to = open ? 1 : 0
-        tAnim.duration = (open ? 480 : 260) / spd
+        tAnim.duration = db.anim === "none" ? 1 : (open ? 560 : 300) / spd
         tAnim.easing.type = Easing.BezierSpline
         tAnim.easing.bezierCurve = open ? [0.05, 0.7, 0.1, 1.0, 1, 1] : [0.3, 0.0, 0.8, 0.15, 1, 1]
         tAnim.start()
@@ -120,14 +157,13 @@ PanelWindow {
             const v = Object.assign({}, visited); v[tab] = true; visited = v
             loadAbout()
             keys.forceActiveFocus()
-            graceTimer.restart()
-        } else { leaveTimer.stop(); graceTimer.stop() }
+        } else { leaveTimer.stop(); typing = false }
     }
-    onTabChanged: { const v = Object.assign({}, visited); v[tab] = true; visited = v }
+    onTabChanged: { const v = Object.assign({}, visited); v[tab] = true; visited = v; if (tab === "wallpaper") editing = false }
 
     // ---------------- settings + open requests ----------------
-    // cheap check every 0.3 s (two small files); the full settings (with bar size and colors)
-    // are read when the file changes and each time the dashboard opens
+    // a cheap look at two small files every 0.3 s; the full settings (with bar size and colors)
+    // are read when the file changes and every time the dashboard opens
     property string rawCfg: "?"
     Process {
         id: fullProc
@@ -136,7 +172,9 @@ PanelWindow {
         stdout: StdioCollector {
             onStreamFinished: {
                 const c = text.trim()
-                if (c.length > 0 && c !== db.cfgText) { try { db.cfg = JSON.parse(c); db.cfgText = c } catch (e) { } }
+                if (c.length > 0 && c !== db.cfgText) {
+                    try { db.cfg = JSON.parse(c); db.cfgText = c; db.layouts = db.cfg.layouts || {} } catch (e) { }
+                }
             }
         }
     }
@@ -154,6 +192,7 @@ PanelWindow {
                     if (db.open && w[2] === "toggle" && (want === "" || want === db.tab)) db.close()
                     else if (db.open && want !== "") db.tab = want
                     else db.show(want, false)
+                    if (w[3] === "edit") db.editing = true
                 }
                 db.lastCmd = o
                 db.cmdSeen = true
@@ -183,26 +222,22 @@ PanelWindow {
         stdout: StdioCollector { onStreamFinished: { try { db.about = JSON.parse(text) } catch (e) { } } }
     }
 
-    // ---------------- the hot spot in the middle of the edge ----------------
-    Item {
-        id: trigger
-        width: cfg.trigger ? cfg.trigger : 260
-        height: 3
-        x: (db.width - width) / 2
-        y: db.atTop ? 0 : db.height - height
-        MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-            enabled: db.cfg.hover !== false
-            onEntered: openTimer.restart()
-            onExited: openTimer.stop()
-            onClicked: db.show("", true)
+    // ---------------- staying open while the pointer is near ----------------
+    function inside() { return shellHover.hovered || bridgeHover.hovered || trigHover.hovered }
+    function pointerMoved() {
+        if (shellHover.hovered) db.entered = true
+        if (inside()) leaveTimer.stop()
+        else if (db.open && (db.entered || db.byHover)) leaveTimer.restart()
+    }
+    Timer {
+        id: leaveTimer
+        interval: 380
+        onTriggered: {
+            if (db.inside() || db.cfg.close_on_leave === false || db.editing || db.typing) return
+            db.armed = !trigHover.hovered
+            db.close()
         }
     }
-    Timer { id: openTimer; interval: Math.max(1, db.cfg.delay !== undefined ? db.cfg.delay : 180); onTriggered: db.show("", true) }
-    Timer { id: leaveTimer; interval: 450; onTriggered: if (!hover.hovered && db.cfg.close_on_leave !== false) db.close() }
-    // opened from the edge but the pointer never came in
-    Timer { id: graceTimer; interval: 1600; onTriggered: if (db.byHover && !db.entered && !hover.hovered) db.close() }
 
     // click outside: close
     MouseArea {
@@ -211,12 +246,44 @@ PanelWindow {
         onClicked: db.close()
     }
 
+    // the hot spot in the middle of the edge (the bar height when the bar is there)
+    Item {
+        id: trigger
+        readonly property real hh: db.cfg.hotspot === "edge" || !db.barHere ? 3 : Math.max(3, db.barOff)
+        width: db.cfg.trigger ? db.cfg.trigger : 260
+        height: hh
+        x: (db.width - width) / 2
+        y: db.atTop ? 0 : db.height - height
+        HoverHandler { id: trigHover; onHoveredChanged: db.pointerMoved() }
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+            enabled: db.cfg.hover !== false
+            onEntered: if (db.armed && !db.open) openTimer.restart()
+            onExited: { openTimer.stop(); db.armed = true }
+            onClicked: { if (db.open) db.close(); else db.show("", true) }
+        }
+    }
+    Timer { id: openTimer; interval: Math.max(1, db.cfg.delay !== undefined ? db.cfg.delay : 150); onTriggered: if (!db.open) db.show("", true) }
+
+    // between the edge and the panel: the bar itself counts as "near"
+    Item {
+        id: bridge
+        visible: db.open
+        x: shell.x
+        width: shell.width * db.sc
+        y: db.atTop ? 0 : shell.y + shell.height
+        height: db.atTop ? Math.max(0, db.barOff) + 2 : db.height - y
+        HoverHandler { id: bridgeHover; onHoveredChanged: db.pointerMoved() }
+    }
+
     // keyboard: Esc, arrows, 1-4
     Item {
         id: keys
         focus: true
         Keys.onPressed: function(e) {
-            if (e.key === Qt.Key_Escape) { db.close(); e.accepted = true }
+            if (e.key === Qt.Key_Escape) { if (db.editing) db.editing = false; else db.close(); e.accepted = true }
+            else if (db.typing) return
             else if (e.key === Qt.Key_Right || (e.key === Qt.Key_Tab && !(e.modifiers & Qt.ShiftModifier))) { db.tab = db.tabs[(db.curIdx + 1) % db.tabs.length]; e.accepted = true }
             else if (e.key === Qt.Key_Left || e.key === Qt.Key_Backtab) { db.tab = db.tabs[(db.curIdx - 1 + db.tabs.length) % db.tabs.length]; e.accepted = true }
             else if (e.key >= Qt.Key_1 && e.key <= Qt.Key_4 && e.key - Qt.Key_1 < db.tabs.length) { db.tab = db.tabs[e.key - Qt.Key_1]; e.accepted = true }
@@ -225,143 +292,304 @@ PanelWindow {
 
     // ---------------- the panel ----------------
     Item {
-        id: panel
-        visible: db.t > 0.005
-        width: db.baseW
-        height: db.baseH
-        x: (db.width - width) / 2
-        y: db.atTop ? db.gapEdge - (1 - db.t) * 26 : db.height - db.gapEdge - height + (1 - db.t) * 26
-        transformOrigin: db.atTop ? Item.Top : Item.Bottom
-        scale: db.sc * (0.93 + 0.07 * db.t)
-        opacity: Math.min(1, db.t * 1.5)
+        id: shell
+        // the full size; what you see grows inside it
+        width: db.curW + 2 * db.earR
+        height: db.curH
+        x: (db.width - width * db.sc) / 2
+        y: db.atTop ? db.barOff + (db.attach ? 0 : 10) : db.height - db.barOff - (db.attach ? 0 : 10) - height * db.sc
+        transformOrigin: Item.TopLeft
+        scale: db.sc
+        visible: db.t > 0.003
 
-        HoverHandler {
-            id: hover
-            onHoveredChanged: {
-                if (hovered) { db.entered = true; leaveTimer.stop(); graceTimer.stop() }
-                else if (db.open && db.entered) leaveTimer.restart()
-            }
-        }
-        // swallow clicks so they do not reach the "click outside" area
-        MouseArea { anchors.fill: parent }
+        // how much of it shows (Morph grows out of the bar, Slide comes down, Fade fades in)
+        readonly property real e: db.t
+        readonly property real sw: db.anim === "morph" ? db.curW * (0.42 + 0.58 * e) : db.curW
+        readonly property real sh: db.anim === "morph" ? Math.max(1, db.curH * e) : db.curH
+        readonly property real slideY: db.anim === "slide" ? (1 - e) * -(db.curH + 30) * (db.atTop ? 1 : -1) : 0
+        opacity: db.anim === "fade" || db.anim === "slide" ? Math.min(1, e * 1.4) : Math.min(1, e * 4)
 
-        // soft shadow
-        Rectangle { anchors.fill: bg; anchors.margins: -1; anchors.topMargin: 4; anchors.bottomMargin: -8; radius: bg.radius + 4; color: Qt.rgba(0, 0, 0, db.p.dark ? 0.35 : 0.16); z: -2 }
-        Rectangle {
-            id: bg
-            anchors.fill: parent
-            radius: db.p.radius
-            color: db.p.bg
-            border.width: 1
-            border.color: db.p.dark ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.06)
-            Behavior on color { ColorAnimation { duration: 300 } }
-        }
+        HoverHandler { id: shellHover; onHoveredChanged: db.pointerMoved() }
+        MouseArea { x: (shell.width - shell.sw) / 2 - db.earR; y: db.atTop ? 0 : shell.height - shell.sh; width: shell.sw + 2 * db.earR; height: shell.sh }
 
-        // ---------- tabs ----------
         Item {
-            id: head
-            x: db.pad; y: 10
-            width: parent.width - 2 * db.pad
-            height: db.headH - 14
-            readonly property real tw: width / Math.max(1, db.tabs.length)
-            readonly property var names: ({ dashboard: "Dashboard", wallpaper: "Wallpaper", performance: "Performance", about: "About" })
-            readonly property var icons: ({ dashboard: 0xF056E, wallpaper: 0xF02E9, performance: 0xF04C5, about: 0xF02FD })
-
-            // segment track (DarkShadow)
-            Rectangle {
-                visible: db.p.tabStyle === "segment"
+            id: frameBox
+            width: shell.width
+            height: shell.height
+            y: shell.slideY
+            // shape: flat edge against the bar, curved "ears" where it meets it, round corners away from it
+            Canvas {
+                id: shape
                 anchors.fill: parent
-                radius: height / 2
-                color: db.p.card
-            }
-            // the moving highlight
-            Rectangle {
-                id: ind
-                readonly property bool under: db.p.tabStyle === "underline"
-                readonly property real lw: under ? labelW(db.curIdx) + 18 : head.tw - (db.p.tabStyle === "segment" ? 8 : 14)
-                function labelW(i) { const it = tabRep.itemAt(i); return it ? it.labelWidth : 60 }
-                x: db.curIdx * head.tw + (head.tw - lw) / 2
-                y: under ? head.height - 3 : (db.p.tabStyle === "segment" ? 4 : 2)
-                width: lw
-                height: under ? 3 : head.height - (db.p.tabStyle === "segment" ? 8 : 4)
-                radius: under ? 1.5 : height / 2
-                color: under ? db.p.primary : (db.p.tabStyle === "segment" ? db.p.primary : db.p.container)
-                Behavior on x { NumberAnimation { duration: 420 / db.spd; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.34, 1.36, 0.64, 1, 1, 1] } }
-                Behavior on width { NumberAnimation { duration: 320 / db.spd; easing.type: Easing.OutCubic } }
-            }
-            Rectangle {
-                visible: db.p.tabStyle === "underline"
-                anchors.left: parent.left; anchors.right: parent.right
-                y: parent.height
-                height: 1
-                color: db.mix(db.acc, "#000000", 0.4, 0.18)
-            }
-            Row {
-                anchors.fill: parent
-                Repeater {
-                    id: tabRep
-                    model: db.tabs
-                    delegate: Item {
-                        id: tb
-                        readonly property bool on: db.curIdx === index
-                        readonly property real labelWidth: lab.implicitWidth
-                        width: head.tw
-                        height: head.height
-                        readonly property color fg: on ? (db.p.tabStyle === "segment" ? db.p.onPrimary : db.p.primary) : db.p.sub
-                        Rectangle {
-                            visible: db.p.tabStyle !== "segment"
-                            anchors.fill: parent; anchors.margins: 2
-                            radius: height / 2
-                            color: tm.containsMouse && !tb.on ? db.p.card : "transparent"
-                            Behavior on color { ColorAnimation { duration: 120 } }
+                property real sw: shell.sw
+                property real sh: shell.sh
+                property color fill: db.p.bg
+                property color stroke: db.p.dark ? Qt.rgba(1, 1, 1, 0.07) : Qt.rgba(0, 0, 0, 0.07)
+                onSwChanged: requestPaint()
+                onShChanged: requestPaint()
+                onFillChanged: requestPaint()
+                onWidthChanged: requestPaint()
+                transform: Scale { yScale: db.atTop ? 1 : -1; origin.y: shape.height / 2 }
+                onPaint: {
+                    const c = getContext("2d")
+                    c.reset()
+                    const er = db.attach ? Math.min(db.earR, sh / 2) : 0
+                    const r = Math.min(db.p.radius, sh / 2, sw / 2)
+                    const L = (width - sw) / 2, R = L + sw, B = sh
+                    function outline(close) {
+                        c.beginPath()
+                        if (db.attach) {
+                            c.moveTo(L - er, 0)
+                            c.arc(L - er, er, er, -Math.PI / 2, 0, false)
+                        } else {
+                            c.moveTo(L, r)
+                            c.arc(L + r, r, r, Math.PI, 1.5 * Math.PI, false)
+                            c.lineTo(R - r, 0)
+                            c.arc(R - r, r, r, 1.5 * Math.PI, 2 * Math.PI, false)
+                            c.lineTo(R, B - r)
+                            c.arc(R - r, B - r, r, 0, Math.PI / 2, false)
+                            c.lineTo(L + r, B)
+                            c.arc(L + r, B - r, r, Math.PI / 2, Math.PI, false)
+                            c.closePath()
+                            return
                         }
-                        Column {
-                            anchors.centerIn: parent
-                            spacing: 2
-                            T { anchors.horizontalCenter: parent.horizontalCenter; kind: "icon"; text: db.md(head.icons[modelData] || 0xF02FD); font.pixelSize: 17; color: tb.fg
-                                Behavior on color { ColorAnimation { duration: 200 } }
-                                scale: tb.on ? 1.08 : 1
-                                Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutBack } } }
-                            T { id: lab; anchors.horizontalCenter: parent.horizontalCenter; text: head.names[modelData] || modelData; font.pixelSize: 12; font.bold: tb.on; color: tb.fg
-                                Behavior on color { ColorAnimation { duration: 200 } } }
-                        }
-                        MouseArea { id: tm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: db.tab = modelData }
+                        c.lineTo(L, B - r)
+                        c.arc(L + r, B - r, r, Math.PI, Math.PI / 2, true)
+                        c.lineTo(R - r, B)
+                        c.arc(R - r, B - r, r, Math.PI / 2, 0, true)
+                        c.lineTo(R, er)
+                        c.arc(R + er, er, er, Math.PI, 1.5 * Math.PI, false)
+                        if (close) c.closePath()
                     }
+                    outline(true)
+                    c.fillStyle = fill
+                    c.fill()
+                    outline(false)
+                    c.lineWidth = 1
+                    c.strokeStyle = stroke
+                    c.stroke()
                 }
             }
-        }
+            // a soft colored glow (Aurora)
+            Rectangle {
+                visible: db.p.glow
+                x: (shell.width - shell.sw) / 2 + 30; width: shell.sw - 60
+                y: db.atTop ? 0 : shell.height - height
+                height: Math.min(140, shell.sh)
+                radius: 60
+                opacity: 0.12 * db.t
+                gradient: Gradient {
+                    GradientStop { position: db.atTop ? 0 : 1; color: db.acc }
+                    GradientStop { position: db.atTop ? 1 : 0; color: "transparent" }
+                }
+            }
 
-        // ---------- tab contents ----------
-        Item {
-            id: body
-            x: db.pad
-            y: db.headH + 4
-            width: parent.width - 2 * db.pad
-            height: db.bodyH
-            Repeater {
-                model: db.tabs
-                delegate: Item {
-                    id: page
-                    readonly property int dist: index - db.curIdx
-                    width: body.width
-                    height: body.height
-                    x: dist * 70
-                    opacity: dist === 0 ? 1 : 0
-                    visible: opacity > 0.01
-                    enabled: dist === 0
-                    Behavior on x { NumberAnimation { duration: 420 / db.spd; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.05, 0.7, 0.1, 1, 1, 1] } }
-                    Behavior on opacity { NumberAnimation { duration: 260 / db.spd; easing.type: Easing.OutCubic } }
-                    readonly property bool liveNow: db.open && db.t > 0.25 && dist === 0
-                    Loader {
-                        anchors.fill: parent
-                        active: db.visited[modelData] === true
-                        sourceComponent: modelData === "dashboard" ? homeC : modelData === "wallpaper" ? wallC
-                                       : modelData === "performance" ? perfC : aboutC
+            // ---------- contents (clipped to the growing shape) ----------
+            Item {
+                id: clipBox
+                x: (shell.width - shell.sw) / 2
+                y: db.atTop ? 0 : shell.height - shell.sh
+                width: shell.sw
+                height: shell.sh
+                clip: true
+                Item {
+                    id: content
+                    width: db.curW
+                    height: db.curH
+                    x: (clipBox.width - width) / 2
+                    y: db.atTop ? 0 : clipBox.height - height
+                    opacity: db.anim === "morph" ? Math.max(0, (db.t - 0.35) / 0.65) : 1
+                    transform: Translate { y: db.anim === "morph" ? (1 - db.t) * -14 * (db.atTop ? 1 : -1) : 0 }
+
+                    // ---------- tabs ----------
+                    Item {
+                        id: head
+                        x: db.pad; y: 10
+                        width: parent.width - 2 * db.pad - (canEdit ? 50 : 0)
+                        height: db.headH - 14
+                        readonly property bool canEdit: db.tab !== "wallpaper"
+                        readonly property real tw: width / Math.max(1, db.tabs.length)
+                        readonly property var names: ({ dashboard: "Dashboard", wallpaper: "Wallpaper", performance: "Performance", about: "About" })
+                        readonly property var icons: ({ dashboard: ["space_dashboard", 0xF056E], wallpaper: ["wallpaper", 0xF02E9],
+                                                        performance: ["speed", 0xF04C5], about: ["info", 0xF02FD] })
+                        Behavior on width { NumberAnimation { duration: 260 } }
+                        Rectangle {
+                            visible: db.p.tabStyle === "segment"
+                            anchors.fill: parent
+                            radius: height / 2
+                            color: db.p.card
+                        }
+                        Rectangle {
+                            id: ind
+                            readonly property bool under: db.p.tabStyle === "underline"
+                            function labelW(i) { const it = tabRep.itemAt(i); return it ? it.labelWidth : 60 }
+                            readonly property real lw: under ? labelW(db.curIdx) + 22 : head.tw - (db.p.tabStyle === "segment" ? 8 : 14)
+                            x: db.curIdx * head.tw + (head.tw - lw) / 2
+                            y: under ? head.height - 3 : (db.p.tabStyle === "segment" ? 4 : 2)
+                            width: lw
+                            height: under ? 3 : head.height - (db.p.tabStyle === "segment" ? 8 : 4)
+                            radius: under ? 1.5 : height / 2
+                            color: under ? db.p.primary : (db.p.tabStyle === "segment" ? db.p.primary : db.p.container)
+                            Behavior on x { NumberAnimation { duration: 460 / db.spd; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.34, 1.36, 0.64, 1, 1, 1] } }
+                            Behavior on width { NumberAnimation { duration: 320 / db.spd; easing.type: Easing.OutCubic } }
+                        }
+                        Rectangle {
+                            visible: db.p.tabStyle === "underline"
+                            anchors.left: parent.left; anchors.right: parent.right
+                            y: parent.height
+                            height: 1
+                            color: db.p.track
+                        }
+                        Row {
+                            anchors.fill: parent
+                            Repeater {
+                                id: tabRep
+                                model: db.tabs
+                                delegate: Item {
+                                    id: tb
+                                    readonly property bool on: db.curIdx === index
+                                    readonly property real labelWidth: lab.implicitWidth
+                                    width: head.tw
+                                    height: head.height
+                                    readonly property color fg: on ? (db.p.tabStyle === "segment" ? db.p.onPrimary : db.p.primary) : db.p.sub
+                                    Rectangle {
+                                        visible: db.p.tabStyle !== "segment"
+                                        anchors.fill: parent; anchors.margins: 2
+                                        radius: height / 2
+                                        color: tm.containsMouse && !tb.on ? db.p.card : "transparent"
+                                        Behavior on color { ColorAnimation { duration: 140 } }
+                                    }
+                                    Column {
+                                        anchors.centerIn: parent
+                                        spacing: 1
+                                        MIcon {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            name: (head.icons[modelData] || ["info", 0xF02FD])[0]
+                                            glyph: db.md((head.icons[modelData] || ["info", 0xF02FD])[1])
+                                            size: 20; color: tb.fg
+                                            Behavior on color { ColorAnimation { duration: 220 } }
+                                            scale: tb.on ? 1.08 : 1
+                                            Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.OutBack } }
+                                        }
+                                        DText { id: lab; anchors.horizontalCenter: parent.horizontalCenter; text: head.names[modelData] || modelData; font.pixelSize: 12; font.weight: tb.on ? Font.DemiBold : Font.Medium; color: tb.fg
+                                            Behavior on color { ColorAnimation { duration: 220 } } }
+                                    }
+                                    MouseArea { id: tm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: db.tab = modelData }
+                                }
+                            }
+                        }
                     }
-                    Component { id: homeC; DashHome { d: db; live: page.liveNow } }
-                    Component { id: wallC; DashWalls { d: db; live: page.liveNow } }
-                    Component { id: perfC; DashPerf { d: db; live: page.liveNow } }
-                    Component { id: aboutC; DashAbout { d: db; live: page.liveNow } }
+                    // edit button
+                    Rectangle {
+                        visible: head.canEdit
+                        anchors.right: parent.right; anchors.rightMargin: db.pad
+                        y: head.y + (head.height - height) / 2
+                        width: 40; height: 40; radius: 20
+                        color: db.editing ? db.p.primary : (edm.containsMouse ? db.p.card2 : db.p.card)
+                        Behavior on color { ColorAnimation { duration: 160 } }
+                        MIcon { anchors.centerIn: parent; name: db.editing ? "check" : "edit"; glyph: db.editing ? db.md(0xF012C) : ""; size: 19; color: db.editing ? db.p.onPrimary : db.p.text }
+                        MouseArea { id: edm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: db.editing = !db.editing }
+                    }
+
+                    // ---------- tab pages ----------
+                    Item {
+                        id: body
+                        x: db.pad
+                        y: db.headH + 4
+                        width: parent.width - 2 * db.pad
+                        height: db.tabH(db.tab)
+                        Repeater {
+                            model: db.tabs
+                            delegate: Item {
+                                id: page
+                                readonly property int dist: index - db.curIdx
+                                width: db.tabW(modelData) - 2 * db.pad
+                                height: db.tabH(modelData)
+                                x: dist * 90 + (body.width - width) / 2
+                                opacity: dist === 0 ? 1 : 0
+                                visible: opacity > 0.01
+                                enabled: dist === 0
+                                Behavior on x { NumberAnimation { duration: 460 / db.spd; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.05, 0.7, 0.1, 1, 1, 1] } }
+                                Behavior on opacity { NumberAnimation { duration: 240 / db.spd; easing.type: Easing.OutCubic } }
+                                readonly property bool liveNow: db.open && db.t > 0.3 && dist === 0
+                                Loader {
+                                    anchors.fill: parent
+                                    active: db.visited[modelData] === true
+                                    sourceComponent: modelData === "dashboard" ? homeC : modelData === "wallpaper" ? wallC
+                                                   : modelData === "performance" ? perfC : aboutC
+                                }
+                                Component { id: homeC; DashHome { d: db; live: page.liveNow } }
+                                Component { id: wallC; DashWalls { d: db; live: page.liveNow } }
+                                Component { id: perfC; DashPerf { d: db; live: page.liveNow } }
+                                Component { id: aboutC; DashAbout { d: db; live: page.liveNow } }
+                            }
+                        }
+                    }
+
+                    // ---------- edit tray ----------
+                    Item {
+                        id: tray
+                        x: db.pad
+                        y: body.y + body.height + 12
+                        width: parent.width - 2 * db.pad
+                        height: 48
+                        opacity: db.trayH > 0 ? 1 : 0
+                        visible: opacity > 0.01
+                        Behavior on opacity { NumberAnimation { duration: 220 } }
+                        readonly property var g: db.grids[db.tab] || null
+                        readonly property var hid: g ? g.hidden() : []
+                        Rectangle { anchors.fill: parent; radius: height / 2; color: db.p.card }
+                        Row {
+                            x: 16; anchors.verticalCenter: parent.verticalCenter
+                            spacing: 8
+                            DText { text: tray.hid.length ? "Add" : "All cards are on"; font.pixelSize: 12; color: db.p.sub; anchors.verticalCenter: parent.verticalCenter }
+                            Repeater {
+                                model: tray.hid
+                                Rectangle {
+                                    height: 32; width: ar.implicitWidth + 24; radius: 16
+                                    color: am.containsMouse ? db.p.primary : db.p.container
+                                    Behavior on color { ColorAnimation { duration: 120 } }
+                                    Row {
+                                        id: ar
+                                        anchors.centerIn: parent
+                                        spacing: 4
+                                        MIcon { name: "add"; glyph: "+"; size: 16; color: am.containsMouse ? db.p.onPrimary : db.p.onContainer; anchors.verticalCenter: parent.verticalCenter }
+                                        DText { text: modelData.name; font.pixelSize: 12; color: am.containsMouse ? db.p.onPrimary : db.p.onContainer; anchors.verticalCenter: parent.verticalCenter }
+                                    }
+                                    MouseArea { id: am; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: tray.g.add(modelData.id) }
+                                }
+                            }
+                        }
+                        Row {
+                            anchors.right: parent.right; anchors.rightMargin: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 8
+                            DText { text: "Drag a card onto another to swap"; font.pixelSize: 11; color: db.p.sub; anchors.verticalCenter: parent.verticalCenter }
+                            Rectangle {
+                                height: 32; width: rr.implicitWidth + 24; radius: 16
+                                color: rm.containsMouse ? db.p.card2 : db.p.container
+                                DText { id: rr; anchors.centerIn: parent; text: "Reset"; font.pixelSize: 12; color: db.p.onContainer }
+                                MouseArea { id: rm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: db.resetLayout(db.tab) }
+                            }
+                            Rectangle {
+                                height: 32; width: dn.implicitWidth + 28; radius: 16
+                                color: dnm.containsMouse ? Qt.lighter(db.p.primary, 1.08) : db.p.primary
+                                DText { id: dn; anchors.centerIn: parent; text: "Done"; font.pixelSize: 12; font.weight: Font.DemiBold; color: db.p.onPrimary }
+                                MouseArea { id: dnm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: db.editing = false }
+                            }
+                        }
+                    }
+
+                    // ---------- toast ----------
+                    Rectangle {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        y: parent.height - height - 14
+                        width: tt.implicitWidth + 28; height: 32; radius: 16
+                        color: db.p.primary
+                        opacity: db.toastText !== "" ? 1 : 0
+                        Behavior on opacity { NumberAnimation { duration: 200 } }
+                        DText { id: tt; anchors.centerIn: parent; text: db.toastText; font.pixelSize: 12; color: db.p.onPrimary }
+                    }
                 }
             }
         }

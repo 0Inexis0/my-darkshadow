@@ -12,6 +12,8 @@ PanelWindow {
     property string cfgText: ""
     property string lastOpenCmd: ""
     property bool cmdSeen: false
+    // after it closes while the pointer is still in the corner, wait until the pointer leaves the corner
+    property bool armed: true
     property real t: 0
 
     readonly property real spd: cfg.speed ? cfg.speed : 1
@@ -90,7 +92,8 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "rice-hotcorner"
     WlrLayershell.keyboardFocus: hc.open ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
-    mask: Region { item: (hc.open || hc.t > 0.02) ? holder : trigger }
+    // the corner itself always counts too, so resting the pointer there keeps the panel open
+    mask: Region { item: (hc.open || hc.t > 0.02) ? holder : trigger; Region { item: trigger } }
 
     // ---- settings + "open now" requests
     Process {
@@ -129,11 +132,15 @@ PanelWindow {
         height: hc.trig
         x: hc.atRight ? parent.width - width : 0
         y: hc.atBottom ? parent.height - height : 0
+        HoverHandler {
+            id: trigHover
+            onHoveredChanged: { if (hovered) { leaveTimer.stop(); graceTimer.stop() } else if (hc.open && !hover.hovered) leaveTimer.restart() }
+        }
         MouseArea {
             anchors.fill: parent
             hoverEnabled: true
-            onEntered: openTimer.restart()
-            onExited: openTimer.stop()
+            onEntered: if (hc.armed && !hc.open) openTimer.restart()
+            onExited: { openTimer.stop(); hc.armed = true }
             onClicked: hc.open = !hc.open
         }
     }
@@ -143,13 +150,13 @@ PanelWindow {
     Timer {
         id: leaveTimer
         interval: 380
-        onTriggered: if (hc.cfg.close_on_leave !== false && !hover.hovered) hc.open = false
+        onTriggered: if (hc.cfg.close_on_leave !== false && !hover.hovered && !trigHover.hovered) hc.open = false
     }
     Timer {
         // opened but the pointer never came into the panel
         id: graceTimer
         interval: 1400
-        onTriggered: if (hc.cfg.close_on_leave !== false && !hover.hovered) hc.open = false
+        onTriggered: if (hc.cfg.close_on_leave !== false && !hover.hovered && !trigHover.hovered) hc.open = false
     }
     onOpenChanged: {
         animateTo(open ? 1 : 0)

@@ -482,3 +482,4 @@ require("rice-keys")
 
 -- must stay last: gaming mode overrides
 require("rice-gaming")
+require("rice-dashboard")

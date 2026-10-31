@@ -19,6 +19,7 @@ Canvas {
         const c = getContext("2d")
         c.reset()
         const R = Math.min(width, height) / 2 - line / 2 - 1
+        if (R <= 1) return
         const cx = width / 2, cy = height / 2
         const gap = gapped ? 0.18 * Math.PI : 0
         const a0 = Math.PI / 2 + gap, span = 2 * Math.PI - 2 * gap

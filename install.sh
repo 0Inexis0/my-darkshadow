@@ -343,7 +343,9 @@ step_finish() {
   command -v rofi >/dev/null 2>&1 && task "Rofi theme" t "$BIN/rice-rofi" apply
   task "Hot corner" t "$BIN/rice-hotcorner" apply
   [ -x "$BIN/desktop-set" ] && task "Dock blur" t "$BIN/desktop-set" dock-blur
+  [ -x "$BIN/rice-dashboard" ] && task "Dashboard blur" t "$BIN/rice-dashboard" blur
   task "Theme colors for the wallpaper picker" patch_colors
+  [ -x "$BIN/rice-fonts" ] && T=180 task "Fonts: Inter, Rubik, Material Symbols (skips what you have)" t "$BIN/rice-fonts"
   if [ -x "$BIN/rice-cursor" ]; then
     local cf; cf="$(mktemp)"
     T=240 task "Cursor packs: Rose Pine (Hyprcursor), Catppuccin, Phinger" cursor_packs "$cf"

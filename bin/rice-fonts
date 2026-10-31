@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Installs the fonts DarkShadow's Shell uses (Inter, Rubik) for the current user.
+# Installs the fonts DarkShadow's Shell uses (Inter, Rubik, Material Symbols Rounded) for the current user.
 # Works on any distro (NixOS too): files go to ~/.local/share/fonts, no root needed.
 #   rice-fonts           install what is missing
 #   rice-fonts status    show what is installed
@@ -7,6 +7,8 @@ set -euo pipefail
 dir="$HOME/.local/share/fonts/shadows-shell"
 INTER_URL="https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip"
 RUBIK_URL="https://raw.githubusercontent.com/google/fonts/main/ofl/rubik/Rubik%5Bwght%5D.ttf"
+# icons of the dashboard (the same set Caelestia and end4 use)
+SYMBOLS_URL="https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbolsRounded%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf"
 
 has() {
   local fams
@@ -15,7 +17,7 @@ has() {
 }
 
 if [ "${1:-}" = "status" ]; then
-  for f in Inter Rubik; do if has "$f"; then echo "$f: installed"; else echo "$f: missing"; fi; done
+  for f in Inter Rubik "Material Symbols Rounded"; do if has "$f"; then echo "$f: installed"; else echo "$f: missing"; fi; done
   exit 0
 fi
 
@@ -45,6 +47,18 @@ else
   echo "Rubik: downloading..."
   curl -fsSL -o "$dir/Rubik-Variable.ttf" "$RUBIK_URL"
   changed=1
+fi
+
+if has "Material Symbols Rounded"; then
+  echo "Material Symbols Rounded: already installed"
+else
+  echo "Material Symbols Rounded: downloading..."
+  if curl -fsSL -o "$tmp/symbols.ttf" "$SYMBOLS_URL" && [ "$(head -c 4 "$tmp/symbols.ttf" | od -An -tx1 | tr -d ' ')" = "00010000" ]; then
+    mv "$tmp/symbols.ttf" "$dir/MaterialSymbolsRounded.ttf"
+    changed=1
+  else
+    echo "Material Symbols Rounded: could not download (the dashboard uses Nerd Font icons instead)"
+  fi
 fi
 
 if [ "$changed" = 1 ]; then

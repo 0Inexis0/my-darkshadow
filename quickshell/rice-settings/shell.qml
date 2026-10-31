@@ -308,13 +308,23 @@ FloatingWindow {
             }
             Connections { target: win; function onPageChanged() { navFlick.reveal() } }
 
+            // the selection glides to the new category and stretches a little on the way (Material 3)
             Rectangle {
-                y: win.page * 56
+                id: navSel
+                property real target: win.page * 56
+                y: target
                 width: 206
                 height: 46
                 radius: 14
-                color: "#2a2a2a"
-                Behavior on y { NumberAnimation { duration: 280; easing.type: Easing.OutCubic } }
+                color: "#262626"
+                border.width: 1
+                border.color: Qt.rgba(1, 1, 1, 0.05)
+                Behavior on y { NumberAnimation { duration: 420; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.2, 0, 0, 1, 1, 1] } }
+                Rectangle {
+                    x: 0; anchors.verticalCenter: parent.verticalCenter
+                    width: 3; height: 18; radius: 1.5
+                    color: "#F6F5F4"
+                }
             }
 
             Column {
@@ -330,8 +340,15 @@ FloatingWindow {
                         radius: 14
                         color: win.page !== index && navMouse.containsMouse ? "#1a1a1a" : "transparent"
                         Behavior on color { ColorAnimation { duration: 150 } }
-                        T { kind: "icon"; x: 18; anchors.verticalCenter: parent.verticalCenter; text: modelData.icon; font.pixelSize: 18 }
-                        T { x: 50; width: parent.width - 58; elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter; text: modelData.name; font.pixelSize: 14; font.bold: win.page === index }
+                        T { kind: "icon"; x: 18; anchors.verticalCenter: parent.verticalCenter; text: modelData.icon; font.pixelSize: 18
+                            color: win.page === index ? "#F6F5F4" : "#a8a8b0"
+                            scale: win.page === index ? 1.1 : 1
+                            Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.OutBack } }
+                            Behavior on color { ColorAnimation { duration: 200 } } }
+                        T { x: 50; width: parent.width - 58; elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter; text: modelData.name; font.pixelSize: 14
+                            font.weight: win.page === index ? Font.DemiBold : Font.Normal
+                            color: win.page === index ? "#F6F5F4" : "#b8b8c0"
+                            Behavior on color { ColorAnimation { duration: 200 } } }
                         MouseArea {
                             id: navMouse
                             anchors.fill: parent

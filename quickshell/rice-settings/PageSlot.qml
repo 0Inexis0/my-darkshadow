@@ -1,6 +1,7 @@
 import QtQuick
 
-// One settings page. The new page rises in (or drops in, going up the list) while the old one fades away.
+// One settings page. Material "fade through": the old page fades away quickly,
+// then the new one fades in while it grows slightly and rises into place.
 Item {
     id: slot
     property int idx: 0
@@ -10,21 +11,35 @@ Item {
 
     width: parent ? parent.width : 0
     height: parent ? parent.height : 0
-    y: on ? 0 : (idx < cur ? -36 : 36)
-    scale: on ? 1 : 0.985
-    opacity: on ? 1 : 0
-    visible: opacity > 0.01
+    visible: inner.opacity > 0.01
     enabled: on
     z: on ? 1 : 0
-    Behavior on y { NumberAnimation { duration: slot.on ? 460 : 220; easing.type: Easing.BezierSpline
-        easing.bezierCurve: slot.on ? [0.05, 0.7, 0.1, 1, 1, 1] : [0.3, 0, 0.8, 0.15, 1, 1] } }
-    Behavior on scale { NumberAnimation { duration: slot.on ? 460 : 220; easing.type: Easing.OutCubic } }
-    Behavior on opacity {
-        SequentialAnimation {
-            PauseAnimation { duration: slot.on ? 60 : 0 }
-            NumberAnimation { duration: slot.on ? 300 : 150; easing.type: Easing.OutCubic }
+
+    Item {
+        id: inner
+        width: parent.width
+        height: parent.height
+        opacity: slot.on ? 1 : 0
+        scale: slot.on ? 1 : (slot.idx < slot.cur ? 0.97 : 0.95)
+        y: slot.on ? 0 : 18
+        transformOrigin: Item.Top
+        Behavior on opacity {
+            SequentialAnimation {
+                PauseAnimation { duration: slot.on ? 90 : 0 }
+                NumberAnimation { duration: slot.on ? 260 : 90; easing.type: slot.on ? Easing.OutCubic : Easing.InCubic }
+            }
+        }
+        Behavior on scale {
+            SequentialAnimation {
+                PauseAnimation { duration: slot.on ? 90 : 0 }
+                NumberAnimation { duration: slot.on ? 420 : 90; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.05, 0.7, 0.1, 1, 1, 1] }
+            }
+        }
+        Behavior on y {
+            SequentialAnimation {
+                PauseAnimation { duration: slot.on ? 90 : 0 }
+                NumberAnimation { duration: slot.on ? 420 : 90; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.05, 0.7, 0.1, 1, 1, 1] }
+            }
         }
     }
-
-    Item { id: inner; anchors.fill: parent }
 }

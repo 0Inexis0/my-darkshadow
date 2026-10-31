@@ -43,7 +43,7 @@
 | **Distro logo** | NixOS logo on NixOS, Arch logo on Arch, and so on |
 | **Hot corner** | touch a screen corner for a panel with Keep Awake, screen recording, screenshots, quick toggles (Wi-Fi, Bluetooth, Do Not Disturb, Gaming mode, microphone, Settings) and now playing; sections, toggles, corner, look and animation are set in Settings > Hot corners |
 | **Desktop widgets** | clock, calendar, weather, music, resources (CPU, RAM, GPU), user card, battery and a see-through audio visualizer (Bars, Mirror, Wave, Dots); a widget editor on the desktop to add, move, resize and style them |
-| **Dashboard** | drops out of the middle of the bar: Dashboard (weather, calendar, usage, music), Wallpaper (all wallpapers, search, color schemes), Performance (CPU, GPU, storage, network, memory, battery), About (your computer, distro, updates); looks End4, Caelestia or DarkShadow |
+| **Dashboard** | drops out of the middle of the bar: Dashboard (weather, calendar, usage, music), Wallpaper (big wallpaper cards, search, random), Performance (CPU, GPU, storage, network, memory, battery), About (your computer, distro, updates); grows out of the bar, cards you can remove, add, resize and move, looks Shadow, Graphite, Aurora and Frost |
 | **Bar layout** | drag and drop Waybar modules between left, center and right, reorder the system icons, Battery module |
 | **Dock** | pinned apps, hover to reveal, media player, tinted icons |
 | **Hyprland** | gaps, borders, rounding, blur, shadows and animations from sliders, no config editing |

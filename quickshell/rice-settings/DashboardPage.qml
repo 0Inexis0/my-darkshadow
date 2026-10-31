@@ -15,9 +15,10 @@ Item {
         { k: "about", n: "About", d: "This computer, your distro and DarkShadow's Shell" }
     ]
     readonly property var looks: [
-        { k: "end4", n: "End4", d: "Light Material You" },
-        { k: "caelestia", n: "Caelestia", d: "Dark tonal, round" },
-        { k: "darkshadow", n: "DarkShadow Shell", d: "Black glass" }
+        { k: "shadow", n: "Shadow", d: "Black glass, the color of your bar" },
+        { k: "graphite", n: "Graphite", d: "Soft grey, your accent color" },
+        { k: "aurora", n: "Aurora", d: "Deep, tinted by your wallpaper" },
+        { k: "frost", n: "Frost", d: "Light frosted glass" }
     ]
     function v(k, d) { return dc[k] !== undefined ? dc[k] : d }
     function setv(k, val) {
@@ -36,6 +37,7 @@ Item {
         return on.concat(allTabs.map(function(t) { return t.k }).filter(function(k) { return on.indexOf(k) < 0 }))
     }
     function info(k) { for (let i = 0; i < allTabs.length; i++) if (allTabs[i].k === k) return allTabs[i]; return { n: k, d: "" } }
+    function editTab(tab) { Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-dashboard\" open \"$1\" --edit", "_", tab]); Qt.quit() }
     function openNow(tab) { Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-dashboard\" open \"$1\" --no-toggle", "_", tab || ""]) }
 
     Process {
@@ -75,7 +77,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: page.v("position", "top") === "top" ? 24 : parent.height - height - 24
                 width: 300; height: 160
-                look: page.v("style", "darkshadow")
+                look: page.v("style", "shadow")
                 acc: page.v("accent", "#9ec9bd")
                 Behavior on y { NumberAnimation { duration: 360; easing.type: Easing.OutCubic } }
             }
@@ -95,15 +97,15 @@ Item {
         }
 
         // ---------- look ----------
-        SectionTitle { text: "Theme"; sub: "How the dashboard looks. End4 and Caelestia take their colors from your wallpaper." }
+        SectionTitle { text: "Theme"; sub: "How the dashboard looks. Graphite and Aurora take their colors from your wallpaper." }
         Row {
             width: parent.width
             spacing: 10
             Repeater {
                 model: page.looks
                 delegate: Rectangle {
-                    readonly property bool on: page.v("style", "darkshadow") === modelData.k
-                    width: (parent.width - 20) / 3
+                    readonly property bool on: page.v("style", "shadow") === modelData.k
+                    width: (parent.width - 30) / 4
                     height: 26 + (width - 24) * 0.53 + 44
                     radius: 14
                     color: lm.containsMouse ? "#191919" : "#141414"
@@ -123,7 +125,7 @@ Item {
                         anchors.bottom: parent.bottom; anchors.bottomMargin: 12
                         spacing: 1
                         T { text: modelData.n; font.pixelSize: 13; font.bold: true }
-                        T { kind: "reading"; text: modelData.d; font.pixelSize: 10; color: "#8a8a8a" }
+                        T { kind: "reading"; text: modelData.d; font.pixelSize: 10; color: "#8a8a8a"; width: parent.parent.width - 50; elide: Text.ElideRight }
                     }
                     Rectangle {
                         visible: parent.on
@@ -137,6 +139,34 @@ Item {
             }
         }
 
+        // ---------- appearance ----------
+        SectionTitle { text: "Look" }
+        ToggleRow { label: "Grow out of the bar"; desc: "Flat edge against the bar with curved corners where they meet. Off: a floating card"; checked: page.v("attach", true) === true; onToggled: function(x) { page.setv("attach", x) } }
+        SliderRow {
+            label: "Transparency"
+            desc: "Lower is more see-through. Starts at the transparency of your bar"
+            from: 0.35; to: 1.0; step: 0.01; decimals: 2
+            value: page.v("opacity", 0.9)
+            onCommitted: function(x) { page.setv("opacity", x.toFixed(2)) }
+        }
+        ToggleRow { label: "Blur"; desc: "Blur the desktop behind the dashboard"; checked: page.v("blur", true) === true; onToggled: function(x) { page.setv("blur", x) } }
+        SegRow {
+            label: "Animation"
+            desc: "Morph grows out of the bar, like Caelestia"
+            options: [{ label: "Morph", value: "morph" }, { label: "Slide", value: "slide" }, { label: "Fade", value: "fade" }, { label: "Off", value: "none" }]
+            current: page.v("animation", "morph")
+            onChosen: function(x) { page.setv("animation", x) }
+        }
+
+        // ---------- cards ----------
+        SectionTitle { text: "Cards"; sub: "Remove, add, resize and move the cards of a tab. The editor opens in the dashboard (the pencil button there does the same)." }
+        Row {
+            spacing: 10
+            Btn { icon: "\uf044"; text: "Edit Dashboard"; onClicked: page.editTab("dashboard") }
+            Btn { icon: "\uf044"; text: "Edit Performance"; onClicked: page.editTab("performance") }
+            Btn { icon: "\uf044"; text: "Edit About"; onClicked: page.editTab("about") }
+        }
+
         // ---------- behaviour ----------
         SectionTitle { text: "Opening" }
         ToggleRow { label: "Dashboard"; desc: "Turn the whole dashboard on or off"; checked: page.v("enabled", true) === true; onToggled: function(x) { page.setv("enabled", x) } }
@@ -147,21 +177,28 @@ Item {
             current: page.v("position", "top")
             onChosen: function(x) { page.setv("position", x) }
         }
-        ToggleRow { label: "Open from the middle of the bar"; desc: "Touch the middle of the screen edge with the pointer"; checked: page.v("hover", true) === true; onToggled: function(x) { page.setv("hover", x) } }
+        ToggleRow { label: "Open from the middle of the bar"; desc: "Rest the pointer on the middle of the bar"; checked: page.v("hover", true) === true; onToggled: function(x) { page.setv("hover", x) } }
+        SegRow {
+            label: "Hot spot"
+            desc: "Whole bar height, or only the very edge of the screen (the bar stays clickable there)"
+            options: [{ label: "Whole bar", value: "bar" }, { label: "Edge only", value: "edge" }]
+            current: page.v("hotspot", "bar")
+            onChosen: function(x) { page.setv("hotspot", x) }
+        }
         ToggleRow { label: "SUPER + W opens Wallpaper"; desc: "Off: SUPER + W opens the old wallpaper picker"; checked: page.v("wallpaper_key", true) === true; onToggled: function(x) { page.setv("wallpaper_key", x) } }
         ToggleRow { label: "Close when the pointer leaves"; desc: "Otherwise click outside or press Esc"; checked: page.v("close_on_leave", true) === true; onToggled: function(x) { page.setv("close_on_leave", x) } }
         SliderRow {
             label: "Hot spot width"
             desc: "How much of the middle of the edge opens it"
             from: 80; to: 900; step: 20; unit: " px"
-            value: page.v("trigger", 260)
+            value: page.v("trigger", 320)
             onCommitted: function(x) { page.setv("trigger", Math.round(x)) }
         }
         SliderRow {
             label: "Delay"
             desc: "Wait before it opens, so passing by does nothing"
             from: 0; to: 900; step: 20; unit: " ms"
-            value: page.v("delay", 180)
+            value: page.v("delay", 150)
             onCommitted: function(x) { page.setv("delay", Math.round(x)) }
         }
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## V2.30
+- Dashboard grows out of the bar (Morph animation) and changes size with each tab
+- Edit mode: remove, add, resize and move the cards of Dashboard, Performance and About
+- New looks: Shadow, Graphite, Aurora and Frost; transparency, blur and animation settings
+- Bigger wallpaper picker; Rubik and Material Symbols fonts; smoother Settings
+- The dashboard and the hot corner stay open while the pointer rests on the bar or in the corner
+
 ## V2.20
 - Dashboard: point at the middle of the bar (or SUPER + ALT + D) for Dashboard, Wallpaper, Performance and About
 - SUPER + W opens the new Wallpaper tab: search, random, folder and color schemes
