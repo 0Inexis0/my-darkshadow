@@ -29,7 +29,7 @@
 </p>
 <p align="center">
   <img src="assets/screenshot-settings.png" alt="The Settings app (SUPER+U)" width="100%"><br>
-  <sub>The Settings app, opened with <code>SUPER + U</code></sub>
+  <sub>The Settings app (<code>SUPER + U</code>) and the hot corner panel</sub>
 </p>
 
 ## Features
