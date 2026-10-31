@@ -48,7 +48,29 @@ def die(msg):
 
 
 def load():
-    return json.load(open(CFG))
+    s = open(CFG).read()
+    try:
+        return json.loads(s)
+    except ValueError:  # .jsonc with // or /* */ comments or trailing commas
+        out, i, n, q = [], 0, len(s), False
+        while i < n:
+            ch = s[i]
+            if q:
+                out.append(ch)
+                if ch == "\\" and i + 1 < n:
+                    out.append(s[i + 1]); i += 1
+                elif ch == '"':
+                    q = False
+            elif ch == '"':
+                q = True; out.append(ch)
+            elif s.startswith("//", i):
+                j = s.find("\n", i); i = n if j < 0 else j; continue
+            elif s.startswith("/*", i):
+                j = s.find("*/", i + 2); i = n if j < 0 else j + 2; continue
+            else:
+                out.append(ch)
+            i += 1
+        return json.loads(re.sub(r",(\s*[}\]])", r"\1", "".join(out)))
 
 
 def atomic(path, text):
@@ -404,9 +426,11 @@ def apply(u):
     c["position"] = u["position"]
     distro_swap(c, u.get("distro_icon") is True)
     # no calendar popup on the clock (survives preset switches because apply() runs after them)
-    if isinstance(c.get("clock"), dict):
-        c["clock"]["tooltip"] = False
-        c["clock"].pop("tooltip-format", None)
+    for k in [k for k in c if k == "clock" or k.startswith("clock#")]:
+        if isinstance(c[k], dict):
+            c[k]["tooltip"] = False
+            c[k].pop("tooltip-format", None)
+            c[k].setdefault("on-click", "$HOME/.local/bin/rice-calendar")
     # one-island style: fixed width + gap to the screen edge; remove only what we set
     if u["style"] == "island":
         mk = "margin-top" if u["position"] == "top" else "margin-bottom"
