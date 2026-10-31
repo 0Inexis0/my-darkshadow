@@ -13,6 +13,7 @@ Item {
 
     readonly property var allSections: [
         { k: "wallpaper", n: "Wallpaper", d: "Your latest wallpapers, one click to switch", g: "󰋩" },
+        { k: "colors", n: "Color schemes", d: "All color schemes, one click to switch", g: "\udb80\udfd8" },
         { k: "apps", n: "Apps", d: "Search and launch apps, pinned apps when empty", g: "󰀻" },
         { k: "awake", n: "Keep Awake", d: "Stop the screen from locking or sleeping", g: "󰅶" },
         { k: "record", n: "Screen recording", d: "Fullscreen or region, list of recordings", g: "󰕧" },
@@ -109,7 +110,7 @@ Item {
                     cfg: page.hc
                     open: true
                     st: ({ awake: false, wifi: true, bluetooth: true, dnd: false, gaming: false, mic_muted: false, accent: page.accent,
-                           walls: page.walls, wall: page.wall,
+                           walls: page.walls, wall: page.wall, schemes: page.ctl.schemes, scheme: page.ctl.colorMode,
                            recordings: [{ name: "Recording_2026-10-31.mp4", path: "", time: "today" }] })
                 }
             }

@@ -201,5 +201,10 @@
 .widget-volume trough highlight {
   background: #d4d4d4;
 }
-
+/* popup style: glass */
+.floating-notifications.background .notification-row .notification-background .notification {
+  background: rgba(18, 18, 20, 0.30);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 18px;
+}
 /* end-rice-notify */

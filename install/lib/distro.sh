@@ -20,7 +20,7 @@ PKG_DESKTOP=(hyprland hyprlock hypridle xdg-desktop-portal-hyprland xdg-desktop-
 PKG_SHELL=(quickshell waybar swaync rofi awww cava kitty fish fastfetch nautilus matugen)
 PKG_TOOLS=(wf-recorder grim slurp wl-clipboard libnotify xdg-user-dirs jq curl python playerctl brightnessctl pamixer
            swayosd imagemagick zenity networkmanager bluez bluez-utils pipewire pipewire-pulse wireplumber
-           btop cmatrix peaclock pavucontrol gnome-calendar overskride)
+           btop cmatrix peaclock pavucontrol gnome-calendar overskride hyprsunset upower)
 PKG_FONTS=(ttf-jetbrains-mono-nerd ttf-nerd-fonts-symbols noto-fonts noto-fonts-emoji inter-font)
 PKG_LOOK=(papirus-icon-theme gnome-themes-extra adw-gtk-theme bibata-cursor-theme-bin)
 ARCH_PKGS=("${PKG_DESKTOP[@]}" "${PKG_SHELL[@]}" "${PKG_TOOLS[@]}" "${PKG_FONTS[@]}" "${PKG_LOOK[@]}")

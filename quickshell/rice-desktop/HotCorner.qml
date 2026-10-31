@@ -73,6 +73,7 @@ PanelWindow {
             if (cmd === "mic") s.mic_muted = !s.mic_muted
             if (cmd === "record" && arg === "stop") s.recording = false
             if (cmd === "wall") s.wall = arg
+            if (cmd === "scheme") s.scheme = arg
             hc.st = s
             Quickshell.execDetached(["bash", "-c", "sleep \"$3\"; \"$HOME/.local/bin/rice-hotcorner\" \"$1\" \"$2\"", "_", cmd, arg, closeFirst ? "0.35" : "0"])
         }

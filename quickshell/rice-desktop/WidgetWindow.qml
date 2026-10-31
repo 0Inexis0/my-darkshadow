@@ -67,9 +67,10 @@ PanelWindow {
     // above windows while you edit, so you can see what you change
     WlrLayershell.layer: editing ? WlrLayer.Top : WlrLayer.Bottom
     WlrLayershell.namespace: "rice-widget"
-    property Region noInput: Region { }
-    property Region hitBox: Region { item: holder }
-    mask: (passive || editing) ? noInput : hitBox
+    // only the widget itself takes clicks; the visualizer (passive) and widgets in the editor take none,
+    // so whatever is under them (other widgets, the desktop) stays clickable
+    mask: Region { item: (w.passive || w.editing) ? nothing : holder }
+    Item { id: nothing; width: 0; height: 0 }
 
     Item {
         id: holder

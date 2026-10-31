@@ -40,6 +40,8 @@ Item {
         return { name: n, icon: i[0], label: i[1] }
     }
     function chips(list) { return (list || []).map(chip) }
+    // room a zone needs for its icons, so nothing wraps onto a second line
+    function need(list) { const n = (list || []).length; return n * 42 + 24 }
     readonly property var subHidden: subsAll.filter(function(s) { return apps.indexOf(s) < 0 })
 
     // ---------------- drag and drop ----------------
@@ -146,7 +148,7 @@ Item {
                         id: zLeft
                         compact: true
                         zone: "left"; title: "LEFT"; page: page
-                        width: (parent.width - 8) * 0.37; height: parent.height
+                        width: Math.max(130, page.need(page.lay.left)); height: parent.height
                         items: page.chips(page.lay.left)
                         align: Qt.AlignLeft
                     }
@@ -154,7 +156,7 @@ Item {
                         id: zCenter
                         compact: true
                         zone: "center"; title: "CENTER"; page: page
-                        width: (parent.width - 8) * 0.26; height: parent.height
+                        width: Math.max(70, parent.width - 8 - zLeft.width - zRight.width); height: parent.height
                         items: page.chips(page.lay.center)
                         align: Qt.AlignHCenter
                     }
@@ -162,7 +164,7 @@ Item {
                         id: zRight
                         compact: true
                         zone: "right"; title: "RIGHT"; page: page
-                        width: (parent.width - 8) * 0.37; height: parent.height
+                        width: Math.max(130, page.need(page.lay.right)); height: parent.height
                         items: page.chips(page.lay.right)
                         align: Qt.AlignRight
                     }

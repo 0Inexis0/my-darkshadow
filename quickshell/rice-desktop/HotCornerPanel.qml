@@ -116,7 +116,7 @@ Item {
                     sourceComponent: modelData === "awake" ? awakeC : modelData === "record" ? recordC
                                    : modelData === "shot" ? shotC : modelData === "toggles" ? togglesC
                                    : modelData === "media" ? mediaC : modelData === "wallpaper" ? wallC
-                                   : modelData === "apps" ? appsC : null
+                                   : modelData === "apps" ? appsC : modelData === "colors" ? colorsC : null
                 }
                 SequentialAnimation {
                     id: inAnim
@@ -193,6 +193,84 @@ Item {
     }
 
     // ---------- sections ----------
+    Component {
+        id: colorsC
+        HcCard {
+            height: cCol.implicitHeight + 28
+            Column {
+                id: cCol
+                x: 14; y: 14
+                width: parent.width - 28
+                spacing: 12
+                Item {
+                    width: parent.width
+                    height: 20
+                    T { text: "Color scheme"; font.pixelSize: 14; font.bold: true; anchors.verticalCenter: parent.verticalCenter }
+                    T {
+                        anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
+                        text: {
+                            const l = pnl.st.schemes || []
+                            const hov = pnl.hoverName.indexOf("scheme:") === 0 ? pnl.hoverName.substr(7) : ""
+                            if (hov) return hov
+                            for (let i = 0; i < l.length; i++) if (l[i].key === pnl.st.scheme) return l[i].name
+                            return ""
+                        }
+                        font.pixelSize: 12
+                        color: "#9a9aa4"
+                    }
+                }
+                Grid {
+                    id: cGrid
+                    columns: 7
+                    spacing: 8
+                    readonly property real cell: Math.floor((cCol.width - 6 * spacing) / 7)
+                    Repeater {
+                        model: pnl.st.schemes || []
+                        delegate: Item {
+                            readonly property bool cur: pnl.st.scheme === modelData.key
+                            readonly property var pv: modelData.preview || ["#111111", "#d4d4d4", "#ffffff"]
+                            width: cGrid.cell
+                            height: cGrid.cell
+                            // surface ring with the accent inside, like a little planet
+                            Rectangle {
+                                anchors.centerIn: parent
+                                width: Math.min(parent.width, 34); height: width; radius: width / 2
+                                color: pv[0]
+                                border.width: cur ? 2 : 1
+                                border.color: cur ? "#F6F5F4" : Qt.rgba(1, 1, 1, 0.14)
+                                scale: sm.containsMouse ? 1.12 : 1
+                                Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    width: parent.width * 0.56; height: width; radius: width / 2
+                                    color: pv[1]
+                                }
+                                T { visible: cur; kind: "icon"; anchors.centerIn: parent; text: "󰄬"; font.pixelSize: 11; color: "#0d0d0d" }
+                            }
+                            MouseArea {
+                                id: sm
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onEntered: pnl.hoverName = "scheme:" + modelData.name
+                                onExited: if (pnl.hoverName === "scheme:" + modelData.name) pnl.hoverName = ""
+                                onClicked: pnl.act("scheme", modelData.key, false)
+                            }
+                        }
+                    }
+                }
+                T {
+                    visible: !(pnl.st.schemes && pnl.st.schemes.length > 0)
+                    width: parent.width
+                    horizontalAlignment: Text.AlignHCenter
+                    text: "Loading color schemes..."
+                    font.pixelSize: 12
+                    color: "#7a7a84"
+                }
+            }
+        }
+    }
+
     Component {
         id: awakeC
         HcCard {

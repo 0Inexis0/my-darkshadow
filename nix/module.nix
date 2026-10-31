@@ -27,6 +27,8 @@
     pavucontrol
     gnome-calendar
     overskride
+    hyprsunset
+    upower
     nautilus
     btop
     cmatrix
@@ -47,6 +49,9 @@
     enable = lib.mkDefault true;
     pulse.enable = lib.mkDefault true;
   };
+
+  # battery and device charge for the Battery widget
+  services.upower.enable = lib.mkDefault true;
 
   xdg.portal.enable = lib.mkDefault true;
 }

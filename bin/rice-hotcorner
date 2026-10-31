@@ -8,6 +8,7 @@
   rice-hotcorner state                      live status as JSON (for the panel)
   rice-hotcorner open                       open the panel now
   rice-hotcorner awake | dnd | wifi | bluetooth | gaming | mic      toggle
+  rice-hotcorner scheme KEY                                 color scheme (rice-colors)
   rice-hotcorner record full|region|stop
   rice-hotcorner shot full|region
   rice-hotcorner show PATH | folder recordings|screenshots
@@ -82,7 +83,7 @@ def walls(limit=9):
     return out, cur
 SHOT_DIR = xdg_dir("PICTURES", "Pictures") + "/Screenshots"
 
-SECTIONS = ["awake", "wallpaper", "apps", "record", "shot", "toggles", "media"]
+SECTIONS = ["awake", "wallpaper", "colors", "apps", "record", "shot", "toggles", "media"]
 TOGGLES = ["wifi", "bluetooth", "dnd", "gaming", "mic", "settings", "wallpaper", "lock"]
 DEFAULTS = {
     "enabled": True, "corner": "bottom-right", "trigger": 4, "delay": 150, "close_on_leave": True,
@@ -247,7 +248,16 @@ def state():
     tools = {t: shutil.which(t) is not None for t in
              ("wf-recorder", "gpu-screen-recorder", "grim", "slurp", "wl-copy", "nmcli", "bluetoothctl", "wpctl", "swaync-client")}
     wl = walls()
+    schemes, scheme = [], ""
+    if "colors" in load().get("sections", []):
+        try:
+            rc = HOME + "/.local/bin/rice-colors"
+            schemes = json.loads(subprocess.run([rc, "list"], capture_output=True, text=True, timeout=5).stdout)
+            scheme = subprocess.run([rc, "get"], capture_output=True, text=True, timeout=5).stdout.strip()
+        except Exception:
+            pass
     out = {
+        "schemes": schemes, "scheme": scheme,
         "awake": bool(alive(AWAKE_PID)), "recording": bool(rec), "rec_start": rec.get("start", 0),
         "wifi": wifi_on(), "bluetooth": bt_on(), "dnd": dnd_on(), "gaming": gaming_on(), "mic_muted": mic_muted(),
         "recordings": recordings(), "rec_dir": REC_DIR, "walls": wl[0], "wall": wl[1], "shot_dir": SHOT_DIR, "accent": accent(), "tools": tools,
@@ -470,6 +480,9 @@ def main(argv):
         record(arg or "full")
     elif cmd == "shot":
         shot(arg or "full")
+    elif cmd == "scheme":
+        if arg:
+            bg([HOME + "/.local/bin/rice-colors", "mode", arg])
     elif cmd == "wall":
         if arg and os.path.isfile(arg):
             if os.path.isfile(WALL_APPLY):

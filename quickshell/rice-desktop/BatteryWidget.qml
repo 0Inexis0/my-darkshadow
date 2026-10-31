@@ -1,64 +1,134 @@
 import Quickshell.Io
 import QtQuick
 
-// Battery: ring with the charge, state and time left. Shows "No battery" on desktops.
+// Battery: this computer's battery as a ring, plus wireless devices (mouse, headset, ...).
+// On a desktop without a battery it shows the devices, or a short note.
 Item {
     id: bt
     property real bg: 1
     property bool running: true
-    property int pct: -1
-    property string status: ""
-    property string remain: ""
+    property var main: null
+    property var devs: []
+    readonly property bool hasMain: main !== null && main !== undefined
+    readonly property int pct: hasMain ? main.pct : -1
+    readonly property string status: hasMain ? main.status : ""
+    readonly property bool charging: status === "Charging" || status === "Full"
+    readonly property bool low: hasMain && pct <= 15 && !charging
 
     Process {
         id: proc
-        command: ["bash", "-c", "b=$(ls -d /sys/class/power_supply/BAT* 2>/dev/null | head -1); [ -n \"$b\" ] || exit 0; " +
-                  "printf '%s\\n%s\\n' \"$(cat $b/capacity)\" \"$(cat $b/status)\"; " +
-                  "upower -i $(upower -e 2>/dev/null | grep -m1 BAT) 2>/dev/null | grep -E 'time to (empty|full)' | sed 's/.*: *//' | head -1"]
+        command: ["bash", "-c", "\"$HOME/.local/bin/rice-battery\""]
         stdout: StdioCollector {
             onStreamFinished: {
-                const p = text.split("\n")
-                bt.pct = p[0] && p[0].length ? parseInt(p[0]) : -1
-                bt.status = p[1] ? p[1].trim() : ""
-                bt.remain = p[2] ? p[2].trim() : ""
+                try { const j = JSON.parse(text); bt.main = j.main; bt.devs = j.devices || [] } catch (e) { }
             }
         }
     }
-    Timer { interval: 30000; running: bt.running && bt.visible; repeat: true; triggeredOnStart: true; onTriggered: if (!proc.running) proc.running = true }
+    Timer { interval: 20000; running: bt.running && bt.visible; repeat: true; triggeredOnStart: true; onTriggered: if (!proc.running) proc.running = true }
 
-    readonly property bool charging: status === "Charging" || status === "Full"
+    function devIcon(k) {
+        return k === "mouse" ? "" : k === "keyboard" ? "" : (k === "headset" || k === "headphones") ? ""
+             : k === "gaming-input" ? "" : k === "phone" ? "" : k === "speakers" ? "" : ""
+    }
+
     Card { anchors.fill: parent; k: bt.bg }
 
-    Canvas {
-        id: ring
-        width: 72; height: 72
+    // ---- laptop battery
+    Item {
+        visible: bt.hasMain
+        anchors.fill: parent
+        Canvas {
+            id: ring
+            width: 72; height: 72
+            anchors.left: parent.left
+            anchors.leftMargin: 18
+            anchors.verticalCenter: parent.verticalCenter
+            property real v: Math.max(0, bt.pct)
+            property bool lowC: bt.low
+            Behavior on v { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
+            onVChanged: requestPaint()
+            onLowCChanged: requestPaint()
+            onPaint: {
+                const c = getContext("2d")
+                c.reset()
+                c.lineWidth = 6
+                c.lineCap = "round"
+                c.strokeStyle = "rgba(255,255,255,0.12)"
+                c.beginPath(); c.arc(36, 36, 30, 0, Math.PI * 2); c.stroke()
+                if (v <= 0) return
+                c.strokeStyle = lowC ? "#e06c75" : "#F6F5F4"
+                c.beginPath(); c.arc(36, 36, 30, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * v / 100); c.stroke()
+            }
+            T { kind: "icon"; anchors.centerIn: parent; text: bt.charging ? "" : ""; font.pixelSize: 18; color: bt.low ? "#e06c75" : "#c8c8cc" }
+        }
+        Column {
+            anchors.left: ring.right
+            anchors.leftMargin: 16
+            anchors.right: parent.right
+            anchors.rightMargin: 14
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 2
+            T { kind: "number"; text: bt.pct + "%"; font.pixelSize: 30; font.bold: true }
+            T {
+                width: parent.width
+                elide: Text.ElideRight
+                text: bt.status === "Full" ? "Fully charged"
+                    : (bt.charging ? "Charging" : "On battery") + (bt.main && bt.main.left ? "  ·  " + bt.main.left + (bt.charging ? " to full" : " left") : "")
+                font.pixelSize: 12; color: "#8a8a8f"
+            }
+            // first wireless device under it, when there is one
+            T {
+                visible: bt.devs.length > 0
+                width: parent.width
+                elide: Text.ElideRight
+                text: bt.devs.length > 0 ? bt.devs[0].name + "  " + bt.devs[0].pct + "%" : ""
+                font.pixelSize: 11; color: "#6f6f76"
+            }
+        }
+    }
+
+    // ---- no battery in this computer: wireless devices, or a note
+    Column {
+        visible: !bt.hasMain
         anchors.left: parent.left
         anchors.leftMargin: 18
+        anchors.right: parent.right
+        anchors.rightMargin: 18
         anchors.verticalCenter: parent.verticalCenter
-        property real v: Math.max(0, bt.pct)
-        Behavior on v { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
-        onVChanged: requestPaint()
-        onPaint: {
-            const c = getContext("2d")
-            c.reset()
-            c.lineWidth = 6
-            c.lineCap = "round"
-            c.strokeStyle = "rgba(255,255,255,0.12)"
-            c.beginPath(); c.arc(36, 36, 30, 0, Math.PI * 2); c.stroke()
-            c.strokeStyle = bt.pct >= 0 && bt.pct <= 15 && !bt.charging ? "#e06c75" : "#F6F5F4"
-            c.beginPath(); c.arc(36, 36, 30, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0.01, v / 100)); c.stroke()
+        spacing: 7
+        Row {
+            visible: bt.devs.length === 0
+            spacing: 14
+            Rectangle {
+                width: 46; height: 46; radius: 23
+                color: Qt.rgba(1, 1, 1, 0.07)
+                T { kind: "icon"; anchors.centerIn: parent; text: ""; font.pixelSize: 18; color: "#c8c8cc" }
+            }
+            Column {
+                anchors.verticalCenter: parent.verticalCenter
+                width: bt.width - 36 - 60
+                spacing: 2
+                T { text: "Plugged in"; font.pixelSize: 17; font.bold: true }
+                T { width: parent.width; elide: Text.ElideRight; text: "No battery in this computer"; font.pixelSize: 11; color: "#8a8a8f" }
+                T { width: parent.width; elide: Text.ElideRight; text: "Wireless mice and headsets show here"; font.pixelSize: 10; color: "#6f6f76" }
+            }
         }
-        T { kind: "icon"; anchors.centerIn: parent; text: bt.charging ? "" : ""; font.pixelSize: 18; color: "#c8c8cc" }
-    }
-    Column {
-        anchors.left: ring.right
-        anchors.leftMargin: 16
-        anchors.verticalCenter: parent.verticalCenter
-        spacing: 2
-        T { kind: "number"; text: bt.pct >= 0 ? bt.pct + "%" : "No battery"; font.pixelSize: bt.pct >= 0 ? 30 : 18; font.bold: true }
-        T {
-            text: bt.pct < 0 ? "This computer runs on power" : (bt.status === "Full" ? "Fully charged" : (bt.charging ? "Charging" : "On battery") + (bt.remain ? "  ·  " + bt.remain : ""))
-            font.pixelSize: 12; color: "#8a8a8f"
+        Repeater {
+            model: bt.devs.slice(0, 3)
+            delegate: Item {
+                width: parent.width
+                height: 22
+                T { id: di; kind: "icon"; text: bt.devIcon(modelData.kind); font.pixelSize: 13; color: "#c8c8cc"; anchors.verticalCenter: parent.verticalCenter; width: 20 }
+                T { x: 26; width: parent.width - 26 - 110; elide: Text.ElideRight; text: modelData.name; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+                Rectangle {
+                    anchors.right: pv.left; anchors.rightMargin: 8
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 60; height: 6; radius: 3
+                    color: Qt.rgba(1, 1, 1, 0.12)
+                    Rectangle { width: parent.width * Math.max(0.03, modelData.pct / 100); height: parent.height; radius: 3; color: modelData.pct <= 15 ? "#e06c75" : "#F6F5F4" }
+                }
+                T { id: pv; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; kind: "number"; text: modelData.pct + "%"; font.pixelSize: 12; font.bold: true; width: 36; horizontalAlignment: Text.AlignRight }
+            }
         }
     }
 }
