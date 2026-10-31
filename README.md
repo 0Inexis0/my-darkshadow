@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="Shadow's Shell" width="100%">
+  <img src="assets/banner-mono.svg" alt="Shadow's Shell" width="100%">
 </p>
 
 <p align="center">
