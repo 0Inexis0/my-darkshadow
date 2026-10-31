@@ -52,6 +52,7 @@
 | **Updates** | a notification when a new version is out ("Update is Available!"), version and Update now button in Settings > About, `rice-update` in a terminal |
 | **Idle & Lockscreen** | lock, screen-off and sleep timers; lock screen with Big / Stacked / Minimal clock, center or left layout, greeting, avatar, Pill / Box / Line password field, power buttons, screenshot / wallpaper / color background and media, resources, weather and notification lines |
 | **Rofi** | 5 themes (Shadow, Graphite, Midnight, Rose, Paper), layouts list / grid / full-width bar, position top, center or bottom, width, rows, corner radius, transparency, blur, font size, icons |
+| **Cursors** | Bibata, Hyprcursor themes (Rose Pine) and packs you can download in Settings: Catppuccin, Phinger; live preview |
 | **Fonts** | one place to set the main and icon fonts |
 | **Notifications** | swaync with a button that opens Settings |
 | **Welcome window** | "Welcome to DarkShadow's Shell" greeting once per login; turn off with `rice-welcome off` or the link in the window |

@@ -5,14 +5,23 @@
   rice-cursor set THEME [SIZE]      use a theme everywhere (Hyprland, GTK 3/4, XWayland apps)
   rice-cursor size SIZE             change only the size
   rice-cursor restore               apply the saved choice again (runs at login)
+  rice-cursor get PACK|all          download a cursor pack into ~/.local/share/icons (see PACKS)
+
+Hyprcursor themes (Hyprland's own format: manifest.hl + .hlc files) work too. Apps that only
+know Xcursor (GTK, XWayland) then use a normal theme as fallback (Bibata if you have it).
 """
 import configparser
 import json
 import os
+import re
 import shutil
 import struct
 import subprocess
 import sys
+import tarfile
+import tempfile
+import urllib.request
+import zipfile
 import zlib
 
 HOME = os.path.expanduser("~")
@@ -26,10 +35,23 @@ ROLES = {
     "default": ["left_ptr", "default", "arrow"],
     "pointer": ["pointer", "hand2", "pointing_hand", "hand1"],
     "text": ["text", "xterm", "ibeam"],
-    "wait": ["wait", "watch", "left_ptr_watch", "progress"],
+    "wait": ["wait", "watch", "left_ptr_watch", "progress", "half-busy", "loading"],
     "grab": ["grabbing", "closedhand", "fleur", "grab", "move"],
 }
 DEFAULT = {"theme": "Bibata-Modern-Ice", "size": 24}
+ICONS = HOME + "/.local/share/icons"
+PACKS_DB = ICONS + "/.rice-cursor-packs.json"
+# cursor packs Settings > Cursors can download (and the installer does once)
+PACKS = [
+    {"id": "rose-pine", "name": "Rose Pine", "desc": "Soft, rounded Hyprcursor theme made for Hyprland",
+     "kind": "git", "url": "https://github.com/ndom91/rose-pine-hyprcursor"},
+    {"id": "catppuccin-dark", "name": "Catppuccin Mocha Dark", "desc": "Dark Catppuccin cursors",
+     "kind": "zip", "url": "https://github.com/catppuccin/cursors/releases/latest/download/catppuccin-mocha-dark-cursors.zip"},
+    {"id": "catppuccin-mauve", "name": "Catppuccin Mocha Mauve", "desc": "Catppuccin with a soft purple accent",
+     "kind": "zip", "url": "https://github.com/catppuccin/cursors/releases/latest/download/catppuccin-mocha-mauve-cursors.zip"},
+    {"id": "phinger", "name": "Phinger", "desc": "Clean, playful cursors in dark and light",
+     "kind": "tar", "url": "https://github.com/phisch/phinger-cursors/releases/latest/download/phinger-cursors-variants.tar.bz2"},
+]
 
 
 def load():
@@ -45,26 +67,109 @@ def save(c):
     json.dump(c, open(CFG, "w"))
 
 
+def manifest(d):
+    """hyprcursor theme folder: (name, cursors dir) or None"""
+    for m in ("manifest.hl", "manifest.toml"):
+        p = os.path.join(d, m)
+        if os.path.isfile(p):
+            kv = {}
+            for line in open(p, errors="ignore"):
+                if "=" in line and not line.strip().startswith("#"):
+                    k, v = line.split("=", 1)
+                    kv[k.strip()] = v.strip().strip('"').strip("'")
+            cdir = os.path.join(d, kv.get("cursors_directory", "hyprcursors"))
+            if os.path.isdir(cdir):
+                return kv.get("name") or os.path.basename(d), cdir
+    return None
+
+
 def themes():
     found = {}
     for d in DIRS:
         if not os.path.isdir(d):
             continue
         for name in sorted(os.listdir(d)):
-            cur = os.path.join(d, name, "cursors")
-            if name in found or name == "default" or not os.path.isdir(cur):
+            if name in found or name == "default" or name.startswith("."):
                 continue
-            title = name
-            idx = os.path.join(d, name, "index.theme")
+            base = os.path.join(d, name)
+            cur = os.path.join(base, "cursors")
+            xdir = cur if os.path.isdir(cur) else None
+            hyp = manifest(base)
+            if not xdir and not hyp:
+                continue
+            title = hyp[0] if hyp else name
+            idx = os.path.join(base, "index.theme")
             if os.path.isfile(idx):
                 cp = configparser.ConfigParser(interpolation=None, strict=False)
                 try:
                     cp.read(idx)
-                    title = cp.get("Icon Theme", "Name", fallback=name)
+                    title = cp.get("Icon Theme", "Name", fallback=title)
                 except Exception:
                     pass
-            found[name] = {"id": name, "name": title.replace("-", " "), "dir": cur}
+            title = title.replace("-", " ").replace("_", " ")
+            if title == title.lower():
+                title = title.title()
+            found[name] = {"id": name, "name": title, "dir": xdir,
+                           "hdir": hyp[1] if hyp else None, "hname": hyp[0] if hyp else None,
+                           "kind": "both" if (xdir and hyp) else ("hyprcursor" if hyp else "xcursor")}
     return found
+
+
+# ---------- hyprcursor (.hlc = zip with meta.hl and images) ----------
+def hlc_shapes(hdir):
+    """shape name -> .hlc file or folder, including the names a shape answers to (define_override)"""
+    out = {}
+    for f in sorted(os.listdir(hdir)):
+        p = os.path.join(hdir, f)
+        stem = f[:-4] if f.endswith(".hlc") else f
+        if not (f.endswith(".hlc") or os.path.isdir(p)):
+            continue
+        out.setdefault(stem, p)
+        try:
+            meta = hlc_meta(p)
+        except Exception:
+            meta = ""
+        for line in meta.splitlines():
+            if "define_override" in line and "=" in line:
+                for n in re.split(r"[;,\s]+", line.split("=", 1)[1].strip().strip('"').strip("'")):
+                    if n:
+                        out.setdefault(n, p)
+    return out
+
+
+def hlc_files(p):
+    if os.path.isdir(p):
+        return {f: open(os.path.join(p, f), "rb").read() for f in os.listdir(p) if os.path.isfile(os.path.join(p, f))}
+    with zipfile.ZipFile(p) as z:
+        return {os.path.basename(n): z.read(n) for n in z.namelist() if not n.endswith("/")}
+
+
+def hlc_meta(p):
+    files = hlc_files(p)
+    for m in ("meta.hl", "meta.toml"):
+        if m in files:
+            return files[m].decode("utf-8", "ignore")
+    return ""
+
+
+def hlc_image(p):
+    """(extension, bytes) of the best picture for a preview"""
+    files = hlc_files(p)
+    meta = ""
+    for m in ("meta.hl", "meta.toml"):
+        if m in files:
+            meta = files[m].decode("utf-8", "ignore")
+    order = re.findall(r"define_size\s*=\s*\"?\s*(\d+)\s*,\s*([^,\s\"]+)", meta)
+    svgs = [f for f in files if f.lower().endswith(".svg")]
+    if svgs:
+        first = [f for _, f in order if f in svgs]
+        return "svg", files[(first or sorted(svgs))[0]]
+    pngs = [(int(sz), f) for sz, f in order if f in files and f.lower().endswith(".png")]
+    if not pngs:
+        pngs = [(32, f) for f in sorted(files) if f.lower().endswith(".png")]
+    if not pngs:
+        return None
+    return "png", files[min(pngs, key=lambda t: abs(t[0] - 48))[1]]
 
 
 # ---------- Xcursor -> PNG (no extra libraries) ----------
@@ -108,23 +213,43 @@ def write_png(path, w, h, bgra):
 def previews(t):
     out = {}
     dst = os.path.join(CACHE, t["id"])
+    shapes = None
     for role, names in ROLES.items():
-        png = os.path.join(dst, role + ".png")
-        if os.path.isfile(png):
-            out[role] = png
+        done = [os.path.join(dst, role + e) for e in (".png", ".svg") if os.path.isfile(os.path.join(dst, role + e))]
+        if done:
+            out[role] = done[0]
             continue
-        for n in names:
-            p = os.path.join(t["dir"], n)
-            if os.path.exists(p):
+        if t["dir"]:
+            for n in names:
+                p = os.path.join(t["dir"], n)
+                if os.path.exists(p):
+                    try:
+                        r = read_xcursor(os.path.realpath(p))
+                    except Exception:
+                        r = None
+                    if r:
+                        os.makedirs(dst, exist_ok=True)
+                        write_png(os.path.join(dst, role + ".png"), *r)
+                        out[role] = os.path.join(dst, role + ".png")
+                        break
+        elif t["hdir"]:
+            if shapes is None:
                 try:
-                    r = read_xcursor(os.path.realpath(p))
+                    shapes = hlc_shapes(t["hdir"])
                 except Exception:
-                    r = None
-                if r:
-                    os.makedirs(dst, exist_ok=True)
-                    write_png(png, *r)
-                    out[role] = png
-                    break
+                    shapes = {}
+            for n in names:
+                if n in shapes:
+                    try:
+                        img = hlc_image(shapes[n])
+                    except Exception:
+                        img = None
+                    if img:
+                        os.makedirs(dst, exist_ok=True)
+                        f = os.path.join(dst, role + "." + img[0])
+                        open(f, "wb").write(img[1])
+                        out[role] = f
+                        break
     return out
 
 
@@ -152,15 +277,118 @@ def run(cmd):
             pass
 
 
+def xfallback(ts):
+    for n in ("Bibata-Modern-Ice", "Bibata-Modern-Classic", "Adwaita"):
+        if n in ts and ts[n]["dir"]:
+            return n
+    for t in ts.values():
+        if t["dir"]:
+            return t["id"]
+    return "Adwaita"
+
+
 def apply(c):
     theme, size = c["theme"], c["size"]
+    ts = themes()
+    t = ts.get(theme)
+    hypr = theme
+    if t and t["kind"] == "hyprcursor":
+        # Hyprland draws the Hyprcursor theme; apps that only know Xcursor get a normal theme
+        hypr = t["hname"] or theme
+        theme = xfallback(ts)
+    elif t and t["hname"]:
+        hypr = t["hname"]
     os.makedirs(HOME + "/.icons/default", exist_ok=True)
     open(HOME + "/.icons/default/index.theme", "w").write("[Icon Theme]\nName=Default\nInherits=%s\n" % theme)
     for v in ("gtk-3.0", "gtk-4.0"):
         set_ini("%s/.config/%s/settings.ini" % (HOME, v), {"gtk-cursor-theme-name": theme, "gtk-cursor-theme-size": size})
     run(["gsettings", "set", "org.gnome.desktop.interface", "cursor-theme", theme])
     run(["gsettings", "set", "org.gnome.desktop.interface", "cursor-size", str(size)])
-    run(["hyprctl", "setcursor", theme, str(size)])
+    run(["hyprctl", "setcursor", hypr, str(size)])
+
+
+def packs_db():
+    try:
+        return json.load(open(PACKS_DB))
+    except Exception:
+        return {}
+
+
+def theme_roots(top):
+    """folders inside a download that are cursor themes"""
+    out = []
+    for d, subs, files in os.walk(top):
+        if os.path.isdir(os.path.join(d, "cursors")) or manifest(d):
+            out.append(d)
+            subs[:] = []
+    return out
+
+
+def safe_extract(arch, kind, dst):
+    if kind == "zip":
+        with zipfile.ZipFile(arch) as z:
+            for n in z.namelist():
+                if n.startswith("/") or ".." in n.split("/"):
+                    raise ValueError("bad path in archive")
+            z.extractall(dst)
+    else:
+        with tarfile.open(arch) as t:
+            for m in t.getmembers():
+                if m.name.startswith("/") or ".." in m.name.split("/") or m.issym() and os.path.isabs(m.linkname):
+                    raise ValueError("bad path in archive")
+            t.extractall(dst)
+
+
+def get_pack(pid):
+    pk = next((p for p in PACKS if p["id"] == pid), None)
+    if not pk:
+        sys.exit("unknown pack: %s (packs: %s)" % (pid, ", ".join(p["id"] for p in PACKS)))
+    os.makedirs(ICONS, exist_ok=True)
+    tmp = tempfile.mkdtemp(prefix="rice-cursor-")
+    try:
+        src = os.path.join(tmp, "src")
+        os.makedirs(src)
+        if pk["kind"] == "git" and shutil.which("git"):
+            r = subprocess.run(["git", "clone", "--depth", "1", "-q", pk["url"], os.path.join(src, os.path.basename(pk["url"]))],
+                               capture_output=True, text=True, timeout=180, env=dict(os.environ, GIT_TERMINAL_PROMPT="0"))
+            if r.returncode != 0:
+                raise RuntimeError(r.stderr.strip().splitlines()[-1] if r.stderr.strip() else "git clone failed")
+            shutil.rmtree(os.path.join(src, os.path.basename(pk["url"]), ".git"), ignore_errors=True)
+        else:
+            url = pk["url"] + "/archive/refs/heads/main.zip" if pk["kind"] == "git" else pk["url"]
+            kind = "zip" if pk["kind"] in ("git", "zip") else "tar"
+            arch = os.path.join(tmp, "pack." + ("zip" if kind == "zip" else "tar"))
+            req = urllib.request.Request(url, headers={"User-Agent": "rice-cursor"})
+            with urllib.request.urlopen(req, timeout=60) as resp, open(arch, "wb") as f:
+                shutil.copyfileobj(resp, f)
+            safe_extract(arch, kind, src)
+        roots = theme_roots(src)
+        if not roots:
+            raise RuntimeError("no cursor theme found in the download")
+        names = []
+        for r in roots:
+            name = re.sub(r"-(main|master)$", "", os.path.basename(r.rstrip("/")))
+            dst = os.path.join(ICONS, name)
+            if os.path.exists(dst):
+                shutil.rmtree(dst)
+            shutil.move(r, dst)
+            shutil.rmtree(os.path.join(CACHE, name), ignore_errors=True)   # fresh previews
+            names.append(name)
+        db = packs_db()
+        db[pid] = names
+        json.dump(db, open(PACKS_DB, "w"))
+        return names
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def packs_state():
+    db = packs_db()
+    out = []
+    for p in PACKS:
+        names = [n for n in db.get(p["id"], []) if os.path.isdir(os.path.join(ICONS, n))]
+        out.append({"id": p["id"], "name": p["name"], "desc": p["desc"], "installed": bool(names), "themes": names})
+    return out
 
 
 def main(a):
@@ -170,8 +398,23 @@ def main(a):
         ts = themes()
         lst = []
         for t in sorted(ts.values(), key=lambda t: (not t["id"].lower().startswith("bibata"), t["name"].lower())):
-            lst.append({"id": t["id"], "name": t["name"], "preview": previews(t)})
-        print(json.dumps({"theme": c["theme"], "size": c["size"], "themes": lst}))
+            lst.append({"id": t["id"], "name": t["name"], "kind": t["kind"], "preview": previews(t)})
+        print(json.dumps({"theme": c["theme"], "size": c["size"], "themes": lst, "packs": packs_state()}))
+    elif cmd == "get" and len(a) > 2:
+        ids = [p["id"] for p in PACKS] if a[2] == "all" else [a[2]]
+        skip = "--missing" in a
+        bad = 0
+        for pid in ids:
+            if skip and any(p["id"] == pid and p["installed"] for p in packs_state()):
+                print("%s: already here" % pid)
+                continue
+            try:
+                print("%s: %s" % (pid, ", ".join(get_pack(pid))))
+            except Exception as e:
+                bad += 1
+                print("%s: could not download (%s)" % (pid, e))
+        if bad == len(ids):
+            sys.exit(1)
     elif cmd == "set" and len(a) > 2:
         c["theme"] = a[2]
         if len(a) > 3:

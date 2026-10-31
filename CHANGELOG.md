@@ -1,5 +1,10 @@
 # Changelog
 
+## V2.10
+- Hyprcursor support: Rose Pine cursor made for Hyprland, sharp at any size
+- New cursor packs: Catppuccin Mocha Dark and Mauve, Phinger (Settings > Cursors > Get more cursors)
+- Update notification shows up within a minute when a new version is out
+
 ## V2.04
 - Services: switches for Wi-Fi, Bluetooth, sound, microphone, airplane mode, night light and more
 - Hot corner: color schemes section

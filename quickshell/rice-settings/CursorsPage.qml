@@ -21,6 +21,25 @@ Item {
         page.ctl.status = "Cursor: " + id.replace(/-/g, " ")
     }
 
+    // cursor packs from GitHub (rice-cursor get)
+    property string getting: ""
+    function getPack(id) {
+        getting = id
+        getProc.command = ["bash", "-c", "\"$HOME/.local/bin/rice-cursor\" get \"$1\" 2>&1", "_", id]
+        getProc.running = true
+        page.ctl.status = "Downloading cursors..."
+    }
+    Process {
+        id: getProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const l = text.trim().split("\n").pop()
+                page.ctl.status = l.indexOf("could not") >= 0 ? l : "Installed: " + l.replace(/^[^:]*: /, "")
+                page.getting = ""
+                stateProc.running = true
+            }
+        }
+    }
     Process {
         id: stateProc
         command: ["bash", "-c", "\"$HOME/.local/bin/rice-cursor\" state"]
@@ -121,6 +140,14 @@ Item {
                         Image { width: 26; height: 26; fillMode: Image.PreserveAspectFit; source: page.img(modelData, "pointer") }
                         Image { width: 26; height: 26; fillMode: Image.PreserveAspectFit; source: page.img(modelData, "text") }
                     }
+                    Rectangle {
+                        visible: modelData.kind === "hyprcursor" || modelData.kind === "both"
+                        anchors.right: parent.right; anchors.rightMargin: on ? 34 : 10
+                        y: 10
+                        width: hb.implicitWidth + 12; height: 18; radius: 9
+                        color: Qt.rgba(1, 1, 1, 0.08)
+                        T { id: hb; anchors.centerIn: parent; text: "Hyprcursor"; font.pixelSize: 9; color: "#cfcfcf" }
+                    }
                     T {
                         x: 14
                         anchors.bottom: parent.bottom
@@ -147,6 +174,31 @@ Item {
                         onExited: if (page.pick === modelData.id) page.pick = ""
                         onClicked: page.apply(modelData.id)
                     }
+                }
+            }
+        }
+        SectionTitle { text: "Get more cursors"; sub: "Downloaded from GitHub into ~/.local/share/icons. Hyprcursor themes are drawn by Hyprland itself (sharp at any size); apps use Bibata meanwhile." }
+        Repeater {
+            model: page.cs.packs || []
+            delegate: Rectangle {
+                width: parent ? parent.width : 400
+                height: 64
+                radius: 14
+                color: "#141414"
+                border.width: 1
+                border.color: "#1f1f1f"
+                Column {
+                    x: 18; anchors.verticalCenter: parent.verticalCenter
+                    spacing: 3
+                    T { text: modelData.name; font.pixelSize: 14; font.bold: true }
+                    T { kind: "reading"; text: modelData.installed ? "Installed  ·  " + modelData.themes.join(", ") : modelData.desc; font.pixelSize: 11; color: "#8a8a8a" }
+                }
+                Btn {
+                    anchors.right: parent.right; anchors.rightMargin: 14
+                    anchors.verticalCenter: parent.verticalCenter
+                    primary: !modelData.installed && page.getting === ""
+                    text: page.getting === modelData.id ? "Downloading..." : (modelData.installed ? "Update" : "Install")
+                    onClicked: if (page.getting === "") page.getPack(modelData.id)
                 }
             }
         }

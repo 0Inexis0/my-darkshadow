@@ -320,6 +320,8 @@ patch_colors() {
   python3 "$ROOT/install/patches/colors-commands.py" "$c"
 }
 fixup() { python3 "$ROOT/install/lib/fixup.py" >"$1"; }
+# extra cursor themes from GitHub into ~/.local/share/icons (skips the ones you have; offline is fine)
+cursor_packs() { t "$BIN/rice-cursor" get all --missing >"$1" 2>&1; }
 remember_repo() { mkdir -p "$HOME/.config/rice"; echo "$ROOT" >"$HOME/.config/rice/repo"; }
 remember_version() { mkdir -p "$HOME/.config/rice"; echo "$RICE_VERSION" >"$HOME/.config/rice/version"; }
 first_backup() { mkdir -p "$HOME/.config/rice" "$HOME/.cache/rice"; [ -f "$HOME/.config/rice/.first-backup" ] || echo "$BK" >"$HOME/.config/rice/.first-backup"; }
@@ -342,6 +344,12 @@ step_finish() {
   task "Hot corner" t "$BIN/rice-hotcorner" apply
   [ -x "$BIN/desktop-set" ] && task "Dock blur" t "$BIN/desktop-set" dock-blur
   task "Theme colors for the wallpaper picker" patch_colors
+  if [ -x "$BIN/rice-cursor" ]; then
+    local cf; cf="$(mktemp)"
+    T=240 task "Cursor packs: Rose Pine (Hyprcursor), Catppuccin, Phinger" cursor_packs "$cf"
+    grep -v 'already here' "$cf" 2>/dev/null | while IFS= read -r line; do note "$line"; done
+    rm -f "$cf"
+  fi
   if [ "$IN_HYPR" = 1 ] && [ "$DRY_RUN" != 1 ]; then
     task "Reloading Hyprland" t hyprctl reload
     task "Restarting Waybar and the desktop widgets" restart_shell
