@@ -28,7 +28,7 @@
   <img src="assets/screenshot.png" alt="Shadow's Shell on NixOS" width="100%">
 </p>
 <p align="center">
-  <img src="assets/screenshot-settings.png" alt="The Settings app (SUPER+U)" width="100%"><br>
+  <img src="assets/screenshot-hotcorner.png" alt="The Settings app (SUPER+U)" width="100%"><br>
   <sub>The Settings app (<code>SUPER + U</code>) and the hot corner panel</sub>
 </p>
 
