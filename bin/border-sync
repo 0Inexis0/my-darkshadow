@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+[ -f "$HOME/.config/rice/border-custom" ] && exit 0
+f="$HOME/.config/hypr/border-colors.txt"
+[ -f "$f" ] || exit 0
+c1=$(sed -n 1p "$f" | tr -d '#')
+c2=$(sed -n 2p "$f" | tr -d '#')
+hyprctl eval "hl.config({ general = { col = { active_border = { colors = {\"rgba(${c1}ff)\", \"rgba(${c2}ff)\"}, angle = 45 } } } })" >/dev/null

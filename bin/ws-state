@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+active=$(hyprctl activeworkspace -j | jq -r .id)
+if [ "$active" = "$1" ]; then cls=active; else cls=inactive; fi
+printf '{"text":"%s","class":"%s"}\n' "$1" "$cls"

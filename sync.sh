@@ -54,6 +54,23 @@ for d in "${CONFIG_DIRS[@]}"; do
   echo "config/$d: $c files"
 done
 
+# every script in ~/.local/bin that a config, widget or script calls (for example ws-state from Waybar)
+echo "--- scripts used by your configs"
+# shellcheck disable=SC2016
+for _ in 1 2 3; do   # a few rounds: found scripts can call other scripts
+  found=0
+  while IFS= read -r name; do
+    [ -f "$HERE/bin/$name" ] && continue
+    src="$HOME/.local/bin/$name"
+    [ -e "$src" ] || continue
+    tmpl "$src" "$HERE/bin/$name"
+    echo "  + $name"
+    found=1
+  done < <(grep -rhoE '(@HOME@|\$HOME|~|\$\{HOME\})/\.local/bin/[A-Za-z0-9._-]+' \
+             "$HERE/config" "$HERE/quickshell" "$HERE/bin" "$HERE/lua" 2>/dev/null | sed 's#.*/##' | sort -u)
+  [ "$found" = 1 ] || break
+done
+
 echo "--- checking for secrets"
 hits="$(grep -rIniE '(ghp_[A-Za-z0-9]{20,}|api[_-]?key|secret|passw(or)?d|bearer |token)' \
         "$HERE/bin" "$HERE/config" "$HERE/quickshell" 2>/dev/null | head -20 || true)"
