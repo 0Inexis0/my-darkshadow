@@ -22,6 +22,7 @@ ZKEY = {"left": "modules-left", "center": "modules-center", "right": "modules-ri
 # top-level modules the layout editor can place: name -> (default zone, css selector)
 REG = {
     "image#nix": ("left", "#image.nix"),
+    "custom/distro": ("left", "#custom-distro"),
     "group/ws": ("left", "#ws"),
     "mpris": ("left", "#mpris"),
     "wireplumber": ("right", "#wireplumber"),
@@ -59,6 +60,71 @@ def atomic(path, text):
 
 def save(c):
     atomic(CFG, json.dumps(c, indent=2, ensure_ascii=False) + "\n")
+
+
+DISTRO_GLYPHS = {
+    "nixos": 0xF313, "arch": 0xF303, "archarm": 0xF303, "cachyos": 0xF303, "endeavouros": 0xF322,
+    "manjaro": 0xF312, "garuda": 0xF303, "ubuntu": 0xF31B, "fedora": 0xF30A, "debian": 0xF306,
+    "opensuse": 0xF314, "gentoo": 0xF30D, "void": 0xF32E, "alpine": 0xF300,
+}
+
+
+def distro_glyph():
+    ids = []
+    try:
+        for ln in open("/etc/os-release"):
+            k, _, v = ln.strip().partition("=")
+            v = v.strip('"').strip("'").lower()
+            if k == "ID":
+                ids.insert(0, v)
+            elif k == "ID_LIKE":
+                ids += v.split()
+    except Exception:
+        pass
+    for i in ids:
+        if i in DISTRO_GLYPHS:
+            return chr(DISTRO_GLYPHS[i])
+    return chr(0xF17C)
+
+
+def _swap_everywhere(c, old, new):
+    """replace a module name in the zones and inside any group (drawer) lists"""
+    for z in ZONES:
+        lst = zone_list(c, z)
+        if old in lst:
+            lst[lst.index(old)] = new
+            set_zone(c, z, lst)
+    for k, v in c.items():
+        if k.startswith("group/") and isinstance(v, dict) and isinstance(v.get("modules"), list) and old in v["modules"]:
+            v["modules"][v["modules"].index(old)] = new
+
+
+def _placed(c, name):
+    if zone_of(c, name):
+        return True
+    return any(isinstance(v, dict) and isinstance(v.get("modules"), list) and name in v["modules"]
+               for k, v in c.items() if k.startswith("group/"))
+
+
+def distro_swap(c, on):
+    # replace the fixed NixOS logo image by a glyph that matches the running distro,
+    # keeping what the logo did when clicked (for example opening the app launcher)
+    if on:
+        _swap_everywhere(c, "image#nix", "custom/distro")
+        if _placed(c, "custom/distro"):
+            d = {"exec": "echo .", "interval": "once", "format": distro_glyph(), "tooltip": False}
+            old = c.get("image#nix") if isinstance(c.get("image#nix"), dict) else {}
+            for key in ("on-click", "on-click-right", "on-click-middle", "tooltip-format"):
+                if key in old:
+                    d[key] = old[key]
+            if "tooltip-format" in d:
+                d["tooltip"] = True
+            c["custom/distro"] = d
+    else:
+        if "image#nix" in c:
+            _swap_everywhere(c, "custom/distro", "image#nix")
+        if not _placed(c, "custom/distro"):
+            c.pop("custom/distro", None)
 
 
 def clamp(v, lo, hi):
@@ -297,6 +363,8 @@ def block(u, rgb, c):
                    "    margin-top: 0;\n    margin-bottom: 0;\n    min-height: 0;\n}" % (h, h))
     out.append("tooltip {\n    background: rgba(18, 18, 18, 0.45);\n    border: 1px solid rgba(255, 255, 255, 0.12);\n"
                "    border-radius: 12px;\n}\n\ntooltip label {\n    color: #F6F5F4;\n    padding: 2px 6px;\n}")
+    if u.get("distro_icon") is True:
+        out.append("#custom-distro {\n    font-size: 16px;\n    padding: 0 8px;\n}")
     ps = u.get("power_size", 0)
     if isinstance(ps, int) and ps > 0:
         out.append("window#waybar #custom-lock {\n    font-size: %dpx;\n}" % ps)
@@ -322,6 +390,7 @@ def apply(u):
     if os.path.exists(LEGACY):
         os.remove(LEGACY)
     c["position"] = u["position"]
+    distro_swap(c, u.get("distro_icon") is True)
     # no calendar popup on the clock (survives preset switches because apply() runs after them)
     if isinstance(c.get("clock"), dict):
         c["clock"]["tooltip"] = False
@@ -385,7 +454,8 @@ def state():
     for z in ZONES:
         lay[z] = [m for m in zone_list(c, z)]
         placed.update(lay[z])
-    lay["available"] = [m for m in REG if m not in placed and has_def(c, m)]
+    lay["available"] = [m for m in REG if m not in placed and has_def(c, m)
+                        and not (u.get("distro_icon") is True and m == "image#nix")]
     out["layout"] = lay
     for m in TOGGLES:
         if m in SUBS:
@@ -397,7 +467,7 @@ def state():
 
 
 USAGE = ("usage: waybar-set state|reapply|opacity V|transparency on|off|position top|bottom|"
-         "autohide on|off|style flat|floating|islands|island|island-width N|power-nudge N|power-size N|group none|pills|segmented|height V|"
+         "autohide on|off|style flat|floating|islands|island|island-width N|distro-icon on|off|power-nudge N|power-size N|group none|pills|segmented|height V|"
          "layout-add ZONE MODULE|layout-remove ZONE MODULE|layout-move ZONE MODULE left|right|"
          "toggle MODULE on|off")
 
@@ -443,6 +513,8 @@ def main(argv):
         if v not in ("top", "bottom"):
             die("position: top|bottom")
         ui_update(position=v)
+    elif cmd == "distro-icon":
+        ui_update(distro_icon=(arg(argv, 2) == "on"))
     elif cmd == "power-size":
         ui_update(power_size=int(clamp(float(arg(argv, 2)), 0, 48)))
     elif cmd == "power-nudge":

@@ -7,7 +7,8 @@ Item {
     property string openZone: ""
 
     readonly property var labels: ({
-        "image#nix": "NixOS logo",
+        "image#nix": "Launcher (logo)",
+        "custom/distro": "Launcher (distro logo)",
         "group/ws": "Workspaces",
         "mpris": "Music",
         "wireplumber": "Volume",
@@ -89,7 +90,7 @@ Item {
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
             onWheel: function(e) {
                 const max = Math.max(0, flick.contentHeight - flick.height)
-                flick.contentY = Math.max(0, Math.min(max, flick.contentY - e.angleDelta.y * 0.9))
+                flick.contentY = Math.max(0, Math.min(max, flick.contentY - e.angleDelta.y * 0.6))
             }
         }
 

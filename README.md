@@ -81,6 +81,10 @@
 | `ALT + ]` / `ALT + [` | volume up / down |
 | `SUPER + F12` / `F11` / `F10` | volume up / down / mute (with on-screen display) |
 | media keys | play/pause, next, previous |
+| `Fn` volume / brightness keys, headset `+` `-` | volume, mute, microphone, brightness |
+| `Print` / `SHIFT + Print` | screenshot of a region / the whole screen |
+| `SUPER + SHIFT + R` | record a region (press again to stop) |
+| `SUPER + A` | open the hot corner panel |
 
 ## Install
 ```bash

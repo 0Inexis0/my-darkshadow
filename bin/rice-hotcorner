@@ -126,10 +126,10 @@ def bg(cmd):
 
 def notify(title, body, icon="dialog-information"):
     if shutil.which("notify-send"):
-        bg(["notify-send", "-a", "Shadow's Shell", "-i", icon, title, body])
+        bg(["notify-send", "-a", "DarkShadow's Shell", "-i", icon, title, body])
     else:
         bg(["busctl", "--user", "call", "org.freedesktop.Notifications", "/org/freedesktop/Notifications",
-            "org.freedesktop.Notifications", "Notify", "susssasa{sv}i", "Shadow's Shell", "0", icon, title, body, "0", "0", "5000"])
+            "org.freedesktop.Notifications", "Notify", "susssasa{sv}i", "DarkShadow's Shell", "0", icon, title, body, "0", "0", "5000"])
 
 
 # ---------------- settings ----------------
@@ -303,7 +303,7 @@ def toggle_awake():
     if not shutil.which("systemd-inhibit"):
         die("systemd-inhibit not found")
     os.makedirs(CACHE, exist_ok=True)
-    p = subprocess.Popen(["systemd-inhibit", "--what=idle:sleep", "--who=Shadow's Shell", "--why=Keep Awake",
+    p = subprocess.Popen(["systemd-inhibit", "--what=idle:sleep", "--who=DarkShadow's Shell", "--why=Keep Awake",
                           "--mode=block", "sleep", "infinity"],
                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
     open(AWAKE_PID, "w").write(str(p.pid))

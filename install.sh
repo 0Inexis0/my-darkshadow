@@ -90,7 +90,7 @@ pretty_dir() {
   case "$1" in
     hypr) echo "Hyprland" ;; waybar) echo "Waybar" ;; swaync) echo "Notifications (swaync)" ;;
     rofi) echo "Rofi" ;; matugen) echo "Matugen colors" ;; kitty) echo "Kitty terminal" ;;
-    fastfetch) echo "Fastfetch" ;; *) echo "$1" ;;
+    fastfetch) echo "Fastfetch" ;; fish) echo "Fish shell" ;; *) echo "$1" ;;
   esac
 }
 
@@ -181,8 +181,20 @@ step_packages() {
   esac
 }
 
+set_cursor() {
+  local theme=Bibata-Modern-Ice
+  mkdir -p "$HOME/.icons/default"
+  printf '[Icon Theme]\nName=Default\nInherits=%s\n' "$theme" >"$HOME/.icons/default/index.theme"
+  command -v gsettings >/dev/null 2>&1 && {
+    gsettings set org.gnome.desktop.interface cursor-theme "$theme" || true
+    gsettings set org.gnome.desktop.interface cursor-size 24 || true
+  }
+  [ "$IN_HYPR" = 1 ] && T=5 t hyprctl setcursor "$theme" 24
+  return 0
+}
 step_fonts() {
   task "Inter and Rubik (interface fonts, from the web)" t 120 "$ROOT/bin/rice-fonts"
+  task "Bibata Modern Ice cursor" set_cursor
   if fc-list 2>/dev/null | grep -qi "JetBrainsMono Nerd"; then ok "JetBrains Mono Nerd Font (icons) is installed"
   else warn "JetBrains Mono Nerd Font is missing: icons will show as boxes"; fi
 }
@@ -195,6 +207,13 @@ step_configs() {
     task "$(pretty_dir "$d")  ->  ~/.config/$d" copy_tree "$ROOT/config/$d" "$HOME/.config/$d"
   done
   task "Hyprland add-ons (keybinds, hot corner, gaming mode)" copy_lua
+  if [ -d "$ROOT/config/fish" ] && command -v fish >/dev/null 2>&1 && [ "$(basename "${SHELL:-}")" != fish ]; then
+    if [ "$ASSUME_YES" != 1 ] && confirm "Make fish your default shell? (the configs are made for it)"; then
+      # chsh asks for your password, so it runs in the open (not behind a spinner)
+      if [ "$DRY_RUN" = 1 ] || chsh -s "$(command -v fish)"; then ok "Default shell is now fish (from your next login)"
+      else warn "Could not change the shell. Run later: chsh -s $(command -v fish)"; fi
+    fi
+  fi
 }
 copy_lua() { local f; for f in "$ROOT"/lua/*.lua; do [ -f "$f" ] && put "$f" "$HOME/.config/hypr/$(basename "$f")"; done; return 0; }
 
