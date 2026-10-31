@@ -1,3 +1,4 @@
+import Quickshell
 import QtQuick
 
 Item {
@@ -10,7 +11,8 @@ Item {
         { key: "resources", label: "Resources", icon: "", desc: "CPU, RAM and GPU" },
         { key: "usercard", label: "User card", icon: "", desc: "Greeting and date" },
         { key: "calendar", label: "Calendar", icon: "", desc: "Month view" },
-        { key: "visualizer", label: "Visualizer", icon: "", desc: "Bars in the Waybar" }
+        { key: "visualizer", label: "Visualizer", icon: "\uf001", desc: "See-through, at the bottom" },
+        { key: "battery", label: "Battery", icon: "\uf240", desc: "Charge and time left" }
     ]
 
     function wOn(k) {
@@ -50,9 +52,42 @@ Item {
             spacing: 10
 
             T { kind: "title"; text: "Widgets"; font.pixelSize: 16; font.bold: true }
+            // the widget editor on the desktop (Settings closes so you can see it)
+            Rectangle {
+                width: parent.width
+                height: 72
+                radius: 14
+                color: edMouse.containsMouse ? "#1c1c1c" : "#141414"
+                border.width: 1
+                border.color: "#2a2a2a"
+                Behavior on color { ColorAnimation { duration: 140 } }
+                Rectangle {
+                    x: 16; anchors.verticalCenter: parent.verticalCenter
+                    width: 42; height: 42; radius: 12
+                    color: "#F6F5F4"
+                    T { kind: "icon"; anchors.centerIn: parent; text: "\uf044"; font.pixelSize: 17; color: "#0d0d0d" }
+                }
+                Column {
+                    x: 72; anchors.verticalCenter: parent.verticalCenter
+                    spacing: 3
+                    T { text: "Edit widgets"; font.pixelSize: 15; font.bold: true }
+                    T { kind: "reading"; text: "Add, move, resize and style widgets right on your desktop"; font.pixelSize: 12; color: "#8a8a8a" }
+                }
+                T { kind: "icon"; anchors.right: parent.right; anchors.rightMargin: 18; anchors.verticalCenter: parent.verticalCenter; text: "\uf054"; color: "#8a8a8a" }
+                MouseArea {
+                    id: edMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" edit on"])
+                        Qt.quit()
+                    }
+                }
+            }
             T {
                 width: parent.width
-                text: "Switch a widget on to put it on the desktop, then press and drag it anywhere to place it. Positions are remembered."
+                text: "Switch a widget on to put it on the desktop. Edit widgets opens the editor on your desktop: add widgets, drag them, pull a corner to resize, change style and opacity. Shortcut: SUPER + ALT + W."
                 color: "#8a8a8a"
                 font.pixelSize: 12
                 wrapMode: Text.WordWrap

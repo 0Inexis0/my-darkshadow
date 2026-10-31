@@ -2,6 +2,7 @@ import QtQuick
 
 Item {
     id: cal
+    property real bg: 1   // card background opacity (widget editor)
     property date now: new Date()
     property int off: 0
     readonly property var days: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
@@ -24,7 +25,7 @@ Item {
 
     Timer { interval: 30000; running: true; repeat: true; onTriggered: cal.now = new Date() }
 
-    Card { anchors.fill: parent }
+    Card { anchors.fill: parent; k: cal.bg }
 
     Row {
         id: head

@@ -3,6 +3,7 @@ import QtQuick
 
 Item {
     id: uc
+    property real bg: 1   // card background opacity (widget editor)
     property date now: new Date()
     readonly property string user: Quickshell.env("USER")
     readonly property string face: "file://" + Quickshell.env("HOME") + "/.face"
@@ -12,7 +13,7 @@ Item {
     }
     Timer { interval: 30000; running: true; repeat: true; onTriggered: uc.now = new Date() }
 
-    Card { anchors.fill: parent }
+    Card { anchors.fill: parent; k: uc.bg }
 
     RoundImage {
         id: av

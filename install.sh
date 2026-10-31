@@ -288,6 +288,7 @@ step_apps() {
   n="$(find "$ROOT/bin" -maxdepth 1 -type f | wc -l)"
   task "Helper scripts ($n)  ->  ~/.local/bin" copy_bins
   [ -d "$ROOT/sounds" ] && task "Notification sounds  ->  ~/.local/share/rice/sounds" copy_tree "$ROOT/sounds" "$HOME/.local/share/rice/sounds"
+  [ -f "$ROOT/assets/icon.png" ] && task "App icon  ->  ~/.local/share/rice/icon.png" put "$ROOT/assets/icon.png" "$HOME/.local/share/rice/icon.png"
   for d in "$ROOT"/quickshell/*/; do
     [ -d "$d" ] || continue
     d="$(basename "$d")"

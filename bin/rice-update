@@ -4,7 +4,7 @@
   rice-update               install the newest version (runs ./install.sh --update in the repo)
   rice-update check [--json] [--offline]
                             compare your version with the newest one on GitHub
-  rice-update watch         background: checks after login and every few hours, shows a notification
+  rice-update watch         background: checks after login and every hour, shows a notification
   rice-update notify        show the "Update is Available!" notification now (to try it)
 """
 import fcntl
@@ -23,8 +23,9 @@ STATE = CACHE + "/update.json"
 NOTIFIED = CACHE + "/update-notified"
 RAW = "https://raw.githubusercontent.com/shadowww-dev/shadows-shell/main/VERSION"
 FIRST_WAIT = 90            # seconds after login
-EVERY = 3 * 3600           # then every 3 hours
+EVERY = 3600               # then every hour
 APP = "DarkShadow's Shell"
+ICON = HOME + "/.local/share/rice/icon.png"
 
 
 def repo():
@@ -64,10 +65,27 @@ def git(r, *a, timeout=25):
     return subprocess.run(["git", "-C", r] + list(a), capture_output=True, text=True, timeout=timeout, env=env)
 
 
+def news(text, version):
+    """first lines of the CHANGELOG entry for this version"""
+    out, on = [], False
+    for ln in (text or "").splitlines():
+        h = ln.strip()
+        if h.startswith("## "):
+            if on:
+                break
+            on = h[3:].strip().lstrip("vV").startswith(version)
+            continue
+        if on and h.startswith(("- ", "* ")):
+            out.append(h[2:].strip())
+    return out
+
+
 def latest(offline=False):
-    """newest version: GitHub (through your repo's git remote), else the raw file, else your repo."""
+    """newest version: GitHub (through your repo's git remote), else the raw file, else your repo.
+    Also: how many new commits GitHub has that this computer does not (an update without a new number)."""
     r = repo()
     found, err = [], ""
+    latest.ahead, latest.sha, latest.log = 0, "", ""
     if r and os.path.isdir(r + "/.git") and shutil.which("git"):
         try:
             if not offline:
@@ -83,6 +101,12 @@ def latest(offline=False):
                 s = git(r, "show", ref + ":VERSION", timeout=5)
                 if s.returncode == 0 and clean(s.stdout):
                     found.append(clean(s.stdout))
+                    a = git(r, "rev-list", "--count", "HEAD.." + ref, timeout=5)
+                    latest.ahead = int(a.stdout.strip() or 0) if a.returncode == 0 else 0
+                    h = git(r, "rev-parse", "--short", ref, timeout=5)
+                    latest.sha = h.stdout.strip() if h.returncode == 0 else ""
+                    cl = git(r, "show", ref + ":CHANGELOG.md", timeout=5)
+                    latest.log = cl.stdout if cl.returncode == 0 else ""
                     break
         except Exception as e:
             err = str(e)
@@ -99,6 +123,11 @@ def latest(offline=False):
             found.append(clean(open(r + "/VERSION").read()))   # pulled but not installed yet
         except OSError:
             pass
+        if not latest.log:
+            try:
+                latest.log = open(r + "/CHANGELOG.md").read()
+            except OSError:
+                pass
     found = [v for v in found if v]
     return (max(found, key=key) if found else ""), err
 
@@ -106,7 +135,11 @@ def latest(offline=False):
 def check(offline=False):
     have = installed()
     new, err = latest(offline)
-    out = {"installed": have, "latest": new or have, "update": bool(new) and key(new) > key(have),
+    newer = bool(new) and key(new) > key(have)
+    ahead = getattr(latest, "ahead", 0)
+    out = {"installed": have, "latest": new or have, "update": newer or ahead > 0,
+           "changes": ahead, "commit": getattr(latest, "sha", ""),
+           "news": news(getattr(latest, "log", ""), new or have)[:4],
            "checked": int(time.time()), "error": err if not new else ""}
     os.makedirs(CACHE, exist_ok=True)
     try:
@@ -124,15 +157,29 @@ def terminal_update():
                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
-def notify(version):
+def body(st):
+    v = st["latest"]
+    head = "<b>Update V%s</b>" % v
+    if st.get("installed") and st["installed"] != v:
+        head += "  ·  you have V%s" % st["installed"]
+    elif st.get("changes"):
+        head += "  ·  %d new change%s" % (st["changes"], "" if st["changes"] == 1 else "s")
+    lines = [head]
+    for n in (st.get("news") or [])[:3]:
+        lines.append("•  " + n.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
+    return "\n".join(lines)
+
+
+def notify(st):
     """the popup; clicking it (or Update now) opens the update in a terminal"""
     if not shutil.which("notify-send"):
         return
-    icon = "system-software-update"
+    icon = ICON if os.path.exists(ICON) else "system-software-update"
     try:
-        r = subprocess.run(["notify-send", "-a", APP, "-i", icon, "-u", "normal", "-t", "15000",
+        r = subprocess.run(["notify-send", "-a", APP, "-i", icon, "-u", "normal", "-t", "20000",
+                            "-c", "system.update",
                             "-A", "default=Update now", "-A", "update=Update now", "-A", "later=Later",
-                            "--wait", "Update is Available!", "Update V" + version],
+                            "--wait", "Update is Available!", body(st)],
                            capture_output=True, text=True, timeout=6 * 3600)
         if r.stdout.strip() in ("default", "update"):
             terminal_update()
@@ -140,10 +187,10 @@ def notify(version):
         pass
 
 
-def notify_bg(version):
+def notify_bg(st):
     if os.fork() == 0:
         os.setsid()
-        notify(version)
+        notify(st)
         os._exit(0)
 
 
@@ -163,9 +210,10 @@ def watch():
                     told = open(NOTIFIED).read().strip()
                 except OSError:
                     told = ""
-                if told != st["latest"]:
-                    open(NOTIFIED, "w").write(st["latest"])
-                    notify_bg(st["latest"])
+                tag = "%s %s" % (st["latest"], st.get("commit", ""))
+                if told != tag:
+                    open(NOTIFIED, "w").write(tag)
+                    notify_bg(st)
         except Exception:
             pass
         time.sleep(EVERY)
@@ -195,14 +243,19 @@ def main(a):
         if "--json" in a:
             print(json.dumps(st))
         elif st["update"]:
-            print("Update V%s is available (you have V%s). Run: rice-update" % (st["latest"], st["installed"]))
+            extra = (" (%d new changes)" % st["changes"]) if st["latest"] == st["installed"] and st["changes"] else ""
+            print("Update V%s is available%s (you have V%s). Run: rice-update" % (st["latest"], extra, st["installed"]))
+            for n in st["news"]:
+                print("  - " + n)
         else:
             print("Up to date: V%s%s" % (st["installed"], ("  (could not check: %s)" % st["error"]) if st["error"] else ""))
     elif cmd == "watch":
         watch()
     elif cmd == "notify":
         st = check(offline="--offline" in a)
-        notify_bg(st["latest"] if st["update"] else st["installed"])
+        if not st["news"]:
+            st["news"] = ["This is how the update notification looks"]
+        notify_bg(st)
     elif cmd in ("", "run"):
         run(a[2:])
     elif cmd in ("-h", "--help", "help"):

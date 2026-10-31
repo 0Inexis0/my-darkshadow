@@ -348,9 +348,27 @@ Item {
             value: page.v("speed", 1.0)
             onCommitted: function(x) { page.setv("speed", x.toFixed(1)) }
         }
+        SegRow {
+            label: "Size"
+            desc: "Makes the whole panel bigger or smaller: text, icons and buttons"
+            options: [{ label: "Small", value: "0.85" }, { label: "Normal", value: "1" }, { label: "Large", value: "1.15" }, { label: "Huge", value: "1.3" }]
+            current: {
+                const v = Number(page.v("scale", 1))
+                return v <= 0.9 ? "0.85" : v < 1.07 ? "1" : v < 1.22 ? "1.15" : "1.3"
+            }
+            onChosen: function(x) { page.setv("scale", Number(x)) }
+        }
+        SliderRow {
+            label: "Scale"
+            desc: "Fine tuning of the size"
+            from: 0.75; to: 1.5; step: 0.05; decimals: 2; unit: "x"
+            value: page.v("scale", 1)
+            onCommitted: function(x) { page.setv("scale", Number(x.toFixed(2))) }
+        }
         SliderRow {
             label: "Width"
-            from: 320; to: 560; step: 10; unit: " px"
+            desc: "How wide the panel is (before scaling)"
+            from: 300; to: 680; step: 10; unit: " px"
             value: page.v("width", 400)
             onCommitted: function(x) { page.setv("width", Math.round(x)) }
         }

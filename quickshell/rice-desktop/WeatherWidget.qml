@@ -4,6 +4,7 @@ import QtQuick
 
 Item {
     id: we
+    property real bg: 1   // card background opacity (widget editor)
     property bool running: true
     property string cond: ""
     property string temp: "--"
@@ -46,7 +47,7 @@ Item {
     }
     onRunningChanged: if (running) fetch.running = true
 
-    Card { anchors.fill: parent }
+    Card { anchors.fill: parent; k: we.bg }
 
     T {
         id: ic

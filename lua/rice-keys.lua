@@ -18,3 +18,5 @@ hl.bind("Print",               hl.dsp.exec_cmd(bin .. "rice-hotcorner shot regio
 hl.bind("SHIFT + Print",       hl.dsp.exec_cmd(bin .. "rice-hotcorner shot full"))
 hl.bind("SUPER + SHIFT + R",   hl.dsp.exec_cmd(bin .. "rice-hotcorner record region"))   -- press again to stop
 hl.bind("SUPER + A",           hl.dsp.exec_cmd(bin .. "rice-hotcorner open"))
+-- widget editor on the desktop (Esc or Done to finish)
+hl.bind("SUPER + ALT + W",     hl.dsp.exec_cmd(bin .. "desktop-set edit toggle"))

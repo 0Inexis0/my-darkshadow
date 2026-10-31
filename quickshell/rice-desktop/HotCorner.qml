@@ -21,6 +21,10 @@ PanelWindow {
     readonly property string anim: cfg.animation ? cfg.animation : "grow"
     readonly property int gap: 10
     readonly property int trig: cfg.trigger ? cfg.trigger : 4
+    // Settings > Hot corners > Size: the whole panel (text, icons, spacing) is drawn bigger or smaller
+    readonly property real sc: cfg.scale ? Math.max(0.75, Math.min(1.5, cfg.scale)) : 1
+    readonly property real pw: panel.width * sc
+    readonly property real ph: panel.height * sc
 
     // emphasized decelerate in, emphasized accelerate out (Material 3 motion)
     NumberAnimation {
@@ -79,8 +83,8 @@ PanelWindow {
     visible: cfg.enabled === true
     color: "transparent"
     anchors { bottom: hc.atBottom; top: !hc.atBottom; right: hc.atRight; left: !hc.atRight }
-    implicitWidth: panel.width + 2 * gap + 16
-    implicitHeight: panel.height + 2 * gap + 16
+    implicitWidth: pw + 2 * gap + 16
+    implicitHeight: ph + 2 * gap + 16
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "rice-hotcorner"
@@ -155,10 +159,10 @@ PanelWindow {
     Item {
         id: holder
         readonly property bool grow: hc.anim === "grow"
-        width: grow ? panel.width * (0.62 + 0.38 * hc.t) : panel.width
-        height: grow ? Math.max(1, panel.height * hc.t) : panel.height
+        width: grow ? hc.pw * (0.62 + 0.38 * hc.t) : hc.pw
+        height: grow ? Math.max(1, hc.ph * hc.t) : hc.ph
         x: (hc.atRight ? parent.width - width - hc.gap : hc.gap)
-           + (hc.anim === "slide" ? (1 - hc.t) * (hc.atRight ? panel.width + hc.gap + 4 : -(panel.width + hc.gap + 4)) : 0)
+           + (hc.anim === "slide" ? (1 - hc.t) * (hc.atRight ? hc.pw + hc.gap + 4 : -(hc.pw + hc.gap + 4)) : 0)
         y: hc.atBottom ? parent.height - height - hc.gap : hc.gap
         visible: hc.t > 0.005
         clip: grow
@@ -181,7 +185,7 @@ PanelWindow {
         // the shape that grows (rounded even while it is small)
         Rectangle {
             anchors.fill: parent
-            radius: Math.min(panel.rad, Math.min(width, height) / 2)
+            radius: Math.min(panel.rad * hc.sc, Math.min(width, height) / 2)
             color: hc.bgColor()
             border.width: 1
             border.color: Qt.rgba(1, 1, 1, 0.08)
@@ -194,8 +198,10 @@ PanelWindow {
             st: hc.st
             open: hc.open
             // content stays pinned to the corner while the shape reveals it
-            x: hc.atRight ? holder.width - width : 0
-            y: hc.atBottom ? holder.height - height : 0
+            transformOrigin: Item.TopLeft
+            scale: hc.sc
+            x: hc.atRight ? holder.width - hc.pw : 0
+            y: hc.atBottom ? holder.height - hc.ph : 0
             onAct: function(cmd, arg, closeFirst) { hc.run(cmd, arg, closeFirst) }
             onLaunch: function(entry) { hc.open = false; entry.execute() }
         }

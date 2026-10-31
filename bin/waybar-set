@@ -30,11 +30,26 @@ REG = {
     "group/apps": ("right", "#apps"),
     "custom/notification": ("right", "#custom-notification"),
     "custom/lock": ("right", "#custom-lock"),
+    "battery": ("right", "#battery"),
+}
+# modules the layout editor can add even when your config has no block for them yet
+DEFAULT_DEFS = {
+    "battery": {
+        "interval": 30,
+        "states": {"warning": 30, "critical": 15},
+        "format": "{icon} {capacity}%",
+        "format-charging": "\U000f0084 {capacity}%",
+        "format-plugged": "\U000f06a5 {capacity}%",
+        "format-full": "\U000f0079 {capacity}%",
+        "format-icons": ["\U000f007a", "\U000f007b", "\U000f007c", "\U000f007d", "\U000f007e",
+                         "\U000f007f", "\U000f0080", "\U000f0081", "\U000f0082", "\U000f0079"],
+        "tooltip-format": "{timeTo}  ·  {power:.1f} W",
+    },
 }
 SUBS = ["bluetooth", "tray", "network"]
 SUB_ORDER = ["bluetooth", "tray", "network"]
 SUB_SEL = ["#bluetooth", "#tray", "#network"]
-TOGGLES = ["mpris", "wireplumber", "custom/notification", "bluetooth", "tray", "network"]
+TOGGLES = ["mpris", "wireplumber", "custom/notification", "bluetooth", "tray", "network", "battery"]
 
 GEN = r"\n?/\* rice-ui \*/.*?/\* end-rice-ui \*/\n?"
 OLD_H = r"\n?/\* bar-height \*/.*?/\* end-bar-height \*/\n?"
@@ -174,7 +189,7 @@ def zone_of(c, name):
 
 def has_def(c, name):
     # plain modules such as clock/mpris may be configured without a block
-    return name in c or name in ("clock", "mpris", "wireplumber")
+    return name in c or name in ("clock", "mpris", "wireplumber") or name in DEFAULT_DEFS
 
 
 def apps_list(c):
@@ -223,6 +238,8 @@ def add(name, zone, c=None):
         c = load()
     if not has_def(c, name):
         die("module has no definition in config: " + name)
+    if name in DEFAULT_DEFS and name not in c:
+        c[name] = json.loads(json.dumps(DEFAULT_DEFS[name]))
     cur = zone_of(c, name)
     if cur is not None:
         lst = zone_list(c, cur)
@@ -392,11 +409,15 @@ def block(u, rgb, c):
     sp = u.get("spacing")
     if isinstance(sp, int):
         # gap between the modules on the right (volume, clock, system icons, notifications, power)
-        right = ["#wireplumber", "#clock", "#apps", "#custom-notification", "#custom-lock"]
+        right = ["#wireplumber", "#clock", "#apps", "#battery", "#custom-notification", "#custom-lock"]
         out.append(", ".join("window#waybar " + x for x in right) +
                    " {\n    margin-left: %dpx;\n    margin-right: %dpx;\n}" % (sp, sp))
         out.append(", ".join("window#waybar " + x for x in SUB_SEL) +
                    " {\n    margin-left: %dpx;\n    margin-right: %dpx;\n}" % (max(0, sp // 2), max(0, sp // 2)))
+    if zone_of(c, "battery"):
+        out.append("window#waybar #battery {\n    padding-left: 10px;\n    padding-right: 10px;\n}\n\n"
+                   "window#waybar #battery.warning:not(.charging) {\n    color: #e5b567;\n}\n\n"
+                   "window#waybar #battery.critical:not(.charging) {\n    color: #e06c75;\n}")
     if u.get("distro_icon") is True:
         out.append("#custom-distro {\n    font-size: 16px;\n    padding: 0 8px;\n}")
     ps = u.get("power_size", 0)
@@ -466,6 +487,58 @@ def ui_update(**kw):
     apply(u)
 
 
+def layout_set(raw):
+    """whole layout at once (drag and drop in Settings > Bar layout): {"left": [...], "center": [...], "right": [...]}"""
+    try:
+        want = json.loads(raw)
+    except ValueError:
+        die("layout-set: bad JSON")
+    c = load()
+    seen = set()
+    new = {}
+    for z in ZONES:
+        lst = []
+        for m in want.get(z, []) if isinstance(want.get(z), list) else []:
+            m = str(m)
+            if m in seen:
+                continue
+            # modules we do not manage (your own custom ones) are kept where you put them
+            if m in REG and not has_def(c, m):
+                continue
+            if m not in REG and m not in c and not any(m in zone_list(c, z) for z in ZONES):
+                continue  # unknown name
+            if m in DEFAULT_DEFS and m not in c:
+                c[m] = json.loads(json.dumps(DEFAULT_DEFS[m]))
+            seen.add(m)
+            lst.append(m)
+        new[z] = lst
+    # anything that was on the bar but is not one of ours and was not mentioned: keep it
+    for z in ZONES:
+        for m in zone_list(c, z):
+            if m not in REG and m not in seen:
+                new[z].append(m)
+                seen.add(m)
+    for z in ZONES:
+        set_zone(c, z, new[z])
+    save(c)
+
+
+def apps_set(raw):
+    """icons inside "System icons" (group/apps), in this order; the ones left out are hidden"""
+    c = load()
+    mods = apps_list(c)
+    if mods is None:
+        die("group/apps not found in config")
+    want = [m for m in raw.split(",") if m in SUBS]
+    keep = [m for m in mods if m not in SUBS]          # your own extra icons stay at the end
+    out = []
+    for m in want + keep:
+        if m not in out:
+            out.append(m)
+    c["group/apps"]["modules"] = out
+    save(c)
+
+
 def regen():
     # layout changes alter which zones exist; refresh the css block if we own one
     if os.path.exists(UI):
@@ -494,6 +567,7 @@ def state():
     lay["available"] = [m for m in REG if m not in placed and has_def(c, m)
                         and not (u.get("distro_icon") is True and m == "image#nix")]
     out["layout"] = lay
+    out["apps"] = list(apps_list(c) or [])
     for m in TOGGLES:
         if m in SUBS:
             ml = apps_list(c)
@@ -505,7 +579,7 @@ def state():
 
 USAGE = ("usage: waybar-set state|reapply|opacity V|transparency on|off|position top|bottom|"
          "autohide on|off|style flat|floating|islands|island|island-width N|distro-icon on|off|power-nudge N|spacing N|power-size N|group none|pills|segmented|height V|"
-         "layout-add ZONE MODULE|layout-remove ZONE MODULE|layout-move ZONE MODULE left|right|"
+         "layout-add ZONE MODULE|layout-remove ZONE MODULE|layout-move ZONE MODULE left|right|layout-set JSON|apps-set a,b,c|"
          "toggle MODULE on|off")
 
 
@@ -588,6 +662,12 @@ def main(argv):
         regen()
     elif cmd == "layout-move":
         move(arg(argv, 2), arg(argv, 3), arg(argv, 4))
+    elif cmd == "layout-set":
+        layout_set(arg(argv, 2))
+        regen()
+    elif cmd == "apps-set":
+        apps_set(arg(argv, 2) if len(argv) > 2 else "")
+        regen()
     else:
         die("unknown command: " + cmd)
 

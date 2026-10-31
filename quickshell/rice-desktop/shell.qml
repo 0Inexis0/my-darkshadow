@@ -20,6 +20,74 @@ ShellRoot {
         Quickshell.execDetached([home + "/.local/bin/desktop-set", "pos", id, String(x), String(y)])
     }
 
+    // ---------------- widget editor ----------------
+    readonly property bool editing: cfg.editing === true
+    // what the editor offers; free = free width and height instead of scaling
+    readonly property var catalog: [
+        { id: "visualizer", name: "Visualizer", icon: "\udb85\udc7d", free: true,
+          styles: [["bars", "Bars"], ["mirror", "Mirror"], ["wave", "Wave"], ["dots", "Dots"]] },
+        { id: "clock", name: "Clock", icon: "\uf017", styles: [["digital", "Digital"], ["cookie", "Cookie"], ["pixel", "Pixel"]] },
+        { id: "media", name: "Music", icon: "\uf001", card: true },
+        { id: "weather", name: "Weather", icon: "\uf0c2", card: true },
+        { id: "calendar", name: "Calendar", icon: "\uf073", card: true },
+        { id: "usercard", name: "User", icon: "\uf007", card: true },
+        { id: "resources", name: "CPU & RAM", icon: "\uf2db", card: true },
+        { id: "battery", name: "Battery", icon: "\uf240", card: true }
+    ]
+    property var wins: ({})
+    function reg(id, w) { const n = Object.assign({}, wins); n[id] = w; wins = n }
+    function ds(args) { Quickshell.execDetached([home + "/.local/bin/desktop-set"].concat(args.map(function(a) { return String(a) }))) }
+    function enabledOf(id) { return id === "clock" ? !!(cfg.clock && cfg.clock.enabled === true) : on(id) }
+    function styleOf(id) {
+        const w = wins[id]
+        if (w && w.sty) return w.sty
+        return id === "clock" ? (cfg.clock && cfg.clock.style ? cfg.clock.style : "digital") : (id === "visualizer" ? "bars" : "")
+    }
+    // optimistic local change, the file follows a moment later
+    function patch(id, obj) {
+        const c = JSON.parse(JSON.stringify(cfg))
+        if (id === "clock") c.clock = Object.assign(c.clock || {}, obj)
+        else { c.widgets = c.widgets || {}; c.widgets[id] = Object.assign(c.widgets[id] || {}, obj) }
+        cfg = c
+    }
+    function saveGeom(id) {
+        const w = wins[id]
+        if (!w) return
+        const free = id === "visualizer"
+        patch(id, free ? { x: Math.round(w.px), y: Math.round(w.py), w: Math.round(w.fw), h: Math.round(w.fh) }
+                       : { x: Math.round(w.px), y: Math.round(w.py), scale: Math.round(w.sc * 1000) / 1000 })
+        ds(["geom", id, Math.round(w.px), Math.round(w.py), free ? "-" : (Math.round(w.sc * 1000) / 1000), free ? Math.round(w.fw) : "-", free ? Math.round(w.fh) : "-"])
+    }
+    function wset(id, key, val) { ds(["wset", id, key, val]) }
+    function setStyle(id, v) {
+        const w = wins[id]
+        if (w) w.sty = v
+        if (id === "clock") { patch("clock", { style: v }); ds(["clock", "style", v]) }
+        else { patch(id, { style: v }); wset(id, "style", v) }
+    }
+    function addWidget(id) {
+        const w = wins[id]
+        let geo = {}
+        if (w && id !== "visualizer" && !(id === "clock" ? (cfg.clock && cfg.clock.x !== undefined) : (wc(id).x !== undefined))) {
+            // a new widget lands in the middle of the screen
+            geo = { x: Math.round((sw - w.dispW) / 2), y: Math.round((sh - w.dispH) / 2) }
+        }
+        if (id === "clock") { patch("clock", Object.assign({ enabled: true, placement: "draggable" }, geo)); ds(["clock", "enabled", "on"]) }
+        else { patch(id, Object.assign({ enabled: true }, geo)); ds(["widget", id, "on"]) }
+        if (geo.x !== undefined) ds(["geom", id, geo.x, geo.y])
+    }
+    function removeWidget(id) {
+        if (id === "clock") { patch("clock", { enabled: false }); ds(["clock", "enabled", "off"]) }
+        else { patch(id, { enabled: false }); ds(["widget", id, "off"]) }
+    }
+    function resetWidget(id) {
+        const w = wins[id]
+        ds(["reset-widget", id])
+        if (w) { w.sc = 1; w.op = 1; w.bgv = 1; w.flp = false; w.px = w.defX; w.py = w.defY; w.fw = w.defW; w.fh = w.defH }
+    }
+    function resetAll() { ds(["reset-pos"]) }
+    function finishEditing() { const c = JSON.parse(JSON.stringify(cfg)); c.editing = false; cfg = c; ds(["edit", "off"]) }
+
     Process {
         id: cfgProc
         command: ["bash", "-c", "cat \"$HOME/.config/rice/desktop.json\" 2>/dev/null"]
@@ -40,40 +108,6 @@ ShellRoot {
         running: true
         repeat: true
         onTriggered: { if (!cfgProc.running) cfgProc.running = true }
-    }
-
-    property string barPos: "top"
-    property int barH: 44
-    Process {
-        id: barProc
-        command: ["bash", "-c", "cat \"$HOME/.config/waybar/config.jsonc\" 2>/dev/null; echo '@@SPLIT@@'; cat \"$HOME/.config/waybar/ui.json\" 2>/dev/null"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const p = text.split("@@SPLIT@@")
-                let base = 34
-                let pad = 4
-                let extra = 0
-                try {
-                    const c = JSON.parse(p[0])
-                    root.barPos = c.position === "bottom" ? "bottom" : "top"
-                    if (c.height) base = c.height
-                } catch (e) { }
-                try {
-                    const u = JSON.parse(p[1])
-                    if (u.height !== undefined && u.height !== null) pad = u.height
-                    if (u.style === "floating") extra = 12
-                    if (u.style === "islands") extra = 8
-                } catch (e) { }
-                root.barH = base + 2 * pad + extra
-            }
-        }
-    }
-    Timer {
-        interval: 3000
-        running: root.on("visualizer")
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: { if (!barProc.running) barProc.running = true }
     }
 
     Process {
@@ -108,7 +142,8 @@ ShellRoot {
         wid: "clock"
         wc: root.placement === "draggable" ? (root.cfg.clock ? root.cfg.clock : ({})) : ({})
         draggable: root.placement === "draggable"
-        active: !!(root.cfg.clock && root.cfg.clock.enabled === true && (root.cfg.clock.onlyLocked !== true || root.locked))
+        editing: root.editing
+        active: !!(root.cfg.clock && root.cfg.clock.enabled === true && (root.cfg.clock.onlyLocked !== true || root.locked || root.editing))
         bw: root.sw
         bh: root.sh
         cw: clk.natW
@@ -116,10 +151,11 @@ ShellRoot {
         defX: root.placement === "draggable" || clk.fx < 0 ? 40 : Math.round(Math.max(30, Math.min(root.sw - cw - 30, clk.fx * root.sw - cw / 2)))
         defY: root.placement === "draggable" || clk.fy < 0 ? 40 : Math.round(Math.max(60, Math.min(root.sh - ch - 30, clk.fy * root.sh - ch / 2)))
         onMoved: function(id, x, y) { root.savePos(id, x, y) }
+        Component.onCompleted: root.reg("clock", clockWin)
         ClockWidget {
             id: clk
             anchors.fill: parent
-            clockStyle: root.cfg.clock && root.cfg.clock.style ? root.cfg.clock.style : "digital"
+            clockStyle: clockWin.sty !== "" ? clockWin.sty : (root.cfg.clock && root.cfg.clock.style ? root.cfg.clock.style : "digital")
             mode: root.placement
             wallpaper: root.wallpaper
             bw: root.sw
@@ -127,73 +163,67 @@ ShellRoot {
         }
     }
 
-    // ---- widgets
+    // ---- widgets (positions, sizes and looks come from the widget editor)
     WidgetWindow {
-        wid: "weather"
-        wc: root.wc("weather")
-        active: root.on("weather")
-        bw: root.sw
-        bh: root.sh
-        cw: 300
-        ch: 120
-        defX: 40
-        defY: 370
+        id: weatherWin
+        wid: "weather"; wc: root.wc("weather"); active: root.on("weather"); editing: root.editing
+        bw: root.sw; bh: root.sh; cw: 300; ch: 120; defX: 40; defY: 370
         onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        WeatherWidget { anchors.fill: parent; running: root.on("weather") }
+        Component.onCompleted: root.reg(wid, weatherWin)
+        WeatherWidget { anchors.fill: parent; running: root.on("weather"); bg: weatherWin.bgv }
     }
     WidgetWindow {
-        wid: "media"
-        wc: root.wc("media")
-        active: root.on("media")
-        bw: root.sw
-        bh: root.sh
-        cw: 400
-        ch: 120
-        defX: root.sw - 440
-        defY: 60
+        id: mediaWin
+        wid: "media"; wc: root.wc("media"); active: root.on("media"); editing: root.editing
+        bw: root.sw; bh: root.sh; cw: 400; ch: 120; defX: root.sw - 440; defY: 60
         onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        MediaWidget { anchors.fill: parent }
+        Component.onCompleted: root.reg(wid, mediaWin)
+        MediaWidget { anchors.fill: parent; bg: mediaWin.bgv }
     }
     WidgetWindow {
-        wid: "calendar"
-        wc: root.wc("calendar")
-        active: root.on("calendar")
-        bw: root.sw
-        bh: root.sh
-        cw: 340
-        ch: 340
-        defX: root.sw - 380
-        defY: 200
+        id: calWin
+        wid: "calendar"; wc: root.wc("calendar"); active: root.on("calendar"); editing: root.editing
+        bw: root.sw; bh: root.sh; cw: 340; ch: 340; defX: root.sw - 380; defY: 200
         onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        CalendarWidget { anchors.fill: parent }
+        Component.onCompleted: root.reg(wid, calWin)
+        CalendarWidget { anchors.fill: parent; bg: calWin.bgv }
     }
     WidgetWindow {
-        wid: "usercard"
-        wc: root.wc("usercard")
-        active: root.on("usercard")
-        bw: root.sw
-        bh: root.sh
-        cw: 340
-        ch: 120
-        defX: root.sw - 380
-        defY: 560
+        id: userWin
+        wid: "usercard"; wc: root.wc("usercard"); active: root.on("usercard"); editing: root.editing
+        bw: root.sw; bh: root.sh; cw: 340; ch: 120; defX: root.sw - 380; defY: 560
         onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        UserCard { anchors.fill: parent }
+        Component.onCompleted: root.reg(wid, userWin)
+        UserCard { anchors.fill: parent; bg: userWin.bgv }
     }
     WidgetWindow {
-        wid: "resources"
-        wc: root.wc("resources")
-        active: root.on("resources")
-        bw: root.sw
-        bh: root.sh
-        cw: 160
-        ch: 380
-        defX: 40
-        defY: root.sh - 440
+        id: resWin
+        wid: "resources"; wc: root.wc("resources"); active: root.on("resources"); editing: root.editing
+        bw: root.sw; bh: root.sh; cw: 160; ch: 380; defX: 40; defY: root.sh - 440
         onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        ResourcesWidget { anchors.fill: parent; running: root.on("resources") }
+        Component.onCompleted: root.reg(wid, resWin)
+        ResourcesWidget { anchors.fill: parent; running: root.on("resources"); bg: resWin.bgv }
     }
-    VizStrip { active: root.on("visualizer"); barPos: root.barPos; barH: root.barH }
+    WidgetWindow {
+        id: batWin
+        wid: "battery"; wc: root.wc("battery"); active: root.on("battery"); editing: root.editing
+        bw: root.sw; bh: root.sh; cw: 280; ch: 110; defX: 40; defY: 520
+        onMoved: function(id, x, y) { root.savePos(id, x, y) }
+        Component.onCompleted: root.reg(wid, batWin)
+        BatteryWidget { anchors.fill: parent; running: root.on("battery"); bg: batWin.bgv }
+    }
+    // audio visualizer: see-through, at the bottom of the screen by default, never takes clicks
+    WidgetWindow {
+        id: vizWin
+        wid: "visualizer"; wc: root.wc("visualizer"); active: root.on("visualizer"); editing: root.editing
+        free: true; passive: true
+        bw: root.sw; bh: root.sh
+        defW: root.sw; defH: 180; defX: 0; defY: root.sh - 180
+        Component.onCompleted: root.reg(wid, vizWin)
+        VizWidget { anchors.fill: parent; running: root.on("visualizer"); style: vizWin.sty !== "" ? vizWin.sty : "bars"; flip: vizWin.flp }
+    }
+
+    EditorWindow { root: root }
 
     Dock { dc: root.cfg.dock ? root.cfg.dock : ({}) }
 

@@ -4,6 +4,7 @@ import QtQuick
 
 Item {
     id: rs
+    property real bg: 1   // card background opacity (widget editor)
     property bool running: true
     property int cpu: 0
     property int ram: 0
@@ -38,7 +39,7 @@ Item {
                 width: rs.width
                 height: (rs.height - 24) / 3
                 readonly property int val: modelData.key === "cpu" ? rs.cpu : (modelData.key === "ram" ? rs.ram : rs.gpu)
-                Card { anchors.fill: parent }
+                Card { anchors.fill: parent; k: rs.bg }
 
                 Canvas {
                     id: ring

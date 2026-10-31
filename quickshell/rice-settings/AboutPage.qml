@@ -18,7 +18,7 @@ Item {
     function open(url) { Quickshell.execDetached(["xdg-open", url]) }
 
     // updates: rice-update compares your version with the newest one on GitHub
-    property var up: ({ installed: "", latest: "", update: false, error: "" })
+    property var up: ({ installed: "", latest: "", update: false, error: "", news: [], changes: 0 })
     property bool checking: true
     function checkUpdates() { page.checking = true; upProc.running = true }
     function runUpdate() {
@@ -159,7 +159,9 @@ Item {
                         kind: "reading"
                         anchors.verticalCenter: parent.verticalCenter
                         text: page.checking ? "Checking for updates..."
-                            : page.up.update ? "Update V" + page.up.latest + " is available"
+                            : page.up.update ? (page.up.latest === page.up.installed && page.up.changes > 0
+                                ? page.up.changes + " new change" + (page.up.changes === 1 ? "" : "s") + " for V" + page.up.latest
+                                : "Update V" + page.up.latest + " is available")
                             : page.up.error ? "Up to date as far as we know (offline?)"
                             : "Up to date"
                         color: page.up.update ? "#F6F5F4" : "#8a8a8a"
@@ -177,6 +179,33 @@ Item {
                 text: page.checking ? "Checking..." : (page.up.update ? "Update now" : "Up to date")
                 // update: opens a terminal so you can see it and type your sudo password; otherwise: check again
                 onClicked: { if (page.checking) return; if (page.up.update) page.runUpdate(); else page.checkUpdates() }
+            }
+        }
+
+        // what the new version brings (from CHANGELOG.md)
+        Rectangle {
+            visible: page.up.update === true && (page.up.news || []).length > 0 && !page.checking
+            width: parent.width
+            height: newsCol.implicitHeight + 26
+            radius: 14
+            color: "#121212"
+            border.width: 1
+            border.color: "#1f1f1f"
+            Column {
+                id: newsCol
+                x: 18; y: 13
+                width: parent.width - 36
+                spacing: 6
+                T { kind: "reading"; text: "WHAT'S NEW"; font.pixelSize: 10; font.letterSpacing: 1.2; color: "#7a7a84" }
+                Repeater {
+                    model: page.up.news || []
+                    delegate: Row {
+                        spacing: 8
+                        width: newsCol.width
+                        Rectangle { width: 4; height: 4; radius: 2; color: "#F6F5F4"; anchors.verticalCenter: parent.verticalCenter }
+                        T { text: modelData; font.pixelSize: 12; color: "#cfcfcf"; width: parent.width - 12; elide: Text.ElideRight }
+                    }
+                }
             }
         }
     }

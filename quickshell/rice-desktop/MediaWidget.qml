@@ -3,6 +3,7 @@ import QtQuick
 
 Item {
     id: me
+    property real bg: 1   // card background opacity (widget editor)
     function pick() {
         const l = Mpris.players.values
         for (let i = 0; i < l.length; i++) if (l[i].isPlaying) return l[i]
@@ -10,7 +11,7 @@ Item {
     }
     readonly property var player: pick()
 
-    Card { anchors.fill: parent }
+    Card { anchors.fill: parent; k: me.bg }
 
     RoundImage {
         id: art

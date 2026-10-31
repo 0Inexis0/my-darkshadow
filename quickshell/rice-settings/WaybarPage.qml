@@ -15,7 +15,8 @@ Item {
         "clock": "Clock",
         "group/apps": "System icons",
         "custom/notification": "Notifications",
-        "custom/lock": "Power"
+        "custom/lock": "Power",
+        "battery": "Battery"
     })
     readonly property var zones: ["left", "center", "right"]
 
@@ -128,6 +129,7 @@ Item {
                     if (m === "group/apps") return "󰂯  󰖩"
                     if (m === "custom/notification") return "󰂚"
                     if (m === "custom/lock") return "󰐥"
+                    if (m === "battery") return "\uf240 85%"
                     return "•"
                 }
                 // a small window, so the preview looks like a desktop
@@ -197,47 +199,30 @@ Item {
                 }
             }
 
-            T { kind: "title"; text: "Bar layout"; font.pixelSize: 16; font.bold: true }
-            T {
+            Rectangle {
                 width: parent.width
-                text: "Arrange what sits on the left, in the middle and on the right. Use ‹ › to reorder, × to remove and + to add."
-                color: "#8a8a8a"
-                font.pixelSize: 12
-                wrapMode: Text.WordWrap
-            }
-
-            ZoneCard {
-                title: "Left"
-                items: page.layout().left
-                available: page.layout().available
-                labelOf: page.lbl
-                adding: page.openZone === "left"
-                onAddToggled: page.openZone = (page.openZone === "left" ? "" : "left")
-                onAddRequested: function(n) { page.addTo("left", n) }
-                onRemoveRequested: function(n) { page.removeFrom("left", n) }
-                onMoveRequested: function(n, d) { page.moveIn("left", n, d) }
-            }
-            ZoneCard {
-                title: "Center"
-                items: page.layout().center
-                available: page.layout().available
-                labelOf: page.lbl
-                adding: page.openZone === "center"
-                onAddToggled: page.openZone = (page.openZone === "center" ? "" : "center")
-                onAddRequested: function(n) { page.addTo("center", n) }
-                onRemoveRequested: function(n) { page.removeFrom("center", n) }
-                onMoveRequested: function(n, d) { page.moveIn("center", n, d) }
-            }
-            ZoneCard {
-                title: "Right"
-                items: page.layout().right
-                available: page.layout().available
-                labelOf: page.lbl
-                adding: page.openZone === "right"
-                onAddToggled: page.openZone = (page.openZone === "right" ? "" : "right")
-                onAddRequested: function(n) { page.addTo("right", n) }
-                onRemoveRequested: function(n) { page.removeFrom("right", n) }
-                onMoveRequested: function(n, d) { page.moveIn("right", n, d) }
+                height: 64
+                radius: 14
+                color: blMouse.containsMouse ? "#1c1c1c" : "#141414"
+                border.width: 1
+                border.color: "#1f1f1f"
+                Behavior on color { ColorAnimation { duration: 140 } }
+                Column {
+                    anchors.left: parent.left
+                    anchors.leftMargin: 18
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 3
+                    T { text: "Bar layout"; font.pixelSize: 14; font.bold: true }
+                    T { kind: "reading"; text: "Drag modules around: left, center, right, order, system icons"; color: "#8a8a8a"; font.pixelSize: 12 }
+                }
+                T { kind: "icon"; anchors.right: parent.right; anchors.rightMargin: 18; anchors.verticalCenter: parent.verticalCenter; text: "\uf054"; color: "#8a8a8a" }
+                MouseArea {
+                    id: blMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: page.ctl.page = 2
+                }
             }
 
             T { kind: "title"; text: "Positioning & styles"; font.pixelSize: 16; font.bold: true; topPadding: 14 }

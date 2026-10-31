@@ -91,10 +91,10 @@ DEFAULTS = {
     "toggles": ["wifi", "bluetooth", "dnd", "gaming", "settings"],
     "width": 420, "radius": 26, "opacity": 0.9, "animation": "grow", "speed": 1.0,
     "audio": False, "clipboard": True,
-    "blur": True, "transparency": True, "card_alpha": 0.05, "tint": False,
+    "blur": True, "transparency": True, "card_alpha": 0.05, "tint": False, "scale": 1.0,
 }
-INTS = {"trigger": (1, 16), "delay": (0, 800), "width": (320, 560), "radius": (0, 36)}
-FLOATS = {"opacity": (0.3, 1.0), "speed": (0.5, 2.0), "card_alpha": (0.0, 0.2)}
+INTS = {"trigger": (1, 16), "delay": (0, 800), "width": (300, 680), "radius": (0, 36)}
+FLOATS = {"opacity": (0.3, 1.0), "speed": (0.5, 2.0), "card_alpha": (0.0, 0.2), "scale": (0.75, 1.5)}
 CHOICES = {"corner": ["bottom-right", "bottom-left", "top-right", "top-left"], "animation": ["grow", "slide", "scale", "fade"]}
 BOOLS = ("enabled", "close_on_leave", "audio", "clipboard", "header", "blur", "transparency", "tint")
 

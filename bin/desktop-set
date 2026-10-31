@@ -13,7 +13,10 @@ LOCKCONF = HOME + "/.config/hypr/rice-lock.conf"
 HYPRLOCK = HOME + "/.config/hypr/hyprlock.conf"
 SOURCE_LINE = "source = ~/.config/hypr/rice-lock.conf"
 
-WIDGETS = ["weather", "media", "resources", "usercard", "calendar", "visualizer"]
+WIDGETS = ["weather", "media", "resources", "usercard", "calendar", "visualizer", "battery"]
+# what the widget editor stores per widget (Settings > Desktop > Edit widgets, or SUPER+ALT+W)
+GEOM = ("x", "y", "scale", "w", "h", "opacity", "bg", "style", "flip")
+STYLES = {"visualizer": ["bars", "mirror", "wave", "dots"], "clock": ["digital", "cookie", "pixel"]}
 DEFAULTS = {
     "widgets": {w: {"enabled": False} for w in WIDGETS},
     "clock": {"enabled": False, "onlyLocked": False, "placement": "draggable", "style": "digital"},
@@ -22,8 +25,17 @@ DEFAULTS = {
              "opacity": 0.78, "blur": True,
              "apps": ["kitty", "org.gnome.Nautilus", "firefox", "spotify", "discord", "steam"]},
     "lock": {"toolbars": False, "widgets": False, "media": False},
+    "editing": False,
 }
 CHOICES = {"placement": ["draggable", "leastBusy", "mostBusy"], "style": ["digital", "cookie", "pixel"]}
+
+
+def target(c, wid):
+    if wid == "clock":
+        return c["clock"]
+    if wid not in c["widgets"]:
+        die("unknown widget: " + wid + "  (" + ", ".join(WIDGETS + ["clock"]) + ")")
+    return c["widgets"][wid]
 
 
 def die(m):
@@ -39,7 +51,7 @@ def merge(base, over):
         else:
             out[k] = over[k] if k in over else v
     for k, v in over.items():
-        if k not in out and k in ("x", "y"):
+        if k not in out and k in GEOM:
             out[k] = v
     return out
 
@@ -50,18 +62,44 @@ def load():
     except Exception:
         raw = {}
     c = merge(DEFAULTS, raw)
-    # keep saved positions
-    for w in WIDGETS:
-        src = raw.get("widgets", {}).get(w, {}) if isinstance(raw.get("widgets"), dict) else {}
-        for k in ("x", "y"):
-            if isinstance(src.get(k), (int, float)):
-                c["widgets"][w][k] = int(src[k])
-    for k in ("x", "y"):
-        if isinstance(raw.get("clock", {}).get(k), (int, float)):
-            c["clock"][k] = int(raw["clock"][k])
+    # keep saved positions, sizes and looks
+    for w in WIDGETS + ["clock"]:
+        if w == "clock":
+            src, dst = raw.get("clock", {}), c["clock"]
+        else:
+            src = raw.get("widgets", {}).get(w, {}) if isinstance(raw.get("widgets"), dict) else {}
+            dst = c["widgets"][w]
+        if not isinstance(src, dict):
+            continue
+        for k in GEOM:
+            if k in src:
+                v = clean_geom(w, k, src[k])
+                if v is not None:
+                    dst[k] = v
+                else:
+                    dst.pop(k, None)
     if isinstance(raw.get("dock", {}).get("apps"), list):
         c["dock"]["apps"] = [str(a) for a in raw["dock"]["apps"]]
     return c
+
+
+def clean_geom(wid, k, v):
+    try:
+        if k in ("x", "y"):
+            return int(max(0, float(v)))
+        if k in ("w", "h"):
+            return int(max(40, min(8000, float(v))))
+        if k == "scale":
+            return round(max(0.4, min(3.0, float(v))), 3)
+        if k in ("opacity", "bg"):
+            return round(max(0.0 if k == "bg" else 0.1, min(1.0, float(v))), 2)
+        if k == "flip":
+            return v is True or str(v).lower() in ("1", "true", "on", "yes")
+        if k == "style":
+            return v if v in STYLES.get(wid, []) else None
+    except (TypeError, ValueError):
+        return None
+    return None
 
 
 def save(c):
@@ -145,7 +183,8 @@ def ensure_shell():
 
 def main(a):
     if len(a) < 2:
-        die("usage: desktop-set state|widget ID on|off|pos ID X Y|clock KEY VAL|dock KEY VAL|lock KEY VAL|dock-blur|reset-pos")
+        die("usage: desktop-set state|widget ID on|off|pos ID X Y|geom ID X Y [SCALE] [W H]|wset ID KEY VAL|"
+            "reset-widget ID|edit on|off|toggle|clock KEY VAL|dock KEY VAL|lock KEY VAL|dock-blur|reset-pos")
     cmd = a[1]
     os.makedirs(DIR, exist_ok=True)
     lk = open(LOCK, "w")
@@ -163,10 +202,10 @@ def main(a):
     elif cmd == "pos":
         if len(a) < 5:
             die("pos ID X Y")
-        target = c["clock"] if a[2] == "clock" else c["widgets"].get(a[2])
-        if target is None:
+        tgt = c["clock"] if a[2] == "clock" else c["widgets"].get(a[2])
+        if tgt is None:
             die("unknown id: " + a[2])
-        target["x"], target["y"] = max(0, int(float(a[3]))), max(0, int(float(a[4])))
+        tgt["x"], tgt["y"] = max(0, int(float(a[3]))), max(0, int(float(a[4])))
     elif cmd == "clock":
         if len(a) < 4:
             die("clock KEY VALUE")
@@ -188,12 +227,41 @@ def main(a):
             c[cmd][a[2]] = tobool(a[3])
     elif cmd in ("lock-regen", "dock-blur"):
         pass
+    elif cmd == "geom":
+        # geom ID X Y [SCALE] [W H]
+        if len(a) < 5:
+            die("geom ID X Y [SCALE] [W H]")
+        t = target(c, a[2])
+        for k, i in (("x", 3), ("y", 4), ("scale", 5), ("w", 6), ("h", 7)):
+            if len(a) > i and a[i] not in ("", "-"):
+                v = clean_geom(a[2], k, a[i])
+                if v is not None:
+                    t[k] = v
+        if a[2] == "clock":
+            c["clock"]["placement"] = "draggable"
+    elif cmd == "wset":
+        # wset ID KEY VALUE   (opacity, bg, style, flip, scale, w, h, x, y)
+        if len(a) < 5 or a[3] not in GEOM:
+            die("wset ID KEY VALUE   keys: " + " ".join(GEOM))
+        t = target(c, a[2])
+        v = clean_geom(a[2], a[3], a[4])
+        if v is None:
+            die("bad value for %s: %s" % (a[3], a[4]))
+        t[a[3]] = v
+    elif cmd == "reset-widget":
+        t = target(c, a[2] if len(a) > 2 else "")
+        for k in GEOM:
+            if k != "style":
+                t.pop(k, None)
+    elif cmd == "edit":
+        v = a[2] if len(a) > 2 else "toggle"
+        c["editing"] = (not c.get("editing")) if v == "toggle" else tobool(v)
     elif cmd == "reset-pos":
         for w in WIDGETS:
-            c["widgets"][w].pop("x", None)
-            c["widgets"][w].pop("y", None)
-        c["clock"].pop("x", None)
-        c["clock"].pop("y", None)
+            for k in ("x", "y", "scale", "w", "h"):
+                c["widgets"][w].pop(k, None)
+        for k in ("x", "y", "scale", "w", "h"):
+            c["clock"].pop(k, None)
     else:
         die("unknown command: " + cmd)
     save(c)
@@ -201,7 +269,9 @@ def main(a):
         lock_conf(c)
     if cmd == "dock" and a[2] == "blur" or cmd == "dock-blur":
         dock_blur(c)
-    elif cmd != "pos":
+    elif cmd not in ("pos", "geom", "wset", "edit", "reset-widget"):
+        ensure_shell()
+    elif cmd == "edit" and c["editing"]:
         ensure_shell()
 
 

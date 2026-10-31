@@ -223,14 +223,14 @@ window#waybar {
     background: rgba(13, 13, 13, 0.25);
 }
 
-#image.nix, #custom-distro, #ws, #mpris, #wireplumber, #clock, #apps, #custom-notification, #custom-lock {
+#image.nix, #custom-distro, #ws, #mpris, #wireplumber, #clock, #apps, #custom-notification, #custom-lock, #battery {
     background: transparent;
     border: none;
     border-radius: 0;
     margin: 0 3px;
 }
 
-#image.nix, #custom-distro, #ws, #mpris, #wireplumber, #clock, #apps, #custom-notification, #custom-lock, #bluetooth, #tray, #network {
+#image.nix, #custom-distro, #ws, #mpris, #wireplumber, #clock, #apps, #custom-notification, #custom-lock, #battery, #bluetooth, #tray, #network {
     padding-top: 2px;
     padding-bottom: 2px;
     margin-top: 0;
@@ -249,7 +249,7 @@ tooltip label {
     padding: 2px 6px;
 }
 
-window#waybar #wireplumber, window#waybar #clock, window#waybar #apps, window#waybar #custom-notification, window#waybar #custom-lock {
+window#waybar #wireplumber, window#waybar #clock, window#waybar #apps, window#waybar #battery, window#waybar #custom-notification, window#waybar #custom-lock {
     margin-left: 0px;
     margin-right: 0px;
 }
