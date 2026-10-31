@@ -469,7 +469,14 @@ def strong(text):
     return text.replace(".floating-notifications .notification-row", ".floating-notifications.background .notification-row")
 
 
+def flat():
+    """rice-effects: blur and transparency are off right now (Lite, or gaming mode)"""
+    return os.path.exists(os.path.expanduser("~/.cache/rice/flat"))
+
+
 def write_css(c):
+    if flat():
+        c = dict(c, opacity=1.0, popup_opacity=1.0)
     s = open(SWCSS).read() if os.path.exists(SWCSS) else ""
     backup_once(SWCSS, ".bak-rice-notify")
     s = re.sub(r"\n?" + re.escape(BEGIN) + r".*?" + re.escape(END) + r"\n?", "\n", s, flags=re.S)

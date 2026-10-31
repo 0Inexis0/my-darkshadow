@@ -214,8 +214,10 @@ def dnd_on():
 
 
 def gaming_on():
+    if os.path.exists(DIR + "/gaming-on"):
+        return True
     try:
-        return "hl.config" in open(GAMING).read()
+        return "Gaming mode from the hot corner" in open(GAMING).read()
     except Exception:
         return False
 
@@ -392,35 +394,23 @@ def shot(mode):
 
 
 def gaming_toggle():
-    on = not gaming_on()
-    os.makedirs(HYPR, exist_ok=True)
-    if on:
-        open(GAMING, "w").write(
-            "-- Gaming mode from the hot corner: no animations, blur, shadows or gaps.\n"
-            "pcall(hl.config, { animations = { enabled = false } })\n"
-            "pcall(hl.config, { decoration = { blur = { enabled = false } } })\n"
-            "pcall(hl.config, { decoration = { shadow = { enabled = false } } })\n"
-            "pcall(hl.config, { general = { gaps_in = 0, gaps_out = 0 } })\n")
-    else:
-        open(GAMING, "w").write("-- Gaming mode is off.\n")
-    try:
-        s = open(HLUA).read()
-        if 'require("rice-gaming")' not in s:
-            if not os.path.exists(HLUA + ".bak-gaming"):
-                shutil.copy2(HLUA, HLUA + ".bak-gaming")
-            open(HLUA, "w").write(s.rstrip("\n") + '\n\n-- must stay last: gaming mode overrides\nrequire("rice-gaming")\n')
-    except FileNotFoundError:
-        pass
-    q(["hyprctl", "reload"])
-    notify("Gaming mode " + ("on" if on else "off"), "Animations, blur, shadows and gaps " + ("off" if on else "back"),
-           "input-gaming")
+    """gaming mode lives in rice-effects now (Settings > Services > Gaming mode has its options)"""
+    eff = HOME + "/.local/bin/rice-effects"
+    if os.path.exists(eff):
+        q([eff, "gaming", "toggle"], timeout=40)
+        return
+    notify("Gaming mode", "rice-effects is missing. Run ./install.sh --update", "dialog-warning")
 
 
 def main(argv):
     cmd = argv[1] if len(argv) > 1 else ""
     arg = argv[2] if len(argv) > 2 else ""
     if cmd == "config":
-        print(json.dumps(load()))
+        c = load()
+        if os.path.exists(CACHE + "/flat"):     # rice-effects: blur & transparency are off right now
+            c["transparency"] = False
+            c["blur"] = False
+        print(json.dumps(c))
     elif cmd == "state":
         state()
     elif cmd == "open":

@@ -20,6 +20,23 @@ Item {
         refresh.restart()
     }
     function mins(x) { return x <= 0 ? "Never" : (x + " min") }
+    // lock screen clock fonts (rice-fonts downloads them)
+    readonly property var clockFonts: [
+        { k: "default", n: "Default", f: "" },
+        { k: "bebas", n: "Bebas Neue", f: "Bebas Neue" },
+        { k: "orbitron", n: "Orbitron", f: "Orbitron" },
+        { k: "outfit", n: "Outfit", f: "Outfit" },
+        { k: "grotesk", n: "Space Grotesk", f: "Space Grotesk" },
+        { k: "unbounded", n: "Unbounded", f: "Unbounded" },
+        { k: "shoulders", n: "Big Shoulders", f: "Big Shoulders Display" }
+    ]
+    readonly property var famList: Qt.fontFamilies()
+    function hasFam(f) { return f === "" || famList.indexOf(f) >= 0 }
+    function clockFam() {
+        const k = v("clock_font", "default")
+        for (let i = 0; i < clockFonts.length; i++) if (clockFonts[i].k === k && clockFonts[i].f !== "") return clockFonts[i].f
+        return Fonts.family("number")
+    }
     function greeting() {
         const h = now.getHours()
         return (h < 5 ? "Good night" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening") + ", " + Quickshell.env("USER")
@@ -111,14 +128,18 @@ Item {
                 T {
                     visible: pv.st === "big"
                     kind: "number"
-                    text: pv.hhmm().h + ":" + pv.hhmm().m
-                    font.pixelSize: 96 * 1.33 * pv.s; font.bold: true
+                    font.family: page.clockFam()
+                    textFormat: Text.StyledText
+                    // white hours, grey minutes
+                    text: "<b>" + pv.hhmm().h + "</b><font color='" + (page.v("accent_clock", false) ? Qt.darker(pv.acc, 1.6) : "#8c8c8c") + "'>:" + pv.hhmm().m + "</font>"
+                    font.pixelSize: 96 * 1.33 * pv.s
                     color: page.v("accent_clock", false) ? pv.acc : "#F6F5F4"
                     x: pv.px(implicitWidth); y: pv.py(160, implicitHeight)
                 }
                 T {
                     visible: pv.st === "stacked"
                     kind: "number"
+                    font.family: page.clockFam()
                     text: pv.hhmm().h
                     font.pixelSize: 120 * 1.33 * pv.s; font.bold: true
                     color: page.v("accent_clock", false) ? pv.acc : "#F6F5F4"
@@ -127,6 +148,7 @@ Item {
                 T {
                     visible: pv.st === "stacked"
                     kind: "number"
+                    font.family: page.clockFam()
                     text: pv.hhmm().m
                     font.pixelSize: 120 * 1.33 * pv.s
                     color: page.v("accent_clock", false) ? pv.acc : "#F6F5F4"
@@ -136,6 +158,7 @@ Item {
                 T {
                     visible: pv.st === "minimal"
                     kind: "number"
+                    font.family: page.clockFam()
                     text: pv.hhmm().h + ":" + pv.hhmm().m
                     font.pixelSize: 30 * 1.33 * pv.s
                     color: page.v("accent_clock", false) ? pv.acc : "#F6F5F4"
@@ -258,6 +281,57 @@ Item {
             options: [{ label: "Big", value: "big" }, { label: "Stacked", value: "stacked" }, { label: "Minimal", value: "minimal" }]
             current: page.v("clock", "big")
             onChosen: function(x) { page.setv("clock", x) }
+        }
+        // ---------- clock font ----------
+        Column {
+            width: parent.width
+            spacing: 8
+            topPadding: 4
+            T { text: "Clock font"; font.pixelSize: 14 }
+            T { kind: "reading"; text: "The clock stays white and grey. Fonts that are not here yet download when you pick them."; color: "#8a8a8a"; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
+            Grid {
+                id: cfGrid
+                width: parent.width
+                columns: 4
+                spacing: 10
+                Repeater {
+                    model: page.clockFonts
+                    delegate: Rectangle {
+                        id: ft
+                        readonly property bool on: page.v("clock_font", "default") === modelData.k
+                        readonly property bool here: page.hasFam(modelData.f)
+                        width: (cfGrid.width - 30) / 4
+                        height: 92
+                        radius: 14
+                        color: fm.containsMouse ? "#1c1c1c" : "#141414"
+                        border.width: on ? 2 : 1
+                        border.color: on ? "#F6F5F4" : "#1f1f1f"
+                        Behavior on color { ColorAnimation { duration: 120 } }
+                        Behavior on border.color { ColorAnimation { duration: 160 } }
+                        scale: fm.pressed ? 0.97 : 1
+                        Behavior on scale { NumberAnimation { duration: 90 } }
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            y: 12
+                            textFormat: Text.StyledText
+                            text: "<b>18</b><font color='#8c8c8c'>:36</font>"
+                            font.family: modelData.f !== "" ? modelData.f : Fonts.family("number")
+                            font.pixelSize: 34
+                            color: "#F6F5F4"
+                            opacity: ft.here ? 1 : 0.4
+                        }
+                        T {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            y: parent.height - 26
+                            text: ft.here ? modelData.n : modelData.n + "  \u2193"
+                            font.pixelSize: 11
+                            color: ft.on ? "#F6F5F4" : "#9a9aa4"
+                        }
+                        MouseArea { id: fm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                            onClicked: { page.setv("clock_font", modelData.k); if (!ft.here) page.ctl.status = "Downloading " + modelData.n + "..." } }
+                    }
+                }
+            }
         }
         ToggleRow { label: "24-hour clock"; checked: page.v("clock_24h", true) === true; onToggled: function(x) { page.setv("clock_24h", x ? "on" : "off") } }
         ToggleRow { label: "Accent clock"; desc: "Color the clock with your Theme"; checked: page.v("accent_clock", false) === true; onToggled: function(x) { page.setv("accent_clock", x ? "on" : "off") } }

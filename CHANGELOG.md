@@ -1,5 +1,14 @@
 # Changelog
 
+## V2.40
+- Dashboard takes its colors from your wallpaper, like the hot corner
+- Desktop widgets: frosted glass with the blurred wallpaper behind them (Settings > Desktop > Blur behind widgets)
+- Settings > Services > Performance: turn off all blur & transparency at once (Hyprland, kitty, Waybar, rofi, notifications, dashboard, hot corner, dock, widgets)
+- Gaming mode turns off blur & transparency too, with options: keep blur, animations, shadows or gaps, Do Not Disturb, dashboard at the bottom edge
+- Lock screen: six new clock fonts (Bebas Neue, Orbitron, Outfit, Space Grotesk, Unbounded, Big Shoulders), white hours and grey minutes
+- Your Settings choices (Waybar look, dashboard, widgets, hot corner, lock screen...) are saved by sync.sh and installed on your other computers
+- install.sh: new Update entry in the menu
+
 ## V2.32
 - Push the pointer against the bottom edge of the screen to open the dashboard (Settings > Dashboard)
 - The dashboard keeps one size on every tab

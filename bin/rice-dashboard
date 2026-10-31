@@ -520,6 +520,18 @@ def main(a):
         except Exception:
             c["opacity"] = round(clamp(c["bar"]["alpha"], 0.55, 1.0), 2)
         c["accent"] = accent()
+        # rice-effects: no blur and no transparency (Lite or gaming mode); gaming mode also keeps the
+        # bottom edge free (unless Settings > Services > Gaming mode says otherwise)
+        try:
+            eff = json.load(open(DIR + "/effects.json"))
+        except Exception:
+            eff = {}
+        if os.path.exists(HOME + "/.cache/rice/flat"):
+            c["opacity"] = 1.0
+            c["blur"] = False
+            c["flat"] = True
+        if os.path.exists(DIR + "/gaming-on") and eff.get("edge") is not True:
+            c["edge"] = False
         print(json.dumps(c))
     elif cmd == "set" and len(a) > 3:
         os.makedirs(DIR, exist_ok=True)

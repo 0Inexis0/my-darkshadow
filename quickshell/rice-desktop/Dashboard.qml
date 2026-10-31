@@ -105,6 +105,9 @@ PanelWindow {
     }
     readonly property string acc: cfg.accent ? cfg.accent : "#9ec9bd"
     readonly property real op: cfg.opacity !== undefined ? cfg.opacity : 0.9
+    // dark or light text on top of the wallpaper color
+    function lum(c) { const x = hx(c); return 0.299 * x[0] + 0.587 * x[1] + 0.114 * x[2] }
+    readonly property string accFg: lum(acc) > 0.55 ? "#0d0d0d" : "#F6F5F4"
     readonly property var barRgb: cfg.bar && cfg.bar.rgb && (cfg.bar.rgb[0] + cfg.bar.rgb[1] + cfg.bar.rgb[2]) < 200 ? cfg.bar.rgb : [12, 12, 14]
     readonly property string style: cfg.style ? cfg.style : "shadow"
     readonly property var p: style === "graphite" ? ({
@@ -126,10 +129,10 @@ PanelWindow {
         container: Qt.rgba(0, 0, 0, 0.07), onContainer: "#18181b",
         line: Qt.rgba(0, 0, 0, 0.05), track: Qt.rgba(0, 0, 0, 0.08), radius: 30, cardRadius: 22, tabStyle: "segment", dark: false, glow: false
     }) : ({
-        // Shadow: the color of your bar (black glass), white details
+        // Shadow: the color of your bar (black glass), details in your wallpaper color (like the hot corner)
         bg: Qt.rgba(barRgb[0] / 255, barRgb[1] / 255, barRgb[2] / 255, op), solidBg: "#0c0c0e", card: Qt.rgba(1, 1, 1, 0.05), card2: Qt.rgba(1, 1, 1, 0.08),
-        text: "#F6F5F4", sub: "#8f8f98", primary: "#F6F5F4", onPrimary: "#0d0d0d",
-        container: Qt.rgba(1, 1, 1, 0.1), onContainer: "#F6F5F4",
+        text: "#F6F5F4", sub: "#8f8f98", primary: acc, onPrimary: accFg,
+        container: mix(acc, "#141416", 0.8), onContainer: mix(acc, "#ffffff", 0.55),
         line: Qt.rgba(1, 1, 1, 0.07), track: Qt.rgba(1, 1, 1, 0.1), radius: 28, cardRadius: 20, tabStyle: "segment", dark: true, glow: false
     })
 
@@ -213,7 +216,8 @@ PanelWindow {
     }
     Process {
         id: cfgProc
-        command: ["bash", "-c", "cat \"$HOME/.config/rice/dashboard.json\" 2>/dev/null; echo '@@'; cat \"$HOME/.cache/rice/dashboard-open\" 2>/dev/null"]
+        // (gaming mode and "no blur & transparency" count as a change of the settings too)
+        command: ["bash", "-c", "cat \"$HOME/.config/rice/dashboard.json\" 2>/dev/null; [ -e \"$HOME/.config/rice/gaming-on\" ] && echo G; [ -e \"$HOME/.cache/rice/flat\" ] && echo F; echo '@@'; cat \"$HOME/.cache/rice/dashboard-open\" 2>/dev/null"]
         stdout: StdioCollector {
             onStreamFinished: {
                 const q = text.split("@@")

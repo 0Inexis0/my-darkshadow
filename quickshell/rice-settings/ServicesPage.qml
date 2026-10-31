@@ -62,6 +62,35 @@ Item {
         }
     }
 
+    // ---------- blur & transparency, gaming mode (rice-effects) ----------
+    property var fx: ({ lite: false, gaming: false, flat: false, opts: {} })
+    function fxOpt(k) { return !!(fx.opts && fx.opts[k] === true) }
+    function fxRun(args, msg) {
+        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-effects\" \"$@\"", "_"].concat(args))
+        page.ctl.status = msg
+        fxRefresh.restart()
+    }
+    function setLite(on) {
+        const n = JSON.parse(JSON.stringify(fx)); n.lite = on; fx = n
+        fxRun(["lite", on ? "on" : "off"], on ? "Blur & transparency: off everywhere" : "Blur & transparency: back")
+    }
+    function setGaming(on) {
+        const n = JSON.parse(JSON.stringify(fx)); n.gaming = on; fx = n
+        fxRun(["gaming", on ? "on" : "off"], "Gaming mode " + (on ? "on" : "off"))
+    }
+    function setOpt(k, on) {
+        const n = JSON.parse(JSON.stringify(fx)); if (!n.opts) n.opts = {}; n.opts[k] = on; fx = n
+        fxRun(["set", k, on ? "on" : "off"], "Gaming mode: saved")
+    }
+    Process {
+        id: fxProc
+        command: ["bash", "-c", "\"$HOME/.local/bin/rice-effects\" state"]
+        running: true
+        stdout: StdioCollector { onStreamFinished: { try { page.fx = JSON.parse(text) } catch (e) { } } }
+    }
+    Timer { id: fxRefresh; interval: 1500; onTriggered: if (!fxProc.running) fxProc.running = true }
+    Timer { interval: 4000; running: page.visible; repeat: true; onTriggered: if (!fxProc.running) fxProc.running = true }
+
     function applyFont(key, value) {
         setProc.command = ["bash", "-c", "\"$HOME/.local/bin/font-set\" set \"$1\" \"$2\" 2>&1", "_", key, value]
         setProc.running = true
@@ -190,6 +219,50 @@ Item {
                     page.ctl.status = "Night light: " + Math.round(x) + " K"
                 }
             }
+
+            SectionTitle { text: "Performance"; sub: "For slower computers: everything becomes solid, nothing is blurred." }
+            ToggleRow {
+                label: "Turn off all blur & transparency"
+                desc: "Hyprland, kitty, Waybar, rofi, notifications, dashboard, hot corner, dock and widgets"
+                checked: page.fx.lite === true
+                onToggled: function(v) { page.setLite(v) }
+            }
+
+            SectionTitle { text: "Gaming mode"; sub: "Also in the hot corner. Choose what stays on while you play." }
+            Rectangle {
+                width: col.width
+                height: 74
+                radius: 14
+                color: gm.containsMouse ? "#1c1c1c" : "#141414"
+                border.width: 1
+                border.color: page.fx.gaming ? "#4a4a4a" : "#1f1f1f"
+                Behavior on color { ColorAnimation { duration: 120 } }
+                Rectangle {
+                    x: 14; anchors.verticalCenter: parent.verticalCenter
+                    width: 44; height: 44; radius: 13
+                    color: page.fx.gaming ? "#F6F5F4" : "#202020"
+                    Behavior on color { ColorAnimation { duration: 200 } }
+                    T { kind: "icon"; anchors.centerIn: parent; text: "\uf11b"; font.pixelSize: 18; color: page.fx.gaming ? "#0d0d0d" : "#F6F5F4" }
+                }
+                Column {
+                    x: 72; anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width - 72 - 70
+                    spacing: 2
+                    T { text: "Gaming mode"; font.pixelSize: 14; font.bold: true }
+                    T {
+                        kind: "reading"; font.pixelSize: 11; color: "#8a8a8a"; width: parent.width; elide: Text.ElideRight
+                        text: page.fx.gaming ? "On: everything you did not keep below is off" : "Off. Turns off animations, blur, transparency, shadows and gaps"
+                    }
+                }
+                Sw { anchors.right: parent.right; anchors.rightMargin: 16; anchors.verticalCenter: parent.verticalCenter; checked: page.fx.gaming === true }
+                MouseArea { id: gm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.setGaming(!(page.fx.gaming === true)) }
+            }
+            ToggleRow { label: "Keep blur & transparency"; desc: "Off: everything is solid while you play (faster)"; checked: page.fxOpt("keep_blur"); onToggled: function(v) { page.setOpt("keep_blur", v) } }
+            ToggleRow { label: "Keep animations"; desc: "Windows and workspaces still animate"; checked: page.fxOpt("keep_anim"); onToggled: function(v) { page.setOpt("keep_anim", v) } }
+            ToggleRow { label: "Keep shadows"; desc: "Shadows under windows"; checked: page.fxOpt("keep_shadows"); onToggled: function(v) { page.setOpt("keep_shadows", v) } }
+            ToggleRow { label: "Keep gaps"; desc: "Space between windows and around the screen"; checked: page.fxOpt("keep_gaps"); onToggled: function(v) { page.setOpt("keep_gaps", v) } }
+            ToggleRow { label: "Do Not Disturb"; desc: "No notification popups while gaming mode is on"; checked: page.fxOpt("dnd"); onToggled: function(v) { page.setOpt("dnd", v) } }
+            ToggleRow { label: "Dashboard at the bottom edge"; desc: "Off: the pointer at the bottom of the screen does not open the dashboard while you play"; checked: page.fxOpt("edge"); onToggled: function(v) { page.setOpt("edge", v) } }
 
             SectionTitle { text: "System services"; sub: "Background services. Start and stop ask for your password for system services." }
             Repeater {

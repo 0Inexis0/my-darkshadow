@@ -10,7 +10,7 @@ Item {
     readonly property var p: look === "graphite" ? ({ bg: "#1c1c1f", card: "#28282c", pri: mix(acc, "#ffffff", 0.42), cont: mix(acc, "#2a2a2e", 0.74), txt: "#ECECEE", r: 0.1, tab: "underline" })
         : look === "aurora" ? ({ bg: mix(acc, "#06060a", 0.86), card: mix(acc, "#16161c", 0.78), pri: mix(acc, "#ffffff", 0.2), cont: mix(acc, "#16161c", 0.55), txt: "#EEEAF2", r: 0.13, tab: "pill" })
         : look === "frost" ? ({ bg: "#f4f4f6", card: "#e6e6ea", pri: "#18181b", cont: "#dcdce1", txt: "#18181b", r: 0.1, tab: "segment" })
-        : ({ bg: "#0e0e10", card: Qt.rgba(1, 1, 1, 0.06), pri: "#F6F5F4", cont: Qt.rgba(1, 1, 1, 0.12), txt: "#F6F5F4", r: 0.09, tab: "segment" })
+        : ({ bg: "#0e0e10", card: Qt.rgba(1, 1, 1, 0.06), pri: acc, cont: mix(acc, "#141416", 0.8), txt: "#F6F5F4", r: 0.09, tab: "segment" })
     readonly property real u: width / 100
 
     Rectangle {

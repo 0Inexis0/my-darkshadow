@@ -89,7 +89,7 @@ PanelWindow {
         width: row.width + 20
         height: 60
         radius: 22
-        color: dock.dc.background === false ? "transparent" : Qt.rgba(0.1, 0.1, 0.11, dock.dc.opacity !== undefined ? Number(dock.dc.opacity) : 0.78)
+        color: dock.dc.background === false ? "transparent" : Qt.rgba(0.1, 0.1, 0.11, Look.flat ? 1 : (dock.dc.opacity !== undefined ? Number(dock.dc.opacity) : 0.78))
         border.width: dock.dc.background === false ? 0 : 1
         border.color: Qt.rgba(1, 1, 1, 0.07)
         Behavior on color { ColorAnimation { duration: 200 } }

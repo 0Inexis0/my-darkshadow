@@ -1,0 +1,78 @@
+{
+  "widgets": {
+    "weather": {
+      "enabled": false,
+      "x": 883,
+      "y": 858
+    },
+    "media": {
+      "enabled": false,
+      "x": 740,
+      "y": 871
+    },
+    "resources": {
+      "enabled": false,
+      "x": 40,
+      "y": 640
+    },
+    "usercard": {
+      "enabled": false,
+      "x": 1538,
+      "y": 81
+    },
+    "calendar": {
+      "enabled": false,
+      "x": 1491,
+      "y": 607
+    },
+    "visualizer": {
+      "enabled": false,
+      "x": 50,
+      "y": 1040,
+      "w": 1792,
+      "h": 40,
+      "style": "bars"
+    },
+    "battery": {
+      "enabled": false,
+      "x": 1011,
+      "y": 714,
+      "scale": 0.937,
+      "opacity": 1.0,
+      "bg": 1.0
+    }
+  },
+  "clock": {
+    "enabled": true,
+    "onlyLocked": false,
+    "placement": "draggable",
+    "style": "digital"
+  },
+  "dock": {
+    "enabled": false,
+    "background": true,
+    "hover": true,
+    "pinnedStartup": false,
+    "media": true,
+    "pinButton": true,
+    "appsButton": true,
+    "tint": false,
+    "opacity": 0.78,
+    "blur": true,
+    "apps": [
+      "kitty",
+      "org.gnome.Nautilus",
+      "firefox",
+      "spotify",
+      "discord",
+      "steam"
+    ]
+  },
+  "lock": {
+    "toolbars": false,
+    "widgets": false,
+    "media": false
+  },
+  "widgetBlur": true,
+  "editing": false
+}

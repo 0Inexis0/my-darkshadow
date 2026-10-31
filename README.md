@@ -42,7 +42,7 @@
 | **Autohide** | bar slides in when the pointer touches the screen edge |
 | **Distro logo** | NixOS logo on NixOS, Arch logo on Arch, and so on |
 | **Hot corner** | touch a screen corner for a panel with Keep Awake, screen recording, screenshots, quick toggles (Wi-Fi, Bluetooth, Do Not Disturb, Gaming mode, microphone, Settings) and now playing; sections, toggles, corner, look and animation are set in Settings > Hot corners |
-| **Desktop widgets** | clock, calendar, weather, music, resources (CPU, RAM, GPU), user card, battery and a see-through audio visualizer (Bars, Mirror, Wave, Dots); a widget editor on the desktop to add, move, resize and style them |
+| **Desktop widgets** | frosted glass over your blurred wallpaper (or plain cards); clock, calendar, weather, music, resources (CPU, RAM, GPU), user card, battery and a see-through audio visualizer (Bars, Mirror, Wave, Dots); a widget editor on the desktop to add, move, resize and style them |
 | **Dashboard** | slides up from the bottom of the screen (SUPER + ALT + D or push the pointer against the bottom edge): Dashboard (weather, calendar, usage, music), Wallpaper (big wallpaper cards, search, random), Performance (CPU, GPU, storage, network, memory, battery), About (your computer, distro, updates); cards you can remove, add, resize and move, looks Shadow, Graphite, Aurora and Frost |
 | **Bar layout** | drag and drop Waybar modules between left, center and right, reorder the system icons, Battery module |
 | **Dock** | pinned apps, hover to reveal, media player, tinted icons |
@@ -51,13 +51,15 @@
 | **Notifications** | swaync popups and panel: position, layout, widgets (title, Do Not Disturb, media, volume, quick buttons), size, timeout, icon size, Glass / Solid / Outline look, opacity, radius, blur, live preview and a test button |
 | **Notification sounds** | six original sounds (Glass, Droplet, Chime, Bubble, Marimba, Aurora) or Off, with volume; silent during Do Not Disturb |
 | **Updates** | a notification when a new version is out ("Update is Available!"), version and Update now button in the About tab of the dashboard, `rice-update` in a terminal |
-| **Idle & Lockscreen** | lock, screen-off and sleep timers; lock screen with Big / Stacked / Minimal clock, center or left layout, greeting, avatar, Pill / Box / Line password field, power buttons, screenshot / wallpaper / color background and media, resources, weather and notification lines |
+| **Idle & Lockscreen** | lock, screen-off and sleep timers; lock screen with Big / Stacked / Minimal clock in seven fonts (white hours, grey minutes), center or left layout, greeting, avatar, Pill / Box / Line password field, power buttons, screenshot / wallpaper / color background and media, resources, weather and notification lines |
 | **Rofi** | 5 themes (Shadow, Graphite, Midnight, Rose, Paper), layouts list / grid / full-width bar, position top, center or bottom, width, rows, corner radius, transparency, blur, font size, icons |
 | **Cursors** | Bibata, Hyprcursor themes (Rose Pine) and packs you can download in Settings: Catppuccin, Phinger; live preview |
 | **Fonts** | one place to set the main and icon fonts |
 | **Notifications** | swaync with a button that opens Settings |
 | **Welcome window** | "Welcome to DarkShadow's Shell" greeting once per login; turn off with `rice-welcome off` or the link in the window |
-| **Installer** | interactive, backs up everything, supports Arch and NixOS |
+| **Performance & gaming** | one switch turns off all blur and transparency (Hyprland, kitty, Waybar, rofi, notifications, dashboard, hot corner, dock, widgets); Gaming mode with options to keep blur, animations, shadows or gaps, Do Not Disturb (Settings > Services) |
+| **Your settings everywhere** | `./sync.sh` saves your Settings choices to `settings/`, `./install.sh` puts them on your other computers (files you changed there are kept) |
+| **Installer** | interactive (Install, Update, Choose, Restore), backs up everything, supports Arch and NixOS |
 
 ## Keybinds
 `SUPER` is the main modifier.
@@ -140,7 +142,7 @@ Run `rice-update` (or `./install.sh --update` in the repo), or press **Update no
 | `.github/` | CI (shellcheck, dry-run install) and issue template |
 
 ## Maintainers
-`./sync.sh` copies your current setup from this machine into the repo (paths become `@HOME@`, no username is stored) and scans for secrets.
+`./sync.sh` copies your current setup from this machine into the repo (paths become `@HOME@`, no username is stored) and scans for secrets. Your choices in Settings go to `settings/`; `./install.sh` applies them on other computers, keeps files you changed there, and `./install.sh --update --use-saved-settings` takes the saved ones anyway.
 
 To release a new version, put the new number in `VERSION` (for example `2.03`) and push. Everyone gets the update notification within a few hours.
 

@@ -12,7 +12,7 @@ HAVE_VERSION="$(tr -d ' \r\n' <"$HOME/.config/rice/version" 2>/dev/null || true)
 # shellcheck source=install/lib/distro.sh
 . "$ROOT/install/lib/distro.sh"
 
-ASSUME_YES=0; DRY_RUN=0; MODE=install; SKIP_PKGS=0; PULLED=0
+ASSUME_YES=0; DRY_RUN=0; MODE=install; SKIP_PKGS=0; PULLED=0; TAKE_SETTINGS_ARG=0
 usage() {
   cat <<U
 DarkShadow's Shell installer V$RICE_VERSION
@@ -22,6 +22,7 @@ Usage: ./install.sh [options]
   -n, --dry-run      show what would happen, change nothing
       --no-packages  skip the package step
       --update       get the newest version and update apps, scripts and packages (keeps your configs)
+      --use-saved-settings  take the settings saved in this copy (settings/) even where you changed yours
       --restore      put back the files from the newest backup
   -h, --help         this help
 U
@@ -34,6 +35,7 @@ for a in "$@"; do
     --restore) MODE=restore ;;
     --update) MODE=update ;;
     --pulled) MODE=update; PULLED=1 ;;
+    --use-saved-settings) TAKE_SETTINGS_ARG=1 ;;
     -h|--help) usage; exit 0 ;;
     *) fail "Unknown option: $a"; usage; exit 2 ;;
   esac
@@ -283,6 +285,70 @@ step_configs() {
 }
 copy_lua() { local f; for f in "$ROOT"/lua/*.lua; do [ -f "$f" ] && put "$f" "$HOME/.config/hypr/$(basename "$f")"; done; return 0; }
 
+# ------------------------------------------------------------------ your saved settings
+# settings/ holds what you chose in Settings on the computer that ran ./sync.sh: the Waybar look
+# (ui.json), dashboard, widgets, hot corner, notifications, lock screen, rofi, fonts, cursor, effects.
+# A file is put in place when you do not have it yet, or when you did not change it since the
+# installer put it there last time. Files you changed on this computer are kept, unless you said
+# "use the saved settings" (then yours are backed up first, like every other file).
+SET_STATE="$HOME/.config/rice/.settings-applied"
+TAKE_SETTINGS=0
+settings_dst() {
+  local rel="${1#"$ROOT/settings/"}"
+  case "$rel" in
+    rice/*) echo "$HOME/.config/rice/${rel#rice/}" ;;
+    waybar/*) echo "$HOME/.config/waybar/${rel#waybar/}" ;;
+  esac
+}
+settings_sum() { sed -e "s|@HOME@|$HOME|g" -e "s|@USER@|$USER|g" "$1" | sha256sum | cut -c1-16; }
+have_settings() { [ -n "$(find "$ROOT/settings" -type f ! -name '.gitkeep' 2>/dev/null | head -n1)" ]; }
+apply_settings() { # apply_settings OUT: puts the saved settings in place, writes what it did to OUT
+  local out="$1" f rel dst new have last key
+  : >"$out"
+  mkdir -p "$SET_STATE"
+  while IFS= read -r -d '' f; do
+    rel="${f#"$ROOT/settings/"}"; dst="$(settings_dst "$f")"
+    [ -n "$dst" ] || continue
+    key="$SET_STATE/${rel//\//_}"
+    new="$(settings_sum "$f")"
+    last="$(cat "$key" 2>/dev/null || true)"
+    if [ -f "$dst" ]; then
+      have="$(sha256sum <"$dst" | cut -c1-16)"
+      if [ "$have" = "$new" ]; then echo "$new" >"$key"; continue; fi
+      if [ "$have" != "$last" ] && [ "$TAKE_SETTINGS" != 1 ]; then echo "kept $rel" >>"$out"; continue; fi
+    fi
+    put "$f" "$dst"
+    echo "$new" >"$key"
+    echo "set $rel" >>"$out"
+  done < <(find "$ROOT/settings" -type f ! -name '.gitkeep' -print0 2>/dev/null)
+  # the widget editor never comes back open
+  [ -f "$HOME/.config/rice/desktop.json" ] && python3 - "$HOME/.config/rice/desktop.json" <<'PY' 2>/dev/null
+import json, sys
+p = sys.argv[1]
+c = json.load(open(p))
+if c.get("editing"):
+    c["editing"] = False
+    json.dump(c, open(p, "w"))
+PY
+  return 0
+}
+step_settings() {
+  local sf; sf="$(mktemp)"
+  task "Your saved settings: Waybar look, dashboard, widgets, hot corner, lock screen..." apply_settings "$sf"
+  local n_set n_kept
+  n_set="$(grep -c '^set ' "$sf" 2>/dev/null || true)"; n_kept="$(grep -c '^kept ' "$sf" 2>/dev/null || true)"
+  [ "${n_set:-0}" -gt 0 ] && note "$n_set settings files updated"
+  if [ "${n_kept:-0}" -gt 0 ]; then
+    note "Kept your own (changed on this computer): $(sed -n 's/^kept //p' "$sf" | xargs -n1 basename | tr '\n' ' ')"
+    note "To take the saved ones too:  ./install.sh --update --use-saved-settings"
+  fi
+  if [ "${n_set:-0}" -gt 0 ] && [ "$DRY_RUN" != 1 ]; then
+    [ -f "$HOME/.config/waybar/config.jsonc" ] && task "Waybar: your look" t "$BIN/waybar-set" reapply
+    [ -x "$BIN/rice-cursor" ] && task "Cursor" t "$BIN/rice-cursor" restore
+  fi
+  rm -f "$sf"
+}
+
 step_apps() {
   local d n
   n="$(find "$ROOT/bin" -maxdepth 1 -type f | wc -l)"
@@ -336,15 +402,18 @@ step_finish() {
   task "Fitting the config to this computer" fixup "$fx"
   grep -v '^nothing to fix$' "$fx" 2>/dev/null | while IFS= read -r line; do note "$line"; done
   rm -f "$fx"
+  [ "${WANT[4]:-0}" = 1 ] && have_settings && step_settings
   [ -f "$HOME/.config/waybar/config.jsonc" ] && task "Waybar: ${DISTRO_NAME} logo" t "$BIN/waybar-set" distro-icon on
   [ -x "$BIN/desktop-set" ] && task "Desktop widgets settings" t "$BIN/desktop-set" state
   command -v swaync >/dev/null 2>&1 && task "Notifications style" t "$BIN/rice-notify" apply
   command -v hyprlock >/dev/null 2>&1 && task "Lock screen and idle timers" t "$BIN/rice-lock" apply
   command -v rofi >/dev/null 2>&1 && task "Rofi theme" t "$BIN/rice-rofi" apply
   task "Hot corner" t "$BIN/rice-hotcorner" apply
-  [ -x "$BIN/desktop-set" ] && task "Dock blur" t "$BIN/desktop-set" dock-blur
+  [ -x "$BIN/desktop-set" ] && task "Dock and widget blur" t "$BIN/desktop-set" dock-blur
   [ -x "$BIN/rice-dashboard" ] && task "Dashboard blur" t "$BIN/rice-dashboard" blur
   task "Theme colors for the wallpaper picker" patch_colors
+  # last: it must stay the last module Hyprland loads
+  [ -x "$BIN/rice-effects" ] && task "Blur, transparency and gaming mode" t "$BIN/rice-effects" apply --no-reload
   [ -x "$BIN/rice-fonts" ] && T=180 task "Fonts: Inter, Rubik, Material Symbols (skips what you have)" t "$BIN/rice-fonts"
   if [ -x "$BIN/rice-cursor" ]; then
     local cf; cf="$(mktemp)"
@@ -416,29 +485,42 @@ if [ "$MODE" = update ]; then
 fi
 
 if [ "$MODE" = update ]; then
-  WANT=(1 0 0 1)
+  WANT=(1 0 0 1 1)
   [ "$SKIP_PKGS" = 1 ] && WANT[0]=0
   [ "$FAMILY" = arch ] || WANT[0]=0
   if [ "$ASSUME_YES" != 1 ] && confirm "Also replace your config files (Hyprland, Waybar, ...) with the new ones? Your current ones are backed up."; then
     WANT[2]=1
   fi
+  # the first update that brings saved settings: ask once (with --yes yours stay)
+  if have_settings && [ ! -d "$SET_STATE" ] && [ "$ASSUME_YES" != 1 ] && [ "$IS_TTY" = 1 ] &&
+     confirm "Use the settings saved in this copy (Waybar look, dashboard, widgets, hot corner, lock screen)? Yours are backed up."; then
+    TAKE_SETTINGS=1
+  fi
   MENU_CHOICE=99
 else
+if [ -n "$HAVE_VERSION" ]; then
+  if ver_newer "$RICE_VERSION" "$HAVE_VERSION"; then UPD_HINT="V$HAVE_VERSION  ->  V$RICE_VERSION, keeps your configs"
+  else UPD_HINT="you have V$HAVE_VERSION, gets the newest from GitHub"; fi
+else UPD_HINT="get the newest version, keeps your configs"; fi
 menu_select "What would you like to do?" \
   "Install everything|recommended" \
+  "Update|$UPD_HINT" \
   "Choose what to install|" \
   "Restore my previous files|from the last backup" \
   "Quit|"
-case "$MENU_CHOICE" in 2) do_restore ;; 3) exit 0 ;; esac
-WANT=(1 1 1 1)
+case "$MENU_CHOICE" in 1) exec "$ROOT/install.sh" --update "$@" ;; 3) do_restore ;; 4) exit 0 ;; esac
+WANT=(1 1 1 1 1)
 [ "$SKIP_PKGS" = 1 ] && WANT[0]=0
+TAKE_SETTINGS=1     # a fresh install takes the saved settings (yours are backed up)
 fi
-if [ "$MENU_CHOICE" = 1 ]; then
+[ "$TAKE_SETTINGS_ARG" = 1 ] && TAKE_SETTINGS=1
+if [ "$MENU_CHOICE" = 2 ]; then
   menu_multi "Choose what to install" \
     "Packages|Hyprland, Quickshell, Waybar, tools|${WANT[0]}" \
-    "Fonts|Inter, Rubik and Nerd Font icons|1" \
+    "Fonts|Inter, Rubik, Nerd Font icons and clock fonts|1" \
     "Config files|Hyprland, Waybar, notifications, rofi|1" \
-    "Apps and scripts|Settings app, widgets, dock, hot corner|1"
+    "Apps and scripts|Settings app, widgets, dock, hot corner|1" \
+    "Your settings|Waybar look, dashboard, widgets, lock screen (settings/)|1"
   WANT=("${MENU_SEL[@]}")
 fi
 
@@ -447,6 +529,7 @@ title "Plan"
 [ "${WANT[1]}" = 1 ] && info "Install fonts"
 [ "${WANT[2]}" = 1 ] && info "Copy config files into ~/.config"
 [ "${WANT[3]}" = 1 ] && info "Install the Settings app, widgets and helper scripts"
+[ "${WANT[4]:-0}" = 1 ] && have_settings && info "Use your saved settings (Waybar look, dashboard, widgets, lock screen...)"
 info "Finish setup (theme, lock screen, notifications, hot corner)"
 note "Files that get replaced are saved in ${BK/#$HOME/~}"
 confirm "Start?" || { warn "Cancelled."; exit 0; }

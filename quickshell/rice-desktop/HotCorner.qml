@@ -98,13 +98,15 @@ PanelWindow {
     // ---- settings + "open now" requests
     Process {
         id: cfgProc
-        command: ["bash", "-c", "cat \"$HOME/.config/rice/hotcorner.json\" 2>/dev/null || \"$HOME/.local/bin/rice-hotcorner\" config; echo; echo '@@'; cat \"$HOME/.cache/rice/hotcorner-open\" 2>/dev/null"]
+        command: ["bash", "-c", "cat \"$HOME/.config/rice/hotcorner.json\" 2>/dev/null || \"$HOME/.local/bin/rice-hotcorner\" config; echo; echo '@@'; cat \"$HOME/.cache/rice/hotcorner-open\" 2>/dev/null; echo '@@'; [ -e \"$HOME/.cache/rice/flat\" ] && echo flat"]
         stdout: StdioCollector {
             onStreamFinished: {
                 const p = text.split("@@")
                 const c = p[0].trim()
-                if (c.length > 0 && c !== hc.cfgText) {
-                    try { hc.cfg = JSON.parse(c); hc.cfgText = c } catch (e) { }
+                // blur & transparency off (rice-effects: Lite or gaming mode): a solid panel
+                const fl = p.length > 2 && p[2].trim() === "flat"
+                if (c.length > 0 && c + fl !== hc.cfgText) {
+                    try { const j = JSON.parse(c); if (fl) { j.transparency = false; j.blur = false } hc.cfg = j; hc.cfgText = c + fl } catch (e) { }
                 }
                 const o = p.length > 1 ? p[1].trim() : ""
                 if (hc.cmdSeen && o.length > 0 && o !== hc.lastOpenCmd) hc.open = true

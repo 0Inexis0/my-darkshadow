@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Installs the fonts DarkShadow's Shell uses (Inter, Rubik, Material Symbols Rounded) for the current user.
+# Installs the fonts DarkShadow's Shell uses (Inter, Rubik, Material Symbols Rounded and the six
+# lock screen clock fonts) for the current user.
 # Works on any distro (NixOS too): files go to ~/.local/share/fonts, no root needed.
 #   rice-fonts           install what is missing
 #   rice-fonts status    show what is installed
@@ -16,8 +17,19 @@ has() {
   grep -qiE "(^|,)$1( |,|$)" <<<"$fams"
 }
 
+# lock screen clock fonts (Settings > Idle & Lockscreen > Clock font), all SIL Open Font License
+GF="https://raw.githubusercontent.com/google/fonts/main/ofl"
+CLOCK_FONTS=(
+  "Bebas Neue|$GF/bebasneue/BebasNeue-Regular.ttf|BebasNeue.ttf"
+  "Orbitron|$GF/orbitron/Orbitron%5Bwght%5D.ttf|Orbitron-Variable.ttf"
+  "Outfit|$GF/outfit/Outfit%5Bwght%5D.ttf|Outfit-Variable.ttf"
+  "Space Grotesk|$GF/spacegrotesk/SpaceGrotesk%5Bwght%5D.ttf|SpaceGrotesk-Variable.ttf"
+  "Unbounded|$GF/unbounded/Unbounded%5Bwght%5D.ttf|Unbounded-Variable.ttf"
+  "Big Shoulders Display|$GF/bigshouldersdisplay/BigShouldersDisplay%5Bwght%5D.ttf|BigShouldersDisplay-Variable.ttf"
+)
+
 if [ "${1:-}" = "status" ]; then
-  for f in Inter Rubik "Material Symbols Rounded"; do if has "$f"; then echo "$f: installed"; else echo "$f: missing"; fi; done
+  for f in Inter Rubik "Material Symbols Rounded" "Bebas Neue" Orbitron Outfit "Space Grotesk" Unbounded "Big Shoulders Display"; do if has "$f"; then echo "$f: installed"; else echo "$f: missing"; fi; done
   exit 0
 fi
 
@@ -60,6 +72,19 @@ else
     echo "Material Symbols Rounded: could not download (the dashboard uses Nerd Font icons instead)"
   fi
 fi
+
+for e in "${CLOCK_FONTS[@]}"; do
+  IFS='|' read -r fam url file <<<"$e"
+  if has "$fam"; then
+    echo "$fam: already installed"
+  elif curl -fsSL -o "$tmp/clock.ttf" "$url" && [ "$(head -c 4 "$tmp/clock.ttf" | od -An -tx1 | tr -d ' ')" = "00010000" ]; then
+    mv "$tmp/clock.ttf" "$dir/$file"
+    echo "$fam: installed (lock screen clock)"
+    changed=1
+  else
+    echo "$fam: could not download (the lock screen clock uses your Numbers font instead)"
+  fi
+done
 
 if [ "$changed" = 1 ]; then
   fc-cache -f "$dir" >/dev/null 2>&1 || true

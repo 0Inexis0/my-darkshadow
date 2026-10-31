@@ -15,7 +15,7 @@ Item {
         { k: "about", n: "About", d: "This computer, your distro and DarkShadow's Shell" }
     ]
     readonly property var looks: [
-        { k: "shadow", n: "Shadow", d: "Black glass, the color of your bar" },
+        { k: "shadow", n: "Shadow", d: "Black glass, colors from your wallpaper" },
         { k: "graphite", n: "Graphite", d: "Soft grey, your accent color" },
         { k: "aurora", n: "Aurora", d: "Deep, tinted by your wallpaper" },
         { k: "frost", n: "Frost", d: "Light frosted glass" }
@@ -90,7 +90,7 @@ Item {
         }
 
         // ---------- look ----------
-        SectionTitle { text: "Theme"; sub: "How the dashboard looks. Graphite and Aurora take their colors from your wallpaper." }
+        SectionTitle { text: "Theme"; sub: "How the dashboard looks. Shadow, Graphite and Aurora take their colors from your wallpaper, like the hot corner." }
         Row {
             width: parent.width
             spacing: 10

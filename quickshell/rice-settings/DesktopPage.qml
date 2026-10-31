@@ -169,6 +169,16 @@ Item {
                 }
             }
 
+            ToggleRow {
+                label: "Blur behind widgets"
+                desc: "Frosted glass: the widgets take the colors of your wallpaper. Off: plain dark cards"
+                checked: page.ctl.dst.widgetBlur !== false
+                onToggled: function(v) {
+                    const d = JSON.parse(JSON.stringify(page.ctl.dst)); d.widgetBlur = v; page.ctl.dst = d
+                    Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" widgets-blur \"$1\"", "_", v ? "on" : "off"])
+                    page.ctl.status = "Widget blur " + (v ? "on" : "off")
+                }
+            }
             Row {
                 spacing: 8
                 Pill { label: "Reset widget positions"; onClicked: page.ctl.dreset() }

@@ -104,7 +104,14 @@ def rgba(hexcol, a):
     return "%s%02x" % (hexcol[:7], int(round(clamp(a, 0, 1) * 255)))
 
 
+def flat():
+    """rice-effects: blur and transparency are off right now (Lite, or gaming mode)"""
+    return os.path.exists(os.path.expanduser("~/.cache/rice/flat"))
+
+
 def theme_text(c):
+    if flat():
+        c = dict(c, transparency=False, blur=False)
     t = THEMES[c["theme"]]
     alpha = c["opacity"] if c["transparency"] else 1.0
     bg = rgba(t["bg"], alpha)

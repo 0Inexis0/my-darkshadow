@@ -430,6 +430,11 @@ def block(u, rgb, c):
     return "\n" + "\n\n".join(out) + "\n"
 
 
+def flat():
+    """rice-effects: blur and transparency are off right now (Lite, or gaming mode)"""
+    return os.path.exists(os.path.expanduser("~/.cache/rice/flat"))
+
+
 def apply(u):
     for f in (CSS, CFG):
         if not os.path.exists(f + ".bak-ui"):
@@ -439,9 +444,10 @@ def apply(u):
     s = re.sub(OLD_H, "\n", s, flags=re.S)
     s = re.sub(OLD_S, "\n", s, flags=re.S)
     s = s.replace('@import "bar-ui.css";\n', "")
-    s = s.replace("@bar_bg", "rgba(13, 13, 13, %.2f)" % u["alpha"])
+    r = dict(u, alpha=1.0) if flat() else u     # solid while blur and transparency are off
+    s = s.replace("@bar_bg", "rgba(13, 13, 13, %.2f)" % r["alpha"])
     c = load()
-    atomic(CSS, s.rstrip() + "\n" + block(u, base_rgb(s), c))
+    atomic(CSS, s.rstrip() + "\n" + block(r, base_rgb(s), c))
     if os.path.exists(LEGACY):
         os.remove(LEGACY)
     c["position"] = u["position"]

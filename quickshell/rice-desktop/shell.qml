@@ -90,15 +90,20 @@ ShellRoot {
 
     Process {
         id: cfgProc
-        command: ["bash", "-c", "cat \"$HOME/.config/rice/desktop.json\" 2>/dev/null"]
+        // desktop.json, then "@@flat" while rice-effects has blur and transparency off
+        command: ["bash", "-c", "cat \"$HOME/.config/rice/desktop.json\" 2>/dev/null; [ -e \"$HOME/.cache/rice/flat\" ] && printf '@@flat'"]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
-                if (text.trim().length === 0 || text === root.cfgText) return
+                const fl = text.indexOf("@@flat") >= 0
+                if (fl !== Look.flat) Look.flat = fl
+                const t = text.replace("@@flat", "")
+                if (t.trim().length === 0 || t === root.cfgText) return
                 try {
-                    const j = JSON.parse(text)
-                    root.cfgText = text
+                    const j = JSON.parse(t)
+                    root.cfgText = t
                     root.cfg = j
+                    Look.blur = j.widgetBlur !== false
                 } catch (e) { }
             }
         }

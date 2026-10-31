@@ -480,6 +480,7 @@ pcall(hl.config, { decoration = { blur = { popups = true, popups_ignorealpha = 0
 
 require("rice-keys")
 
--- must stay last: gaming mode overrides
-require("rice-gaming")
 require("rice-dashboard")
+
+-- must stay last: gaming mode and "no blur & transparency" override
+require("rice-gaming")

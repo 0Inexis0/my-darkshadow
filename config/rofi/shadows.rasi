@@ -5,8 +5,8 @@ configuration {
 }
 
 * {
-    bg: #0d0d0dd1;
-    alt: #1a1a1ae5;
+    bg: #0d0d0dbd;
+    alt: #1a1a1ad1;
     fg: #F6F5F4;
     dim: #8a8a8a;
     sel: #F6F5F4;
