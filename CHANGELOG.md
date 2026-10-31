@@ -1,5 +1,11 @@
 # Changelog
 
+## V2.20
+- Dashboard: point at the middle of the bar (or SUPER + ALT + D) for Dashboard, Wallpaper, Performance and About
+- SUPER + W opens the new Wallpaper tab: search, random, folder and color schemes
+- Three dashboard looks: End4, Caelestia and DarkShadow Shell (Settings > Dashboard)
+- Smoother page animations in Settings
+
 ## V2.10
 - Hyprcursor support: Rose Pine cursor made for Hyprland, sharp at any size
 - New cursor packs: Catppuccin Mocha Dark and Mauve, Phinger (Settings > Cursors > Get more cursors)

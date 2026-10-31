@@ -262,12 +262,12 @@ Item {
                 spacing: 10
                 Repeater {
                     model: [
-                        { i: "\udb80\udfd8", t: "Theme", d: "Colors & schemes", p: 5 },
+                        { i: "\udb80\udfd8", t: "Theme", d: "Colors & schemes", p: 6 },
                         { i: "\uf03e", t: "Wallpaper", d: "Pick a new one", p: -1 },
-                        { i: "\uf0f3", t: "Notifications", d: "Popups & panel", p: 7 },
-                        { i: "\uf023", t: "Lock screen", d: "Idle & lock", p: 8 },
+                        { i: "\uf0f3", t: "Notifications", d: "Popups & panel", p: 8 },
+                        { i: "\uf023", t: "Lock screen", d: "Idle & lock", p: 9 },
                         { i: "\uf0c9", t: "Waybar", d: "Bar layout & style", p: 1 },
-                        { i: "\uf002", t: "Rofi", d: "App launcher", p: 4 }
+                        { i: "\uf002", t: "Rofi", d: "App launcher", p: 5 }
                     ]
                     delegate: Rectangle {
                         width: (quick.width - 20) / 3

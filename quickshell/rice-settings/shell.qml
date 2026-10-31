@@ -83,6 +83,7 @@ FloatingWindow {
         { name: "Waybar", icon: "\uf0c9" },
         { name: "Bar layout", icon: "\uf0db" },
         { name: "Hyprland", icon: "\uf108" },
+        { name: "Dashboard", icon: "\uf009" },
         { name: "Rofi", icon: "\uf002" },
         { name: "Theme", icon: "\udb80\udfd8" },
         { name: "Cursors", icon: "\uf245" },
@@ -369,16 +370,17 @@ FloatingWindow {
             PageSlot { idx: 1; cur: win.page; WaybarPage { anchors.fill: parent; ctl: win } }
             PageSlot { idx: 2; cur: win.page; BarLayoutPage { anchors.fill: parent; ctl: win } }
             PageSlot { idx: 3; cur: win.page; HyprlandPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 4; cur: win.page; RofiPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 5; cur: win.page; ThemePage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 6; cur: win.page; CursorsPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 7; cur: win.page; NotificationsPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 8; cur: win.page; IdlePage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 9; cur: win.page; DesktopPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 10; cur: win.page; HotCornersPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 11; cur: win.page; InterfacePage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 12; cur: win.page; ServicesPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 13; cur: win.page; AboutPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 4; cur: win.page; DashboardPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 5; cur: win.page; RofiPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 6; cur: win.page; ThemePage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 7; cur: win.page; CursorsPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 8; cur: win.page; NotificationsPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 9; cur: win.page; IdlePage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 10; cur: win.page; DesktopPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 11; cur: win.page; HotCornersPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 12; cur: win.page; InterfacePage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 13; cur: win.page; ServicesPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 14; cur: win.page; AboutPage { anchors.fill: parent; ctl: win } }
         }
 
         T {

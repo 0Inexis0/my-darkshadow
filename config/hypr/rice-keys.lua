@@ -3,7 +3,8 @@ local bin = os.getenv("HOME") .. "/.local/bin/"
 
 -- wallpaper picker: unbind first so only ONE menu opens even if another config also binds SUPER + W
 hl.unbind("SUPER + W")
-hl.bind("SUPER + W", hl.dsp.exec_cmd(bin .. "rice-wallpaper"))
+-- the Wallpaper tab of the dashboard (or the old picker when the dashboard is off)
+hl.bind("SUPER + W", hl.dsp.exec_cmd(bin .. "rice-dashboard wallpaper"))
 
 -- volume, microphone and brightness: laptop Fn keys and headset +/- buttons
 hl.bind("XF86AudioRaiseVolume",  hl.dsp.exec_cmd(bin .. "rice-media up"),          { locked = true })
@@ -20,3 +21,5 @@ hl.bind("SUPER + SHIFT + R",   hl.dsp.exec_cmd(bin .. "rice-hotcorner record reg
 hl.bind("SUPER + A",           hl.dsp.exec_cmd(bin .. "rice-hotcorner open"))
 -- widget editor on the desktop (Esc or Done to finish)
 hl.bind("SUPER + ALT + W",     hl.dsp.exec_cmd(bin .. "desktop-set edit toggle"))
+-- dashboard (also: point at the middle of the bar edge)
+hl.bind("SUPER + ALT + D",     hl.dsp.exec_cmd(bin .. "rice-dashboard open"))

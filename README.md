@@ -33,7 +33,7 @@
 </p>
 
 ## Features
-**Settings app** (`SUPER+U`), fourteen pages: Home, Waybar, Bar layout, Hyprland, Rofi, Theme, Cursors, Notifications, Idle & Lockscreen, Desktop, Hot corners, Interface, Services, About.
+**Settings app** (`SUPER+U`), fifteen pages: Home, Waybar, Bar layout, Hyprland, Dashboard, Rofi, Theme, Cursors, Notifications, Idle & Lockscreen, Desktop, Hot corners, Interface, Services, About.
 
 | Area | What you get |
 | --- | --- |
@@ -43,6 +43,7 @@
 | **Distro logo** | NixOS logo on NixOS, Arch logo on Arch, and so on |
 | **Hot corner** | touch a screen corner for a panel with Keep Awake, screen recording, screenshots, quick toggles (Wi-Fi, Bluetooth, Do Not Disturb, Gaming mode, microphone, Settings) and now playing; sections, toggles, corner, look and animation are set in Settings > Hot corners |
 | **Desktop widgets** | clock, calendar, weather, music, resources (CPU, RAM, GPU), user card, battery and a see-through audio visualizer (Bars, Mirror, Wave, Dots); a widget editor on the desktop to add, move, resize and style them |
+| **Dashboard** | drops out of the middle of the bar: Dashboard (weather, calendar, usage, music), Wallpaper (all wallpapers, search, color schemes), Performance (CPU, GPU, storage, network, memory, battery), About (your computer, distro, updates); looks End4, Caelestia or DarkShadow |
 | **Bar layout** | drag and drop Waybar modules between left, center and right, reorder the system icons, Battery module |
 | **Dock** | pinned apps, hover to reveal, media player, tinted icons |
 | **Hyprland** | gaps, borders, rounding, blur, shadows and animations from sliders, no config editing |
@@ -64,7 +65,6 @@
 | Keys | Action |
 | --- | --- |
 | `SUPER + U` | open **Settings** |
-| `SUPER + W` | wallpaper menu |
 | `SUPER + Q` | terminal |
 | `SUPER + E` | file manager |
 | `SUPER + R` | app menu |
@@ -90,6 +90,8 @@
 | `SUPER + SHIFT + R` | record a region (press again to stop) |
 | `SUPER + A` | open the hot corner panel |
 | `SUPER + ALT + W` | edit desktop widgets (add, move, resize, style) |
+| `SUPER + ALT + D` | dashboard (or point at the middle of the bar) |
+| `SUPER + W` | wallpapers (Wallpaper tab of the dashboard) |
 
 ## Installation
 

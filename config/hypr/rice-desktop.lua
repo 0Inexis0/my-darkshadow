@@ -10,3 +10,6 @@ end)
 local function rule(r) pcall(hl.window_rule, r) end
 rule({ name = "rice-nautilus-glass", match = { class = "org.gnome.Nautilus" }, opacity = "0.90 0.84" })
 rule({ name = "rice-calendar-float", match = { class = "org.gnome.Calendar" }, float = true, center = true, size = "900 650" })
+
+-- blur behind the dashboard (only where it is not see-through)
+pcall(hl.layer_rule, { name = "rice-dashboard-blur", match = { namespace = "rice-dashboard" }, blur = true, ignore_alpha = 0.5 })

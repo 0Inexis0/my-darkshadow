@@ -225,6 +225,9 @@ ShellRoot {
 
     EditorWindow { root: root }
 
+    // ---- dashboard (middle of the bar edge, SUPER + W for wallpapers)
+    Dashboard { }
+
     Dock { dc: root.cfg.dock ? root.cfg.dock : ({}) }
 
     // ---- hot corner (Settings > Hot corners)
