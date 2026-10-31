@@ -306,9 +306,9 @@ settings_dst() {
 }
 settings_sum() { sed -e "s|@HOME@|$HOME|g" -e "s|@USER@|$USER|g" "$1" | sha256sum | cut -c1-16; }
 have_settings() { [ -n "$(find "$ROOT/settings" -type f ! -name '.gitkeep' 2>/dev/null | head -n1)" ]; }
-apply_settings() { # apply_settings OUT: puts the saved settings in place, writes what it did to OUT
-  local out="$1" f rel dst new have last key
-  : >"$out"
+apply_settings() { # apply_settings RES: puts the saved settings in place, writes what it did to RES
+  local res="$1" f rel dst new have last key
+  : >"$res"
   mkdir -p "$SET_STATE"
   while IFS= read -r -d '' f; do
     rel="${f#"$ROOT/settings/"}"; dst="$(settings_dst "$f")"
@@ -319,11 +319,11 @@ apply_settings() { # apply_settings OUT: puts the saved settings in place, write
     if [ -f "$dst" ]; then
       have="$(sha256sum <"$dst" | cut -c1-16)"
       if [ "$have" = "$new" ]; then echo "$new" >"$key"; continue; fi
-      if [ "$have" != "$last" ] && [ "$TAKE_SETTINGS" != 1 ]; then echo "kept $rel" >>"$out"; continue; fi
+      if [ "$have" != "$last" ] && [ "$TAKE_SETTINGS" != 1 ]; then echo "kept $rel" >>"$res"; continue; fi
     fi
     put "$f" "$dst"
     echo "$new" >"$key"
-    echo "set $rel" >>"$out"
+    echo "set $rel" >>"$res"
   done < <(find "$ROOT/settings" -type f ! -name '.gitkeep' -print0 2>/dev/null)
   # the widget editor never comes back open
   [ -f "$HOME/.config/rice/desktop.json" ] && python3 - "$HOME/.config/rice/desktop.json" <<'PY' 2>/dev/null
