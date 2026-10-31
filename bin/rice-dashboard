@@ -38,7 +38,7 @@ WAYBAR = HOME + "/.config/waybar"
 
 TABS = ["dashboard", "wallpaper", "performance", "about"]
 DEFAULTS = {
-    "enabled": True, "position": "bottom", "hover": False, "wallpaper_key": True, "style": "shadow",
+    "enabled": True, "position": "bottom", "hover": False, "edge": True, "wallpaper_key": True, "style": "shadow",
     "width": 1000, "scale": 1.0, "delay": 150, "trigger": 320, "close_on_leave": True, "speed": 1.0,
     "tabs": list(TABS), "default_tab": "dashboard", "blur": True, "opacity": 0.9, "animation": "slide",
     "hotspot": "bar", "attach": True, "layouts": {},
@@ -48,7 +48,7 @@ FLOATS = {"scale": (0.75, 1.4), "speed": (0.5, 2.0), "opacity": (0.35, 1.0)}
 CHOICES = {"position": ["top", "bottom"], "style": ["shadow", "graphite", "aurora", "frost"], "default_tab": TABS,
            "animation": ["slide", "fade", "none"], "hotspot": ["bar", "edge"]}
 OLD_STYLES = {"darkshadow": "shadow", "end4": "frost", "caelestia": "aurora"}
-BOOLS = ("enabled", "hover", "wallpaper_key", "close_on_leave", "blur", "attach")
+BOOLS = ("enabled", "hover", "edge", "wallpaper_key", "close_on_leave", "blur", "attach")
 HYPR = HOME + "/.config/hypr"
 
 
@@ -98,7 +98,11 @@ def clean_layouts(v):
         items = []
         for it in lst:
             try:
-                items.append({"id": str(it["id"])[:40], "w": int(clamp(int(it["w"]), 1, 12)), "h": int(clamp(int(it["h"]), 1, 4))})
+                o = {"id": str(it["id"])[:40], "w": int(clamp(int(it["w"]), 1, 12)), "h": int(clamp(int(it["h"]), 1, 4))}
+                if "x" in it and "y" in it:   # a place on the grid (edit mode); without one the card is packed
+                    o["x"] = int(clamp(int(it["x"]), 0, 11))
+                    o["y"] = int(clamp(int(it["y"]), 0, 3))
+                items.append(o)
             except Exception:
                 pass
         out[tab] = items[:24]

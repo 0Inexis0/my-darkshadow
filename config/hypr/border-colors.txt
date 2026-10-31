@@ -1,2 +1,2 @@
-#ffb3b4
-#e5c18d
+#99ccfa
+#d2bfe7

@@ -369,6 +369,9 @@ FloatingWindow {
             height: parent.height - 60
             clip: true
 
+            // falling stars behind every page (they stay put while the pages change)
+            StarField { anchors.fill: parent; running: win.visible; opacity: win.page === 0 ? 1 : 0.6; Behavior on opacity { NumberAnimation { duration: 400 } } }
+
             PageSlot { idx: 0; cur: win.page; HomePage { anchors.fill: parent; ctl: win } }
             PageSlot { idx: 1; cur: win.page; WaybarPage { anchors.fill: parent; ctl: win } }
             PageSlot { idx: 2; cur: win.page; BarLayoutPage { anchors.fill: parent; ctl: win } }

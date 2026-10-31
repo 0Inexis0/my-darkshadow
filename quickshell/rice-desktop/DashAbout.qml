@@ -112,13 +112,12 @@ Item {
                 DText { width: parent.width; horizontalAlignment: Text.AlignHCenter; elide: Text.ElideRight; text: ab.di.version || ""; font.pixelSize: 12; color: ab.p.sub }
                 DText { width: parent.width; horizontalAlignment: Text.AlignHCenter; elide: Text.ElideRight; text: (ab.a.user || "") + (ab.a.host ? "@" + ab.a.host : ""); font.pixelSize: 11; color: ab.p.sub; topPadding: 4 }
             }
-            Flow {
+            Row {
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: parent.height - 50
-                width: Math.min(parent.width - 20, childrenRect.width)
                 spacing: 8
                 Btn { icon: "language"; glyph: ab.d.md(0xF059F); text: "Website"; primary: true; onClicked: ab.open(ab.di.url) }
-                Btn { visible: !!ab.di.docs && dist.width > 230; icon: "menu_book"; glyph: ab.d.md(0xF02FD); text: "Docs"; onClicked: ab.open(ab.di.docs) }
+                Btn { visible: !!ab.di.docs && dist.width > 215; icon: "menu_book"; glyph: ab.d.md(0xF02FD); text: "Docs"; onClicked: ab.open(ab.di.docs) }
             }
         }
     }

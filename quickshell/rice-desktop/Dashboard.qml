@@ -40,13 +40,13 @@ PanelWindow {
     readonly property real earR: attach ? 24 : 0
     readonly property real headH: 64
     readonly property real pad: 18
-    readonly property real trayH: editing && tab !== "wallpaper" ? 62 : 0
+    readonly property real trayH: 0
     readonly property real baseW: cfg.width ? cfg.width : 1000
-    // every tab has its own size; the panel glides between them
-    function tabW(t) { return Math.min((db.width - 40) / sc - 2 * earR, baseW * ({ dashboard: 1.0, wallpaper: 1.18, performance: 1.04, about: 0.96 }[t] || 1)) }
-    function tabH(t) { return ({ dashboard: 330, wallpaper: 320, performance: 330, about: 300 }[t] || 330) }
+    // one size for every tab (the size of Performance), so switching tabs never resizes the panel
+    function tabW(t) { return Math.min((db.width - 40) / sc - 2 * earR, baseW * 1.04) }
+    function tabH(t) { return 330 }
     readonly property real wantW: tabW(tab)
-    readonly property real wantH: headH + tabH(tab) + pad + trayH
+    readonly property real wantH: headH + tabH(tab) + pad
     property real curW: wantW
     property real curH: wantH
     Behavior on curW { NumberAnimation { duration: 460 / db.spd; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.05, 0.7, 0.1, 1, 1, 1] } }
@@ -141,9 +141,35 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "rice-dashboard"
     WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-    mask: Region { item: (db.open || db.t > 0.02) ? whole : nothing }
+    // closed: only a thin strip at the bottom edge takes the pointer (it opens the dashboard)
+    mask: Region { item: (db.open || db.t > 0.02) ? whole : (db.edgeOn ? edge : nothing) }
     Item { id: whole; anchors.fill: parent }
     Item { id: nothing; width: 0; height: 0 }
+
+    // ---------------- open by touching the bottom edge ----------------
+    readonly property bool edgeOn: cfg.edge !== false
+    Item {
+        id: edge
+        // the middle of the bottom edge, as wide as the dashboard; the corners stay free for the hot corner
+        width: Math.min(db.width - 360, (db.wantW + 2 * db.earR) * db.sc)
+        height: 2
+        x: (db.width - width) / 2
+        y: db.height - height
+        HoverHandler {
+            id: edgeHover
+            enabled: db.edgeOn
+            onHoveredChanged: {
+                if (hovered) { if (!db.open) edgeTimer.restart() }
+                else edgeTimer.stop()
+                db.pointerMoved()
+            }
+        }
+    }
+    Timer {
+        id: edgeTimer
+        interval: Math.max(1, db.cfg.delay !== undefined ? db.cfg.delay : 150)
+        onTriggered: if (!db.open && edgeHover.hovered) db.show("", true)
+    }
 
     // wallpaper preview (Wallpaper tab): shown behind the desktop while you pick, dropped when you leave
     property string previewPath: ""
@@ -230,7 +256,7 @@ PanelWindow {
     }
 
     // ---------------- staying open while the pointer is near ----------------
-    function inside() { return shellHover.hovered || bridgeHover.hovered }
+    function inside() { return shellHover.hovered || bridgeHover.hovered || edgeHover.hovered || trayHover.hovered }
     function pointerMoved() {
         if (shellHover.hovered) db.entered = true
         if (inside()) leaveTimer.stop()
@@ -238,9 +264,10 @@ PanelWindow {
     }
     Timer {
         id: leaveTimer
-        interval: 380
+        // opened from the edge but not moved into it yet: a little longer
+        interval: db.entered ? 380 : 900
         onTriggered: {
-            if (db.inside() || db.cfg.close_on_leave === false || db.editing || db.typing || !db.entered) return
+            if (db.inside() || db.cfg.close_on_leave === false || db.editing || db.typing || !(db.entered || db.byHover)) return
             db.close()
         }
     }
@@ -281,6 +308,71 @@ PanelWindow {
         }
     }
 
+    // ---------------- edit tray: floats just above the panel ----------------
+    Item {
+        id: tray
+        readonly property bool on: db.editing && db.open && db.tab !== "wallpaper"
+        transformOrigin: Item.TopLeft
+        scale: db.sc
+        width: db.curW - 2 * db.pad
+        height: 52
+        x: (db.width - width * db.sc) / 2
+        y: shell.y - (height + 12) * db.sc + (on ? 0 : 14)
+        opacity: on ? 1 : 0
+        visible: opacity > 0.01
+        Behavior on opacity { NumberAnimation { duration: 220 } }
+        Behavior on y { NumberAnimation { duration: 320; easing.type: Easing.OutCubic } }
+        HoverHandler { id: trayHover }
+        MouseArea { anchors.fill: parent }
+        readonly property var g: db.grids[db.tab] || null
+        readonly property var hid: g && g.packed ? (g.packed, g.hidden()) : []
+        Rectangle {
+            anchors.fill: parent; radius: height / 2
+            color: db.p.solidBg
+            border.width: 1
+            border.color: db.p.dark ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.08)
+        }
+        Row {
+            x: 18; anchors.verticalCenter: parent.verticalCenter
+            spacing: 8
+            DText { text: tray.hid.length ? "Add" : "All cards are on"; font.pixelSize: 12; color: db.p.sub; anchors.verticalCenter: parent.verticalCenter }
+            Repeater {
+                model: tray.hid
+                Rectangle {
+                    height: 32; width: ar.implicitWidth + 24; radius: 16
+                    color: am.containsMouse ? db.p.primary : db.p.container
+                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Row {
+                        id: ar
+                        anchors.centerIn: parent
+                        spacing: 4
+                        MIcon { name: "add"; glyph: "+"; size: 16; color: am.containsMouse ? db.p.onPrimary : db.p.onContainer; anchors.verticalCenter: parent.verticalCenter }
+                        DText { text: modelData.name; font.pixelSize: 12; color: am.containsMouse ? db.p.onPrimary : db.p.onContainer; anchors.verticalCenter: parent.verticalCenter }
+                    }
+                    MouseArea { id: am; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: tray.g.add(modelData.id) }
+                }
+            }
+        }
+        Row {
+            anchors.right: parent.right; anchors.rightMargin: 10
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 8
+            DText { text: "Drag to move · pull the handles to resize · + fills a gap"; font.pixelSize: 11; color: db.p.sub; anchors.verticalCenter: parent.verticalCenter }
+            Rectangle {
+                height: 32; width: rr.implicitWidth + 24; radius: 16
+                color: rm.containsMouse ? db.p.card2 : db.p.container
+                DText { id: rr; anchors.centerIn: parent; text: "Reset"; font.pixelSize: 12; color: db.p.onContainer }
+                MouseArea { id: rm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: db.resetLayout(db.tab) }
+            }
+            Rectangle {
+                height: 32; width: dn.implicitWidth + 28; radius: 16
+                color: dnm.containsMouse ? Qt.lighter(db.p.primary, 1.08) : db.p.primary
+                DText { id: dn; anchors.centerIn: parent; text: "Done"; font.pixelSize: 12; font.weight: Font.DemiBold; color: db.p.onPrimary }
+                MouseArea { id: dnm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: db.editing = false }
+            }
+        }
+    }
+
     // ---------------- the panel ----------------
     Item {
         id: shell
@@ -292,7 +384,7 @@ PanelWindow {
         transformOrigin: Item.TopLeft
         scale: db.sc
         visible: db.t > 0.003
-        clip: db.anim === "slide"
+        clip: db.anim === "slide" && db.t < 0.999
 
         // how much of it shows (Morph grows out of the bar, Slide comes down, Fade fades in)
         readonly property real e: db.t
@@ -513,60 +605,6 @@ PanelWindow {
                                 Component { id: wallC; DashWalls { d: db; live: page.liveNow } }
                                 Component { id: perfC; DashPerf { d: db; live: page.liveNow } }
                                 Component { id: aboutC; DashAbout { d: db; live: page.liveNow } }
-                            }
-                        }
-                    }
-
-                    // ---------- edit tray ----------
-                    Item {
-                        id: tray
-                        x: db.pad
-                        y: body.y + body.height + 12
-                        width: parent.width - 2 * db.pad
-                        height: 48
-                        opacity: db.trayH > 0 ? 1 : 0
-                        visible: opacity > 0.01
-                        Behavior on opacity { NumberAnimation { duration: 220 } }
-                        readonly property var g: db.grids[db.tab] || null
-                        readonly property var hid: g ? g.hidden() : []
-                        Rectangle { anchors.fill: parent; radius: height / 2; color: db.p.card }
-                        Row {
-                            x: 16; anchors.verticalCenter: parent.verticalCenter
-                            spacing: 8
-                            DText { text: tray.hid.length ? "Add" : "All cards are on"; font.pixelSize: 12; color: db.p.sub; anchors.verticalCenter: parent.verticalCenter }
-                            Repeater {
-                                model: tray.hid
-                                Rectangle {
-                                    height: 32; width: ar.implicitWidth + 24; radius: 16
-                                    color: am.containsMouse ? db.p.primary : db.p.container
-                                    Behavior on color { ColorAnimation { duration: 120 } }
-                                    Row {
-                                        id: ar
-                                        anchors.centerIn: parent
-                                        spacing: 4
-                                        MIcon { name: "add"; glyph: "+"; size: 16; color: am.containsMouse ? db.p.onPrimary : db.p.onContainer; anchors.verticalCenter: parent.verticalCenter }
-                                        DText { text: modelData.name; font.pixelSize: 12; color: am.containsMouse ? db.p.onPrimary : db.p.onContainer; anchors.verticalCenter: parent.verticalCenter }
-                                    }
-                                    MouseArea { id: am; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: tray.g.add(modelData.id) }
-                                }
-                            }
-                        }
-                        Row {
-                            anchors.right: parent.right; anchors.rightMargin: 8
-                            anchors.verticalCenter: parent.verticalCenter
-                            spacing: 8
-                            DText { text: "Drag a card onto another to swap"; font.pixelSize: 11; color: db.p.sub; anchors.verticalCenter: parent.verticalCenter }
-                            Rectangle {
-                                height: 32; width: rr.implicitWidth + 24; radius: 16
-                                color: rm.containsMouse ? db.p.card2 : db.p.container
-                                DText { id: rr; anchors.centerIn: parent; text: "Reset"; font.pixelSize: 12; color: db.p.onContainer }
-                                MouseArea { id: rm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: db.resetLayout(db.tab) }
-                            }
-                            Rectangle {
-                                height: 32; width: dn.implicitWidth + 28; radius: 16
-                                color: dnm.containsMouse ? Qt.lighter(db.p.primary, 1.08) : db.p.primary
-                                DText { id: dn; anchors.centerIn: parent; text: "Done"; font.pixelSize: 12; font.weight: Font.DemiBold; color: db.p.onPrimary }
-                                MouseArea { id: dnm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: db.editing = false }
                             }
                         }
                     }

@@ -53,7 +53,7 @@
 }
 .control-center {
   background: rgba(18, 18, 20, 0.46);
-  border: 1px solid #733336;
+  border: 1px solid #084b72;
   border-radius: 18px;
   padding: 8px;
   color: #F6F5F4;
@@ -74,7 +74,7 @@
 }
 .notification-row .notification-background .notification {
   background: rgba(18, 18, 20, 0.46);
-  border: 1px solid #733336;
+  border: 1px solid #084b72;
   border-radius: 12px;
   padding: 8px;
   color: #F6F5F4;
@@ -110,16 +110,16 @@
   min-height: 22px;
 }
 .notification-row .notification-background .close-button:hover {
-  background: #733336;
-  color: #ffdada;
+  background: #084b72;
+  color: #cde5ff;
 }
 .notification-row .notification-background .notification .notification-action {
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.08);
 }
 .notification-row .notification-background .notification .notification-action:hover {
-  background: #733336;
-  color: #ffdada;
+  background: #084b72;
+  color: #cde5ff;
 }
 .notification-group .notification-group-headers {
   color: #9a9aa4;
@@ -140,8 +140,8 @@
   border: none;
 }
 .widget-title > button:hover {
-  background: #733336;
-  color: #ffdada;
+  background: #084b72;
+  color: #cde5ff;
 }
 .widget-dnd {
   margin: 6px 8px;
@@ -152,7 +152,7 @@
   background: rgba(255, 255, 255, 0.10);
 }
 .widget-dnd > switch:checked {
-  background: #733336;
+  background: #084b72;
 }
 .widget-dnd > switch slider {
   border-radius: 100px;
@@ -163,7 +163,7 @@
 }
 .widget-mpris .widget-mpris-player {
   background: rgba(18, 18, 20, 0.46);
-  border: 1px solid #733336;
+  border: 1px solid #084b72;
   border-radius: 12px;
   padding: 8px;
 }
@@ -189,8 +189,8 @@
 }
 .widget-buttons-grid > flowbox > flowboxchild > button:hover,
 .widget-buttons-grid > flowbox > flowboxchild > button:checked {
-  background: #733336;
-  color: #ffdada;
+  background: #084b72;
+  color: #cde5ff;
 }
 .widget-volume {
   margin: 6px 8px;
@@ -199,7 +199,7 @@
   border-radius: 12px;
 }
 .widget-volume trough highlight {
-  background: #733336;
+  background: #084b72;
 }
 /* popup style: glass */
 .floating-notifications.background .notification-row .notification-background .notification {

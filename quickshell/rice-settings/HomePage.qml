@@ -7,8 +7,6 @@ Item {
     id: page
     property var ctl
 
-    // falling stars behind everything on this page
-    StarField { anchors.fill: parent; z: -1; running: page.visible && page.ctl && page.ctl.page === 0 }
     readonly property string home: Quickshell.env("HOME")
     readonly property string user: Quickshell.env("USER")
     readonly property string faceUrl: "file://" + home + "/.face"

@@ -1,5 +1,11 @@
 # Changelog
 
+## V2.32
+- Push the pointer against the bottom edge of the screen to open the dashboard (Settings > Dashboard)
+- The dashboard keeps one size on every tab
+- Edit mode: drag cards to any empty spot, hold an edge or corner to resize, click + in a gap to put a card there
+- Falling stars behind every Settings page
+
 ## V2.31
 - Dashboard always slides up from the bottom, smooth and without flying around
 - Wallpaper tab: arrow down/up moves right/left, Enter sets it, live preview on the desktop (Esc brings the old one back)

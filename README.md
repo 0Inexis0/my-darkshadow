@@ -43,7 +43,7 @@
 | **Distro logo** | NixOS logo on NixOS, Arch logo on Arch, and so on |
 | **Hot corner** | touch a screen corner for a panel with Keep Awake, screen recording, screenshots, quick toggles (Wi-Fi, Bluetooth, Do Not Disturb, Gaming mode, microphone, Settings) and now playing; sections, toggles, corner, look and animation are set in Settings > Hot corners |
 | **Desktop widgets** | clock, calendar, weather, music, resources (CPU, RAM, GPU), user card, battery and a see-through audio visualizer (Bars, Mirror, Wave, Dots); a widget editor on the desktop to add, move, resize and style them |
-| **Dashboard** | slides up from the bottom of the screen (SUPER + ALT + D): Dashboard (weather, calendar, usage, music), Wallpaper (big wallpaper cards, search, random), Performance (CPU, GPU, storage, network, memory, battery), About (your computer, distro, updates); cards you can remove, add, resize and move, looks Shadow, Graphite, Aurora and Frost |
+| **Dashboard** | slides up from the bottom of the screen (SUPER + ALT + D or push the pointer against the bottom edge): Dashboard (weather, calendar, usage, music), Wallpaper (big wallpaper cards, search, random), Performance (CPU, GPU, storage, network, memory, battery), About (your computer, distro, updates); cards you can remove, add, resize and move, looks Shadow, Graphite, Aurora and Frost |
 | **Bar layout** | drag and drop Waybar modules between left, center and right, reorder the system icons, Battery module |
 | **Dock** | pinned apps, hover to reveal, media player, tinted icons |
 | **Hyprland** | gaps, borders, rounding, blur, shadows and animations from sliders, no config editing |
@@ -90,7 +90,7 @@
 | `SUPER + SHIFT + R` | record a region (press again to stop) |
 | `SUPER + A` | open the hot corner panel |
 | `SUPER + ALT + W` | edit desktop widgets (add, move, resize, style) |
-| `SUPER + ALT + D` | dashboard (slides up from the bottom) |
+| `SUPER + ALT + D` | dashboard (slides up from the bottom; pushing the pointer against the bottom edge opens it too) |
 | `SUPER + W` | wallpapers (Wallpaper tab of the dashboard) |
 
 ## Installation
