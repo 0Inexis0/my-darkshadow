@@ -15,7 +15,7 @@ import time
 HOME = os.path.expanduser("~")
 CFG = HOME + "/.config/rice/notify.json"
 DIRS = [HOME + "/.local/share/rice/sounds", "/run/current-system/sw/share/rice/sounds"]
-SOUNDS = ["glass", "droplet", "chime", "bubble", "marimba", "aurora"]
+SOUNDS = ["glass", "droplet", "chime", "bubble", "marimba", "aurora", "ping", "harp", "keys", "ripple"]
 STAMP = HOME + "/.cache/rice/sound.last"
 # never ding for these: volume/brightness popups and the like
 QUIET_APPS = {"rice-media", "swayosd", "volume", "brightness", "brightnessctl"}

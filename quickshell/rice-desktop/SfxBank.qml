@@ -14,10 +14,8 @@ QtObject {
     property SoundEffect switchOff: SoundEffect { source: bank.src("switch-off"); volume: bank.vol }
     property SoundEffect slide: SoundEffect { source: bank.src("slide"); volume: bank.vol }
     property SoundEffect type: SoundEffect { source: bank.src("type"); volume: bank.vol }
-    property SoundEffect open: SoundEffect { source: bank.src("open"); volume: bank.vol }
-    property SoundEffect close: SoundEffect { source: bank.src("close"); volume: bank.vol }
     readonly property var map: ({ click: click, select: select, done: done, "switch-on": switchOn, "switch-off": switchOff,
-                                  slide: slide, type: type, open: open, close: close })
+                                  slide: slide, type: type })
     // false: not here (the caller plays it another way)
     function play(ev) {
         const s = map[ev]

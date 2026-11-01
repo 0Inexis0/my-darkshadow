@@ -1,5 +1,12 @@
 # Changelog
 
+## V2.91
+- Sounds stay quiet when "Sounds of your desktop" is off (also right after opening Settings or the hot corner)
+- No more sound when Settings, the dashboard or the hot corner open and close
+- Four new sound packs: Tap (crisp, modern), Pluck (a small harp), Keys (a mechanical keyboard) and Retro (8-bit), next to Soft, Crystal and Bubble; Tap is the new default
+- Four new notification sounds: Ping, Harp, Keys and Ripple
+- New music for the welcome intro and the tour (soft electric piano and a little music box) and new intro sounds; every step of the tour has a soft ping
+
 ## V2.90
 - New page Sfx & sounds (right after Home): soft interface sounds in the shell's own parts (clicks, switches, sliders, typing, opening and closing panels), three sound packs (Soft, Crystal, Bubble), volume, every sound on or off; the notification sound moved here
 - Quiet, friendly music during the welcome intro and the Settings tour, plus sounds for the intro

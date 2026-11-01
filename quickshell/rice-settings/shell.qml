@@ -17,9 +17,7 @@ FloatingWindow {
     // the tour is on: the rest of the screen goes dark (dimWin below)
     property bool tourOn: false
     function startTour() { page = 0; tour.start() }
-    // the close sound plays in its own process, so it is still heard after the window is gone
-    function closeNow() { Sfx.play("close", true); Qt.quit() }
-    Timer { interval: 140; running: true; onTriggered: Sfx.play("open") }
+    function closeNow() { Qt.quit() }
 
     // ---------- search: every setting on every page, found by its name, its section, its page or its text ----------
     property var results: []

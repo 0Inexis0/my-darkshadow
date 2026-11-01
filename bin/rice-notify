@@ -49,7 +49,7 @@ CHOICES = {"pos_x": ["left", "center", "right"], "pos_y": ["top", "bottom"],
            "popup_style": ["match", "glass", "solid", "minimal", "pill", "accent", "glow", "island", "light"],
            "colors": ["black", "graphite", "slate", "white", "tinted"], "font": ["sans", "rounded", "mono", "system"],
            "border": ["subtle", "accent", "none"],
-           "sound": ["glass", "droplet", "chime", "bubble", "marimba", "aurora", "off"]}
+           "sound": ["glass", "droplet", "chime", "bubble", "marimba", "aurora", "ping", "harp", "keys", "ripple", "off"]}
 ORDER = {
     # Deck: switches on top, power modes, notifications, media, volume and brightness, power buttons at the bottom
     "deck": ["buttons-grid#quick", "buttons-grid#power", "title", "notifications", "mpris", "volume", "backlight",

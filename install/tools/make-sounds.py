@@ -159,6 +159,63 @@ def aurora():
     return reverb(lowpass(b, 5500), 0.3, 1.3)
 
 
+def ping():
+    """crisp and modern: a bright glass tap with a soft high echo"""
+    p = [(1, 1.0, 1.0), (2.76, 0.25, 0.35), (5.4, 0.08, 0.2)]
+    b = np.zeros(int(SR * 1.2))
+    place(b, bell(2093.0, 0.9, p, 0.28, 0.0008), 0.0)          # C7
+    place(b, 0.45 * bell(2637.0, 0.9, p, 0.3, 0.0008), 0.12)   # E7
+    return reverb(lowpass(b, 9000), 0.25, 0.9)
+
+
+def ks(f, dur, damp=0.996, bright=0.6):
+    """plucked string (Karplus-Strong)"""
+    rng = np.random.default_rng(int(f))
+    n = int(SR / f)
+    buf = lowpass(rng.uniform(-1, 1, n), 1500 + 9000 * bright)
+    out = np.zeros(int(SR * dur))
+    for i in range(len(out)):
+        j = i % n
+        v = buf[j]
+        out[i] = v
+        buf[j] = damp * 0.5 * (v + buf[(i + 1) % n])
+    return out
+
+
+def harp():
+    """a little harp run going up"""
+    b = np.zeros(int(SR * 1.6))
+    for i, f in enumerate((783.99, 987.77, 1174.66, 1567.98)):   # G5 B5 D6 G6
+        place(b, (0.8 + 0.06 * i) * ks(f, 1.3, 0.9965), 0.075 * i)
+    return reverb(b, 0.25, 1.1)
+
+
+def keys():
+    """two soft electric piano notes, a little lo-fi"""
+    def ep(f, dur):
+        x = t(dur)
+        idx = 1.5 * np.exp(-x / 0.3) + 0.25
+        return np.sin(2 * np.pi * f * x + idx * np.sin(2 * np.pi * f * x)) * env(len(x), 0.004, 0.7)
+    b = np.zeros(int(SR * 1.6))
+    place(b, ep(659.25, 1.4), 0.0)            # E5
+    place(b, 0.9 * ep(987.77, 1.4), 0.13)     # B5
+    place(b, 0.5 * ep(493.88, 1.4), 0.13)     # B4 under it
+    return reverb(lowpass(b, 4500), 0.28, 1.2)
+
+
+def ripple():
+    """a water drop and its rings"""
+    def drop(f0, f1, dur, dec):
+        x = t(dur)
+        f = f0 + (f1 - f0) * (1 - np.exp(-x / 0.02))
+        return np.sin(2 * np.pi * np.cumsum(f) / SR) * env(len(x), 0.0015, dec)
+    b = np.zeros(int(SR * 1.2))
+    place(b, drop(700, 1500, 0.4, 0.06), 0.0)
+    for k, g in enumerate((0.45, 0.28, 0.16)):
+        place(b, g * drop(1100 + 150 * k, 1700 + 150 * k, 0.3, 0.05), 0.16 + 0.13 * k)
+    return reverb(lowpass(b, 6000), 0.3, 1.1)
+
+
 if __name__ == "__main__":
     finish("glass", glass())
     finish("droplet", droplet(), 0.55)
@@ -166,3 +223,7 @@ if __name__ == "__main__":
     finish("bubble", bubble(), 0.5)
     finish("marimba", marimba())
     finish("aurora", aurora(), 0.45)
+    finish("ping", ping(), 0.45)
+    finish("harp", harp(), 0.5)
+    finish("keys", keys(), 0.5)
+    finish("ripple", ripple(), 0.5)

@@ -37,6 +37,7 @@ Item {
         tx = r.x; ty = r.y; tw = r.w; th = r.h; tr = step.r !== undefined ? step.r : 16
     }
     function start() {
+        Sfx.play("intro/tip")
         index = 0
         place()
         active = true
@@ -44,7 +45,7 @@ Item {
     }
     function next() {
         if (index >= steps.length - 1) { Sfx.play("done"); stop(); return }
-        Sfx.play("select")
+        Sfx.play("intro/tip")
         index++
         place()
     }

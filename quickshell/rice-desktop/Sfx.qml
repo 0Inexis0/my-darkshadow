@@ -9,22 +9,24 @@ import QtQuick
 Singleton {
     id: sfx
     property bool enabled: true
+    // nothing plays until your settings are read (else a sound could slip out while they are off)
+    property bool loaded: false
     property int volume: 45
-    property string pack: "soft"
-    property var opt: ({ click: true, "switch": true, slider: true, typing: true, panels: true, music: true })
+    property string pack: "tap"
+    property var opt: ({ click: true, "switch": true, slider: true, typing: true, music: true })
     readonly property string dir: Quickshell.env("HOME") + "/.local/share/rice/sounds/sfx/"
     property var bank: null
     property var lastAt: ({})
     readonly property var kinds: ({ click: "click", select: "click", done: "click", "switch-on": "switch", "switch-off": "switch",
-                                    slide: "slider", type: "typing", open: "panels", close: "panels" })
+                                    slide: "slider", type: "typing" })
     // the same sound again this soon is skipped (typing, sliding)
     readonly property var gaps: ({ slide: 45, type: 30, click: 35 })
 
     function file(ev) { return ev.indexOf("intro/") === 0 ? dir + ev + ".wav" : dir + pack + "/" + ev + ".wav" }
     function allowed(ev) {
-        if (!enabled || volume <= 0) return false
-        const k = ev.indexOf("intro/") === 0 ? "panels" : (kinds[ev] || "click")
-        return opt[k] !== false
+        if (!loaded || !enabled || volume <= 0) return false
+        if (ev.indexOf("intro/") === 0) return true          // the welcome intro and the tour: only the main switch
+        return opt[kinds[ev] || "click"] !== false
     }
     // outside: play in its own process, so it is heard even if this window closes right away
     function play(ev, outside) {
@@ -50,9 +52,10 @@ Singleton {
             if (j.volume !== undefined) volume = Math.max(0, Math.min(100, Number(j.volume)))
             if (j.pack) pack = j.pack
             const o = {}
-            for (const k of ["click", "switch", "slider", "typing", "panels", "music"]) o[k] = j[k] !== false
+            for (const k of ["click", "switch", "slider", "typing", "music"]) o[k] = j[k] !== false
             opt = o
         } catch (e) { }
+        loaded = true
     }
     function reload() { if (!cfgProc.running) cfgProc.running = true }
     Process {
@@ -61,7 +64,7 @@ Singleton {
         command: ["bash", "-c", "cat \"$HOME/.config/rice/sfx.json\" 2>/dev/null || echo '{}'"]
         stdout: StdioCollector { onStreamFinished: sfx.applyCfg(text) }
     }
-    Timer { interval: 4000; running: true; repeat: true; onTriggered: sfx.reload() }
+    Timer { interval: 1500; running: true; repeat: true; onTriggered: sfx.reload() }
 
     Component.onCompleted: {
         // QtMultimedia is optional: without it the sounds still play (a little later) through pw-play

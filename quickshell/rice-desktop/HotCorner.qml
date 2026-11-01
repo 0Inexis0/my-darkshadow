@@ -188,7 +188,6 @@ PanelWindow {
     }
     onOpenChanged: {
         animateTo(open ? 1 : 0)
-        Sfx.play(open ? "open" : "close")
         if (open) { refresh(); graceTimer.restart() }
         else { graceTimer.stop(); leaveTimer.stop() }
     }

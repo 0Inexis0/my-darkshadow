@@ -2,7 +2,7 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 
-// Settings > Sfx & sounds: the interface sounds (clicks, switches, sliders, typing, panels, welcome music)
+// Settings > Sfx & sounds: the interface sounds (clicks, switches, sliders, typing, welcome music)
 // and the notification sound.
 Item {
     id: page
@@ -90,7 +90,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 4
                 T { kind: "title"; text: "Sounds of your desktop"; font.pixelSize: 18; font.bold: true }
-                T { kind: "reading"; text: "Soft clicks, switches and swishes in the shell's own parts. Never in other apps."; color: "#8a8a8a"; font.pixelSize: 12 }
+                T { kind: "reading"; text: "Clicks, switches and sliders in the shell's own parts. Never in other apps."; color: "#8a8a8a"; font.pixelSize: 12 }
             }
             Tog {
                 anchors.right: parent.right; anchors.rightMargin: 22
@@ -108,16 +108,20 @@ Item {
             spacing: 10
             Repeater {
                 model: [
+                    { k: "tap", n: "Tap", b: [0.2, 1, 0.3, 0.9, 0.15] },
                     { k: "soft", n: "Soft", b: [0.35, 0.8, 0.5, 0.3, 0.15] },
+                    { k: "pluck", n: "Pluck", b: [0.9, 0.6, 0.45, 0.3, 0.2] },
+                    { k: "keys", n: "Keys", b: [0.7, 0.25, 0.75, 0.3, 0.65] },
                     { k: "crystal", n: "Crystal", b: [0.3, 0.6, 0.9, 1, 0.55] },
-                    { k: "bubble", n: "Bubble", b: [0.8, 0.35, 0.75, 0.3, 0.2] }
+                    { k: "bubble", n: "Bubble", b: [0.8, 0.35, 0.75, 0.3, 0.2] },
+                    { k: "retro", n: "Retro", b: [0.6, 0.6, 1, 1, 0.4] }
                 ]
                 delegate: SoundTile {
-                    width: (packs.width - 20) / 3
+                    width: (packs.width - 30) / 4
                     name: modelData.k
                     label: modelData.n
                     bars: modelData.b
-                    selected: page.v("pack", "soft") === modelData.k
+                    selected: page.v("pack", "tap") === modelData.k
                     onPicked: {
                         if (!selected) page.setv("pack", modelData.k)
                         Sfx.pack = modelData.k
@@ -139,7 +143,6 @@ Item {
         ToggleRow { label: "Switches"; desc: "A soft up when something turns on, down when it turns off"; checked: page.v("switch", true); onToggled: function(x) { page.setv("switch", x) } }
         ToggleRow { label: "Sliders"; desc: "A tiny tick for every step while you drag"; checked: page.v("slider", true); onToggled: function(x) { page.setv("slider", x) } }
         ToggleRow { label: "Typing"; desc: "Search fields and text boxes"; checked: page.v("typing", true); onToggled: function(x) { page.setv("typing", x) } }
-        ToggleRow { label: "Opening and closing"; desc: "Settings, the dashboard and the hot corner panel"; checked: page.v("panels", true); onToggled: function(x) { page.setv("panels", x) } }
         ToggleRow { label: "Welcome music"; desc: "Quiet music during the welcome intro and the Settings tour"; checked: page.v("music", true); onToggled: function(x) { page.setv("music", x) } }
 
         Row {
@@ -165,6 +168,10 @@ Item {
                     { k: "bubble", n: "Bubble", b: [0.9, 0.3, 0.8, 0.25, 0.15] },
                     { k: "marimba", n: "Marimba", b: [1, 0.45, 0.85, 0.4, 0.2] },
                     { k: "aurora", n: "Aurora", b: [0.3, 0.55, 0.8, 0.95, 0.75] },
+                    { k: "ping", n: "Ping", b: [1, 0.4, 0.6, 0.25, 0.1] },
+                    { k: "harp", n: "Harp", b: [0.4, 0.55, 0.7, 0.85, 1] },
+                    { k: "keys", n: "Keys", b: [0.8, 0.5, 0.9, 0.6, 0.35] },
+                    { k: "ripple", n: "Ripple", b: [1, 0.3, 0.6, 0.2, 0.35] },
                     { k: "off", n: "Off", b: [0.13, 0.13, 0.13, 0.13, 0.13] }
                 ]
                 delegate: SoundTile {

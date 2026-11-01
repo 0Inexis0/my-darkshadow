@@ -2,10 +2,10 @@
 """rice-sfx: interface sounds of DarkShadow's Shell (Settings > Sfx & sounds).
 
   rice-sfx state                   JSON with the settings and the sound packs
-  rice-sfx set KEY VALUE           enabled on|off, volume 0-100, pack soft|crystal|bubble,
-                                   click|switch|slider|typing|panels|music on|off
+  rice-sfx set KEY VALUE           enabled on|off, volume 0-100, pack (see PACKS),
+                                   click|switch|slider|typing|music on|off
   rice-sfx play EVENT              play one sound now (respects the settings): click switch-on switch-off
-                                   slide type open close select done, intro/night intro/reveal intro/open
+                                   slide type select done, intro/night intro/reveal intro/open intro/tip
   rice-sfx music start|stop        quiet music for the welcome intro and the Settings tour
 
 Only the shell's own parts make these sounds (Settings, dashboard, hot corner, welcome), never other apps.
@@ -25,13 +25,13 @@ CFG = DIR + "/sfx.json"
 SND = HOME + "/.local/share/rice/sounds/sfx"
 CACHE = HOME + "/.cache/rice"
 MUSIC_PID = CACHE + "/sfx-music.pid"
-PACKS = ["soft", "crystal", "bubble"]
-EVENTS = ["click", "switch", "slider", "typing", "panels", "music"]
-DEFAULTS = {"enabled": True, "volume": 45, "pack": "soft",
-            "click": True, "switch": True, "slider": True, "typing": True, "panels": True, "music": True}
+PACKS = ["tap", "soft", "pluck", "keys", "crystal", "bubble", "retro"]
+EVENTS = ["click", "switch", "slider", "typing", "music"]
+DEFAULTS = {"enabled": True, "volume": 45, "pack": "tap",
+            "click": True, "switch": True, "slider": True, "typing": True, "music": True}
 # which setting each sound belongs to
 KIND = {"click": "click", "select": "click", "done": "click", "switch-on": "switch", "switch-off": "switch",
-        "slide": "slider", "type": "typing", "open": "panels", "close": "panels"}
+        "slide": "slider", "type": "typing"}
 
 
 def load():
@@ -45,7 +45,7 @@ def load():
         pass
     c["volume"] = max(0, min(100, int(c["volume"])))
     if c["pack"] not in PACKS:
-        c["pack"] = "soft"
+        c["pack"] = "tap"
     return c
 
 
@@ -74,8 +74,7 @@ def play(event, c=None, force=False):
     if not force:
         if not c["enabled"]:
             return
-        kind = "panels" if event.startswith("intro/") else KIND.get(event, "click")
-        if not c.get(kind, True):
+        if not event.startswith("intro/") and not c.get(KIND.get(event, "click"), True):
             return
     path = "%s/%s.wav" % (SND, event) if event.startswith("intro/") else "%s/%s/%s.wav" % (SND, c["pack"], event)
     if not os.path.exists(path):
