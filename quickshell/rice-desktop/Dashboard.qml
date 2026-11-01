@@ -55,8 +55,8 @@ PanelWindow {
     // ---------------- helpers for the tabs ----------------
     function md(cp) { return String.fromCodePoint(cp) }
     readonly property var glyphs: ({
-        nixos: "", arch: "", archarm: "", cachyos: "", endeavouros: "", manjaro: "",
-        garuda: "", ubuntu: "", fedora: "", debian: "", opensuse: "", gentoo: "",
+        nixos: "", arch: "", archarm: "", cachyos: "", endeavouros: "", manjaro: "",
+        garuda: "", ubuntu: "", fedora: "", nobara: "", bazzite: "", ultramarine: "", debian: "", opensuse: "", gentoo: "",
         void: "", alpine: "", linuxmint: "", pop: ""
     })
     function distroGlyph() {

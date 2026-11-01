@@ -24,8 +24,8 @@ FloatingWindow {
     property var osIds: ["linux"]
     // distro logo from the Nerd Font "font logos" set (NixOS logo on NixOS, Arch logo on Arch, ...)
     readonly property var osGlyphs: ({
-        nixos: "\uf313", arch: "\uf303", archarm: "\uf303", cachyos: "\uf303", endeavouros: "\uf322", manjaro: "\uf312",
-        garuda: "\uf303", ubuntu: "\uf31b", fedora: "\uf30a", debian: "\uf306", opensuse: "\uf314", gentoo: "\uf30d",
+        nixos: "\uf313", arch: "\uf303", archarm: "\uf303", cachyos: "\uf385", endeavouros: "\uf322", manjaro: "\uf312",
+        garuda: "\uf303", ubuntu: "\uf31b", fedora: "\uf30a", nobara: "\uf380", bazzite: "\uf30a", ultramarine: "\uf30a", debian: "\uf306", opensuse: "\uf314", gentoo: "\uf30d",
         void: "\uf32e", alpine: "\uf300", linuxmint: "\uf30e", pop: "\uf32a"
     })
     function osGlyph() {

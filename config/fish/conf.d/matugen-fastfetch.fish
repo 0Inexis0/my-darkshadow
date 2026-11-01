@@ -5,9 +5,9 @@ end
 
 function fastfetch
     command fastfetch \
-        --color-keys (__hex2rgb '#93cdf6') \
-        --color-title (__hex2rgb '#cdc0e9') \
-        --logo-color-1 (__hex2rgb '#93cdf6') \
-        --logo-color-2 (__hex2rgb '#b6c9d8') \
+        --color-keys (__hex2rgb '#ffffff') \
+        --color-title (__hex2rgb '#e2e2e2') \
+        --logo-color-1 (__hex2rgb '#ffffff') \
+        --logo-color-2 (__hex2rgb '#c6c6c6') \
         $argv
 end

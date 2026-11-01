@@ -2,18 +2,21 @@
   "widgets": {
     "weather": {
       "enabled": false,
-      "x": 1565,
-      "y": 581
+      "x": 725,
+      "y": 274,
+      "scale": 1.0
     },
     "media": {
       "enabled": false,
-      "x": 740,
-      "y": 871
+      "x": 920,
+      "y": 404,
+      "scale": 1.0
     },
     "resources": {
       "enabled": true,
-      "x": 40,
-      "y": 640
+      "x": 55,
+      "y": 598,
+      "scale": 1.0
     },
     "usercard": {
       "enabled": false,
@@ -31,12 +34,13 @@
       "y": 1040,
       "w": 1920,
       "h": 40,
-      "style": "bars"
+      "style": "bars",
+      "flip": false
     },
     "battery": {
       "enabled": false,
-      "x": 1011,
-      "y": 714,
+      "x": 779,
+      "y": 471,
       "scale": 0.937,
       "opacity": 1.0,
       "bg": 1.0

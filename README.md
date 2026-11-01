@@ -3,34 +3,76 @@
 </p>
 
 <p align="center">
-  <b>A Hyprland rice with its own Quickshell settings app, Waybar, desktop widgets and a dock.</b><br>
+  <b>A Hyprland rice with its own Quickshell settings app, Waybar, desktop widgets, a dashboard and a dock.</b><br>
+  Everything is set with sliders and switches in one app. No config editing.<br>
   Made by <a href="https://www.tiktok.com/@shadoww.dev">shadoww.dev</a>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/NixOS-supported-5277C3?style=for-the-badge&logo=nixos&logoColor=white" alt="NixOS">
   <img src="https://img.shields.io/badge/Arch_Linux-supported-1793D1?style=for-the-badge&logo=archlinux&logoColor=white" alt="Arch Linux">
-  <img src="https://img.shields.io/badge/Hyprland-0.55-58E1FF?style=for-the-badge&logoColor=white" alt="Hyprland">
-  <img src="https://img.shields.io/badge/Quickshell-QML-8B7BFF?style=for-the-badge" alt="Quickshell">
+  <img src="https://img.shields.io/badge/CachyOS-new-08A283?style=for-the-badge&logo=cachyos&logoColor=white" alt="CachyOS">
+  <img src="https://img.shields.io/badge/Fedora-new-51A2DA?style=for-the-badge&logo=fedora&logoColor=white" alt="Fedora">
+</p>
+<p align="center">
+  <img src="https://img.shields.io/badge/Hyprland-0.55+-58E1FF?style=flat-square" alt="Hyprland">
+  <img src="https://img.shields.io/badge/Quickshell-QML-8B7BFF?style=flat-square" alt="Quickshell">
+  <img src="https://img.shields.io/github/stars/shadowww-dev/shadows-shell?style=flat-square&color=f5c542" alt="Stars">
+  <img src="https://img.shields.io/github/last-commit/shadowww-dev/shadows-shell?style=flat-square" alt="Last commit">
 </p>
 
 <p align="center">
-  <a href="#installation">Install</a> ·
+  <a href="#install-in-one-minute">Install</a> ·
+  <a href="#supported-systems">Systems</a> ·
   <a href="#features">Features</a> ·
+  <a href="#keybinds">Keybinds</a> ·
   <a href="docs/INSTALL.md">Docs</a> ·
   <a href="docs/CUSTOMIZE.md">Customize</a>
 </p>
 
 ---
 
-## Screenshot
+## Screenshots
 <p align="center">
-  <img src="assets/screenshot.png" alt="DarkShadow's Shell on NixOS" width="100%">
+  <img src="assets/screenshot.png" alt="DarkShadow's Shell: desktop with widgets" width="100%">
 </p>
 <p align="center">
-  <img src="assets/screenshot-settings.png" alt="The Settings app (SUPER+U)" width="100%"><br>
-  <sub>The Settings app (<code>SUPER + U</code>) and the hot corner panel</sub>
+  <img src="assets/screenshot-settings.png" alt="The Settings app (SUPER + U)" width="100%"><br>
+  <sub>The Settings app (<code>SUPER + U</code>)</sub>
 </p>
+<!-- more screenshots: put the files in assets/ and add them here -->
+
+## Supported systems
+The bar, the dashboard, the welcome window and Settings show **your distro's logo** automatically.
+
+| System | Status | How |
+| --- | --- | --- |
+| **NixOS** | main system | the module in `nix/`, then `./install.sh` |
+| **Arch Linux** | supported | `./install.sh` |
+| **CachyOS** | new in V2.70 | `./install.sh` (Arch based: its repositories and `paru` are used) |
+| **EndeavourOS, Garuda** | Arch route | `./install.sh` |
+| **Fedora, Nobara** | new in V2.60 | `./install.sh` (COPR for Hyprland and Quickshell) |
+| **Bazzite, Silverblue** | commands only | the installer prints the `rpm-ostree` steps |
+| **Manjaro** | may not work | its packages are held back, Hyprland can be older than 0.55 |
+
+CachyOS and Fedora support is new: if something does not install, open an issue with the installer log and it gets fixed fast.
+
+## Install in one minute
+**Arch Linux / CachyOS / EndeavourOS**
+```bash
+sudo pacman -S --needed git base-devel
+git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
+./install.sh
+```
+
+**Fedora / Nobara**
+```bash
+sudo dnf install -y git
+git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
+./install.sh
+```
+
+**NixOS**: see [Installation](#installation) below. Then log out and pick Hyprland, and press `SUPER + U`.
 
 ## Features
 **Settings app** (`SUPER+U`), fourteen pages: Home, Waybar, Bar layout, Hyprland, Dashboard, Rofi, Theme, Cursors, Notifications, Idle & Lockscreen, Desktop, Hot corners, Interface, Services.
@@ -40,7 +82,7 @@
 | **Waybar** | layout editor (move modules between left, center and right), saved presets, position top or bottom, bar height, opacity |
 | **Bar styles** | Flat, Floating, Islands, **One island**; group styles None, Pills, Segmented |
 | **Autohide** | bar slides in when the pointer touches the screen edge |
-| **Distro logo** | NixOS logo on NixOS, Arch logo on Arch, and so on |
+| **Distro logo** | the logo of your distro (NixOS, Arch, CachyOS, Fedora, Nobara, EndeavourOS ...) in the bar, the dashboard, the welcome window and Settings, picked automatically |
 | **Hot corner** | touch a screen corner for a panel with Keep Awake, screen recording, screenshots, quick toggles (Wi-Fi, Bluetooth, Do Not Disturb, Gaming mode, microphone, Settings) and now playing; sections, toggles, corner, look and animation are set in Settings > Hot corners |
 | **Desktop widgets** | frosted glass over your blurred wallpaper (or plain cards), auto-hide while windows are open; clock, calendar, weather, music, resources (CPU, RAM, GPU), user card, battery and a see-through audio visualizer (Bars, Mirror, Wave, Dots); a widget editor on the desktop to add, move, resize and style them |
 | **Dashboard** | slides up from the bottom of the screen (SUPER + ALT + D or push the pointer against the bottom edge): Dashboard (weather, calendar, usage, music), Wallpaper (big wallpaper cards, search, random), Performance (CPU, GPU, storage, network, memory, battery), About (your computer, distro, updates); cards you can remove, add, resize and move, looks Shadow, Graphite, Aurora and Frost |
@@ -60,7 +102,7 @@
 | **Welcome window** | "Welcome to DarkShadow's Shell" greeting once per login; turn off with `rice-welcome off` or the link in the window |
 | **Performance & gaming** | one switch turns off all blur and transparency (Hyprland, kitty, Waybar, rofi, notifications, dashboard, hot corner, dock, widgets); Gaming mode with options to keep blur, animations, shadows or gaps, Do Not Disturb (Settings > Services) |
 | **Your settings everywhere** | `./sync.sh` saves your Settings choices to `settings/`, `./install.sh` puts them on your other computers (files you changed there are kept) |
-| **Installer** | interactive (Install, Update, Choose, Restore), backs up everything, supports Arch and NixOS |
+| **Installer** | interactive (Install, Update, Choose, Restore), backs up everything, supports Arch, CachyOS, Fedora and NixOS, warns when Hyprland is too old |
 
 ## Keybinds
 `SUPER` is the main modifier.
@@ -98,14 +140,23 @@
 
 ## Installation
 
-### Arch Linux (and CachyOS, EndeavourOS, Manjaro)
+### Arch Linux (and CachyOS, EndeavourOS, Garuda)
 ```bash
 sudo pacman -S --needed git base-devel
 git clone https://github.com/shadowww-dev/shadows-shell
 cd shadows-shell
 ./install.sh
 ```
-The installer updates your system, installs every package (Hyprland, Quickshell, Waybar, swaync, rofi, kitty, fish, Nautilus, fonts, Papirus icons, Bibata cursor, btop, cava, fastfetch, cmatrix, peaclock and more), offers to install `yay` for the few AUR packages, copies the configs and sets everything up. Then log out and pick Hyprland.
+The installer updates your system, installs every package (Hyprland, Quickshell, Waybar, swaync, rofi, kitty, fish, Nautilus, fonts, Papirus icons, Bibata cursor, btop, cava, fastfetch, cmatrix, peaclock and more), uses the AUR helper you have (`paru` comes with CachyOS, or it offers `yay`) for the few AUR packages, copies the configs and sets everything up. At the end it warns you when your Hyprland is older than 0.55. Then log out and pick Hyprland.
+
+### Fedora (and Nobara)
+```bash
+sudo dnf install -y git
+git clone https://github.com/shadowww-dev/shadows-shell
+cd shadows-shell
+./install.sh
+```
+The installer turns on two COPR repositories (`nett00n/hyprland` for the newest Hyprland, its tools and Quickshell, `scottames/awww` for the wallpaper daemon), installs the rest from Fedora, and downloads what Fedora does not package (Nerd Font icons, Bibata cursor). Packages your Fedora does not have are listed and skipped. Fedora Atomic (Bazzite, Silverblue) gets the `rpm-ostree` commands to run instead.
 
 ### NixOS
 ```bash

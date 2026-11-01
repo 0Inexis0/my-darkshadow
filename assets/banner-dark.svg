@@ -61,5 +61,5 @@
         font-size="17" letter-spacing="5" fill="#a8a8a8">QUICKSHELL  ·  HYPRLAND  ·  WAYBAR</text>
 
   <text x="640" y="368" text-anchor="middle" font-family="'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace"
-        font-size="13" letter-spacing="3" fill="#6e6e6e">NixOS  ·  Arch Linux</text>
+        font-size="13" letter-spacing="3" fill="#6e6e6e">NixOS  ·  Arch Linux  ·  CachyOS  ·  Fedora</text>
 </svg>

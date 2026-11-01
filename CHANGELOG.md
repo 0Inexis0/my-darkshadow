@@ -1,5 +1,17 @@
 # Changelog
 
+## V2.70
+- CachyOS support: detected by the installer (its repositories and paru are used), CachyOS logo in the bar, dashboard, welcome window and Settings
+- Fedora and Nobara logos everywhere the distro logo shows
+- The installer warns at the end when Hyprland is older than 0.55 (the Lua config needs it) and tells you how to update it
+- Manjaro: a note that its Hyprland can be too old
+- rice-fonts downloads newer Nerd Font icons when your icon font has no CachyOS logo
+- New README, banner and social preview with the supported systems
+
+## V2.60
+- Fedora support: the installer sets up COPR (Hyprland, Quickshell, awww), installs the packages with dnf and downloads Nerd Font icons and the Bibata cursor
+- Fedora Atomic (Bazzite, Silverblue): the rpm-ostree commands are shown
+
 ## V2.52
 - Notification center: switches that are on have a white icon
 

@@ -73,6 +73,34 @@ else
   fi
 fi
 
+# icons: JetBrains Mono Nerd Font and Symbols Nerd Font (packaged on Arch and NixOS, not on Fedora)
+NF="https://github.com/ryanoasis/nerd-fonts/releases/latest/download"
+for e in "JetBrainsMono Nerd Font|JetBrainsMono|JetBrainsMonoNerdFont-*.ttf" "Symbols Nerd Font|NerdFontsSymbolsOnly|SymbolsNerdFont-*.ttf"; do
+  IFS='|' read -r fam pkg pat <<<"$e"
+  if has "$fam"; then
+    echo "$fam: already installed"
+  elif command -v tar >/dev/null && curl -fsSL -o "$tmp/$pkg.tar.xz" "$NF/$pkg.tar.xz" &&
+       mkdir -p "$dir/$pkg" && tar -xJf "$tmp/$pkg.tar.xz" -C "$dir/$pkg" --wildcards "$pat" 2>/dev/null; then
+    echo "$fam: installed"
+    changed=1
+  else
+    echo "$fam: could not download (icons may show as boxes)"
+  fi
+done
+
+# the CachyOS logo (U+F385) needs Nerd Fonts 3.4 or newer: with an older icon font it shows as a box
+# (only Nerd Fonts count: Material Symbols and Unifont use the same code range for other pictures)
+if command -v fc-list >/dev/null && ! fc-list ':charset=f385' family 2>/dev/null | grep -qi 'nerd'; then
+  echo "Logo icons (CachyOS): your Nerd Font is older, downloading the newest icons..."
+  if command -v tar >/dev/null && curl -fsSL -o "$tmp/logos.tar.xz" "$NF/NerdFontsSymbolsOnly.tar.xz" &&
+     mkdir -p "$dir/NerdFontsSymbolsOnly" && tar -xJf "$tmp/logos.tar.xz" -C "$dir/NerdFontsSymbolsOnly" --wildcards "SymbolsNerdFont-*.ttf" 2>/dev/null; then
+    echo "Logo icons: installed"
+    changed=1
+  else
+    echo "Logo icons: could not download (the CachyOS logo may show as a box)"
+  fi
+fi
+
 for e in "${CLOCK_FONTS[@]}"; do
   IFS='|' read -r fam url file <<<"$e"
   if has "$fam"; then

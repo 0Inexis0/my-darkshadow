@@ -13,7 +13,16 @@ FAMILY=other
 case " $DISTRO_ID $DISTRO_LIKE " in
   *" nixos "*) FAMILY=nixos ;;
   *" arch "*|*" archlinux "*|*" cachyos "*|*" endeavouros "*|*" manjaro "*|*" garuda "*) FAMILY=arch ;;
+  *" fedora "*|*" nobara "*|*" ultramarine "*) FAMILY=fedora ;;
 esac
+# the flavour inside a family, for messages (CachyOS, EndeavourOS, Manjaro, Nobara, Bazzite ...)
+DISTRO_FLAVOR="$DISTRO_ID"
+case "$FAMILY" in arch|fedora) : ;; *) DISTRO_FLAVOR="$FAMILY" ;; esac
+# the Hyprland config is Lua, which needs Hyprland 0.55 or newer
+HYPR_MIN_MAJOR=0; HYPR_MIN_MINOR=55
+# Fedora Atomic (Bazzite, Silverblue, Kinoite...): packages are layered with rpm-ostree, not dnf
+FEDORA_ATOMIC=0
+if [ "$FAMILY" = fedora ] && [ -e "${OSTREE_BOOTED:-/run/ostree-booted}" ]; then FEDORA_ATOMIC=1; fi
 
 # Arch packages, grouped so the installer can explain what it is doing.
 PKG_DESKTOP=(hyprland hyprlock hypridle xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent qt5-wayland qt6-wayland)
@@ -27,3 +36,17 @@ ARCH_PKGS=("${PKG_DESKTOP[@]}" "${PKG_SHELL[@]}" "${PKG_TOOLS[@]}" "${PKG_FONTS[
 
 # programs the desktop needs at runtime (shown at the end if something is missing)
 NEED_CMDS=(Hyprland hyprlock hypridle waybar qs swaync-client rofi awww matugen cava jq python3 grim slurp wl-copy wf-recorder notify-send)
+
+# Fedora packages (dnf). Hyprland, its tools and Quickshell come from the nett00n/hyprland COPR (the newest
+# Hyprland, needed for the Lua config); awww from scottames/awww. Nerd Font icons and the Bibata cursor are not
+# in Fedora: rice-fonts and the installer download them.
+FEDORA_COPRS=(nett00n/hyprland scottames/awww)
+FPKG_DESKTOP=(hyprland hyprlock hypridle hyprsunset hyprpolkitagent xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
+              qt5-qtwayland qt6-qtwayland)
+FPKG_SHELL=(quickshell waybar SwayNotificationCenter rofi-wayland awww cava kitty fish fastfetch nautilus matugen)
+FPKG_TOOLS=(wf-recorder grim slurp wl-clipboard libnotify xdg-user-dirs jq curl python3 playerctl brightnessctl pamixer
+            swayosd ImageMagick zenity NetworkManager bluez pipewire pipewire-pulseaudio wireplumber
+            btop cmatrix pavucontrol gnome-calendar upower power-profiles-daemon tar xz unzip)
+FPKG_FONTS=(rsms-inter-fonts google-noto-sans-fonts google-noto-emoji-fonts)
+FPKG_LOOK=(papirus-icon-theme adw-gtk3-theme)
+FEDORA_PKGS=("${FPKG_DESKTOP[@]}" "${FPKG_SHELL[@]}" "${FPKG_TOOLS[@]}" "${FPKG_FONTS[@]}" "${FPKG_LOOK[@]}")

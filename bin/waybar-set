@@ -100,8 +100,8 @@ def save(c):
 
 
 DISTRO_GLYPHS = {
-    "nixos": 0xF313, "arch": 0xF303, "archarm": 0xF303, "cachyos": 0xF303, "endeavouros": 0xF322,
-    "manjaro": 0xF312, "garuda": 0xF303, "ubuntu": 0xF31B, "fedora": 0xF30A, "debian": 0xF306,
+    "nixos": 0xF313, "arch": 0xF303, "archarm": 0xF303, "cachyos": 0xF385, "endeavouros": 0xF322,
+    "manjaro": 0xF312, "garuda": 0xF303, "ubuntu": 0xF31B, "fedora": 0xF30A, "nobara": 0xF380, "bazzite": 0xF30A, "ultramarine": 0xF30A, "debian": 0xF306,
     "opensuse": 0xF314, "gentoo": 0xF30D, "void": 0xF32E, "alpine": 0xF300,
 }
 
@@ -109,7 +109,7 @@ DISTRO_GLYPHS = {
 def distro_glyph():
     ids = []
     try:
-        for ln in open("/etc/os-release"):
+        for ln in open(os.environ.get("OS_RELEASE", "/etc/os-release")):
             k, _, v = ln.strip().partition("=")
             v = v.strip('"').strip("'").lower()
             if k == "ID":

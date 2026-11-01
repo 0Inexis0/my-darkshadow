@@ -11,10 +11,24 @@ ShellRoot {
     property bool closing: false
     readonly property int life: 12000
 
+    // distro logo (Nerd Font "font logos"): the same ones as the bar and the dashboard
+    property string glyph: "\uf17c"
+    readonly property var glyphs: ({
+        nixos: "\uf313", arch: "\uf303", archarm: "\uf303", cachyos: "\uf385", endeavouros: "\uf322", manjaro: "\uf312",
+        garuda: "\uf337", ubuntu: "\uf31b", fedora: "\uf30a", nobara: "\uf380", bazzite: "\uf30a", ultramarine: "\uf30a",
+        debian: "\uf306", opensuse: "\uf314", gentoo: "\uf30d", void: "\uf32e", alpine: "\uf300", linuxmint: "\uf30e", pop: "\uf32a"
+    })
     Process {
-        command: ["bash", "-c", ". /etc/os-release 2>/dev/null; echo \"${PRETTY_NAME:-${NAME:-Linux}}\""]
+        command: ["bash", "-c", ". /etc/os-release 2>/dev/null; printf '%s\\n%s\\n' \"${PRETTY_NAME:-${NAME:-Linux}}\" \"${ID:-linux} ${ID_LIKE:-}\""]
         running: true
-        stdout: StdioCollector { onStreamFinished: { const t = text.trim(); if (t.length > 0) root.distro = t } }
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const l = text.split("\n")
+                if (l[0].trim().length > 0) root.distro = l[0].trim()
+                const ids = (l[1] || "").toLowerCase().split(/\s+/)
+                for (let i = 0; i < ids.length; i++) if (root.glyphs[ids[i]] !== undefined) { root.glyph = root.glyphs[ids[i]]; break }
+            }
+        }
     }
 
     function close() {
@@ -77,11 +91,11 @@ ShellRoot {
                     font.pixelSize: 26
                     font.bold: true
                 }
-                T {
+                Row {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: "Hi " + root.user + "  ·  " + root.distro
-                    font.pixelSize: 13
-                    color: "#9a9aa4"
+                    spacing: 7
+                    T { kind: "icon"; text: root.glyph; font.pixelSize: 15; color: "#c8c8d0"; anchors.verticalCenter: parent.verticalCenter }
+                    T { text: "Hi " + root.user + "  ·  " + root.distro; font.pixelSize: 13; color: "#9a9aa4"; anchors.verticalCenter: parent.verticalCenter }
                 }
             }
 

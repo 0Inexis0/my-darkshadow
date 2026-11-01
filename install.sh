@@ -138,6 +138,34 @@ pkg_load() {
   done <"$PKG_SPLIT"
 }
 
+# fedora_check: writes the names of the FEDORA_PKGS your repositories have (one per line)
+fedora_check() {
+  dnf repoquery -q --qf '%{name}\n' "${FEDORA_PKGS[@]}" 2>/dev/null | sort -u >"$PKG_SPLIT"
+  return 0
+}
+
+# the installed Hyprland is older than the Lua config needs: prints its version, nothing when it is fine or missing
+hypr_too_old() {
+  command -v Hyprland >/dev/null 2>&1 || return 0
+  local v maj min
+  v="$(timeout 10 Hyprland --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+' | head -1)"
+  [ -n "$v" ] || return 0
+  maj="${v%%.*}"; min="${v#*.}"
+  if [ "$maj" -lt "$HYPR_MIN_MAJOR" ] || { [ "$maj" -eq "$HYPR_MIN_MAJOR" ] && [ "$min" -lt "$HYPR_MIN_MINOR" ]; }; then echo "$v"; fi
+  return 0
+}
+
+# what is special about this flavour of the family (shown once at the start)
+flavor_notes() {
+  case "$DISTRO_FLAVOR" in
+    cachyos)     note "CachyOS: its own repositories are used, and paru (which CachyOS ships) installs the AUR packages." ;;
+    endeavouros) note "EndeavourOS: plain Arch with yay or paru, everything is installed from the Arch repositories and the AUR." ;;
+    garuda)      note "Garuda: Arch based, paru is used for the AUR packages." ;;
+    manjaro)     warn "Manjaro holds packages back for weeks. Hyprland may be older than 0.55 (the Lua config needs 0.55): CachyOS or EndeavourOS work better." ;;
+    nobara)      note "Nobara: Fedora based, the Fedora steps below are used." ;;
+  esac
+}
+
 aur_helper() { command -v paru >/dev/null 2>&1 && { echo paru; return; }; command -v yay >/dev/null 2>&1 && echo yay; return 0; }
 
 install_yay() {
@@ -201,6 +229,44 @@ step_packages() {
         task "Turning on the Bluetooth service" sudo systemctl enable --now bluetooth.service
       fi
       ;;
+    fedora)
+      if [ "$FEDORA_ATOMIC" = 1 ]; then
+        warn "$DISTRO_NAME is an atomic (image based) Fedora: packages are layered with rpm-ostree."
+        note "Run these, reboot, then ./install.sh again:"
+        local c; for c in "${FEDORA_COPRS[@]}"; do note "  sudo wget -P /etc/yum.repos.d/ https://copr.fedorainfracloud.org/coprs/$c/repo/fedora-\$(rpm -E %fedora)/${c%%/*}-${c##*/}-fedora-\$(rpm -E %fedora).repo"; done
+        note "  rpm-ostree install ${FEDORA_PKGS[*]}"
+        return 0
+      fi
+      sudo_keepalive || return 0
+      if [ "$DRY_RUN" = 1 ]; then
+        info "would enable COPR ${FEDORA_COPRS[*]} and install ${#FEDORA_PKGS[@]} packages: ${FEDORA_PKGS[*]}"; return 0
+      fi
+      task "COPR support for dnf" sudo dnf install -y 'dnf-command(copr)'
+      local c
+      for c in "${FEDORA_COPRS[@]}"; do task "Enabling COPR $c" sudo dnf copr enable -y "$c"; done
+      task "Checking which packages your Fedora has" fedora_check
+      local have=() absent=() p
+      for p in "${FEDORA_PKGS[@]}"; do
+        if grep -qx "$p" "$PKG_SPLIT" 2>/dev/null; then have+=("$p"); else absent+=("$p"); fi
+      done
+      # repoquery did not work at all: just try everything
+      [ "${#have[@]}" = 0 ] && { have=("${FEDORA_PKGS[@]}"); absent=(); }
+      note "${#have[@]} packages to install${absent[0]:+, not in your repositories: ${absent[*]}}"
+      if ! task "Installing ${#have[@]} packages: desktop, shell, tools and fonts" sudo dnf install -y --skip-unavailable "${have[@]}"; then
+        warn "Installing them together failed, trying one by one"
+        local failed=()
+        for p in "${have[@]}"; do
+          rpm -q "$p" >/dev/null 2>&1 && continue
+          task "  $p" sudo dnf install -y "$p" || failed+=("$p")
+        done
+        [ "${#failed[@]}" -gt 0 ] && warn "Could not install: ${failed[*]} (see $LOG)"
+      fi
+      # power modes, unless TLP or auto-cpufreq already manage power
+      if rpm -q power-profiles-daemon >/dev/null 2>&1 && ! rpm -q tlp >/dev/null 2>&1 && ! rpm -q auto-cpufreq >/dev/null 2>&1; then
+        task "Turning on power modes (power-profiles-daemon)" sudo systemctl enable --now power-profiles-daemon.service
+      fi
+      rpm -q bluez >/dev/null 2>&1 && task "Turning on the Bluetooth service" sudo systemctl enable --now bluetooth.service
+      ;;
     nixos)
       info "NixOS installs packages from your system configuration, not from this script."
       note "Add this line to /etc/nixos/configuration.nix:"
@@ -233,6 +299,12 @@ set_look() {
     gsettings set org.gnome.desktop.interface cursor-theme "$theme" || true
     gsettings set org.gnome.desktop.interface cursor-size 24 || true
   fi
+  # Bibata is not packaged everywhere (Fedora): download it for this user when it is missing
+  if [ ! -d "/usr/share/icons/$theme" ] && [ ! -d "$HOME/.local/share/icons/$theme" ] && [ ! -d "$HOME/.icons/$theme" ]; then
+    mkdir -p "$HOME/.local/share/icons"
+    curl -fsSL -m 120 "https://github.com/ful1e5/Bibata_Cursor/releases/latest/download/$theme.tar.xz" |
+      tar -xJ -C "$HOME/.local/share/icons" 2>/dev/null || echo "could not download the $theme cursor"
+  fi
   [ -f "$HOME/.config/rice/cursor.json" ] || { mkdir -p "$HOME/.config/rice"; echo '{"theme": "Bibata-Modern-Ice", "size": 24}' >"$HOME/.config/rice/cursor.json"; }
   [ -x "$ROOT/bin/rice-cursor" ] && T=10 t "$ROOT/bin/rice-cursor" restore
   # Nautilus opens folders
@@ -262,7 +334,7 @@ quiet_fish() {
   printf '# DarkShadow'"'"'s Shell: no "Welcome to fish" message\nset -g fish_greeting\n' >"$HOME/.config/fish/conf.d/darkshadows.fish"
 }
 step_fonts() {
-  task "Inter and Rubik (interface fonts)" timeout 180 "$ROOT/bin/rice-fonts"
+  task "Fonts: Inter, Rubik, Nerd Font icons, clock fonts" timeout 400 "$ROOT/bin/rice-fonts"
   command -v fc-cache >/dev/null 2>&1 && task "Refreshing the font cache" timeout 120 fc-cache -f
   task "Dark theme for apps, Papirus icons, Bibata cursor" set_look
   if fc-list 2>/dev/null | grep -qi "JetBrainsMono Nerd"; then ok "JetBrains Mono Nerd Font (icons) is installed"
@@ -418,7 +490,7 @@ step_finish() {
   task "Theme colors for the wallpaper picker" patch_colors
   # last: it must stay the last module Hyprland loads
   [ -x "$BIN/rice-effects" ] && task "Blur, transparency and gaming mode" t "$BIN/rice-effects" apply --no-reload
-  [ -x "$BIN/rice-fonts" ] && T=180 task "Fonts: Inter, Rubik, Material Symbols (skips what you have)" t "$BIN/rice-fonts"
+  [ -x "$BIN/rice-fonts" ] && T=400 task "Fonts: Inter, Rubik, Material Symbols, Nerd Font icons (skips what you have)" t "$BIN/rice-fonts"
   if [ -x "$BIN/rice-cursor" ]; then
     local cf; cf="$(mktemp)"
     T=240 task "Cursor packs: Rose Pine (Hyprcursor), Catppuccin, Phinger" cursor_packs "$cf"
@@ -456,6 +528,7 @@ banner
 title "Your system"
 kv "User" "$USER  ($HOME)"
 kv "System" "$DISTRO_NAME"
+flavor_notes
 if [ "$IN_HYPR" = 1 ]; then kv "Session" "Hyprland is running (changes apply right away)"
 else kv "Session" "not in Hyprland (changes apply at next login)"; fi
 if [ "$FAMILY" = arch ]; then h="$(aur_helper)"; kv "AUR" "${h:-none yet (yay can be installed for you)}"; fi
@@ -491,7 +564,7 @@ fi
 if [ "$MODE" = update ]; then
   WANT=(1 0 0 1 1)
   [ "$SKIP_PKGS" = 1 ] && WANT[0]=0
-  [ "$FAMILY" = arch ] || WANT[0]=0
+  [ "$FAMILY" = arch ] || [ "$FAMILY" = fedora ] || WANT[0]=0
   if [ "$ASSUME_YES" != 1 ] && confirm "Also replace your config files (Hyprland, Waybar, ...) with the new ones? Your current ones are backed up."; then
     WANT[2]=1
   fi
@@ -562,6 +635,14 @@ else
 fi
 hr
 if [ -n "$miss" ]; then warn "Still missing: $miss"; else ok "All needed programs are installed"; fi
+old_hypr="$(hypr_too_old)"
+if [ -n "$old_hypr" ] && [ "$DRY_RUN" != 1 ]; then
+  warn "Hyprland $old_hypr is older than 0.55. The config is written in Lua and needs 0.55 or newer."
+  case "$FAMILY" in
+    arch)   note "Update it: sudo pacman -Syu hyprland (Manjaro: the new version can take a while to arrive)" ;;
+    fedora) note "Update it: sudo dnf upgrade --refresh hyprland (the nett00n/hyprland COPR carries the newest)" ;;
+  esac
+fi
 if [ "$IN_HYPR" = 1 ] && [ "$DRY_RUN" != 1 ]; then
   errs="$(t hyprctl configerrors 2>/dev/null | grep -v '^\s*$' | head -5 || true)"
   if [ -n "$errs" ]; then warn "Hyprland reports config errors:"; printf '%s\n' "$errs" | sed 's/^/        /'; fi
