@@ -370,6 +370,7 @@ def record(mode):
     os.makedirs(REC_DIR, exist_ok=True)
     os.makedirs(CACHE, exist_ok=True)
     f = time.strftime(REC_DIR + "/Recording_%Y-%m-%d_%H-%M-%S.mp4")
+    tries = []
     if shutil.which("wf-recorder"):
         cmd = ["wf-recorder", "-f", f]
         if mode == "region":
@@ -379,7 +380,11 @@ def record(mode):
             cmd += ["-g", g]
         if c["rec_sound"] or c["rec_mic"]:
             src = sound_source(mic=c["rec_mic"] and not c["rec_sound"])
-            cmd.append("--audio=" + src if src else "-a")
+            if src:
+                tries.append((cmd + ["--audio=" + src], ""))
+            tries.append((cmd + ["-a"], "Recording with the default sound input (the chosen sound did not work)"))
+        tries.append((cmd, "Recording WITHOUT sound: wf-recorder could not record sound (see ~/.cache/rice/record.log)"
+                      if (c["rec_sound"] or c["rec_mic"]) else ""))
     elif shutil.which("gpu-screen-recorder"):
         cmd = ["gpu-screen-recorder", "-w", "screen", "-f", "60", "-o", f]
         if c["rec_sound"] and c["rec_mic"]:
@@ -391,7 +396,23 @@ def record(mode):
     else:
         notify("Screen recorder missing", "Install wf-recorder (and slurp for regions)", "dialog-warning")
         return
-    p = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+    if not tries:
+        tries = [(cmd, "")]
+    # a recorder that stops right away (a sound device it does not take, ...) gets the next, simpler try
+    log = open(CACHE + "/record.log", "w")
+    p = None
+    for i, (cmd, note) in enumerate(tries):
+        log.write("$ " + " ".join(cmd) + "\n"); log.flush()
+        p = subprocess.Popen(cmd, stdout=log, stderr=log, stdin=subprocess.DEVNULL, start_new_session=True)
+        if i == len(tries) - 1:
+            break
+        try:
+            p.wait(timeout=1.5)
+            log.write("(stopped at once, code %s)\n" % p.returncode); log.flush()
+        except subprocess.TimeoutExpired:
+            break
+    if note:
+        notify("Screen recording", note, "media-record")
     open(REC_PID, "w").write(str(p.pid))
     json.dump({"start": time.time(), "file": f}, open(REC_INFO, "w"))
 
