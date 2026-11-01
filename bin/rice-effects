@@ -2,7 +2,8 @@
 """rice-effects: blur, transparency and gaming mode for the whole shell (Settings > Services).
 
   rice-effects state                    JSON: {lite, gaming, flat, opts}
-  rice-effects lite on|off|toggle       turn off ALL blur and transparency (for slower computers)
+  rice-effects lite on|off|toggle       Light mode for slower computers: no blur, no transparency, no animations, no
+                                        shadows, the visualizer stops and widgets pause while a window covers them
   rice-effects gaming on|off|toggle     gaming mode (hot corner, Settings > Services)
   rice-effects set KEY on|off           gaming mode options: keep_blur keep_anim keep_gaps keep_shadows dnd edge
   rice-effects apply                    write everything again (the installer runs this)
@@ -29,6 +30,7 @@ CFG = DIR + "/effects.json"
 GAMING_ON = DIR + "/gaming-on"          # this computer is in gaming mode right now (not synced)
 CACHE = HOME + "/.cache/rice"
 FLAT = CACHE + "/flat"                  # exists while blur and transparency are off
+LITE = CACHE + "/lite"                  # exists while Light mode is on (the desktop widgets read it)
 DND_BY_US = CACHE + "/gaming-dnd"
 HYPR = HOME + "/.config/hypr"
 LUA = HYPR + "/rice-gaming.lua"
@@ -113,6 +115,10 @@ def lua_text(c):
                    "pcall(hl.config, { decoration = { blur = { enabled = false } } })\n"
                    "pcall(hl.config, { decoration = { active_opacity = 1.0, inactive_opacity = 1.0, fullscreen_opacity = 1.0 } })\n"
                    'pcall(hl.window_rule, { name = "rice-flat-opaque", match = { class = ".*" }, opacity = "1.0 override 1.0 override" })\n')
+    if c["lite"]:
+        out.append("-- Light mode: no animations, no shadows\n"
+                   "pcall(hl.config, { animations = { enabled = false } })\n"
+                   "pcall(hl.config, { decoration = { shadow = { enabled = false } } })\n")
     if g:
         out.append("-- gaming mode\n")
         if not c["keep_anim"]:
@@ -121,7 +127,7 @@ def lua_text(c):
             out.append("pcall(hl.config, { decoration = { shadow = { enabled = false } } })\n")
         if not c["keep_gaps"]:
             out.append("pcall(hl.config, { general = { gaps_in = 0, gaps_out = 0 } })\n")
-    if not fl and not g:
+    if not fl and not g and not c["lite"]:
         out.append("-- nothing is changed right now\n")
     return "".join(out)
 
@@ -177,6 +183,10 @@ def apply(c, reload_hypr=True, quiet=False):
         open(FLAT, "w").write("1\n")
     elif os.path.exists(FLAT):
         os.remove(FLAT)
+    if c["lite"]:
+        open(LITE, "w").write("1\n")
+    elif os.path.exists(LITE):
+        os.remove(LITE)
     os.makedirs(HYPR, exist_ok=True)
     old = open(LUA).read() if os.path.exists(LUA) else ""
     new = lua_text(c)
@@ -223,8 +233,8 @@ def main(argv):
         c["lite"] = on
         save(c)
         apply(c)
-        notify("Blur & transparency " + ("off" if on else "back"),
-               "Everything is solid now. Lighter on slower computers." if on else "See-through panels and blur are back.")
+        notify("Light mode " + ("on" if on else "off"),
+               "No blur, no animations, calmer widgets. Lighter on slower computers." if on else "Blur, transparency and animations are back.")
     elif cmd == "gaming":
         if arg not in ("on", "off", "toggle"):
             sys.exit("usage: rice-effects gaming on|off|toggle")

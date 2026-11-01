@@ -35,7 +35,7 @@ FloatingWindow {
         monitor: ["monitor", "screen", "display"], dark: ["dark", "black", "theme"], wallpaper: ["wallpaper", "background"],
         background: ["background", "wallpaper"], top: ["top", "position"], bottom: ["bottom", "position"],
         place: ["position"], where: ["position"], size: ["size", "width", "height", "scale"], big: ["size", "scale"],
-        speed: ["speed", "animation"], fast: ["speed"], slow: ["speed"], power: ["power", "battery"], wifi: ["wi-fi", "wifi", "network"],
+        speed: ["speed", "animation"], fast: ["speed"], slow: ["speed", "light", "performance"], lag: ["light", "performance"], laggy: ["light", "performance"], performance: ["light", "performance"], power: ["power", "battery"], wifi: ["wi-fi", "wifi", "network"],
         launcher: ["rofi", "launcher"], apps: ["apps", "rofi", "dock"], game: ["gaming"], games: ["gaming"]
     })
     function buildIndex() {

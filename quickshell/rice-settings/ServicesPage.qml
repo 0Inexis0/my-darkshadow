@@ -72,7 +72,7 @@ Item {
     }
     function setLite(on) {
         const n = JSON.parse(JSON.stringify(fx)); n.lite = on; fx = n
-        fxRun(["lite", on ? "on" : "off"], on ? "Blur & transparency: off everywhere" : "Blur & transparency: back")
+        fxRun(["lite", on ? "on" : "off"], on ? "Light mode on" : "Light mode off")
     }
     function setGaming(on) {
         const n = JSON.parse(JSON.stringify(fx)); n.gaming = on; fx = n
@@ -220,10 +220,10 @@ Item {
                 }
             }
 
-            SectionTitle { text: "Performance"; sub: "For slower computers: everything becomes solid, nothing is blurred." }
+            SectionTitle { text: "Performance"; sub: "For slower computers: everything becomes solid, nothing is blurred or animated." }
             ToggleRow {
-                label: "Turn off all blur & transparency"
-                desc: "Hyprland, kitty, Waybar, rofi, notifications, dashboard, hot corner, dock and widgets"
+                label: "Light mode"
+                desc: "No blur, transparency, animations or shadows anywhere; the visualizer stops and widgets rest while a window covers them. Also on Home"
                 checked: page.fx.lite === true
                 onToggled: function(v) { page.setLite(v) }
             }

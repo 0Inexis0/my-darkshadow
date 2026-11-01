@@ -44,6 +44,19 @@ Item {
         return page.ctl.colorMode
     }
 
+    // Light mode (rice-effects lite): for slower computers
+    property bool lite: false
+    function setLite(on) {
+        lite = on
+        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-effects\" lite \"$1\"", "_", on ? "on" : "off"])
+        page.ctl.status = "Light mode " + (on ? "on" : "off")
+    }
+    Process {
+        command: ["bash", "-c", "\"$HOME/.local/bin/rice-effects\" state"]
+        running: true
+        stdout: StdioCollector { onStreamFinished: { try { page.lite = JSON.parse(text).lite === true } catch (e) { } } }
+    }
+
     Timer { interval: 15000; running: true; repeat: true; onTriggered: page.now = new Date() }
     Timer { interval: 7000; running: true; repeat: true; onTriggered: tipFade.restart() }
     Process {
@@ -178,6 +191,42 @@ Item {
                     NumberAnimation { target: tipCol; property: "opacity"; to: 1; duration: 320 }
                 }
                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: tipFade.restart() }
+            }
+
+            // Light mode: one switch for slower computers, right on Home
+            Rectangle {
+                width: parent.width
+                height: 76
+                radius: 14
+                color: "#141414"
+                border.width: 1
+                border.color: page.lite ? "#4a4a4f" : "#1f1f1f"
+                Behavior on border.color { ColorAnimation { duration: 160 } }
+                Rectangle {
+                    id: litei
+                    x: 14
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 40; height: 40; radius: 12
+                    color: Qt.rgba(1, 1, 1, page.lite ? 0.14 : 0.06)
+                    T { kind: "icon"; anchors.centerIn: parent; text: "\uf0e7"; font.pixelSize: 17 }
+                }
+                Column {
+                    anchors.left: litei.right
+                    anchors.leftMargin: 12
+                    anchors.right: litetog.left
+                    anchors.rightMargin: 12
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 2
+                    T { text: "Light mode"; font.pixelSize: 13; font.bold: true }
+                    T { kind: "reading"; text: "Running slow? No blur, animations or shadows, and the widgets rest when a window covers them"; color: "#8a8a8a"; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
+                }
+                Tog {
+                    id: litetog
+                    anchors.right: parent.right; anchors.rightMargin: 16
+                    anchors.verticalCenter: parent.verticalCenter
+                    checked: page.lite
+                    onToggled: function(v) { page.setLite(v) }
+                }
             }
 
             T { kind: "title"; text: "Make it yours"; font.pixelSize: 16; font.bold: true; topPadding: 10 }

@@ -91,13 +91,15 @@ ShellRoot {
     Process {
         id: cfgProc
         // desktop.json, then "@@flat" while rice-effects has blur and transparency off
-        command: ["bash", "-c", "cat \"$HOME/.config/rice/desktop.json\" 2>/dev/null; [ -e \"$HOME/.cache/rice/flat\" ] && printf '@@flat'"]
+        command: ["bash", "-c", "cat \"$HOME/.config/rice/desktop.json\" 2>/dev/null; [ -e \"$HOME/.cache/rice/flat\" ] && printf '@@flat'; [ -e \"$HOME/.cache/rice/lite\" ] && printf '@@lite'"]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
                 const fl = text.indexOf("@@flat") >= 0
                 if (fl !== Look.flat) Look.flat = fl
-                const t = text.replace("@@flat", "")
+                const lt = text.indexOf("@@lite") >= 0
+                if (lt !== Look.lite) Look.lite = lt
+                const t = text.replace("@@flat", "").replace("@@lite", "")
                 if (t.trim().length === 0 || t === root.cfgText) return
                 try {
                     const j = JSON.parse(t)
@@ -142,7 +144,7 @@ ShellRoot {
     }
 
     // ---- auto-hide (Settings > Desktop): widgets fade out while windows are open on this screen
-    readonly property bool autoHide: cfg.autoHide === true
+    readonly property bool autoHide: cfg.autoHide === true || Look.lite
     property bool busy: false
     readonly property bool hideWidgets: autoHide && busy && !editing && !locked
     Process {
@@ -238,7 +240,7 @@ ShellRoot {
         bw: root.sw; bh: root.sh
         defW: root.sw; defH: 180; defX: 0; defY: root.sh - 180
         Component.onCompleted: root.reg(wid, vizWin)
-        VizWidget { anchors.fill: parent; running: root.on("visualizer") && !root.hideWidgets; style: vizWin.sty !== "" ? vizWin.sty : "bars"; flip: vizWin.flp }
+        VizWidget { anchors.fill: parent; running: root.on("visualizer") && !root.hideWidgets && !Look.lite; style: vizWin.sty !== "" ? vizWin.sty : "bars"; flip: vizWin.flp }
     }
 
     EditorWindow { root: root }

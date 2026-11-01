@@ -8,4 +8,6 @@ Singleton {
     property bool blur: true
     // no blur and no transparency at all (Settings > Services: Lite, or gaming mode)
     property bool flat: false
+    // Light mode (Settings > Home): the visualizer stops and widgets pause while a window covers them
+    property bool lite: false
 }
