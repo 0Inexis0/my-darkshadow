@@ -1,5 +1,8 @@
 # Changelog
 
+## V2.92
+- Desktop widgets no longer hide when only floating windows are open (Settings, pop-ups, a floating-only layout); only tiled windows hide them with "Auto-hide widgets"
+
 ## V2.91
 - Sounds stay quiet when "Sounds of your desktop" is off (also right after opening Settings or the hot corner)
 - No more sound when Settings, the dashboard or the hot corner open and close

@@ -171,7 +171,7 @@ Item {
 
             ToggleRow {
                 label: "Auto-hide widgets"
-                desc: "Hide them while a window is open on the screen; they come back on an empty desktop. Lighter on the computer"
+                desc: "Hide them while a tiled window is open on the screen; floating windows (Settings, pop-ups) leave them alone. Lighter on the computer"
                 checked: page.ctl.dst.autoHide === true
                 onToggled: function(v) {
                     const d = JSON.parse(JSON.stringify(page.ctl.dst)); d.autoHide = v; page.ctl.dst = d

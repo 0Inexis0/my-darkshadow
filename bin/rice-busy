@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""rice-busy: prints 1 while the screen has windows on it, 0 when the desktop is empty.
+"""rice-busy: prints 1 while the screen has tiled windows on it, 0 when the desktop is empty.
+Floating windows (Settings, pop-ups, a floating-only layout) do not count: the widgets stay.
 
   rice-busy [MONITOR]     MONITOR: name like DP-1 (default: the focused one)
 
@@ -27,8 +28,8 @@ def hypr(what):
 
 def busy(mon_name):
     mons = hypr("monitors")
-    wss = hypr("workspaces")
-    if not mons or wss is None:
+    clients = hypr("clients")
+    if not mons or clients is None:
         return False
     mon = None
     for m in mons:
@@ -40,7 +41,16 @@ def busy(mon_name):
     sp = mon.get("specialWorkspace", {}) or {}
     if sp.get("id"):
         ids.add(sp.get("id"))
-    return any(w.get("id") in ids and w.get("windows", 0) > 0 for w in wss)
+    # only tiled (or fullscreen) windows hide the widgets; floating ones leave them alone
+    for c in clients:
+        if (c.get("workspace", {}) or {}).get("id") not in ids:
+            continue
+        if not c.get("mapped", True) or c.get("hidden", False):
+            continue
+        if c.get("floating", False) and not c.get("fullscreen", 0):
+            continue
+        return True
+    return False
 
 
 def sock_path():
