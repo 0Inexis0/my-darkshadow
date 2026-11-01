@@ -37,8 +37,8 @@
   <img src="assets/screenshot.png" alt="DarkShadow's Shell: desktop with widgets" width="100%">
 </p>
 <p align="center">
-  <img src="assets/screenshot-settings.png" alt="The Settings app (SUPER + U)" width="100%"><br>
-  <sub>The Settings app (<code>SUPER + U</code>)</sub>
+  <img src="assets/screenshot-home.png" alt="The Settings app (SUPER + U) over the desktop widgets" width="100%"><br>
+  <sub>The Settings app (<code>SUPER + U</code>) with desktop widgets, calendar and audio visualizer</sub>
 </p>
 <!-- more screenshots: put the files in assets/ and add them here -->
 
