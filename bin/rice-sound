@@ -71,7 +71,20 @@ def dnd():
         return False
 
 
+def let_go():
+    """close swaync's pipe before anything else (swaync 0.12 crashes if it stays open after we end)"""
+    try:
+        fd = os.open(os.devnull, os.O_RDWR)
+        for n in (0, 1, 2):
+            os.dup2(fd, n)
+        if fd > 2:
+            os.close(fd)
+    except OSError:
+        pass
+
+
 def notify():
+    let_go()
     # return to swaync at once, decide in the background
     if os.fork() > 0:
         return

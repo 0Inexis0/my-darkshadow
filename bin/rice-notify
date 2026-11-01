@@ -16,8 +16,9 @@ import time
 
 HOME = os.path.expanduser("~")
 DIR = HOME + "/.config/rice"
-# swaync may run with a short PATH (started by D-Bus or systemd): its scripts go through rice-run
-RUN = "/bin/sh " + HOME + "/.local/bin/rice-run"
+# swaync may run with a short PATH (started by D-Bus or systemd): its scripts go through rice-run.
+# "exec": swaync's own /bin/sh becomes rice-run, so its output pipe closes at once (swaync 0.12 crash)
+RUN = "exec /bin/sh " + HOME + "/.local/bin/rice-run"
 KEEP_LOG = HOME + "/.cache/rice/notify-keep.log"
 CFG = DIR + "/notify.json"
 FONTS = DIR + "/fonts.json"
@@ -820,16 +821,18 @@ def keep():
     app = e.get("SWAYNC_APP_NAME") or "Notification"
     urg = {"low": "low", "critical": "critical"}.get(e.get("SWAYNC_URGENCY", "").lower(), "normal")
     icon = e.get("SWAYNC_DESKTOP_ENTRY") or app.lower()
-    if os.fork() > 0:      # give swaync its answer at once
-        return
-    os.setsid()
-    # let go of swaync's pipes, so it is not kept waiting for us
+    # let go of swaync's pipe before anything else: swaync 0.12 crashes when it is still open after we end
     try:
         fd = os.open(os.devnull, os.O_RDWR)
         for n in (0, 1, 2):
             os.dup2(fd, n)
+        if fd > 2:
+            os.close(fd)
     except OSError:
         pass
+    if os.fork() > 0:      # give swaync its answer at once
+        return
+    os.setsid()
     time.sleep(0.2)        # after swaync has removed the clicked one
     err = post_kept(app, icon, summary, body, urg)
     keep_log(("kept: " if not err else "FAILED: " + err + " for: ") + app + " / " + summary[:60])
