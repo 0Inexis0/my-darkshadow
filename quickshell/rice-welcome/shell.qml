@@ -2,209 +2,297 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import QtQuick
+import QtQuick.Effects
 
+// The welcome intro, shown once after DarkShadow's Shell is installed (rice-welcome show plays it again).
+// Night falls over the desktop from the middle of the screen, a few words rise letter by letter, the moon
+// draws itself in, and "Take a look" opens the night up again from the moon. Then Settings opens with a
+// short tour.
 ShellRoot {
     id: root
     readonly property string home: Quickshell.env("HOME")
     readonly property string user: Quickshell.env("USER")
     property string distro: "Linux"
-    property bool closing: false
-    readonly property int life: 12000
+    property string version: ""
+    property bool leaving: false
 
     // distro logo (Nerd Font "font logos"): the same ones as the bar and the dashboard
-    property string glyph: "\uf17c"
+    property string glyph: ""
     readonly property var glyphs: ({
-        nixos: "\uf313", arch: "\uf303", archarm: "\uf303", cachyos: "\uf385", endeavouros: "\uf322", manjaro: "\uf312",
-        garuda: "\uf337", ubuntu: "\uf31b", fedora: "\uf30a", nobara: "\uf380", bazzite: "\uf30a", ultramarine: "\uf30a",
-        debian: "\uf306", opensuse: "\uf314", gentoo: "\uf30d", void: "\uf32e", alpine: "\uf300", linuxmint: "\uf30e", pop: "\uf32a"
+        nixos: "", arch: "", archarm: "", cachyos: "", endeavouros: "", manjaro: "",
+        garuda: "", ubuntu: "", fedora: "", nobara: "", bazzite: "", ultramarine: "",
+        debian: "", opensuse: "", gentoo: "", void: "", alpine: "", linuxmint: "", pop: ""
     })
     Process {
-        command: ["bash", "-c", ". /etc/os-release 2>/dev/null; printf '%s\\n%s\\n' \"${PRETTY_NAME:-${NAME:-Linux}}\" \"${ID:-linux} ${ID_LIKE:-}\""]
+        command: ["bash", "-c", ". /etc/os-release 2>/dev/null; printf '%s\\n%s\\n' \"${NAME:-Linux}\" \"${ID:-linux} ${ID_LIKE:-}\"; tr -d ' \\r\\n' 2>/dev/null <\"$HOME/.config/rice/version\""]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
                 const l = text.split("\n")
-                if (l[0].trim().length > 0) root.distro = l[0].trim()
+                if ((l[0] || "").trim().length > 0) root.distro = l[0].trim()
                 const ids = (l[1] || "").toLowerCase().split(/\s+/)
                 for (let i = 0; i < ids.length; i++) if (root.glyphs[ids[i]] !== undefined) { root.glyph = root.glyphs[ids[i]]; break }
+                root.version = (l[2] || "").trim().replace(/^[vV]/, "")
             }
         }
     }
 
-    function close() {
-        if (closing) return
-        closing = true
-        fade.start()
+    // "Take a look": Settings opens with the tour while the night opens up; Esc: just leave
+    function finish(tour) {
+        if (leaving) return
+        leaving = true
+        if (tour) Quickshell.execDetached(["bash", "-c", "sleep 0.6; \"$HOME/.local/bin/rice-welcome\" tour"])
+        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-welcome\" seen"])
+        win.openUp()
     }
 
     PanelWindow {
         id: win
         color: "transparent"
-        implicitWidth: 560
-        implicitHeight: 350
+        anchors { top: true; bottom: true; left: true; right: true }
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "rice-welcome"
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
-        Rectangle {
-            id: card
+        // ---------- the night: a circle grows from the middle and covers the desktop ----------
+        // at the end the circle turns into a hole that grows out of the moon and gives the desktop back
+        property real iris: 0             // 0 → 1
+        property bool opening: false
+        property real holeX: width / 2
+        property real holeY: height / 2
+        readonly property real diag: Math.sqrt(width * width + height * height)
+        NumberAnimation on iris { from: 0; to: 1; duration: 900; easing.type: Easing.InOutCubic; running: true }
+        NumberAnimation {
+            id: openOut
+            target: win; property: "iris"; from: 0; to: 1
+            duration: 900; easing.type: Easing.InCubic
+            onFinished: Qt.quit()
+        }
+        function openUp() {
+            const p = logo.mapToItem(scene, logo.width / 2, logo.height / 2)
+            holeX = p.x; holeY = p.y
+            opening = true
+            iris = 0
+            openOut.start()
+        }
+
+        Item {
+            id: maskShape
             anchors.fill: parent
-            radius: 28
-            color: Qt.rgba(0.07, 0.07, 0.08, 0.62)
-            border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.09)
-            opacity: 0
-            scale: 0.94
-            transformOrigin: Item.Center
-
-            NumberAnimation on opacity { id: fin; to: 1; duration: 380; easing.type: Easing.OutCubic; running: true }
-            NumberAnimation on scale { to: 1; duration: 420; easing.type: Easing.OutBack; easing.overshoot: 0.8; running: true }
-            NumberAnimation { id: fade; target: card; property: "opacity"; to: 0; duration: 260; easing.type: Easing.InCubic; onFinished: Qt.quit() }
-
-            // soft glow behind the title
+            visible: false
+            layer.enabled: true
             Rectangle {
-                width: 420; height: 160; radius: 80
-                anchors.horizontalCenter: parent.horizontalCenter
-                y: 20
-                color: Qt.rgba(0.55, 0.48, 1, 0.10)
+                // closing: from the middle out to the corners; opening: from the moon out past the corners
+                readonly property real r: win.iris * win.diag * (win.opening ? 1.05 : 0.56) + 1
+                x: (win.opening ? win.holeX : win.width / 2) - r
+                y: (win.opening ? win.holeY : win.height / 2) - r
+                width: 2 * r; height: 2 * r; radius: r
+                color: "#ffffff"
             }
+        }
 
-            RoundImage {
-                id: face
-                width: 84; height: 84
-                cornerRadius: 24
-                anchors.horizontalCenter: parent.horizontalCenter
-                y: 30
-                source: "file://" + root.home + "/.face"
-                fallback: root.user.length > 0 ? root.user[0].toUpperCase() : "?"
+        Item {
+            id: scene
+            anchors.fill: parent
+            visible: false
+            layer.enabled: true
+
+            // deep night with a faint glow where the moon will be
+            Rectangle {
+                anchors.fill: parent
+                gradient: Gradient {
+                    GradientStop { position: 0; color: "#0b0c14" }
+                    GradientStop { position: 0.6; color: "#06070b" }
+                    GradientStop { position: 1; color: "#030304" }
+                }
+            }
+            Canvas {
+                // soft moonlight, no edges
+                width: Math.min(parent.width, parent.height) * 1.3; height: width
+                anchors.centerIn: parent
+                anchors.verticalCenterOffset: -parent.height * 0.06
+                opacity: stage.step >= 3 ? 1 : 0.4
+                Behavior on opacity { NumberAnimation { duration: 1600 } }
+                onPaint: {
+                    const ctx = getContext("2d")
+                    ctx.reset()
+                    const g = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, width / 2)
+                    g.addColorStop(0, Qt.rgba(0.54, 0.58, 0.85, 0.16))
+                    g.addColorStop(0.5, Qt.rgba(0.54, 0.58, 0.85, 0.05))
+                    g.addColorStop(1, Qt.rgba(0.54, 0.58, 0.85, 0))
+                    ctx.fillStyle = g
+                    ctx.fillRect(0, 0, width, height)
+                }
+            }
+            StarField {
+                anchors.fill: parent
+                count: 10
+                opacity: stage.step >= 1 ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: 1200 } }
             }
 
             Column {
-                anchors.horizontalCenter: parent.horizontalCenter
-                y: 128
-                spacing: 6
+                anchors.centerIn: parent
+                opacity: stage.step === 1 ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: 280 } }
+                Rise { text: "Hi, " + root.user + "."; px: 46; shown: stage.step === 1 }
+            }
+            Column {
+                anchors.centerIn: parent
+                spacing: 16
+                opacity: stage.step === 2 ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: 450 } }
+                Rise { text: "Your new desktop is ready."; px: 38; startDelay: 320; shown: stage.step === 2 }
                 T {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    kind: "title"
-                    text: "Welcome to DarkShadow's Shell"
-                    font.pixelSize: 26
-                    font.bold: true
-                }
-                Row {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: 7
-                    T { kind: "icon"; text: root.glyph; font.pixelSize: 15; color: "#c8c8d0"; anchors.verticalCenter: parent.verticalCenter }
-                    T { text: "Hi " + root.user + "  ·  " + root.distro; font.pixelSize: 13; color: "#9a9aa4"; anchors.verticalCenter: parent.verticalCenter }
-                }
-            }
-
-            Row {
-                id: tips
-                anchors.horizontalCenter: parent.horizontalCenter
-                y: 202
-                spacing: 10
-                Repeater {
-                    model: [
-                        { k: "SUPER + U", v: "Settings" },
-                        { k: "SUPER + Q", v: "Terminal" },
-                        { k: "SUPER + W", v: "Wallpaper" }
-                    ]
-                    delegate: Rectangle {
-                        width: 160; height: 52; radius: 14
-                        color: Qt.rgba(1, 1, 1, 0.05)
-                        border.width: 1
-                        border.color: Qt.rgba(1, 1, 1, 0.06)
-                        Column {
-                            anchors.centerIn: parent
-                            spacing: 3
-                            T { anchors.horizontalCenter: parent.horizontalCenter; kind: "mono"; text: modelData.k; font.pixelSize: 12; font.bold: true }
-                            T { anchors.horizontalCenter: parent.horizontalCenter; text: modelData.v; font.pixelSize: 11; color: "#8a8a94" }
-                        }
-                    }
-                }
-            }
-
-            Row {
-                anchors.horizontalCenter: parent.horizontalCenter
-                y: 274
-                spacing: 12
-
-                Rectangle {
-                    width: 168; height: 40; radius: 14
-                    color: openMouse.containsMouse ? "#ffffff" : "#F6F5F4"
-                    Behavior on color { ColorAnimation { duration: 120 } }
-                    T { anchors.centerIn: parent; text: "Open Settings"; font.pixelSize: 13; font.bold: true; color: "#0d0d0d" }
-                    MouseArea {
-                        id: openMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-settings\""])
-                            root.close()
-                        }
-                    }
-                }
-                Rectangle {
-                    width: 110; height: 40; radius: 14
-                    color: closeMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.06)
-                    Behavior on color { ColorAnimation { duration: 120 } }
-                    T { anchors.centerIn: parent; text: "Close"; font.pixelSize: 13 }
-                    MouseArea {
-                        id: closeMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.close()
-                    }
+                    text: "Every corner of it is yours to change."
+                    font.pixelSize: 16
+                    color: "#9a9db0"
+                    opacity: stage.step === 2 ? 1 : 0
+                    Behavior on opacity { SequentialAnimation { PauseAnimation { duration: 700 } NumberAnimation { duration: 600 } } }
                 }
             }
 
             T {
-                id: never
-                anchors.right: parent.right
-                anchors.rightMargin: 20
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 14
-                text: "Don't show again"
-                font.pixelSize: 10
-                color: neverMouse.containsMouse ? "#c8c8cc" : "#6a6a72"
-                MouseArea {
-                    id: neverMouse
-                    anchors.fill: parent
-                    anchors.margins: -6
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-welcome\" off"])
-                        root.close()
+                anchors.right: parent.right; anchors.bottom: parent.bottom
+                anchors.margins: 26
+                kind: "mono"
+                text: stage.step >= 4 ? "Enter  take a look      Esc  skip" : "Esc  skip"
+                font.pixelSize: 11; font.letterSpacing: 1
+                color: "#5c5f6e"
+                opacity: stage.step >= 1 ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: 800 } }
+            }
+        }
+
+        MultiEffect {
+            anchors.fill: parent
+            source: scene
+            maskEnabled: true
+            maskSource: maskShape
+            maskInverted: win.opening
+            maskThresholdMin: 0.5
+            maskSpreadAtMin: 0.1
+        }
+
+        // a click anywhere before the button is there jumps ahead
+        MouseArea {
+            anchors.fill: parent
+            enabled: stage.step < 4 && !root.leaving
+            onClicked: stage.step = Math.min(4, stage.step + 1)
+        }
+
+        // ---------- the moon, the name and "Take a look" (on top, so the button can be clicked) ----------
+        Column {
+            id: hero
+            anchors.centerIn: parent
+            anchors.verticalCenterOffset: -20
+            spacing: 6
+            visible: stage.step >= 3
+            opacity: root.leaving ? 0 : 1
+            scale: root.leaving ? 1.08 : 1
+            Behavior on opacity { NumberAnimation { duration: 380; easing.type: Easing.InCubic } }
+            Behavior on scale { NumberAnimation { duration: 500; easing.type: Easing.InCubic } }
+            MoonLogo {
+                id: logo
+                anchors.horizontalCenter: parent.horizontalCenter
+                size: 210
+                intro: true
+            }
+            T {
+                anchors.horizontalCenter: parent.horizontalCenter
+                kind: "title"
+                text: "DarkShadow's Shell"
+                font.pixelSize: 40
+                font.bold: true
+                // the letters come together
+                font.letterSpacing: name.on ? -0.5 : 16
+                opacity: name.on ? 1 : 0
+                Behavior on font.letterSpacing { NumberAnimation { duration: 1300; easing.type: Easing.OutCubic } }
+                Behavior on opacity { NumberAnimation { duration: 900 } }
+                Timer { id: name; property bool on: false; interval: 650; running: stage.step >= 3; onTriggered: on = true }
+            }
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 8
+                opacity: name.on ? 1 : 0
+                Behavior on opacity { SequentialAnimation { PauseAnimation { duration: 800 } NumberAnimation { duration: 700 } } }
+                T { kind: "icon"; text: root.glyph; font.pixelSize: 14; color: "#9a9db0"; anchors.verticalCenter: parent.verticalCenter }
+                T {
+                    kind: "mono"
+                    text: (root.version ? "V" + root.version + "  ·  " : "") + root.distro + "  ·  Hyprland"
+                    font.pixelSize: 12; font.letterSpacing: 2; color: "#7d8092"
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
+            Item { width: 1; height: 26 }
+
+            // the preview button: a ring that breathes around it, the arrow moves on hover
+            Item {
+                id: go
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: 208; height: 52
+                opacity: stage.step >= 4 ? 1 : 0
+                scale: stage.step >= 4 ? 1 : 0.85
+                Behavior on opacity { NumberAnimation { duration: 500 } }
+                Behavior on scale { NumberAnimation { duration: 600; easing.type: Easing.OutBack } }
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: parent.width + 14; height: parent.height + 14; radius: height / 2
+                    color: "transparent"
+                    border.width: 1
+                    border.color: Qt.rgba(1, 1, 1, 0.2)
+                    SequentialAnimation on opacity {
+                        running: stage.step >= 4; loops: Animation.Infinite
+                        NumberAnimation { from: 0.25; to: 1; duration: 1400; easing.type: Easing.InOutSine }
+                        NumberAnimation { from: 1; to: 0.25; duration: 1400; easing.type: Easing.InOutSine }
                     }
                 }
-            }
-
-            // time left, pauses while the pointer is over the card
-            Rectangle {
-                id: bar
-                anchors.left: parent.left
-                anchors.bottom: parent.bottom
-                anchors.leftMargin: 28
-                anchors.bottomMargin: 0
-                height: 2
-                radius: 1
-                color: Qt.rgba(1, 1, 1, 0.28)
-                width: 0
-                NumberAnimation on width {
-                    id: life
-                    from: card.width - 56
-                    to: 0
-                    duration: root.life
-                    running: true
-                    paused: hover.hovered
-                    onFinished: root.close()
+                Rectangle {
+                    anchors.fill: parent
+                    radius: height / 2
+                    color: goMouse.containsMouse ? "#ffffff" : "#E9EAF1"
+                    Behavior on color { ColorAnimation { duration: 140 } }
+                    Row {
+                        anchors.centerIn: parent
+                        spacing: goMouse.containsMouse ? 13 : 8
+                        Behavior on spacing { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        T { text: "Take a look"; font.pixelSize: 15; font.bold: true; color: "#0b0c12"; anchors.verticalCenter: parent.verticalCenter }
+                        T { kind: "icon"; text: ""; font.pixelSize: 13; color: "#0b0c12"; anchors.verticalCenter: parent.verticalCenter }
+                    }
+                }
+                MouseArea {
+                    id: goMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    enabled: stage.step >= 4 && !root.leaving
+                    onClicked: root.finish(true)
                 }
             }
-            HoverHandler { id: hover }
+        }
+
+        // ---------- timeline ----------
+        Item {
+            id: stage
+            property int step: 0
+            focus: true
+            Keys.onEscapePressed: root.finish(false)
+            Keys.onReturnPressed: { if (step >= 4) root.finish(true); else stage.step = 4 }
+            Keys.onEnterPressed: { if (step >= 4) root.finish(true); else stage.step = 4 }
+            Keys.onSpacePressed: { if (step < 4) stage.step = stage.step + 1 }
+            SequentialAnimation {
+                running: true
+                PauseAnimation { duration: 950 }
+                ScriptAction { script: if (stage.step < 1) stage.step = 1 }
+                PauseAnimation { duration: 2300 }
+                ScriptAction { script: if (stage.step < 2) stage.step = 2 }
+                PauseAnimation { duration: 2900 }
+                ScriptAction { script: if (stage.step < 3) stage.step = 3 }
+                PauseAnimation { duration: 2100 }
+                ScriptAction { script: if (stage.step < 4) stage.step = 4 }
+            }
         }
     }
 }

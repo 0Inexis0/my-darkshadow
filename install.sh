@@ -6,7 +6,7 @@ set -Euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RICE_VERSION="$(tr -d ' \r\n' <"$ROOT/VERSION" 2>/dev/null || true)"; RICE_VERSION="${RICE_VERSION#[vV]}"; RICE_VERSION="${RICE_VERSION:-2.02}"
-HAVE_VERSION="$(tr -d ' \r\n' <"$HOME/.config/rice/version" 2>/dev/null || true)"; HAVE_VERSION="${HAVE_VERSION#[vV]}"
+HAVE_VERSION="$(tr -d ' \r\n' 2>/dev/null <"$HOME/.config/rice/version" || true)"; HAVE_VERSION="${HAVE_VERSION#[vV]}"
 # shellcheck source=install/lib/ui.sh
 . "$ROOT/install/lib/ui.sh"
 # shellcheck source=install/lib/distro.sh
@@ -140,8 +140,34 @@ pkg_load() {
 
 # fedora_check: writes the names of the FEDORA_PKGS your repositories have (one per line)
 fedora_check() {
-  dnf repoquery -q --qf '%{name}\n' "${FEDORA_PKGS[@]}" 2>/dev/null | sort -u >"$PKG_SPLIT"
+  local names=() p
+  for p in "${FEDORA_PKGS[@]}"; do IFS='|' read -r -a alts <<<"$p"; names+=("${alts[@]}"); done
+  dnf repoquery -q --qf '%{name}\n' "${names[@]}" 2>/dev/null | sort -u >"$PKG_SPLIT"
   return 0
+}
+# fedora_pick "a|b": the first name your repositories have (nothing when none)
+fedora_pick() {
+  local a
+  IFS='|' read -r -a alts <<<"$1"
+  for a in "${alts[@]}"; do grep -qx "$a" "$PKG_SPLIT" 2>/dev/null && { echo "$a"; return 0; }; done
+  return 0
+}
+
+# matugen from its GitHub releases (Fedora 43 and older have no package): ~/.local/bin/matugen
+matugen_download() {
+  local arch url d
+  arch="$(uname -m)"
+  url="$(curl -fsSL --max-time 20 https://api.github.com/repos/InioX/matugen/releases/latest 2>/dev/null |
+         grep -oE '"browser_download_url": *"[^"]+"' | grep -oE 'https://[^"]+' |
+         grep -iE "${arch}.*\.tar\.gz$" | head -1)"
+  [ -n "$url" ] || return 1
+  d="$(mktemp -d)"
+  if curl -fsSL --max-time 120 -o "$d/m.tar.gz" "$url" && tar -xzf "$d/m.tar.gz" -C "$d" 2>/dev/null; then
+    local bin; bin="$(find "$d" -type f -name matugen | head -1)"
+    if [ -n "$bin" ]; then mkdir -p "$HOME/.local/bin"; install -m 755 "$bin" "$HOME/.local/bin/matugen"; rm -rf "$d"; return 0; fi
+  fi
+  rm -rf "$d"
+  return 1
 }
 
 # the installed Hyprland is older than the Lua config needs: prints its version, nothing when it is fine or missing
@@ -234,23 +260,25 @@ step_packages() {
         warn "$DISTRO_NAME is an atomic (image based) Fedora: packages are layered with rpm-ostree."
         note "Run these, reboot, then ./install.sh again:"
         local c; for c in "${FEDORA_COPRS[@]}"; do note "  sudo wget -P /etc/yum.repos.d/ https://copr.fedorainfracloud.org/coprs/$c/repo/fedora-\$(rpm -E %fedora)/${c%%/*}-${c##*/}-fedora-\$(rpm -E %fedora).repo"; done
-        note "  rpm-ostree install ${FEDORA_PKGS[*]}"
+        local first=() p; for p in "${FEDORA_PKGS[@]}"; do first+=("${p%%|*}"); done
+        note "  rpm-ostree install ${first[*]}"
         return 0
       fi
       sudo_keepalive || return 0
       if [ "$DRY_RUN" = 1 ]; then
-        info "would enable COPR ${FEDORA_COPRS[*]} and install ${#FEDORA_PKGS[@]} packages: ${FEDORA_PKGS[*]}"; return 0
+        info "would enable COPR ${FEDORA_COPRS[*]} and install ${#FEDORA_PKGS[@]} packages: ${FEDORA_PKGS[*]//|/ or }"; return 0
       fi
       task "COPR support for dnf" sudo dnf install -y 'dnf-command(copr)'
       local c
       for c in "${FEDORA_COPRS[@]}"; do task "Enabling COPR $c" sudo dnf copr enable -y "$c"; done
       task "Checking which packages your Fedora has" fedora_check
-      local have=() absent=() p
+      local have=() absent=() p n
       for p in "${FEDORA_PKGS[@]}"; do
-        if grep -qx "$p" "$PKG_SPLIT" 2>/dev/null; then have+=("$p"); else absent+=("$p"); fi
+        n="$(fedora_pick "$p")"
+        if [ -n "$n" ]; then have+=("$n"); else absent+=("${p//|/ or }"); fi
       done
-      # repoquery did not work at all: just try everything
-      [ "${#have[@]}" = 0 ] && { have=("${FEDORA_PKGS[@]}"); absent=(); }
+      # repoquery did not work at all: just try everything (first names)
+      if [ "${#have[@]}" = 0 ]; then have=(); for p in "${FEDORA_PKGS[@]}"; do have+=("${p%%|*}"); done; absent=(); fi
       note "${#have[@]} packages to install${absent[0]:+, not in your repositories: ${absent[*]}}"
       if ! task "Installing ${#have[@]} packages: desktop, shell, tools and fonts" sudo dnf install -y --skip-unavailable "${have[@]}"; then
         warn "Installing them together failed, trying one by one"
@@ -260,6 +288,10 @@ step_packages() {
           task "  $p" sudo dnf install -y "$p" || failed+=("$p")
         done
         [ "${#failed[@]}" -gt 0 ] && warn "Could not install: ${failed[*]} (see $LOG)"
+      fi
+      if ! command -v matugen >/dev/null 2>&1; then
+        if task "matugen (theme colors) from its GitHub releases" matugen_download; then ok "matugen is in ~/.local/bin"
+        else warn "matugen could not be installed: colors from the wallpaper will not change (cargo install matugen works too)"; fi
       fi
       # power modes, unless TLP or auto-cpufreq already manage power
       if rpm -q power-profiles-daemon >/dev/null 2>&1 && ! rpm -q tlp >/dev/null 2>&1 && ! rpm -q auto-cpufreq >/dev/null 2>&1; then
@@ -654,3 +686,8 @@ info "Touch the bottom-right corner of the screen for the hot corner"
 [ -d "$BK" ] && info "Undo everything:  ./install.sh --restore"
 note "Full log: $LOG"
 printf '\n'
+# the welcome intro (once): night falls, the moon draws itself in, then Settings opens with a short tour
+if [ "$IN_HYPR" = 1 ] && [ "$DRY_RUN" != 1 ] && [ -x "$BIN/rice-welcome" ] && [ ! -f "$HOME/.config/rice/welcome-seen" ] && [ ! -f "$HOME/.config/rice/welcome-off" ]; then
+  info "Starting the welcome intro..."
+  detach "$BIN/rice-welcome" start 1
+fi

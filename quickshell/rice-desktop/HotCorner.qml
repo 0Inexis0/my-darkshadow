@@ -152,8 +152,20 @@ PanelWindow {
     Timer {
         id: leaveTimer
         interval: 380
-        onTriggered: if (hc.cfg.close_on_leave !== false && !hover.hovered && !trigHover.hovered) hc.open = false
+        onTriggered: if (hc.cfg.close_on_leave !== false && !hover.hovered && !trigHover.hovered) shotCheck.running = true
     }
+    // a screenshot (Print) is being taken while the panel is open: stay, so the panel can be in the picture
+    Process {
+        id: shotCheck
+        command: ["bash", "-c", "[ -e \"$HOME/.cache/rice/shooting\" ] && echo 1 || echo 0"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (text.trim() === "1") { shotWait.restart(); return }
+                if (!hover.hovered && !trigHover.hovered) hc.open = false
+            }
+        }
+    }
+    Timer { id: shotWait; interval: 400; onTriggered: if (hc.open && !hover.hovered && !trigHover.hovered) shotCheck.running = true }
     Timer {
         // opened but the pointer never came into the panel
         id: graceTimer
@@ -194,11 +206,35 @@ PanelWindow {
 
         // the shape that grows (rounded even while it is small)
         Rectangle {
+            id: shape
             anchors.fill: parent
             radius: Math.min(panel.rad * hc.sc, Math.min(width, height) / 2)
             color: hc.bgColor()
+            antialiasing: true
+        }
+        // one thin, even outline that follows the rounded corners exactly (drawn on top of the fill,
+        // so it never doubles up with the background at the corners)
+        Rectangle {
+            anchors.fill: shape
+            radius: shape.radius
+            color: "transparent"
+            antialiasing: true
             border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.08)
+            border.color: Qt.rgba(1, 1, 1, 0.09)
+            z: 2
+        }
+        // soft light on the top edge only
+        Rectangle {
+            x: shape.radius; width: shape.width - 2 * shape.radius
+            y: 0; height: 1
+            z: 2
+            visible: !hc.atBottom || hc.anim !== "grow" || hc.t > 0.9
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0; color: Qt.rgba(1, 1, 1, 0) }
+                GradientStop { position: 0.5; color: Qt.rgba(1, 1, 1, 0.14) }
+                GradientStop { position: 1; color: Qt.rgba(1, 1, 1, 0) }
+            }
         }
 
         HotCornerPanel {

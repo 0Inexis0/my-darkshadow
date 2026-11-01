@@ -272,9 +272,22 @@ PanelWindow {
         interval: db.entered ? 380 : 900
         onTriggered: {
             if (db.inside() || db.cfg.close_on_leave === false || db.editing || db.typing || !(db.entered || db.byHover)) return
-            db.close()
+            // a screenshot is being taken (slurp takes the pointer): stay, so the dashboard can be in the picture
+            shotCheck.running = true
         }
     }
+    Process {
+        id: shotCheck
+        command: ["bash", "-c", "[ -e \"$HOME/.cache/rice/shooting\" ] && echo 1 || echo 0"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (text.trim() === "1") { shotWait.restart(); return }
+                if (!db.inside() && db.open) db.close()
+            }
+        }
+    }
+    // check again until the screenshot is done, then close only if the pointer is not back on the dashboard
+    Timer { id: shotWait; interval: 400; onTriggered: if (db.open && !db.inside()) shotCheck.running = true }
 
     // click outside: close
     MouseArea {

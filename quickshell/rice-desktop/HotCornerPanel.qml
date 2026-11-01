@@ -21,7 +21,8 @@ Item {
     }
 
     readonly property real rad: cfg.radius !== undefined ? cfg.radius : 26
-    readonly property real inner: Math.max(8, rad - 10)
+    // cards sit 14px inside the panel: their corners follow the panel corner (concentric)
+    readonly property real inner: Math.max(6, rad - 14)
     readonly property string acc: st.accent ? st.accent : "#d4d4d4"
     readonly property real speed: cfg.speed ? cfg.speed : 1
     function lum(h) {

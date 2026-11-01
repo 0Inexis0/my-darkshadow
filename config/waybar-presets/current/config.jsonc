@@ -86,11 +86,11 @@
     "tooltip": false,
     "format": "{icon}",
     "format-icons": {
-      "notification": "<span foreground=\"#ff4d4d\"></span>",
+      "notification": "󱅫",
       "none": "",
       "dnd-notification": "<span foreground=\"#666666\"></span>",
       "dnd-none": "<span foreground=\"#666666\"></span>",
-      "inhibited-notification": "<span foreground=\"#ff4d4d\"></span>",
+      "inhibited-notification": "󱅫",
       "inhibited-none": "",
       "dnd-inhibited-notification": "<span foreground=\"#666666\"></span>",
       "dnd-inhibited-none": "<span foreground=\"#666666\"></span>"

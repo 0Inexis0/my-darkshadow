@@ -264,6 +264,7 @@ FloatingWindow {
             // avatar with a ring (your initial when there is no ~/.face)
             Item {
                 id: av
+                z: 2            // above the card's click area, so the picture can be clicked on its own
                 x: 12
                 anchors.verticalCenter: parent.verticalCenter
                 width: 52
@@ -286,13 +287,45 @@ FloatingWindow {
                     T { anchors.centerIn: parent; text: win.userName.length ? win.userName[0].toUpperCase() : "?"; font.pixelSize: 20; font.bold: true }
                 }
                 RoundImage {
+                    id: avImg
                     anchors.fill: parent
                     anchors.margins: 3
                     source: "file://" + win.home + "/.face"
                 }
-                scale: pfm.containsMouse ? 1.05 : 1
+                // click the picture: choose a new one (it is also on the lock screen)
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.margins: 3
+                    radius: width / 2
+                    color: Qt.rgba(0, 0, 0, 0.55)
+                    opacity: avm.containsMouse ? 1 : 0
+                    Behavior on opacity { NumberAnimation { duration: 160 } }
+                    T { anchors.centerIn: parent; kind: "icon"; text: "\uf030"; font.pixelSize: 15 }
+                }
+                MouseArea {
+                    id: avm
+                    anchors.fill: parent
+                    z: 5
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: facePicker.running = true
+                }
+                scale: pfm.containsMouse || avm.containsMouse ? 1.05 : 1
                 Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutBack } }
             }
+            Process {
+                id: facePicker
+                command: ["zenity", "--file-selection", "--title=Choose a profile picture", "--file-filter=Images | *.png *.jpg *.jpeg *.webp"]
+                stdout: StdioCollector {
+                    onStreamFinished: {
+                        const p = text.trim()
+                        if (p.length === 0) return
+                        Quickshell.execDetached(["bash", "-c", "cp -f \"$1\" \"$HOME/.face\"", "_", p])
+                        faceReload.restart()
+                    }
+                }
+            }
+            Timer { id: faceReload; interval: 400; onTriggered: { avImg.source = ""; avImg.source = "file://" + win.home + "/.face" } }
             Column {
                 anchors.left: av.right
                 anchors.leftMargin: 12
@@ -323,6 +356,7 @@ FloatingWindow {
         Rectangle { x: 238; y: 58; width: parent.width - 254; height: 1; color: "#222222" }
 
         Rectangle {
+            id: closeBtn
             width: 30
             height: 30
             radius: 15
@@ -436,7 +470,7 @@ FloatingWindow {
             // falling stars behind every page (they stay put while the pages change)
             StarField { anchors.fill: parent; running: win.visible; opacity: win.page === 0 ? 1 : 0.6; Behavior on opacity { NumberAnimation { duration: 400 } } }
 
-            PageSlot { idx: 0; cur: win.page; HomePage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 0; cur: win.page; HomePage { id: homePage; anchors.fill: parent; ctl: win } }
             PageSlot { idx: 1; cur: win.page; WaybarPage { anchors.fill: parent; ctl: win } }
             PageSlot { idx: 2; cur: win.page; BarLayoutPage { anchors.fill: parent; ctl: win } }
             PageSlot { idx: 3; cur: win.page; HyprlandPage { anchors.fill: parent; ctl: win } }
@@ -451,6 +485,38 @@ FloatingWindow {
             PageSlot { idx: 12; cur: win.page; InterfacePage { anchors.fill: parent; ctl: win } }
             PageSlot { idx: 13; cur: win.page; ServicesPage { anchors.fill: parent; ctl: win } }
         }
+
+        // ---------- the tour (after the welcome intro, or rice-welcome tour) ----------
+        Tour {
+            id: tour
+            objectName: "tour"
+            onFinished: card.forceActiveFocus()
+            steps: [
+                { title: "You can find anything here!", r: 18,
+                  body: "Every part of your desktop has its own page: the bar, the theme, notifications, the lock screen, the dashboard and more.",
+                  rect: function() { return { x: navFlick.x - 6, y: navFlick.y - 6, w: navFlick.width + 12, h: Math.min(navFlick.height, navCol.height) + 12 } } },
+                { title: "Make it yours", r: 16,
+                  body: "Start with the things people change first. Most changes show up right away, and every page has a live preview.",
+                  rect: function() {
+                      const q = homePage.quickArea, p = q.mapToItem(card, 0, 0)
+                      return { x: p.x - 10, y: p.y - 44, w: q.width + 20, h: q.height + 54 }
+                  } },
+                { title: "This is you", r: 22,
+                  body: "Click your picture to change it, it shows on the lock screen too. Click the card to come back here, to Home.",
+                  rect: function() { return { x: profile.x - 5, y: profile.y - 5, w: profile.width + 10, h: profile.height + 10 } } },
+                { title: "That's it!", r: 20,
+                  body: "Close Settings here and open it again any time with SUPER + U. Have fun with your desktop.",
+                  rect: function() { return { x: closeBtn.x - 6, y: closeBtn.y - 6, w: closeBtn.width + 12, h: closeBtn.height + 12 } } }
+            ]
+        }
+        Process {
+            // the welcome intro leaves this file behind when it opens Settings
+            id: tourCheck
+            running: true
+            command: ["bash", "-c", "f=\"$HOME/.cache/rice/settings-tour\"; [ -e \"$f\" ] && rm -f \"$f\" && echo 1 || echo 0"]
+            stdout: StdioCollector { onStreamFinished: if (text.trim() === "1") tourDelay.start() }
+        }
+        Timer { id: tourDelay; interval: 650; onTriggered: { win.page = 0; tour.start() } }
 
         T {
             anchors.bottom: parent.bottom

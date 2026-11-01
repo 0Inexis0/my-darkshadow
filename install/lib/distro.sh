@@ -40,10 +40,13 @@ NEED_CMDS=(Hyprland hyprlock hypridle waybar qs swaync-client rofi awww matugen 
 # Fedora packages (dnf). Hyprland, its tools and Quickshell come from the nett00n/hyprland COPR (the newest
 # Hyprland, needed for the Lua config); awww from scottames/awww. Nerd Font icons and the Bibata cursor are not
 # in Fedora: rice-fonts and the installer download them.
-FEDORA_COPRS=(nett00n/hyprland scottames/awww)
+# "a|b": the first of these names your Fedora has (Fedora 43 merged rofi-wayland into rofi, for example).
+# Quickshell: errornointernet/quickshell is the COPR the Quickshell docs point to (nett00n/hyprland has it too).
+# matugen is in Fedora 44 and newer; on older ones the installer downloads it from its GitHub releases.
+FEDORA_COPRS=(nett00n/hyprland errornointernet/quickshell scottames/awww)
 FPKG_DESKTOP=(hyprland hyprlock hypridle hyprsunset hyprpolkitagent xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
               qt5-qtwayland qt6-qtwayland)
-FPKG_SHELL=(quickshell waybar SwayNotificationCenter rofi-wayland awww cava kitty fish fastfetch nautilus matugen)
+FPKG_SHELL=(quickshell waybar SwayNotificationCenter 'rofi-wayland|rofi' awww cava kitty fish fastfetch nautilus matugen)
 FPKG_TOOLS=(wf-recorder grim slurp wl-clipboard libnotify xdg-user-dirs jq curl python3 playerctl brightnessctl pamixer
             swayosd ImageMagick zenity NetworkManager bluez pipewire pipewire-pulseaudio wireplumber
             btop cmatrix pavucontrol gnome-calendar upower power-profiles-daemon tar xz unzip)

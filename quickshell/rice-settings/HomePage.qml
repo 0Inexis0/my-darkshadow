@@ -6,6 +6,8 @@ import QtQuick.Effects
 Item {
     id: page
     property var ctl
+    // the "Make it yours" cards (the Settings tour points at them)
+    property alias quickArea: quick
 
     readonly property string home: Quickshell.env("HOME")
     readonly property string user: Quickshell.env("USER")
@@ -20,7 +22,7 @@ Item {
         "Pick a scheme in Theme to recolor the bar, borders, notifications and lock screen.",
         "Try the One island bar style in Waybar for a floating look.",
         "Idle & Lockscreen decides when the screen locks and when the computer sleeps.",
-        "Click your picture above to change it. It is also shown on the lock screen.",
+        "Click your picture in the sidebar to change it. It is also shown on the lock screen.",
         "Touch the bottom-right corner of the screen for quick toggles, apps and wallpapers.",
         "Type right away in the hot corner's Apps search and press Enter to launch.",
         "Keep Awake in the hot corner stops the screen from locking during a movie.",
@@ -59,26 +61,6 @@ Item {
     }
     Timer { interval: 60000; running: true; repeat: true; onTriggered: upProc.running = true }
 
-    Process {
-        id: picker
-        command: ["zenity", "--file-selection", "--title=Choose a profile picture", "--file-filter=Images | *.png *.jpg *.jpeg *.webp"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const p = text.trim()
-                if (p.length > 0) {
-                    Quickshell.execDetached(["bash", "-c", "cp -f \"$1\" \"$HOME/.face\"", "_", p])
-                    faceReload.restart()
-                }
-            }
-        }
-    }
-
-    Timer {
-        id: faceReload
-        interval: 400
-        onTriggered: { avatarImg.source = ""; avatarImg.source = page.faceUrl }
-    }
-
     Flickable {
         id: flick
         anchors.fill: parent
@@ -107,70 +89,13 @@ Item {
             width: flick.width - 48
             spacing: 12
 
-            Item {
-                id: avatar
-                width: 112
-                height: 112
+            // the logo, moving: the moon floats and sways, the stars twinkle (your picture is in the sidebar)
+            MoonLogo {
+                id: homeLogo
+                objectName: "homeLogo"
                 anchors.horizontalCenter: parent.horizontalCenter
-
-                Image {
-                    id: avatarImg
-                    anchors.fill: parent
-                    visible: false
-                    source: page.faceUrl
-                    fillMode: Image.PreserveAspectCrop
-                    cache: false
-                    asynchronous: true
-                    sourceSize.width: 256
-                    sourceSize.height: 256
-                }
-                Item {
-                    id: maskItem
-                    anchors.fill: parent
-                    visible: false
-                    layer.enabled: true
-                    Rectangle { anchors.fill: parent; radius: width / 2 }
-                }
-                MultiEffect {
-                    anchors.fill: parent
-                    source: avatarImg
-                    maskEnabled: true
-                    maskSource: maskItem
-                    visible: avatarImg.status === Image.Ready
-                }
-                Rectangle {
-                    anchors.fill: parent
-                    radius: width / 2
-                    visible: avatarImg.status !== Image.Ready
-                    color: "#161616"
-                    border.width: 2
-                    border.color: "#3a3a3a"
-                    T { anchors.centerIn: parent; text: "+"; color: "#8a8a8a"; font.pixelSize: 44 }
-                }
-                Rectangle {
-                    anchors.fill: parent
-                    radius: width / 2
-                    color: Qt.rgba(0, 0, 0, 0.5)
-                    opacity: avatarMouse.containsMouse ? 1 : 0
-                    Behavior on opacity { NumberAnimation { duration: 160 } }
-                    T { anchors.centerIn: parent; text: "Change"; font.pixelSize: 13; font.bold: true }
-                }
-                Rectangle {
-                    anchors.fill: parent
-                    radius: width / 2
-                    color: "transparent"
-                    border.width: 2
-                    border.color: "#F6F5F4"
-                    opacity: avatarMouse.containsMouse ? 0.9 : 0
-                    Behavior on opacity { NumberAnimation { duration: 160 } }
-                }
-                MouseArea {
-                    id: avatarMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: picker.running = true
-                }
+                size: 136
+                running: page.visible
             }
 
             T {

@@ -1,5 +1,14 @@
 # Changelog
 
+## V2.80
+- New welcome intro: night falls over the desktop, a few words rise letter by letter, the moon logo draws itself in, "Take a look" opens the desktop up again from the moon
+- Settings tour after the intro: one part lights up at a time with a short explanation (Next, Skip, Done); `rice-welcome tour` plays it again
+- Settings Home: the moon logo, moving (it floats, the stars twinkle, a shooting star now and then); change your picture by clicking it in the sidebar
+- Notifications: no more red bell for new notifications, a white bell with a small badge; DarkShadow's Shell notifications stay in the notification center when clicked
+- Screenshots are saved faster, and the dashboard and hot corner stay open while you take one (so they can be in the picture)
+- Hot corner: an even outline that follows the rounded corners, cards inside are concentric with the panel
+- Fedora: Quickshell from the COPR its docs recommend, rofi on Fedora 43, matugen from GitHub when Fedora has no package
+
 ## V2.70
 - CachyOS support: detected by the installer (its repositories and paru are used), CachyOS logo in the bar, dashboard, welcome window and Settings
 - Fedora and Nobara logos everywhere the distro logo shows

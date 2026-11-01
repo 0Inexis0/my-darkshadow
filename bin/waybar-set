@@ -164,6 +164,27 @@ def distro_swap(c, on):
             c.pop("custom/distro", None)
 
 
+BELL, BELL_NEW, BELL_OFF = chr(0xF0F3), chr(0xF116B), chr(0xF009B)
+
+
+def notif_icons(c):
+    """the bell: no red dot for new notifications any more, a white bell with a small badge instead
+    (Do Not Disturb stays grey). Only the colors this rice used to set are replaced."""
+    for k, v in c.items():
+        if not (k == "custom/notification" or k.startswith("custom/notification#")) or not isinstance(v, dict):
+            continue
+        icons = v.get("format-icons")
+        if not isinstance(icons, dict):
+            continue
+        for name, val in list(icons.items()):
+            if not isinstance(val, str) or ("#ff4d4d" not in val and val.strip() not in (BELL, "")):
+                continue
+            dnd = name.startswith("dnd")
+            new = name.endswith("-notification") or name == "notification"
+            glyph = BELL_OFF if dnd else (BELL_NEW if new else BELL)
+            icons[name] = '<span foreground="#666666">%s</span>' % glyph if dnd else glyph
+
+
 def clamp(v, lo, hi):
     return max(lo, min(hi, v))
 
@@ -452,6 +473,7 @@ def apply(u):
         os.remove(LEGACY)
     c["position"] = u["position"]
     distro_swap(c, u.get("distro_icon") is True)
+    notif_icons(c)
     # no calendar popup on the clock (survives preset switches because apply() runs after them)
     for k in [k for k in c if k == "clock" or k.startswith("clock#")]:
         if isinstance(c[k], dict):
