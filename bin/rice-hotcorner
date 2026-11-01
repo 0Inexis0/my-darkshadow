@@ -91,13 +91,13 @@ DEFAULTS = {
     "apps": [],
     "toggles": ["wifi", "bluetooth", "dnd", "gaming", "settings"],
     "width": 420, "radius": 26, "opacity": 0.9, "animation": "grow", "speed": 1.0,
-    "audio": False, "clipboard": True,
+    "audio": False, "rec_sound": True, "rec_mic": False, "clipboard": True,
     "blur": True, "transparency": True, "card_alpha": 0.05, "tint": False, "scale": 1.0,
 }
 INTS = {"trigger": (1, 16), "delay": (0, 800), "width": (300, 680), "radius": (0, 36)}
 FLOATS = {"opacity": (0.3, 1.0), "speed": (0.5, 2.0), "card_alpha": (0.0, 0.2), "scale": (0.75, 1.5)}
 CHOICES = {"corner": ["bottom-right", "bottom-left", "top-right", "top-left"], "animation": ["grow", "slide", "scale", "fade"]}
-BOOLS = ("enabled", "close_on_leave", "audio", "clipboard", "header", "blur", "transparency", "tint")
+BOOLS = ("enabled", "close_on_leave", "audio", "rec_sound", "rec_mic", "clipboard", "header", "blur", "transparency", "tint")
 
 
 def die(m):
@@ -328,6 +328,26 @@ def region():
     return out.strip() if code == 0 and out.strip() else None
 
 
+def sound_source(mic=False):
+    """what wf-recorder should listen to: the sound of the computer (the default output's monitor),
+    or the microphone. wf-recorder's plain -a takes the default INPUT, which is the microphone,
+    so recordings had no game or video sound."""
+    q = lambda cmd: subprocess.run(cmd, capture_output=True, text=True, timeout=3).stdout.strip()
+    try:
+        if shutil.which("pactl"):
+            name = q(["pactl", "get-default-source" if mic else "get-default-sink"])
+            if name:
+                return name if mic else name + ".monitor"
+        if shutil.which("wpctl"):
+            out = q(["wpctl", "inspect", "@DEFAULT_AUDIO_SOURCE@" if mic else "@DEFAULT_AUDIO_SINK@"])
+            m = re.search(r'node\.name = "([^"]+)"', out)
+            if m:
+                return m.group(1) if mic else m.group(1) + ".monitor"
+    except Exception:
+        pass
+    return ""
+
+
 def record(mode):
     c = load()
     pid = alive(REC_PID)
@@ -357,12 +377,17 @@ def record(mode):
             if not g:
                 return
             cmd += ["-g", g]
-        if c["audio"]:
-            cmd.append("-a")
+        if c["rec_sound"] or c["rec_mic"]:
+            src = sound_source(mic=c["rec_mic"] and not c["rec_sound"])
+            cmd.append("--audio=" + src if src else "-a")
     elif shutil.which("gpu-screen-recorder"):
         cmd = ["gpu-screen-recorder", "-w", "screen", "-f", "60", "-o", f]
-        if c["audio"]:
+        if c["rec_sound"] and c["rec_mic"]:
+            cmd += ["-a", "default_output|default_input"]
+        elif c["rec_sound"]:
             cmd += ["-a", "default_output"]
+        elif c["rec_mic"]:
+            cmd += ["-a", "default_input"]
     else:
         notify("Screen recorder missing", "Install wf-recorder (and slurp for regions)", "dialog-warning")
         return

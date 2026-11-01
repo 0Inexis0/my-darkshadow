@@ -403,7 +403,8 @@ Item {
 
         // ---------- capture ----------
         SectionTitle { text: "Recording & screenshots"; sub: "Recordings go to Videos/Recordings, screenshots to Pictures/Screenshots." }
-        ToggleRow { label: "Record audio"; desc: "Include sound in screen recordings"; checked: page.v("audio", false) === true; onToggled: function(x) { page.setv("audio", x ? "on" : "off") } }
+        ToggleRow { label: "Record sound"; desc: "The sound of your computer (games, videos, calls) in screen recordings"; checked: page.v("rec_sound", true) === true; onToggled: function(x) { page.setv("rec_sound", x ? "on" : "off") } }
+        ToggleRow { label: "Record microphone"; desc: "Your voice instead (with wf-recorder only one of the two; gpu-screen-recorder can take both)"; checked: page.v("rec_mic", false) === true; onToggled: function(x) { page.setv("rec_mic", x ? "on" : "off") } }
         ToggleRow { label: "Copy screenshots"; desc: "Also put every screenshot on the clipboard"; checked: page.v("clipboard", true) === true; onToggled: function(x) { page.setv("clipboard", x ? "on" : "off") } }
         T {
             readonly property var miss: {

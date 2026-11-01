@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-if pgrep -x wf-recorder > /dev/null; then
-    pkill -SIGINT -x wf-recorder
-else
-    mkdir -p "$HOME/Videos/Recordings"
-    wf-recorder -g "$(slurp)" -f "$HOME/Videos/Recordings/$(date +%Y-%m-%d_%H-%M-%S).mp4"
-fi
+# old name for the screen recorder: the same as SUPER + SHIFT + R (press again to stop).
+# Sound: Settings > Hot corners > Record sound / Record microphone.
+exec "$HOME/.local/bin/rice-hotcorner" record region
