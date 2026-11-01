@@ -245,4 +245,7 @@ PanelWindow {
             }
         }
     }
+
+    // a soft click on the dock's buttons (Settings > Sfx & sounds)
+    SfxTap {}
 }

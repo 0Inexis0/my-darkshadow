@@ -195,6 +195,10 @@ Item {
 
             // Light mode: one switch for slower computers, right on Home
             Rectangle {
+                // found by the search in the sidebar
+                property string label: "Light mode"
+                property string desc: "Running slow? Turn off blur, animations, shadows and the falling stars; performance"
+                property real reserved: 80
                 width: parent.width
                 height: 76
                 radius: 14
@@ -226,6 +230,44 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     checked: page.lite
                     onToggled: function(v) { page.setLite(v) }
+                }
+            }
+
+            // the falling stars across this window
+            Rectangle {
+                property string label: "Falling stars"
+                property string desc: "Comets falling across this window; turn them off for a calm look"
+                property real reserved: 80
+                width: parent.width
+                height: 64
+                radius: 14
+                color: "#141414"
+                border.width: 1
+                border.color: "#1f1f1f"
+                Rectangle {
+                    id: starsi
+                    x: 14
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 36; height: 36; radius: 11
+                    color: Qt.rgba(1, 1, 1, page.ctl.stars ? 0.12 : 0.06)
+                    T { kind: "icon"; anchors.centerIn: parent; text: "\uf005"; font.pixelSize: 15 }
+                }
+                Column {
+                    anchors.left: starsi.right
+                    anchors.leftMargin: 12
+                    anchors.right: starstog.left
+                    anchors.rightMargin: 12
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 2
+                    T { text: "Falling stars"; font.pixelSize: 13; font.bold: true }
+                    T { kind: "reading"; text: page.lite ? "Resting while Light mode is on" : "Comets falling across this window"; color: "#8a8a8a"; font.pixelSize: 11; width: parent.width; elide: Text.ElideRight }
+                }
+                Tog {
+                    id: starstog
+                    anchors.right: parent.right; anchors.rightMargin: 16
+                    anchors.verticalCenter: parent.verticalCenter
+                    checked: page.ctl.stars
+                    onToggled: function(v) { page.ctl.setStars(v) }
                 }
             }
 

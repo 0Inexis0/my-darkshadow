@@ -101,19 +101,28 @@ PanelWindow {
             property real sy: 0
             property real ox: 0
             property real oy: 0
+            property real tick: 0       // way moved since the last soft tick
+            property bool moved: false
             cursorShape: pressed ? Qt.ClosedHandCursor : Qt.ArrowCursor
             onPressed: function(m) {
                 const g = mapToItem(null, m.x, m.y)
                 sx = g.x; sy = g.y; ox = w.px; oy = w.py
+                tick = 0; moved = false
                 w.dragging = true
+                Sfx.play("select")
             }
             onPositionChanged: function(m) {
                 if (!pressed) return
                 const g = mapToItem(null, m.x, m.y)
-                w.px = Math.max(0, Math.min(w.bw - w.dispW, ox + g.x - sx))
-                w.py = Math.max(0, Math.min(w.bh - w.dispH, oy + g.y - sy))
+                const nx = Math.max(0, Math.min(w.bw - w.dispW, ox + g.x - sx))
+                const ny = Math.max(0, Math.min(w.bh - w.dispH, oy + g.y - sy))
+                tick += Math.abs(nx - w.px) + Math.abs(ny - w.py)
+                if (tick > 34) { tick = 0; moved = true; Sfx.play("slide") }
+                w.px = nx
+                w.py = ny
             }
             onReleased: {
+                if (moved) Sfx.play("done")
                 w.dragging = false
                 w.px = Math.round(w.px)
                 w.py = Math.round(w.py)

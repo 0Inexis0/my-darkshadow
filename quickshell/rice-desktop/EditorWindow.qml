@@ -141,8 +141,11 @@ PanelWindow {
                 property real ox: 0
                 property real oy: 0
                 property bool moved: false
+                property real tick: 0
                 onPressed: function(m) {
                     moved = false
+                    tick = 0
+                    Sfx.play("select")
                     ed.sel = modelData.id
                     keys.forceActiveFocus()
                     const g = mapToItem(null, m.x, m.y)
@@ -154,14 +157,18 @@ PanelWindow {
                     const g = mapToItem(null, m.x, m.y)
                     if (!moved && Math.abs(g.x - sx) + Math.abs(g.y - sy) < 3) return
                     moved = true
-                    fr.w.px = ed.snap(ox + g.x - sx, 0, ed.root.sw, fr.w.dispW, "guideX")
-                    fr.w.py = ed.snap(oy + g.y - sy, 0, ed.root.sh, fr.w.dispH, "guideY")
+                    const nx = ed.snap(ox + g.x - sx, 0, ed.root.sw, fr.w.dispW, "guideX")
+                    const ny = ed.snap(oy + g.y - sy, 0, ed.root.sh, fr.w.dispH, "guideY")
+                    tick += Math.abs(nx - fr.w.px) + Math.abs(ny - fr.w.py)
+                    if (tick > 34) { tick = 0; Sfx.play("slide") }
+                    fr.w.px = nx
+                    fr.w.py = ny
                 }
                 onReleased: {
                     ed.guideX = false; ed.guideY = false
                     fr.w.px = Math.round(fr.w.px); fr.w.py = Math.round(fr.w.py)
                     fr.w.dragging = false
-                    if (moved) ed.root.saveGeom(modelData.id)
+                    if (moved) { ed.root.saveGeom(modelData.id); Sfx.play("done") }
                 }
             }
 
@@ -193,12 +200,16 @@ PanelWindow {
                         property real t0: 0
                         property real r0: 0
                         property real b0: 0
+                        property real tick: 0
                         onPressed: {
+                            tick = 0
+                            Sfx.play("select")
                             const w = fr.w
                             l0 = w.px; t0 = w.py; r0 = w.px + w.dispW; b0 = w.py + w.dispH
                             w.dragging = true
                         }
                         onPositionChanged: function(m) {
+                            if (pressed) { tick += 1; if (tick % 6 === 0) Sfx.play("slide") }
                             if (!pressed) return
                             const w = fr.w, h = parent.h
                             const g = mapToItem(null, m.x, m.y)
@@ -224,6 +235,7 @@ PanelWindow {
                             }
                         }
                         onReleased: {
+                            Sfx.play("done")
                             const w = fr.w
                             w.px = Math.round(w.px); w.py = Math.round(w.py)
                             w.fw = Math.round(w.fw); w.fh = Math.round(w.fh)
@@ -552,4 +564,7 @@ PanelWindow {
             }
         }
     }
+
+    // a soft click on every button here (Settings > Sfx & sounds)
+    SfxTap { visible: ed.visible }
 }

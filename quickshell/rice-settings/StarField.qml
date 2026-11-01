@@ -1,6 +1,6 @@
 import QtQuick
 
-// Falling white stars behind the Home page: a few shooting stars with soft tails and tiny twinkling dots.
+// Falling white stars behind the whole Settings window: a few shooting stars with soft tails and tiny twinkling dots.
 Item {
     id: sf
     property int count: 14
@@ -34,11 +34,11 @@ Item {
             id: st
             property real k: 0
             property real sx: Math.random() * (sf.width + 300)
-            property real len: 50 + Math.random() * 110
+            property real len: 60 + Math.random() * 150
             property real dur: 2400 + Math.random() * 3600
             property real size: 1.4 + Math.random() * 1.6
             readonly property real dx: -0.35
-            function again() { sx = Math.random() * (sf.width + 300); len = 50 + Math.random() * 110; dur = 2400 + Math.random() * 3600 }
+            function again() { sx = Math.random() * (sf.width + 300); len = 60 + Math.random() * 150; dur = 2400 + Math.random() * 3600 }
             x: sx + dx * k * (sf.height + 160)
             y: -60 + k * (sf.height + 160)
             opacity: (k < 0.12 ? k / 0.12 : (k > 0.75 ? Math.max(0, (1 - k) / 0.25) : 1)) * 0.85

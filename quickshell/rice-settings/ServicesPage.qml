@@ -220,14 +220,6 @@ Item {
                 }
             }
 
-            SectionTitle { text: "Performance"; sub: "For slower computers: everything becomes solid, nothing is blurred or animated." }
-            ToggleRow {
-                label: "Light mode"
-                desc: "No blur, transparency, animations or shadows anywhere; the visualizer stops and widgets rest while a window covers them. Also on Home"
-                checked: page.fx.lite === true
-                onToggled: function(v) { page.setLite(v) }
-            }
-
             SectionTitle { text: "Gaming mode"; sub: "Also in the hot corner. Choose what stays on while you play." }
             Rectangle {
                 width: col.width

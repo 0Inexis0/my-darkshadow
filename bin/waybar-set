@@ -96,6 +96,7 @@ def atomic(path, text):
 
 
 def save(c):
+    click_sounds(c)
     atomic(CFG, json.dumps(c, indent=2, ensure_ascii=False) + "\n")
 
 
@@ -183,6 +184,27 @@ def notif_icons(c):
             new = name.endswith("-notification") or name == "notification"
             glyph = BELL_OFF if dnd else (BELL_NEW if new else BELL)
             icons[name] = '<span foreground="#666666">%s</span>' % glyph if dnd else glyph
+
+
+SFX_CLICK = "$HOME/.local/bin/rice-sfx play click >/dev/null 2>&1 & "
+# words Waybar understands itself (not commands): leave them alone
+WAYBAR_WORDS = {"activate", "minimize", "minimize-raise", "maximize", "fullscreen", "close", "mode", "tz_up",
+                "tz_down", "shift_up", "shift_down", "shift_reset"}
+
+
+def click_sounds(c):
+    """a soft click (Settings > Sfx & sounds) when you click something on the bar. rice-sfx itself
+    stays quiet while the sounds are off, so the commands stay the same either way."""
+    for k, v in c.items():
+        if not isinstance(v, dict):
+            continue
+        for key in ("on-click", "on-click-right", "on-click-middle"):
+            cmd = v.get(key)
+            if not isinstance(cmd, str) or not cmd.strip() or cmd.strip() in WAYBAR_WORDS:
+                continue
+            if cmd.startswith(SFX_CLICK):
+                continue
+            v[key] = SFX_CLICK + cmd
 
 
 def clamp(v, lo, hi):

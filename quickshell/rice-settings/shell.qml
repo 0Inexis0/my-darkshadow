@@ -7,8 +7,12 @@ ShellRoot {
 FloatingWindow {
     id: win
     title: "Rice Settings"
-    implicitWidth: 980
-    implicitHeight: 790
+    // bigger on bigger screens (about 70 % of a 1080p screen), never more than fits
+    readonly property var scr0: Quickshell.screens && Quickshell.screens.length > 0 ? Quickshell.screens[0] : null
+    readonly property int sw0: scr0 ? scr0.width : 1920
+    readonly property int sh0: scr0 ? scr0.height : 1080
+    implicitWidth: Math.max(Math.min(980, sw0 - 40), Math.min(1260, Math.round(sw0 * 0.68)))
+    implicitHeight: Math.max(Math.min(720, sh0 - 60), Math.min(900, Math.round(sh0 * 0.82)))
     color: "transparent"
     visible: true
     onVisibleChanged: if (!visible) Qt.quit()
@@ -17,6 +21,18 @@ FloatingWindow {
     // the tour is on: the rest of the screen goes dark (dimWin below)
     property bool tourOn: false
     function startTour() { page = 0; tour.start() }
+
+    // falling stars across the whole window (Home: Falling stars); off in Light mode too
+    property bool stars: true
+    function setStars(on) {
+        stars = on
+        Quickshell.execDetached(["bash", "-c", "mkdir -p \"$HOME/.config/rice\" && printf '{\"stars\": %s}\\n' \"$1\" > \"$HOME/.config/rice/settings-app.json\"", "_", on ? "true" : "false"])
+    }
+    Process {
+        command: ["bash", "-c", "cat \"$HOME/.config/rice/settings-app.json\" 2>/dev/null || echo '{}'"]
+        running: true
+        stdout: StdioCollector { onStreamFinished: { try { win.stars = JSON.parse(text).stars !== false } catch (e) { } } }
+    }
     function closeNow() { Qt.quit() }
 
     // ---------- search: every setting on every page, found by its name, its section, its page or its text ----------
@@ -366,6 +382,17 @@ FloatingWindow {
         Keys.onEscapePressed: win.closeNow()
         NumberAnimation on opacity { from: 0; to: 1; duration: 240; easing.type: Easing.OutCubic }
 
+        // falling stars over the whole window, behind everything (they stay put while the pages change)
+        StarField {
+            anchors.fill: parent
+            count: 20
+            readonly property bool on: win.stars && !(homePage && homePage.lite)
+            running: win.visible && on
+            opacity: on ? (win.page === 0 ? 1 : 0.55) : 0
+            visible: opacity > 0.01
+            Behavior on opacity { NumberAnimation { duration: 400 } }
+        }
+
         // ---------- you: a bigger profile card on top of the sidebar ----------
         Rectangle {
             id: profile
@@ -480,7 +507,6 @@ FloatingWindow {
             }
             MouseArea { id: pfm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: win.page = 0 }
         }
-        Rectangle { x: 238; y: 58; width: parent.width - 254; height: 1; color: "#222222" }
 
         Rectangle {
             id: closeBtn
@@ -674,7 +700,6 @@ FloatingWindow {
             }
         }
 
-        Rectangle { x: 232; y: 64; width: 1; height: parent.height - 96; color: "#222222" }
 
         Item {
             id: pagesHolder
@@ -684,8 +709,6 @@ FloatingWindow {
             height: parent.height - 60
             clip: true
 
-            // falling stars behind every page (they stay put while the pages change)
-            StarField { anchors.fill: parent; running: win.visible; opacity: win.page === 0 ? 1 : 0.6; Behavior on opacity { NumberAnimation { duration: 400 } } }
 
             PageSlot { idx: 0; cur: win.page; HomePage { id: homePage; anchors.fill: parent; ctl: win } }
             PageSlot { idx: 1; cur: win.page; SoundsPage { anchors.fill: parent; ctl: win } }

@@ -431,7 +431,7 @@ hl.window_rule({
     match = { title = "^Rice Settings$" },
     float = true,
     center = true,
-    size = "900 640",
+    -- no size here: the window picks one that fits your screen
 })
 
 hl.window_rule({
