@@ -6,7 +6,7 @@
 - The installer warns at the end when Hyprland is older than 0.55 (the Lua config needs it) and tells you how to update it
 - Manjaro: a note that its Hyprland can be too old
 - rice-fonts downloads newer Nerd Font icons when your icon font has no CachyOS logo
-- New README, banner and social preview with the supported systems
+- New README, banner (crescent moon logo, stars, supported distros) and social preview
 
 ## V2.60
 - Fedora support: the installer sets up COPR (Hyprland, Quickshell, awww), installs the packages with dnf and downloads Nerd Font icons and the Bibata cursor
