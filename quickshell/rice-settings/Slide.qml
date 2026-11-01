@@ -10,6 +10,7 @@ Item {
     property bool dragging: false
     readonly property real shown: dragging ? dragValue : (isFinite(value) ? value : from)
     signal released(real v)
+    readonly property bool sfxOwn: true     // a soft tick for every step while dragging
     width: 200
     height: 24
     readonly property real pos: to > from ? Math.max(0, Math.min(1, (shown - from) / (to - from))) : 0
@@ -43,7 +44,9 @@ Item {
         function update(mx) {
             const p = Math.max(0, Math.min(1, mx / sl.width))
             const raw = sl.from + p * (sl.to - sl.from)
-            sl.dragValue = Math.round(raw / sl.step) * sl.step
+            const nv = Math.round(raw / sl.step) * sl.step
+            if (nv !== sl.dragValue) Sfx.play("slide")
+            sl.dragValue = nv
         }
         onPressed: function(mouse) { sl.dragging = true; update(mouse.x) }
         onPositionChanged: function(mouse) { if (sl.dragging) update(mouse.x) }

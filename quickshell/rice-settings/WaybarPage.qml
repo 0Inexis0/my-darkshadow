@@ -221,7 +221,7 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: page.ctl.page = 2
+                    onClicked: page.ctl.page = 3
                 }
             }
 
@@ -412,6 +412,7 @@ Item {
 
                     TextInput {
                         id: nameInput
+                        onTextChanged: if (activeFocus) Sfx.play("type")
                         anchors.fill: parent
                         anchors.leftMargin: 14
                         anchors.rightMargin: 14

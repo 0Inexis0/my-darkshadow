@@ -30,6 +30,7 @@ SettingRow {
             border.color: hexIn.activeFocus ? "#5a5a5a" : "#2a2a2a"
             TextInput {
                 id: hexIn
+                onTextChanged: if (activeFocus) Sfx.play("type")
                 anchors.fill: parent
                 anchors.leftMargin: 10
                 anchors.rightMargin: 10

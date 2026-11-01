@@ -93,7 +93,21 @@ PanelWindow {
     WlrLayershell.namespace: "rice-hotcorner"
     WlrLayershell.keyboardFocus: hc.open ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
     // the corner itself always counts too, so resting the pointer there keeps the panel open
-    mask: Region { item: (hc.open || hc.t > 0.02) ? holder : trigger; Region { item: trigger } }
+    // open: the whole corner area (the panel and the gap around it) keeps it open, so moving the pointer
+    // along the screen edge next to the panel does not close it and open it again over and over
+    mask: Region { item: (hc.open || hc.t > 0.02) ? area : trigger; Region { item: trigger } }
+    Item {
+        id: area
+        anchors.fill: parent
+        HoverHandler {
+            id: areaHover
+            enabled: hc.open
+            onHoveredChanged: {
+                if (hovered) { leaveTimer.stop(); graceTimer.stop() }
+                else if (hc.open && !hover.hovered && !trigHover.hovered) leaveTimer.restart()
+            }
+        }
+    }
 
     // ---- settings + "open now" requests
     Process {
@@ -152,7 +166,7 @@ PanelWindow {
     Timer {
         id: leaveTimer
         interval: 380
-        onTriggered: if (hc.cfg.close_on_leave !== false && !hover.hovered && !trigHover.hovered) shotCheck.running = true
+        onTriggered: if (hc.cfg.close_on_leave !== false && !hover.hovered && !trigHover.hovered && !areaHover.hovered) shotCheck.running = true
     }
     // a screenshot (Print) is being taken while the panel is open: stay, so the panel can be in the picture
     Process {
@@ -161,19 +175,20 @@ PanelWindow {
         stdout: StdioCollector {
             onStreamFinished: {
                 if (text.trim() === "1") { shotWait.restart(); return }
-                if (!hover.hovered && !trigHover.hovered) hc.open = false
+                if (!hover.hovered && !trigHover.hovered && !areaHover.hovered) hc.open = false
             }
         }
     }
-    Timer { id: shotWait; interval: 400; onTriggered: if (hc.open && !hover.hovered && !trigHover.hovered) shotCheck.running = true }
+    Timer { id: shotWait; interval: 400; onTriggered: if (hc.open && !hover.hovered && !trigHover.hovered && !areaHover.hovered) shotCheck.running = true }
     Timer {
         // opened but the pointer never came into the panel
         id: graceTimer
         interval: 1400
-        onTriggered: if (hc.cfg.close_on_leave !== false && !hover.hovered && !trigHover.hovered) hc.open = false
+        onTriggered: if (hc.cfg.close_on_leave !== false && !hover.hovered && !trigHover.hovered && !areaHover.hovered) hc.open = false
     }
     onOpenChanged: {
         animateTo(open ? 1 : 0)
+        Sfx.play(open ? "open" : "close")
         if (open) { refresh(); graceTimer.restart() }
         else { graceTimer.stop(); leaveTimer.stop() }
     }
@@ -252,4 +267,6 @@ PanelWindow {
             onLaunch: function(entry) { hc.open = false; entry.execute() }
         }
     }
+
+    SfxTap { visible: hc.open }
 }

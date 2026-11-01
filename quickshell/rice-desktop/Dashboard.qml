@@ -188,6 +188,7 @@ PanelWindow {
         tAnim.easing.type = Easing.BezierSpline
         tAnim.easing.bezierCurve = open ? [0.05, 0.7, 0.1, 1.0, 1, 1] : [0.3, 0.0, 0.8, 0.15, 1, 1]
         tAnim.start()
+        Sfx.play(open ? "open" : "close")
         if (open) {
             if (!fullProc.running) fullProc.running = true
             const v = Object.assign({}, visited); v[tab] = true; visited = v
@@ -260,7 +261,17 @@ PanelWindow {
     }
 
     // ---------------- staying open while the pointer is near ----------------
-    function inside() { return shellHover.hovered || bridgeHover.hovered || edgeHover.hovered || trayHover.hovered }
+    // the whole bottom edge counts as "near" while it is open: moving the pointer along the bottom of the
+    // screen never closes it (it used to close in the corners and open again on the edge, over and over)
+    function inside() { return shellHover.hovered || bridgeHover.hovered || edgeHover.hovered || trayHover.hovered || bottomHover.hovered }
+    Item {
+        id: bottomZone
+        visible: db.open && db.byHover
+        width: db.width
+        height: 10
+        y: db.height - height
+        HoverHandler { id: bottomHover; onHoveredChanged: db.pointerMoved() }
+    }
     function pointerMoved() {
         if (shellHover.hovered) db.entered = true
         if (inside()) leaveTimer.stop()
@@ -640,4 +651,7 @@ PanelWindow {
             }
         }
     }
+
+    // the click sound for everything clickable on the dashboard (Settings > Sfx & sounds)
+    SfxTap { visible: db.open }
 }

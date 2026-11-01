@@ -11,6 +11,7 @@ Item {
     property bool active: false
     readonly property var step: steps.length > 0 ? steps[Math.min(index, steps.length - 1)] : null
     signal finished()
+    readonly property bool sfxOwn: true     // Next and Done make their own sounds
 
     anchors.fill: parent
     visible: opacity > 0.01
@@ -42,13 +43,15 @@ Item {
         keys.forceActiveFocus()
     }
     function next() {
-        if (index >= steps.length - 1) { stop(); return }
+        if (index >= steps.length - 1) { Sfx.play("done"); stop(); return }
+        Sfx.play("select")
         index++
         place()
     }
     function stop() {
         if (!active) return
         active = false
+        Sfx.music(false)        // the quiet music from the welcome intro ends with the tour
         finished()
     }
 

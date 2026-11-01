@@ -91,45 +91,13 @@ Item {
             Btn { icon: ""; text: "Open panel"; onClicked: page.tool("panel") }
         }
 
-        // ---------- sound ----------
-        SectionTitle { text: "Sound"; sub: "Plays when a notification arrives (Discord, updates, ...). Silent during Do Not Disturb. Click one to hear it." }
-        Flow {
-            id: sounds
-            width: parent.width
-            spacing: 10
-            Repeater {
-                model: [
-                    { k: "glass", n: "Glass", b: [0.45, 1, 0.75, 0.5, 0.3] },
-                    { k: "droplet", n: "Droplet", b: [0.3, 0.9, 0.4, 0.7, 0.2] },
-                    { k: "chime", n: "Chime", b: [0.4, 0.6, 0.85, 1, 0.6] },
-                    { k: "bubble", n: "Bubble", b: [0.9, 0.3, 0.8, 0.25, 0.15] },
-                    { k: "marimba", n: "Marimba", b: [1, 0.45, 0.85, 0.4, 0.2] },
-                    { k: "aurora", n: "Aurora", b: [0.3, 0.55, 0.8, 0.95, 0.75] },
-                    { k: "off", n: "Off", b: [0.13, 0.13, 0.13, 0.13, 0.13] }
-                ]
-                delegate: SoundTile {
-                    width: (sounds.width - 30) / 4
-                    name: modelData.k
-                    label: modelData.n
-                    bars: modelData.b
-                    selected: page.v("sound", "glass") === modelData.k
-                    onPicked: {
-                        if (modelData.k !== "off")
-                            page.preview(modelData.k, page.v("sound_volume", 70))
-                        if (!selected) page.setv("sound", modelData.k)
-                    }
-                }
-            }
-        }
-        SliderRow {
-            label: "Sound volume"
-            desc: "How loud the sound is, on top of your system volume"
-            from: 0; to: 100; step: 5; unit: " %"
-            value: page.v("sound_volume", 70)
-            onCommitted: function(x) {
-                page.setv("sound_volume", Math.round(x))
-                if (page.v("sound", "glass") !== "off") page.preview(page.v("sound", "glass"), Math.round(x))
-            }
+        // ---------- clicking ----------
+        SectionTitle { text: "Clicking a notification"; sub: "The sound for new notifications is in Sfx & sounds now." }
+        ToggleRow {
+            label: "Keep notifications when clicked"
+            desc: "Clicking opens the app and the notification stays in the center (close it with its X or Clear all)"
+            checked: page.v("keep_clicked", true)
+            onToggled: function(x) { page.setv("keep_clicked", x ? "on" : "off") }
         }
 
         // ---------- position ----------

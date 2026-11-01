@@ -1,5 +1,14 @@
 # Changelog
 
+## V2.90
+- New page Sfx & sounds (right after Home): soft interface sounds in the shell's own parts (clicks, switches, sliders, typing, opening and closing panels), three sound packs (Soft, Crystal, Bubble), volume, every sound on or off; the notification sound moved here
+- Quiet, friendly music during the welcome intro and the Settings tour, plus sounds for the intro
+- Search in Settings: "Search anything!" under your profile finds every setting by its name, section or page ("bar position", "blur", "clock font") and jumps right to it
+- The tour darkens the whole screen (wallpaper, Waybar, widgets), not only Settings, and everything comes back after it; it now shows the search and Sfx & sounds too
+- Notifications stay in the notification center when you click them (Discord too); turn it off in Notifications
+- Hot corner and dashboard: moving the pointer along the screen edge no longer closes and opens them over and over
+- install.sh asks "Reboot now?" at the end of a new install; the welcome intro and the tour start when you log in
+
 ## V2.80
 - New welcome intro: night falls over the desktop, a few words rise letter by letter, the moon logo draws itself in, "Take a look" opens the desktop up again from the moon
 - Settings tour after the intro: one part lights up at a time with a short explanation (Next, Skip, Done); `rice-welcome tour` plays it again

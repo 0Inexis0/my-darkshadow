@@ -75,7 +75,7 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 **NixOS**: see [Installation](#installation) below. Then log out and pick Hyprland, and press `SUPER + U`.
 
 ## Features
-**Settings app** (`SUPER+U`), fourteen pages: Home, Waybar, Bar layout, Hyprland, Dashboard, Rofi, Theme, Cursors, Notifications, Idle & Lockscreen, Desktop, Hot corners, Interface, Services.
+**Settings app** (`SUPER+U`), fifteen pages and a search: Home, Sfx & sounds, Waybar, Bar layout, Hyprland, Dashboard, Rofi, Theme, Cursors, Notifications, Idle & Lockscreen, Desktop, Hot corners, Interface, Services.
 
 | Area | What you get |
 | --- | --- |
@@ -92,7 +92,8 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 | **Theme** | 21 color schemes: Auto and Grey from your wallpaper, six monochrome (Mono, Slate, Stone, Steel, Ash, Ink) and thirteen colors (Navy, Ocean, Sky, Teal, Mint, Forest, Lime, Gold, Sunset, Ember, Rose, Orchid, Violet). They recolor Waybar, borders, notifications and the lock screen |
 | **Notification center** | Deck: switches (Wi-Fi, Bluetooth, Do Not Disturb, night light, keep awake), power modes, notifications, media, volume and brightness, power buttons; floating or against the edge, left or right, any size, blur and transparency |
 | **Notifications** | swaync popups and panel: position, layout, widgets (title, Do Not Disturb, media, volume, quick buttons), size, timeout, icon size, Glass / Solid / Outline look, opacity, radius, blur, live preview and a test button |
-| **Notification sounds** | six original sounds (Glass, Droplet, Chime, Bubble, Marimba, Aurora) or Off, with volume; silent during Do Not Disturb |
+| **Sfx & sounds** | soft interface sounds in the shell's own parts (clicks, switches, sliders, typing, panels opening and closing), packs Soft, Crystal and Bubble, volume, each sound on or off, quiet music for the welcome; six notification sounds (Glass, Droplet, Chime, Bubble, Marimba, Aurora) or Off |
+| **Search** | "Search anything!" in Settings finds every setting ("bar position", "blur", "clock font") and jumps to it |
 | **Updates** | a notification when a new version is out ("Update is Available!"), version and Update now button in the About tab of the dashboard, `rice-update` in a terminal |
 | **Idle & Lockscreen** | lock, screen-off and sleep timers; lock screen with Big / Stacked / Minimal clock in seven fonts (white hours, grey minutes), center or left layout, greeting, avatar, Pill / Box / Line password field, power buttons, screenshot / wallpaper / color background and media, resources, weather and notification lines |
 | **Rofi** | 5 themes (Shadow, Graphite, Midnight, Rose, Paper), layouts list / grid / full-width bar, position top, center or bottom, width, rows, corner radius, transparency, blur, font size, icons |

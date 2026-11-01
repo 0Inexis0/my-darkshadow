@@ -9,6 +9,7 @@ Rectangle {
     property bool selected: false
     property bool playing: false
     signal picked()
+    readonly property bool sfxOwn: true     // it plays its own sound when picked
 
     height: 84
     radius: 14

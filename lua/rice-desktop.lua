@@ -10,3 +10,7 @@ end)
 local function rule(r) pcall(hl.window_rule, r) end
 rule({ name = "rice-nautilus-glass", match = { class = "org.gnome.Nautilus" }, opacity = "0.90 0.84" })
 rule({ name = "rice-calendar-float", match = { class = "org.gnome.Calendar" }, float = true, center = true, size = "900 650" })
+
+-- full-screen layers that animate themselves: no extra pop-in from Hyprland
+pcall(hl.layer_rule, { name = "rice-welcome-noanim", match = { namespace = "rice-welcome" }, no_anim = true })
+pcall(hl.layer_rule, { name = "rice-tour-dim-noanim", match = { namespace = "rice-tour-dim" }, no_anim = true })

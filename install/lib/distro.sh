@@ -26,7 +26,7 @@ if [ "$FAMILY" = fedora ] && [ -e "${OSTREE_BOOTED:-/run/ostree-booted}" ]; then
 
 # Arch packages, grouped so the installer can explain what it is doing.
 PKG_DESKTOP=(hyprland hyprlock hypridle xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent qt5-wayland qt6-wayland)
-PKG_SHELL=(quickshell waybar swaync rofi awww cava kitty fish fastfetch nautilus matugen)
+PKG_SHELL=(quickshell qt6-multimedia waybar swaync rofi awww cava kitty fish fastfetch nautilus matugen)
 PKG_TOOLS=(wf-recorder grim slurp wl-clipboard libnotify xdg-user-dirs jq curl python playerctl brightnessctl pamixer
            swayosd imagemagick zenity networkmanager bluez bluez-utils pipewire pipewire-pulse wireplumber
            btop cmatrix peaclock pavucontrol gnome-calendar overskride hyprsunset upower power-profiles-daemon)
@@ -46,7 +46,7 @@ NEED_CMDS=(Hyprland hyprlock hypridle waybar qs swaync-client rofi awww matugen 
 FEDORA_COPRS=(nett00n/hyprland errornointernet/quickshell scottames/awww)
 FPKG_DESKTOP=(hyprland hyprlock hypridle hyprsunset hyprpolkitagent xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
               qt5-qtwayland qt6-qtwayland)
-FPKG_SHELL=(quickshell waybar SwayNotificationCenter 'rofi-wayland|rofi' awww cava kitty fish fastfetch nautilus matugen)
+FPKG_SHELL=(quickshell qt6-qtmultimedia waybar SwayNotificationCenter 'rofi-wayland|rofi' awww cava kitty fish fastfetch nautilus matugen)
 FPKG_TOOLS=(wf-recorder grim slurp wl-clipboard libnotify xdg-user-dirs jq curl python3 playerctl brightnessctl pamixer
             swayosd ImageMagick zenity NetworkManager bluez pipewire pipewire-pulseaudio wireplumber
             btop cmatrix pavucontrol gnome-calendar upower power-profiles-daemon tar xz unzip)

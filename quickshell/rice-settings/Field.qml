@@ -13,6 +13,7 @@ Rectangle {
 
     TextInput {
         id: input
+        onTextChanged: if (activeFocus) Sfx.play("type")
         anchors.fill: parent
         anchors.leftMargin: 14
         anchors.rightMargin: 14

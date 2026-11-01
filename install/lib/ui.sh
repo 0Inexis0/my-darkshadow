@@ -149,6 +149,15 @@ menu_multi() {
   MENU_SEL=("${sel[@]}")
 }
 
+# like confirm, but Enter means no (for things like a reboot)
+confirm_no() {
+  local a
+  [ "$IS_TTY" = 1 ] || return 1
+  printf '\n    %s%s%s %s[y/N]%s ' "$CB" "$1" "$C0" "$CG2" "$C0"
+  IFS= read -r a || return 1
+  case "$a" in y|Y|yes|YES) return 0 ;; *) return 1 ;; esac
+}
+
 confirm() {
   local a
   if [ "${ASSUME_YES:-0}" = 1 ] || [ "$IS_TTY" != 1 ]; then return 0; fi

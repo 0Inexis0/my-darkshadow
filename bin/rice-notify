@@ -10,6 +10,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 
 HOME = os.path.expanduser("~")
 DIR = HOME + "/.config/rice"
@@ -35,6 +36,8 @@ DEFAULTS = {
     "colors": "graphite", "font": "sans", "font_size": 13, "popup_opacity": 0.85, "blur_popups": True,
     "border": "subtle", "shadow": False,
     "sound": "glass", "sound_volume": 70,
+    # clicking a notification keeps it in the notification center (swaync would remove it)
+    "keep_clicked": True,
 }
 INTS = {"margin": (0, 60), "panel_width": (300, 700), "panel_height": (300, 1400), "popup_width": (260, 600),
         "timeout": (2, 30), "icon_size": (20, 72), "radius": (0, 32), "font_size": (10, 18),
@@ -214,6 +217,19 @@ def write_config(c):
     scripts.pop("rice-sound", None)
     if c["sound"] != "off":
         scripts["rice-sound"] = {"exec": HOME + "/.local/bin/rice-sound notify", "app-name": ".*", "run-on": "receive"}
+    # swaync removes a notification when you click it (only "resident" ones stay). With keep_clicked
+    # rice-notify keep puts a quiet copy back right away: muted (no popup, no sound), resident (stays
+    # when clicked again), and the next click on it does nothing special.
+    scripts.pop("rice-keep", None)
+    vis = j.get("notification-visibility") if isinstance(j.get("notification-visibility"), dict) else {}
+    vis.pop("rice-kept", None)
+    if c["keep_clicked"]:
+        scripts["rice-keep"] = {"exec": HOME + "/.local/bin/rice-notify keep", "app-name": ".*", "run-on": "action"}
+        vis["rice-kept"] = {"category": "^rice\\.kept$", "state": "muted"}
+    if vis:
+        j["notification-visibility"] = vis
+    else:
+        j.pop("notification-visibility", None)
     if scripts:
         j["scripts"] = scripts
     else:
@@ -745,6 +761,29 @@ def quiet(cmd, timeout=6):
             pass
 
 
+def keep():
+    """swaync runs this when a notification is clicked (just before it removes it): post a quiet copy that stays"""
+    e = os.environ
+    if e.get("SWAYNC_CATEGORY") == "rice.kept" or e.get("SWAYNC_HINT_RESIDENT", "").lower() == "true":
+        return
+    summary, body = e.get("SWAYNC_SUMMARY", ""), e.get("SWAYNC_BODY", "")
+    if not summary and not body:
+        return
+    app = e.get("SWAYNC_APP_NAME") or "Notification"
+    urg = {"low": "low", "critical": "critical"}.get(e.get("SWAYNC_URGENCY", "").lower(), "normal")
+    icon = e.get("SWAYNC_DESKTOP_ENTRY") or app.lower()
+    if not shutil.which("notify-send"):
+        return
+    if os.fork() > 0:      # give swaync its answer at once
+        return
+    os.setsid()
+    time.sleep(0.15)       # after swaync has removed the clicked one
+    subprocess.run(["notify-send", "-a", app, "-u", urg, "-i", icon, "-c", "rice.kept",
+                    "-h", "boolean:resident:true", "-h", "boolean:SWAYNC_NO_SCRIPT:true",
+                    "--", summary, body], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10)
+    os._exit(0)
+
+
 def apply(c, reload_hypr=False):
     write_config(c)
     write_css(c)
@@ -771,6 +810,9 @@ def test():
 
 def main(argv):
     cmd = argv[1] if len(argv) > 1 else ""
+    if cmd == "keep":
+        keep()
+        return
     if cmd == "state":
         out = load()
         out["accent_color"], out["on_accent"] = accent()

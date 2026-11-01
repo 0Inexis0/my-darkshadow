@@ -86,7 +86,7 @@ Item {
                     font.family: DashFont.sans
                     font.pixelSize: 13
                     clip: true
-                    onTextChanged: { wp.query = text; wp.sel = 0; car.positionViewAtBeginning() }
+                    onTextChanged: { wp.query = text; wp.sel = 0; car.positionViewAtBeginning(); if (activeFocus) Sfx.play("type") }
                     onActiveFocusChanged: wp.d.typing = activeFocus
                     Keys.onEscapePressed: { if (text !== "") text = ""; else wp.d.close() }
                     Keys.onReturnPressed: wp.applySel()

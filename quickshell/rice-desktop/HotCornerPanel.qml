@@ -636,7 +636,7 @@ Item {
                         font.family: Fonts.family("main")
                         font.pixelSize: 13
                         clip: true
-                        onTextChanged: ac.query = text
+                        onTextChanged: { ac.query = text; if (activeFocus) Sfx.play("type") }
                         Keys.onReturnPressed: if (ac.results.length > 0) pnl.launch(ac.results[0])
                         Keys.onEscapePressed: pnl.act("close", "", true)
                     }

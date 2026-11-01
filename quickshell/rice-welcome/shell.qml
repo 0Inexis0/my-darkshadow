@@ -41,7 +41,9 @@ ShellRoot {
     function finish(tour) {
         if (leaving) return
         leaving = true
+        Sfx.play("intro/open", true)
         if (tour) Quickshell.execDetached(["bash", "-c", "sleep 0.6; \"$HOME/.local/bin/rice-welcome\" tour"])
+        else Sfx.music(false)       // skipped: no music (with the tour it plays on until the tour ends)
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-welcome\" seen"])
         win.openUp()
     }
@@ -282,6 +284,9 @@ ShellRoot {
             Keys.onReturnPressed: { if (step >= 4) root.finish(true); else stage.step = 4 }
             Keys.onEnterPressed: { if (step >= 4) root.finish(true); else stage.step = 4 }
             Keys.onSpacePressed: { if (step < 4) stage.step = stage.step + 1 }
+            // sounds: night falls, quiet music, the moon draws itself in (Settings > Sfx & sounds)
+            onStepChanged: if (step === 3) Sfx.play("intro/reveal")
+            Timer { interval: 350; running: true; onTriggered: { Sfx.play("intro/night"); Sfx.music(true) } }
             SequentialAnimation {
                 running: true
                 PauseAnimation { duration: 950 }

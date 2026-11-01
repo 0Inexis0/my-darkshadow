@@ -686,8 +686,22 @@ info "Touch the bottom-right corner of the screen for the hot corner"
 [ -d "$BK" ] && info "Undo everything:  ./install.sh --restore"
 note "Full log: $LOG"
 printf '\n'
-# the welcome intro (once): night falls, the moon draws itself in, then Settings opens with a short tour
-if [ "$IN_HYPR" = 1 ] && [ "$DRY_RUN" != 1 ] && [ -x "$BIN/rice-welcome" ] && [ ! -f "$HOME/.config/rice/welcome-seen" ] && [ ! -f "$HOME/.config/rice/welcome-off" ]; then
-  info "Starting the welcome intro..."
-  detach "$BIN/rice-welcome" start 1
+# the welcome intro (once): night falls, the moon draws itself in, then Settings opens with a short tour.
+# After a new install it plays at the next login (Hyprland starts it), so offer a reboot.
+# After an update inside Hyprland it plays right away, if it has not been seen yet.
+intro_pending=0
+[ -x "$BIN/rice-welcome" ] && [ ! -f "$HOME/.config/rice/welcome-seen" ] && [ ! -f "$HOME/.config/rice/welcome-off" ] && intro_pending=1
+if [ "$DRY_RUN" != 1 ]; then
+  if [ "$MODE" = update ]; then
+    if [ "$intro_pending" = 1 ] && [ "$IN_HYPR" = 1 ]; then info "Starting the welcome intro..."; detach "$BIN/rice-welcome" start 1; fi
+  else
+    [ "$intro_pending" = 1 ] && info "The welcome intro and a short tour of Settings start when you log in."
+    if [ "$ASSUME_YES" != 1 ] && [ "$IS_TTY" = 1 ] && confirm_no "Reboot now?"; then
+      info "Rebooting..."
+      sleep 1
+      systemctl reboot || sudo systemctl reboot || warn "Could not reboot. Reboot yourself to finish."
+    else
+      note "Reboot (or log out and back in) when you are ready."
+    fi
+  fi
 fi

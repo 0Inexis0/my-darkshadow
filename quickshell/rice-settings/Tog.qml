@@ -4,6 +4,7 @@ Rectangle {
     id: sw
     property bool checked: false
     signal toggled(bool value)
+    readonly property bool sfxOwn: true     // its own on/off sound, not the click
     width: 44
     height: 24
     radius: 12
@@ -23,6 +24,6 @@ Rectangle {
     MouseArea {
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
-        onClicked: sw.toggled(!sw.checked)
+        onClicked: { Sfx.play(sw.checked ? "switch-off" : "switch-on"); sw.toggled(!sw.checked) }
     }
 }
