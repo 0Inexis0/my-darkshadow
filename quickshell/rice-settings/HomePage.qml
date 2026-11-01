@@ -197,7 +197,7 @@ Item {
             Rectangle {
                 // found by the search in the sidebar
                 property string label: "Light mode"
-                property string desc: "Running slow? Turn off blur, animations, shadows and the falling stars; performance"
+                property string desc: "Running slow? Turn off blur, transparency and shadows, animations stay; performance"
                 property real reserved: 80
                 width: parent.width
                 height: 76
@@ -222,7 +222,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 2
                     T { text: "Light mode"; font.pixelSize: 13; font.bold: true }
-                    T { kind: "reading"; text: "Running slow? No blur, animations or shadows, and the widgets rest when a window covers them"; color: "#8a8a8a"; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
+                    T { kind: "reading"; text: "Running slow? No blur or shadows, widgets rest when a window covers them. Animations stay"; color: "#8a8a8a"; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
                 }
                 Tog {
                     id: litetog
@@ -260,7 +260,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 2
                     T { text: "Falling stars"; font.pixelSize: 13; font.bold: true }
-                    T { kind: "reading"; text: page.lite ? "Resting while Light mode is on" : "Comets falling across this window"; color: "#8a8a8a"; font.pixelSize: 11; width: parent.width; elide: Text.ElideRight }
+                    T { kind: "reading"; text: "Comets falling across this window"; color: "#8a8a8a"; font.pixelSize: 11; width: parent.width; elide: Text.ElideRight }
                 }
                 Tog {
                     id: starstog

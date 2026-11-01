@@ -22,7 +22,7 @@ FloatingWindow {
     property bool tourOn: false
     function startTour() { page = 0; tour.start() }
 
-    // falling stars across the whole window (Home: Falling stars); off in Light mode too
+    // falling stars across the whole window (Home: Falling stars)
     property bool stars: true
     function setStars(on) {
         stars = on
@@ -386,7 +386,7 @@ FloatingWindow {
         StarField {
             anchors.fill: parent
             count: 20
-            readonly property bool on: win.stars && !(homePage && homePage.lite)
+            readonly property bool on: win.stars
             running: win.visible && on
             opacity: on ? (win.page === 0 ? 1 : 0.55) : 0
             visible: opacity > 0.01
