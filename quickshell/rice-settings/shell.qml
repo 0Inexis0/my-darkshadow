@@ -11,8 +11,8 @@ FloatingWindow {
     readonly property var scr0: Quickshell.screens && Quickshell.screens.length > 0 ? Quickshell.screens[0] : null
     readonly property int sw0: scr0 ? scr0.width : 1920
     readonly property int sh0: scr0 ? scr0.height : 1080
-    implicitWidth: Math.max(Math.min(820, sw0 - 40), Math.min(940, Math.round(sw0 * 0.46)))
-    implicitHeight: Math.max(Math.min(600, sh0 - 60), Math.min(680, Math.round(sh0 * 0.58)))
+    implicitWidth: Math.min(sw0 - 20, Math.round(Math.max(Math.min(820, sw0 - 40), Math.min(940, Math.round(sw0 * 0.46))) * Prefs.size))
+    implicitHeight: Math.min(sh0 - 40, Math.round(Math.max(Math.min(600, sh0 - 60), Math.min(680, Math.round(sh0 * 0.58))) * Prefs.size))
     color: "transparent"
     visible: true
     onVisibleChanged: if (!visible) Qt.quit()

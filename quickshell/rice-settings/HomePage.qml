@@ -368,6 +368,14 @@ Item {
 
             SectionTitle { text: "Settings"; sub: "The things you change most. They apply right away." }
 
+            SliderRow {
+                label: "Window size"
+                desc: "Make this Settings window smaller or bigger"
+                from: 75; to: 150; step: 5; unit: " %"
+                value: Math.round(Prefs.size * 100)
+                onCommitted: function(v) { Prefs.setSize(v / 100) }
+            }
+
             ToggleRow {
                 label: "Bar transparency"
                 desc: "Translucent bar with blur; off makes it solid"

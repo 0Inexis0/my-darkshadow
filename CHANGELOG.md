@@ -1,5 +1,8 @@
 # Changelog
 
+## V3.06
+- Home > Settings > Window size: a slider (75 % to 150 %) makes the Settings window smaller or bigger, and it remembers the size
+
 ## V3.05
 - The Settings window is smaller again: under half of a 1080p screen (about 880 x 630), still never bigger than your screen
 

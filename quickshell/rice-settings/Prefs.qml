@@ -9,6 +9,12 @@ Singleton {
     id: prefs
     property real scroll: 1.0
     readonly property real wheel: 0.6 * scroll       // pixels per wheel unit on a page
+    // size of the Settings window: 1 = the default size, 0.75 smaller, 1.5 bigger
+    property real size: 1.0
+    function setSize(v) {
+        size = Math.max(0.75, Math.min(1.5, Math.round(v * 20) / 20))
+        save("size", size)
+    }
 
     function save(key, value) {
         Quickshell.execDetached(["python3", "-c",
@@ -26,7 +32,11 @@ Singleton {
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
-                try { const j = JSON.parse(text); if (j.scroll !== undefined) prefs.scroll = Math.max(0.3, Math.min(3, Number(j.scroll))) } catch (e) { }
+                try {
+                    const j = JSON.parse(text)
+                    if (j.scroll !== undefined) prefs.scroll = Math.max(0.3, Math.min(3, Number(j.scroll)))
+                    if (j.size !== undefined) prefs.size = Math.max(0.75, Math.min(1.5, Number(j.size)))
+                } catch (e) { }
             }
         }
     }
