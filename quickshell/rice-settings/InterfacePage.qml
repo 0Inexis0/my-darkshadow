@@ -149,9 +149,15 @@ Item {
 
             ToggleRow {
                 label: "Media player"
-                desc: "Show the current track in the dock"
+                desc: "The song cover and a play / pause button in the dock"
                 checked: page.dv("media", true) === true
                 onToggled: function(v) { page.ctl.dset("dock", "media", v ? "on" : "off") }
+            }
+            ToggleRow {
+                label: "Now playing text"
+                desc: "Write the song title and artist in the dock while something plays"
+                checked: page.dv("nowText", true) === true
+                onToggled: function(v) { page.ctl.dset("dock", "nowText", v ? "on" : "off") }
             }
             ToggleRow {
                 label: "Show pin button"

@@ -532,18 +532,11 @@ PanelWindow {
                         width: db.side ? db.railW - db.pad : parent.width - 2 * db.pad - (canEdit ? 50 : 0)
                         height: db.side ? parent.height - 2 * db.pad : db.headH - 14
                         readonly property bool canEdit: db.tab !== "wallpaper"
-                        // in the column: Dashboard at the top, Wallpaper, Performance and About at the bottom
-                        readonly property real cell: 84
+                        // in the column: the tabs share the whole height (no gap), with thin lines between them,
+                        // and the edit button has its own small place at the bottom
+                        readonly property real cell: db.side ? (height - 56) / Math.max(1, db.tabs.length) : 84
                         readonly property real tw: db.side ? cell : width / Math.max(1, db.tabs.length)
-                        function atBottom(k) { return k !== "dashboard" }
-                        readonly property int topN: { let n = 0; for (let i = 0; i < db.tabs.length; i++) if (!atBottom(db.tabs[i])) n++; return n }
-                        readonly property int botN: db.tabs.length - topN
-                        function slotY(i) {
-                            let before = 0
-                            const b = atBottom(db.tabs[i])
-                            for (let j = 0; j < i; j++) if (atBottom(db.tabs[j]) === b) before++
-                            return b ? height - (botN - before) * cell : before * cell
-                        }
+                        function slotY(i) { return i * cell }
                         readonly property var names: ({ dashboard: "Dashboard", wallpaper: "Wallpaper", performance: "Performance", about: "About" })
                         readonly property var icons: ({ dashboard: ["space_dashboard", 0xF056E], wallpaper: ["wallpaper", 0xF02E9],
                                                         performance: ["speed", 0xF04C5], about: ["info", 0xF02FD] })
@@ -554,11 +547,19 @@ PanelWindow {
                             radius: db.side ? 22 : height / 2
                             color: db.p.card
                         }
+                        Repeater {
+                            model: db.side ? db.tabs.length : 0
+                            Rectangle {
+                                x: 16; width: head.width - 32; height: 1
+                                y: (index + 1) * head.cell
+                                color: db.p.track
+                            }
+                        }
                         Rectangle {
                             id: ind
                             readonly property bool under: db.p.tabStyle === "underline" && !db.side
                             function labelW(i) { const it = tabRep.itemAt(i); return it ? it.labelWidth : 60 }
-                            readonly property real lw: under ? labelW(db.curIdx) + 22 : head.tw - (db.p.tabStyle === "segment" ? 8 : 14)
+                            readonly property real lw: under ? labelW(db.curIdx) + 22 : (db.side ? Math.min(head.tw, 92) : head.tw) - (db.p.tabStyle === "segment" ? 8 : 14)
                             x: db.side ? (db.p.tabStyle === "segment" ? 4 : 2) : db.curIdx * head.tw + (head.tw - lw) / 2
                             y: db.side ? head.slotY(db.curIdx) + (head.tw - lw) / 2 : (under ? head.height - 3 : (db.p.tabStyle === "segment" ? 4 : 2))
                             width: db.side ? head.width - (db.p.tabStyle === "segment" ? 8 : 4) : lw
@@ -621,7 +622,7 @@ PanelWindow {
                     Rectangle {
                         visible: head.canEdit
                         x: db.side ? db.pad + (head.width - width) / 2 : parent.width - db.pad - width
-                        y: db.side ? head.y + head.topN * head.cell + 4 : head.y + (head.height - height) / 2
+                        y: db.side ? head.y + head.height - 56 + (56 - height) / 2 : head.y + (head.height - height) / 2
                         width: 40; height: 40; radius: 20
                         color: db.editing ? db.p.primary : (edm.containsMouse ? db.p.card2 : db.p.card)
                         Behavior on color { ColorAnimation { duration: 160 } }

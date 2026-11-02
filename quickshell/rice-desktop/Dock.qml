@@ -11,7 +11,7 @@ PanelWindow {
     property bool hovering: false
     readonly property bool autoHide: dc.hover !== false
     readonly property bool reveal: !autoHide || pinned || hovering
-    // the screen edge: bottom, top, left or right (Settings > Interface > Dock > Position)
+    // the screen edge: bottom, top, left or right (Settings > Dock > Position)
     readonly property string edge: dc.position === "top" || dc.position === "left" || dc.position === "right" ? dc.position : "bottom"
     readonly property bool vert: edge === "left" || edge === "right"
 
@@ -221,11 +221,12 @@ PanelWindow {
                     fallback: ""
                     source: dock.player && dock.player.trackArtUrl ? dock.player.trackArtUrl : ""
                 }
+                // what is playing, written out (Settings > Dock > Now playing text)
                 Column {
-                    visible: !dock.vert
-                    width: 130
-                    T { width: parent.width; elide: Text.ElideRight; font.pixelSize: 12; font.bold: true; text: dock.player ? (dock.player.trackTitle || "") : "" }
-                    T { width: parent.width; elide: Text.ElideRight; font.pixelSize: 10; color: "#a8a8ad"; text: dock.player ? (dock.player.trackArtist || "") : "" }
+                    visible: dock.dc.nowText !== false
+                    width: dock.vert ? 50 : 130
+                    T { width: parent.width; elide: Text.ElideRight; horizontalAlignment: dock.vert ? Text.AlignHCenter : Text.AlignLeft; font.pixelSize: dock.vert ? 10 : 12; font.bold: true; text: dock.player ? (dock.player.trackTitle || "") : "" }
+                    T { width: parent.width; elide: Text.ElideRight; horizontalAlignment: dock.vert ? Text.AlignHCenter : Text.AlignLeft; font.pixelSize: dock.vert ? 9 : 10; color: "#a8a8ad"; text: dock.player ? (dock.player.trackArtist || "") : "" }
                 }
                 Rectangle {
                     width: 34

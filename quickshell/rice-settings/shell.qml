@@ -293,7 +293,7 @@ FloatingWindow {
         { name: "Idle & Lockscreen", icon: "\uf023" },
         { name: "Widgets", icon: "\uf26c" },
         { name: "Hot corners", icon: "\udb82\ude0b" },
-        { name: "Interface", icon: "\uf2d0" },
+        { name: "Dock", icon: "\uf2d0" },
         { name: "Services", icon: "" }
     ]
 
