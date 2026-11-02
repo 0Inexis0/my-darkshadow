@@ -29,8 +29,42 @@ PanelWindow {
     property var layouts: ({})
     property var grids: ({})
     property string toastText: ""
+    // switches (Wi-Fi, Bluetooth, ...) and the to-do list: shared by the Dashboard, Control and Tasks tabs
+    property var svc: ({})
+    property var todos: []
+    function svcRefresh() { if (!svcProc.running) svcProc.running = true }
+    function svcToggle(k) {
+        const n = Object.assign({}, svc); n[k] = !n[k]; svc = n
+        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-services\" toggle \"$1\"", "_", k])
+        svcLater.restart()
+    }
+    function todoRefresh() { if (!todoProc.running) todoProc.running = true }
+    function todoRun(args) {
+        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-todo\" \"$@\"", "_"].concat(args))
+        todoLater.restart()
+    }
+    function todoToggle(i) {
+        const n = todos.map(function(x, j) { return j === i ? { t: x.t, done: !x.done } : x }); todos = n
+        todoRun(["toggle", String(i)])
+    }
+    function todoAdd(t) { t = String(t).trim(); if (t === "") return; todos = todos.concat([{ t: t, done: false }]); todoRun(["add", t]) }
+    function todoRemove(i) { todos = todos.filter(function(x, j) { return j !== i }); todoRun(["remove", String(i)]) }
+    function todoClear() { todos = todos.filter(function(x) { return !x.done }); todoRun(["clear"]) }
+    Process {
+        id: svcProc
+        command: ["bash", "-c", "\"$HOME/.local/bin/rice-services\" state 2>/dev/null"]
+        stdout: StdioCollector { onStreamFinished: { try { db.svc = JSON.parse(text) } catch (e) { } } }
+    }
+    Process {
+        id: todoProc
+        command: ["bash", "-c", "\"$HOME/.local/bin/rice-todo\" list 2>/dev/null"]
+        stdout: StdioCollector { onStreamFinished: { try { db.todos = JSON.parse(text) } catch (e) { } } }
+    }
+    Timer { id: svcLater; interval: 1300; onTriggered: db.svcRefresh() }
+    Timer { id: todoLater; interval: 900; onTriggered: db.todoRefresh() }
+    Timer { interval: 6000; running: db.open; repeat: true; triggeredOnStart: true; onTriggered: { db.svcRefresh(); db.todoRefresh() } }
 
-    readonly property var tabs: cfg.tabs && cfg.tabs.length ? cfg.tabs : ["dashboard", "wallpaper", "performance", "about"]
+    readonly property var tabs: cfg.tabs && cfg.tabs.length ? cfg.tabs : ["dashboard", "control", "tasks", "wallpaper", "performance", "about"]
     readonly property int curIdx: Math.max(0, tabs.indexOf(tab))
     readonly property string pos: cfg.position === "top" || cfg.position === "left" || cfg.position === "right" ? cfg.position : "bottom"
     readonly property bool atTop: pos === "top"
@@ -341,7 +375,7 @@ PanelWindow {
             else if (db.tab === "wallpaper" && db.wallsTab && (e.key === Qt.Key_Return || e.key === Qt.Key_Enter)) { db.wallsTab.applySel(); e.accepted = true }
             else if (e.key === Qt.Key_Right || (e.key === Qt.Key_Tab && !(e.modifiers & Qt.ShiftModifier))) { db.tab = db.tabs[(db.curIdx + 1) % db.tabs.length]; e.accepted = true }
             else if (e.key === Qt.Key_Left || e.key === Qt.Key_Backtab) { db.tab = db.tabs[(db.curIdx - 1 + db.tabs.length) % db.tabs.length]; e.accepted = true }
-            else if (e.key >= Qt.Key_1 && e.key <= Qt.Key_4 && e.key - Qt.Key_1 < db.tabs.length) { db.tab = db.tabs[e.key - Qt.Key_1]; e.accepted = true }
+            else if (e.key >= Qt.Key_1 && e.key <= Qt.Key_9 && e.key - Qt.Key_1 < db.tabs.length) { db.tab = db.tabs[e.key - Qt.Key_1]; e.accepted = true }
         }
     }
 
@@ -537,9 +571,10 @@ PanelWindow {
                         readonly property real cell: db.side ? 88 : 84
                         readonly property real tw: db.side ? cell : width / Math.max(1, db.tabs.length)
                         function slotY(i) { return i * cell }
-                        readonly property var names: ({ dashboard: "Dashboard", wallpaper: "Wallpaper", performance: "Performance", about: "About" })
+                        readonly property var names: ({ dashboard: "Dashboard", control: "Control", tasks: "Tasks", wallpaper: "Wallpaper", performance: "Performance", about: "About" })
                         readonly property var icons: ({ dashboard: ["space_dashboard", 0xF056E], wallpaper: ["wallpaper", 0xF02E9],
-                                                        performance: ["speed", 0xF04C5], about: ["info", 0xF02FD] })
+                                                        performance: ["speed", 0xF04C5], about: ["info", 0xF02FD],
+                                                        control: ["tune", 0xF062E], tasks: ["checklist", 0xF05E1] })
                         Behavior on width { enabled: !db.side; NumberAnimation { duration: 260 } }
                         Rectangle {
                             visible: db.p.tabStyle === "segment"
@@ -647,12 +682,15 @@ PanelWindow {
                                     anchors.fill: parent
                                     active: db.visited[modelData] === true
                                     sourceComponent: modelData === "dashboard" ? homeC : modelData === "wallpaper" ? wallC
+                                                   : modelData === "control" ? ctlC : modelData === "tasks" ? tasksTabC
                                                    : modelData === "performance" ? perfC : aboutC
                                 }
                                 Component { id: homeC; DashHome { d: db; live: page.liveNow } }
                                 Component { id: wallC; DashWalls { d: db; live: page.liveNow } }
                                 Component { id: perfC; DashPerf { d: db; live: page.liveNow } }
                                 Component { id: aboutC; DashAbout { d: db; live: page.liveNow } }
+                                Component { id: ctlC; DashControl { d: db; live: page.liveNow } }
+                                Component { id: tasksTabC; DashTasks { d: db; live: page.liveNow } }
                             }
                         }
                     }

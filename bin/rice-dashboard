@@ -3,7 +3,7 @@
 
   rice-dashboard config                 settings as JSON (with bar position and theme accent)
   rice-dashboard set KEY VALUE          change a setting
-  rice-dashboard tabs a,b,c             tabs and their order (dashboard wallpaper performance about)
+  rice-dashboard tabs a,b,c             tabs and their order (dashboard control tasks wallpaper performance about)
   rice-dashboard open [TAB] [--edit]    open it (toggle when it is already open on that tab); --edit: edit mode
   rice-dashboard layout TAB JSON        cards of a tab: [{"id": "cpu", "w": 5, "h": 1}, ...]
   rice-dashboard reset-layout TAB       back to the default cards
@@ -36,7 +36,11 @@ MY_THUMBS = CACHE + "/thumbs"
 WALL_CURRENT = HOME + "/.cache/hyprquickpaper-current"
 WAYBAR = HOME + "/.config/waybar"
 
-TABS = ["dashboard", "wallpaper", "performance", "about"]
+TABS = ["dashboard", "control", "tasks", "wallpaper", "performance", "about"]
+OLD_TABS = ["dashboard", "wallpaper", "performance", "about"]   # the tabs before Control and Tasks came
+TABS_V = 2
+# cards of the new Dashboard tab: when the config is from before them, a saved layout without any of them is dropped (once)
+HOME_NEW = ("hero", "quick", "now", "week", "pulse", "tasks")
 DEFAULTS = {
     "enabled": True, "position": "bottom", "hover": False, "edge": True, "wallpaper_key": True, "style": "shadow",
     "width": 1000, "scale": 1.0, "delay": 150, "trigger": 320, "close_on_leave": True, "speed": 1.0,
@@ -70,7 +74,7 @@ def load():
             v = "slide"
         try:
             if k == "layouts":
-                c[k] = clean_layouts(v)
+                c[k] = clean_layouts(v, raw.get("tabs_v") != TABS_V)
             elif k in BOOLS:
                 c[k] = v is True
             elif k in CHOICES:
@@ -84,16 +88,22 @@ def load():
                 c[k] = t or list(TABS)
         except Exception:
             c[k] = d
+    # a config from before Control and Tasks: switch the new tabs on once (after that your choice stays)
+    if raw.get("tabs") == OLD_TABS and raw.get("tabs_v") != TABS_V:
+        c["tabs"] = list(TABS)
+    c["tabs_v"] = TABS_V
     return c
 
 
-def clean_layouts(v):
+def clean_layouts(v, migrate=False):
     out = {}
     if not isinstance(v, dict):
         return out
     for tab, lst in v.items():
         # a tab, or the layout of the tall panel at the side edges ("dashboard-side")
         if (tab not in TABS and not (tab.endswith("-side") and tab[:-5] in TABS)) or not isinstance(lst, list):
+            continue
+        if migrate and tab in ("dashboard", "dashboard-side") and not any(isinstance(i, dict) and i.get("id") in HOME_NEW for i in lst):
             continue
         items = []
         for it in lst:

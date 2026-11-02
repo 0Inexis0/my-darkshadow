@@ -2,7 +2,7 @@ pragma Singleton
 import Quickshell
 import QtQuick
 
-// Fonts of the dashboard: Rubik for text (like Caelestia), Material Symbols for icons when installed
+// Fonts of the dashboard: Rubik for text, Material Symbols for icons when installed
 // (rice-fonts downloads both), otherwise your normal fonts and Nerd Font icons.
 Singleton {
     readonly property var fams: Qt.fontFamilies()
