@@ -1,5 +1,11 @@
 # Changelog
 
+## V3.17
+- **DarkShadow bar**, a new bar made in Quickshell, replaces Waybar. Workspaces as dots, **Pac-Man** or letters, the title of the window, a clock that shows the date when you point at it, music, tray, volume (scroll to change, click to mute), Bluetooth, Wi-Fi, battery, notifications and power (click locks the screen, right click opens the log out menu). Four styles: Flat, Island, **Islands** (an island for each side, the new default) and **Pills** (a pill for every module). Top or bottom, size, transparency and blur. Settings > DarkShadow bar and Bar layout (drag the modules between left, center and right)
+- The Wi-Fi and Bluetooth icons of the bar open a menu under them: networks with their signal, connect (it asks for the password), disconnect, forget, Wi-Fi / Bluetooth on and off, and your Bluetooth devices with their battery, pairing a new one. Right click opens the old menus
+- **DarkShadow Launcher**, a new app launcher built into the shell, instead of Rofi: it searches your apps (the ones you use most come first), calculates ("2+2", Enter copies the result) and can search the web. Smooth scrolling and a quiet animation as you type. It uses the same settings as Rofi (Settings > Rofi): theme, list, grid, bar or the new **Split** style (wallpaper on the left, the apps you use most as round buttons), position, width, corners, transparency, icons. Alt + Space, the dock and the hot corner open it. The Split style is in Rofi too. Settings > Rofi > Launcher > Engine brings Rofi back
+- The update switches the autostart of Hyprland to the new bar and the new launcher (a copy of hyprland.lua is kept as hyprland.lua.bak-bar). `rice-bar off` goes back to Waybar
+
 ## V3.16
 - The installer copies files that are new on your computer first and the changed ones after them, so Quickshell no longer shows "Config reload failed: X is not a type" for a moment while an update that adds new files is installed
 

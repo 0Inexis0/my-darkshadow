@@ -281,7 +281,7 @@ FloatingWindow {
     readonly property var pages: [
         { name: "Home", icon: "\uf015" },
         { name: "Sfx & sounds", icon: "\uf028" },
-        { name: "Waybar", icon: "\uf0c9" },
+        { name: "DarkShadow bar", icon: "\uf0c9" },
         { name: "Bar layout", icon: "\uf0db" },
         { name: "Hyprland", icon: "\uf108" },
         { name: "Recorder", icon: "\uf03d" },
@@ -903,7 +903,7 @@ FloatingWindow {
 
             PageSlot { idx: 0; cur: win.page; HomePage { id: homePage; anchors.fill: parent; ctl: win } }
             PageSlot { idx: 1; cur: win.page; SoundsPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 2; cur: win.page; WaybarPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 2; cur: win.page; BarPage { anchors.fill: parent; ctl: win } }
             PageSlot { idx: 3; cur: win.page; BarLayoutPage { anchors.fill: parent; ctl: win } }
             PageSlot { idx: 4; cur: win.page; HyprlandPage { anchors.fill: parent; ctl: win } }
             PageSlot { idx: 5; cur: win.page; RecorderPage { anchors.fill: parent; ctl: win } }

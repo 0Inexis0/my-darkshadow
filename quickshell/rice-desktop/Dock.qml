@@ -258,7 +258,7 @@ PanelWindow {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: Quickshell.execDetached(["rofi", "-show", "drun"])
+                    onClicked: Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-launch\""])
                 }
             }
         }

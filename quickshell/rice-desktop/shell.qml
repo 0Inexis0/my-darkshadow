@@ -307,6 +307,10 @@ ShellRoot {
 
     // ---- dashboard (middle of the bar edge, SUPER + W for wallpapers)
     Dashboard { id: dash }
+    Launcher { }
+    Bar { }
+    WifiMenu { }
+    BluetoothMenu { }
     WallPreview { path: dash.previewPath }
 
     Dock { dc: root.cfg.dock ? root.cfg.dock : ({}) }

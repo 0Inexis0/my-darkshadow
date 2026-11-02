@@ -523,7 +523,8 @@ step_finish() {
   [ -x "$BIN/desktop-set" ] && task "Desktop widgets settings" t "$BIN/desktop-set" state
   command -v swaync >/dev/null 2>&1 && task "Notifications style" t "$BIN/rice-notify" apply
   command -v hyprlock >/dev/null 2>&1 && task "Lock screen and idle timers" t "$BIN/rice-lock" apply
-  command -v rofi >/dev/null 2>&1 && task "Rofi theme" t "$BIN/rice-rofi" apply
+  task "Launcher and Rofi theme" t "$BIN/rice-rofi" apply
+  [ -x "$BIN/rice-bar" ] && task "DarkShadow bar (Waybar stays off)" t "$BIN/rice-bar" start
   task "Hot corner" t "$BIN/rice-hotcorner" apply
   [ -x "$BIN/desktop-set" ] && task "Dock and widget blur" t "$BIN/desktop-set" dock-blur
   [ -x "$BIN/rice-dashboard" ] && task "Dashboard blur" t "$BIN/rice-dashboard" blur
@@ -539,14 +540,18 @@ step_finish() {
   fi
   if [ "$IN_HYPR" = 1 ] && [ "$DRY_RUN" != 1 ]; then
     task "Reloading Hyprland" t hyprctl reload
-    task "Restarting Waybar and the desktop widgets" restart_shell
+    task "Restarting the bar and the desktop widgets" restart_shell
   else
     note "Hyprland is not running here, so nothing was reloaded. Everything starts on your next login."
   fi
 }
 restart_shell() {
-  pkill -x waybar 2>/dev/null; pkill -x .waybar-wrapped 2>/dev/null; sleep 0.3
-  command -v waybar >/dev/null 2>&1 && detach waybar
+  if [ -x "$BIN/rice-bar" ] && "$BIN/rice-bar" enabled 2>/dev/null; then
+    "$BIN/rice-bar" start
+  else
+    pkill -x waybar 2>/dev/null; pkill -x .waybar-wrapped 2>/dev/null; sleep 0.3
+    command -v waybar >/dev/null 2>&1 && detach waybar
+  fi
   [ -x "$BIN/rice-desktop" ] && T=10 t "$BIN/rice-desktop" restart
   return 0
 }

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Open the app launcher: the DarkShadow Launcher (built into the shell, the default) or Rofi, as chosen in Settings > Rofi > Launcher.
+cfg="$HOME/.config/rice/rofi.json"
+engine=shadow
+[ -f "$cfg" ] && grep -q '"engine": *"rofi"' "$cfg" && engine=rofi
+if [ "$engine" = shadow ] && pgrep -f "quickshell/rice-desktop" >/dev/null 2>&1; then
+  mkdir -p "$HOME/.cache/rice"
+  printf '%s toggle\n' "$(date +%s.%N)" >"$HOME/.cache/rice/launcher-open"
+  exit 0
+fi
+# Rofi: the same key closes it again
+if pgrep -x rofi >/dev/null 2>&1; then pkill -x rofi; exit 0; fi
+exec rofi -show drun

@@ -1,0 +1,266 @@
+import Quickshell
+import Quickshell.Io
+import Quickshell.Wayland
+import QtQuick
+
+// The Bluetooth menu: click the Bluetooth icon on the bar and it drops down under it. Your devices (battery too), connect,
+// disconnect, pair a new one, forget one, Bluetooth on / off. It talks to BlueZ through bluetoothctl.
+PanelWindow {
+    id: wm
+    property bool open: false
+    property real t: 0
+    Behavior on t { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+    onOpenChanged: t = open ? 1 : 0
+
+    // ---------- look ----------
+    readonly property color fg: "#F6F5F4"
+    readonly property color dim: Qt.rgba(0.965, 0.961, 0.957, 0.6)
+    readonly property color line: Qt.rgba(1, 1, 1, 0.09)
+    readonly property color hot: Qt.rgba(1, 1, 1, 0.07)
+    readonly property real alpha: Look.flat ? 1 : 0.86
+    readonly property color bg: Qt.rgba(0.05, 0.05, 0.05, alpha)
+    property var bc: ({})
+    readonly property bool atBottom: bc.position === "bottom"
+    readonly property real barSpace: (bc.enabled === false ? 34 : (bc.height ? bc.height : 38)) + (bc.style === "flat" ? 0 : 16) + 8
+
+    // ---------- data ----------
+    property real cx: 0
+    property bool radio: true
+    property var nets: []
+    property string busyFor: ""
+    property string msg: ""
+    property bool scanning: false
+    readonly property int cardW: 360
+    readonly property int rowH: 54
+    readonly property int maxRows: 7
+
+    function parse(text) {
+        const lines = text.split("\n")
+        const list = []
+        for (let i = 0; i < lines.length; i++) {
+            const l = lines[i]
+            if (l.indexOf("power:") === 0) { radio = l.substring(6).trim() === "yes"; continue }
+            const f = l.split("|")
+            if (f.length < 6 || f[0] === "") continue
+            const paired = f[3].trim() === "yes", conn = f[2].trim() === "yes"
+            if (!paired && !conn && f[1].replace(/-/g, ":") === f[0]) continue      // an unnamed device nearby
+            list.push({ mac: f[0], name: f[1], active: conn, paired: paired, icon: f[4].trim(), batt: parseInt(f[5]) })
+        }
+        list.sort(function(a, b) { return a.active !== b.active ? (a.active ? -1 : 1) : (a.paired !== b.paired ? (a.paired ? -1 : 1) : a.name.localeCompare(b.name)) })
+        nets = list
+    }
+
+    Process {
+        id: stateProc
+        command: ["bash", "-c", "\"$HOME/.local/bin/rice-bluetooth\" list"]
+        stdout: StdioCollector { onStreamFinished: wm.parse(text) }
+    }
+    Process {
+        id: barProc
+        command: ["bash", "-c", "\"$HOME/.local/bin/rice-bar\" state 2>/dev/null"]
+        stdout: StdioCollector { onStreamFinished: { try { wm.bc = JSON.parse(text) } catch (e) { } } }
+    }
+    Process {
+        id: act
+        stderr: StdioCollector { id: actErr }
+        onExited: function(code) {
+            wm.busyFor = ""
+            if (code === 0) { wm.msg = ""; Sfx.play("done") }
+            else { wm.msg = "Could not connect. Is the device on and close by?"; Sfx.play("remove") }
+            refreshTimer.restart()
+        }
+    }
+    Process { id: scanProc; command: ["bluetoothctl", "--timeout", "12", "scan", "on"]; onExited: wm.scanning = false }
+    function sh(cmd, label) { act.command = ["bash", "-c", cmd]; busyFor = label || ""; act.running = true }
+    function refresh() { if (!stateProc.running) stateProc.running = true }
+    Timer { id: refreshTimer; interval: 700; onTriggered: wm.refresh() }
+    Timer { interval: 4000; running: wm.open; repeat: true; onTriggered: wm.refresh() }
+
+    function pick(n) {
+        msg = ""
+        if (n.active) return
+        if (n.paired) sh("bluetoothctl connect " + n.mac, n.mac)
+        else sh("bluetoothctl pair " + n.mac + " && bluetoothctl trust " + n.mac + " && bluetoothctl connect " + n.mac, n.mac)
+    }
+    function scan() { if (scanning) return; scanning = true; scanProc.running = true; refreshTimer.interval = 2500; refreshTimer.restart() }
+    function power(on) { radio = on; sh((on ? "rfkill unblock bluetooth; " : "") + "bluetoothctl power " + (on ? "on" : "off"), ""); if (on) scan() }
+    function iconOf(n) {
+        const i = n.icon
+        if (i.indexOf("headphone") >= 0 || i.indexOf("headset") >= 0) return ["headphones", 0xF02CB]
+        if (i.indexOf("audio") >= 0) return ["speaker", 0xF04C3]
+        if (i.indexOf("keyboard") >= 0) return ["keyboard", 0xF030C]
+        if (i.indexOf("mouse") >= 0) return ["mouse", 0xF037D]
+        if (i.indexOf("gaming") >= 0) return ["sports_esports", 0xF0297]
+        if (i.indexOf("phone") >= 0) return ["smartphone", 0xF011C]
+        if (i.indexOf("computer") >= 0) return ["computer", 0xF0379]
+        return ["bluetooth", 0xF00AF]
+    }
+
+    // ---------- opening and closing ----------
+    function show(x) {
+        cx = x
+        msg = ""
+        barProc.running = true
+        refresh()
+        open = true
+    }
+    function hide() { open = false }
+    property string lastCmd: ""
+    property bool cmdSeen: false
+    Process {
+        id: trig
+        command: ["bash", "-c", "cat \"$HOME/.cache/rice/bluetooth-open\" 2>/dev/null"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const o = text.trim()
+                if (wm.cmdSeen && o !== "" && o !== wm.lastCmd) {
+                    const x = parseFloat(o.split(" ")[1])
+                    if (wm.open) wm.hide(); else wm.show(isNaN(x) ? wm.width - 200 : x)
+                }
+                wm.lastCmd = o
+                wm.cmdSeen = true
+            }
+        }
+    }
+    Timer { interval: 200; running: true; repeat: true; triggeredOnStart: true; onTriggered: if (!trig.running) trig.running = true }
+
+    // ---------- window ----------
+    visible: open || t > 0.01
+    color: "transparent"
+    anchors { top: true; left: true; right: true; bottom: true }
+    exclusionMode: ExclusionMode.Ignore
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.namespace: "rice-bluetooth"
+    WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    MouseArea { anchors.fill: parent; onClicked: wm.hide() }
+
+    readonly property int shown: Math.min(Math.max(nets.length, 1), maxRows)
+    readonly property real listH: shown * rowH
+    Rectangle {
+        id: card
+        width: wm.cardW
+        height: head.height + 14 + wm.listH + (wm.msg !== "" ? 34 : 0) + 14
+        Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+        x: Math.max(12, Math.min(wm.width - width - 12, wm.cx - width / 2))
+        y: wm.atBottom ? wm.height - wm.barSpace - height : wm.barSpace
+        radius: 20
+        color: wm.bg
+        border.width: 1; border.color: wm.line
+        opacity: wm.t
+        scale: 0.96 + 0.04 * wm.t
+        transformOrigin: wm.atBottom ? Item.Bottom : Item.Top
+        transform: Translate { y: (1 - wm.t) * (wm.atBottom ? 10 : -10) }
+        focus: true
+        Keys.onEscapePressed: wm.hide()
+        MouseArea { anchors.fill: parent }
+
+        // ---------- header: title, rescan, Wi-Fi switch ----------
+        Item {
+            id: head
+            x: 18; y: 14; width: parent.width - 36; height: 36
+            MIcon { id: hi; name: wm.radio ? "bluetooth" : "bluetooth_disabled"; glyph: String.fromCodePoint(wm.radio ? 0xF00AF : 0xF00B2); size: 22; color: wm.fg; anchors.verticalCenter: parent.verticalCenter }
+            Text { x: 34; anchors.verticalCenter: parent.verticalCenter; text: "Bluetooth"; color: wm.fg; font.family: Fonts.main; font.pixelSize: 15; font.weight: Font.DemiBold }
+            Item {   // rescan
+                id: rs
+                anchors.right: sw.left; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
+                width: 30; height: 30; visible: wm.radio
+                MIcon { id: ri; anchors.centerIn: parent; name: "refresh"; glyph: String.fromCodePoint(0xF0450); size: 18; color: rsm.containsMouse ? wm.fg : wm.dim
+                    RotationAnimation on rotation { id: spin; running: false; from: 0; to: 360; duration: 700; easing.type: Easing.OutCubic } }
+                MouseArea { id: rsm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { spin.restart(); wm.scan() } }
+            }
+            Rectangle {   // the switch
+                id: sw
+                anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
+                width: 42; height: 24; radius: 12
+                color: wm.radio ? Look.accent : Qt.rgba(1, 1, 1, 0.14)
+                Behavior on color { ColorAnimation { duration: 160 } }
+                Rectangle { y: 3; x: wm.radio ? 21 : 3; width: 18; height: 18; radius: 9; color: wm.radio ? "#0d0d0d" : "#F6F5F4"
+                    Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutBack } } }
+                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                    onClicked: { Sfx.play(wm.radio ? "switch-off" : "switch-on"); wm.power(!wm.radio) } }
+            }
+        }
+
+        // ---------- networks ----------
+        Text {
+            visible: wm.nets.length === 0
+            x: 18; y: head.height + 24; width: parent.width - 36; horizontalAlignment: Text.AlignHCenter
+            text: wm.radio ? (wm.scanning ? "Looking for devices…" : "No devices. Press refresh to search") : "Bluetooth is off"
+            color: wm.dim; font.family: Fonts.main; font.pixelSize: 13
+        }
+        Flickable {
+            id: fl
+            x: 8; y: head.height + 22
+            width: parent.width - 16; height: wm.listH
+            contentHeight: listCol.height
+            clip: true
+            interactive: false
+            boundsBehavior: Flickable.StopAtBounds
+            NumberAnimation { id: flAnim; target: fl; property: "contentY"; duration: 150; easing.type: Easing.OutCubic }
+            WheelHandler { acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                onWheel: function(e) {
+                    const base = flAnim.running ? flAnim.to : fl.contentY
+                    const to = Math.max(0, Math.min(fl.contentHeight - fl.height, base - e.angleDelta.y * 1.4))
+                    flAnim.stop(); flAnim.from = fl.contentY; flAnim.to = to; flAnim.start()
+                } }
+            Column {
+                id: listCol
+                width: fl.width
+                Repeater {
+                    model: wm.radio ? wm.nets : []
+                    delegate: Item {
+                        id: row
+                        readonly property bool busy: wm.busyFor === modelData.mac
+                        width: listCol.width
+                        height: wm.rowH
+                        Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                        opacity: 0
+                        property real slide: 10
+                        transform: Translate { y: row.slide }
+                        Component.onCompleted: enter.start()
+                        SequentialAnimation { id: enter
+                            PauseAnimation { duration: Math.min(index, 8) * 22 }
+                            ParallelAnimation {
+                                NumberAnimation { target: row; property: "opacity"; to: 1; duration: 200 }
+                                NumberAnimation { target: row; property: "slide"; to: 0; duration: 260; easing.type: Easing.OutCubic }
+                            }
+                        }
+                        Rectangle {
+                            x: 0; y: 2; width: parent.width; height: parent.height - 4; radius: 14
+                            color: modelData.active ? Qt.rgba(1, 1, 1, 0.1) : (rm.containsMouse ? wm.hot : "transparent")
+                            Behavior on color { ColorAnimation { duration: 120 } }
+                        }
+                        MouseArea { id: rm; x: 0; y: 0; width: parent.width; height: wm.rowH; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: wm.pick(modelData) }
+                        MIcon { x: 14; y: (wm.rowH - height) / 2; size: 22; color: modelData.active ? Look.accent : wm.fg
+                            name: wm.iconOf(modelData)[0]; glyph: String.fromCodePoint(wm.iconOf(modelData)[1]) }
+                        Column {
+                            x: 50; y: (wm.rowH - height) / 2; spacing: 2
+                            width: parent.width - 50 - 60
+                            Text { width: parent.width; elide: Text.ElideRight; text: modelData.name; color: wm.fg; font.family: Fonts.main; font.pixelSize: 14; font.weight: modelData.active ? Font.DemiBold : Font.Normal }
+                            Text { visible: text !== ""; width: parent.width; elide: Text.ElideRight; color: modelData.active ? Look.accent : wm.dim; font.family: Fonts.main; font.pixelSize: 11
+                                text: row.busy ? "Connecting…" : (modelData.active ? "Connected" + (isNaN(modelData.batt) ? "" : "  \u00b7  " + modelData.batt + "%") : (modelData.paired ? "Paired" : "Tap to pair")) }
+                        }
+                        Row {
+                            anchors.right: parent.right; anchors.rightMargin: 14; y: (wm.rowH - height) / 2; spacing: 10
+                            Item {   // disconnect (the connected one) or forget (a paired one)
+                                visible: modelData.paired || modelData.active
+                                width: 26; height: 26; anchors.verticalCenter: parent.verticalCenter
+                                MIcon { anchors.centerIn: parent; name: modelData.active ? "link_off" : "delete"; glyph: String.fromCodePoint(modelData.active ? 0xF0337 : 0xF01B4); size: 16
+                                    color: xm.containsMouse ? "#ff6b6b" : wm.dim }
+                                MouseArea { id: xm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                                    onClicked: wm.sh(modelData.active ? "bluetoothctl disconnect " + modelData.mac : "bluetoothctl remove " + modelData.mac, modelData.mac) }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ---------- an error, if there was one ----------
+        Text {
+            visible: wm.msg !== ""
+            x: 18; y: parent.height - 38; width: parent.width - 36; elide: Text.ElideRight
+            text: wm.msg; color: "#ff8a8a"; font.family: Fonts.main; font.pixelSize: 12
+        }
+    }
+}

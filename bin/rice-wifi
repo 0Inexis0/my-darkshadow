@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Open the Wi-Fi menu under the bar. rice-wifi [X]: X is where on the screen the icon is (pixels from the left).
+# Without the DarkShadow bar running it falls back to the old nmtui window.
+if pgrep -f "quickshell/rice-desktop" >/dev/null 2>&1; then
+  mkdir -p "$HOME/.cache/rice"
+  printf '%s %s\n' "$(date +%s.%N)" "${1:-0}" >"$HOME/.cache/rice/wifi-open"
+else
+  exec "$HOME/.local/bin/wifi-menu"
+fi

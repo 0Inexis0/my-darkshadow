@@ -2,7 +2,7 @@
 """rice-rofi: themes and layout for rofi, controlled from Settings > Rofi.
 
   rice-rofi state            JSON for the settings app
-  rice-rofi set KEY VALUE    change one option (theme, layout, position, width, radius,
+  rice-rofi set KEY VALUE    change one option (engine, theme, layout, position, width, radius,
                              transparency, opacity, blur, icons, font_size, lines)
   rice-rofi apply            regenerate the theme and wire it into rofi / Hyprland
   rice-rofi reset            back to defaults
@@ -30,11 +30,12 @@ HLUA = HYPR + "/hyprland.lua"
 MARK = "/* rice-rofi */"
 
 DEFAULTS = {
-    "theme": "shadow", "layout": "list", "position": "center", "width": 620, "radius": 18,
+    "engine": "shadow", "theme": "shadow", "layout": "list", "position": "center", "width": 620, "radius": 18,
     "transparency": True, "opacity": 0.82, "blur": True, "icons": True, "font_size": 13, "lines": 8,
 }
 RANGES = {"width": (360, 1200), "radius": (0, 32), "opacity": (0.3, 1.0), "font_size": (9, 20), "lines": (3, 14)}
-CHOICES = {"layout": ["list", "grid", "bar"], "position": ["top", "center", "bottom"]}
+# engine: shadow = the DarkShadow Launcher (built into the shell, same look and settings, opened by rice-launch; the default), or rofi
+CHOICES = {"engine": ["rofi", "shadow"], "layout": ["list", "grid", "bar", "split"], "position": ["top", "center", "bottom"]}
 BOOLS = ("transparency", "blur", "icons")
 
 # bg = window, alt = input/field, sel = selected row, fg = text, dim = secondary text
@@ -128,6 +129,8 @@ def theme_text(c):
     else:
         if layout == "grid":
             w = max(w, 720)
+        if layout == "split":
+            w = max(w, 860)
         if pos == "top":
             win = "location: north;\n    anchor: north;\n    y-offset: 64px;"
         elif pos == "bottom":
@@ -139,7 +142,29 @@ def theme_text(c):
     fam = font_family().replace('"', "")
     lines = c["lines"]
 
-    if layout == "bar":
+    if layout == "split":
+        try:
+            wall = open(HOME + "/.cache/hyprquickpaper-current").read().strip()
+        except Exception:
+            wall = ""
+        if not os.path.isfile(wall):
+            wall = ""
+        img = ('background-image: url("%s", height);' % wall.replace('"', "")) if wall else "background-color: @alt;"
+        mainbox = ("mainbox {\n    orientation: horizontal;\n    children: [ imagebox, listbox ];\n    spacing: 0px;\n"
+                   "    padding: 0px;\n    background-color: transparent;\n}\n\n"
+                   "imagebox {\n    expand: false;\n    width: %dpx;\n    children: [];\n    %s\n"
+                   "    border-radius: %dpx 0px 0px %dpx;\n}\n\n"
+                   "listbox {\n    orientation: vertical;\n    children: [ inputbar, listview ];\n    spacing: 10px;\n"
+                   "    padding: 14px;\n    expand: true;\n    background-color: transparent;\n}" % (int(w * 0.36), img, r, r))
+        inputbar = ("inputbar {\n    children: [ entry ];\n    padding: 10px 16px;\n    border-radius: %dpx;\n"
+                    "    background-color: @alt;\n}" % r_in)
+        listview = ("listview {\n    columns: 1;\n    lines: %d;\n    fixed-height: true;\n    scrollbar: false;\n"
+                    "    spacing: 4px;\n    background-color: transparent;\n}" % lines)
+        element = ("element {\n    orientation: horizontal;\n    padding: 8px 12px;\n    border-radius: %dpx;\n"
+                   "    spacing: 12px;\n    background-color: transparent;\n    text-color: @fg;\n}" % r_in)
+        icon = "element-icon {\n    size: 28px;\n    background-color: transparent;\n}"
+        text = "element-text {\n    background-color: transparent;\n    text-color: inherit;\n    vertical-align: 0.5;\n}"
+    elif layout == "bar":
         mainbox = ("mainbox {\n    orientation: horizontal;\n    children: [ inputbar, listview ];\n"
                    "    spacing: 14px;\n    padding: 8px 14px;\n    background-color: transparent;\n}")
         inputbar = ("inputbar {\n    children: [ entry ];\n    padding: 6px 12px;\n    border-radius: 10px;\n"
@@ -264,6 +289,15 @@ def lua_text(c):
     if c["blur"]:
         out.append('hl.layer_rule({\n    name  = "rice-rofi-blur",\n    match = { namespace = "rofi" },\n'
                    '    blur = true,\n    ignore_alpha = 0.1,\n})\n')
+        out.append('hl.layer_rule({\n    name  = "rice-launcher-blur",\n    match = { namespace = "rice-launcher" },\n'
+                   '    blur = true,\n    ignore_alpha = 0.1,\n})\n')
+    # the Quickshell bar (rice-bar) blurs the same way
+    out.append('hl.layer_rule({\n    name  = "rice-bar-blur",\n    match = { namespace = "rice-bar" },\n'
+               '    blur = true,\n    ignore_alpha = 0.1,\n})\n')
+    out.append('hl.layer_rule({\n    name  = "rice-wifi-blur",\n    match = { namespace = "rice-wifi" },\n'
+               '    blur = true,\n    ignore_alpha = 0.1,\n})\n')
+    out.append('hl.layer_rule({\n    name  = "rice-bluetooth-blur",\n    match = { namespace = "rice-bluetooth" },\n'
+               '    blur = true,\n    ignore_alpha = 0.1,\n})\n')
     return "".join(out)
 
 
@@ -328,9 +362,12 @@ def apply(c, reload_hypr=False):
 def state():
     c = load()
     out = dict(c)
-    out["themes"] = {k: {"name": v["name"], "bg": v["bg"], "alt": v["alt"], "sel": v["sel"], "fg": v["fg"]}
-                     for k, v in THEMES.items()}
+    out["themes"] = {k: dict(v) for k, v in THEMES.items()}
     out["installed"] = shutil.which("rofi") is not None
+    try:
+        out["wallpaper"] = open(HOME + "/.cache/hyprquickpaper-current").read().strip()
+    except Exception:
+        out["wallpaper"] = ""
     print(json.dumps(out))
 
 

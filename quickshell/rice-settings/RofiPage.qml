@@ -87,7 +87,13 @@ Item {
                 Rectangle {
                     id: win
                     readonly property bool bar: rprev.lay === "bar"
-                    width: bar ? rprev.width : Math.min(rprev.width - 40, Math.max(rprev.lay === "grid" ? 720 : 360, page.v("width", 620)) * rprev.sc)
+                    readonly property real leftw: rprev.lay === "split" ? width * 0.36 : 0
+                    Rectangle {   // split: the wallpaper side
+                        visible: rprev.lay === "split"
+                        width: win.leftw; height: parent.height; radius: win.radius
+                        gradient: Gradient { GradientStop { position: 0; color: "#e2a0a0" } GradientStop { position: 1; color: "#7a86b8" } }
+                    }
+                    width: bar ? rprev.width : Math.min(rprev.width - 40, Math.max(rprev.lay === "split" ? 860 : (rprev.lay === "grid" ? 720 : 360), page.v("width", 620)) * rprev.sc)
                     height: bar ? 34 : body.implicitHeight + 20
                     x: (rprev.width - width) / 2
                     y: rprev.pos === "top" ? (bar ? 0 : 16) : rprev.pos === "bottom" ? rprev.height - height - (bar ? 0 : 16) : (rprev.height - height) / 2
@@ -122,8 +128,8 @@ Item {
                     Column {
                         id: body
                         visible: !win.bar
-                        x: 10; y: 10
-                        width: parent.width - 20
+                        x: 10 + win.leftw; y: 10
+                        width: parent.width - 20 - win.leftw
                         spacing: 6
                         Rectangle {
                             width: parent.width; height: 26; radius: Math.max(4, win.radius - 4)
@@ -167,6 +173,18 @@ Item {
                     font.pixelSize: 10
                     color: "#7a7a84"
                 }
+            }
+
+            T { kind: "title"; text: "Launcher"; font.pixelSize: 16; font.bold: true }
+            SegRow {
+                label: "Engine"
+                desc: "The DarkShadow Launcher is built into the shell and uses the same settings below. Alt + Space, the dock button and the hot corner open it"
+                options: [
+                    { label: "DarkShadow Launcher", value: "shadow" },
+                    { label: "Rofi", value: "rofi" }
+                ]
+                current: page.v("engine", "shadow")
+                onChosen: function(x) { page.setv("engine", x) }
             }
 
             T { kind: "title"; text: "Theme"; font.pixelSize: 16; font.bold: true }
@@ -219,11 +237,12 @@ Item {
 
             SegRow {
                 label: "Style"
-                desc: "List, icon grid, or a full-width bar"
+                desc: "List, icon grid, full-width bar, or split (wallpaper on the left)"
                 options: [
                     { label: "List", value: "list" },
                     { label: "Grid", value: "grid" },
-                    { label: "Bar", value: "bar" }
+                    { label: "Bar", value: "bar" },
+                    { label: "Split", value: "split" }
                 ]
                 current: page.v("layout", "list")
                 onChosen: function(x) { page.setv("layout", x) }

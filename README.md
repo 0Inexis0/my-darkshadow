@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <b>A Hyprland rice with its own Quickshell settings app, Waybar, desktop widgets, a dashboard and a dock.</b><br>
+  <b>A Hyprland rice with its own Quickshell settings app, bar, launcher, desktop widgets, a dashboard and a dock.</b><br>
   Everything is set with sliders and switches in one app. No config editing.<br>
   Made by <a href="https://www.tiktok.com/@shadoww.dev">shadoww.dev</a>
 </p>
@@ -75,18 +75,18 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 **NixOS**: see [Installation](#installation) below. Then log out and pick Hyprland, and press `SUPER + U`.
 
 ## Features
-**Settings app** (`SUPER+U`), sixteen pages in five groups (touch an arrow to open one) and a search: Home, Sfx & sounds, Waybar, Bar layout, Hyprland, Recorder, Dashboard, Rofi, Theme, Cursors, Notifications, Idle & Lockscreen, Widgets, Hot corners, Dock, Services.
+**Settings app** (`SUPER+U`), sixteen pages in five groups (touch an arrow to open one) and a search: Home, Sfx & sounds, DarkShadow bar, Bar layout, Hyprland, Recorder, Dashboard, Rofi, Theme, Cursors, Notifications, Idle & Lockscreen, Widgets, Hot corners, Dock, Services.
 
 | Area | What you get |
 | --- | --- |
-| **Waybar** | layout editor (move modules between left, center and right), saved presets, position top or bottom, bar height, opacity |
+| **DarkShadow bar** | the Quickshell bar: style Flat, Island, Islands or Pills, position top or bottom, size, transparency, workspaces as dots, Pac-Man or letters, clock with seconds, a switch back to Waybar |
 | **Bar styles** | Flat, Floating, Islands, **One island**; group styles None, Pills, Segmented |
 | **Autohide** | bar slides in when the pointer touches the screen edge |
 | **Distro logo** | the logo of your distro (NixOS, Arch, CachyOS, Fedora, Nobara, EndeavourOS ...) in the bar, the dashboard, the welcome window and Settings, picked automatically |
 | **Hot corner** | touch a screen corner for a panel with Keep Awake, screen recording, screenshots, quick toggles (Wi-Fi, Bluetooth, Do Not Disturb, Gaming mode, microphone, Settings) and now playing; sections, toggles, corner, look and animation are set in Settings > Hot corners |
 | **Desktop widgets** | frosted glass over your blurred wallpaper (or plain cards), auto-hide while windows are open; clock, calendar, weather, music, resources (CPU, RAM, GPU), user card, battery and a see-through audio visualizer (Bars like cava in a terminal, Mirror, Wave, Dots, in your Theme color, a gradient or rainbow), a to-do list, a focus timer and a note; three widget styles (DarkShadow, Google, Outline); colors that turn light or dark with your wallpaper; a widget editor on the desktop to add, move, resize and style them |
 | **Dashboard** | slides up from the bottom of the screen (SUPER + ALT + D or push the pointer against the bottom edge): Dashboard (weather, calendar, usage, music), Wallpaper (big wallpaper cards, search, random), Performance (CPU, GPU, storage, network, memory, battery), About (your computer, distro, updates); cards you can remove, add, resize and move, looks Shadow, Graphite, Aurora and Frost |
-| **Bar layout** | drag and drop Waybar modules between left, center and right, reorder the system icons, Battery module |
+| **Bar layout** | drag and drop the modules of the bar between left, center and right: launcher, workspaces, window title, music, clock, tray, volume, Bluetooth, Wi-Fi, battery, notifications, power |
 | **Dock** | pinned apps, hover to reveal, media player, tinted icons |
 | **Hyprland** | gaps, borders, rounding, blur, shadows and animations from sliders, no config editing |
 | **Theme** | 21 color schemes: Auto and Grey from your wallpaper, six monochrome (Mono, Slate, Stone, Steel, Ash, Ink) and thirteen colors (Navy, Ocean, Sky, Teal, Mint, Forest, Lime, Gold, Sunset, Ember, Rose, Orchid, Violet). They recolor Waybar, borders, notifications and the lock screen |
@@ -96,7 +96,7 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 | **Search** | "Search anything!" in Settings finds every setting ("bar position", "blur", "clock font") and jumps to it |
 | **Updates** | a notification when a new version is out ("Update is Available!"), version and Update now button in the About tab of the dashboard, `rice-update` in a terminal |
 | **Idle & Lockscreen** | lock, screen-off and sleep timers; lock screen with Big / Stacked / Minimal clock in seven fonts (white hours, grey minutes), center or left layout, greeting, avatar, Pill / Box / Line password field, power buttons, screenshot / wallpaper / color background and media, resources, weather and notification lines |
-| **Rofi** | 5 themes (Shadow, Graphite, Midnight, Rose, Paper), layouts list / grid / full-width bar, position top, center or bottom, width, rows, corner radius, transparency, blur, font size, icons |
+| **Rofi** | Engine: the built-in DarkShadow Launcher (default) or Rofi; 5 themes (Shadow, Graphite, Midnight, Rose, Paper), layouts list / grid / full-width bar / split (wallpaper on the left), position top, center or bottom, width, rows, corner radius, transparency, blur, font size, icons |
 | **Cursors** | Bibata, Hyprcursor themes (Rose Pine) and packs you can download in Settings: Catppuccin, Phinger; live preview |
 | **Fonts** | one place to set the main and icon fonts |
 | **Welcome intro** | once after installing: night falls over the desktop, a few words, the moon logo draws itself in, "Take a look" opens it up again and Settings starts a short tour (it lights up one part at a time). Play it again with `rice-welcome show`, only the tour: `rice-welcome tour` |
@@ -113,7 +113,7 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 | `SUPER + Q` | terminal |
 | `SUPER + E` | file manager |
 | `SUPER + R` | app menu |
-| `ALT + Space` | app launcher (rofi) |
+| `ALT + Space` | app launcher (DarkShadow Launcher, or rofi) |
 | `SUPER + C` | close window |
 | `SUPER + V` | toggle floating |
 | `SUPER + P` | pseudo-tile |

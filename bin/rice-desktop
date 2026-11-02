@@ -5,7 +5,7 @@ running() { pgrep -f "quickshell/rice-desktop" >/dev/null; }
 [ "$1" = start ] && "$HOME/.local/bin/desktop-set" edit off >/dev/null 2>&1
 case "$1" in
   start|ensure)
-    "$HOME/.local/bin/waybar-autohide" ensure >/dev/null 2>&1 &
+    "$HOME/.local/bin/rice-bar" enabled 2>/dev/null || "$HOME/.local/bin/waybar-autohide" ensure >/dev/null 2>&1 &
     [ -x "$HOME/.local/bin/rice-ws-watch" ] && setsid -f "$HOME/.local/bin/rice-ws-watch" >/dev/null 2>&1
     [ -x "$HOME/.local/bin/rice-update" ] && setsid -f "$HOME/.local/bin/rice-update" watch >/dev/null 2>&1
     [ -x "$HOME/.local/bin/rice-welcome" ] && "$HOME/.local/bin/rice-welcome" start >/dev/null 2>&1 &

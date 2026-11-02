@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# the DarkShadow bar is on: there is no Waybar to reload
+"$HOME/.local/bin/rice-bar" enabled 2>/dev/null && exit 0
 exec 9>/tmp/waybar-reload.lock
 flock -n 9 || exit 0
 pkill -x waybar 2>/dev/null; pkill -x .waybar-wrapped 2>/dev/null

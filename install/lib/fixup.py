@@ -2,6 +2,8 @@
 
 - require("x") lines whose x.lua does not exist here are commented out (instead of breaking the config)
 - values that newer Hyprland versions reject are clamped (shadow render_power 1..4)
+- V3.17: the Hyprland autostart starts the DarkShadow bar (rice-bar start: Waybar only if you switched it off) and
+  ALT + Space opens the DarkShadow Launcher (rice-launch: Rofi if you chose Rofi). A copy of the file is kept next to it
 Prints one line per change. Safe to run many times.
 """
 import json
@@ -68,11 +70,31 @@ def clamp_json(path):
         changes.append("%s: shadow render_power clamped to 1..4" % os.path.basename(path))
 
 
+def migrate_main(path):
+    try:
+        s = open(path).read()
+    except OSError:
+        return
+    n = s
+    if "rice-bar start" not in n:
+        n = re.sub(r'hl\.exec_cmd\(\s*"waybar"\s*\)', 'hl.exec_cmd("$HOME/.local/bin/rice-bar start")', n)
+    if "rice-launch" not in n:
+        n = re.sub(r'(hl\.bind\(\s*"ALT \+ Space"\s*,\s*hl\.dsp\.exec_cmd\()\s*"[^"]*rofi[^"]*"(\s*\))',
+                   r'\1"$HOME/.local/bin/rice-launch"\2', n)
+    if n != s:
+        bak = path + ".bak-bar"
+        if not os.path.exists(bak):
+            open(bak, "w").write(s)
+        open(path, "w").write(n)
+        changes.append("hyprland.lua: autostart and ALT + Space use the DarkShadow bar and launcher (copy: hyprland.lua.bak-bar)")
+
+
 if os.path.isdir(hypr):
     for f in sorted(os.listdir(hypr)):
         if f.endswith(".lua"):
             clamp_lua(os.path.join(hypr, f))
     fix_requires(os.path.join(hypr, "hyprland.lua"))
+    migrate_main(os.path.join(hypr, "hyprland.lua"))
 clamp_json(home + "/.config/rice/hypr.json")
 
 for c in changes:
