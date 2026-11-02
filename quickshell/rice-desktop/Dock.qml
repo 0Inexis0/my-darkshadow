@@ -11,6 +11,9 @@ PanelWindow {
     property bool hovering: false
     readonly property bool autoHide: dc.hover !== false
     readonly property bool reveal: !autoHide || pinned || hovering
+    // the screen edge: bottom, top, left or right (Settings > Interface > Dock > Position)
+    readonly property string edge: dc.position === "top" || dc.position === "left" || dc.position === "right" ? dc.position : "bottom"
+    readonly property bool vert: edge === "left" || edge === "right"
 
     function pickPlayer() {
         const l = Mpris.players.values
@@ -62,9 +65,9 @@ PanelWindow {
 
     visible: dc.enabled === true
     color: "transparent"
-    anchors { bottom: true }
-    implicitWidth: bar.width + 24
-    implicitHeight: (reveal || slide.running) ? bar.height + 28 : 6
+    anchors { bottom: edge === "bottom"; top: edge === "top"; left: edge === "left"; right: edge === "right" }
+    implicitWidth: vert ? ((reveal || slide.running) ? bar.width + 28 : 6) : bar.width + 24
+    implicitHeight: vert ? bar.height + 24 : ((reveal || slide.running) ? bar.height + 28 : 6)
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.namespace: "rice-dock"
@@ -80,31 +83,43 @@ PanelWindow {
 
     Rectangle {
         id: bar
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: dock.reveal ? 14 : -(height + 4)
-        Behavior on anchors.bottomMargin {
+        anchors.horizontalCenter: dock.vert ? undefined : parent.horizontalCenter
+        anchors.verticalCenter: dock.vert ? parent.verticalCenter : undefined
+        anchors.bottom: dock.edge === "bottom" ? parent.bottom : undefined
+        anchors.top: dock.edge === "top" ? parent.top : undefined
+        anchors.left: dock.edge === "left" ? parent.left : undefined
+        anchors.right: dock.edge === "right" ? parent.right : undefined
+        // how far it sits from the screen edge; hidden = pushed out of the screen
+        property real off: dock.reveal ? 14 : -((dock.vert ? width : height) + 4)
+        Behavior on off {
             NumberAnimation { id: slide; duration: 280; easing.type: Easing.OutCubic }
         }
-        width: row.width + 20
-        height: 60
+        anchors.bottomMargin: off
+        anchors.topMargin: off
+        anchors.leftMargin: off
+        anchors.rightMargin: off
+        width: dock.vert ? 60 : row.width + 20
+        height: dock.vert ? row.height + 20 : 60
         radius: 22
         color: dock.dc.background === false ? "transparent" : Qt.rgba(0.1, 0.1, 0.11, Look.flat ? 1 : (dock.dc.opacity !== undefined ? Number(dock.dc.opacity) : 0.78))
         border.width: dock.dc.background === false ? 0 : 1
         border.color: Qt.rgba(1, 1, 1, 0.07)
         Behavior on color { ColorAnimation { duration: 200 } }
 
-        Row {
+        Grid {
             id: row
             anchors.centerIn: parent
             spacing: 6
+            // one row along the bottom or top, one column along the sides
+            columns: dock.vert ? 1 : 1000
+            horizontalItemAlignment: Grid.AlignHCenter
+            verticalItemAlignment: Grid.AlignVCenter
 
             Rectangle {
                 visible: dock.dc.pinButton !== false
                 width: 40
                 height: 40
                 radius: 14
-                anchors.verticalCenter: parent.verticalCenter
                 color: dock.pinned ? "#F6F5F4" : (pinMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.14) : Qt.rgba(1, 1, 1, 0.06))
                 Behavior on color { ColorAnimation { duration: 140 } }
                 T {
@@ -130,7 +145,6 @@ PanelWindow {
                     id: app
                     width: 44
                     height: 48
-                    anchors.verticalCenter: parent.verticalCenter
                     readonly property bool tint: dock.dc.tint === true
                     Image {
                         id: ico
@@ -160,14 +174,19 @@ PanelWindow {
                     }
                     Rectangle {
                         visible: modelData.tl !== null
-                        width: modelData.tl && modelData.tl.activated ? 14 : 5
-                        height: 4
+                        readonly property bool act: modelData.tl && modelData.tl.activated
+                        width: dock.vert ? 4 : (act ? 14 : 5)
+                        height: dock.vert ? (act ? 14 : 5) : 4
                         radius: 2
                         color: "#F6F5F4"
-                        opacity: modelData.tl && modelData.tl.activated ? 1 : 0.55
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.bottom: parent.bottom
+                        opacity: act ? 1 : 0.55
+                        anchors.horizontalCenter: dock.vert ? undefined : parent.horizontalCenter
+                        anchors.verticalCenter: dock.vert ? parent.verticalCenter : undefined
+                        anchors.bottom: dock.vert ? undefined : parent.bottom
+                        anchors.left: dock.edge === "left" ? parent.left : undefined
+                        anchors.right: dock.edge === "right" ? parent.right : undefined
                         Behavior on width { NumberAnimation { duration: 160 } }
+                        Behavior on height { NumberAnimation { duration: 160 } }
                     }
                     MouseArea {
                         id: appMouse
@@ -184,26 +203,26 @@ PanelWindow {
 
             Rectangle {
                 visible: dock.dc.media !== false && dock.player !== null
-                width: 1
-                height: 30
+                width: dock.vert ? 30 : 1
+                height: dock.vert ? 1 : 30
                 color: Qt.rgba(1, 1, 1, 0.12)
-                anchors.verticalCenter: parent.verticalCenter
             }
 
-            Row {
+            Grid {
                 visible: dock.dc.media !== false && dock.player !== null
                 spacing: 8
-                anchors.verticalCenter: parent.verticalCenter
+                columns: dock.vert ? 1 : 3
+                horizontalItemAlignment: Grid.AlignHCenter
+                verticalItemAlignment: Grid.AlignVCenter
                 RoundImage {
                     width: 38
                     height: 38
                     cornerRadius: 12
                     fallback: ""
-                    anchors.verticalCenter: parent.verticalCenter
                     source: dock.player && dock.player.trackArtUrl ? dock.player.trackArtUrl : ""
                 }
                 Column {
-                    anchors.verticalCenter: parent.verticalCenter
+                    visible: !dock.vert
                     width: 130
                     T { width: parent.width; elide: Text.ElideRight; font.pixelSize: 12; font.bold: true; text: dock.player ? (dock.player.trackTitle || "") : "" }
                     T { width: parent.width; elide: Text.ElideRight; font.pixelSize: 10; color: "#a8a8ad"; text: dock.player ? (dock.player.trackArtist || "") : "" }
@@ -212,7 +231,6 @@ PanelWindow {
                     width: 34
                     height: 34
                     radius: 17
-                    anchors.verticalCenter: parent.verticalCenter
                     color: playMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(1, 1, 1, 0.07)
                     Behavior on color { ColorAnimation { duration: 140 } }
                     T { anchors.centerIn: parent; text: dock.player && dock.player.isPlaying ? "" : ""; font.pixelSize: 12 }
@@ -231,7 +249,6 @@ PanelWindow {
                 width: 40
                 height: 40
                 radius: 14
-                anchors.verticalCenter: parent.verticalCenter
                 color: appsMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.14) : Qt.rgba(1, 1, 1, 0.06)
                 Behavior on color { ColorAnimation { duration: 140 } }
                 T { anchors.centerIn: parent; text: ""; font.pixelSize: 16 }

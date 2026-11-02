@@ -102,9 +102,16 @@ Item {
 
             ToggleRow {
                 label: "Enable"
-                desc: "A minimal dock with your apps at the bottom of the screen"
+                desc: "A minimal dock with your apps on a screen edge (bottom, top, left or right)"
                 checked: page.dv("enabled", false) === true
                 onToggled: function(v) { page.ctl.dset("dock", "enabled", v ? "on" : "off") }
+            }
+            SegRow {
+                label: "Position"
+                desc: "Which screen edge the dock sits on"
+                options: [{ label: "Bottom", value: "bottom" }, { label: "Top", value: "top" }, { label: "Left", value: "left" }, { label: "Right", value: "right" }]
+                current: page.dv("position", "bottom")
+                onChosen: function(x) { page.ctl.dset("dock", "position", x) }
             }
             ToggleRow {
                 label: "Background"
@@ -127,7 +134,7 @@ Item {
             }
             ToggleRow {
                 label: "Hover to reveal"
-                desc: "Hide the dock and slide it in when the pointer touches the bottom edge"
+                desc: "Hide the dock and slide it in when the pointer touches its screen edge"
                 checked: page.dv("hover", true) === true
                 onToggled: function(v) { page.ctl.dset("dock", "hover", v ? "on" : "off") }
             }

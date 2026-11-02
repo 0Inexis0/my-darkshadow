@@ -25,7 +25,7 @@ THEMES = ["shadow", "google", "outline"]
 DEFAULTS = {
     "widgets": {w: {"enabled": False} for w in WIDGETS},
     "clock": {"enabled": False, "onlyLocked": False, "placement": "draggable", "style": "digital", "font": "default"},
-    "dock": {"enabled": False, "background": True, "hover": True, "pinnedStartup": False,
+    "dock": {"enabled": False, "position": "bottom", "background": True, "hover": True, "pinnedStartup": False,
              "media": True, "pinButton": True, "appsButton": True, "tint": False,
              "opacity": 0.78, "blur": True,
              "apps": ["kitty", "org.gnome.Nautilus", "firefox", "spotify", "discord", "steam"]},
@@ -256,7 +256,11 @@ def main(a):
     elif cmd in ("dock", "lock"):
         if len(a) < 4 or a[2] not in c[cmd] or a[2] == "apps":
             die("%s KEY on|off (keys: %s)" % (cmd, ", ".join(k for k in c[cmd] if k != "apps")))
-        if cmd == "dock" and a[2] == "opacity":
+        if cmd == "dock" and a[2] == "position":
+            if a[3] not in ("bottom", "top", "left", "right"):
+                die("dock position: bottom|top|left|right")
+            c["dock"]["position"] = a[3]
+        elif cmd == "dock" and a[2] == "opacity":
             c["dock"]["opacity"] = round(max(0.2, min(1.0, float(a[3]))), 2)
         else:
             c[cmd][a[2]] = tobool(a[3])

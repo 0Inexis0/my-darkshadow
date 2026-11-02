@@ -3,7 +3,8 @@ import Quickshell.Io
 import Quickshell.Wayland
 import QtQuick
 
-// The dashboard. It slides up out of the bottom edge, or in from the left edge (Settings > Dashboard > Position).
+// The dashboard. It comes out of the bottom, top, left or right edge (Settings > Dashboard > Position).
+// At the bottom and top the tabs run along the top of it, at the left and right they are a column on its left side.
 // SUPER + ALT + D opens it, SUPER + W opens the wallpapers.
 // Tabs: Dashboard, Wallpaper, Performance, About. Settings > Dashboard.
 PanelWindow {
@@ -31,13 +32,17 @@ PanelWindow {
 
     readonly property var tabs: cfg.tabs && cfg.tabs.length ? cfg.tabs : ["dashboard", "wallpaper", "performance", "about"]
     readonly property int curIdx: Math.max(0, tabs.indexOf(tab))
-    readonly property bool atTop: false   // never at the top
-    readonly property bool atLeft: cfg.position === "left"   // in the middle of the left edge, floating
+    readonly property string pos: cfg.position === "top" || cfg.position === "left" || cfg.position === "right" ? cfg.position : "bottom"
+    readonly property bool atTop: pos === "top"
+    readonly property bool atLeft: pos === "left"
+    readonly property bool atRight: pos === "right"
+    readonly property bool side: atLeft || atRight       // floating in the middle of a side edge, tabs in a column
+    readonly property real railW: side ? 124 : 0
     readonly property real sc: cfg.scale ? cfg.scale : 1
     readonly property real spd: cfg.speed ? cfg.speed : 1
     readonly property string anim: cfg.animation === "fade" || cfg.animation === "none" ? cfg.animation : "slide"
-    readonly property bool attach: cfg.attach !== false && !atLeft
-    readonly property bool barHere: !atLeft && !!cfg.bar && cfg.bar.position === "bottom" && !cfg.bar.autohide
+    readonly property bool attach: cfg.attach !== false && !side
+    readonly property bool barHere: !side && !!cfg.bar && cfg.bar.position === (atTop ? "top" : "bottom") && !cfg.bar.autohide
     readonly property real barOff: barHere ? cfg.bar.height : 0
     readonly property real earR: attach ? 24 : 0
     readonly property real headH: 64
@@ -45,10 +50,10 @@ PanelWindow {
     readonly property real trayH: 0
     readonly property real baseW: cfg.width ? cfg.width : 1000
     // one size for every tab (the size of Performance), so switching tabs never resizes the panel
-    function tabW(t) { return Math.min((db.width - 40) / sc - 2 * earR, baseW * 1.04) }
+    function tabW(t) { return Math.min((db.width - 40) / sc - 2 * earR - railW, baseW * (side ? 0.92 : 1.04)) }
     function tabH(t) { return 330 }
-    readonly property real wantW: tabW(tab)
-    readonly property real wantH: headH + tabH(tab) + pad
+    readonly property real wantW: tabW(tab) + railW
+    readonly property real wantH: (side ? 2 * pad + 4 : headH + pad) + tabH(tab)
     property real curW: wantW
     property real curH: wantH
     Behavior on curW { NumberAnimation { duration: 460 / db.spd; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.05, 0.7, 0.1, 1, 1, 1] } }
@@ -156,10 +161,10 @@ PanelWindow {
     Item {
         id: edge
         // the middle of the bottom edge, as wide as the dashboard; the corners stay free for the hot corner
-        width: db.atLeft ? 2 : Math.min(db.width - 360, (db.wantW + 2 * db.earR) * db.sc)
-        height: db.atLeft ? Math.min(db.height - 360, db.wantH * db.sc + 120) : 2
-        x: db.atLeft ? 0 : (db.width - width) / 2
-        y: db.atLeft ? (db.height - height) / 2 : db.height - height
+        width: db.side ? 2 : Math.min(db.width - 360, (db.wantW + 2 * db.earR) * db.sc)
+        height: db.side ? Math.min(db.height - 360, db.wantH * db.sc + 120) : 2
+        x: db.atLeft ? 0 : (db.atRight ? db.width - width : (db.width - width) / 2)
+        y: db.side ? (db.height - height) / 2 : (db.atTop ? 0 : db.height - height)
         HoverHandler {
             id: edgeHover
             enabled: db.edgeOn
@@ -268,10 +273,10 @@ PanelWindow {
     Item {
         id: bottomZone
         visible: db.open && db.byHover
-        width: db.atLeft ? 10 : db.width
-        height: db.atLeft ? db.height : 10
-        x: 0
-        y: db.atLeft ? 0 : db.height - height
+        width: db.side ? 10 : db.width
+        height: db.side ? db.height : 10
+        x: db.atRight ? db.width - width : 0
+        y: db.atTop ? 0 : (db.side ? 0 : db.height - height)
         HoverHandler { id: bottomHover; onHoveredChanged: db.pointerMoved() }
     }
     function pointerMoved() {
@@ -314,10 +319,10 @@ PanelWindow {
     Item {
         id: bridge
         visible: db.open
-        x: db.atLeft ? 0 : shell.x
-        width: db.atLeft ? shell.x : shell.width * db.sc
-        y: db.atLeft ? shell.y : (db.atTop ? 0 : shell.y + shell.height)
-        height: db.atLeft ? shell.height * db.sc : (db.atTop ? Math.max(0, db.barOff) + 2 : db.height - y)
+        x: db.atLeft ? 0 : (db.atRight ? shell.x + shell.width * db.sc : shell.x)
+        width: db.atLeft ? shell.x : (db.atRight ? db.width - x : shell.width * db.sc)
+        y: db.side ? shell.y : (db.atTop ? 0 : shell.y + shell.height * db.sc)
+        height: db.side ? shell.height * db.sc : (db.atTop ? shell.y + 2 : db.height - y)
         HoverHandler { id: bridgeHover; onHoveredChanged: db.pointerMoved() }
     }
 
@@ -346,8 +351,8 @@ PanelWindow {
         scale: db.sc
         width: db.curW - 2 * db.pad
         height: 52
-        x: db.atLeft ? shell.x : (db.width - width * db.sc) / 2
-        y: shell.y - (height + 12) * db.sc + (on ? 0 : 14)
+        x: db.side ? shell.x + db.pad * db.sc : (db.width - width * db.sc) / 2
+        y: db.atTop ? shell.y + (shell.height + 12) * db.sc - (on ? 0 : 14) : shell.y - (height + 12) * db.sc + (on ? 0 : 14)
         opacity: on ? 1 : 0
         visible: opacity > 0.01
         Behavior on opacity { NumberAnimation { duration: 220 } }
@@ -409,8 +414,8 @@ PanelWindow {
         // the full size; what you see grows inside it
         width: db.curW + 2 * db.earR
         height: db.curH
-        x: db.atLeft ? 10 : (db.width - width * db.sc) / 2
-        y: db.atLeft ? (db.height - height * db.sc) / 2 : (db.atTop ? db.barOff + (db.attach ? 0 : 10) : db.height - db.barOff - (db.attach ? 0 : 10) - height * db.sc)
+        x: db.atLeft ? 10 : (db.atRight ? db.width - width * db.sc - 10 : (db.width - width * db.sc) / 2)
+        y: db.side ? (db.height - height * db.sc) / 2 : (db.atTop ? db.barOff + (db.attach ? 0 : 10) : db.height - db.barOff - (db.attach ? 0 : 10) - height * db.sc)
         transformOrigin: Item.TopLeft
         scale: db.sc
         visible: db.t > 0.003
@@ -420,8 +425,8 @@ PanelWindow {
         readonly property real e: db.t
         readonly property real sw: db.curW
         readonly property real sh: db.curH
-        readonly property real slideY: db.anim === "slide" && !db.atLeft ? (1 - e) * (db.curH + 4) : 0
-        readonly property real slideX: db.anim === "slide" && db.atLeft ? -(1 - e) * (db.curW + 14) : 0
+        readonly property real slideY: db.anim === "slide" && !db.side ? (db.atTop ? -1 : 1) * (1 - e) * (db.curH + 4) : 0
+        readonly property real slideX: db.anim === "slide" && db.side ? (db.atLeft ? -1 : 1) * (1 - e) * (db.curW + 14) : 0
         opacity: db.anim === "fade" ? e : (db.anim === "slide" ? Math.min(1, 0.4 + e) : 1)
 
         HoverHandler { id: shellHover; onHoveredChanged: db.pointerMoved() }
@@ -519,44 +524,47 @@ PanelWindow {
                     // ---------- tabs ----------
                     Item {
                         id: head
-                        x: db.pad; y: 10
-                        width: parent.width - 2 * db.pad - (canEdit ? 50 : 0)
-                        height: db.headH - 14
+                        x: db.pad; y: db.side ? db.pad : 10
+                        // along the top (bottom and top positions) or a column on the left (side positions)
+                        width: db.side ? db.railW - db.pad : parent.width - 2 * db.pad - (canEdit ? 50 : 0)
+                        height: db.side ? parent.height - 2 * db.pad - 50 : db.headH - 14
                         readonly property bool canEdit: db.tab !== "wallpaper"
-                        readonly property real tw: width / Math.max(1, db.tabs.length)
+                        readonly property real tw: (db.side ? height : width) / Math.max(1, db.tabs.length)
                         readonly property var names: ({ dashboard: "Dashboard", wallpaper: "Wallpaper", performance: "Performance", about: "About" })
                         readonly property var icons: ({ dashboard: ["space_dashboard", 0xF056E], wallpaper: ["wallpaper", 0xF02E9],
                                                         performance: ["speed", 0xF04C5], about: ["info", 0xF02FD] })
-                        Behavior on width { NumberAnimation { duration: 260 } }
+                        Behavior on width { enabled: !db.side; NumberAnimation { duration: 260 } }
                         Rectangle {
                             visible: db.p.tabStyle === "segment"
                             anchors.fill: parent
-                            radius: height / 2
+                            radius: db.side ? 22 : height / 2
                             color: db.p.card
                         }
                         Rectangle {
                             id: ind
-                            readonly property bool under: db.p.tabStyle === "underline"
+                            readonly property bool under: db.p.tabStyle === "underline" && !db.side
                             function labelW(i) { const it = tabRep.itemAt(i); return it ? it.labelWidth : 60 }
                             readonly property real lw: under ? labelW(db.curIdx) + 22 : head.tw - (db.p.tabStyle === "segment" ? 8 : 14)
-                            x: db.curIdx * head.tw + (head.tw - lw) / 2
-                            y: under ? head.height - 3 : (db.p.tabStyle === "segment" ? 4 : 2)
-                            width: lw
-                            height: under ? 3 : head.height - (db.p.tabStyle === "segment" ? 8 : 4)
-                            radius: under ? 1.5 : height / 2
+                            x: db.side ? (db.p.tabStyle === "segment" ? 4 : 2) : db.curIdx * head.tw + (head.tw - lw) / 2
+                            y: db.side ? db.curIdx * head.tw + (head.tw - lw) / 2 : (under ? head.height - 3 : (db.p.tabStyle === "segment" ? 4 : 2))
+                            width: db.side ? head.width - (db.p.tabStyle === "segment" ? 8 : 4) : lw
+                            height: db.side ? lw : (under ? 3 : head.height - (db.p.tabStyle === "segment" ? 8 : 4))
+                            radius: under ? 1.5 : Math.min(width, height) / 2
                             color: under ? db.p.primary : (db.p.tabStyle === "segment" ? db.p.primary : db.p.container)
                             Behavior on x { NumberAnimation { duration: 460 / db.spd; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.34, 1.36, 0.64, 1, 1, 1] } }
+                            Behavior on y { NumberAnimation { duration: 460 / db.spd; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.34, 1.36, 0.64, 1, 1, 1] } }
                             Behavior on width { NumberAnimation { duration: 320 / db.spd; easing.type: Easing.OutCubic } }
                         }
                         Rectangle {
-                            visible: db.p.tabStyle === "underline"
+                            visible: db.p.tabStyle === "underline" && !db.side
                             anchors.left: parent.left; anchors.right: parent.right
                             y: parent.height
                             height: 1
                             color: db.p.track
                         }
-                        Row {
+                        Grid {
                             anchors.fill: parent
+                            columns: db.side ? 1 : Math.max(1, db.tabs.length)
                             Repeater {
                                 id: tabRep
                                 model: db.tabs
@@ -564,8 +572,8 @@ PanelWindow {
                                     id: tb
                                     readonly property bool on: db.curIdx === index
                                     readonly property real labelWidth: lab.implicitWidth
-                                    width: head.tw
-                                    height: head.height
+                                    width: db.side ? head.width : head.tw
+                                    height: db.side ? head.tw : head.height
                                     readonly property color fg: on ? (db.p.tabStyle === "segment" ? db.p.inkOn : db.p.primary) : db.p.sub
                                     Rectangle {
                                         visible: db.p.tabStyle !== "segment"
@@ -597,8 +605,8 @@ PanelWindow {
                     // edit button
                     Rectangle {
                         visible: head.canEdit
-                        anchors.right: parent.right; anchors.rightMargin: db.pad
-                        y: head.y + (head.height - height) / 2
+                        x: db.side ? db.pad + (head.width - width) / 2 : parent.width - db.pad - width
+                        y: db.side ? head.y + head.height + 5 : head.y + (head.height - height) / 2
                         width: 40; height: 40; radius: 20
                         color: db.editing ? db.p.primary : (edm.containsMouse ? db.p.card2 : db.p.card)
                         Behavior on color { ColorAnimation { duration: 160 } }
@@ -609,9 +617,9 @@ PanelWindow {
                     // ---------- tab pages ----------
                     Item {
                         id: body
-                        x: db.pad
-                        y: db.headH + 4
-                        width: parent.width - 2 * db.pad
+                        x: db.pad + db.railW
+                        y: db.side ? db.pad + 4 : db.headH + 4
+                        width: parent.width - 2 * db.pad - db.railW
                         height: db.tabH(db.tab)
                         Repeater {
                             model: db.tabs
