@@ -1,5 +1,10 @@
 # Changelog
 
+## V3.08
+- Notification center (Deck): the power modes (Saver, Balanced, Performance) are a small row at the very bottom now, no longer a huge pill in the middle
+- Pressing a power mode applies it and only that mode stays lit (the panel redraws a moment after the click)
+- Power modes show on desktop PCs too, whenever power-profiles-daemon is running; the row is hidden when it is not
+
 ## V3.07
 - Home > Settings > Window size: a live preview, a small screen with a small window that grows and shrinks while you drag the slider (with the size in pixels)
 - The Settings window really changes size now: new helper rice-settings-size asks Hyprland for the size, checks that it worked and centers the window (the log is in ~/.cache/rice/settings-size.log)

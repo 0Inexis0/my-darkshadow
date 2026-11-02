@@ -57,9 +57,9 @@ CHOICES = {"pos_x": ["left", "center", "right"], "pos_y": ["top", "bottom"],
            "border": ["subtle", "accent", "none"],
            "sound": ["glass", "droplet", "chime", "bubble", "marimba", "aurora", "ping", "harp", "keys", "ripple", "off"]}
 ORDER = {
-    # Deck: switches on top, power modes, notifications, media, volume and brightness, power buttons at the bottom
-    "deck": ["buttons-grid#quick", "buttons-grid#power", "title", "notifications", "mpris", "volume", "backlight",
-             "buttons-grid#session"],
+    # Deck: switches on top, notifications, media, volume and brightness, power buttons, and the small power modes row at the very bottom
+    "deck": ["buttons-grid#quick", "title", "notifications", "mpris", "volume", "backlight",
+             "buttons-grid#session", "buttons-grid#power"],
     "controls-top": ["buttons-grid", "mpris", "volume", "dnd", "title", "notifications"],
     "controls-bottom": ["title", "dnd", "notifications", "mpris", "volume", "buttons-grid"],
     "minimal": ["title", "dnd", "notifications"],
@@ -208,7 +208,7 @@ def write_config(c):
     j["notification-grouping"] = False
     j["image-visibility"] = "when-available" if c["images"] else "never"
     light = backlight_device()
-    have_pp = shutil.which("powerprofilesctl") is not None
+    have_pp = power_profiles_ok()
     j["widgets"] = [w for w in ORDER[c["layout"]] if w == "notifications" or c[WKEY[w]]]
     # hide rows this computer cannot use (no screen brightness on a desktop PC, no power-profiles-daemon)
     j["widgets"] = [w for w in j["widgets"] if not (w == "backlight" and not light) and not (w == "buttons-grid#power" and not have_pp)]
@@ -249,6 +249,16 @@ def write_config(c):
     os.replace(tmp, SWCFG)
 
 
+def power_profiles_ok():
+    """power modes work: powerprofilesctl is installed and the daemon answers (laptops and desktop PCs alike)"""
+    if not shutil.which("powerprofilesctl"):
+        return False
+    try:
+        return subprocess.run(["powerprofilesctl", "get"], capture_output=True, timeout=3).returncode == 0
+    except Exception:
+        return False
+
+
 def backlight_device():
     try:
         devs = sorted(os.listdir("/sys/class/backlight"))
@@ -269,9 +279,14 @@ def deck_widgets(c, light):
     quick.append(tog(chr(0xF0176), "awake"))
     if len(quick) < 5:
         quick.append(tog(chr(0xF036C), "mic"))
-    power = [dict(tog(chr(0xF032A) + "  Saver", "profile:power-saver")),
-             dict(tog(chr(0xF05D1) + "  Balanced", "profile:balanced")),
-             dict(tog(chr(0xF04C5) + "  Performance", "profile:performance"))]
+    def mode(icon, name, key):
+        # pressing a mode switches to it right away; a moment later the panel redraws so only that mode stays lit
+        b = tog(icon + " " + name, "profile:" + key)
+        b["command"] = "%s toggle profile:%s; (sleep 0.5; swaync-client -R) >/dev/null 2>&1 &" % (SVC, key)
+        return b
+    power = [mode(chr(0xF032A), "Saver", "power-saver"),
+             mode(chr(0xF05D1), "Balanced", "balanced"),
+             mode(chr(0xF04C5), "Performance", "performance")]
     session = [{"label": chr(0xF033E), "command": SVC + " session lock"},
                {"label": chr(0xF04B2), "command": SVC + " session suspend"},
                {"label": chr(0xF0343), "command": SVC + " session logout"},
@@ -619,21 +634,23 @@ def deck_css(c, v):
   border-radius: 18px;
   font-size: 1.6em;
 }
-/* power modes: one pill with three parts */
+/* power modes: a small pill with three parts, at the very bottom */
 .control-center .widget-buttons-grid.power {
   background: %(tile)s;
   border-radius: 100px;
-  padding: 4px;
-  margin: 6px 9px;
+  padding: 2px;
+  margin: 8px 9px 0 9px;
 }
 .control-center .widget-buttons-grid.power > flowbox > flowboxchild {
-  padding: 0 2px;
+  padding: 0 1px;
 }
 .control-center .widget-buttons-grid.power > flowbox > flowboxchild > button {
   background: transparent;
-  min-height: 36px;
+  min-height: 26px;
+  min-width: 0;
+  padding: 0 4px;
   border-radius: 100px;
-  font-size: 1.0em;
+  font-size: 0.78em;
   font-weight: bold;
   color: %(dim)s;
 }
@@ -1004,7 +1021,7 @@ def main(argv):
         out = load()
         out["accent_color"], out["on_accent"] = accent()
         out["installed"] = shutil.which("swaync-client") is not None
-        out["have_power_profiles"] = shutil.which("powerprofilesctl") is not None
+        out["have_power_profiles"] = power_profiles_ok()
         out["have_backlight"] = backlight_device() != ""
         out["flat"] = flat()
         print(json.dumps(out))
