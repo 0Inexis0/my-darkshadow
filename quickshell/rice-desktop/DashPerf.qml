@@ -291,12 +291,12 @@ Item {
                 visible: !!bat.mb
                 anchors.right: parent.right; anchors.rightMargin: 14
                 anchors.bottom: parent.bottom; anchors.bottomMargin: 12
-                DText { anchors.right: parent.right; text: bat.mb ? (bat.mb.status === "Full" ? "Full" : bat.charging ? "Charging" : "On battery") : ""; font.pixelSize: 12; color: pf.p.onPrimary }
+                DText { anchors.right: parent.right; text: bat.mb ? (bat.mb.status === "Full" ? "Full" : bat.charging ? "Charging" : "On battery") : ""; font.pixelSize: 12; color: pf.p.inkOn }
                 Row {
                     anchors.right: parent.right
                     spacing: 2
-                    MIcon { visible: bat.charging; name: "bolt"; glyph: pf.d.md(0xF0241); size: 26; color: pf.p.onPrimary; anchors.verticalCenter: parent.verticalCenter }
-                    DText { text: bat.mb ? bat.mb.pct + "%" : ""; font.pixelSize: Math.min(36, bat.width * 0.24); font.weight: Font.DemiBold; color: pf.p.onPrimary }
+                    MIcon { visible: bat.charging; name: "bolt"; glyph: pf.d.md(0xF0241); size: 26; color: pf.p.inkOn; anchors.verticalCenter: parent.verticalCenter }
+                    DText { text: bat.mb ? bat.mb.pct + "%" : ""; font.pixelSize: Math.min(36, bat.width * 0.24); font.weight: Font.DemiBold; color: pf.p.inkOn }
                 }
             }
         }

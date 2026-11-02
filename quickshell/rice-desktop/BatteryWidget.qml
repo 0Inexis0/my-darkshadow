@@ -6,6 +6,14 @@ import QtQuick
 Item {
     id: bt
     property real bg: 1
+    property var pal: null
+    readonly property color cFg: pal ? pal.fg : "#F6F5F4"
+    readonly property color cFg2: pal ? pal.fg2 : "#c8c8cc"
+    readonly property color cFg3: pal ? pal.fg3 : "#8a8a8f"
+    readonly property color cFg4: pal ? pal.fg4 : "#6f6f76"
+    readonly property color cWarn: pal ? pal.warn : "#e06c75"
+    readonly property color cMain: pal ? pal.primary : "#F6F5F4"
+    readonly property color cTrack: pal ? pal.track : Qt.rgba(1, 1, 1, 0.12)
     property bool running: true
     property var main: null
     property var devs: []
@@ -31,7 +39,7 @@ Item {
              : k === "gaming-input" ? "" : k === "phone" ? "" : k === "speakers" ? "" : ""
     }
 
-    Card { anchors.fill: parent; k: bt.bg }
+    Card { anchors.fill: parent; k: bt.bg; pal: bt.pal }
 
     // ---- laptop battery
     Item {
@@ -48,18 +56,23 @@ Item {
             Behavior on v { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
             onVChanged: requestPaint()
             onLowCChanged: requestPaint()
+            property color trackC: bt.cTrack
+            property color fillC: bt.cMain
+            property color warnC: bt.cWarn
+            onTrackCChanged: requestPaint()
+            onFillCChanged: requestPaint()
             onPaint: {
                 const c = getContext("2d")
                 c.reset()
                 c.lineWidth = 6
                 c.lineCap = "round"
-                c.strokeStyle = "rgba(255,255,255,0.12)"
+                c.strokeStyle = trackC
                 c.beginPath(); c.arc(36, 36, 30, 0, Math.PI * 2); c.stroke()
                 if (v <= 0) return
-                c.strokeStyle = lowC ? "#e06c75" : "#F6F5F4"
+                c.strokeStyle = lowC ? warnC : fillC
                 c.beginPath(); c.arc(36, 36, 30, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * v / 100); c.stroke()
             }
-            T { kind: "icon"; anchors.centerIn: parent; text: bt.charging ? "" : ""; font.pixelSize: 18; color: bt.low ? "#e06c75" : "#c8c8cc" }
+            T { kind: "icon"; anchors.centerIn: parent; text: bt.charging ? "" : ""; font.pixelSize: 18; color: bt.low ? bt.cWarn : bt.cFg2 }
         }
         Column {
             anchors.left: ring.right
@@ -68,13 +81,13 @@ Item {
             anchors.rightMargin: 14
             anchors.verticalCenter: parent.verticalCenter
             spacing: 2
-            T { kind: "number"; text: bt.pct + "%"; font.pixelSize: 30; font.bold: true }
+            T { kind: "number"; text: bt.pct + "%"; font.pixelSize: 30; font.bold: true; color: bt.cFg }
             T {
                 width: parent.width
                 elide: Text.ElideRight
                 text: bt.status === "Full" ? "Fully charged"
                     : (bt.charging ? "Charging" : "On battery") + (bt.main && bt.main.left ? "  ·  " + bt.main.left + (bt.charging ? " to full" : " left") : "")
-                font.pixelSize: 12; color: "#8a8a8f"
+                font.pixelSize: 12; color: bt.cFg3
             }
             // first wireless device under it, when there is one
             T {
@@ -82,7 +95,7 @@ Item {
                 width: parent.width
                 elide: Text.ElideRight
                 text: bt.devs.length > 0 ? bt.devs[0].name + "  " + bt.devs[0].pct + "%" : ""
-                font.pixelSize: 11; color: "#6f6f76"
+                font.pixelSize: 11; color: bt.cFg4
             }
         }
     }
@@ -101,16 +114,16 @@ Item {
             spacing: 14
             Rectangle {
                 width: 46; height: 46; radius: 23
-                color: Qt.rgba(1, 1, 1, 0.07)
-                T { kind: "icon"; anchors.centerIn: parent; text: ""; font.pixelSize: 18; color: "#c8c8cc" }
+                color: bt.pal ? bt.pal.chip : Qt.rgba(1, 1, 1, 0.07)
+                T { kind: "icon"; anchors.centerIn: parent; text: ""; font.pixelSize: 18; color: bt.cFg2 }
             }
             Column {
                 anchors.verticalCenter: parent.verticalCenter
                 width: bt.width - 36 - 60
                 spacing: 2
-                T { text: "Plugged in"; font.pixelSize: 17; font.bold: true }
-                T { width: parent.width; elide: Text.ElideRight; text: "No battery in this computer"; font.pixelSize: 11; color: "#8a8a8f" }
-                T { width: parent.width; elide: Text.ElideRight; text: "Wireless mice and headsets show here"; font.pixelSize: 10; color: "#6f6f76" }
+                T { text: "Plugged in"; font.pixelSize: 17; font.bold: true; color: bt.cFg }
+                T { width: parent.width; elide: Text.ElideRight; text: "No battery in this computer"; font.pixelSize: 11; color: bt.cFg3 }
+                T { width: parent.width; elide: Text.ElideRight; text: "Wireless mice and headsets show here"; font.pixelSize: 10; color: bt.cFg4 }
             }
         }
         Repeater {
@@ -118,16 +131,16 @@ Item {
             delegate: Item {
                 width: parent.width
                 height: 22
-                T { id: di; kind: "icon"; text: bt.devIcon(modelData.kind); font.pixelSize: 13; color: "#c8c8cc"; anchors.verticalCenter: parent.verticalCenter; width: 20 }
-                T { x: 26; width: parent.width - 26 - 110; elide: Text.ElideRight; text: modelData.name; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+                T { id: di; kind: "icon"; text: bt.devIcon(modelData.kind); font.pixelSize: 13; color: bt.cFg2; anchors.verticalCenter: parent.verticalCenter; width: 20 }
+                T { x: 26; width: parent.width - 26 - 110; elide: Text.ElideRight; text: modelData.name; font.pixelSize: 12; color: bt.cFg; anchors.verticalCenter: parent.verticalCenter }
                 Rectangle {
                     anchors.right: pv.left; anchors.rightMargin: 8
                     anchors.verticalCenter: parent.verticalCenter
                     width: 60; height: 6; radius: 3
-                    color: Qt.rgba(1, 1, 1, 0.12)
-                    Rectangle { width: parent.width * Math.max(0.03, modelData.pct / 100); height: parent.height; radius: 3; color: modelData.pct <= 15 ? "#e06c75" : "#F6F5F4" }
+                    color: bt.cTrack
+                    Rectangle { width: parent.width * Math.max(0.03, modelData.pct / 100); height: parent.height; radius: 3; color: modelData.pct <= 15 ? bt.cWarn : bt.cMain }
                 }
-                T { id: pv; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; kind: "number"; text: modelData.pct + "%"; font.pixelSize: 12; font.bold: true; width: 36; horizontalAlignment: Text.AlignRight }
+                T { id: pv; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; kind: "number"; text: modelData.pct + "%"; font.pixelSize: 12; font.bold: true; color: bt.cFg; width: 36; horizontalAlignment: Text.AlignRight }
             }
         }
     }

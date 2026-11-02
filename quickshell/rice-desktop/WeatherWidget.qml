@@ -5,6 +5,7 @@ import QtQuick
 Item {
     id: we
     property real bg: 1   // card background opacity (widget editor)
+    property var pal: null
     property bool running: true
     property string cond: ""
     property string temp: "--"
@@ -47,7 +48,7 @@ Item {
     }
     onRunningChanged: if (running) fetch.running = true
 
-    Card { anchors.fill: parent; k: we.bg }
+    Card { anchors.fill: parent; k: we.bg; pal: we.pal }
 
     T {
         id: ic
@@ -56,6 +57,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         text: we.glyph(we.cond)
         font.pixelSize: 52
+        color: we.pal ? we.pal.primary : "#F6F5F4"
     }
     Column {
         anchors.left: ic.right
@@ -64,8 +66,8 @@ Item {
         anchors.rightMargin: 18
         anchors.verticalCenter: parent.verticalCenter
         spacing: 2
-        T { kind: "number"; text: we.temp; font.pixelSize: 34; font.bold: true }
-        T { text: we.error !== "" ? we.error : we.cond; font.pixelSize: 13; color: "#c8c8cc"; width: parent.width; elide: Text.ElideRight }
-        T { text: we.place; font.pixelSize: 11; color: "#8a8a8f"; width: parent.width; elide: Text.ElideRight }
+        T { kind: "number"; text: we.temp; font.pixelSize: 34; font.bold: true; color: we.pal ? we.pal.fg : "#F6F5F4" }
+        T { text: we.error !== "" ? we.error : we.cond; font.pixelSize: 13; color: we.pal ? we.pal.fg2 : "#c8c8cc"; width: parent.width; elide: Text.ElideRight }
+        T { text: we.place; font.pixelSize: 11; color: we.pal ? we.pal.fg3 : "#8a8a8f"; width: parent.width; elide: Text.ElideRight }
     }
 }

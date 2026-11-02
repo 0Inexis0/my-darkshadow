@@ -4,6 +4,7 @@ import QtQuick
 Item {
     id: uc
     property real bg: 1   // card background opacity (widget editor)
+    property var pal: null
     property date now: new Date()
     readonly property string user: Quickshell.env("USER")
     readonly property string face: "file://" + Quickshell.env("HOME") + "/.face"
@@ -13,7 +14,7 @@ Item {
     }
     Timer { interval: 30000; running: true; repeat: true; onTriggered: uc.now = new Date() }
 
-    Card { anchors.fill: parent; k: uc.bg }
+    Card { anchors.fill: parent; k: uc.bg; pal: uc.pal }
 
     RoundImage {
         id: av
@@ -31,12 +32,12 @@ Item {
         anchors.rightMargin: 16
         anchors.verticalCenter: parent.verticalCenter
         spacing: 3
-        T { kind: "title"; text: "Hi, " + uc.user + "!"; font.pixelSize: 18; font.bold: true; width: parent.width; elide: Text.ElideRight }
-        T { text: uc.greeting(); font.pixelSize: 14; color: "#c8c8cc" }
+        T { kind: "title"; text: "Hi, " + uc.user + "!"; font.pixelSize: 18; font.bold: true; width: parent.width; elide: Text.ElideRight; color: uc.pal ? uc.pal.fg : "#F6F5F4" }
+        T { text: uc.greeting(); font.pixelSize: 14; color: uc.pal ? uc.pal.fg2 : "#c8c8cc" }
         T {
             text: "Today · " + uc.now.toLocaleDateString(Qt.locale("en_US"), "dddd d MMM")
             font.pixelSize: 11
-            color: "#8a8a8f"
+            color: uc.pal ? uc.pal.fg3 : "#8a8a8f"
         }
     }
 }

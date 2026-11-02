@@ -260,7 +260,7 @@ Item {
                     anchors.left: parent.left; anchors.top: parent.top; anchors.margins: 8
                     width: nm.implicitWidth + 16; height: 22; radius: 11
                     color: g.d.p.primary
-                    DText { id: nm; anchors.centerIn: parent; text: (g.info(cell.cid) || {}).name || cell.cid; font.pixelSize: 10; font.weight: Font.DemiBold; color: g.d.p.onPrimary }
+                    DText { id: nm; anchors.centerIn: parent; text: (g.info(cell.cid) || {}).name || cell.cid; font.pixelSize: 10; font.weight: Font.DemiBold; color: g.d.p.inkOn }
                 }
             }
             // move: hold and drag
@@ -325,7 +325,7 @@ Item {
                 anchors.centerIn: parent
                 width: szT.implicitWidth + 22; height: 30; radius: 15
                 color: g.d.p.primary
-                DText { id: szT; anchors.centerIn: parent; text: g.rsW + " × " + g.rsH; font.pixelSize: 13; font.weight: Font.DemiBold; color: g.d.p.onPrimary }
+                DText { id: szT; anchors.centerIn: parent; text: g.rsW + " × " + g.rsH; font.pixelSize: 13; font.weight: Font.DemiBold; color: g.d.p.inkOn }
             }
 
         }

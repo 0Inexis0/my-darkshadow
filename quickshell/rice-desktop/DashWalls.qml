@@ -165,8 +165,8 @@ Item {
                         id: curRow
                         anchors.centerIn: parent
                         spacing: 4
-                        MIcon { name: "check"; glyph: wp.d.md(0xF012C); size: 15; color: wp.p.onPrimary; anchors.verticalCenter: parent.verticalCenter }
-                        DText { text: "Current"; font.pixelSize: 11; font.weight: Font.DemiBold; color: wp.p.onPrimary; anchors.verticalCenter: parent.verticalCenter }
+                        MIcon { name: "check"; glyph: wp.d.md(0xF012C); size: 15; color: wp.p.inkOn; anchors.verticalCenter: parent.verticalCenter }
+                        DText { text: "Current"; font.pixelSize: 11; font.weight: Font.DemiBold; color: wp.p.inkOn; anchors.verticalCenter: parent.verticalCenter }
                     }
                 }
                 Rectangle {
@@ -228,8 +228,8 @@ Item {
             id: plr
             anchors.centerIn: parent
             spacing: 6
-            MIcon { name: pl.icon; glyph: pl.glyph; size: 18; color: pm.containsMouse ? wp.p.onPrimary : wp.p.onContainer; anchors.verticalCenter: parent.verticalCenter }
-            DText { text: pl.text; font.pixelSize: 13; color: pm.containsMouse ? wp.p.onPrimary : wp.p.onContainer; anchors.verticalCenter: parent.verticalCenter }
+            MIcon { name: pl.icon; glyph: pl.glyph; size: 18; color: pm.containsMouse ? wp.p.inkOn : wp.p.onContainer; anchors.verticalCenter: parent.verticalCenter }
+            DText { text: pl.text; font.pixelSize: 13; color: pm.containsMouse ? wp.p.inkOn : wp.p.onContainer; anchors.verticalCenter: parent.verticalCenter }
         }
         MouseArea { id: pm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: pl.clicked() }
     }
@@ -241,7 +241,7 @@ Item {
         width: 44; height: 44; radius: 22
         color: am.containsMouse ? wp.p.primary : Qt.rgba(0, 0, 0, 0.5)
         Behavior on color { ColorAnimation { duration: 120 } }
-        MIcon { anchors.centerIn: parent; name: arw.icon; glyph: arw.glyph; size: 26; color: am.containsMouse ? wp.p.onPrimary : "#ffffff" }
+        MIcon { anchors.centerIn: parent; name: arw.icon; glyph: arw.glyph; size: 26; color: am.containsMouse ? wp.p.inkOn : "#ffffff" }
         MouseArea { id: am; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: arw.clicked() }
     }
 }

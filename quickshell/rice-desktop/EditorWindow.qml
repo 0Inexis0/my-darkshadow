@@ -305,6 +305,13 @@ PanelWindow {
                 current: ed.root.styleOf(ed.sel)
                 onChosen: function(v) { ed.root.setStyle(ed.sel, v) }
             }
+            EdDrop {
+                up: !tb.below
+                visible: ed.selInfo && ed.selInfo.opts !== undefined
+                options: ed.selInfo && ed.selInfo.opts ? ed.selInfo.opts : []
+                current: ed.selInfo && ed.selInfo.opts ? ed.root.optOf(ed.sel, ed.selInfo.optKey, ed.selInfo.optDefault) : ""
+                onChosen: function(v) { ed.root.setOpt(ed.sel, ed.selInfo.optKey, v) }
+            }
             EdSlider {
                 icon: ""
                 tip: "Opacity"

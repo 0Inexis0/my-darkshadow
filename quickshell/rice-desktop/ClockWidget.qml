@@ -5,13 +5,23 @@ Item {
     property string clockStyle: "digital"
     property string mode: "draggable"
     property string wallpaper: ""
+    property var pal: null
+    property string fontKey: "default"      // the lock screen clock fonts (rice-fonts downloads them)
     property int bw: 1920
     property int bh: 1080
     property date now: new Date()
     property real fx: -1
     property real fy: -1
-    readonly property int natW: clockStyle === "cookie" ? 260 : (clockStyle === "pixel" ? 270 : 200)
-    readonly property int natH: clockStyle === "cookie" ? 260 : (clockStyle === "pixel" ? 100 : 310)
+    readonly property int natW: clockStyle === "cookie" ? 260 : (clockStyle === "pixel" ? 270 : (clockStyle === "line" ? 430 : 200))
+    readonly property int natH: clockStyle === "cookie" ? 260 : (clockStyle === "pixel" ? 100 : (clockStyle === "line" ? 190 : 310))
+    readonly property var fonts: ({ bebas: "Bebas Neue", orbitron: "Orbitron", outfit: "Outfit", grotesk: "Space Grotesk",
+                                    unbounded: "Unbounded", shoulders: "Big Shoulders Display" })
+    readonly property string fam: fonts[fontKey] !== undefined ? fonts[fontKey] : Fonts.family("number")
+    readonly property bool lightBg: pal ? pal.light : false
+    readonly property color ink: pal ? pal.fg : "#F6F5F4"
+    readonly property color hand: pal ? pal.primary : "#F6F5F4"
+    onLightBgChanged: { cookie.requestPaint(); pixel.requestPaint() }
+    onHandChanged: { cookie.requestPaint(); pixel.requestPaint() }
 
     function pad(n) { return n < 10 ? "0" + n : "" + n }
     readonly property string hh: pad(now.getHours())
@@ -24,8 +34,28 @@ Item {
         visible: ck.clockStyle === "digital"
         anchors.centerIn: parent
         spacing: -42
-        T { kind: "number"; text: ck.hh; font.pixelSize: 150; font.bold: true; color: "#F6F5F4"; opacity: 0.85; anchors.horizontalCenter: parent.horizontalCenter }
-        T { kind: "number"; text: ck.mm; font.pixelSize: 150; font.bold: true; color: "#F6F5F4"; opacity: 0.45; anchors.horizontalCenter: parent.horizontalCenter }
+        T { text: ck.hh; font.family: ck.fam; font.pixelSize: 150; font.bold: true; color: ck.hand; opacity: 0.9; anchors.horizontalCenter: parent.horizontalCenter }
+        T { text: ck.mm; font.family: ck.fam; font.pixelSize: 150; font.bold: true; color: ck.ink; opacity: ck.lightBg ? 0.6 : 0.45; anchors.horizontalCenter: parent.horizontalCenter }
+    }
+
+    // ---- line: hours and minutes side by side, the date under them
+    Column {
+        visible: ck.clockStyle === "line"
+        anchors.centerIn: parent
+        spacing: -6
+        Row {
+            anchors.horizontalCenter: parent.horizontalCenter
+            spacing: 0
+            T { text: ck.hh; font.family: ck.fam; font.pixelSize: 128; font.bold: true; color: ck.hand; opacity: 0.92 }
+            T { text: ":"; font.family: ck.fam; font.pixelSize: 128; font.bold: true; color: ck.ink; opacity: 0.4; anchors.verticalCenter: parent.verticalCenter }
+            T { text: ck.mm; font.family: ck.fam; font.pixelSize: 128; font.bold: true; color: ck.ink; opacity: ck.lightBg ? 0.62 : 0.5 }
+        }
+        T {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: ck.now.toLocaleDateString(Qt.locale("en_US"), "dddd, d MMMM")
+            font.pixelSize: 19
+            color: ck.pal ? ck.pal.fg2 : "#c8c8cc"
+        }
     }
 
     // ---- cookie
@@ -42,7 +72,7 @@ Item {
             const c = getContext("2d")
             c.reset()
             const cx = 125, cy = 125, R = 112
-            c.fillStyle = "rgba(44,44,48,0.82)"
+            c.fillStyle = ck.lightBg ? "rgba(248,248,250,0.85)" : "rgba(44,44,48,0.82)"
             c.beginPath()
             for (let i = 0; i <= 360; i++) {
                 const a = i * Math.PI / 180
@@ -52,7 +82,7 @@ Item {
             }
             c.closePath()
             c.fill()
-            c.fillStyle = "rgba(255,255,255,0.35)"
+            c.fillStyle = ck.lightBg ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.35)"
             for (let h = 0; h < 12; h++) {
                 const a = h * Math.PI / 6
                 c.beginPath()
@@ -64,15 +94,17 @@ Item {
             const mAng = (d.getMinutes() + d.getSeconds() / 60) * Math.PI / 30
             const sAng = d.getSeconds() * Math.PI / 30
             c.lineCap = "round"
-            c.strokeStyle = "#F6F5F4"
+            c.strokeStyle = ck.lightBg ? "#15151a" : "#F6F5F4"
             c.lineWidth = 9
             c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + 46 * Math.sin(hAng), cy - 46 * Math.cos(hAng)); c.stroke()
             c.lineWidth = 6
             c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + 72 * Math.sin(mAng), cy - 72 * Math.cos(mAng)); c.stroke()
-            c.strokeStyle = "rgba(246,245,244,0.55)"
+            c.strokeStyle = ck.hand
+            c.globalAlpha = 0.85
             c.lineWidth = 2
             c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + 82 * Math.sin(sAng), cy - 82 * Math.cos(sAng)); c.stroke()
-            c.fillStyle = "#F6F5F4"
+            c.globalAlpha = 1
+            c.fillStyle = ck.hand
             c.beginPath(); c.arc(cx, cy, 6, 0, Math.PI * 2); c.fill()
         }
     }
@@ -101,7 +133,7 @@ Item {
             c.reset()
             const seq = [txt[0], txt[1], ":", txt[2], txt[3]]
             let x = 0
-            c.fillStyle = "#F6F5F4"
+            c.fillStyle = ck.ink
             for (let s = 0; s < seq.length; s++) {
                 const g = glyphs[seq[s]]
                 if (!g) continue

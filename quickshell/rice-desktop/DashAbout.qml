@@ -209,8 +209,8 @@ Item {
             id: br
             anchors.centerIn: parent
             spacing: 6
-            MIcon { name: bb.icon; glyph: bb.glyph; size: 17; color: bb.primary ? ab.p.onPrimary : ab.p.onContainer; anchors.verticalCenter: parent.verticalCenter }
-            DText { text: bb.text; font.pixelSize: 12; font.weight: bb.primary ? Font.DemiBold : Font.Normal; color: bb.primary ? ab.p.onPrimary : ab.p.onContainer; anchors.verticalCenter: parent.verticalCenter }
+            MIcon { name: bb.icon; glyph: bb.glyph; size: 17; color: bb.primary ? ab.p.inkOn : ab.p.onContainer; anchors.verticalCenter: parent.verticalCenter }
+            DText { text: bb.text; font.pixelSize: 12; font.weight: bb.primary ? Font.DemiBold : Font.Normal; color: bb.primary ? ab.p.inkOn : ab.p.onContainer; anchors.verticalCenter: parent.verticalCenter }
         }
         MouseArea { id: bm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: bb.clicked() }
     }

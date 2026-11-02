@@ -13,23 +13,30 @@ LOCKCONF = HOME + "/.config/hypr/rice-lock.conf"
 HYPRLOCK = HOME + "/.config/hypr/hyprlock.conf"
 SOURCE_LINE = "source = ~/.config/hypr/rice-lock.conf"
 
-WIDGETS = ["weather", "media", "resources", "usercard", "calendar", "visualizer", "battery"]
+WIDGETS = ["weather", "media", "resources", "usercard", "calendar", "visualizer", "battery", "todo", "focus", "notes"]
 # what the widget editor stores per widget (Settings > Desktop > Edit widgets, or SUPER+ALT+W)
-GEOM = ("x", "y", "scale", "w", "h", "opacity", "bg", "style", "flip")
-STYLES = {"visualizer": ["bars", "mirror", "wave", "dots"], "clock": ["digital", "cookie", "pixel"]}
+GEOM = ("x", "y", "scale", "w", "h", "opacity", "bg", "style", "flip", "color", "font", "focus")
+STYLES = {"visualizer": ["bars", "mirror", "wave", "dots"], "clock": ["digital", "line", "cookie", "pixel"]}
+# visualizer colors; clock fonts (the same ones as the lock screen clock, rice-fonts downloads them)
+COLORS = {"visualizer": ["accent", "gradient", "rainbow", "mono"]}
+FONTS = {"default": "", "bebas": "Bebas Neue", "orbitron": "Orbitron", "outfit": "Outfit",
+         "grotesk": "Space Grotesk", "unbounded": "Unbounded", "shoulders": "Big Shoulders Display"}
+THEMES = ["shadow", "google", "outline"]
 DEFAULTS = {
     "widgets": {w: {"enabled": False} for w in WIDGETS},
-    "clock": {"enabled": False, "onlyLocked": False, "placement": "draggable", "style": "digital"},
+    "clock": {"enabled": False, "onlyLocked": False, "placement": "draggable", "style": "digital", "font": "default"},
     "dock": {"enabled": False, "background": True, "hover": True, "pinnedStartup": False,
              "media": True, "pinButton": True, "appsButton": True, "tint": False,
              "opacity": 0.78, "blur": True,
              "apps": ["kitty", "org.gnome.Nautilus", "firefox", "spotify", "discord", "steam"]},
     "lock": {"toolbars": False, "widgets": False, "media": False},
     "widgetBlur": True,
+    "widgetTheme": "shadow",  # how the widget cards look: shadow (DarkShadow's Shell), google, outline
+    "widgetAdapt": True,      # text and cards turn light or dark with the wallpaper behind each widget
     "autoHide": False,       # widgets hide while windows are open (Settings > Desktop)      # blurred wallpaper behind the widget cards (Settings > Desktop > Widgets)
     "editing": False,
 }
-CHOICES = {"placement": ["draggable", "leastBusy", "mostBusy"], "style": ["digital", "cookie", "pixel"]}
+CHOICES = {"placement": ["draggable", "leastBusy", "mostBusy"], "style": ["digital", "line", "cookie", "pixel"], "font": list(FONTS)}
 
 
 def target(c, wid):
@@ -99,6 +106,12 @@ def clean_geom(wid, k, v):
             return v is True or str(v).lower() in ("1", "true", "on", "yes")
         if k == "style":
             return v if v in STYLES.get(wid, []) else None
+        if k == "color":
+            return v if v in COLORS.get(wid, []) else None
+        if k == "font":
+            return v if wid == "clock" and v in FONTS else None
+        if k == "focus":
+            return int(max(5, min(120, float(v)))) if wid == "focus" else None
     except (TypeError, ValueError):
         return None
     return None
@@ -179,6 +192,22 @@ def dock_blur(c):
         pass
 
 
+def font_wanted(key):
+    fam = FONTS.get(key, "")
+    if not fam:
+        return
+    try:
+        out = subprocess.run(["fc-list", ":", "family"], capture_output=True, text=True, timeout=10).stdout
+    except Exception:
+        return
+    if any(fam.lower() == x.strip().lower() for line in out.splitlines() for x in line.split(",")):
+        return
+    fonts, desk = HOME + "/.local/bin/rice-fonts", HOME + "/.local/bin/rice-desktop"
+    if os.path.exists(fonts):
+        subprocess.Popen(["bash", "-c", '"$1" >/dev/null 2>&1; "$2" restart >/dev/null 2>&1', "_", fonts, desk],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+
+
 def ensure_shell():
     try:
         subprocess.Popen([HOME + "/.local/bin/rice-desktop", "ensure"], stdout=subprocess.DEVNULL,
@@ -190,7 +219,7 @@ def ensure_shell():
 def main(a):
     if len(a) < 2:
         die("usage: desktop-set state|widget ID on|off|pos ID X Y|geom ID X Y [SCALE] [W H]|wset ID KEY VAL|"
-            "reset-widget ID|edit on|off|toggle|clock KEY VAL|dock KEY VAL|lock KEY VAL|dock-blur|widgets-blur on|off|auto-hide on|off|reset-pos")
+            "reset-widget ID|edit on|off|toggle|clock KEY VAL|dock KEY VAL|lock KEY VAL|dock-blur|widgets-blur on|off|widgets-theme shadow|google|outline|widgets-adapt on|off|auto-hide on|off|reset-pos")
     cmd = a[1]
     os.makedirs(DIR, exist_ok=True)
     lk = open(LOCK, "w")
@@ -235,6 +264,12 @@ def main(a):
         pass
     elif cmd == "widgets-blur":
         c["widgetBlur"] = tobool(a[2] if len(a) > 2 else "on")
+    elif cmd == "widgets-theme":
+        if len(a) < 3 or a[2] not in THEMES:
+            die("widgets-theme " + "|".join(THEMES))
+        c["widgetTheme"] = a[2]
+    elif cmd == "widgets-adapt":
+        c["widgetAdapt"] = tobool(a[2] if len(a) > 2 else "on")
     elif cmd == "auto-hide":
         c["autoHide"] = tobool(a[2] if len(a) > 2 else "on")
     elif cmd == "geom":
@@ -261,7 +296,7 @@ def main(a):
     elif cmd == "reset-widget":
         t = target(c, a[2] if len(a) > 2 else "")
         for k in GEOM:
-            if k != "style":
+            if k not in ("style", "color", "font", "focus"):
                 t.pop(k, None)
     elif cmd == "edit":
         v = a[2] if len(a) > 2 else "toggle"
@@ -275,11 +310,14 @@ def main(a):
     else:
         die("unknown command: " + cmd)
     save(c)
+    # a clock font that is not on this computer yet: download it, then start the widgets again (they read fonts at start)
+    if (cmd == "clock" and a[2] == "font") or (cmd == "wset" and a[2] == "clock" and a[3] == "font"):
+        font_wanted(c["clock"].get("font", "default"))
     if cmd in ("lock", "lock-regen"):
         lock_conf(c)
     if cmd == "dock" and a[2] == "blur" or cmd in ("dock-blur", "widgets-blur"):
         dock_blur(c)
-    elif cmd not in ("pos", "geom", "wset", "edit", "reset-widget"):
+    elif cmd not in ("pos", "geom", "wset", "edit", "reset-widget", "widgets-theme", "widgets-adapt"):
         ensure_shell()
     elif cmd == "edit" and c["editing"]:
         ensure_shell()

@@ -113,25 +113,25 @@ PanelWindow {
     readonly property var p: style === "graphite" ? ({
         // warm grey, soft and solid, your color as the accent
         bg: Qt.rgba(0.11, 0.11, 0.122, op), solidBg: "#1c1c1f", card: Qt.rgba(1, 1, 1, 0.055), card2: Qt.rgba(1, 1, 1, 0.085),
-        text: "#ECECEE", sub: "#9a9aa3", primary: mix(acc, "#ffffff", 0.42), onPrimary: "#141416",
+        text: "#ECECEE", sub: "#9a9aa3", primary: mix(acc, "#ffffff", 0.42), inkOn: "#141416",
         container: mix(acc, "#2a2a2e", 0.74), onContainer: mix(acc, "#ffffff", 0.62),
         line: "transparent", track: Qt.rgba(1, 1, 1, 0.09), radius: 30, cardRadius: 22, tabStyle: "underline", dark: true, glow: false
     }) : style === "aurora" ? ({
         // deep and dark, tinted by your wallpaper colors, with a soft glow
         bg: mix(acc, "#06060a", 0.88, op), solidBg: mix(acc, "#06060a", 0.88), card: mix(acc, "#16161c", 0.8, 0.72), card2: mix(acc, "#1e1e26", 0.72, 0.8),
-        text: "#EEEAF2", sub: "#a9a4b0", primary: mix(acc, "#ffffff", 0.2), onPrimary: mix(acc, "#000000", 0.85),
+        text: "#EEEAF2", sub: "#a9a4b0", primary: mix(acc, "#ffffff", 0.2), inkOn: mix(acc, "#000000", 0.85),
         container: mix(acc, "#16161c", 0.55), onContainer: mix(acc, "#ffffff", 0.78),
         line: Qt.rgba(1, 1, 1, 0.05), track: Qt.rgba(1, 1, 1, 0.09), radius: 34, cardRadius: 26, tabStyle: "pill", dark: true, glow: true
     }) : style === "frost" ? ({
         // light frosted glass
         bg: Qt.rgba(0.965, 0.965, 0.972, op), solidBg: "#f6f6f8", card: Qt.rgba(0, 0, 0, 0.045), card2: Qt.rgba(0, 0, 0, 0.07),
-        text: "#18181b", sub: "#6b6b74", primary: "#18181b", onPrimary: "#ffffff",
+        text: "#18181b", sub: "#6b6b74", primary: "#18181b", inkOn: "#ffffff",
         container: Qt.rgba(0, 0, 0, 0.07), onContainer: "#18181b",
         line: Qt.rgba(0, 0, 0, 0.05), track: Qt.rgba(0, 0, 0, 0.08), radius: 30, cardRadius: 22, tabStyle: "segment", dark: false, glow: false
     }) : ({
         // Shadow: the color of your bar (black glass), details in your wallpaper color (like the hot corner)
         bg: Qt.rgba(barRgb[0] / 255, barRgb[1] / 255, barRgb[2] / 255, op), solidBg: "#0c0c0e", card: Qt.rgba(1, 1, 1, 0.05), card2: Qt.rgba(1, 1, 1, 0.08),
-        text: "#F6F5F4", sub: "#8f8f98", primary: acc, onPrimary: accFg,
+        text: "#F6F5F4", sub: "#8f8f98", primary: acc, inkOn: accFg,
         container: mix(acc, "#141416", 0.8), onContainer: mix(acc, "#ffffff", 0.55),
         line: Qt.rgba(1, 1, 1, 0.07), track: Qt.rgba(1, 1, 1, 0.1), radius: 28, cardRadius: 20, tabStyle: "segment", dark: true, glow: false
     })
@@ -373,8 +373,8 @@ PanelWindow {
                         id: ar
                         anchors.centerIn: parent
                         spacing: 4
-                        MIcon { name: "add"; glyph: "+"; size: 16; color: am.containsMouse ? db.p.onPrimary : db.p.onContainer; anchors.verticalCenter: parent.verticalCenter }
-                        DText { text: modelData.name; font.pixelSize: 12; color: am.containsMouse ? db.p.onPrimary : db.p.onContainer; anchors.verticalCenter: parent.verticalCenter }
+                        MIcon { name: "add"; glyph: "+"; size: 16; color: am.containsMouse ? db.p.inkOn : db.p.onContainer; anchors.verticalCenter: parent.verticalCenter }
+                        DText { text: modelData.name; font.pixelSize: 12; color: am.containsMouse ? db.p.inkOn : db.p.onContainer; anchors.verticalCenter: parent.verticalCenter }
                     }
                     MouseArea { id: am; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: tray.g.add(modelData.id) }
                 }
@@ -394,7 +394,7 @@ PanelWindow {
             Rectangle {
                 height: 32; width: dn.implicitWidth + 28; radius: 16
                 color: dnm.containsMouse ? Qt.lighter(db.p.primary, 1.08) : db.p.primary
-                DText { id: dn; anchors.centerIn: parent; text: "Done"; font.pixelSize: 12; font.weight: Font.DemiBold; color: db.p.onPrimary }
+                DText { id: dn; anchors.centerIn: parent; text: "Done"; font.pixelSize: 12; font.weight: Font.DemiBold; color: db.p.inkOn }
                 MouseArea { id: dnm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: db.editing = false }
             }
         }
@@ -561,7 +561,7 @@ PanelWindow {
                                     readonly property real labelWidth: lab.implicitWidth
                                     width: head.tw
                                     height: head.height
-                                    readonly property color fg: on ? (db.p.tabStyle === "segment" ? db.p.onPrimary : db.p.primary) : db.p.sub
+                                    readonly property color fg: on ? (db.p.tabStyle === "segment" ? db.p.inkOn : db.p.primary) : db.p.sub
                                     Rectangle {
                                         visible: db.p.tabStyle !== "segment"
                                         anchors.fill: parent; anchors.margins: 2
@@ -597,7 +597,7 @@ PanelWindow {
                         width: 40; height: 40; radius: 20
                         color: db.editing ? db.p.primary : (edm.containsMouse ? db.p.card2 : db.p.card)
                         Behavior on color { ColorAnimation { duration: 160 } }
-                        MIcon { anchors.centerIn: parent; name: db.editing ? "check" : "edit"; glyph: db.editing ? db.md(0xF012C) : ""; size: 19; color: db.editing ? db.p.onPrimary : db.p.text }
+                        MIcon { anchors.centerIn: parent; name: db.editing ? "check" : "edit"; glyph: db.editing ? db.md(0xF012C) : ""; size: 19; color: db.editing ? db.p.inkOn : db.p.text }
                         MouseArea { id: edm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: db.editing = !db.editing }
                     }
 
@@ -644,7 +644,7 @@ PanelWindow {
                         color: db.p.primary
                         opacity: db.toastText !== "" ? 1 : 0
                         Behavior on opacity { NumberAnimation { duration: 200 } }
-                        DText { id: tt; anchors.centerIn: parent; text: db.toastText; font.pixelSize: 12; color: db.p.onPrimary }
+                        DText { id: tt; anchors.centerIn: parent; text: db.toastText; font.pixelSize: 12; color: db.p.inkOn }
                     }
                 }
             }

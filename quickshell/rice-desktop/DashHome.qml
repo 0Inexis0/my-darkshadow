@@ -114,7 +114,7 @@ Item {
                     width: 24; height: 24; radius: 12
                     color: h.p.primary
                     border.width: 2; border.color: h.p.solidBg
-                    Text { anchors.centerIn: parent; text: h.d.distroGlyph(); font.family: DashFont.nerd; font.pixelSize: 11; color: h.p.onPrimary }
+                    Text { anchors.centerIn: parent; text: h.d.distroGlyph(); font.family: DashFont.nerd; font.pixelSize: 11; color: h.p.inkOn }
                 }
             }
             Column {
@@ -199,7 +199,7 @@ Item {
                             color: h.p.primary
                         }
                         DText { anchors.centerIn: parent; text: parent.day.getDate(); font.pixelSize: 11; font.weight: parent.today ? Font.DemiBold : Font.Normal
-                            color: parent.today ? h.p.onPrimary : h.p.text; opacity: parent.inMonth ? 1 : 0.35 }
+                            color: parent.today ? h.p.inkOn : h.p.text; opacity: parent.inMonth ? 1 : 0.35 }
                     }
                 }
             }
@@ -282,7 +282,7 @@ Item {
                     color: playM.containsMouse ? Qt.lighter(h.p.primary, 1.08) : h.p.primary
                     scale: playM.pressed ? 0.93 : 1
                     Behavior on scale { NumberAnimation { duration: 90 } }
-                    MIcon { anchors.centerIn: parent; name: h.player && h.player.isPlaying ? "pause" : "play_arrow"; glyph: h.player && h.player.isPlaying ? h.d.md(0xF03E4) : h.d.md(0xF040A); size: 22; color: h.p.onPrimary }
+                    MIcon { anchors.centerIn: parent; name: h.player && h.player.isPlaying ? "pause" : "play_arrow"; glyph: h.player && h.player.isPlaying ? h.d.md(0xF03E4) : h.d.md(0xF040A); size: 22; color: h.p.inkOn }
                     MouseArea { id: playM; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: if (h.player) h.player.togglePlaying() }
                 }
                 IconBtn { size: 38; icon: "skip_next"; glyph: h.d.md(0xF04AD); enabled: !!h.player; onClicked: h.player.next() }

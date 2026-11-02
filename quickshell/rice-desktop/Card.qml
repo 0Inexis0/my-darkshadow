@@ -1,22 +1,20 @@
 import QtQuick
 
-// The background of a desktop widget.
-//   blur on:  frosted glass, the blurred wallpaper shows through (Hyprland layer rule rice-widget-blur)
-//   blur off: the classic dark see-through card
-//   flat:     solid (no blur, no transparency: Lite or gaming mode)
+// The background of a desktop widget; its colors come from the widget's palette (WPal.qml).
+//   DarkShadow: frosted glass over your blurred wallpaper (or a plain dark card, or solid when blur is off / Light mode)
+//   Google:     a soft card tinted with your theme color, rounder corners
+//   Outline:    no fill, only a thin line; the text sits right on the wallpaper
 Rectangle {
     property real k: 1     // 0 = no background, 1 = normal
+    property var pal: null
     readonly property bool glass: Look.blur && !Look.flat
-    radius: 26
-    color: Look.flat ? Qt.rgba(0.12, 0.12, 0.135, k > 0.02 ? 1 : 0)
-         : glass ? Qt.rgba(0.10, 0.10, 0.115, 0.46 * k)
-         : Qt.rgba(0.17, 0.17, 0.19, 0.74 * k)
-    border.width: 1
-    border.color: Qt.rgba(1, 1, 1, (glass ? 0.10 : 0.06) * k)
-    Behavior on color { ColorAnimation { duration: 300 } }
+    radius: pal ? pal.radius : 26
+    color: pal ? pal.cardColor : Qt.rgba(0.10, 0.10, 0.115, 0.46 * k)
+    border.width: pal ? pal.edgeWidth : 1
+    border.color: pal ? pal.edge : Qt.rgba(1, 1, 1, 0.10 * k)
     // a soft light along the top edge of the glass
     Rectangle {
-        visible: parent.glass && parent.k > 0.02
+        visible: (pal ? pal.shine : parent.glass) && parent.k > 0.02
         anchors.fill: parent
         radius: parent.radius
         opacity: 0.6 * parent.k

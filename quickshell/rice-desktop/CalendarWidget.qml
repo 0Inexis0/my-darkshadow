@@ -3,6 +3,8 @@ import QtQuick
 Item {
     id: cal
     property real bg: 1   // card background opacity (widget editor)
+    property var pal: null
+    readonly property color cFg: pal ? pal.fg : "#F6F5F4"
     property date now: new Date()
     property int off: 0
     readonly property var days: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
@@ -25,7 +27,7 @@ Item {
 
     Timer { interval: 30000; running: true; repeat: true; onTriggered: cal.now = new Date() }
 
-    Card { anchors.fill: parent; k: cal.bg }
+    Card { anchors.fill: parent; k: cal.bg; pal: cal.pal }
 
     Row {
         id: head
@@ -37,6 +39,7 @@ Item {
             text: cal.title()
             font.pixelSize: 17
             font.bold: true
+            color: cal.cFg
             width: parent.width - 76
             anchors.verticalCenter: parent.verticalCenter
         }
@@ -46,9 +49,9 @@ Item {
                 width: 34
                 height: 34
                 radius: 17
-                color: navMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.14) : Qt.rgba(1, 1, 1, 0.07)
+                color: navMouse.containsMouse ? (cal.pal ? cal.pal.chipHover : Qt.rgba(1, 1, 1, 0.14)) : (cal.pal ? cal.pal.chip : Qt.rgba(1, 1, 1, 0.07))
                 Behavior on color { ColorAnimation { duration: 140 } }
-                T { anchors.centerIn: parent; text: modelData.g; font.pixelSize: 18 }
+                T { anchors.centerIn: parent; text: modelData.g; font.pixelSize: 18; color: cal.cFg }
                 MouseArea {
                     id: navMouse
                     anchors.fill: parent
@@ -74,7 +77,7 @@ Item {
             delegate: Item {
                 width: grid.cellW
                 height: 24
-                T { anchors.centerIn: parent; text: modelData; font.pixelSize: 12; color: "#8a8a8f" }
+                T { anchors.centerIn: parent; text: modelData; font.pixelSize: 12; color: cal.pal ? cal.pal.fg3 : "#8a8a8f" }
             }
         }
         Repeater {
@@ -87,7 +90,7 @@ Item {
                     width: 32
                     height: 32
                     radius: 16
-                    color: modelData.today ? "#F6F5F4" : "transparent"
+                    color: modelData.today ? (cal.pal ? cal.pal.primary : "#F6F5F4") : "transparent"
                 }
                 T {
                     kind: "number"
@@ -95,7 +98,7 @@ Item {
                     text: modelData.d
                     font.pixelSize: 13
                     font.bold: modelData.today
-                    color: modelData.today ? "#0d0d0d" : (modelData.cur ? "#F6F5F4" : "#55555a")
+                    color: modelData.today ? (cal.pal ? cal.pal.inkOn : "#0d0d0d") : (modelData.cur ? cal.cFg : (cal.pal ? cal.pal.fg4 : "#55555a"))
                 }
             }
         }

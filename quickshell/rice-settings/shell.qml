@@ -206,6 +206,29 @@ FloatingWindow {
         drefresh.restart()
     }
 
+    // one setting of a widget: wset ID KEY VALUE (visualizer color, clock font, focus minutes)
+    function dwset(id, key, value) {
+        const d = JSON.parse(JSON.stringify(dst))
+        if (id === "clock") { if (!d.clock) d.clock = {}; d.clock[key] = value }
+        else { if (!d.widgets[id]) d.widgets[id] = {}; d.widgets[id][key] = value }
+        dst = d
+        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" wset \"$1\" \"$2\" \"$3\"", "_", id, key, String(value)])
+        status = "Applied"
+        drefresh.restart()
+    }
+    // widget style: shadow (DarkShadow's Shell), google, outline
+    function setWidgetTheme(v) {
+        const d = JSON.parse(JSON.stringify(dst)); d.widgetTheme = v; dst = d
+        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" widgets-theme \"$1\"", "_", v])
+        status = "Widget style: " + v
+    }
+    // dark or light text and cards by the wallpaper behind each widget
+    function setWidgetAdapt(on) {
+        const d = JSON.parse(JSON.stringify(dst)); d.widgetAdapt = on; dst = d
+        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" widgets-adapt \"$1\"", "_", on ? "on" : "off"])
+        status = "Adaptive colors " + (on ? "on" : "off")
+    }
+
     function dreset() {
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" reset-pos"])
         status = "Widget positions reset"

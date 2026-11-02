@@ -25,14 +25,20 @@ ShellRoot {
     // what the editor offers; free = free width and height instead of scaling
     readonly property var catalog: [
         { id: "visualizer", name: "Visualizer", icon: "\udb85\udc7d", free: true,
-          styles: [["bars", "Bars"], ["mirror", "Mirror"], ["wave", "Wave"], ["dots", "Dots"]] },
-        { id: "clock", name: "Clock", icon: "\uf017", styles: [["digital", "Digital"], ["cookie", "Cookie"], ["pixel", "Pixel"]] },
+          styles: [["bars", "Bars"], ["mirror", "Mirror"], ["wave", "Wave"], ["dots", "Dots"]],
+          optKey: "color", opts: [["accent", "Theme color"], ["gradient", "Gradient"], ["rainbow", "Rainbow"], ["mono", "White / black"]], optDefault: "accent" },
+        { id: "clock", name: "Clock", icon: "\uf017", styles: [["digital", "Digital"], ["line", "Line"], ["cookie", "Cookie"], ["pixel", "Pixel"]],
+          optKey: "font", opts: [["default", "Font: Default"], ["bebas", "Bebas Neue"], ["orbitron", "Orbitron"], ["outfit", "Outfit"],
+                                 ["grotesk", "Space Grotesk"], ["unbounded", "Unbounded"], ["shoulders", "Big Shoulders"]], optDefault: "default" },
         { id: "media", name: "Music", icon: "\uf001", card: true },
         { id: "weather", name: "Weather", icon: "\uf0c2", card: true },
         { id: "calendar", name: "Calendar", icon: "\uf073", card: true },
         { id: "usercard", name: "User", icon: "\uf007", card: true },
         { id: "resources", name: "CPU & RAM", icon: "\uf2db", card: true },
-        { id: "battery", name: "Battery", icon: "\uf240", card: true }
+        { id: "battery", name: "Battery", icon: "\uf240", card: true },
+        { id: "todo", name: "To-do", icon: "\uf14a", card: true },
+        { id: "focus", name: "Focus", icon: "\uf017", card: true },
+        { id: "notes", name: "Note", icon: "\uf249", card: true }
     ]
     property var wins: ({})
     function reg(id, w) { const n = Object.assign({}, wins); n[id] = w; wins = n }
@@ -42,6 +48,19 @@ ShellRoot {
         const w = wins[id]
         if (w && w.sty) return w.sty
         return id === "clock" ? (cfg.clock && cfg.clock.style ? cfg.clock.style : "digital") : (id === "visualizer" ? "bars" : "")
+    }
+    // the second choice of a widget (visualizer color, clock font)
+    function optOf(id, key, dflt) {
+        const w = wins[id]
+        if (id === "clock") return cfg.clock && cfg.clock[key] ? cfg.clock[key] : dflt
+        if (w && key === "color" && w.vcolor) return w.vcolor
+        return wc(id)[key] ? wc(id)[key] : dflt
+    }
+    function setOpt(id, key, v) {
+        const w = wins[id]
+        if (w && key === "color") w.vcolor = v
+        patch(id, (function() { const o = {}; o[key] = v; return o })())
+        wset(id, key, v)
     }
     // optimistic local change, the file follows a moment later
     function patch(id, obj) {
@@ -91,7 +110,7 @@ ShellRoot {
     Process {
         id: cfgProc
         // desktop.json, then "@@flat" while rice-effects has blur and transparency off
-        command: ["bash", "-c", "cat \"$HOME/.config/rice/desktop.json\" 2>/dev/null; [ -e \"$HOME/.cache/rice/flat\" ] && printf '@@flat'; [ -e \"$HOME/.cache/rice/lite\" ] && printf '@@lite'"]
+        command: ["bash", "-c", "cat \"$HOME/.config/rice/desktop.json\" 2>/dev/null; [ -e \"$HOME/.cache/rice/flat\" ] && printf '@@flat'; [ -e \"$HOME/.cache/rice/lite\" ] && printf '@@lite'; printf '@@accent'; sed -n 's/^@define-color accent *\\(#[0-9a-fA-F]\\{6\\}\\).*/\\1/p' \"$HOME/.config/waybar/colors.css\" 2>/dev/null | head -1"]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
@@ -99,13 +118,20 @@ ShellRoot {
                 if (fl !== Look.flat) Look.flat = fl
                 const lt = text.indexOf("@@lite") >= 0
                 if (lt !== Look.lite) Look.lite = lt
-                const t = text.replace("@@flat", "").replace("@@lite", "")
+                const ai = text.indexOf("@@accent")
+                if (ai >= 0) {
+                    const ac = text.substring(ai + 8).trim()
+                    if (/^#[0-9a-fA-F]{6}$/.test(ac) && Look.accent.toString() !== ac.toLowerCase()) Look.accent = ac
+                }
+                const t = (ai >= 0 ? text.substring(0, ai) : text).replace("@@flat", "").replace("@@lite", "")
                 if (t.trim().length === 0 || t === root.cfgText) return
                 try {
                     const j = JSON.parse(t)
                     root.cfgText = t
                     root.cfg = j
                     Look.blur = j.widgetBlur !== false
+                    Look.theme = j.widgetTheme === "google" || j.widgetTheme === "outline" ? j.widgetTheme : "shadow"
+                    Look.adapt = j.widgetAdapt !== false
                 } catch (e) { }
             }
         }
@@ -119,12 +145,12 @@ ShellRoot {
 
     Process {
         id: wpProc
-        command: ["bash", "-c", "awww query 2>/dev/null | grep -o 'image: .*' | head -1 | sed 's/^image: //'"]
+        command: ["bash", "-c", "w=$(awww query 2>/dev/null | grep -o 'image: .*' | head -1 | sed 's/^image: //'); [ -z \"$w\" ] && w=$(cat \"$HOME/.cache/hyprquickpaper-current\" 2>/dev/null); echo \"$w\""]
         stdout: StdioCollector { onStreamFinished: root.wallpaper = text.trim() }
     }
     Timer {
         interval: 6000
-        running: !!(root.placement !== "draggable" && root.cfg.clock && root.cfg.clock.enabled === true)
+        running: Look.adapt || !!(root.placement !== "draggable" && root.cfg.clock && root.cfg.clock.enabled === true)
         repeat: true
         triggeredOnStart: true
         onTriggered: { if (!wpProc.running) wpProc.running = true }
@@ -180,6 +206,8 @@ ShellRoot {
             wallpaper: root.wallpaper
             bw: root.sw
             bh: root.sh
+            pal: clockWin.pal
+            fontKey: root.cfg.clock && root.cfg.clock.font ? root.cfg.clock.font : "default"
         }
     }
 
@@ -190,7 +218,7 @@ ShellRoot {
         bw: root.sw; bh: root.sh; cw: 300; ch: 120; defX: 40; defY: 370
         onMoved: function(id, x, y) { root.savePos(id, x, y) }
         Component.onCompleted: root.reg(wid, weatherWin)
-        WeatherWidget { anchors.fill: parent; running: root.on("weather") && !root.hideWidgets; bg: weatherWin.bgv }
+        WeatherWidget { anchors.fill: parent; pal: weatherWin.pal; running: root.on("weather") && !root.hideWidgets; bg: weatherWin.bgv }
     }
     WidgetWindow {
         id: mediaWin
@@ -198,7 +226,7 @@ ShellRoot {
         bw: root.sw; bh: root.sh; cw: 400; ch: 120; defX: root.sw - 440; defY: 60
         onMoved: function(id, x, y) { root.savePos(id, x, y) }
         Component.onCompleted: root.reg(wid, mediaWin)
-        MediaWidget { anchors.fill: parent; bg: mediaWin.bgv }
+        MediaWidget { anchors.fill: parent; pal: mediaWin.pal; bg: mediaWin.bgv }
     }
     WidgetWindow {
         id: calWin
@@ -206,7 +234,7 @@ ShellRoot {
         bw: root.sw; bh: root.sh; cw: 340; ch: 340; defX: root.sw - 380; defY: 200
         onMoved: function(id, x, y) { root.savePos(id, x, y) }
         Component.onCompleted: root.reg(wid, calWin)
-        CalendarWidget { anchors.fill: parent; bg: calWin.bgv }
+        CalendarWidget { anchors.fill: parent; pal: calWin.pal; bg: calWin.bgv }
     }
     WidgetWindow {
         id: userWin
@@ -214,7 +242,7 @@ ShellRoot {
         bw: root.sw; bh: root.sh; cw: 340; ch: 120; defX: root.sw - 380; defY: 560
         onMoved: function(id, x, y) { root.savePos(id, x, y) }
         Component.onCompleted: root.reg(wid, userWin)
-        UserCard { anchors.fill: parent; bg: userWin.bgv }
+        UserCard { anchors.fill: parent; pal: userWin.pal; bg: userWin.bgv }
     }
     WidgetWindow {
         id: resWin
@@ -222,7 +250,7 @@ ShellRoot {
         bw: root.sw; bh: root.sh; cw: 160; ch: 380; defX: 40; defY: root.sh - 440
         onMoved: function(id, x, y) { root.savePos(id, x, y) }
         Component.onCompleted: root.reg(wid, resWin)
-        ResourcesWidget { anchors.fill: parent; running: root.on("resources") && !root.hideWidgets; bg: resWin.bgv }
+        ResourcesWidget { anchors.fill: parent; pal: resWin.pal; running: root.on("resources") && !root.hideWidgets; bg: resWin.bgv }
     }
     WidgetWindow {
         id: batWin
@@ -230,7 +258,36 @@ ShellRoot {
         bw: root.sw; bh: root.sh; cw: 280; ch: 110; defX: 40; defY: 520
         onMoved: function(id, x, y) { root.savePos(id, x, y) }
         Component.onCompleted: root.reg(wid, batWin)
-        BatteryWidget { anchors.fill: parent; running: root.on("battery") && !root.hideWidgets; bg: batWin.bgv }
+        BatteryWidget { anchors.fill: parent; pal: batWin.pal; running: root.on("battery") && !root.hideWidgets; bg: batWin.bgv }
+    }
+    // to-do list, focus timer, note (click them to type)
+    WidgetWindow {
+        id: todoWin
+        wid: "todo"; wc: root.wc("todo"); active: root.on("todo"); editing: root.editing; hidden: root.hideWidgets; keys: true
+        bw: root.sw; bh: root.sh; cw: 330; ch: 390; defX: 440; defY: 200
+        onMoved: function(id, x, y) { root.savePos(id, x, y) }
+        Component.onCompleted: root.reg(wid, todoWin)
+        TodoWidget { anchors.fill: parent; pal: todoWin.pal; running: root.on("todo") && !root.hideWidgets; bg: todoWin.bgv }
+    }
+    WidgetWindow {
+        id: focusWin
+        wid: "focus"; wc: root.wc("focus"); active: root.on("focus"); editing: root.editing; hidden: root.hideWidgets
+        bw: root.sw; bh: root.sh; cw: 260; ch: 300; defX: 800; defY: 200
+        onMoved: function(id, x, y) { root.savePos(id, x, y) }
+        Component.onCompleted: root.reg(wid, focusWin)
+        FocusWidget {
+            anchors.fill: parent; pal: focusWin.pal; bg: focusWin.bgv
+            focusMin: root.wc("focus").focus !== undefined ? root.wc("focus").focus : 25
+            onSetFocus: function(m) { root.patch("focus", { focus: m }); root.wset("focus", "focus", m) }
+        }
+    }
+    WidgetWindow {
+        id: notesWin
+        wid: "notes"; wc: root.wc("notes"); active: root.on("notes"); editing: root.editing; hidden: root.hideWidgets; keys: true
+        bw: root.sw; bh: root.sh; cw: 300; ch: 260; defX: 800; defY: 540
+        onMoved: function(id, x, y) { root.savePos(id, x, y) }
+        Component.onCompleted: root.reg(wid, notesWin)
+        NotesWidget { anchors.fill: parent; pal: notesWin.pal; bg: notesWin.bgv }
     }
     // audio visualizer: see-through, at the bottom of the screen by default, never takes clicks
     WidgetWindow {
@@ -240,8 +297,11 @@ ShellRoot {
         bw: root.sw; bh: root.sh
         defW: root.sw; defH: 180; defX: 0; defY: root.sh - 180
         Component.onCompleted: root.reg(wid, vizWin)
-        VizWidget { anchors.fill: parent; running: root.on("visualizer") && !root.hideWidgets && !Look.lite; style: vizWin.sty !== "" ? vizWin.sty : "bars"; flip: vizWin.flp }
+        VizWidget { anchors.fill: parent; running: root.on("visualizer") && !root.hideWidgets && !Look.lite; style: vizWin.sty !== "" ? vizWin.sty : "bars"; flip: vizWin.flp; pal: vizWin.pal; colorMode: vizWin.vcolor !== "" ? vizWin.vcolor : "accent" }
     }
+
+    // reads how bright the wallpaper is in each part of the screen, so every widget can pick dark or light text
+    WallLum { path: root.wallpaper; sw: root.sw; sh: root.sh }
 
     EditorWindow { root: root }
 

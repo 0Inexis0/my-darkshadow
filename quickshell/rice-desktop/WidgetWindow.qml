@@ -39,6 +39,11 @@ PanelWindow {
     property string sty: ""
     property bool flp: false
     property bool dragging: false
+    property string vcolor: ""    // visualizer color (accent, gradient, rainbow, mono)
+    property bool keys: false     // takes the keyboard when you click it (To-do, Notes)
+    // brightness of the wallpaper behind this widget, and the colors that follow from it
+    readonly property real lum: Look.lumAt(px, py, dispW, dispH, bw, bh)
+    readonly property var pal: WPal { wall: w.lum; k: w.bgv }
     readonly property real dispW: free ? fw : cw * sc
     readonly property real dispH: free ? fh : ch * sc
 
@@ -56,6 +61,7 @@ PanelWindow {
         bgv = wc.bg !== undefined ? wc.bg : 1
         sty = wc.style !== undefined ? wc.style : ""
         flp = wc.flip === true
+        vcolor = wc.color !== undefined ? wc.color : ""
     }
     onWcChanged: adopt()
     onDefXChanged: adopt()
@@ -71,6 +77,8 @@ PanelWindow {
     // above windows while you edit, so you can see what you change
     WlrLayershell.layer: editing ? WlrLayer.Top : WlrLayer.Bottom
     WlrLayershell.namespace: "rice-widget"
+    // To-do and Notes: a click gives them the keyboard (typing), nothing takes it otherwise
+    WlrLayershell.keyboardFocus: (keys && !editing) ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
     // only the widget itself takes clicks; the visualizer (passive) and widgets in the editor take none,
     // so whatever is under them (other widgets, the desktop) stays clickable
     mask: Region { item: (w.passive || w.editing) ? nothing : holder }
