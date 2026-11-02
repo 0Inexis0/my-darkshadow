@@ -173,11 +173,7 @@ Item {
                 label: "Auto-hide widgets"
                 desc: "Hide them while a tiled window is open on the screen; floating windows (Settings, pop-ups) leave them alone. Lighter on the computer"
                 checked: page.ctl.dst.autoHide === true
-                onToggled: function(v) {
-                    const d = JSON.parse(JSON.stringify(page.ctl.dst)); d.autoHide = v; page.ctl.dst = d
-                    Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" auto-hide \"$1\"", "_", v ? "on" : "off"])
-                    page.ctl.status = "Auto-hide widgets " + (v ? "on" : "off")
-                }
+                onToggled: function(v) { page.ctl.setAutoHide(v) }
             }
             ToggleRow {
                 label: "Blur behind widgets"

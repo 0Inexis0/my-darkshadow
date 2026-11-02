@@ -1,5 +1,11 @@
 # Changelog
 
+## V2.98
+- New Recorder page in Settings (after Hyprland): resolution (Native, 1440p, 1080p, 720p), frame rate (30 or 60 fps), quality (Best, High, Balanced, Small), encoder (CPU or GPU with VAAPI), sound and microphone, a preview with the size per minute, and your recent recordings with a picture (click to play). Recordings were soft before because wf-recorder's own defaults were used; the new default is High quality at 60 fps. If wf-recorder does not take the new settings, it records with its own defaults and tells you
+- Settings: "Desktop" is now "Widgets", and the window is a little smaller
+- Home: Auto-hide widgets next to Light mode (same switch as in Widgets)
+- Record sound and Record microphone moved from Hot corners to Recorder
+
 ## V2.97
 - Screen recording never fails because of sound: if wf-recorder stops right away with the chosen sound, it tries the default input, then records without sound, and tells you. What happened is in ~/.cache/rice/record.log
 

@@ -233,6 +233,46 @@ Item {
                 }
             }
 
+            // Auto-hide widgets: the desktop widgets rest while a window covers the screen
+            Rectangle {
+                property string label: "Auto-hide widgets"
+                property string desc: "Hide the desktop widgets while a window covers the screen; floating windows leave them alone"
+                property real reserved: 80
+                readonly property bool on: page.ctl.dst.autoHide === true || page.lite
+                width: parent.width
+                height: 76
+                radius: 14
+                color: "#141414"
+                border.width: 1
+                border.color: on ? "#4a4a4f" : "#1f1f1f"
+                Behavior on border.color { ColorAnimation { duration: 160 } }
+                Rectangle {
+                    id: ahi
+                    x: 14
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 40; height: 40; radius: 12
+                    color: Qt.rgba(1, 1, 1, parent.on ? 0.14 : 0.06)
+                    T { kind: "icon"; anchors.centerIn: parent; text: parent.parent.on ? "\uf070" : "\uf06e"; font.pixelSize: 17 }
+                }
+                Column {
+                    anchors.left: ahi.right
+                    anchors.leftMargin: 12
+                    anchors.right: ahtog.left
+                    anchors.rightMargin: 12
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 2
+                    T { text: "Auto-hide widgets"; font.pixelSize: 13; font.bold: true }
+                    T { kind: "reading"; text: page.lite ? "On while Light mode is on" : "Widgets hide while a window covers the screen, and come back on an empty desktop"; color: "#8a8a8a"; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
+                }
+                Tog {
+                    id: ahtog
+                    anchors.right: parent.right; anchors.rightMargin: 16
+                    anchors.verticalCenter: parent.verticalCenter
+                    checked: parent.on
+                    onToggled: function(v) { page.ctl.setAutoHide(v) }
+                }
+            }
+
             // the falling stars across this window
             Rectangle {
                 property string label: "Falling stars"
@@ -279,12 +319,12 @@ Item {
                 spacing: 10
                 Repeater {
                     model: [
-                        { i: "\udb80\udfd8", t: "Theme", d: "Colors & schemes", p: 7 },
+                        { i: "\udb80\udfd8", t: "Theme", d: "Colors & schemes", p: 8 },
                         { i: "\uf03e", t: "Wallpaper", d: "Pick a new one", p: -1 },
-                        { i: "\uf0f3", t: "Notifications", d: "Popups & panel", p: 9 },
-                        { i: "\uf023", t: "Lock screen", d: "Idle & lock", p: 10 },
+                        { i: "\uf0f3", t: "Notifications", d: "Popups & panel", p: 10 },
+                        { i: "\uf023", t: "Lock screen", d: "Idle & lock", p: 11 },
                         { i: "\uf0c9", t: "Waybar", d: "Bar layout & style", p: 2 },
-                        { i: "\uf002", t: "Rofi", d: "App launcher", p: 6 }
+                        { i: "\uf002", t: "Rofi", d: "App launcher", p: 7 }
                     ]
                     delegate: Rectangle {
                         width: (quick.width - 20) / 3

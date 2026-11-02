@@ -16,7 +16,7 @@ Item {
         { k: "colors", n: "Color schemes", d: "All color schemes, one click to switch", g: "\udb80\udfd8" },
         { k: "apps", n: "Apps", d: "Search and launch apps, pinned apps when empty", g: "󰀻" },
         { k: "awake", n: "Keep Awake", d: "Stop the screen from locking or sleeping", g: "󰅶" },
-        { k: "record", n: "Screen recording", d: "Fullscreen or region, list of recordings", g: "󰕧" },
+        { k: "record", n: "Screen recording", d: "Fullscreen or region, list of recordings (settings in Recorder)", g: "󰕧" },
         { k: "shot", n: "Screenshots", d: "Whole screen or a region, copied to clipboard", g: "󰄀" },
         { k: "toggles", n: "Quick toggles", d: "Wi-Fi, Bluetooth, Do Not Disturb and more", g: "󰕰" },
         { k: "media", n: "Now playing", d: "Song with play, pause, next and previous", g: "󰎈" }
@@ -402,9 +402,7 @@ Item {
         ToggleRow { label: "Theme tint"; desc: "Mix a little of your Theme color into the panel"; checked: page.v("tint", false) === true; onToggled: function(x) { page.setv("tint", x ? "on" : "off") } }
 
         // ---------- capture ----------
-        SectionTitle { text: "Recording & screenshots"; sub: "Recordings go to Videos/Recordings, screenshots to Pictures/Screenshots." }
-        ToggleRow { label: "Record sound"; desc: "The sound of your computer (games, videos, calls) in screen recordings"; checked: page.v("rec_sound", true) === true; onToggled: function(x) { page.setv("rec_sound", x ? "on" : "off") } }
-        ToggleRow { label: "Record microphone"; desc: "Your voice instead (with wf-recorder only one of the two; gpu-screen-recorder can take both)"; checked: page.v("rec_mic", false) === true; onToggled: function(x) { page.setv("rec_mic", x ? "on" : "off") } }
+        SectionTitle { text: "Recording & screenshots"; sub: "Screenshots go to Pictures/Screenshots. Recording size, quality and sound are on the Recorder page." }
         ToggleRow { label: "Copy screenshots"; desc: "Also put every screenshot on the clipboard"; checked: page.v("clipboard", true) === true; onToggled: function(x) { page.setv("clipboard", x ? "on" : "off") } }
         T {
             readonly property var miss: {

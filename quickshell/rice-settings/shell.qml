@@ -11,8 +11,8 @@ FloatingWindow {
     readonly property var scr0: Quickshell.screens && Quickshell.screens.length > 0 ? Quickshell.screens[0] : null
     readonly property int sw0: scr0 ? scr0.width : 1920
     readonly property int sh0: scr0 ? scr0.height : 1080
-    implicitWidth: Math.max(Math.min(980, sw0 - 40), Math.min(1260, Math.round(sw0 * 0.68)))
-    implicitHeight: Math.max(Math.min(720, sh0 - 60), Math.min(900, Math.round(sh0 * 0.82)))
+    implicitWidth: Math.max(Math.min(960, sw0 - 40), Math.min(1140, Math.round(sw0 * 0.62)))
+    implicitHeight: Math.max(Math.min(700, sh0 - 60), Math.min(820, Math.round(sh0 * 0.76)))
     color: "transparent"
     visible: true
     onVisibleChanged: if (!visible) Qt.quit()
@@ -33,6 +33,12 @@ FloatingWindow {
         running: true
         stdout: StdioCollector { onStreamFinished: { try { win.stars = JSON.parse(text).stars !== false } catch (e) { } } }
     }
+    // Auto-hide widgets (Home and Widgets): widgets rest while a tiled window covers the screen
+    function setAutoHide(on) {
+        const d = JSON.parse(JSON.stringify(win.dst)); d.autoHide = on; win.dst = d
+        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" auto-hide \"$1\"", "_", on ? "on" : "off"])
+        status = "Auto-hide widgets " + (on ? "on" : "off")
+    }
     function closeNow() { Qt.quit() }
 
     // ---------- search: every setting on every page, found by its name, its section, its page or its text ----------
@@ -52,7 +58,7 @@ FloatingWindow {
         background: ["background", "wallpaper"], top: ["top", "position"], bottom: ["bottom", "position"],
         place: ["position"], where: ["position"], size: ["size", "width", "height", "scale"], big: ["size", "scale"],
         speed: ["speed", "animation"], fast: ["speed"], slow: ["speed", "light", "performance"], lag: ["light", "performance"], laggy: ["light", "performance"], performance: ["light", "performance"], power: ["power", "battery"], wifi: ["wi-fi", "wifi", "network"],
-        launcher: ["rofi", "launcher"], apps: ["apps", "rofi", "dock"], game: ["gaming"], games: ["gaming"]
+        launcher: ["rofi", "launcher"], record: ["record", "recorder", "recording"], recording: ["record", "recorder"], video: ["record", "recorder", "video"], desktop: ["widgets", "widget"], widget: ["widgets", "widget"], hide: ["auto-hide", "hide"], apps: ["apps", "rofi", "dock"], game: ["gaming"], games: ["gaming"]
     })
     function buildIndex() {
         const out = []
@@ -235,13 +241,14 @@ FloatingWindow {
         { name: "Waybar", icon: "\uf0c9" },
         { name: "Bar layout", icon: "\uf0db" },
         { name: "Hyprland", icon: "\uf108" },
+        { name: "Recorder", icon: "\uf03d" },
         { name: "Dashboard", icon: "\uf009" },
         { name: "Rofi", icon: "\uf002" },
         { name: "Theme", icon: "\udb80\udfd8" },
         { name: "Cursors", icon: "\uf245" },
         { name: "Notifications", icon: "\uf0f3" },
         { name: "Idle & Lockscreen", icon: "\uf023" },
-        { name: "Desktop", icon: "\uf26c" },
+        { name: "Widgets", icon: "\uf26c" },
         { name: "Hot corners", icon: "\udb82\ude0b" },
         { name: "Interface", icon: "\uf2d0" },
         { name: "Services", icon: "" }
@@ -715,16 +722,17 @@ FloatingWindow {
             PageSlot { idx: 2; cur: win.page; WaybarPage { anchors.fill: parent; ctl: win } }
             PageSlot { idx: 3; cur: win.page; BarLayoutPage { anchors.fill: parent; ctl: win } }
             PageSlot { idx: 4; cur: win.page; HyprlandPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 5; cur: win.page; DashboardPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 6; cur: win.page; RofiPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 7; cur: win.page; ThemePage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 8; cur: win.page; CursorsPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 9; cur: win.page; NotificationsPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 10; cur: win.page; IdlePage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 11; cur: win.page; DesktopPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 12; cur: win.page; HotCornersPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 13; cur: win.page; InterfacePage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 14; cur: win.page; ServicesPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 5; cur: win.page; RecorderPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 6; cur: win.page; DashboardPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 7; cur: win.page; RofiPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 8; cur: win.page; ThemePage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 9; cur: win.page; CursorsPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 10; cur: win.page; NotificationsPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 11; cur: win.page; IdlePage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 12; cur: win.page; DesktopPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 13; cur: win.page; HotCornersPage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 14; cur: win.page; InterfacePage { anchors.fill: parent; ctl: win } }
+            PageSlot { idx: 15; cur: win.page; ServicesPage { anchors.fill: parent; ctl: win } }
         }
 
         // ---------- the tour (after the welcome intro, or rice-welcome tour) ----------

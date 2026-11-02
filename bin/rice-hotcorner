@@ -10,6 +10,7 @@
   rice-hotcorner awake | dnd | wifi | bluetooth | gaming | mic      toggle
   rice-hotcorner scheme KEY                                 color scheme (rice-colors)
   rice-hotcorner record full|region|stop
+  rice-hotcorner rec-info                   recorder status + recent recordings (with thumbnails) as JSON
   rice-hotcorner shot full|region
   rice-hotcorner show PATH | folder recordings|screenshots
 """
@@ -92,11 +93,14 @@ DEFAULTS = {
     "toggles": ["wifi", "bluetooth", "dnd", "gaming", "settings"],
     "width": 420, "radius": 26, "opacity": 0.9, "animation": "grow", "speed": 1.0,
     "audio": False, "rec_sound": True, "rec_mic": False, "clipboard": True,
+    "rec_quality": "high", "rec_res": "native", "rec_fps": "60", "rec_encoder": "cpu",
     "blur": True, "transparency": True, "card_alpha": 0.05, "tint": False, "scale": 1.0,
 }
 INTS = {"trigger": (1, 16), "delay": (0, 800), "width": (300, 680), "radius": (0, 36)}
 FLOATS = {"opacity": (0.3, 1.0), "speed": (0.5, 2.0), "card_alpha": (0.0, 0.2), "scale": (0.75, 1.5)}
-CHOICES = {"corner": ["bottom-right", "bottom-left", "top-right", "top-left"], "animation": ["grow", "slide", "scale", "fade"]}
+CHOICES = {"corner": ["bottom-right", "bottom-left", "top-right", "top-left"], "animation": ["grow", "slide", "scale", "fade"],
+           "rec_quality": ["best", "high", "balanced", "small"], "rec_res": ["native", "1440", "1080", "720"],
+           "rec_fps": ["30", "60"], "rec_encoder": ["cpu", "gpu"]}
 BOOLS = ("enabled", "close_on_leave", "audio", "rec_sound", "rec_mic", "clipboard", "header", "blur", "transparency", "tint")
 
 
@@ -348,6 +352,99 @@ def sound_source(mic=False):
     return ""
 
 
+REC_THUMBS = CACHE + "/rec-thumbs"
+# quality -> x264 CRF (lower = sharper and bigger) and preset (slower = smaller for the same look, but heavier)
+REC_QUALITY = {"best": (15, "fast"), "high": (18, "veryfast"), "balanced": (23, "veryfast"), "small": (28, "veryfast")}
+
+
+def source_height(mode, geo=None):
+    """height in pixels of what is being recorded (a region, or the focused screen)"""
+    try:
+        if geo:
+            return int(re.search(r"x(\d+)\s*$", geo.strip()).group(1))
+        code, out = q(["hyprctl", "-j", "monitors"])
+        mons = json.loads(out)
+        m = next((m for m in mons if m.get("focused")), mons[0])
+        return int(m["height"])
+    except Exception:
+        return 0
+
+
+def render_node():
+    for n in sorted(glob.glob("/dev/dri/renderD*")):
+        return n
+    return ""
+
+
+def video_args(c, src_h):
+    """quality, fps, size and encoder for wf-recorder (empty list = wf-recorder's own defaults)"""
+    crf, preset = REC_QUALITY[c["rec_quality"]]
+    scale = c["rec_res"] != "native" and src_h and int(c["rec_res"]) < src_h
+    a = ["-r", c["rec_fps"]]
+    node = render_node() if c["rec_encoder"] == "gpu" else ""
+    if node:
+        a += ["-c", "h264_vaapi", "-d", node, "-p", "qp=%d" % (crf + 2)]
+        if scale:
+            a += ["-F", "scale_vaapi=w=-2:h=%s:format=nv12" % c["rec_res"]]
+    else:
+        a += ["-c", "libx264", "-p", "crf=%d" % crf, "-p", "preset=" + preset]
+        if scale:
+            a += ["-F", "scale=-2:%s:flags=lanczos,format=yuv420p" % c["rec_res"]]
+    return a
+
+
+def rec_thumb(path):
+    """a small picture from the recording (cached); "" when ffmpeg is not there"""
+    if not shutil.which("ffmpeg"):
+        return ""
+    try:
+        st = os.stat(path)
+        t = "%s/%s-%d.jpg" % (REC_THUMBS, os.path.splitext(os.path.basename(path))[0], int(st.st_mtime))
+        if os.path.isfile(t):
+            return t
+        os.makedirs(REC_THUMBS, exist_ok=True)
+        for old in glob.glob("%s/%s-*.jpg" % (REC_THUMBS, os.path.splitext(os.path.basename(path))[0])):
+            os.remove(old)
+        for ss in ("1", "0"):
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", ss, "-i", path, "-frames:v", "1",
+                            "-vf", "scale=360:-2", t], capture_output=True, timeout=15)
+            if os.path.isfile(t) and os.path.getsize(t) > 0:
+                return t
+    except Exception:
+        pass
+    return ""
+
+
+def rec_duration(path):
+    code, out = q(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=nw=1:nk=1", path], timeout=5)
+    try:
+        return int(float(out.strip()))
+    except Exception:
+        return 0
+
+
+def rec_info():
+    pid = alive(REC_PID)
+    start = 0
+    if pid:
+        try:
+            start = json.load(open(REC_INFO)).get("start", time.time())
+        except Exception:
+            start = time.time()
+    files = []
+    for ext in ("mp4", "mkv", "webm"):
+        files += glob.glob(REC_DIR + "/*." + ext)
+    files.sort(key=os.path.getmtime, reverse=True)
+    out = []
+    for f in files[:6]:
+        st = os.stat(f)
+        out.append({"name": os.path.basename(f), "path": f, "mb": round(st.st_size / 1048576, 1), "sec": rec_duration(f),
+                    "time": time.strftime("%d %b %H:%M", time.localtime(st.st_mtime)), "thumb": rec_thumb(f)})
+    tools = {t: shutil.which(t) is not None for t in ("wf-recorder", "gpu-screen-recorder", "slurp", "ffmpeg", "pactl", "wpctl")}
+    print(json.dumps({"recording": bool(pid), "start": start, "now": time.time(), "recordings": out, "dir": REC_DIR,
+                      "tools": tools, "gpu": bool(render_node())}))
+
+
 def record(mode):
     c = load()
     pid = alive(REC_PID)
@@ -372,21 +469,32 @@ def record(mode):
     f = time.strftime(REC_DIR + "/Recording_%Y-%m-%d_%H-%M-%S.mp4")
     tries = []
     if shutil.which("wf-recorder"):
-        cmd = ["wf-recorder", "-f", f]
+        base = ["wf-recorder", "-f", f]
+        geo = None
         if mode == "region":
-            g = region()
-            if not g:
+            geo = region()
+            if not geo:
                 return
-            cmd += ["-g", g]
-        if c["rec_sound"] or c["rec_mic"]:
+            base += ["-g", geo]
+        vid = video_args(c, source_height(mode, geo))
+        want = c["rec_sound"] or c["rec_mic"]
+        auds = []
+        if want:
             src = sound_source(mic=c["rec_mic"] and not c["rec_sound"])
             if src:
-                tries.append((cmd + ["--audio=" + src], ""))
-            tries.append((cmd + ["-a"], "Recording with the default sound input (the chosen sound did not work)"))
-        tries.append((cmd, "Recording WITHOUT sound: wf-recorder could not record sound (see ~/.cache/rice/record.log)"
-                      if (c["rec_sound"] or c["rec_mic"]) else ""))
+                auds.append((["--audio=" + src], ""))
+            auds.append((["-a"], "Recording with the default sound input (the chosen sound did not work)"))
+        else:
+            auds.append(([], ""))
+        for a, note in auds:
+            tries.append((base + vid + a, note))
+        # the quality settings are not taken (an older wf-recorder, no GPU encoder): wf-recorder's own defaults
+        for a, note in auds:
+            tries.append((base + a, "Recording with default quality (wf-recorder did not take the Recorder settings, see ~/.cache/rice/record.log)"))
+        if want:
+            tries.append((base, "Recording WITHOUT sound: wf-recorder could not record sound (see ~/.cache/rice/record.log)"))
     elif shutil.which("gpu-screen-recorder"):
-        cmd = ["gpu-screen-recorder", "-w", "screen", "-f", "60", "-o", f]
+        cmd = ["gpu-screen-recorder", "-w", "screen", "-f", c["rec_fps"], "-o", f]
         if c["rec_sound"] and c["rec_mic"]:
             cmd += ["-a", "default_output|default_input"]
         elif c["rec_sound"]:
@@ -531,6 +639,8 @@ def main(argv):
         q(["wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", "toggle"])
     elif cmd == "record":
         record(arg or "full")
+    elif cmd == "rec-info":
+        rec_info()
     elif cmd == "shot":
         shot(arg or "full")
     elif cmd == "scheme":
