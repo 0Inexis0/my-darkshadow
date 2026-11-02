@@ -1,5 +1,8 @@
 # Changelog
 
+## V3.16
+- The installer copies files that are new on your computer first and the changed ones after them, so Quickshell no longer shows "Config reload failed: X is not a type" for a moment while an update that adds new files is installed
+
 ## V3.15
 - Two new Dashboard tabs fill the column: **Control** (switches for Wi-Fi, Bluetooth, Do not disturb, Night light, Sound, Microphone, Stay awake and Airplane, volume and brightness sliders, power mode, screenshot and recording buttons, lock / sleep / log out / restart / shut down) and **Tasks** (focus timer that keeps running while the dashboard is closed, to-do list with typing, and the note). Switch them on or off in Settings > Dashboard > Tabs (they are switched on once by this update). Keys 1-9 switch tabs
 - The Dashboard tab is new, a day board: big time with a line for the day that has passed, weather, round switches, the week you are in, music as a turning record, a Pulse card with bars for CPU, GPU, RAM and disk (and the battery), and your first tasks to tick. The older cards (You, Clock, Calendar, Usage, Music) can still be added in edit mode. An old saved Dashboard layout is reset once
