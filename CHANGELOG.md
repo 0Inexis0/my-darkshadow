@@ -1,5 +1,10 @@
 # Changelog
 
+## V3.03
+- Settings has a tidy sidebar now: Home, then five groups with an arrow (Appearance, Desktop, Bar & launcher, Sound & alerts, System). Touch an arrow to open the pages inside. The group of the page you are on opens by itself
+- Home: "Bar & Screen" is now "Settings": Bar transparency, Window blur and Animations on or off, Settings scroll speed with a box to try it, and Mouse & touchpad (mouse wheel speed, touchpad scroll speed, natural scrolling, tap to click, pointer speed)
+- hypr-set knows the input options above (hypr-set set input.scroll_factor 1.5)
+
 ## V3.02
 - Notification center styles (Settings > Notifications): DarkShadow Shell (frosted glass), Dark (no blur, no transparency) and Google (soft tonal surfaces in your Theme color, big round corners, pill buttons). Pick one with the three preview tiles
 - Notifications no longer pile on top of each other: they are one flat list now, and every card is solid, so the text of one card never shows through another

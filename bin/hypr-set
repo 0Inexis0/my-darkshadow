@@ -45,6 +45,13 @@ SPEC = {
     "decoration.blur.ignore_opacity": ("bool",),
     "decoration.blur.new_optimizations": ("bool",),
     "decoration.blur.popups": ("bool",),
+    # Settings > Home > Settings: mouse and touchpad
+    "input.scroll_factor": ("float", 0.2, 3.0),
+    "input.touchpad.scroll_factor": ("float", 0.2, 3.0),
+    "input.natural_scroll": ("bool",),
+    "input.touchpad.natural_scroll": ("bool",),
+    "input.touchpad.tap-to-click": ("bool",),
+    "input.sensitivity": ("float", -1.0, 1.0),
 }
 
 # (leaf, speed, bezier, style) - wartości z twojego hyprland.lua
@@ -105,7 +112,8 @@ def lua(v):
 def nest(key, v):
     s = lua(v)
     for p in reversed(key.split(".")):
-        s = "{ %s = %s }" % (p, s)
+        name = p if re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", p) else '["%s"]' % p     # tap-to-click is not a Lua name
+        s = "{ %s = %s }" % (name, s)
     return s
 
 

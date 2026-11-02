@@ -26,7 +26,7 @@ FloatingWindow {
     property bool stars: true
     function setStars(on) {
         stars = on
-        Quickshell.execDetached(["bash", "-c", "mkdir -p \"$HOME/.config/rice\" && printf '{\"stars\": %s}\\n' \"$1\" > \"$HOME/.config/rice/settings-app.json\"", "_", on ? "true" : "false"])
+        Prefs.save("stars", on)
     }
     Process {
         command: ["bash", "-c", "cat \"$HOME/.config/rice/settings-app.json\" 2>/dev/null || echo '{}'"]
@@ -276,6 +276,74 @@ FloatingWindow {
         { name: "Interface", icon: "\uf2d0" },
         { name: "Services", icon: "" }
     ]
+
+
+    // the sidebar: Home, then groups with an arrow (touch one to see its pages)
+    readonly property var navTree: [
+        { page: 0 },
+        { sep: true },
+        { group: "look", name: "Appearance", icon: "\udb80\udfd8", pages: [8, 9, 14] },
+        { group: "desk", name: "Desktop", icon: "\uf108", pages: [12, 13, 4, 11] },
+        { group: "bar", name: "Bar & launcher", icon: "\uf0c9", pages: [2, 3, 6, 7] },
+        { group: "snd", name: "Sound & alerts", icon: "\uf028", pages: [1, 10] },
+        { group: "sys", name: "System", icon: "\uf013", pages: [5, 15] }
+    ]
+    readonly property var navRows: {
+        const out = []
+        for (let i = 0; i < navTree.length; i++) {
+            const n = navTree[i]
+            if (n.sep) { out.push({ kind: "sep" }); continue }
+            if (n.group) {
+                out.push({ kind: "group", gid: n.group, name: n.name, icon: n.icon })
+                for (let k = 0; k < n.pages.length; k++) out.push({ kind: "page", idx: n.pages[k], gid: n.group, child: true })
+                continue
+            }
+            out.push({ kind: "page", idx: n.page, gid: "", child: false })
+        }
+        return out
+    }
+    readonly property var navGroups: navTree.filter(function(n) { return n.group }).map(function(n) { return n.group })
+    property var navOpen: ({})
+    function groupOf(idx) {
+        for (let i = 0; i < navRows.length; i++) if (navRows[i].kind === "page" && navRows[i].idx === idx) return navRows[i].gid
+        return ""
+    }
+    function toggleGroup(g) { const o = Object.assign({}, navOpen); o[g] = !(o[g] === true); navOpen = o }
+    function openFor(idx) { const g = groupOf(idx); if (g !== "" && navOpen[g] !== true) { const o = Object.assign({}, navOpen); o[g] = true; navOpen = o } }
+    // the row of a page; when its group is closed: the row of the group
+    function navRowOf(idx) {
+        let g = -1
+        for (let i = 0; i < navRows.length; i++) {
+            const r = navRows[i]
+            if (r.kind === "page" && r.idx === idx) { if (navLayout.vis[i]) return i; g = r.gid; break }
+        }
+        if (g === -1) return -1
+        for (let i = 0; i < navRows.length; i++) if (navRows[i].kind === "group" && navRows[i].gid === g) return i
+        return -1
+    }
+    readonly property var navLayout: {
+        const ys = [], hs = [], vis = [], gbg = {}
+        let y = 0
+        for (let i = 0; i < navRows.length; i++) {
+            const r = navRows[i]
+            if (r.kind === "sep") { ys.push(y + 4); hs.push(10); vis.push(true); y += 18; continue }
+            if (r.kind === "page" && r.child) {
+                if (navOpen[r.gid] !== true) { ys.push(y); hs.push(38); vis.push(false); continue }
+                if (!gbg[r.gid]) gbg[r.gid] = { y: y, h: 0 }
+                ys.push(y); hs.push(38); vis.push(true)
+                gbg[r.gid].h += 40
+                y += 40
+                continue
+            }
+            ys.push(y); hs.push(44); vis.push(true)
+            y += 48
+            // a little air under an open group
+            if (r.kind === "group" && navOpen[r.gid] === true) y += 3
+        }
+        return { ys: ys, hs: hs, vis: vis, gbg: gbg, total: y }
+    }
+    onPageChanged: openFor(page)
+    Component.onCompleted: openFor(page)
 
     readonly property string hyprTool: home + "/.local/bin/hypr-set"
     property var hv: ({})
@@ -666,29 +734,61 @@ FloatingWindow {
                 acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                 onWheel: function(e) {
                     const max = Math.max(0, navFlick.contentHeight - navFlick.height)
-                    navFlick.contentY = Math.max(0, Math.min(max, navFlick.contentY - e.angleDelta.y * 0.9))
+                    navFlick.contentY = Math.max(0, Math.min(max, navFlick.contentY - e.angleDelta.y * Prefs.wheel * 1.5))
                 }
             }
             // keep the selected category visible
             function reveal() {
-                const top = win.page * 56, bottom = top + 46
-                if (top < contentY) contentY = top
+                const r = win.navRowOf(win.page)
+                if (r < 0) return
+                const top = win.navLayout.ys[r], bottom = top + win.navLayout.hs[r]
+                if (top < contentY) contentY = Math.max(0, top - 6)
                 else if (bottom > contentY + height) contentY = Math.min(Math.max(0, contentHeight - height), bottom + 8 - height)
             }
             Connections { target: win; function onPageChanged() { navFlick.reveal() } }
 
+            // the box behind the pages of an open group
+            Repeater {
+                model: win.navGroups
+                delegate: Rectangle {
+                    readonly property var g: win.navLayout.gbg[modelData] || ({ y: 0, h: 0 })
+                    x: 0
+                    y: g.y - 3
+                    width: 206
+                    height: Math.max(0, g.h + 4)
+                    radius: 14
+                    color: "#111112"
+                    border.width: 1
+                    border.color: "#1c1c1e"
+                    opacity: win.navOpen[modelData] === true ? 1 : 0
+                    visible: opacity > 0.01
+                    Behavior on y { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+                    Behavior on height { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+                    Behavior on opacity { NumberAnimation { duration: 180 } }
+                }
+            }
+
             // the selection glides to the new category and stretches a little on the way (Material 3)
             Rectangle {
                 id: navSel
-                property real target: win.page * 56
+                readonly property int row: win.navRowOf(win.page)
+                readonly property bool child: row >= 0 && win.navRows[row] && win.navRows[row].child === true
+                property real target: row >= 0 ? win.navLayout.ys[row] : 0
                 y: target
-                width: 206
-                height: 46
-                radius: 14
+                x: child ? 8 : 0
+                width: child ? 198 : 206
+                height: row >= 0 ? win.navLayout.hs[row] : 44
+                radius: child ? 11 : 14
                 color: "#262626"
                 border.width: 1
                 border.color: Qt.rgba(1, 1, 1, 0.05)
+                // the page is inside a closed group: the selection rests on the group, a little dimmer
+                opacity: row >= 0 && win.navLayout.vis[row] ? 1 : 0
                 Behavior on y { NumberAnimation { duration: 420; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.2, 0, 0, 1, 1, 1] } }
+                Behavior on x { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
+                Behavior on width { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
+                Behavior on height { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
+                Behavior on opacity { NumberAnimation { duration: 160 } }
                 Rectangle {
                     x: 0; anchors.verticalCenter: parent.verticalCenter
                     width: 3; height: 18; radius: 1.5
@@ -696,40 +796,81 @@ FloatingWindow {
                 }
             }
 
-            Column {
+            Item {
                 id: navCol
                 width: 206
-                spacing: 10
+                height: win.navLayout.total
 
                 Repeater {
-                    model: win.pages
-                    delegate: Rectangle {
-                        width: parent.width
-                        height: 46
-                        radius: 14
-                        color: win.page !== index && navMouse.containsMouse ? "#1a1a1a" : "transparent"
-                        Behavior on color { ColorAnimation { duration: 150 } }
-                        T { kind: "icon"; x: 18; anchors.verticalCenter: parent.verticalCenter; text: modelData.icon; font.pixelSize: 18
-                            color: win.page === index ? "#F6F5F4" : "#a8a8b0"
-                            scale: win.page === index ? 1.1 : 1
-                            Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.OutBack } }
-                            Behavior on color { ColorAnimation { duration: 200 } } }
-                        T { x: 50; width: parent.width - 58; elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter; text: modelData.name; font.pixelSize: 14
-                            font.weight: win.page === index ? Font.DemiBold : Font.Normal
-                            color: win.page === index ? "#F6F5F4" : "#b8b8c0"
-                            Behavior on color { ColorAnimation { duration: 200 } } }
-                        MouseArea {
-                            id: navMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: win.page = index
+                    model: win.navRows
+                    delegate: Item {
+                        id: nr
+                        readonly property var r: modelData
+                        readonly property bool shown: win.navLayout.vis[index] === true
+                        readonly property bool sel: r.kind === "page" && win.page === r.idx
+                        // a group is "current" when one of its pages is open
+                        readonly property bool holds: r.kind === "group" && win.groupOf(win.page) === r.gid
+                        y: win.navLayout.ys[index]
+                        width: 206
+                        height: win.navLayout.hs[index]
+                        opacity: shown ? 1 : 0
+                        visible: opacity > 0.01
+                        Behavior on y { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+                        Behavior on opacity { NumberAnimation { duration: 180 } }
+
+                        // a thin line between Home and the groups
+                        Rectangle {
+                            visible: nr.r.kind === "sep"
+                            x: 14; width: parent.width - 28; height: 1
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: "#202022"
+                        }
+
+                        Rectangle {
+                            visible: nr.r.kind !== "sep"
+                            x: nr.r.child ? 8 : 0
+                            width: parent.width - (nr.r.child ? 8 : 0)
+                            height: parent.height
+                            radius: nr.r.child ? 11 : 14
+                            color: !nr.sel && navMouse.containsMouse ? (nr.r.child ? "#1a1a1c" : "#1a1a1a") : "transparent"
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                            T { kind: "icon"; x: nr.r.child ? 14 : 18; anchors.verticalCenter: parent.verticalCenter
+                                text: nr.r.kind === "group" ? nr.r.icon : (nr.r.kind === "page" ? win.pages[nr.r.idx].icon : "")
+                                font.pixelSize: nr.r.child ? 14 : 18
+                                color: nr.sel || nr.holds ? "#F6F5F4" : "#a8a8b0"
+                                scale: nr.sel ? 1.1 : 1
+                                Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.OutBack } }
+                                Behavior on color { ColorAnimation { duration: 200 } } }
+                            T { x: nr.r.child ? 40 : 50; width: parent.width - (nr.r.child ? 52 : 82); elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter
+                                text: nr.r.kind === "group" ? nr.r.name : (nr.r.kind === "page" ? win.pages[nr.r.idx].name : "")
+                                font.pixelSize: nr.r.child ? 13 : 14
+                                font.weight: nr.sel || nr.holds ? Font.DemiBold : Font.Normal
+                                color: nr.sel || nr.holds ? "#F6F5F4" : "#b8b8c0"
+                                Behavior on color { ColorAnimation { duration: 200 } } }
+                            // groups: an arrow that turns when the group opens
+                            T { visible: nr.r.kind === "group"; kind: "icon"; x: parent.width - 30; anchors.verticalCenter: parent.verticalCenter
+                                text: "\uf078"; font.pixelSize: 10; color: navMouse.containsMouse || nr.holds ? "#d0d0d6" : "#7a7a82"
+                                rotation: win.navOpen[nr.r.gid] === true ? 180 : 0
+                                Behavior on rotation { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } } }
+                            // a closed group with the open page inside: a small dot
+                            Rectangle { visible: nr.holds && win.navOpen[nr.r.gid] !== true; x: parent.width - 48; width: 5; height: 5; radius: 2.5
+                                anchors.verticalCenter: parent.verticalCenter; color: "#F6F5F4" }
+                            MouseArea {
+                                id: navMouse
+                                anchors.fill: parent
+                                enabled: nr.shown
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    if (nr.r.kind === "group") { Sfx.play(win.navOpen[nr.r.gid] === true ? "switch-off" : "switch-on"); win.toggleGroup(nr.r.gid) }
+                                    else win.page = nr.r.idx
+                                }
+                            }
                         }
                     }
                 }
             }
         }
-
 
         Item {
             id: pagesHolder
@@ -770,10 +911,14 @@ FloatingWindow {
                   rect: function() { return { x: searchBox.x - 5, y: searchBox.y - 5, w: searchBox.width + 10, h: searchBox.height + 10 } } },
                 { title: "Every part has a page", r: 18,
                   body: "The bar, the theme, notifications, the lock screen, the dashboard and more. Click one to open it.",
-                  rect: function() { return { x: navFlick.x - 6, y: navFlick.y - 6, w: navFlick.width + 12, h: Math.min(navFlick.height, navCol.height) + 12 } } },
+                  rect: function() { return { x: navFlick.x - 6, y: navFlick.y - 6, w: navFlick.width + 12, h: Math.min(navFlick.height, win.navLayout.total) + 12 } } },
                 { title: "Sounds you can change", r: 14,
                   body: "The soft clicks and this quiet music live in Sfx & sounds. Pick another sound pack, make it quieter or turn it off.",
-                  rect: function() { return { x: navFlick.x - 4, y: navFlick.y + 56 - navFlick.contentY - 4, w: navFlick.width + 8, h: 54 } } },
+                  rect: function() {
+                      win.openFor(1)
+                      const r = win.navRowOf(1), y = r >= 0 ? win.navLayout.ys[r] : 0, h = r >= 0 ? win.navLayout.hs[r] : 44
+                      return { x: navFlick.x - 4, y: navFlick.y + y - navFlick.contentY - 4, w: navFlick.width + 8, h: h + 8 }
+                  } },
                 { title: "Make it yours", r: 16,
                   body: "Start with the things people change first. Most changes show up right away, and every page has a live preview.",
                   rect: function() {

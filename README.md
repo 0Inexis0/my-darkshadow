@@ -75,7 +75,7 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 **NixOS**: see [Installation](#installation) below. Then log out and pick Hyprland, and press `SUPER + U`.
 
 ## Features
-**Settings app** (`SUPER+U`), sixteen pages and a search: Home, Sfx & sounds, Waybar, Bar layout, Hyprland, Recorder, Dashboard, Rofi, Theme, Cursors, Notifications, Idle & Lockscreen, Widgets, Hot corners, Interface, Services.
+**Settings app** (`SUPER+U`), sixteen pages in five groups (touch an arrow to open one) and a search: Home, Sfx & sounds, Waybar, Bar layout, Hyprland, Recorder, Dashboard, Rofi, Theme, Cursors, Notifications, Idle & Lockscreen, Widgets, Hot corners, Interface, Services.
 
 | Area | What you get |
 | --- | --- |

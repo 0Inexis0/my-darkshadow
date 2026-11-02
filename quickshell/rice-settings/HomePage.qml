@@ -91,7 +91,7 @@ Item {
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
             onWheel: function(e) {
                 const max = Math.max(0, flick.contentHeight - flick.height)
-                flick.contentY = Math.max(0, Math.min(max, flick.contentY - e.angleDelta.y * 0.6))
+                flick.contentY = Math.max(0, Math.min(max, flick.contentY - e.angleDelta.y * Prefs.wheel))
             }
         }
 
@@ -366,21 +366,136 @@ Item {
                 }
             }
 
-            T { kind: "title"; text: "Bar & Screen"; font.pixelSize: 16; font.bold: true; topPadding: 12 }
+            SectionTitle { text: "Settings"; sub: "The things you change most. They apply right away." }
 
-            SettingRow {
+            ToggleRow {
                 label: "Bar transparency"
                 desc: "Translucent bar with blur; off makes it solid"
-                Tog {
-                    anchors.right: parent.right
-                    anchors.rightMargin: 16
-                    anchors.verticalCenter: parent.verticalCenter
-                    checked: page.ctl.st.transparent === true
-                    onToggled: function(v) {
-                        page.ctl.setSt("transparent", v)
-                        page.ctl.run(["transparency", v ? "on" : "off"])
+                checked: page.ctl.st.transparent === true
+                onToggled: function(v) {
+                    page.ctl.setSt("transparent", v)
+                    page.ctl.run(["transparency", v ? "on" : "off"])
+                }
+            }
+            ToggleRow {
+                label: "Window blur"
+                desc: "Blur behind the bar, notifications and see-through windows"
+                checked: page.ctl.hv["decoration.blur.enabled"] !== false
+                onToggled: function(v) { page.ctl.hset("decoration.blur.enabled", v) }
+            }
+            ToggleRow {
+                label: "Animations"
+                desc: "Windows and workspaces move smoothly. Off is the lightest"
+                checked: page.ctl.ha.enabled !== false
+                onToggled: function(v) { page.ctl.setAnim("enabled", v) }
+            }
+
+            SectionTitle { text: "Scrolling"; sub: "How fast pages move. Try it in the box." }
+
+            SliderRow {
+                label: "Settings scroll speed"
+                desc: "Wheel and touchpad scrolling in this window"
+                from: 0.3; to: 3; step: 0.05; decimals: 2; unit: "x"
+                value: Prefs.scroll
+                onCommitted: function(v) { Prefs.setScroll(v) }
+            }
+            // a small place to feel the speed
+            Rectangle {
+                width: parent.width
+                height: 128
+                radius: 12
+                color: "#141414"
+                border.width: 1
+                border.color: "#1f1f1f"
+                Column {
+                    x: 16; y: 14
+                    width: 190
+                    spacing: 4
+                    T { text: "Try it"; font.pixelSize: 14 }
+                    T { kind: "reading"; text: "Scroll in the box. The speed above changes how far one notch goes."; color: "#8a8a8a"; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
+                }
+                Rectangle {
+                    x: 226; y: 12
+                    width: parent.width - 226 - 14
+                    height: parent.height - 24
+                    radius: 9
+                    color: "#0e0e0f"
+                    border.width: 1
+                    border.color: "#1c1c1e"
+                    clip: true
+                    Flickable {
+                        id: tryFlick
+                        anchors.fill: parent
+                        anchors.margins: 1
+                        contentWidth: width
+                        contentHeight: tryCol.height + 12
+                        boundsBehavior: Flickable.StopAtBounds
+                        Behavior on contentY { enabled: !tryFlick.dragging && !tryFlick.flicking; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                        WheelHandler {
+                            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                            onWheel: function(e) {
+                                const max = Math.max(0, tryFlick.contentHeight - tryFlick.height)
+                                tryFlick.contentY = Math.max(0, Math.min(max, tryFlick.contentY - e.angleDelta.y * Prefs.wheel))
+                            }
+                        }
+                        Column {
+                            id: tryCol
+                            x: 10; y: 6
+                            width: parent.width - 28
+                            Repeater {
+                                model: 40
+                                delegate: Rectangle {
+                                    width: tryCol.width; height: 26; radius: 6
+                                    color: index % 2 === 0 ? Qt.rgba(1, 1, 1, 0.035) : "transparent"
+                                    T { x: 8; anchors.verticalCenter: parent.verticalCenter; text: "Line " + (index + 1); font.pixelSize: 12; color: "#9a9aa2" }
+                                }
+                            }
+                        }
+                    }
+                    // where you are
+                    Rectangle {
+                        x: parent.width - 6; width: 3; radius: 1.5
+                        y: 4 + (parent.height - 8 - height) * (tryFlick.contentHeight > tryFlick.height ? tryFlick.contentY / (tryFlick.contentHeight - tryFlick.height) : 0)
+                        height: Math.max(16, (parent.height - 8) * tryFlick.height / Math.max(1, tryFlick.contentHeight))
+                        color: "#5a5a60"
                     }
                 }
+            }
+
+            SectionTitle { text: "Mouse & touchpad"; sub: "System-wide, for every app." }
+
+            SliderRow {
+                label: "Mouse wheel speed"
+                desc: "How far one notch scrolls, everywhere"
+                from: 0.2; to: 3; step: 0.1; decimals: 1; unit: "x"
+                value: page.ctl.hv["input.scroll_factor"] !== undefined ? page.ctl.hv["input.scroll_factor"] : 1
+                onCommitted: function(v) { page.ctl.hset("input.scroll_factor", Math.round(v * 10) / 10) }
+            }
+            SliderRow {
+                label: "Touchpad scroll speed"
+                desc: "Two-finger scrolling, everywhere"
+                from: 0.2; to: 3; step: 0.1; decimals: 1; unit: "x"
+                value: page.ctl.hv["input.touchpad.scroll_factor"] !== undefined ? page.ctl.hv["input.touchpad.scroll_factor"] : 1
+                onCommitted: function(v) { page.ctl.hset("input.touchpad.scroll_factor", Math.round(v * 10) / 10) }
+            }
+            ToggleRow {
+                label: "Natural scrolling"
+                desc: "Touchpad: content follows your fingers, like a phone"
+                checked: page.ctl.hv["input.touchpad.natural_scroll"] === true
+                onToggled: function(v) { page.ctl.hset("input.touchpad.natural_scroll", v) }
+            }
+            ToggleRow {
+                label: "Tap to click"
+                desc: "Touchpad: a light tap is a click"
+                checked: page.ctl.hv["input.touchpad.tap-to-click"] !== false
+                onToggled: function(v) { page.ctl.hset("input.touchpad.tap-to-click", v) }
+            }
+            SliderRow {
+                label: "Pointer speed"
+                desc: "How fast the cursor moves"
+                from: -1; to: 1; step: 0.05; decimals: 2
+                value: page.ctl.hv["input.sensitivity"] !== undefined ? page.ctl.hv["input.sensitivity"] : 0
+                onCommitted: function(v) { page.ctl.hset("input.sensitivity", Math.round(v * 20) / 20) }
             }
         }
     }
