@@ -51,7 +51,7 @@ INTS = {"margin": (0, 60), "panel_width": (300, 700), "panel_height": (300, 1400
 FLOATS = {"opacity": (0.3, 1.0), "popup_opacity": (0.3, 1.0)}
 CHOICES = {"pos_x": ["left", "center", "right"], "pos_y": ["top", "bottom"],
            "layout": ["deck", "controls-top", "controls-bottom", "minimal"], "style": ["glass", "solid", "google", "outline"],
-           "cc_side": ["left", "right"],
+           "cc_side": ["left", "right", "top", "bottom"],
            "popup_style": ["match", "glass", "solid", "minimal", "pill", "accent", "glow", "island", "light"],
            "colors": ["black", "graphite", "slate", "white", "tinted"], "font": ["sans", "rounded", "mono", "system"],
            "border": ["subtle", "accent", "none"],
@@ -185,12 +185,14 @@ def write_config(c):
     deck = c["layout"] == "deck"
     if deck:
         # the panel has its own side; floating = a gap all around, otherwise flat against the edge, full height
-        j["control-center-positionX"] = c["cc_side"]
-        j["control-center-positionY"] = "top"
+        sideways = c["cc_side"] in ("left", "right")
+        j["control-center-positionX"] = c["cc_side"] if sideways else "center"
+        j["control-center-positionY"] = "top" if sideways else c["cc_side"]
         gap = c["margin"] if c["cc_float"] else 0
         for side in ("top", "bottom", "left", "right"):
             j["control-center-margin-" + side] = gap
-        j["fit-to-screen"] = c["fit"] or not c["cc_float"]
+        # on the left or right: full height; at the top or bottom: only as tall as set (Height)
+        j["fit-to-screen"] = (c["fit"] or not c["cc_float"]) if sideways else False
     else:
         j.pop("control-center-positionX", None)
         j.pop("control-center-positionY", None)
@@ -577,7 +579,8 @@ def deck_css(c, v):
     if c["cc_float"]:
         rad = "%dpx" % r
     else:
-        rad = ("%dpx 0 0 %dpx" % (r, r)) if c["cc_side"] == "right" else ("0 %dpx %dpx 0" % (r, r))
+        rad = {"right": "%dpx 0 0 %dpx" % (r, r), "left": "0 %dpx %dpx 0" % (r, r),
+               "top": "0 0 %dpx %dpx" % (r, r), "bottom": "%dpx %dpx 0 0" % (r, r)}.get(c["cc_side"], "%dpx" % r)
     light = c["colors"] == "white"
     tile = v.get("tile") or ("rgba(0, 0, 0, 0.06)" if light else "rgba(255, 255, 255, 0.07)")
     tile_h = v.get("tileh") or ("rgba(0, 0, 0, 0.10)" if light else "rgba(255, 255, 255, 0.12)")

@@ -3,7 +3,8 @@ import Quickshell.Io
 import Quickshell.Wayland
 import QtQuick
 
-// The dashboard. It slides up out of the bottom edge (SUPER + ALT + D, or SUPER + W for wallpapers).
+// The dashboard. It slides up out of the bottom edge, or in from the left edge (Settings > Dashboard > Position).
+// SUPER + ALT + D opens it, SUPER + W opens the wallpapers.
 // Tabs: Dashboard, Wallpaper, Performance, About. Settings > Dashboard.
 PanelWindow {
     id: db
@@ -30,12 +31,13 @@ PanelWindow {
 
     readonly property var tabs: cfg.tabs && cfg.tabs.length ? cfg.tabs : ["dashboard", "wallpaper", "performance", "about"]
     readonly property int curIdx: Math.max(0, tabs.indexOf(tab))
-    readonly property bool atTop: false   // always at the bottom
+    readonly property bool atTop: false   // never at the top
+    readonly property bool atLeft: cfg.position === "left"   // in the middle of the left edge, floating
     readonly property real sc: cfg.scale ? cfg.scale : 1
     readonly property real spd: cfg.speed ? cfg.speed : 1
     readonly property string anim: cfg.animation === "fade" || cfg.animation === "none" ? cfg.animation : "slide"
-    readonly property bool attach: cfg.attach !== false
-    readonly property bool barHere: !!cfg.bar && cfg.bar.position === "bottom" && !cfg.bar.autohide
+    readonly property bool attach: cfg.attach !== false && !atLeft
+    readonly property bool barHere: !atLeft && !!cfg.bar && cfg.bar.position === "bottom" && !cfg.bar.autohide
     readonly property real barOff: barHere ? cfg.bar.height : 0
     readonly property real earR: attach ? 24 : 0
     readonly property real headH: 64
@@ -154,10 +156,10 @@ PanelWindow {
     Item {
         id: edge
         // the middle of the bottom edge, as wide as the dashboard; the corners stay free for the hot corner
-        width: Math.min(db.width - 360, (db.wantW + 2 * db.earR) * db.sc)
-        height: 2
-        x: (db.width - width) / 2
-        y: db.height - height
+        width: db.atLeft ? 2 : Math.min(db.width - 360, (db.wantW + 2 * db.earR) * db.sc)
+        height: db.atLeft ? Math.min(db.height - 360, db.wantH * db.sc + 120) : 2
+        x: db.atLeft ? 0 : (db.width - width) / 2
+        y: db.atLeft ? (db.height - height) / 2 : db.height - height
         HoverHandler {
             id: edgeHover
             enabled: db.edgeOn
@@ -266,9 +268,10 @@ PanelWindow {
     Item {
         id: bottomZone
         visible: db.open && db.byHover
-        width: db.width
-        height: 10
-        y: db.height - height
+        width: db.atLeft ? 10 : db.width
+        height: db.atLeft ? db.height : 10
+        x: 0
+        y: db.atLeft ? 0 : db.height - height
         HoverHandler { id: bottomHover; onHoveredChanged: db.pointerMoved() }
     }
     function pointerMoved() {
@@ -311,10 +314,10 @@ PanelWindow {
     Item {
         id: bridge
         visible: db.open
-        x: shell.x
-        width: shell.width * db.sc
-        y: db.atTop ? 0 : shell.y + shell.height
-        height: db.atTop ? Math.max(0, db.barOff) + 2 : db.height - y
+        x: db.atLeft ? 0 : shell.x
+        width: db.atLeft ? shell.x : shell.width * db.sc
+        y: db.atLeft ? shell.y : (db.atTop ? 0 : shell.y + shell.height)
+        height: db.atLeft ? shell.height * db.sc : (db.atTop ? Math.max(0, db.barOff) + 2 : db.height - y)
         HoverHandler { id: bridgeHover; onHoveredChanged: db.pointerMoved() }
     }
 
@@ -343,7 +346,7 @@ PanelWindow {
         scale: db.sc
         width: db.curW - 2 * db.pad
         height: 52
-        x: (db.width - width * db.sc) / 2
+        x: db.atLeft ? shell.x : (db.width - width * db.sc) / 2
         y: shell.y - (height + 12) * db.sc + (on ? 0 : 14)
         opacity: on ? 1 : 0
         visible: opacity > 0.01
@@ -406,8 +409,8 @@ PanelWindow {
         // the full size; what you see grows inside it
         width: db.curW + 2 * db.earR
         height: db.curH
-        x: (db.width - width * db.sc) / 2
-        y: db.atTop ? db.barOff + (db.attach ? 0 : 10) : db.height - db.barOff - (db.attach ? 0 : 10) - height * db.sc
+        x: db.atLeft ? 10 : (db.width - width * db.sc) / 2
+        y: db.atLeft ? (db.height - height * db.sc) / 2 : (db.atTop ? db.barOff + (db.attach ? 0 : 10) : db.height - db.barOff - (db.attach ? 0 : 10) - height * db.sc)
         transformOrigin: Item.TopLeft
         scale: db.sc
         visible: db.t > 0.003
@@ -417,7 +420,8 @@ PanelWindow {
         readonly property real e: db.t
         readonly property real sw: db.curW
         readonly property real sh: db.curH
-        readonly property real slideY: db.anim === "slide" ? (1 - e) * (db.curH + 4) : 0
+        readonly property real slideY: db.anim === "slide" && !db.atLeft ? (1 - e) * (db.curH + 4) : 0
+        readonly property real slideX: db.anim === "slide" && db.atLeft ? -(1 - e) * (db.curW + 14) : 0
         opacity: db.anim === "fade" ? e : (db.anim === "slide" ? Math.min(1, 0.4 + e) : 1)
 
         HoverHandler { id: shellHover; onHoveredChanged: db.pointerMoved() }
@@ -427,6 +431,7 @@ PanelWindow {
             id: frameBox
             width: shell.width
             height: shell.height
+            x: shell.slideX
             y: shell.slideY
             // shape: flat edge against the bar, curved "ears" where it meets it, round corners away from it
             Canvas {

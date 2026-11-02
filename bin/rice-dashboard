@@ -45,7 +45,7 @@ DEFAULTS = {
 }
 INTS = {"width": (760, 1500), "delay": (0, 900), "trigger": (80, 900)}
 FLOATS = {"scale": (0.75, 1.4), "speed": (0.5, 2.0), "opacity": (0.35, 1.0)}
-CHOICES = {"position": ["top", "bottom"], "style": ["shadow", "graphite", "aurora", "frost"], "default_tab": TABS,
+CHOICES = {"position": ["bottom", "left"], "style": ["shadow", "graphite", "aurora", "frost"], "default_tab": TABS,
            "animation": ["slide", "fade", "none"], "hotspot": ["bar", "edge"]}
 OLD_STYLES = {"darkshadow": "shadow", "end4": "frost", "caelestia": "aurora"}
 BOOLS = ("enabled", "hover", "edge", "wallpaper_key", "close_on_leave", "blur", "attach")
@@ -84,7 +84,8 @@ def load():
                 c[k] = t or list(TABS)
         except Exception:
             c[k] = d
-    c["position"] = "bottom"   # the dashboard always comes from the bottom
+    if c.get("position") != "left":
+        c["position"] = "bottom"   # the bottom edge, or the left edge
     return c
 
 

@@ -142,8 +142,8 @@ Item {
         SegRow {
             visible: page.deck
             label: "Side"
-            desc: "Where the notification center opens"
-            options: [{ label: "Left", value: "left" }, { label: "Right", value: "right" }]
+            desc: "Which screen edge the notification center opens from. Top and bottom use the Height below"
+            options: [{ label: "Left", value: "left" }, { label: "Right", value: "right" }, { label: "Top", value: "top" }, { label: "Bottom", value: "bottom" }]
             current: page.v("cc_side", "right")
             onChosen: function(x) { page.setv("cc_side", x) }
         }
@@ -168,7 +168,7 @@ Item {
         }
         SliderRow {
             label: "Height"
-            desc: "Used when full height is off"
+            desc: "Used when full height is off, and always at the top or bottom"
             from: 300; to: 1400; step: 20; unit: " px"
             value: page.v("panel_height", 820)
             onCommitted: function(x) { page.setv("panel_height", Math.round(x)) }

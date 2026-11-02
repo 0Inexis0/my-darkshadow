@@ -144,8 +144,15 @@ Item {
         }
         ToggleRow { label: "Blur"; desc: "Blur the desktop behind the dashboard"; checked: page.v("blur", true) === true; onToggled: function(x) { page.setv("blur", x) } }
         SegRow {
+            label: "Position"
+            desc: "Which screen edge the dashboard opens from"
+            options: [{ label: "Bottom", value: "bottom" }, { label: "Left", value: "left" }]
+            current: page.v("position", "bottom") === "left" ? "left" : "bottom"
+            onChosen: function(x) { page.setv("position", x) }
+        }
+        SegRow {
             label: "Animation"
-            desc: "Slide comes up out of the bottom edge"
+            desc: "Slide comes in out of the screen edge"
             options: [{ label: "Slide", value: "slide" }, { label: "Fade", value: "fade" }, { label: "Off", value: "none" }]
             current: page.v("animation", "slide") === "morph" ? "slide" : page.v("animation", "slide")
             onChosen: function(x) { page.setv("animation", x) }
