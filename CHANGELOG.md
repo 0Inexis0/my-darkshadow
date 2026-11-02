@@ -1,5 +1,8 @@
 # Changelog
 
+## V3.05
+- The Settings window is smaller again: under half of a 1080p screen (about 880 x 630), still never bigger than your screen
+
 ## V3.04
 - Update card (dashboard About tab) and the update notification: long lines of "What's new" wrap to a second line instead of ending in "..."
 

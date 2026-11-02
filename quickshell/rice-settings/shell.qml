@@ -7,12 +7,12 @@ ShellRoot {
 FloatingWindow {
     id: win
     title: "Rice Settings"
-    // bigger on bigger screens (about 70 % of a 1080p screen), never more than fits
+    // about half of a 1080p screen, a little bigger on bigger screens, never more than fits
     readonly property var scr0: Quickshell.screens && Quickshell.screens.length > 0 ? Quickshell.screens[0] : null
     readonly property int sw0: scr0 ? scr0.width : 1920
     readonly property int sh0: scr0 ? scr0.height : 1080
-    implicitWidth: Math.max(Math.min(960, sw0 - 40), Math.min(1140, Math.round(sw0 * 0.62)))
-    implicitHeight: Math.max(Math.min(700, sh0 - 60), Math.min(820, Math.round(sh0 * 0.76)))
+    implicitWidth: Math.max(Math.min(820, sw0 - 40), Math.min(940, Math.round(sw0 * 0.46)))
+    implicitHeight: Math.max(Math.min(600, sh0 - 60), Math.min(680, Math.round(sh0 * 0.58)))
     color: "transparent"
     visible: true
     onVisibleChanged: if (!visible) Qt.quit()
