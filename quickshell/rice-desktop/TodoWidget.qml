@@ -9,6 +9,7 @@ Item {
     property real bg: 1       // card background opacity (widget editor)
     property var pal: null
     property bool running: true
+    readonly property bool typing: input.activeFocus
     property var items: []
     property bool quiet: false   // right after a change here: do not let an older file overwrite it
     readonly property string tool: Quickshell.env("HOME") + "/.local/bin/rice-todo"
@@ -138,7 +139,7 @@ Item {
                         cursorShape: Qt.PointingHandCursor
                         property bool sfxOwn: true
                         onClicked: function(m) {
-                            if (m.x > row.width - 34) { Sfx.play("click"); td.remove(index) }
+                            if (m.x > row.width - 34) { Sfx.play("remove"); td.remove(index) }
                             else { Sfx.play(row.done ? "switch-off" : "switch-on"); td.toggle(index) }
                         }
                     }
@@ -177,7 +178,7 @@ Item {
             font.pixelSize: 13
             clip: true
             maximumLength: 200
-            onAccepted: { if (text.trim().length > 0) Sfx.play("done"); td.add(text); text = "" }
+            onAccepted: { if (text.trim().length > 0) Sfx.play("add"); td.add(text); text = "" }
             onTextChanged: if (activeFocus) Sfx.play("type")
             Keys.onEscapePressed: focus = false
         }

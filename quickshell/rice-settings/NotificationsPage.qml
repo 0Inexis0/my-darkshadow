@@ -326,13 +326,70 @@ Item {
         ToggleRow { label: "Blur popups"; desc: "Blur the desktop behind popups"; checked: page.v("blur_popups", true) === true; onToggled: function(x) { page.setv("blur_popups", x ? "on" : "off") } }
         ToggleRow { label: "Blur panel"; desc: "Blur the desktop behind the notification center"; checked: page.v("blur", true) === true; onToggled: function(x) { page.setv("blur", x ? "on" : "off") } }
 
-        SectionTitle { text: "Notification center style"; sub: "Look of the panel. Popups use it too when their style is Same as panel." }
-        SegRow {
-            label: "Look"
-            desc: "Glass is translucent, Solid is opaque, Outline uses the accent"
-            options: [{ label: "Glass", value: "glass" }, { label: "Solid", value: "solid" }, { label: "Outline", value: "outline" }]
-            current: page.v("style", "glass")
-            onChosen: function(x) { page.setv("style", x) }
+        SectionTitle { text: "Notification center style"; sub: "Look of the panel. Popups use it too when their style is Same as panel. Dark and Google switch the blur off. Notifications are never stacked on top of each other." }
+        Flow {
+            id: pstyles
+            width: parent.width
+            spacing: 10
+            Repeater {
+                model: [
+                    { k: "glass", n: "DarkShadow Shell", d: "Frosted glass" },
+                    { k: "solid", n: "Dark", d: "No blur, no transparency" },
+                    { k: "google", n: "Google", d: "Tonal and round" }
+                ]
+                delegate: Rectangle {
+                    readonly property bool on: page.v("style", "glass") === modelData.k
+                    width: (pstyles.width - 20) / 3
+                    height: 196
+                    radius: 14
+                    color: "#141414"
+                    border.width: on ? 2 : 1
+                    border.color: on ? "#F6F5F4" : (pMouse.containsMouse ? "#3a3a3a" : "#2a2a2a")
+                    Behavior on border.color { ColorAnimation { duration: 140 } }
+                    Rectangle {
+                        x: 8; y: 8
+                        width: parent.width - 16; height: 124
+                        radius: 9
+                        clip: true
+                        gradient: Gradient {
+                            orientation: Gradient.Horizontal
+                            GradientStop { position: 0; color: "#3a3150" }
+                            GradientStop { position: 1; color: "#1a2a3a" }
+                        }
+                        PanelMock {
+                            anchors.centerIn: parent
+                            width: parent.width - 28
+                            height: parent.height - 16
+                            look: modelData.k
+                            acc: page.v("accent", true) ? page.v("accent_color", "#d4d4d4") : "#F6F5F4"
+                            accFg: page.v("on_accent", "#0d0d0d")
+                            surface: page.v("colors", "graphite")
+                            baseRadius: page.v("radius", 18)
+                        }
+                    }
+                    T {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        y: 140
+                        text: modelData.n
+                        font.pixelSize: 13
+                        font.bold: on
+                    }
+                    T {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        y: 160
+                        text: modelData.d
+                        font.pixelSize: 11
+                        color: "#8a8a8a"
+                    }
+                    MouseArea {
+                        id: pMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: page.setv("style", modelData.k)
+                    }
+                }
+            }
         }
         SliderRow {
             label: "Corner radius"

@@ -263,11 +263,11 @@ ShellRoot {
     // to-do list, focus timer, note (click them to type)
     WidgetWindow {
         id: todoWin
-        wid: "todo"; wc: root.wc("todo"); active: root.on("todo"); editing: root.editing; hidden: root.hideWidgets; keys: true
+        wid: "todo"; wc: root.wc("todo"); active: root.on("todo"); editing: root.editing; hidden: root.hideWidgets; keys: true; typing: todoW.typing
         bw: root.sw; bh: root.sh; cw: 330; ch: 390; defX: 440; defY: 200
         onMoved: function(id, x, y) { root.savePos(id, x, y) }
         Component.onCompleted: root.reg(wid, todoWin)
-        TodoWidget { anchors.fill: parent; pal: todoWin.pal; running: root.on("todo") && !root.hideWidgets; bg: todoWin.bgv }
+        TodoWidget { id: todoW; anchors.fill: parent; pal: todoWin.pal; running: root.on("todo") && !root.hideWidgets; bg: todoWin.bgv }
     }
     WidgetWindow {
         id: focusWin
@@ -283,11 +283,11 @@ ShellRoot {
     }
     WidgetWindow {
         id: notesWin
-        wid: "notes"; wc: root.wc("notes"); active: root.on("notes"); editing: root.editing; hidden: root.hideWidgets; keys: true
+        wid: "notes"; wc: root.wc("notes"); active: root.on("notes"); editing: root.editing; hidden: root.hideWidgets; keys: true; typing: notesW.typing
         bw: root.sw; bh: root.sh; cw: 300; ch: 260; defX: 800; defY: 540
         onMoved: function(id, x, y) { root.savePos(id, x, y) }
         Component.onCompleted: root.reg(wid, notesWin)
-        NotesWidget { anchors.fill: parent; pal: notesWin.pal; bg: notesWin.bgv }
+        NotesWidget { id: notesW; anchors.fill: parent; pal: notesWin.pal; bg: notesWin.bgv }
     }
     // audio visualizer: see-through, at the bottom of the screen by default, never takes clicks
     WidgetWindow {

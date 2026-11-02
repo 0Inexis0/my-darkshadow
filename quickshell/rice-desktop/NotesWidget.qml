@@ -7,6 +7,7 @@ Item {
     id: nt
     property real bg: 1       // card background opacity (widget editor)
     property var pal: null
+    readonly property bool typing: edit.activeFocus
     property bool running: true
     property bool loaded: false
     readonly property string file: Quickshell.env("HOME") + "/.config/rice/note.txt"

@@ -18,7 +18,8 @@ Singleton {
     property var bank: null
     property var lastAt: ({})
     readonly property var kinds: ({ click: "click", select: "click", done: "click", "switch-on": "switch", "switch-off": "switch",
-                                    slide: "slider", type: "typing" })
+                                    slide: "slider", type: "typing",
+                                    "page-next": "click", "page-prev": "click", add: "click", remove: "click" })
     // the same sound again this soon is skipped (typing, sliding)
     readonly property var gaps: ({ slide: 45, type: 30, click: 35 })
 

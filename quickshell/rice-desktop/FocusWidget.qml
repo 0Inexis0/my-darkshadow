@@ -75,7 +75,7 @@ Item {
         id: ring
         width: 150; height: 150
         anchors.horizontalCenter: parent.horizontalCenter
-        y: 58
+        y: 52
         property real v: fo.frac
         property color fillC: fo.cMain
         property color trackC: fo.pal ? fo.pal.track : Qt.rgba(1, 1, 1, 0.13)
@@ -105,7 +105,7 @@ Item {
     // buttons
     Row {
         anchors.horizontalCenter: parent.horizontalCenter
-        y: 222
+        y: 208
         spacing: 14
         Rectangle {
             width: 36; height: 36; radius: 18
@@ -134,7 +134,7 @@ Item {
     // sessions done today (four dots) and the length of a session
     Row {
         anchors.horizontalCenter: parent.horizontalCenter
-        y: parent.height - 30
+        y: parent.height - 26
         spacing: 14
         Row {
             spacing: 5

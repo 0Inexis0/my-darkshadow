@@ -28,8 +28,12 @@ QtObject {
     property SoundEffect switchOff: Snd { source: bank.src("switch-off") }
     property SoundEffect slide: Snd { source: bank.src("slide") }
     property SoundEffect type: Snd { source: bank.src("type") }
+    property SoundEffect pageNext: Snd { source: bank.src("page-next") }
+    property SoundEffect pagePrev: Snd { source: bank.src("page-prev") }
+    property SoundEffect addSnd: Snd { source: bank.src("add") }
+    property SoundEffect removeSnd: Snd { source: bank.src("remove") }
     readonly property var map: ({ click: click, select: select, done: done, "switch-on": switchOn, "switch-off": switchOff,
-                                  slide: slide, type: type })
+                                  slide: slide, type: type, "page-next": pageNext, "page-prev": pagePrev, add: addSnd, remove: removeSnd })
     // false: not ready here (the caller plays it another way)
     function play(ev) {
         const s = map[ev]

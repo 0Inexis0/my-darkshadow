@@ -57,7 +57,8 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: cal.off += modelData.d
+                    property bool sfxOwn: true
+                    onClicked: { Sfx.play(modelData.d > 0 ? "page-next" : "page-prev"); cal.off += modelData.d }
                 }
             }
         }

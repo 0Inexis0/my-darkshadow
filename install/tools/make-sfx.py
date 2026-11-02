@@ -4,7 +4,8 @@
   python3 install/tools/make-sfx.py        needs numpy and scipy; ffmpeg for the music (.ogg)
 
 sounds/sfx/<pack>/<event>.wav   packs: tap soft pluck keys crystal bubble retro
-                                events: click switch-on switch-off slide type select done
+                                events: click switch-on switch-off slide type select done page-next page-prev add remove
+  python3 install/tools/make-sfx.py --extra   only page-next, page-prev, add and remove
 sounds/sfx/intro/*.wav          welcome intro and tour: night reveal open tip
 sounds/sfx/music/calm.ogg       quiet music for the welcome intro and the Settings tour
 """
@@ -317,7 +318,98 @@ def calm(seconds=72, bpm=72):
     return norm(out, 0.5)
 
 
+# ---------------------------------------------------------------- extra events (own noise source, so the older sounds never change)
+rng2 = np.random.default_rng(302)
+
+
+def sweep_noise(f0, f1, dur, decay, q=0.35):
+    """filtered noise whose center moves from f0 to f1: a page being turned"""
+    n = int(SR * dur)
+    x = rng2.standard_normal(n)
+    out = np.zeros(n)
+    blk = 128
+    zi = None
+    for i in range(0, n, blk):
+        k = i / max(1, n)
+        c = f0 * (f1 / f0) ** k
+        sos = butter(2, [max(80, c * (1 - q)), min(c * (1 + q), SR / 2.1)], btype="band", fs=SR, output="sos")
+        if zi is None or zi.shape != (sos.shape[0], 2):
+            zi = np.zeros((sos.shape[0], 2))
+        seg, zi = sosfilt(sos, x[i:i + blk], zi=zi)
+        out[i:i + blk] = seg
+    return out * env(n, dur * 0.35, decay)
+
+
+def chirp(f0, f1, dur, decay, square_wave=False):
+    x = t(dur)
+    ff = f0 * (f1 / f0) ** (x / dur)
+    ph = 2 * np.pi * np.cumsum(ff) / SR
+    s = np.sign(np.sin(ph)) * 0.6 if square_wave else np.sin(ph)
+    return s * env(len(x), 0.002, decay)
+
+
+def extra_events():
+    """page-next / page-prev: the calendar changes month.  add / remove: a task is added or deleted in To-do."""
+    def pack(voice, note, swish, lo, hi, up_gain=1.0):
+        return {
+            "page-next": mix(swish(lo, hi, 0.11, 0.05), voice(note * 1.5, 0.12) * 0.55),
+            "page-prev": mix(swish(hi, lo, 0.11, 0.05), voice(note * 1.0, 0.12) * 0.55),
+            "add": seq((voice(note * 1.0, 0.1), 0), (voice(note * 1.25, 0.1), 0.04), (voice(note * 1.5, 0.16), 0.08)),
+            "remove": seq((voice(note * 1.4, 0.08), 0), (voice(note * 0.8, 0.14), 0.05)) * 0.9,
+        }
+
+    def tap_v(f, d):
+        return mix(sine(f, d, d * 0.2), tick(0.006, 3000, 11000, 0.001) * 0.3)
+
+    def soft_v(f, d):
+        x = t(d + 0.05)
+        return sum(g * np.sin(2 * np.pi * f * r * x) for r, g in ((1, 1), (2.7, 0.25))) * env(len(x), 0.001, d * 0.3)
+
+    def pluck_v(f, d):
+        return pluck(f, d + 0.12, 0.5, 0.992)
+
+    def keys_v(f, d):
+        return mix(sine(f * 0.18, 0.06, 0.02, glide=0.8, glide_t=0.02) * 0.8,
+                   band(rng2.standard_normal(int(SR * 0.03)), f * 1.2, f * 2.2) * env(int(SR * 0.03), 0.0003, 0.004) * 0.6)
+
+    def crystal_v(f, d):
+        return bell(f * 1.5, d + 0.12, d * 0.4)
+
+    def bubble_v(f, d):
+        return sine(f * 0.6, d, d * 0.35, attack=0.002, glide=1.7, glide_t=d * 0.4)
+
+    def retro_v(f, d):
+        return square(f * 0.9, d, d * 0.4, 0.25)
+
+    def retro_swish(f0, f1, dur, decay):
+        return chirp(f0 * 0.5, f1 * 0.5, dur, decay, True) * 0.5
+
+    return {
+        "tap": pack(tap_v, 1100, sweep_noise, 1800, 6500),
+        "soft": pack(soft_v, 520, sweep_noise, 900, 3500),
+        "pluck": pack(pluck_v, 659, sweep_noise, 1400, 5000),
+        "keys": pack(keys_v, 1300, sweep_noise, 1800, 6000),
+        "crystal": pack(crystal_v, 880, sweep_noise, 2200, 8000),
+        "bubble": pack(bubble_v, 760, sweep_noise, 600, 2600),
+        "retro": pack(retro_v, 700, retro_swish, 800, 2600),
+    }
+
+
+PEAK.update({"page-next": 0.32, "page-prev": 0.32, "add": 0.4, "remove": 0.34})
+
+
+def write_extra():
+    gain = {"pluck": 1.6, "retro": 0.65, "keys": 1.1}
+    for name, evs in extra_events().items():
+        for ev, snd in evs.items():
+            write(os.path.join(OUT, name, ev + ".wav"), norm(snd, min(0.8, PEAK[ev] * gain.get(name, 1.0))))
+    print("extra sounds written")
+
+
 def main():
+    if "--extra" in os.sys.argv:      # only the newer events; the others stay as they are
+        write_extra()
+        return
     if os.path.isdir(OUT):
         shutil.rmtree(OUT)
     packs = {"tap": tap, "soft": soft, "pluck": pluck_pack, "keys": keys, "crystal": crystal, "bubble": bubble, "retro": retro}
@@ -327,6 +419,7 @@ def main():
             write(os.path.join(OUT, name, ev + ".wav"), norm(s, min(0.8, PEAK[ev] * gain.get(name, 1.0))))
     for ev, s in intro().items():
         write(os.path.join(OUT, "intro", ev + ".wav"), s)
+    write_extra()
     wav = os.path.join(OUT, "music", "calm.wav")
     write(wav, calm())
     if shutil.which("ffmpeg"):

@@ -40,6 +40,12 @@ PanelWindow {
     property bool dragging: false
     property string vcolor: ""    // visualizer color (accent, gradient, rainbow, mono)
     property bool keys: false     // takes the keyboard when you click it (To-do, Notes)
+    property bool typing: false   // a text field in the widget has the keyboard
+    // a click anywhere else (the desktop, another window) or Esc ends the typing and gives the keyboard back
+    function releaseKeys() { holder.forceActiveFocus() }
+    property var grab: null
+    Component.onDestruction: if (grab) grab.active = false
+    onTypingChanged: if (grab) grab.active = typing && !editing
     // brightness of the wallpaper behind this widget, and the colors that follow from it
     readonly property real lum: Look.lumAt(px, py, dispW, dispH, bw, bh)
     readonly property var pal: WPal { wall: w.lum; k: w.bgv }
@@ -67,7 +73,17 @@ PanelWindow {
     onDefYChanged: adopt()
     onDefWChanged: adopt()
     onDefHChanged: adopt()
-    Component.onCompleted: adopt()
+    Component.onCompleted: {
+        adopt()
+        // Hyprland tells us when you click outside this widget. Made on the fly, so a Quickshell without Hyprland
+        // support only loses this one nicety instead of failing to load the whole shell.
+        if (keys) {
+            try {
+                grab = Qt.createQmlObject('import Quickshell.Hyprland\nHyprlandFocusGrab { property var win; windows: [win]; active: false; onCleared: win.releaseKeys() }', w, "focusgrab")
+                grab.win = w
+            } catch (e) { grab = null }
+        }
+    }
 
     visible: active && fk > 0.01
     color: "transparent"
@@ -101,6 +117,8 @@ PanelWindow {
             transformOrigin: Item.TopLeft
         }
 
+        // a click on a part of the widget that is not a field ends the typing
+        MouseArea { anchors.fill: parent; z: -1; onPressed: function(m) { w.releaseKeys(); m.accepted = false } }
         // widgets are clicked, not dragged: moving and resizing happen in the widget editor only
         SfxTap {}
     }

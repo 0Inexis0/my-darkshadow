@@ -3,7 +3,7 @@ import QtQuick
 // A small fake notification popup that mirrors the swaync popup styles (see bin/rice-notify).
 Item {
     id: m
-    property string look: "glass"          // glass | solid | outline | minimal | pill | accent | glow | island | light
+    property string look: "glass"          // glass | solid | google | outline | minimal | pill | accent | glow | island | light
     property string surface: "graphite"    // black | graphite | slate | white | tinted
     property string edge: "subtle"         // subtle | accent | none
     property string fam: ""
@@ -28,13 +28,18 @@ Item {
         if (surface === "tinted") { const a = hexRgb(acc); return [14 + (a[0] - 14) * 0.14, 14 + (a[1] - 14) * 0.14, 14 + (a[2] - 14) * 0.14] }
         return [18, 18, 20]
     }
+    // Google look: surfaces tinted with the accent
+    function tonal(k) {
+        const a = hexRgb(acc), b = surface === "white" ? [254, 247, 255] : [20, 19, 24]
+        return Qt.rgba((b[0] + (a[0] - b[0]) * k) / 255, (b[1] + (a[1] - b[1]) * k) / 255, (b[2] + (a[2] - b[2]) * k) / 255, 1)
+    }
     function bgc(a) { return Qt.rgba(baseRgb[0] / 255, baseRgb[1] / 255, baseRgb[2] / 255, a) }
 
     readonly property bool lightText: look === "light" || (surface === "white" && look !== "island")
     readonly property color fg: lightText ? "#141414" : "#F6F5F4"
     readonly property color dim: lightText ? "#5c5c64" : "#9a9aa4"
     readonly property real r: look === "pill" ? height / 2 : look === "minimal" ? 8 : look === "accent" ? 10
-                            : look === "island" ? Math.min(28, height / 2) : baseRadius
+                            : look === "island" ? Math.min(28, height / 2) : look === "google" ? baseRadius + 8 : baseRadius
 
     // soft drop shadow
     Rectangle {
@@ -63,10 +68,11 @@ Item {
         color: m.look === "island" ? "#000000"
              : m.look === "light" ? Qt.rgba(0.965, 0.96, 0.957, Math.max(m.pop, 0.9))
              : m.look === "solid" ? m.bgc(1)
+             : m.look === "google" ? m.tonal(0.12)
              : m.look === "glass" ? m.bgc(Math.min(m.pop, 0.62))
              : m.look === "outline" ? m.bgc(m.op)
              : m.bgc(m.pop)
-        border.width: (m.look === "minimal" || m.look === "island" || (m.edge === "none" && m.look !== "glow" && m.look !== "outline")) ? 0 : 1
+        border.width: (m.look === "minimal" || m.look === "island" || m.look === "google" || (m.edge === "none" && m.look !== "glow" && m.look !== "outline")) ? 0 : 1
         border.color: (m.look === "outline" || m.look === "glow" || m.edge === "accent") ? m.acc
                     : m.lightText ? Qt.rgba(0, 0, 0, 0.09) : Qt.rgba(1, 1, 1, 0.10)
         Behavior on radius { NumberAnimation { duration: 180 } }

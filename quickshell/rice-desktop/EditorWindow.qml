@@ -168,7 +168,7 @@ PanelWindow {
                     ed.guideX = false; ed.guideY = false
                     fr.w.px = Math.round(fr.w.px); fr.w.py = Math.round(fr.w.py)
                     fr.w.dragging = false
-                    if (moved) { ed.root.saveGeom(modelData.id); Sfx.play("done") }
+                    if (moved) ed.root.saveGeom(modelData.id)
                 }
             }
 
@@ -235,7 +235,6 @@ PanelWindow {
                             }
                         }
                         onReleased: {
-                            Sfx.play("done")
                             const w = fr.w
                             w.px = Math.round(w.px); w.py = Math.round(w.py)
                             w.fw = Math.round(w.fw); w.fh = Math.round(w.fh)
