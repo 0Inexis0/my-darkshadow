@@ -136,7 +136,11 @@ Item {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: function(m) { if (m.x > row.width - 34) td.remove(index); else td.toggle(index) }
+                        property bool sfxOwn: true
+                        onClicked: function(m) {
+                            if (m.x > row.width - 34) { Sfx.play("click"); td.remove(index) }
+                            else { Sfx.play(row.done ? "switch-off" : "switch-on"); td.toggle(index) }
+                        }
                     }
                 }
             }
@@ -173,7 +177,8 @@ Item {
             font.pixelSize: 13
             clip: true
             maximumLength: 200
-            onAccepted: { td.add(text); text = "" }
+            onAccepted: { if (text.trim().length > 0) Sfx.play("done"); td.add(text); text = "" }
+            onTextChanged: if (activeFocus) Sfx.play("type")
             Keys.onEscapePressed: focus = false
         }
         T {

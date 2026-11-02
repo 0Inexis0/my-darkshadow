@@ -37,6 +37,7 @@ Item {
         Quickshell.execDetached(["notify-send", "-a", "DarkShadow's Shell", "-i", "alarm",
                                  wasFocus ? "Focus session done" : "Break is over",
                                  wasFocus ? "Time for a " + breakMin + " minute break." : "Ready for the next session?"])
+        Sfx.play("done")
         mode = wasFocus ? "break" : "focus"
         secs = total
     }
@@ -119,7 +120,7 @@ Item {
             scale: pm.pressed ? 0.94 : 1
             Behavior on scale { NumberAnimation { duration: 90 } }
             T { kind: "icon"; anchors.centerIn: parent; anchors.horizontalCenterOffset: fo.going ? 0 : 2; text: fo.going ? "" : ""; font.pixelSize: 18; color: fo.pal ? fo.pal.inkOn : "#0d0d0d" }
-            MouseArea { id: pm; anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: fo.going ? fo.pause() : fo.start() }
+            MouseArea { id: pm; anchors.fill: parent; cursorShape: Qt.PointingHandCursor; property bool sfxOwn: true; onClicked: { Sfx.play(fo.going ? "switch-off" : "switch-on"); if (fo.going) fo.pause(); else fo.start() } }
         }
         Rectangle {
             width: 36; height: 36; radius: 18

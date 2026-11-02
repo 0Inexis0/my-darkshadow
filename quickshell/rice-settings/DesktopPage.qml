@@ -396,7 +396,7 @@ Item {
             }
             SegRow {
                 label: "Placement strategy"
-                desc: "Drag it, or auto-pick a spot"
+                desc: "Move it in the widget editor, or auto-pick a spot"
                 options: [
                     { label: "Draggable", value: "draggable" },
                     { label: "Least busy", value: "leastBusy" },

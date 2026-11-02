@@ -3,8 +3,7 @@ import Quickshell.Wayland
 import QtQuick
 
 // Full-screen transparent surface; only the widget rectangle receives input (mask).
-// Dragging moves an item inside the surface, so nothing is resized or re-configured
-// by the compositor while you drag (no shaking).
+// Outside the editor the widget only takes clicks (calendar arrows, timer, notes...). The editor moves it.
 // The widget editor (EditorWindow.qml) changes px/py/sc/fw/fh/op/bgv/sty/flp live and saves on release.
 PanelWindow {
     id: w
@@ -20,7 +19,7 @@ PanelWindow {
     property int bw: 1920
     property int bh: 1080
     property bool active: true
-    property bool draggable: true
+    property bool draggable: true    // kept for old configs; moving is done in the widget editor
     property bool passive: false  // never takes clicks (visualizer)
     property bool editing: false
     // auto-hide (Settings > Desktop): fades out while windows are open, then the surface goes away
@@ -102,40 +101,7 @@ PanelWindow {
             transformOrigin: Item.TopLeft
         }
 
-        MouseArea {
-            anchors.fill: parent
-            enabled: w.draggable && !w.passive && !w.editing
-            property real sx: 0
-            property real sy: 0
-            property real ox: 0
-            property real oy: 0
-            property real tick: 0       // way moved since the last soft tick
-            property bool moved: false
-            cursorShape: pressed ? Qt.ClosedHandCursor : Qt.ArrowCursor
-            onPressed: function(m) {
-                const g = mapToItem(null, m.x, m.y)
-                sx = g.x; sy = g.y; ox = w.px; oy = w.py
-                tick = 0; moved = false
-                w.dragging = true
-                Sfx.play("select")
-            }
-            onPositionChanged: function(m) {
-                if (!pressed) return
-                const g = mapToItem(null, m.x, m.y)
-                const nx = Math.max(0, Math.min(w.bw - w.dispW, ox + g.x - sx))
-                const ny = Math.max(0, Math.min(w.bh - w.dispH, oy + g.y - sy))
-                tick += Math.abs(nx - w.px) + Math.abs(ny - w.py)
-                if (tick > 34) { tick = 0; moved = true; Sfx.play("slide") }
-                w.px = nx
-                w.py = ny
-            }
-            onReleased: {
-                if (moved) Sfx.play("done")
-                w.dragging = false
-                w.px = Math.round(w.px)
-                w.py = Math.round(w.py)
-                w.moved(w.wid, w.px, w.py)
-            }
-        }
+        // widgets are clicked, not dragged: moving and resizing happen in the widget editor only
+        SfxTap {}
     }
 }

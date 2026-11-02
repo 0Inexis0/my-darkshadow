@@ -62,6 +62,7 @@ Item {
             onTextChanged: {
                 if (text.length > 4000) { text = text.substring(0, 4000); return }
                 if (nt.loaded) save.restart()
+                if (activeFocus) Sfx.play("type")
             }
             Keys.onEscapePressed: focus = false
         }
