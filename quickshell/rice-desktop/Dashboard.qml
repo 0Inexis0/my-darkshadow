@@ -50,8 +50,9 @@ PanelWindow {
     readonly property real trayH: 0
     readonly property real baseW: cfg.width ? cfg.width : 1000
     // one size for every tab (the size of Performance), so switching tabs never resizes the panel
-    function tabW(t) { return Math.min((db.width - 40) / sc - 2 * earR - railW, baseW * (side ? 0.92 : 1.04)) }
-    function tabH(t) { return 330 }
+    // side positions: a tall panel, top to bottom of the screen, with the cards next to the tab column
+    function tabW(t) { return side ? Math.min((db.width - 40) / sc - railW, baseW * 0.52) : Math.min((db.width - 40) / sc - 2 * earR, baseW * 1.04) }
+    function tabH(t) { return side ? (db.height - 20) / sc - 2 * pad - 4 : 330 }
     readonly property real wantW: tabW(tab) + railW
     readonly property real wantH: (side ? 2 * pad + 4 : headH + pad) + tabH(tab)
     property real curW: wantW
@@ -349,10 +350,12 @@ PanelWindow {
         readonly property bool on: db.editing && db.open && db.tab !== "wallpaper"
         transformOrigin: Item.TopLeft
         scale: db.sc
-        width: db.curW - 2 * db.pad
+        width: db.curW - 2 * db.pad - db.railW
         height: 52
-        x: db.side ? shell.x + db.pad * db.sc : (db.width - width * db.sc) / 2
-        y: db.atTop ? shell.y + (shell.height + 12) * db.sc - (on ? 0 : 14) : shell.y - (height + 12) * db.sc + (on ? 0 : 14)
+        x: db.side ? shell.x + (db.pad + db.railW) * db.sc : (db.width - width * db.sc) / 2
+        // at a side edge the panel is as tall as the screen: the bar floats over the bottom of the cards
+        y: db.side ? shell.y + (shell.height - height - db.pad) * db.sc + (on ? 0 : 14)
+           : (db.atTop ? shell.y + (shell.height + 12) * db.sc - (on ? 0 : 14) : shell.y - (height + 12) * db.sc + (on ? 0 : 14))
         opacity: on ? 1 : 0
         visible: opacity > 0.01
         Behavior on opacity { NumberAnimation { duration: 220 } }
@@ -392,12 +395,12 @@ PanelWindow {
             anchors.right: parent.right; anchors.rightMargin: 10
             anchors.verticalCenter: parent.verticalCenter
             spacing: 8
-            DText { text: "Drag to move · pull the handles to resize · + fills a gap"; font.pixelSize: 11; color: db.p.sub; anchors.verticalCenter: parent.verticalCenter }
+            DText { visible: !db.side; text: "Drag to move · pull the handles to resize · + fills a gap"; font.pixelSize: 11; color: db.p.sub; anchors.verticalCenter: parent.verticalCenter }
             Rectangle {
                 height: 32; width: rr.implicitWidth + 24; radius: 16
                 color: rm.containsMouse ? db.p.card2 : db.p.container
                 DText { id: rr; anchors.centerIn: parent; text: "Reset"; font.pixelSize: 12; color: db.p.onContainer }
-                MouseArea { id: rm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: db.resetLayout(db.tab) }
+                MouseArea { id: rm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: db.resetLayout(db.side ? db.tab + "-side" : db.tab) }
             }
             Rectangle {
                 height: 32; width: dn.implicitWidth + 28; radius: 16
@@ -527,9 +530,20 @@ PanelWindow {
                         x: db.pad; y: db.side ? db.pad : 10
                         // along the top (bottom and top positions) or a column on the left (side positions)
                         width: db.side ? db.railW - db.pad : parent.width - 2 * db.pad - (canEdit ? 50 : 0)
-                        height: db.side ? parent.height - 2 * db.pad - 50 : db.headH - 14
+                        height: db.side ? parent.height - 2 * db.pad : db.headH - 14
                         readonly property bool canEdit: db.tab !== "wallpaper"
-                        readonly property real tw: (db.side ? height : width) / Math.max(1, db.tabs.length)
+                        // in the column: Dashboard at the top, Wallpaper, Performance and About at the bottom
+                        readonly property real cell: 84
+                        readonly property real tw: db.side ? cell : width / Math.max(1, db.tabs.length)
+                        function atBottom(k) { return k !== "dashboard" }
+                        readonly property int topN: { let n = 0; for (let i = 0; i < db.tabs.length; i++) if (!atBottom(db.tabs[i])) n++; return n }
+                        readonly property int botN: db.tabs.length - topN
+                        function slotY(i) {
+                            let before = 0
+                            const b = atBottom(db.tabs[i])
+                            for (let j = 0; j < i; j++) if (atBottom(db.tabs[j]) === b) before++
+                            return b ? height - (botN - before) * cell : before * cell
+                        }
                         readonly property var names: ({ dashboard: "Dashboard", wallpaper: "Wallpaper", performance: "Performance", about: "About" })
                         readonly property var icons: ({ dashboard: ["space_dashboard", 0xF056E], wallpaper: ["wallpaper", 0xF02E9],
                                                         performance: ["speed", 0xF04C5], about: ["info", 0xF02FD] })
@@ -546,7 +560,7 @@ PanelWindow {
                             function labelW(i) { const it = tabRep.itemAt(i); return it ? it.labelWidth : 60 }
                             readonly property real lw: under ? labelW(db.curIdx) + 22 : head.tw - (db.p.tabStyle === "segment" ? 8 : 14)
                             x: db.side ? (db.p.tabStyle === "segment" ? 4 : 2) : db.curIdx * head.tw + (head.tw - lw) / 2
-                            y: db.side ? db.curIdx * head.tw + (head.tw - lw) / 2 : (under ? head.height - 3 : (db.p.tabStyle === "segment" ? 4 : 2))
+                            y: db.side ? head.slotY(db.curIdx) + (head.tw - lw) / 2 : (under ? head.height - 3 : (db.p.tabStyle === "segment" ? 4 : 2))
                             width: db.side ? head.width - (db.p.tabStyle === "segment" ? 8 : 4) : lw
                             height: db.side ? lw : (under ? 3 : head.height - (db.p.tabStyle === "segment" ? 8 : 4))
                             radius: under ? 1.5 : Math.min(width, height) / 2
@@ -562,9 +576,8 @@ PanelWindow {
                             height: 1
                             color: db.p.track
                         }
-                        Grid {
+                        Item {
                             anchors.fill: parent
-                            columns: db.side ? 1 : Math.max(1, db.tabs.length)
                             Repeater {
                                 id: tabRep
                                 model: db.tabs
@@ -572,6 +585,8 @@ PanelWindow {
                                     id: tb
                                     readonly property bool on: db.curIdx === index
                                     readonly property real labelWidth: lab.implicitWidth
+                                    x: db.side ? 0 : index * head.tw
+                                    y: db.side ? head.slotY(index) : 0
                                     width: db.side ? head.width : head.tw
                                     height: db.side ? head.tw : head.height
                                     readonly property color fg: on ? (db.p.tabStyle === "segment" ? db.p.inkOn : db.p.primary) : db.p.sub
@@ -606,7 +621,7 @@ PanelWindow {
                     Rectangle {
                         visible: head.canEdit
                         x: db.side ? db.pad + (head.width - width) / 2 : parent.width - db.pad - width
-                        y: db.side ? head.y + head.height + 5 : head.y + (head.height - height) / 2
+                        y: db.side ? head.y + head.topN * head.cell + 4 : head.y + (head.height - height) / 2
                         width: 40; height: 40; radius: 20
                         color: db.editing ? db.p.primary : (edm.containsMouse ? db.p.card2 : db.p.card)
                         Behavior on color { ColorAnimation { duration: 160 } }

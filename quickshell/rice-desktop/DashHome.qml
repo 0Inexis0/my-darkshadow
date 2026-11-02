@@ -61,7 +61,9 @@ Item {
         anchors.fill: parent
         d: h.d
         tabId: "dashboard"
-        rows: 3
+        layoutKey: h.d.side ? "dashboard-side" : ""
+        cols: h.d.side ? 6 : 12
+        rows: h.d.side ? 6 : 3
         live: h.live
         catalog: [
             { id: "weather", name: "Weather", sizes: [[3, 1], [4, 1], [2, 1]] },
@@ -71,7 +73,10 @@ Item {
             { id: "calendar", name: "Calendar", sizes: [[5, 2], [4, 2], [6, 2]] },
             { id: "rings", name: "Usage", sizes: [[2, 2], [1, 2], [3, 1]] }
         ]
-        defaults: [
+        defaults: h.d.side ? [
+            { id: "profile", x: 0, y: 0, w: 6, h: 1 }, { id: "weather", x: 0, y: 1, w: 4, h: 1 }, { id: "clock", x: 4, y: 1, w: 2, h: 1 },
+            { id: "calendar", x: 0, y: 2, w: 6, h: 2 }, { id: "media", x: 0, y: 4, w: 4, h: 2 }, { id: "rings", x: 4, y: 4, w: 2, h: 2 }
+        ] : [
             { id: "weather", w: 3, h: 1 }, { id: "profile", w: 5, h: 1 }, { id: "media", w: 4, h: 3 },
             { id: "clock", w: 1, h: 2 }, { id: "calendar", w: 5, h: 2 }, { id: "rings", w: 2, h: 2 }
         ]

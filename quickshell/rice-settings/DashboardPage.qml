@@ -145,7 +145,7 @@ Item {
         ToggleRow { label: "Blur"; desc: "Blur the desktop behind the dashboard"; checked: page.v("blur", true) === true; onToggled: function(x) { page.setv("blur", x) } }
         SegRow {
             label: "Position"
-            desc: "Which screen edge it opens from. On the left and right the tabs become a column"
+            desc: "Which screen edge it opens from. Left and right: a tall panel with the tabs in a column"
             options: [{ label: "Bottom", value: "bottom" }, { label: "Top", value: "top" }, { label: "Left", value: "left" }, { label: "Right", value: "right" }]
             current: page.v("position", "bottom")
             onChosen: function(x) { page.setv("position", x) }

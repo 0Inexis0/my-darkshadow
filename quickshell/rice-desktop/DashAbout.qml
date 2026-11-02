@@ -32,14 +32,18 @@ Item {
         anchors.fill: parent
         d: ab.d
         tabId: "about"
-        rows: 1
+        layoutKey: ab.d.side ? "about-side" : ""
+        cols: ab.d.side ? 6 : 12
+        rows: ab.d.side ? 2 : 1
+        rowH: ab.d.side ? 250 : 0
         live: ab.live
         catalog: [
             { id: "system", name: "This computer", sizes: [[5, 1], [4, 1], [6, 1]] },
             { id: "distro", name: "Distro", sizes: [[3, 1], [4, 1], [2, 1]] },
             { id: "rice", name: "DarkShadow's Shell", sizes: [[4, 1], [3, 1], [5, 1]] }
         ]
-        defaults: [{ id: "system", w: 5, h: 1 }, { id: "distro", w: 3, h: 1 }, { id: "rice", w: 4, h: 1 }]
+        defaults: ab.d.side ? [{ id: "system", x: 0, y: 0, w: 6, h: 1 }, { id: "distro", x: 0, y: 1, w: 3, h: 1 }, { id: "rice", x: 3, y: 1, w: 3, h: 1 }]
+                          : [{ id: "system", w: 5, h: 1 }, { id: "distro", w: 3, h: 1 }, { id: "rice", w: 4, h: 1 }]
         comps: ({ system: sysC, distro: distC, rice: riceC })
     }
 

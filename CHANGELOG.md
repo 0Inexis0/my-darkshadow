@@ -1,5 +1,10 @@
 # Changelog
 
+## V3.11
+- Dashboard on the left or right edge is a tall panel now, top to bottom of the screen (like the notification center): a narrow column of tabs on its left side (Dashboard and the edit pencil at the top, Wallpaper, Performance and About at the bottom) and the cards next to it
+- The cards have their own tall layouts for the side positions (Dashboard, Performance, About), and Reset restores them. Wallpapers scroll up and down in the tall panel
+- At the bottom and top nothing changed
+
 ## V3.10
 - Dashboard opens from any edge (Settings > Dashboard > Position: Bottom, Top, Left, Right), like the notification center. On the left and right the tabs (Dashboard, Wallpaper, Performance, About) are a column on the left side of the panel and the cards are on the right of it
 - Dock: Settings > Interface > Dock > Position puts it on the bottom, top, left or right edge. On the sides it becomes a column (the song shows only the cover and the play button)

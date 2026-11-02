@@ -15,13 +15,16 @@ Item {
     property var comps: ({})        // id -> Component (a DCard)
     property int cols: 12
     property int rows: 2
+    property string layoutKey: ""   // where the layout is kept when it is not the tab id (the tall layout has its own)
+    property real rowH: 0           // a fixed row height; 0 = the rows share the height
+    readonly property string lkey: layoutKey !== "" ? layoutKey : tabId
     property bool live: false
     readonly property bool editing: d && d.editing && d.tab === tabId
     readonly property real gap: 12
     readonly property real cw: (width - (cols - 1) * gap) / cols
-    readonly property real rh: (height - (rows - 1) * gap) / rows
+    readonly property real rh: rowH > 0 ? rowH : (height - (rows - 1) * gap) / rows
 
-    readonly property var layout: d && d.layouts && d.layouts[tabId] ? d.layouts[tabId] : defaults
+    readonly property var layout: d && d.layouts && d.layouts[lkey] ? d.layouts[lkey] : defaults
     readonly property var packed: pack(layout)
 
     function info(id) { for (let i = 0; i < catalog.length; i++) if (catalog[i].id === id) return catalog[i]; return null }
@@ -80,7 +83,7 @@ Item {
     function hidden() {
         return catalog.filter(function(c) { return !packed.pos[c.id] })
     }
-    function save(l) { d.saveLayout(tabId, l) }
+    function save(l) { d.saveLayout(lkey, l) }
 
     // the biggest of the card's sizes that fits with (cx, cy) inside it
     function placeAt(id, cx, cy) {

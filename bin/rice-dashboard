@@ -92,15 +92,16 @@ def clean_layouts(v):
     if not isinstance(v, dict):
         return out
     for tab, lst in v.items():
-        if tab not in TABS or not isinstance(lst, list):
+        # a tab, or the layout of the tall panel at the side edges ("dashboard-side")
+        if (tab not in TABS and not (tab.endswith("-side") and tab[:-5] in TABS)) or not isinstance(lst, list):
             continue
         items = []
         for it in lst:
             try:
-                o = {"id": str(it["id"])[:40], "w": int(clamp(int(it["w"]), 1, 12)), "h": int(clamp(int(it["h"]), 1, 4))}
+                o = {"id": str(it["id"])[:40], "w": int(clamp(int(it["w"]), 1, 12)), "h": int(clamp(int(it["h"]), 1, 8))}
                 if "x" in it and "y" in it:   # a place on the grid (edit mode); without one the card is packed
                     o["x"] = int(clamp(int(it["x"]), 0, 11))
-                    o["y"] = int(clamp(int(it["y"]), 0, 3))
+                    o["y"] = int(clamp(int(it["y"]), 0, 7))
                 items.append(o)
             except Exception:
                 pass

@@ -14,6 +14,7 @@ Item {
     property string query: ""
     readonly property var shown: query === "" ? all : all.filter(function(w) { return w.name.toLowerCase().indexOf(query.toLowerCase()) >= 0 })
     property int sel: 0
+    readonly property bool tall: d.side === true       // tall panel at a side edge: the cards scroll up and down
     Component.onCompleted: d.wallsTab = wp
 
     // move the selection (arrows, wheel, buttons); the desktop shows a preview of it
@@ -54,9 +55,10 @@ Item {
     // ---------- top row ----------
     Item {
         id: top
-        width: parent.width; height: 40
+        width: parent.width; height: wp.tall ? 88 : 40
         Row {
-            anchors.verticalCenter: parent.verticalCenter
+            anchors.verticalCenter: wp.tall ? undefined : parent.verticalCenter
+            y: wp.tall ? 1 : 0
             spacing: 10
             MIcon { name: "wallpaper"; glyph: wp.d.md(0xF02E9); size: 22; color: wp.p.primary; anchors.verticalCenter: parent.verticalCenter }
             DText { text: "Wallpapers"; font.pixelSize: 18; font.weight: Font.DemiBold; color: wp.p.text; anchors.verticalCenter: parent.verticalCenter }
@@ -69,10 +71,11 @@ Item {
         }
         Row {
             anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
+            anchors.verticalCenter: wp.tall ? undefined : parent.verticalCenter
+            y: wp.tall ? 46 : 0
             spacing: 8
             Rectangle {
-                width: 240; height: 38; radius: 19
+                width: wp.tall ? 210 : 240; height: 38; radius: 19
                 color: wp.p.container
                 border.width: search.activeFocus ? 2 : 0
                 border.color: wp.p.primary
@@ -107,18 +110,19 @@ Item {
         y: top.height + 14
         width: parent.width
         height: parent.height - y
-        orientation: ListView.Horizontal
+        orientation: wp.tall ? ListView.Vertical : ListView.Horizontal
         spacing: 16
         clip: true
         model: wp.shown
         currentIndex: wp.sel
         interactive: false
-        readonly property real cardH: height - 30
-        readonly property real cardW: cardH * 1.6
+        readonly property real cardW: wp.tall ? width - 30 : cardH * 1.6
+        readonly property real cardH: wp.tall ? cardW / 1.6 : height - 30
+        readonly property real itemH: wp.tall ? cardH + 34 : height
         // the chosen card glides to the middle
         highlightRangeMode: ListView.StrictlyEnforceRange
-        preferredHighlightBegin: (width - cardW) / 2
-        preferredHighlightEnd: (width + cardW) / 2
+        preferredHighlightBegin: wp.tall ? (height - itemH) / 2 : (width - cardW) / 2
+        preferredHighlightEnd: wp.tall ? (height + itemH) / 2 : (width + cardW) / 2
         highlightMoveDuration: 420
         highlightMoveVelocity: -1
         // wheel: down = next (to the right), up = back
@@ -133,15 +137,16 @@ Item {
         }
         delegate: Item {
             id: wc
-            width: car.cardW
-            height: car.height
+            width: wp.tall ? car.width : car.cardW
+            height: car.itemH
             readonly property bool cur: modelData.path === wp.current
             readonly property bool picked: index === wp.sel
             opacity: picked ? 1 : 0.55
             Behavior on opacity { NumberAnimation { duration: 260 } }
             Rectangle {
                 id: frame
-                width: parent.width
+                width: car.cardW
+                x: (parent.width - width) / 2
                 height: car.cardH
                 radius: 22
                 color: wp.p.container
@@ -188,7 +193,7 @@ Item {
             DText {
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: car.cardH + 8
-                width: parent.width - 20
+                width: car.cardW - 20
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
                 text: modelData.name
@@ -197,13 +202,15 @@ Item {
                 color: wc.picked ? wp.p.text : wp.p.sub
             }
             // click: the chosen one is set, another one gets chosen (and previewed)
-            MouseArea { id: tm; width: parent.width; height: car.cardH; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+            MouseArea { id: tm; x: (parent.width - car.cardW) / 2; width: car.cardW; height: car.cardH; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                 onClicked: { if (wc.picked) wp.applySel(); else { wp.sel = index; previewTimer.restart() } } }
         }
     }
     // arrows
-    Arrow { anchors.left: car.left; anchors.leftMargin: 10; y: car.y + car.cardH / 2 - height / 2; icon: "chevron_left"; glyph: wp.d.md(0xF0141); visible: wp.sel > 0; onClicked: wp.move(-1) }
-    Arrow { anchors.right: car.right; anchors.rightMargin: 10; y: car.y + car.cardH / 2 - height / 2; icon: "chevron_right"; glyph: wp.d.md(0xF0142); visible: wp.sel < wp.shown.length - 1; onClicked: wp.move(1) }
+    Arrow { anchors.left: car.left; anchors.leftMargin: 10; y: car.y + car.cardH / 2 - height / 2; icon: "chevron_left"; glyph: wp.d.md(0xF0141); visible: !wp.tall && wp.sel > 0; onClicked: wp.move(-1) }
+    Arrow { anchors.right: car.right; anchors.rightMargin: 10; y: car.y + car.cardH / 2 - height / 2; icon: "chevron_right"; glyph: wp.d.md(0xF0142); visible: !wp.tall && wp.sel < wp.shown.length - 1; onClicked: wp.move(1) }
+    Arrow { x: car.x + car.width / 2 - width / 2; y: car.y + 6; icon: "expand_less"; glyph: wp.d.md(0xF0143); visible: wp.tall && wp.sel > 0; onClicked: wp.move(-1) }
+    Arrow { x: car.x + car.width / 2 - width / 2; y: car.y + car.height - height - 6; icon: "expand_more"; glyph: wp.d.md(0xF0140); visible: wp.tall && wp.sel < wp.shown.length - 1; onClicked: wp.move(1) }
     DText {
         visible: wp.all.length === 0
         anchors.centerIn: car

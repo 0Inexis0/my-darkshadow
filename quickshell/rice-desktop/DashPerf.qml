@@ -37,7 +37,9 @@ Item {
         anchors.fill: parent
         d: pf.d
         tabId: "performance"
-        rows: 2
+        layoutKey: pf.d.side ? "performance-side" : ""
+        cols: pf.d.side ? 6 : 12
+        rows: pf.d.side ? 5 : 2
         live: pf.live
         catalog: [
             { id: "cpu", name: "CPU", sizes: [[5, 1], [4, 1], [6, 1]] },
@@ -47,7 +49,10 @@ Item {
             { id: "network", name: "Network", sizes: [[4, 1], [3, 1], [6, 1]] },
             { id: "memory", name: "Memory", sizes: [[2, 1], [3, 1]] }
         ]
-        defaults: [
+        defaults: pf.d.side ? [
+            { id: "cpu", x: 0, y: 0, w: 6, h: 1 }, { id: "gpu", x: 0, y: 1, w: 6, h: 1 }, { id: "battery", x: 0, y: 2, w: 2, h: 2 },
+            { id: "network", x: 2, y: 2, w: 4, h: 1 }, { id: "storage", x: 2, y: 3, w: 4, h: 1 }, { id: "memory", x: 0, y: 4, w: 3, h: 1 }
+        ] : [
             { id: "cpu", w: 5, h: 1 }, { id: "gpu", w: 5, h: 1 }, { id: "battery", w: 2, h: 2 },
             { id: "storage", w: 4, h: 1 }, { id: "network", w: 4, h: 1 }, { id: "memory", w: 2, h: 1 }
         ]
