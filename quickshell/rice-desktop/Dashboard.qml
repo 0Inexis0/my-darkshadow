@@ -52,7 +52,8 @@ PanelWindow {
     // one size for every tab (the size of Performance), so switching tabs never resizes the panel
     // side positions: a tall panel, top to bottom of the screen, with the cards next to the tab column
     function tabW(t) { return side ? Math.min((db.width - 40) / sc - railW, baseW * 0.52) : Math.min((db.width - 40) / sc - 2 * earR, baseW * 1.04) }
-    function tabH(t) { return side ? (db.height - 20) / sc - 2 * pad - 4 : 330 }
+    // the side panel is a compact one, floating in the middle of the edge (not the whole screen height)
+    function tabH(t) { return side ? Math.min((db.height - 20) / sc, 860) - 2 * pad - 4 : 330 }
     readonly property real wantW: tabW(tab) + railW
     readonly property real wantH: (side ? 2 * pad + 4 : headH + pad) + tabH(tab)
     property real curW: wantW
@@ -530,11 +531,10 @@ PanelWindow {
                         x: db.pad; y: db.side ? db.pad : 10
                         // along the top (bottom and top positions) or a column on the left (side positions)
                         width: db.side ? db.railW - db.pad : parent.width - 2 * db.pad - (canEdit ? 50 : 0)
-                        height: db.side ? parent.height - 2 * db.pad : db.headH - 14
+                        height: db.side ? head.cell * Math.max(1, db.tabs.length) : db.headH - 14
                         readonly property bool canEdit: db.tab !== "wallpaper"
-                        // in the column: the tabs share the whole height (no gap), with thin lines between them,
-                        // and the edit button has its own small place at the bottom
-                        readonly property real cell: db.side ? (height - 56) / Math.max(1, db.tabs.length) : 84
+                        // in the column: the tabs sit together in one pill, like the bar along the top, and the edit button under it
+                        readonly property real cell: db.side ? 88 : 84
                         readonly property real tw: db.side ? cell : width / Math.max(1, db.tabs.length)
                         function slotY(i) { return i * cell }
                         readonly property var names: ({ dashboard: "Dashboard", wallpaper: "Wallpaper", performance: "Performance", about: "About" })
@@ -546,14 +546,6 @@ PanelWindow {
                             anchors.fill: parent
                             radius: db.side ? 22 : height / 2
                             color: db.p.card
-                        }
-                        Repeater {
-                            model: db.side ? db.tabs.length : 0
-                            Rectangle {
-                                x: 16; width: head.width - 32; height: 1
-                                y: (index + 1) * head.cell
-                                color: db.p.track
-                            }
                         }
                         Rectangle {
                             id: ind
@@ -622,7 +614,7 @@ PanelWindow {
                     Rectangle {
                         visible: head.canEdit
                         x: db.side ? db.pad + (head.width - width) / 2 : parent.width - db.pad - width
-                        y: db.side ? head.y + head.height - 56 + (56 - height) / 2 : head.y + (head.height - height) / 2
+                        y: db.side ? head.y + head.height + 12 : head.y + (head.height - height) / 2
                         width: 40; height: 40; radius: 20
                         color: db.editing ? db.p.primary : (edm.containsMouse ? db.p.card2 : db.p.card)
                         Behavior on color { ColorAnimation { duration: 160 } }

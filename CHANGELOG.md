@@ -1,5 +1,12 @@
 # Changelog
 
+## V3.14
+- Dashboard at the left or right is a smaller panel now, floating in the middle of the screen edge, with no empty space below the cards (it does not run the whole screen height any more)
+- Dashboard at the left or right: the tabs are back in one compact pill like the bar at the bottom, no lines and no gaps, with the edit pencil right under it
+- About tab can be edited now: move, remove and add cards, and pull the handles to resize them into empty places (it has two rows now, the tall panel has as many as fit)
+- About: two new cards to add, Software (kernel, packages, WM, shell, Quickshell) and Session (uptime, display)
+- Music card: in a narrow card the cover sits on top and the buttons stay inside the card
+
 ## V3.12
 - Dashboard at the left or right: the tab column has no empty gap any more, the four tabs share its whole height with thin lines between them, and the edit pencil sits at the bottom of it
 - Dock: new switch Now playing text (Settings > Dock): the song title and artist are written in the dock while something plays; Media player keeps the cover and the play button. On a left or right dock the text sits under the cover

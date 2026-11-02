@@ -34,17 +34,20 @@ Item {
         tabId: "about"
         layoutKey: ab.d.side ? "about-side" : ""
         cols: ab.d.side ? 6 : 12
-        rows: ab.d.side ? 2 : 1
+        // two rows, so cards can move and grow into empty places; on the tall panel as many rows as fit
+        rows: ab.d.side ? Math.max(2, Math.floor((height + 12) / 262)) : 2
         rowH: ab.d.side ? 250 : 0
         live: ab.live
         catalog: [
-            { id: "system", name: "This computer", sizes: [[5, 1], [4, 1], [6, 1]] },
-            { id: "distro", name: "Distro", sizes: [[3, 1], [4, 1], [2, 1]] },
-            { id: "rice", name: "DarkShadow's Shell", sizes: [[4, 1], [3, 1], [5, 1]] }
+            { id: "system", name: "This computer", sizes: [[5, 2], [6, 2], [4, 2], [5, 1], [6, 1], [4, 1]], min: [3, 1] },
+            { id: "distro", name: "Distro", sizes: [[3, 2], [4, 2], [2, 2], [3, 1], [4, 1], [2, 1]], min: [2, 1] },
+            { id: "rice", name: "DarkShadow's Shell", sizes: [[4, 2], [3, 2], [5, 2], [4, 1], [3, 1], [5, 1]], min: [3, 1] },
+            { id: "software", name: "Software", sizes: [[3, 2], [4, 2], [3, 1], [4, 1]], min: [2, 1] },
+            { id: "session", name: "Session", sizes: [[3, 1], [2, 1], [3, 2], [4, 1]], min: [2, 1] }
         ]
         defaults: ab.d.side ? [{ id: "system", x: 0, y: 0, w: 6, h: 1 }, { id: "distro", x: 0, y: 1, w: 3, h: 1 }, { id: "rice", x: 3, y: 1, w: 3, h: 1 }]
-                          : [{ id: "system", w: 5, h: 1 }, { id: "distro", w: 3, h: 1 }, { id: "rice", w: 4, h: 1 }]
-        comps: ({ system: sysC, distro: distC, rice: riceC })
+                          : [{ id: "system", x: 0, y: 0, w: 5, h: 2 }, { id: "distro", x: 5, y: 0, w: 3, h: 2 }, { id: "rice", x: 8, y: 0, w: 4, h: 2 }]
+        comps: ({ system: sysC, distro: distC, rice: riceC, software: softC, session: sessC })
     }
 
     Component {
@@ -194,6 +197,61 @@ Item {
                     }
                 }
                 Btn { visible: rice.width > 260; icon: "code"; glyph: ab.d.md(0xF02A4); text: "GitHub"; onClicked: ab.open("https://github.com/shadowww-dev/shadows-shell") }
+            }
+        }
+    }
+
+    // Software and Session: two more cards you can add in edit mode
+    Component {
+        id: softC
+        DCard {
+            id: soft
+            p: ab.p
+            Row {
+                x: 18; y: 14
+                spacing: 8
+                MIcon { name: "terminal"; glyph: ab.d.md(0xF0EC0); size: 19; color: ab.p.primary; anchors.verticalCenter: parent.verticalCenter }
+                DText { text: "Software"; font.pixelSize: 17; font.weight: Font.DemiBold; color: ab.p.text }
+            }
+            Column {
+                x: 18; y: 48
+                width: parent.width - 36
+                spacing: 2
+                Repeater {
+                    model: [
+                        { t: "Kernel", v: ab.a.kernel || "" }, { t: "Packages", v: ab.a.packages || "" },
+                        { t: "WM", v: ab.a.wm || "" }, { t: "Shell", v: ab.a.shell || "" }, { t: "Quickshell", v: ab.a.quickshell || "" }
+                    ].filter(function(r) { return r.v !== "" })
+                    Item {
+                        width: parent.width; height: 24
+                        visible: y + height < soft.height - 8
+                        DText { text: modelData.t; font.pixelSize: 12; color: ab.p.sub; anchors.verticalCenter: parent.verticalCenter }
+                        DText { x: 78; width: parent.width - 78; elide: Text.ElideRight; text: modelData.v; font.pixelSize: 12; color: ab.p.text; anchors.verticalCenter: parent.verticalCenter }
+                    }
+                }
+            }
+        }
+    }
+    Component {
+        id: sessC
+        DCard {
+            id: sess
+            p: ab.p
+            Row {
+                x: 18; y: 14
+                spacing: 8
+                MIcon { name: "timer"; glyph: ab.d.md(0xF051B); size: 19; color: ab.p.primary; anchors.verticalCenter: parent.verticalCenter }
+                DText { text: "Session"; font.pixelSize: 17; font.weight: Font.DemiBold; color: ab.p.text }
+            }
+            Column {
+                x: 18
+                y: 48
+                width: parent.width - 36
+                spacing: 2
+                DText { width: parent.width; elide: Text.ElideRight; text: ab.d.uptimeText(ab.d.stats.uptime || ab.a.uptime || 0); font.pixelSize: Math.min(30, Math.max(18, sess.height * 0.22)); font.weight: Font.DemiBold; color: ab.p.primary }
+                DText { width: parent.width; elide: Text.ElideRight; text: "up"; font.pixelSize: 11; color: ab.p.sub }
+                DText { visible: sess.height > 130; width: parent.width; elide: Text.ElideRight; topPadding: 8; text: ab.a.display || ""; font.pixelSize: 12; color: ab.p.text }
+                DText { visible: sess.height > 130; width: parent.width; elide: Text.ElideRight; text: ab.a.host || ""; font.pixelSize: 12; color: ab.p.sub }
             }
         }
     }

@@ -243,8 +243,8 @@ Item {
             id: mc
             p: h.p
             strong: true
-            readonly property bool tall: height > width * 0.9
-            readonly property real cs: tall ? Math.min(width - 60, height * 0.42) : height - 28
+            readonly property bool tall: height > width * 0.9 || width < 340   // narrow card: cover on top, text and buttons under it
+            readonly property real cs: tall ? Math.min(width - 60, height * 0.42) : Math.min(height - 28, width * 0.4)
             Rectangle {
                 id: cover
                 x: mc.tall ? (mc.width - width) / 2 : 14
