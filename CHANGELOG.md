@@ -1,5 +1,8 @@
 # Changelog
 
+## V3.04
+- Update card (dashboard About tab) and the update notification: long lines of "What's new" wrap to a second line instead of ending in "..."
+
 ## V3.03
 - Settings has a tidy sidebar now: Home, then five groups with an arrow (Appearance, Desktop, Bar & launcher, Sound & alerts, System). Touch an arrow to open the pages inside. The group of the page you are on opens by itself
 - Home: "Bar & Screen" is now "Settings": Bar transparency, Window blur and Animations on or off, Settings scroll speed with a box to try it, and Mouse & touchpad (mouse wheel speed, touchpad scroll speed, natural scrolling, tap to click, pointer speed)

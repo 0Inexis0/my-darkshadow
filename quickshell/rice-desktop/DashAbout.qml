@@ -166,8 +166,11 @@ Item {
                     Row {
                         spacing: 8
                         width: parent.width
-                        Rectangle { width: 5; height: 5; radius: 2.5; color: ab.p.primary; anchors.verticalCenter: parent.verticalCenter }
-                        DText { width: parent.width - 13; elide: Text.ElideRight; text: modelData; font.pixelSize: 12; color: ab.p.text }
+                        // only the lines that fit above the buttons
+                        visible: y + height + 92 + 24 < parent.parent.height - 56
+                        Rectangle { width: 5; height: 5; radius: 2.5; color: ab.p.primary; y: 5 }
+                        // a long line wraps to a second line before it is cut with dots
+                        DText { width: parent.width - 13; wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight; text: modelData; font.pixelSize: 12; color: ab.p.text }
                     }
                 }
             }
