@@ -92,8 +92,11 @@ put() {
 copy_tree() { # copy_tree SRC_DIR DST_DIR
   local src="$1" dst="$2" f
   [ -d "$src" ] || return 0
+  # shell.qml goes last: Quickshell reloads as soon as it changes, and the files it uses must already be there
   while IFS= read -r -d '' f; do put "$f" "$dst/${f#"$src"/}"; done \
-    < <(find -L "$src" -type f ! -name '*.bak*' ! -name '.gitkeep' -print0)
+    < <(find -L "$src" -type f ! -name '*.bak*' ! -name '.gitkeep' ! -name shell.qml -print0)
+  [ -f "$src/shell.qml" ] && put "$src/shell.qml" "$dst/shell.qml"
+  return 0
 }
 missing_cmds() {
   local c out=()

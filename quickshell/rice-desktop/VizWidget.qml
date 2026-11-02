@@ -2,7 +2,7 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 
-// Audio visualizer (cava). No background; styles: bars (round pills), mirror, wave, dots.
+// Audio visualizer (cava). No background; styles: bars (straight bars like cava in a terminal), mirror, wave, dots.
 // colors: accent (your theme color), gradient (it shifts along the bars), rainbow, mono (white, or black on a light wallpaper).
 // flip: grow downwards instead of upwards.
 Item {
@@ -15,7 +15,7 @@ Item {
     property var bars: []
     readonly property int count: 64
     readonly property real pitch: width / count
-    readonly property real gap: style === "dots" ? 4 : (style === "wave" ? 3 : Math.max(3, Math.min(14, pitch * 0.34)))
+    readonly property real gap: style === "dots" ? 4 : (style === "wave" ? 3 : Math.max(2, Math.min(14, pitch * 0.32)))
     readonly property real bw: Math.max(1, (width - gap * (count - 1)) / count)
 
     readonly property bool lightBg: pal ? pal.light : false
@@ -35,6 +35,10 @@ Item {
     }
     function css(c, a) { return "rgba(" + Math.round(c.r * 255) + "," + Math.round(c.g * 255) + "," + Math.round(c.b * 255) + "," + a + ")" }
     onColorModeChanged: cv.requestPaint()
+    onStyleChanged: cv.requestPaint()
+    onFlipChanged: cv.requestPaint()
+    onWidthChanged: cv.requestPaint()
+    onHeightChanged: cv.requestPaint()
     onLightBgChanged: cv.requestPaint()
     onAccChanged: cv.requestPaint()
 
@@ -44,49 +48,20 @@ Item {
         stdout: SplitParser {
             onRead: function(line) {
                 const p = line.split(";").filter(function(s) { return s.length > 0 }).map(Number)
-                if (p.length > 0) { vz.bars = p; if (vz.style === "wave" || vz.style === "dots") cv.requestPaint() }
-            }
-        }
-    }
-
-    // bars and mirror: round pills that fade toward their base (cheap on the GPU)
-    Row {
-        visible: vz.style === "bars" || vz.style === "mirror"
-        anchors.fill: parent
-        spacing: vz.gap
-        Repeater {
-            model: vz.count
-            delegate: Item {
-                id: bar
-                width: vz.bw
-                height: vz.height
-                readonly property real v: vz.bars[index] !== undefined ? vz.bars[index] / 100 : 0
-                readonly property color c: vz.colorAt(index)
-                // opacity at the top, middle and bottom end of the pill: the tip is strong, the base fades
-                readonly property real aTop: vz.style === "mirror" ? 0.9 : (vz.flip ? 0.28 : 0.92)
-                readonly property real aBot: vz.style === "mirror" ? 0.9 : (vz.flip ? 0.92 : 0.28)
-                readonly property real aMid: vz.style === "mirror" ? 0.34 : (aTop + aBot) / 2
-                Rectangle {
-                    width: bar.width
-                    height: Math.max(width, vz.height * bar.v)
-                    radius: width / 2
-                    gradient: Gradient {
-                        orientation: Gradient.Vertical
-                        GradientStop { position: 0; color: Qt.rgba(bar.c.r, bar.c.g, bar.c.b, bar.aTop) }
-                        GradientStop { position: 0.5; color: Qt.rgba(bar.c.r, bar.c.g, bar.c.b, bar.aMid) }
-                        GradientStop { position: 1; color: Qt.rgba(bar.c.r, bar.c.g, bar.c.b, bar.aBot) }
-                    }
-                    y: vz.style === "mirror" ? (vz.height - height) / 2 : (vz.flip ? 0 : vz.height - height)
-                    Behavior on height { NumberAnimation { duration: 70 } }
+                if (p.length > 0) {
+                    // rises at once, falls softly
+                    const o = vz.bars, q = []
+                    for (let i = 0; i < p.length; i++) { const a = o[i] !== undefined ? o[i] : 0; q.push(p[i] >= a ? p[i] : a * 0.8 + p[i] * 0.2) }
+                    vz.bars = q
+                    cv.requestPaint()
                 }
             }
         }
     }
 
-    // wave and dots: drawn
+    // everything is drawn here
     Canvas {
         id: cv
-        visible: vz.style === "wave" || vz.style === "dots"
         anchors.fill: parent
         onVisibleChanged: requestPaint()
         onPaint: {
@@ -94,7 +69,37 @@ Item {
             c.reset()
             const n = vz.count, W = width, H = height, b = vz.bars
             if (!b || b.length === 0) return
-            if (vz.style === "wave") {
+            if (vz.style === "bars" || vz.style === "mirror") {
+                // straight bars with flat tops, like cava in a terminal: one soft fade over the whole height,
+                // a little dimmer at the base, brightest in the middle, fading toward the tip
+                const mir = vz.style === "mirror"
+                const span = mir ? H / 2 : H
+                for (let i = 0; i < n; i++) {
+                    const v = Math.max(0, Math.min(1, (b[i] || 0) / 100))
+                    const h = Math.max(2, Math.round(v * span))
+                    const x = Math.round(i * (vz.bw + vz.gap))
+                    const w = Math.max(1, Math.round(vz.bw))
+                    const col = vz.colorAt(i)
+                    const y0 = mir ? H / 2 : (vz.flip ? 0 : H)           // where the bars start
+                    const y1 = mir ? 0 : (vz.flip ? H : 0)               // where a full bar ends
+                    const g = c.createLinearGradient(0, y0, 0, y1)
+                    g.addColorStop(0, vz.css(col, 0.82))
+                    g.addColorStop(0.5, vz.css(col, 1))
+                    g.addColorStop(1, vz.css(col, 0.3))
+                    c.fillStyle = g
+                    if (mir) {
+                        c.beginPath(); c.rect(x, H / 2 - h, w, h); c.fill()
+                        const g2 = c.createLinearGradient(0, H / 2, 0, H)
+                        g2.addColorStop(0, vz.css(col, 0.82))
+                        g2.addColorStop(0.5, vz.css(col, 1))
+                        g2.addColorStop(1, vz.css(col, 0.3))
+                        c.fillStyle = g2
+                        c.beginPath(); c.rect(x, H / 2, w, h); c.fill()
+                    } else {
+                        c.beginPath(); c.rect(x, vz.flip ? 0 : H - h, w, h); c.fill()
+                    }
+                }
+            } else if (vz.style === "wave") {
                 const pts = []
                 for (let i = 0; i < n; i++) {
                     const v = (b[i] || 0) / 100
