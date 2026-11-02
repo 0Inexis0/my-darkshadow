@@ -57,6 +57,30 @@ Item {
         stdout: StdioCollector { onStreamFinished: { try { page.lite = JSON.parse(text).lite === true } catch (e) { } } }
     }
 
+    // Profiles: the power mode of this computer (power-profiles-daemon). Only the modes this computer has are shown.
+    property string profile: ""
+    property var profiles: []
+    function readProfile() { if (!profProc.running) profProc.running = true }
+    function setProfile(k) {
+        profile = k
+        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-services\" profile \"$1\"", "_", k])
+        profSoon.restart()
+        page.ctl.status = "Profile: " + k.replace("power-saver", "Power saver").replace("balanced", "Balanced").replace("performance", "Performance")
+    }
+    Timer { id: profSoon; interval: 900; onTriggered: page.readProfile() }
+    Process {
+        id: profProc
+        command: ["bash", "-c", "command -v powerprofilesctl >/dev/null || exit 0; powerprofilesctl list 2>/dev/null | grep -oE '^[* ] *(power-saver|balanced|performance):' | tr -d '*: '; echo CUR; powerprofilesctl get 2>/dev/null"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const parts = text.split("CUR")
+                page.profiles = parts[0].split("\n").map(function(x) { return x.trim() }).filter(function(x) { return x.length > 0 })
+                page.profile = parts.length > 1 ? parts[1].trim() : ""
+            }
+        }
+    }
+
     Timer { interval: 15000; running: true; repeat: true; onTriggered: page.now = new Date() }
     Timer { interval: 7000; running: true; repeat: true; onTriggered: tipFade.restart() }
     Process {
@@ -367,6 +391,78 @@ Item {
             }
 
             SectionTitle { text: "Settings"; sub: "The things you change most. They apply right away." }
+
+            // Profiles: Performance, Balanced, Power saver
+            Item {
+                id: profBox
+                width: parent.width
+                height: page.profiles.length > 0 ? 120 : 64
+                Row {
+                    id: profHead
+                    spacing: 8
+                    T { text: "Profiles"; font.pixelSize: 14; font.bold: true; anchors.verticalCenter: parent.verticalCenter }
+                    T { kind: "reading"; text: page.profiles.length > 0 ? "How fast this computer runs, and how much power it uses" : ""; color: "#8a8a8a"; font.pixelSize: 11; anchors.verticalCenter: parent.verticalCenter }
+                }
+                Row {
+                    visible: page.profiles.length > 0
+                    y: 28
+                    width: parent.width
+                    spacing: 10
+                    Repeater {
+                        model: [
+                            { k: "performance", i: "\udb81\udcc5", t: "Performance", d: "Fastest, uses more power" },
+                            { k: "balanced", i: "\udb81\uddd1", t: "Balanced", d: "Good for everyday use" },
+                            { k: "power-saver", i: "\udb80\udf2a", t: "Power saver", d: "Quiet, longest battery" }
+                        ].filter(function(m) { return page.profiles.indexOf(m.k) >= 0 })
+                        delegate: Rectangle {
+                            id: pc
+                            readonly property bool on: page.profile === modelData.k
+                            width: (profBox.width - 10 * (page.profiles.length - 1)) / Math.max(1, page.profiles.length)
+                            height: 84
+                            radius: 14
+                            color: on ? "#F6F5F4" : (pMouse.containsMouse ? "#1b1b1d" : "#141414")
+                            border.width: 1
+                            border.color: on ? "#F6F5F4" : (pMouse.containsMouse ? "#333333" : "#1f1f1f")
+                            Behavior on color { ColorAnimation { duration: 160 } }
+                            Rectangle {
+                                id: pi
+                                x: 14
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 42; height: 42; radius: 13
+                                color: pc.on ? Qt.rgba(0, 0, 0, 0.10) : Qt.rgba(1, 1, 1, 0.06)
+                                T { kind: "icon"; anchors.centerIn: parent; text: modelData.i; font.pixelSize: 19; color: pc.on ? "#0d0d0d" : "#F6F5F4" }
+                            }
+                            Column {
+                                anchors.left: pi.right
+                                anchors.leftMargin: 12
+                                anchors.right: parent.right
+                                anchors.rightMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 3
+                                T { text: modelData.t; font.pixelSize: 14; font.bold: true; color: pc.on ? "#0d0d0d" : "#F6F5F4"; width: parent.width; elide: Text.ElideRight }
+                                T { kind: "reading"; text: modelData.d; font.pixelSize: 11; color: pc.on ? "#3a3a3e" : "#8a8a8a"; width: parent.width; elide: Text.ElideRight }
+                            }
+                            MouseArea {
+                                id: pMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: page.setProfile(modelData.k)
+                            }
+                        }
+                    }
+                }
+                T {
+                    visible: page.profiles.length === 0
+                    y: 26
+                    width: parent.width
+                    wrapMode: Text.WordWrap
+                    kind: "reading"
+                    font.pixelSize: 12
+                    color: "#8a8a8a"
+                    text: "Power modes need power-profiles-daemon, and it is not running on this computer. Install it and turn it on: sudo systemctl enable --now power-profiles-daemon (on NixOS: services.power-profiles-daemon.enable = true)."
+                }
+            }
 
             SliderRow {
                 id: sizeRow

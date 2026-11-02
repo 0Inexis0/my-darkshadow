@@ -1,9 +1,8 @@
 # Changelog
 
 ## V3.08
-- Notification center (Deck): the power modes (Saver, Balanced, Performance) are a small row at the very bottom now, no longer a huge pill in the middle
-- Pressing a power mode applies it and only that mode stays lit (the panel redraws a moment after the click)
-- Power modes show on desktop PCs too, whenever power-profiles-daemon is running; the row is hidden when it is not
+- Home > Settings > Profiles: Performance, Balanced and Power saver as three cards at the top of Settings; click one to switch, the current one is lit. Only the modes your computer has are shown, and a hint appears when power-profiles-daemon is not running. Works on laptops and desktop PCs
+- The power modes are gone from the notification center (they were too big there)
 
 ## V3.07
 - Home > Settings > Window size: a live preview, a small screen with a small window that grows and shrinks while you drag the slider (with the size in pixels)

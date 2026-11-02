@@ -176,7 +176,6 @@ Item {
 
         SectionTitle { text: "Widgets"; sub: "What the notification center shows." }
         ToggleRow { visible: page.deck; label: "Switches"; desc: "Wi-Fi, Bluetooth, Do Not Disturb, night light, keep awake"; checked: page.v("w_quick", true) === true; onToggled: function(x) { page.setv("w_quick", x ? "on" : "off") } }
-        ToggleRow { visible: page.deck; label: "Power modes"; desc: page.v("have_power_profiles", true) ? "Power saver, Balanced, Performance" : "Needs power-profiles-daemon (not found)"; checked: page.v("w_power", true) === true; onToggled: function(x) { page.setv("w_power", x ? "on" : "off") } }
         ToggleRow { visible: page.deck; label: "Brightness"; desc: page.v("have_backlight", false) ? "Screen brightness" : "Only on screens with a backlight (laptops)"; checked: page.v("w_brightness", true) === true; onToggled: function(x) { page.setv("w_brightness", x ? "on" : "off") } }
         ToggleRow { visible: page.deck; label: "Power buttons"; desc: "Lock, sleep, log out, restart, shut down (the last three ask first)"; checked: page.v("w_session", true) === true; onToggled: function(x) { page.setv("w_session", x ? "on" : "off") } }
         ToggleRow { label: "Title & Clear all"; desc: "Header with a button that clears everything"; checked: page.v("w_title", true) === true; onToggled: function(x) { page.setv("w_title", x ? "on" : "off") } }
