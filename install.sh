@@ -91,15 +91,15 @@ put() {
 }
 copy_tree() { # copy_tree SRC_DIR DST_DIR
   local src="$1" dst="$2" f rel
-  local -a fresh=() old=()
+  local -a new_files=() kept_files=()
   [ -d "$src" ] || return 0
   # files that are new on this computer go first (a changed file may need them, and Quickshell reloads as soon as
   # something changes), then the changed ones, and shell.qml goes last
   while IFS= read -r -d '' f; do
     rel="${f#"$src"/}"
-    if [ -e "$dst/$rel" ] || [ -L "$dst/$rel" ]; then old+=("$f"); else fresh+=("$f"); fi
+    if [ -e "$dst/$rel" ] || [ -L "$dst/$rel" ]; then kept_files+=("$f"); else new_files+=("$f"); fi
   done < <(find -L "$src" -type f ! -name '*.bak*' ! -name '.gitkeep' ! -name shell.qml -print0)
-  for f in "${fresh[@]}" "${old[@]}"; do put "$f" "$dst/${f#"$src"/}"; done
+  for f in "${new_files[@]}" "${kept_files[@]}"; do put "$f" "$dst/${f#"$src"/}"; done
   [ -f "$src/shell.qml" ] && put "$src/shell.qml" "$dst/shell.qml"
   return 0
 }
