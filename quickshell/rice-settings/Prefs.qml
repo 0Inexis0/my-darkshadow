@@ -11,6 +11,9 @@ Singleton {
     readonly property real wheel: 0.6 * scroll       // pixels per wheel unit on a page
     // size of the Settings window: 1 = the default size, 0.75 smaller, 1.5 bigger
     property real size: 1.0
+    // the Settings window in pixels on a screen of sw x sh at size k (the window and the preview use the same formula)
+    function winW(sw, k) { return Math.min(sw - 20, Math.round(Math.max(Math.min(820, sw - 40), Math.min(940, Math.round(sw * 0.46))) * k)) }
+    function winH(sh, k) { return Math.min(sh - 40, Math.round(Math.max(Math.min(600, sh - 60), Math.min(680, Math.round(sh * 0.58))) * k)) }
     function setSize(v) {
         size = Math.max(0.75, Math.min(1.5, Math.round(v * 20) / 20))
         save("size", size)

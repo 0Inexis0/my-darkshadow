@@ -11,8 +11,28 @@ FloatingWindow {
     readonly property var scr0: Quickshell.screens && Quickshell.screens.length > 0 ? Quickshell.screens[0] : null
     readonly property int sw0: scr0 ? scr0.width : 1920
     readonly property int sh0: scr0 ? scr0.height : 1080
-    implicitWidth: Math.min(sw0 - 20, Math.round(Math.max(Math.min(820, sw0 - 40), Math.min(940, Math.round(sw0 * 0.46))) * Prefs.size))
-    implicitHeight: Math.min(sh0 - 40, Math.round(Math.max(Math.min(600, sh0 - 60), Math.min(680, Math.round(sh0 * 0.58))) * Prefs.size))
+    implicitWidth: Prefs.winW(sw0, Prefs.size)
+    implicitHeight: Prefs.winH(sh0, Prefs.size)
+    // While the size changes the window is pinned to it for a moment (Hyprland keeps a floating window inside these limits)
+    property bool pin: false
+    minimumSize: pin ? Qt.size(implicitWidth, implicitHeight) : Qt.size(0, 0)
+    maximumSize: pin ? Qt.size(implicitWidth, implicitHeight) : Qt.size(16384, 16384)
+    // A floating window cannot resize itself on Wayland, only Hyprland can. rice-settings-size asks it and checks the result.
+    property bool sizeAgain: false
+    function applySize() {
+        pin = true
+        unpin.restart()
+        if (sizer.running) sizeAgain = true; else sizer.running = true
+    }
+    Process {
+        id: sizer
+        command: ["bash", "-c", "\"$HOME/.local/bin/rice-settings-size\" \"$1\" \"$2\" >/dev/null 2>&1 || true", "_", String(win.implicitWidth), String(win.implicitHeight)]
+        onExited: if (win.sizeAgain) { win.sizeAgain = false; running = true }
+    }
+    Timer { id: unpin; interval: 1200; onTriggered: win.pin = false }
+    Timer { interval: 600; running: true; onTriggered: win.applySize() }
+    Timer { id: sizeSoon; interval: 120; onTriggered: win.applySize() }
+    Connections { target: Prefs; function onSizeChanged() { sizeSoon.restart() } }
     color: "transparent"
     visible: true
     onVisibleChanged: if (!visible) Qt.quit()

@@ -369,11 +369,93 @@ Item {
             SectionTitle { text: "Settings"; sub: "The things you change most. They apply right away." }
 
             SliderRow {
+                id: sizeRow
                 label: "Window size"
                 desc: "Make this Settings window smaller or bigger"
                 from: 75; to: 150; step: 5; unit: " %"
                 value: Math.round(Prefs.size * 100)
                 onCommitted: function(v) { Prefs.setSize(v / 100) }
+            }
+
+            // preview: the screen, and this Settings window on it, as big as the slider says (moves while you drag)
+            Rectangle {
+                id: szPrev
+                width: parent.width
+                height: 168
+                radius: 12
+                color: "#141414"
+                border.width: 1
+                border.color: "#1f1f1f"
+                readonly property var scr: Quickshell.screens && Quickshell.screens.length > 0 ? Quickshell.screens[0] : null
+                readonly property real sw: scr ? scr.width : 1920
+                readonly property real sh: scr ? scr.height : 1080
+                readonly property real k: sizeRow.shown / 100
+                readonly property real ww: Prefs.winW(sw, k)
+                readonly property real wh: Prefs.winH(sh, k)
+
+                Rectangle {
+                    id: mon
+                    x: 16
+                    anchors.verticalCenter: parent.verticalCenter
+                    height: 136
+                    width: Math.min(260, Math.round(height * szPrev.sw / szPrev.sh))
+                    radius: 6
+                    color: "#0b0b0d"
+                    border.width: 2
+                    border.color: "#3a3a40"
+                    clip: true
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: "#1b1b24" }
+                        GradientStop { position: 1.0; color: "#0e0e12" }
+                    }
+                    // the bar
+                    Rectangle { x: 0; y: 0; width: parent.width; height: 5; color: "#26262c" }
+                    // the Settings window
+                    Rectangle {
+                        id: miniWin
+                        width: Math.round(mon.width * szPrev.ww / szPrev.sw)
+                        height: Math.round(mon.height * szPrev.wh / szPrev.sh)
+                        x: Math.round((mon.width - width) / 2)
+                        y: Math.round((mon.height - height) / 2)
+                        radius: 4
+                        color: "#141414"
+                        border.width: 1
+                        border.color: "#8a8a92"
+                        Rectangle { x: 0; y: 0; width: Math.round(parent.width * 0.26); height: parent.height; color: "#1c1c1f"; radius: 4 }
+                        Repeater {
+                            model: 5
+                            Rectangle {
+                                x: 4; y: 8 + index * 9
+                                width: Math.round(miniWin.width * 0.26) - 8
+                                height: 4; radius: 2
+                                color: index === 0 ? "#F6F5F4" : "#3a3a40"
+                            }
+                        }
+                        Repeater {
+                            model: 4
+                            Rectangle {
+                                x: Math.round(miniWin.width * 0.26) + 6
+                                y: 8 + index * Math.round(miniWin.height * 0.2)
+                                width: Math.round(miniWin.width * 0.74) - 12
+                                height: Math.max(6, Math.round(miniWin.height * 0.14)); radius: 3
+                                color: "#202024"
+                            }
+                        }
+                        Behavior on width { enabled: !sizeRow.dragging; NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                        Behavior on height { enabled: !sizeRow.dragging; NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                    }
+                }
+                Column {
+                    anchors.left: mon.right
+                    anchors.leftMargin: 20
+                    anchors.right: parent.right
+                    anchors.rightMargin: 16
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 4
+                    T { text: Math.round(szPrev.ww) + " \u00d7 " + Math.round(szPrev.wh) + " px"; font.pixelSize: 20; font.bold: true }
+                    T { kind: "reading"; text: Math.round(szPrev.ww * 100 / szPrev.sw) + " % of the screen width, " + Math.round(szPrev.wh * 100 / szPrev.sh) + " % of its height"; color: "#8a8a8a"; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
+                    T { kind: "reading"; text: "Preview: the small window follows the slider. It is applied when you let go."; color: "#6a6a72"; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
+                }
             }
 
             ToggleRow {

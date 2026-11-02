@@ -8,6 +8,8 @@ SettingRow {
     property real value: 0
     property int decimals: 0
     property string unit: ""
+    readonly property bool dragging: sld.dragging
+    readonly property real shown: sld.shown      // the value while it is being dragged
     signal committed(real v)
     reserved: 300
 
