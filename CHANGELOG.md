@@ -1,5 +1,9 @@
 # Changelog
 
+## V3.20
+- Bar: switching workspaces stays smooth even when the desktop widgets come back on an empty workspace. The workspaces keep one width each and a single marker slides to the active one; the sliding runs on the graphics thread now (Pac-Man too)
+- Bar: the launcher button looks like before V3.19 again
+
 ## V3.19
 - Rofi is gone: the DarkShadow Launcher is the only launcher. The Settings page Rofi is called Launcher (same themes, styles and options), rofi is no longer installed, and the old Rofi theme is taken out of rofi's config. Questions like "Log out?" use a small zenity window instead of rofi
 - Sound menu: right click the volume icon on the bar for a menu under it (like a small pavucontrol): volume, where the sound goes (speakers, headphones ...), the microphone and the volume of every app that plays. Left click still mutes

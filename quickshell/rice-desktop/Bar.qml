@@ -153,11 +153,10 @@ PanelWindow {
     }
 
     Component { id: mLauncher
-        Item { property bool shown: true; width: 24; height: bar.barH
+        Item { property bool shown: true; width: 22; height: bar.barH
             MIcon { visible: bar.logoKey === "apps"; anchors.centerIn: parent; name: "apps"; glyph: String.fromCodePoint(0xF003B); size: 18; color: lm.containsMouse ? bar.fg : bar.dim
                 scale: lm.containsMouse ? 1.12 : 1; Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutBack } } }
-            Text { visible: bar.logoKey !== "apps"; anchors.fill: parent
-                horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
+            Text { visible: bar.logoKey !== "apps"; anchors.centerIn: parent; anchors.horizontalCenterOffset: 1
                 text: bar.logos[bar.logoKey] !== undefined ? String.fromCodePoint(bar.logos[bar.logoKey]) : ""
                 font.family: Fonts.icons; font.pixelSize: 18; color: bar.fg
                 scale: lm.containsMouse ? 1.15 : 1; Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } } }
@@ -172,16 +171,28 @@ PanelWindow {
             readonly property string st: bar.wsStyle
             readonly property bool pac: st === "pacman"
             readonly property bool dots: st === "dots"
-            readonly property real cw: dots ? 14 : (pac ? 20 : 18)
-            readonly property real sp: dots ? 6 : 4
+            // every workspace has the same width, so nothing in the row moves; what moves is one marker that slides.
+            // The sliding and the popping run as Animators, on the render thread: they stay smooth even while the
+            // shell is busy (the desktop widgets coming back when you switch to an empty workspace)
+            readonly property real cw: dots ? 28 : (pac ? 20 : 18)
             readonly property int count: bar.maxWs()
             readonly property int fi: bar.focusedId - 1
-            width: wsRow.width; height: bar.barH
+            readonly property bool fiOk: fi >= 0 && fi < count
+            width: count * cw; height: bar.barH
+
+            // dots: the pill of the active workspace
+            Rectangle {
+                visible: wsm.dots && wsm.fiOk
+                width: 30; height: 12; radius: 6
+                anchors.verticalCenter: parent.verticalCenter
+                color: bar.fg
+                x: Math.max(0, wsm.fi) * wsm.cw + (wsm.cw - width) / 2
+                Behavior on x { XAnimator { duration: 320; easing.type: Easing.OutBack; easing.overshoot: 1.15 } }
+            }
 
             Row {
                 id: wsRow
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: wsm.sp
                 Repeater {
                     model: wsm.count
                     delegate: Item {
@@ -189,17 +200,18 @@ PanelWindow {
                         readonly property int wid: index + 1
                         readonly property bool act: bar.focusedId === wid
                         readonly property bool occ: bar.occupied(wid)
-                        width: wsm.dots && act ? 36 : wsm.cw; height: bar.barH
-                        Behavior on width { NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 1.4 } }
+                        width: wsm.cw; height: bar.barH
 
-                        // dots: a dot, the active one stretched into a pill
+                        // dots: a dot (the pill covers the active one)
                         Rectangle {
                             visible: wsm.dots
                             anchors.centerIn: parent
-                            width: act ? parent.width : (wm.containsMouse ? 14 : 12); height: wm.containsMouse && !act ? 14 : 12; radius: height / 2
-                            color: act ? bar.fg : (occ ? Qt.rgba(0.965, 0.961, 0.957, 0.6) : Qt.rgba(0.965, 0.961, 0.957, 0.24))
-                            Behavior on color { ColorAnimation { duration: 200 } }
-                            Behavior on height { NumberAnimation { duration: 120 } }
+                            width: 12; height: 12; radius: 6
+                            color: occ ? Qt.rgba(0.965, 0.961, 0.957, 0.6) : Qt.rgba(0.965, 0.961, 0.957, 0.24)
+                            opacity: act ? 0 : 1
+                            scale: wm.containsMouse ? 1.2 : 1
+                            Behavior on opacity { OpacityAnimator { duration: 160 } }
+                            Behavior on scale { ScaleAnimator { duration: 120 } }
                         }
                         // pacman: pac-dots; the one Pac-Man sits on is gone, the ones he has passed are eaten
                         Rectangle {
@@ -209,8 +221,8 @@ PanelWindow {
                             color: Qt.rgba(0.965, 0.961, 0.957, occ ? 0.9 : 0.45)
                             opacity: act ? 0 : (wid < bar.focusedId ? 0.25 : 1)
                             scale: wm.containsMouse ? 1.35 : 1
-                            Behavior on opacity { NumberAnimation { duration: 260 } }
-                            Behavior on scale { NumberAnimation { duration: 120 } }
+                            Behavior on opacity { OpacityAnimator { duration: 260 } }
+                            Behavior on scale { ScaleAnimator { duration: 120 } }
                         }
                         // letters (A B C) or numbers (1 2 3)
                         Text {
@@ -220,8 +232,7 @@ PanelWindow {
                             font.family: Fonts.main; font.pixelSize: 14; font.weight: act ? Font.Bold : Font.Medium
                             color: act ? bar.fg : (occ ? Qt.rgba(0.965, 0.961, 0.957, 0.9) : Qt.rgba(0.965, 0.961, 0.957, 0.32))
                             scale: act ? 1.18 : (wm.containsMouse ? 1.12 : 1)
-                            Behavior on color { ColorAnimation { duration: 200 } }
-                            Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
+                            Behavior on scale { ScaleAnimator { duration: 220; easing.type: Easing.OutBack } }
                         }
                         MouseArea { id: wm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: bar.goWs(wid) }
                     }
@@ -229,39 +240,43 @@ PanelWindow {
             }
 
             // Pac-Man: still and white; he only chomps while he runs to the workspace you switch to
-            Canvas {
-                id: pac
-                visible: wsm.pac && wsm.fi >= 0 && wsm.fi < wsm.count
+            Item {
+                id: pacBox
+                visible: wsm.pac && wsm.fiOk
                 width: 18; height: 18
                 anchors.verticalCenter: parent.verticalCenter
-                readonly property real tx: Math.max(0, wsm.fi) * (wsm.cw + wsm.sp) + (wsm.cw - width) / 2
+                readonly property real tx: Math.max(0, wsm.fi) * wsm.cw + (wsm.cw - width) / 2
                 property bool facingLeft: false
-                property real mouth: 0.2
                 x: tx
-                Behavior on x { NumberAnimation { id: run; duration: 380; easing.type: Easing.InOutCubic } }
+                Behavior on x { XAnimator { duration: 380; easing.type: Easing.InOutCubic } }
                 onTxChanged: { facingLeft = tx < x; chomp.restart() }
-                SequentialAnimation {
-                    id: chomp
-                    loops: 1
+                Canvas {
+                    id: pac
+                    anchors.fill: parent
+                    property real mouth: 0.2
+                    renderStrategy: Canvas.Threaded
                     SequentialAnimation {
-                        loops: 3
-                        NumberAnimation { target: pac; property: "mouth"; to: 0.02; duration: 65 }
-                        NumberAnimation { target: pac; property: "mouth"; to: 0.26; duration: 65 }
+                        id: chomp
+                        SequentialAnimation {
+                            loops: 3
+                            NumberAnimation { target: pac; property: "mouth"; to: 0.02; duration: 65 }
+                            NumberAnimation { target: pac; property: "mouth"; to: 0.26; duration: 65 }
+                        }
+                        NumberAnimation { target: pac; property: "mouth"; to: 0.2; duration: 80 }
                     }
-                    NumberAnimation { target: pac; property: "mouth"; to: 0.2; duration: 80 }
-                }
-                transform: Scale { origin.x: 9; xScale: pac.facingLeft ? -1 : 1 }
-                onMouthChanged: requestPaint()
-                onVisibleChanged: if (visible) requestPaint()
-                onPaint: {
-                    const c = getContext("2d")
-                    c.reset()
-                    c.fillStyle = "#F6F5F4"
-                    c.beginPath()
-                    c.moveTo(width / 2, height / 2)
-                    c.arc(width / 2, height / 2, width / 2, mouth * Math.PI, (2 - mouth) * Math.PI)
-                    c.closePath()
-                    c.fill()
+                    transform: Scale { origin.x: 9; xScale: pacBox.facingLeft ? -1 : 1 }
+                    onMouthChanged: requestPaint()
+                    onVisibleChanged: if (visible) requestPaint()
+                    onPaint: {
+                        const c = getContext("2d")
+                        c.reset()
+                        c.fillStyle = "#F6F5F4"
+                        c.beginPath()
+                        c.moveTo(width / 2, height / 2)
+                        c.arc(width / 2, height / 2, width / 2, mouth * Math.PI, (2 - mouth) * Math.PI)
+                        c.closePath()
+                        c.fill()
+                    }
                 }
             }
             WheelHandler { acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
@@ -429,7 +444,7 @@ PanelWindow {
                     readonly property bool shown: ld.status === Loader.Ready && ld.item && ld.item.shown !== false
                     readonly property bool pill: bar.sty === "pills"
                     visible: shown
-                    width: shown ? (pill ? Math.max(bar.barH, ld.width + 22) : ld.width) : 0
+                    width: shown ? ld.width + (pill ? 24 : 0) : 0
                     height: bar.barH
                     Rectangle { visible: slot.pill; anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: bar.barH
                         radius: height / 2; color: bar.bg; border.width: 1; border.color: bar.line }
