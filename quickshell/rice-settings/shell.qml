@@ -78,7 +78,7 @@ FloatingWindow {
         background: ["background", "wallpaper"], top: ["top", "position"], bottom: ["bottom", "position"],
         place: ["position"], where: ["position"], size: ["size", "width", "height", "scale"], big: ["size", "scale"],
         speed: ["speed", "animation"], fast: ["speed"], slow: ["speed", "light", "performance"], lag: ["light", "performance"], laggy: ["light", "performance"], performance: ["light", "performance"], power: ["power", "battery"], wifi: ["wi-fi", "wifi", "network"],
-        launcher: ["rofi", "launcher"], record: ["record", "recorder", "recording"], recording: ["record", "recorder"], video: ["record", "recorder", "video"], desktop: ["widgets", "widget"], widget: ["widgets", "widget"], hide: ["auto-hide", "hide"], apps: ["apps", "rofi", "dock"], game: ["gaming"], games: ["gaming"]
+        launcher: ["launcher", "apps"], rofi: ["launcher"], record: ["record", "recorder", "recording"], recording: ["record", "recorder"], video: ["record", "recorder", "video"], desktop: ["widgets", "widget"], widget: ["widgets", "widget"], hide: ["auto-hide", "hide"], apps: ["apps", "rofi", "dock"], game: ["gaming"], games: ["gaming"]
     })
     function buildIndex() {
         const out = []
@@ -286,7 +286,7 @@ FloatingWindow {
         { name: "Hyprland", icon: "\uf108" },
         { name: "Recorder", icon: "\uf03d" },
         { name: "Dashboard", icon: "\uf009" },
-        { name: "Rofi", icon: "\uf002" },
+        { name: "Launcher", icon: "\uf002" },
         { name: "Theme", icon: "\udb80\udfd8" },
         { name: "Cursors", icon: "\uf245" },
         { name: "Notifications", icon: "\uf0f3" },

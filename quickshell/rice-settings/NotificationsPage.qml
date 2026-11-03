@@ -40,6 +40,7 @@ Item {
         // ---------- live preview ----------
         Rectangle {
             id: stage
+            visible: Prefs.previews
             width: parent.width
             height: 170
             radius: 16

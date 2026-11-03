@@ -78,6 +78,7 @@ Item {
             // ---------- live preview ----------
             Rectangle {
                 id: prev
+                visible: Prefs.previews
                 width: parent.width
                 height: 128
                 radius: 16

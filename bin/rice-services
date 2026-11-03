@@ -191,13 +191,13 @@ def profile_set(name):
 
 
 def confirm(question):
-    """a small yes / no menu (rofi); without rofi: yes"""
-    if not shutil.which("rofi"):
+    """a small yes / no question (zenity); without zenity: yes"""
+    if not shutil.which("zenity"):
         return True
     try:
-        r = subprocess.run(["rofi", "-dmenu", "-i", "-p", question, "-l", "2", "-no-custom", "-theme-str", "window { width: 360px; }"],
-                           input="No\nYes\n", capture_output=True, text=True, timeout=60)
-        return r.stdout.strip() == "Yes"
+        r = subprocess.run(["zenity", "--question", "--title", "DarkShadow's Shell", "--text", question, "--ok-label", "Yes",
+                            "--cancel-label", "No"], capture_output=True, timeout=60)
+        return r.returncode == 0
     except Exception:
         return False
 

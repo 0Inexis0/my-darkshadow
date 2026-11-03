@@ -61,6 +61,7 @@ Item {
             // ---------- live preview ----------
             Rectangle {
                 id: rprev
+                visible: Prefs.previews
                 width: parent.width
                 height: 230
                 radius: 16
@@ -173,18 +174,6 @@ Item {
                     font.pixelSize: 10
                     color: "#7a7a84"
                 }
-            }
-
-            T { kind: "title"; text: "Launcher"; font.pixelSize: 16; font.bold: true }
-            SegRow {
-                label: "Engine"
-                desc: "The DarkShadow Launcher is built into the shell and uses the same settings below. Alt + Space, the dock button and the hot corner open it"
-                options: [
-                    { label: "DarkShadow Launcher", value: "shadow" },
-                    { label: "Rofi", value: "rofi" }
-                ]
-                current: page.v("engine", "shadow")
-                onChosen: function(x) { page.setv("engine", x) }
             }
 
             T { kind: "title"; text: "Theme"; font.pixelSize: 16; font.bold: true }
@@ -329,13 +318,13 @@ Item {
                     width: 150; height: 38; radius: 12
                     color: pMouse.containsMouse ? "#ffffff" : "#F6F5F4"
                     Behavior on color { ColorAnimation { duration: 120 } }
-                    T { anchors.centerIn: parent; text: "Preview"; font.pixelSize: 13; font.bold: true; color: "#0d0d0d" }
+                    T { anchors.centerIn: parent; text: "Open it"; font.pixelSize: 13; font.bold: true; color: "#0d0d0d" }
                     MouseArea {
                         id: pMouse
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: Quickshell.execDetached(["bash", "-c", "sleep 0.3; rofi -show drun"])
+                        onClicked: Quickshell.execDetached(["bash", "-c", "sleep 0.3; \"$HOME/.local/bin/rice-launch\""])
                     }
                 }
                 Rectangle {
@@ -350,21 +339,13 @@ Item {
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
                             Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-rofi\" reset"])
-                            page.ctl.status = "Rofi reset"
+                            page.ctl.status = "Launcher reset"
                             refresh.restart()
                         }
                     }
                 }
             }
 
-            T {
-                visible: page.rs.installed === false
-                width: parent.width
-                text: "rofi was not found on this system. Install it to use these settings."
-                color: "#e0a050"
-                font.pixelSize: 12
-                wrapMode: Text.WordWrap
-            }
         }
     }
 }

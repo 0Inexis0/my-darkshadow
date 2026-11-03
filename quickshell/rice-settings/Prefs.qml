@@ -8,6 +8,9 @@ import QtQuick
 Singleton {
     id: prefs
     property real scroll: 1.0
+    // the live pictures at the top of some pages (Home > Settings > Previews); off by default
+    property bool previews: false
+    function setPreviews(v) { previews = v; save("previews", v) }
     readonly property real wheel: 0.6 * scroll       // pixels per wheel unit on a page
     // size of the Settings window: 1 = the default size, 0.75 smaller, 1.5 bigger
     property real size: 1.0
@@ -38,6 +41,7 @@ Singleton {
                 try {
                     const j = JSON.parse(text)
                     if (j.scroll !== undefined) prefs.scroll = Math.max(0.3, Math.min(3, Number(j.scroll)))
+                    if (j.previews !== undefined) prefs.previews = j.previews === true
                     if (j.size !== undefined) prefs.size = Math.max(0.75, Math.min(1.5, Number(j.size)))
                 } catch (e) { }
             }

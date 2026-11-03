@@ -11,8 +11,8 @@ PanelWindow {
     property bool hovering: false
     readonly property bool autoHide: dc.hover !== false
     readonly property bool reveal: !autoHide || pinned || hovering
-    // the screen edge: bottom, top, left or right (Settings > Dock > Position)
-    readonly property string edge: dc.position === "top" || dc.position === "left" || dc.position === "right" ? dc.position : "bottom"
+    // the screen edge: bottom, left or right (Settings > Dock > Position); the top belongs to the bar
+    readonly property string edge: dc.position === "left" || dc.position === "right" ? dc.position : "bottom"
     readonly property bool vert: edge === "left" || edge === "right"
 
     function pickPlayer() {
@@ -65,10 +65,21 @@ PanelWindow {
 
     visible: dc.enabled === true
     color: "transparent"
-    anchors { bottom: edge === "bottom"; top: edge === "top"; left: edge === "left"; right: edge === "right" }
-    implicitWidth: vert ? ((reveal || slide.running) ? bar.width + 28 : 6) : bar.width + 24
-    implicitHeight: vert ? bar.height + 24 : ((reveal || slide.running) ? bar.height + 28 : 6)
+    anchors { bottom: edge === "bottom"; left: edge === "left"; right: edge === "right" }
+    // the window keeps one size; hiding slides the dock out and leaves only a thin strip at the edge that reacts
+    // (no resizing while it moves, which went wrong on the left and right edges)
+    implicitWidth: vert ? bar.width + 28 : bar.width + 24
+    implicitHeight: vert ? bar.height + 24 : bar.height + 28
     exclusionMode: ExclusionMode.Ignore
+    mask: Region { item: dock.reveal ? fullArea : edgeStrip }
+    Item { id: fullArea; anchors.fill: parent }
+    Item {
+        id: edgeStrip
+        width: dock.vert ? 6 : parent.width
+        height: dock.vert ? parent.height : 6
+        x: dock.edge === "right" ? parent.width - 6 : 0
+        y: dock.vert ? 0 : parent.height - 6
+    }
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.namespace: "rice-dock"
 
@@ -86,18 +97,20 @@ PanelWindow {
         anchors.horizontalCenter: dock.vert ? undefined : parent.horizontalCenter
         anchors.verticalCenter: dock.vert ? parent.verticalCenter : undefined
         anchors.bottom: dock.edge === "bottom" ? parent.bottom : undefined
-        anchors.top: dock.edge === "top" ? parent.top : undefined
         anchors.left: dock.edge === "left" ? parent.left : undefined
         anchors.right: dock.edge === "right" ? parent.right : undefined
-        // how far it sits from the screen edge; hidden = pushed out of the screen
-        property real off: dock.reveal ? 14 : -((dock.vert ? width : height) + 4)
-        Behavior on off {
-            NumberAnimation { id: slide; duration: 280; easing.type: Easing.OutCubic }
+        anchors.bottomMargin: 14
+        anchors.leftMargin: 14
+        anchors.rightMargin: 14
+        // hidden = slid out of the screen, toward its edge
+        property real hid: dock.reveal ? 0 : 1
+        Behavior on hid { NumberAnimation { duration: 280; easing.type: Easing.OutCubic } }
+        readonly property real away: (dock.vert ? width : height) + 20
+        transform: Translate {
+            x: dock.edge === "left" ? -bar.away * bar.hid : (dock.edge === "right" ? bar.away * bar.hid : 0)
+            y: dock.edge === "bottom" ? bar.away * bar.hid : 0
         }
-        anchors.bottomMargin: off
-        anchors.topMargin: off
-        anchors.leftMargin: off
-        anchors.rightMargin: off
+        opacity: 1 - bar.hid * 0.6
         width: dock.vert ? 60 : row.width + 20
         height: dock.vert ? row.height + 20 : 60
         radius: 22
@@ -168,7 +181,7 @@ PanelWindow {
                         colorization: app.tint ? 1.0 : 0.0
                         colorizationColor: "#e4e4e7"
                         scale: appMouse.containsMouse ? 1.18 : 1.0
-                        transformOrigin: Item.Bottom
+                        transformOrigin: dock.edge === "left" ? Item.Left : (dock.edge === "right" ? Item.Right : Item.Bottom)
                         Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
                         Behavior on colorization { NumberAnimation { duration: 200 } }
                     }

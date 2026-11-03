@@ -1,5 +1,16 @@
 # Changelog
 
+## V3.19
+- Rofi is gone: the DarkShadow Launcher is the only launcher. The Settings page Rofi is called Launcher (same themes, styles and options), rofi is no longer installed, and the old Rofi theme is taken out of rofi's config. Questions like "Log out?" use a small zenity window instead of rofi
+- Sound menu: right click the volume icon on the bar for a menu under it (like a small pavucontrol): volume, where the sound goes (speakers, headphones ...), the microphone and the volume of every app that plays. Left click still mutes
+- Volume pop-up: whenever the volume changes (keys, headphones, the bar) a small pill near the bottom shows how loud it is, and the microphone shows when you mute it
+- Volume keys: laptop and keyboard volume keys, headphone buttons (XF86AudioRaiseVolume / LowerVolume / Mute / MicMute) work now, as do SUPER + F10 / F11 / F12 and ALT + [ / ]. The update adds them to your hyprland.lua (a copy is kept)
+- Bar: the Wi-Fi, Bluetooth, power and sound menus are more see-through with a light blur
+- Bar: workspaces react to clicks again (Hyprland's Lua config needs a different command), the dots are bigger and white, and clicking them makes no sound
+- Bar: in the Pills style the launcher logo and the other icons sit in round pills
+- Dock: fixed on the left and right edge (it no longer gets stuck half outside the screen). The top edge is gone, it belongs to the bar; a dock at the top moves to the bottom
+- Settings: the live previews at the top of some pages are off; Home > Settings > Previews turns them on
+
 ## V3.18
 - Power button of the bar opens a small power menu: Lock, Sleep, Log out, Restart and Shut down (the last three need a second click). Lock uses hyprlock and never logs you out; right click locks at once
 - Launcher icon: pick the logo on the bar in Settings > DarkShadow bar > Launcher icon: Auto (the logo of your system), Arch, Gentoo, Fedora, Debian, Ubuntu, NixOS, CachyOS, EndeavourOS, Manjaro, Mint, openSUSE, Void, Alpine, Pop!_OS and more, or the app grid

@@ -55,6 +55,7 @@ Item {
 
         // ---------- hero ----------
         Rectangle {
+            visible: Prefs.previews
             width: parent.width
             height: 200
             radius: 16

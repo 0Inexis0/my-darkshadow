@@ -75,7 +75,7 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 **NixOS**: see [Installation](#installation) below. Then log out and pick Hyprland, and press `SUPER + U`.
 
 ## Features
-**Settings app** (`SUPER+U`), sixteen pages in five groups (touch an arrow to open one) and a search: Home, Sfx & sounds, DarkShadow bar, Bar layout, Hyprland, Recorder, Dashboard, Rofi, Theme, Cursors, Notifications, Idle & Lockscreen, Widgets, Hot corners, Dock, Services.
+**Settings app** (`SUPER+U`), sixteen pages in five groups (touch an arrow to open one) and a search: Home, Sfx & sounds, DarkShadow bar, Bar layout, Hyprland, Recorder, Dashboard, Launcher, Theme, Cursors, Notifications, Idle & Lockscreen, Widgets, Hot corners, Dock, Services.
 
 | Area | What you get |
 | --- | --- |
@@ -96,11 +96,11 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 | **Search** | "Search anything!" in Settings finds every setting ("bar position", "blur", "clock font") and jumps to it |
 | **Updates** | a notification when a new version is out ("Update is Available!"), version and Update now button in the About tab of the dashboard, `rice-update` in a terminal |
 | **Idle & Lockscreen** | lock, screen-off and sleep timers; lock screen with Big / Stacked / Minimal clock in seven fonts (white hours, grey minutes), center or left layout, greeting, avatar, Pill / Box / Line password field, power buttons, screenshot / wallpaper / color background and media, resources, weather and notification lines |
-| **Rofi** | Engine: the built-in DarkShadow Launcher (default) or Rofi; 5 themes (Shadow, Graphite, Midnight, Rose, Paper), layouts list / grid / full-width bar / split (wallpaper on the left), position top, center or bottom, width, rows, corner radius, transparency, blur, font size, icons |
+| **Launcher** | the built-in DarkShadow Launcher: 5 themes (Shadow, Graphite, Midnight, Rose, Paper), layouts list / grid / full-width bar / split (wallpaper on the left), position top, center or bottom, width, rows, corner radius, transparency, blur, font size, icons |
 | **Cursors** | Bibata, Hyprcursor themes (Rose Pine) and packs you can download in Settings: Catppuccin, Phinger; live preview |
 | **Fonts** | one place to set the main and icon fonts |
 | **Welcome intro** | once after installing: night falls over the desktop, a few words, the moon logo draws itself in, "Take a look" opens it up again and Settings starts a short tour (it lights up one part at a time). Play it again with `rice-welcome show`, only the tour: `rice-welcome tour` |
-| **Performance & gaming** | one switch turns off all blur and transparency (Hyprland, kitty, Waybar, rofi, notifications, dashboard, hot corner, dock, widgets); Gaming mode with options to keep blur, animations, shadows or gaps, Do Not Disturb (Settings > Services) |
+| **Performance & gaming** | one switch turns off all blur and transparency (Hyprland, kitty, bar, launcher, notifications, dashboard, hot corner, dock, widgets); Gaming mode with options to keep blur, animations, shadows or gaps, Do Not Disturb (Settings > Services) |
 | **Your settings everywhere** | `./sync.sh` saves your Settings choices to `settings/`, `./install.sh` puts them on your other computers (files you changed there are kept) |
 | **Installer** | interactive (Install, Update, Choose, Restore), backs up everything, supports Arch, CachyOS, Fedora and NixOS, warns when Hyprland is too old |
 
@@ -113,7 +113,7 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 | `SUPER + Q` | terminal |
 | `SUPER + E` | file manager |
 | `SUPER + R` | app menu |
-| `ALT + Space` | app launcher (DarkShadow Launcher, or rofi) |
+| `ALT + Space` | app launcher (DarkShadow Launcher) |
 | `SUPER + C` | close window |
 | `SUPER + V` | toggle floating |
 | `SUPER + P` | pseudo-tile |
@@ -147,7 +147,7 @@ git clone https://github.com/shadowww-dev/shadows-shell
 cd shadows-shell
 ./install.sh
 ```
-The installer updates your system, installs every package (Hyprland, Quickshell, Waybar, swaync, rofi, kitty, fish, Nautilus, fonts, Papirus icons, Bibata cursor, btop, cava, fastfetch, cmatrix, peaclock and more), uses the AUR helper you have (`paru` comes with CachyOS, or it offers `yay`) for the few AUR packages, copies the configs and sets everything up. At the end it warns you when your Hyprland is older than 0.55. Then log out and pick Hyprland.
+The installer updates your system, installs every package (Hyprland, Quickshell, Waybar, swaync, kitty, fish, Nautilus, fonts, Papirus icons, Bibata cursor, btop, cava, fastfetch, cmatrix, peaclock and more), uses the AUR helper you have (`paru` comes with CachyOS, or it offers `yay`) for the few AUR packages, copies the configs and sets everything up. At the end it warns you when your Hyprland is older than 0.55. Then log out and pick Hyprland.
 
 ### Fedora (and Nobara)
 ```bash

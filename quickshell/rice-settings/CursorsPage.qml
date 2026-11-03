@@ -52,6 +52,7 @@ Item {
 
         // ---------- preview ----------
         Rectangle {
+            visible: Prefs.previews
             width: parent.width
             height: 210
             radius: 16

@@ -26,7 +26,7 @@ if [ "$FAMILY" = fedora ] && [ -e "${OSTREE_BOOTED:-/run/ostree-booted}" ]; then
 
 # Arch packages, grouped so the installer can explain what it is doing.
 PKG_DESKTOP=(hyprland hyprlock hypridle xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent qt5-wayland qt6-wayland)
-PKG_SHELL=(quickshell qt6-multimedia waybar swaync rofi awww cava kitty fish fastfetch nautilus matugen)
+PKG_SHELL=(quickshell qt6-multimedia waybar swaync awww cava kitty fish fastfetch nautilus matugen)
 PKG_TOOLS=(wf-recorder grim slurp wl-clipboard libnotify xdg-user-dirs jq curl python playerctl brightnessctl pamixer
            swayosd imagemagick zenity networkmanager bluez bluez-utils pipewire pipewire-pulse wireplumber
            btop cmatrix peaclock pavucontrol gnome-calendar overskride hyprsunset upower power-profiles-daemon)
@@ -35,18 +35,18 @@ PKG_LOOK=(papirus-icon-theme gnome-themes-extra adw-gtk-theme bibata-cursor-them
 ARCH_PKGS=("${PKG_DESKTOP[@]}" "${PKG_SHELL[@]}" "${PKG_TOOLS[@]}" "${PKG_FONTS[@]}" "${PKG_LOOK[@]}")
 
 # programs the desktop needs at runtime (shown at the end if something is missing)
-NEED_CMDS=(Hyprland hyprlock hypridle waybar qs swaync-client rofi awww matugen cava jq python3 grim slurp wl-copy wf-recorder notify-send)
+NEED_CMDS=(Hyprland hyprlock hypridle waybar qs swaync-client awww matugen cava jq python3 grim slurp wl-copy wf-recorder notify-send)
 
 # Fedora packages (dnf). Hyprland, its tools and Quickshell come from the nett00n/hyprland COPR (the newest
 # Hyprland, needed for the Lua config); awww from scottames/awww. Nerd Font icons and the Bibata cursor are not
 # in Fedora: rice-fonts and the installer download them.
-# "a|b": the first of these names your Fedora has (Fedora 43 merged rofi-wayland into rofi, for example).
+# "a|b": the first of these names your Fedora has (package names that changed between Fedora releases).
 # Quickshell: errornointernet/quickshell is the COPR the Quickshell docs point to (nett00n/hyprland has it too).
 # matugen is in Fedora 44 and newer; on older ones the installer downloads it from its GitHub releases.
 FEDORA_COPRS=(nett00n/hyprland errornointernet/quickshell scottames/awww)
 FPKG_DESKTOP=(hyprland hyprlock hypridle hyprsunset hyprpolkitagent xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
               qt5-qtwayland qt6-qtwayland)
-FPKG_SHELL=(quickshell qt6-qtmultimedia waybar SwayNotificationCenter 'rofi-wayland|rofi' awww cava kitty fish fastfetch nautilus matugen)
+FPKG_SHELL=(quickshell qt6-qtmultimedia waybar SwayNotificationCenter awww cava kitty fish fastfetch nautilus matugen)
 FPKG_TOOLS=(wf-recorder grim slurp wl-clipboard libnotify xdg-user-dirs jq curl python3 playerctl brightnessctl pamixer
             swayosd ImageMagick zenity NetworkManager bluez pipewire pipewire-pulseaudio wireplumber
             btop cmatrix pavucontrol gnome-calendar upower power-profiles-daemon tar xz unzip)

@@ -11,7 +11,7 @@
 
 "Flat" (no blur, no transparency) is on when Lite is on, or when gaming mode is on and
 "Keep blur & transparency" is off. It reaches:
-  Hyprland (blur off, every window opaque), kitty (background_opacity 1), Waybar, rofi,
+  Hyprland (blur off, every window opaque), kitty (background_opacity 1), Waybar, the launcher,
   notifications (swaync), the dashboard, the hot corner, the dock and the desktop widgets.
 Gaming mode also turns off animations, shadows and gaps (unless you keep them), can turn on
 Do Not Disturb, and stops the dashboard from opening at the bottom edge.

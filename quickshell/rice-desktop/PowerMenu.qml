@@ -15,7 +15,7 @@ PanelWindow {
     readonly property color fg: "#F6F5F4"
     readonly property color dim: Qt.rgba(0.965, 0.961, 0.957, 0.6)
     readonly property color line: Qt.rgba(1, 1, 1, 0.09)
-    readonly property color bg: Qt.rgba(0.05, 0.05, 0.05, Look.flat ? 1 : 0.86)
+    readonly property color bg: Qt.rgba(0.05, 0.05, 0.05, Look.flat ? 1 : 0.62)
     property var bc: ({})
     readonly property bool atBottom: bc.position === "bottom"
     readonly property real barSpace: (bc.enabled === false ? 34 : (bc.height ? bc.height : 38)) + (bc.style === "flat" ? 0 : 16) + 8

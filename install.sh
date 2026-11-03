@@ -523,7 +523,7 @@ step_finish() {
   [ -x "$BIN/desktop-set" ] && task "Desktop widgets settings" t "$BIN/desktop-set" state
   command -v swaync >/dev/null 2>&1 && task "Notifications style" t "$BIN/rice-notify" apply
   command -v hyprlock >/dev/null 2>&1 && task "Lock screen and idle timers" t "$BIN/rice-lock" apply
-  task "Launcher and Rofi theme" t "$BIN/rice-rofi" apply
+  task "Launcher and bar blur" t "$BIN/rice-rofi" apply
   [ -x "$BIN/rice-bar" ] && task "DarkShadow bar (Waybar stays off)" t "$BIN/rice-bar" start
   task "Hot corner" t "$BIN/rice-hotcorner" apply
   [ -x "$BIN/desktop-set" ] && task "Dock and widget blur" t "$BIN/desktop-set" dock-blur
@@ -640,7 +640,7 @@ if [ "$MENU_CHOICE" = 2 ]; then
   menu_multi "Choose what to install" \
     "Packages|Hyprland, Quickshell, Waybar, tools|${WANT[0]}" \
     "Fonts|Inter, Rubik, Nerd Font icons and clock fonts|1" \
-    "Config files|Hyprland, Waybar, notifications, rofi|1" \
+    "Config files|Hyprland, bar, notifications, launcher|1" \
     "Apps and scripts|Settings app, widgets, dock, hot corner|1" \
     "Your settings|Waybar look, dashboard, widgets, lock screen (settings/)|1"
   WANT=("${MENU_SEL[@]}")

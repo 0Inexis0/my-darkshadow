@@ -81,12 +81,25 @@ def migrate_main(path):
     if "rice-launch" not in n:
         n = re.sub(r'(hl\.bind\(\s*"ALT \+ Space"\s*,\s*hl\.dsp\.exec_cmd\()\s*"[^"]*rofi[^"]*"(\s*\))',
                    r'\1"$HOME/.local/bin/rice-launch"\2', n)
+    # V3.19: the volume keys go through rice-volume, so the shell can show how loud it is
+    for old, new in (("pamixer -i 5", "up"), ("pamixer -d 5", "down"), ("swayosd-client --output-volume raise", "up"),
+                     ("swayosd-client --output-volume lower", "down"), ("swayosd-client --output-volume mute-toggle", "mute")):
+        n = n.replace('hl.dsp.exec_cmd("%s")' % old, 'hl.dsp.exec_cmd("$HOME/.local/bin/rice-volume %s")' % new)
+    if "XF86AudioRaiseVolume" not in n:
+        n = n.rstrip("\n") + """
+
+-- volume keys of laptops, keyboards and headphones (added by DarkShadow's Shell V3.19)
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("$HOME/.local/bin/rice-volume up"),   { locked = true })
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("$HOME/.local/bin/rice-volume down"), { locked = true })
+hl.bind("XF86AudioMute",        hl.dsp.exec_cmd("$HOME/.local/bin/rice-volume mute"), { locked = true })
+hl.bind("XF86AudioMicMute",     hl.dsp.exec_cmd("$HOME/.local/bin/rice-volume mic"),  { locked = true })
+"""
     if n != s:
         bak = path + ".bak-bar"
         if not os.path.exists(bak):
             open(bak, "w").write(s)
         open(path, "w").write(n)
-        changes.append("hyprland.lua: autostart and ALT + Space use the DarkShadow bar and launcher (copy: hyprland.lua.bak-bar)")
+        changes.append("hyprland.lua: bar, launcher and volume keys of DarkShadow's Shell (copy: hyprland.lua.bak-bar)")
 
 
 if os.path.isdir(hypr):

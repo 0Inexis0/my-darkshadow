@@ -258,8 +258,8 @@ def main(a):
             die("%s KEY on|off (keys: %s)" % (cmd, ", ".join(k for k in c[cmd] if k != "apps")))
         if cmd == "dock" and a[2] == "position":
             if a[3] not in ("bottom", "top", "left", "right"):
-                die("dock position: bottom|top|left|right")
-            c["dock"]["position"] = a[3]
+                die("dock position: bottom|left|right")
+            c["dock"]["position"] = "bottom" if a[3] == "top" else a[3]   # the top belongs to the bar
         elif cmd == "dock" and a[2] == "opacity":
             c["dock"]["opacity"] = round(max(0.2, min(1.0, float(a[3]))), 2)
         else:

@@ -304,8 +304,8 @@ hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 
 -- Laptop multimedia keys for volume and LCD brightness
-hl.bind("ALT + bracketright", hl.dsp.exec_cmd("pamixer -i 5"))
-hl.bind("ALT + bracketleft", hl.dsp.exec_cmd("pamixer -d 5"))
+hl.bind("ALT + bracketright", hl.dsp.exec_cmd("$HOME/.local/bin/rice-volume up"))
+hl.bind("ALT + bracketleft", hl.dsp.exec_cmd("$HOME/.local/bin/rice-volume down"))
 hl.bind("ALT + Space", hl.dsp.exec_cmd("$HOME/.local/bin/rice-launch"))
 -- Requires playerctl
 hl.bind("XF86AudioNext",  hl.dsp.exec_cmd("playerctl next"),       { locked = true })
@@ -314,9 +314,14 @@ hl.bind("XF86AudioPlay",  hl.dsp.exec_cmd("playerctl play-pause"), { locked = tr
 hl.bind("XF86AudioPrev",  hl.dsp.exec_cmd("playerctl previous"),   { locked = true })
 
 -- Volume
-hl.bind("SUPER + F12", hl.dsp.exec_cmd("swayosd-client --output-volume raise"))
-hl.bind("SUPER + F11", hl.dsp.exec_cmd("swayosd-client --output-volume lower"))
-hl.bind("SUPER + F10", hl.dsp.exec_cmd("swayosd-client --output-volume mute-toggle"))
+hl.bind("SUPER + F12", hl.dsp.exec_cmd("$HOME/.local/bin/rice-volume up"))
+hl.bind("SUPER + F11", hl.dsp.exec_cmd("$HOME/.local/bin/rice-volume down"))
+hl.bind("SUPER + F10", hl.dsp.exec_cmd("$HOME/.local/bin/rice-volume mute"))
+-- volume keys of laptops, keyboards and headphones (the shell shows how loud it is)
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("$HOME/.local/bin/rice-volume up"),   { locked = true })
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("$HOME/.local/bin/rice-volume down"), { locked = true })
+hl.bind("XF86AudioMute",        hl.dsp.exec_cmd("$HOME/.local/bin/rice-volume mute"), { locked = true })
+hl.bind("XF86AudioMicMute",     hl.dsp.exec_cmd("$HOME/.local/bin/rice-volume mic"),  { locked = true })
 
 
 --------------------------------

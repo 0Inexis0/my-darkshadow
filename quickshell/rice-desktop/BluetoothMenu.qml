@@ -17,7 +17,7 @@ PanelWindow {
     readonly property color dim: Qt.rgba(0.965, 0.961, 0.957, 0.6)
     readonly property color line: Qt.rgba(1, 1, 1, 0.09)
     readonly property color hot: Qt.rgba(1, 1, 1, 0.07)
-    readonly property real alpha: Look.flat ? 1 : 0.86
+    readonly property real alpha: Look.flat ? 1 : 0.62
     readonly property color bg: Qt.rgba(0.05, 0.05, 0.05, alpha)
     property var bc: ({})
     readonly property bool atBottom: bc.position === "bottom"

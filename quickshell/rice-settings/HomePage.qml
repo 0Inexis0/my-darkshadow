@@ -576,6 +576,14 @@ Item {
                 onToggled: function(v) { page.ctl.setAnim("enabled", v) }
             }
 
+            SectionTitle { text: "Previews"; sub: "The live pictures at the top of some pages." }
+            ToggleRow {
+                label: "Show previews"
+                desc: "Bar, Launcher, Notifications, Dashboard and Cursors show a small live picture of your choices"
+                checked: Prefs.previews
+                onToggled: function(v) { Prefs.setPreviews(v) }
+            }
+
             SectionTitle { text: "Scrolling"; sub: "How fast pages move. Try it in the box." }
 
             SliderRow {

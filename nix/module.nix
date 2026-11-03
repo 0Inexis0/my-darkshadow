@@ -10,7 +10,6 @@
     swaynotificationcenter
     hyprlock
     hypridle
-    rofi
     cava
     curl
     jq

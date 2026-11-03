@@ -312,6 +312,8 @@ ShellRoot {
     WifiMenu { }
     BluetoothMenu { }
     PowerMenu { }
+    VolumeMenu { }
+    VolumeOsd { }
     WallPreview { path: dash.previewPath }
 
     Dock { dc: root.cfg.dock ? root.cfg.dock : ({}) }

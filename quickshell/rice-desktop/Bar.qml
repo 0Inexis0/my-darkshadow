@@ -95,7 +95,8 @@ PanelWindow {
         for (let i = 0; i < l.length; i++) if (l[i].id > m && l[i].id <= 20) m = l[i].id
         return m
     }
-    function goWs(id) { Hyprland.dispatch("workspace " + id) }
+    // through ws-go: Hyprland with a Lua config wants hl.dsp.focus(...), the old "workspace N" does nothing there
+    function goWs(id) { run("\"$HOME/.local/bin/ws-go\" " + id) }
     function run(cmd) { Quickshell.execDetached(["bash", "-c", cmd]) }
 
     function pickPlayer() {
@@ -152,10 +153,11 @@ PanelWindow {
     }
 
     Component { id: mLauncher
-        Item { property bool shown: true; width: 22; height: bar.barH
+        Item { property bool shown: true; width: 24; height: bar.barH
             MIcon { visible: bar.logoKey === "apps"; anchors.centerIn: parent; name: "apps"; glyph: String.fromCodePoint(0xF003B); size: 18; color: lm.containsMouse ? bar.fg : bar.dim
                 scale: lm.containsMouse ? 1.12 : 1; Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutBack } } }
-            Text { visible: bar.logoKey !== "apps"; anchors.centerIn: parent; anchors.horizontalCenterOffset: 1
+            Text { visible: bar.logoKey !== "apps"; anchors.fill: parent
+                horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
                 text: bar.logos[bar.logoKey] !== undefined ? String.fromCodePoint(bar.logos[bar.logoKey]) : ""
                 font.family: Fonts.icons; font.pixelSize: 18; color: bar.fg
                 scale: lm.containsMouse ? 1.15 : 1; Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } } }
@@ -170,8 +172,8 @@ PanelWindow {
             readonly property string st: bar.wsStyle
             readonly property bool pac: st === "pacman"
             readonly property bool dots: st === "dots"
-            readonly property real cw: dots ? 12 : (pac ? 18 : 16)
-            readonly property real sp: dots ? 7 : 5
+            readonly property real cw: dots ? 14 : (pac ? 20 : 18)
+            readonly property real sp: dots ? 6 : 4
             readonly property int count: bar.maxWs()
             readonly property int fi: bar.focusedId - 1
             width: wsRow.width; height: bar.barH
@@ -187,15 +189,15 @@ PanelWindow {
                         readonly property int wid: index + 1
                         readonly property bool act: bar.focusedId === wid
                         readonly property bool occ: bar.occupied(wid)
-                        width: wsm.dots && act ? 32 : wsm.cw; height: bar.barH
+                        width: wsm.dots && act ? 36 : wsm.cw; height: bar.barH
                         Behavior on width { NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 1.4 } }
 
                         // dots: a dot, the active one stretched into a pill
                         Rectangle {
                             visible: wsm.dots
                             anchors.centerIn: parent
-                            width: parent.width; height: wm.containsMouse && !act ? 12 : 10; radius: height / 2
-                            color: act ? Look.accent : (occ ? Qt.rgba(0.965, 0.961, 0.957, 0.75) : Qt.rgba(0.965, 0.961, 0.957, 0.22))
+                            width: act ? parent.width : (wm.containsMouse ? 14 : 12); height: wm.containsMouse && !act ? 14 : 12; radius: height / 2
+                            color: act ? bar.fg : (occ ? Qt.rgba(0.965, 0.961, 0.957, 0.6) : Qt.rgba(0.965, 0.961, 0.957, 0.24))
                             Behavior on color { ColorAnimation { duration: 200 } }
                             Behavior on height { NumberAnimation { duration: 120 } }
                         }
@@ -203,7 +205,7 @@ PanelWindow {
                         Rectangle {
                             visible: wsm.pac
                             anchors.centerIn: parent
-                            width: occ ? 9 : 6; height: width; radius: width / 2
+                            width: occ ? 10 : 7; height: width; radius: width / 2
                             color: Qt.rgba(0.965, 0.961, 0.957, occ ? 0.9 : 0.45)
                             opacity: act ? 0 : (wid < bar.focusedId ? 0.25 : 1)
                             scale: wm.containsMouse ? 1.35 : 1
@@ -215,13 +217,13 @@ PanelWindow {
                             visible: !wsm.dots && !wsm.pac
                             anchors.centerIn: parent
                             text: wsm.st === "numbers" ? String(wid) : String.fromCharCode(64 + wid)
-                            font.family: Fonts.main; font.pixelSize: 13; font.weight: act ? Font.Bold : Font.Medium
-                            color: act ? Look.accent : (occ ? Qt.rgba(0.965, 0.961, 0.957, 0.9) : Qt.rgba(0.965, 0.961, 0.957, 0.32))
+                            font.family: Fonts.main; font.pixelSize: 14; font.weight: act ? Font.Bold : Font.Medium
+                            color: act ? bar.fg : (occ ? Qt.rgba(0.965, 0.961, 0.957, 0.9) : Qt.rgba(0.965, 0.961, 0.957, 0.32))
                             scale: act ? 1.18 : (wm.containsMouse ? 1.12 : 1)
                             Behavior on color { ColorAnimation { duration: 200 } }
                             Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
                         }
-                        MouseArea { id: wm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("select"); bar.goWs(wid) } }
+                        MouseArea { id: wm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: bar.goWs(wid) }
                     }
                 }
             }
@@ -263,7 +265,7 @@ PanelWindow {
                 }
             }
             WheelHandler { acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                onWheel: function(e) { Hyprland.dispatch("workspace " + (e.angleDelta.y > 0 ? "e-1" : "e+1")) } }
+                onWheel: function(e) { bar.goWs(e.angleDelta.y > 0 ? "e-1" : "e+1") } }
         }
     }
 
@@ -326,12 +328,15 @@ PanelWindow {
             MIcon { anchors.centerIn: parent; size: 23; color: bar.muted ? bar.dim : bar.fg
                 name: bar.muted ? "volume_off" : (bar.vol < 0.34 ? "volume_mute" : (bar.vol < 0.67 ? "volume_down" : "volume_up"))
                 glyph: String.fromCodePoint(bar.muted ? 0xF0581 : (bar.vol < 0.34 ? 0xF057F : (bar.vol < 0.67 ? 0xF0580 : 0xF057E))) }
-            MouseArea { id: vm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                onClicked: if (bar.sink && bar.sink.audio) bar.sink.audio.muted = !bar.sink.audio.muted
+            MouseArea { id: vm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
+                onClicked: function(m) {
+                    if (m.button === Qt.RightButton) { const p = mapToItem(null, width / 2, 0); bar.run("\"$HOME/.local/bin/rice-volume\" menu " + Math.round(p.x)); return }
+                    if (bar.sink && bar.sink.audio) bar.sink.audio.muted = !bar.sink.audio.muted
+                }
                 onWheel: function(e) { if (bar.sink && bar.sink.audio) bar.sink.audio.volume = Math.max(0, Math.min(1, bar.sink.audio.volume + (e.angleDelta.y > 0 ? 0.04 : -0.04))) } }
             Rectangle {   // a small level line under the icon
                 anchors.horizontalCenter: parent.horizontalCenter; y: parent.height / 2 + 14; height: 2; radius: 1
-                width: 16 * Math.min(1, bar.vol); color: Look.accent; opacity: vm.containsMouse ? 0.9 : 0
+                width: 16 * Math.min(1, bar.vol); color: bar.fg; opacity: vm.containsMouse ? 0.9 : 0
                 Behavior on opacity { NumberAnimation { duration: 160 } }
             }
         }
@@ -424,7 +429,7 @@ PanelWindow {
                     readonly property bool shown: ld.status === Loader.Ready && ld.item && ld.item.shown !== false
                     readonly property bool pill: bar.sty === "pills"
                     visible: shown
-                    width: shown ? ld.width + (pill ? 24 : 0) : 0
+                    width: shown ? (pill ? Math.max(bar.barH, ld.width + 22) : ld.width) : 0
                     height: bar.barH
                     Rectangle { visible: slot.pill; anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: bar.barH
                         radius: height / 2; color: bar.bg; border.width: 1; border.color: bar.line }
