@@ -1,5 +1,8 @@
 # Changelog
 
+## V3.25
+- Bug fixes
+
 ## V3.24
 - Notifications, rebuilt in the Google style: the shell shows them itself now. Pop-ups look like the control center (the app's icon in your shape, the time, pictures, action buttons, a thin line that shows how long it stays), grow in from their side and slide away; pointing at one keeps it, important ones wait until you close them. The update switches to them once; swaync stays one click away (Settings > Notifications > Shown by)
 - Control center (SUPER + N or the bell on the bar): switches, sliders, music with a wavy, seekable progress line, and your notifications; smooth Material 3 motion when it opens and between Control and Overview

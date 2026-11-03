@@ -93,7 +93,7 @@ Item {
             x: sp.small ? 56 : 68; y: 13; width: parent.width - x - 14
             spacing: 2
             T { scaled: false; text: "Messages  ·  now"; font.pixelSize: sp.small ? 9 : 11; color: sp.p.dim }
-            T { scaled: false; width: parent.width; elide: Text.ElideRight; text: "Bartek"; font.pixelSize: sp.small ? 11 : page.v("font_size", 13) + 1; font.weight: Font.DemiBold; color: sp.p.fg }
+            T { scaled: false; width: parent.width; elide: Text.ElideRight; text: "Example text"; font.pixelSize: sp.small ? 11 : page.v("font_size", 13) + 1; font.weight: Font.DemiBold; color: sp.p.fg }
             T { scaled: false; width: parent.width; elide: Text.ElideRight; visible: !sp.small; text: "Did you see the new notifications?"; font.pixelSize: page.v("font_size", 13) - 1; color: sp.p.dim }
             Row {
                 visible: !sp.small; spacing: 6; topPadding: 6
