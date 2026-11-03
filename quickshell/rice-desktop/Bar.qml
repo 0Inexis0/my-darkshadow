@@ -17,7 +17,7 @@ PanelWindow {
 
     // ---------- settings (~/.config/rice/bar.json) ----------
     property var bc: ({})
-    readonly property bool on: bc.enabled === true
+    readonly property bool on: bc.enabled !== false     // no bar.json yet (a fresh install or an update) = on
     readonly property string sty: bc.style === "flat" || bc.style === "islands" || bc.style === "pills" ? bc.style : "island"
     readonly property bool island: sty === "island"
     readonly property bool floating: sty !== "flat"
@@ -59,19 +59,16 @@ PanelWindow {
     property string cfgText: ""
     readonly property string home: Quickshell.env("HOME")
 
-    Process {
-        id: cfgProc
-        command: ["bash", "-c", "cat \"$HOME/.config/rice/bar.json\" 2>/dev/null"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const t = text.trim()
-                if (t === bar.cfgText) return
-                bar.cfgText = t
-                try { bar.bc = t === "" ? ({}) : JSON.parse(t) } catch (e) { }
-            }
+    Trigger {
+        path: bar.home + "/.config/rice/bar.json"
+        every: 2000
+        onContent: function(t) {
+            const x = t.trim()
+            if (x === bar.cfgText) return
+            bar.cfgText = x
+            try { bar.bc = x === "" ? ({}) : JSON.parse(x) } catch (e) { }
         }
     }
-    Timer { interval: 1000; running: true; repeat: true; triggeredOnStart: true; onTriggered: if (!cfgProc.running) cfgProc.running = true }
 
     // ---------- the window ----------
     visible: on

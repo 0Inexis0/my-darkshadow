@@ -1,5 +1,15 @@
 # Changelog
 
+## V3.22
+- Fix: after an update the DarkShadow bar did not show up (with no bar.json yet it counted as off). It is on now when you never chose otherwise, and the installer switches it on once for everyone coming from an older version
+- Much less work in the background, most noticeable on laptops: the shell used to start small programs about 30 times a second to check whether the launcher, the menus or the dashboard should open and whether a setting changed. It now watches those files and reads them only when they change
+- The visualizer does no drawing while it is silent, and cava runs at 24 frames a second instead of 30
+- Launcher: its settings (transparency, blur, theme ...) are read again as soon as you change them in Settings > Launcher
+- The dock is rebuilt: on the bottom, left and right edge alike it slides in and out without resizing its window, a thin strip at the edge brings it back, and every setting on the Dock page works on every edge. Icons are drawn directly (the grey effect only when Tint is on)
+- Hyprland: outer gaps are 5 by default (the update changes the old default 12 to 5; Settings > Hyprland sets another value)
+- The installer no longer installs overskride (Bluetooth has its own menu on the bar) or swayosd (the shell shows the volume itself)
+- SUPER + A opens the dashboard on its Control tab (it opened the hot corner, which is gone)
+
 ## V3.21
 - Bar: the workspace dots are back to the pill that stretches, a bit bigger
 - Bar: left click on the volume icon opens the sound menu, right click mutes. Wi-Fi, Bluetooth and power open only their own menus now (the old overskride / nmtui windows and the right-click lock are gone)

@@ -25,7 +25,6 @@
     xdg-user-dirs
     pavucontrol
     gnome-calendar
-    overskride
     hyprsunset
     upower
     nautilus

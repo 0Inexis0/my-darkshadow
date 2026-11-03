@@ -524,7 +524,7 @@ step_finish() {
   command -v swaync >/dev/null 2>&1 && task "Notifications style" t "$BIN/rice-notify" apply
   command -v hyprlock >/dev/null 2>&1 && task "Lock screen and idle timers" t "$BIN/rice-lock" apply
   task "Launcher and bar blur" t "$BIN/rice-rofi" apply
-  [ -x "$BIN/rice-bar" ] && task "DarkShadow bar (Waybar stays off)" t "$BIN/rice-bar" start
+  [ -x "$BIN/rice-bar" ] && task "DarkShadow bar (Waybar stays off)" t bash -c "\"$BIN/rice-bar\" migrate && \"$BIN/rice-bar\" start"
   task "Hot corner" t "$BIN/rice-hotcorner" apply
   [ -x "$BIN/desktop-set" ] && task "Dock and widget blur" t "$BIN/desktop-set" dock-blur
   [ -x "$BIN/rice-dashboard" ] && task "Dashboard blur" t "$BIN/rice-dashboard" blur

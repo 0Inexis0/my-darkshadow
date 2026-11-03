@@ -30,11 +30,18 @@ PanelWindow {
         stdout: SplitParser {
             onRead: function(line) {
                 const p = line.split(";").filter(function(s) { return s.length > 0 }).map(Number)
-                if (p.length > 0) vz.bars = p
+                if (p.length === 0) return
+                // nothing changes while it is silent: skip the update
+                let loud = 0
+                for (let i = 0; i < p.length; i++) if (p[i] > loud) loud = p[i]
+                if (loud < 0.5 && vz.quiet) return
+                vz.quiet = loud < 0.5
+                vz.bars = p
             }
         }
     }
 
+    property bool quiet: false
     Row {
         anchors.fill: parent
         spacing: 3

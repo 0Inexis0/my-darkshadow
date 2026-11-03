@@ -45,24 +45,13 @@ PanelWindow {
     }
     function show(x) { cx = x; armed = ""; barProc.running = true; open = true }
     function hide() { open = false; armed = "" }
-    property string lastCmd: ""
-    property bool cmdSeen: false
-    Process {
-        id: trig
-        command: ["bash", "-c", "cat \"$HOME/.cache/rice/power-open\" 2>/dev/null"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const o = text.trim()
-                if (pw.cmdSeen && o !== "" && o !== pw.lastCmd) {
-                    const x = parseFloat(o.split(" ")[1])
-                    if (pw.open) pw.hide(); else pw.show(isNaN(x) ? pw.width - 120 : x)
-                }
-                pw.lastCmd = o
-                pw.cmdSeen = true
-            }
+    Trigger {
+        name: "power-open"
+        onFired: function(o) {
+            const x = parseFloat(o.split(" ")[1])
+            if (pw.open) pw.hide(); else pw.show(isNaN(x) ? pw.width - 120 : x)
         }
     }
-    Timer { interval: 200; running: true; repeat: true; triggeredOnStart: true; onTriggered: if (!trig.running) trig.running = true }
 
     visible: open || t > 0.01
     color: "transparent"

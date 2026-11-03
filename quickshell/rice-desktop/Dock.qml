@@ -4,16 +4,34 @@ import Quickshell.Services.Mpris
 import QtQuick
 import QtQuick.Effects
 
-PanelWindow {
+// The dock (Settings > Dock), rebuilt in V3.22. Two layer windows:
+//   - the dock itself, which only exists while it is shown, at its full size (it never resizes while it moves);
+//   - with "Show on hover", a thin invisible strip along the screen edge that brings it back.
+// Bottom, left or right edge. Pinned apps from desktop.json, then every open app; the song that plays; apps button.
+Scope {
     id: dock
     property var dc: ({})
     property bool pinned: false
     property bool hovering: false
+    readonly property bool on: dc.enabled === true
     readonly property bool autoHide: dc.hover !== false
-    readonly property bool reveal: !autoHide || pinned || hovering
-    // the screen edge: bottom, left or right (Settings > Dock > Position); the top belongs to the bar
+    readonly property bool reveal: on && (!autoHide || pinned || hovering)
     readonly property string edge: dc.position === "left" || dc.position === "right" ? dc.position : "bottom"
     readonly property bool vert: edge === "left" || edge === "right"
+    readonly property real alpha: Look.flat ? 1 : (dc.opacity !== undefined ? Number(dc.opacity) : 0.78)
+    readonly property int icon: 34          // app icon size
+    readonly property int cell: 46          // room for one app along the dock
+    readonly property int thick: 60         // the dock's width across
+
+    // 0 = hidden, 1 = shown; the window stays until the slide is over
+    property real t: reveal ? 1 : 0
+    Behavior on t { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
+
+    property bool initDone: false
+    onDcChanged: {
+        if (!initDone && dc.enabled !== undefined) { pinned = dc.pinnedStartup === true; initDone = true }
+    }
+    Timer { id: hideTimer; interval: 600; onTriggered: dock.hovering = false }
 
     function pickPlayer() {
         const l = Mpris.players.values
@@ -21,6 +39,7 @@ PanelWindow {
         return l.length > 0 ? l[0] : null
     }
     readonly property var player: pickPlayer()
+    readonly property bool showMedia: dc.media !== false && player !== null
 
     function build() {
         const tl = ToplevelManager.toplevels.values
@@ -48,235 +67,196 @@ PanelWindow {
         return out
     }
     readonly property var items: build()
-
     function iconFor(it) {
         const n = it.entry ? it.entry.icon : (it.tl ? (it.tl.appId || "").toLowerCase() : "")
         const p = n !== "" ? Quickshell.iconPath(n, true) : ""
         return p !== "" ? p : Quickshell.iconPath("application-x-executable", true)
     }
 
-    property bool initDone: false
-    onDcChanged: {
-        if (!initDone && dc.enabled !== undefined) {
-            pinned = dc.pinnedStartup === true
-            initDone = true
+    // ---------------- the strip that brings the dock back ----------------
+    PanelWindow {
+        id: strip
+        visible: dock.on && dock.autoHide && !dock.reveal && dock.t < 0.05
+        color: "transparent"
+        anchors { bottom: dock.edge === "bottom"; left: dock.edge === "left"; right: dock.edge === "right" }
+        implicitWidth: dock.vert ? 3 : Math.max(200, panel.width)
+        implicitHeight: dock.vert ? Math.max(200, panel.height) : 3
+        exclusionMode: ExclusionMode.Ignore
+        WlrLayershell.layer: WlrLayer.Top
+        WlrLayershell.namespace: "rice-dock-edge"
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+            onEntered: { hideTimer.stop(); dock.hovering = true }
         }
     }
 
-    visible: dc.enabled === true
-    color: "transparent"
-    anchors { bottom: edge === "bottom"; left: edge === "left"; right: edge === "right" }
-    // the window keeps one size; hiding slides the dock out and leaves only a thin strip at the edge that reacts
-    // (no resizing while it moves, which went wrong on the left and right edges)
-    implicitWidth: vert ? bar.width + 28 : bar.width + 24
-    implicitHeight: vert ? bar.height + 24 : bar.height + 28
-    exclusionMode: ExclusionMode.Ignore
-    mask: Region { item: dock.reveal ? fullArea : edgeStrip }
-    Item { id: fullArea; anchors.fill: parent }
-    Item {
-        id: edgeStrip
-        width: dock.vert ? 6 : parent.width
-        height: dock.vert ? parent.height : 6
-        x: dock.edge === "right" ? parent.width - 6 : 0
-        y: dock.vert ? 0 : parent.height - 6
-    }
-    WlrLayershell.layer: WlrLayer.Top
-    WlrLayershell.namespace: "rice-dock"
+    // ---------------- the dock ----------------
+    PanelWindow {
+        id: win
+        visible: dock.on && (dock.reveal || dock.t > 0.01)
+        color: "transparent"
+        anchors { bottom: dock.edge === "bottom"; left: dock.edge === "left"; right: dock.edge === "right" }
+        implicitWidth: panel.width + (dock.vert ? 18 : 24)
+        implicitHeight: panel.height + (dock.vert ? 24 : 18)
+        exclusionMode: ExclusionMode.Ignore
+        WlrLayershell.layer: WlrLayer.Top
+        WlrLayershell.namespace: "rice-dock"
 
-    MouseArea {
-        anchors.fill: parent
-        hoverEnabled: true
-        acceptedButtons: Qt.NoButton
-        onEntered: { hideTimer.stop(); dock.hovering = true }
-        onExited: hideTimer.restart()
-    }
-    Timer { id: hideTimer; interval: 500; onTriggered: dock.hovering = false }
-
-    Rectangle {
-        id: bar
-        anchors.horizontalCenter: dock.vert ? undefined : parent.horizontalCenter
-        anchors.verticalCenter: dock.vert ? parent.verticalCenter : undefined
-        anchors.bottom: dock.edge === "bottom" ? parent.bottom : undefined
-        anchors.left: dock.edge === "left" ? parent.left : undefined
-        anchors.right: dock.edge === "right" ? parent.right : undefined
-        anchors.bottomMargin: 14
-        anchors.leftMargin: 14
-        anchors.rightMargin: 14
-        // hidden = slid out of the screen, toward its edge
-        property real hid: dock.reveal ? 0 : 1
-        Behavior on hid { NumberAnimation { duration: 280; easing.type: Easing.OutCubic } }
-        readonly property real away: (dock.vert ? width : height) + 20
-        transform: Translate {
-            x: dock.edge === "left" ? -bar.away * bar.hid : (dock.edge === "right" ? bar.away * bar.hid : 0)
-            y: dock.edge === "bottom" ? bar.away * bar.hid : 0
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+            acceptedButtons: Qt.NoButton
+            onEntered: { hideTimer.stop(); dock.hovering = true }
+            onExited: if (dock.autoHide) hideTimer.restart()
         }
-        opacity: 1 - bar.hid * 0.6
-        width: dock.vert ? 60 : row.width + 20
-        height: dock.vert ? row.height + 20 : 60
-        radius: 22
-        color: dock.dc.background === false ? "transparent" : Qt.rgba(0.1, 0.1, 0.11, Look.flat ? 1 : (dock.dc.opacity !== undefined ? Number(dock.dc.opacity) : 0.78))
-        border.width: dock.dc.background === false ? 0 : 1
-        border.color: Qt.rgba(1, 1, 1, 0.07)
-        Behavior on color { ColorAnimation { duration: 200 } }
 
-        Grid {
-            id: row
-            anchors.centerIn: parent
-            spacing: 6
-            // one row along the bottom or top, one column along the sides
-            columns: dock.vert ? 1 : 1000
-            horizontalItemAlignment: Grid.AlignHCenter
-            verticalItemAlignment: Grid.AlignVCenter
-
-            Rectangle {
-                visible: dock.dc.pinButton !== false
-                width: 40
-                height: 40
-                radius: 14
-                color: dock.pinned ? "#F6F5F4" : (pinMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.14) : Qt.rgba(1, 1, 1, 0.06))
-                Behavior on color { ColorAnimation { duration: 140 } }
-                T {
-                    anchors.centerIn: parent
-                    text: ""
-                    font.pixelSize: 15
-                    color: dock.pinned ? "#0d0d0d" : "#F6F5F4"
-                    rotation: dock.pinned ? 0 : 45
-                    Behavior on rotation { NumberAnimation { duration: 200 } }
-                }
-                MouseArea {
-                    id: pinMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: dock.pinned = !dock.pinned
-                }
+        Rectangle {
+            id: panel
+            // sits 10 px from its edge; hidden = slid out over that edge
+            readonly property real away: (dock.vert ? width : height) + 14
+            x: dock.vert ? (dock.edge === "left" ? 10 : parent.width - width - 10) : (parent.width - width) / 2
+            y: dock.vert ? (parent.height - height) / 2 : parent.height - height - 10
+            transform: Translate {
+                x: dock.edge === "left" ? -panel.away * (1 - dock.t) : (dock.edge === "right" ? panel.away * (1 - dock.t) : 0)
+                y: dock.edge === "bottom" ? panel.away * (1 - dock.t) : 0
             }
+            opacity: 0.4 + 0.6 * dock.t
+            width: dock.vert ? dock.thick : list.implicitWidth + 20
+            height: dock.vert ? list.implicitHeight + 20 : dock.thick
+            radius: 22
+            color: dock.dc.background === false ? "transparent" : Qt.rgba(0.1, 0.1, 0.11, dock.alpha)
+            border.width: dock.dc.background === false ? 0 : 1
+            border.color: Qt.rgba(1, 1, 1, 0.07)
 
-            Repeater {
-                model: dock.items
-                delegate: Item {
-                    id: app
-                    width: 44
-                    height: 48
-                    readonly property bool tint: dock.dc.tint === true
-                    Image {
-                        id: ico
-                        width: 34
-                        height: 34
-                        x: 5
-                        y: 3
-                        visible: false
-                        source: dock.iconFor(modelData)
-                        sourceSize.width: 64
-                        sourceSize.height: 64
-                        asynchronous: true
-                    }
-                    MultiEffect {
-                        id: fx
-                        x: 5
-                        y: 3
-                        width: 34
-                        height: 34
-                        source: ico
-                        colorization: app.tint ? 1.0 : 0.0
-                        colorizationColor: "#e4e4e7"
-                        scale: appMouse.containsMouse ? 1.18 : 1.0
-                        transformOrigin: dock.edge === "left" ? Item.Left : (dock.edge === "right" ? Item.Right : Item.Bottom)
-                        Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
-                        Behavior on colorization { NumberAnimation { duration: 200 } }
-                    }
-                    Rectangle {
-                        visible: modelData.tl !== null
-                        readonly property bool act: modelData.tl && modelData.tl.activated
-                        width: dock.vert ? 4 : (act ? 14 : 5)
-                        height: dock.vert ? (act ? 14 : 5) : 4
-                        radius: 2
-                        color: "#F6F5F4"
-                        opacity: act ? 1 : 0.55
-                        anchors.horizontalCenter: dock.vert ? undefined : parent.horizontalCenter
-                        anchors.verticalCenter: dock.vert ? parent.verticalCenter : undefined
-                        anchors.bottom: dock.vert ? undefined : parent.bottom
-                        anchors.left: dock.edge === "left" ? parent.left : undefined
-                        anchors.right: dock.edge === "right" ? parent.right : undefined
-                        Behavior on width { NumberAnimation { duration: 160 } }
-                        Behavior on height { NumberAnimation { duration: 160 } }
-                    }
-                    MouseArea {
-                        id: appMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            if (modelData.tl) modelData.tl.activate()
-                            else if (modelData.entry) modelData.entry.execute()
+            Grid {
+                id: list
+                anchors.centerIn: parent
+                spacing: 6
+                columns: dock.vert ? 1 : 1000
+                horizontalItemAlignment: Grid.AlignHCenter
+                verticalItemAlignment: Grid.AlignVCenter
+
+                // keep the dock shown
+                Rectangle {
+                    visible: dock.dc.pinButton !== false
+                    width: 40; height: 40; radius: 14
+                    color: dock.pinned ? "#F6F5F4" : (pinM.containsMouse ? Qt.rgba(1, 1, 1, 0.14) : Qt.rgba(1, 1, 1, 0.06))
+                    Behavior on color { ColorAnimation { duration: 140 } }
+                    MIcon { anchors.centerIn: parent; name: "keep"; glyph: String.fromCodePoint(0xF0403); size: 18
+                        color: dock.pinned ? "#0d0d0d" : "#F6F5F4"; rotation: dock.pinned ? 0 : 45
+                        Behavior on rotation { RotationAnimator { duration: 200 } } }
+                    MouseArea { id: pinM; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: dock.pinned = !dock.pinned }
+                }
+
+                // the apps
+                Repeater {
+                    model: dock.items
+                    delegate: Item {
+                        id: app
+                        width: dock.vert ? dock.thick - 12 : dock.cell
+                        height: dock.vert ? dock.cell : dock.thick - 12
+                        readonly property bool running: modelData.tl !== null
+                        readonly property bool act: !!modelData.tl && modelData.tl.activated
+                        Image {
+                            id: ico
+                            anchors.centerIn: parent
+                            anchors.horizontalCenterOffset: dock.edge === "left" ? 2 : (dock.edge === "right" ? -2 : 0)
+                            anchors.verticalCenterOffset: dock.vert ? 0 : -2
+                            width: dock.icon; height: dock.icon
+                            source: dock.iconFor(modelData)
+                            sourceSize.width: 64; sourceSize.height: 64
+                            asynchronous: true
+                            smooth: true
+                            visible: dock.dc.tint !== true
+                            scale: appM.containsMouse ? 1.16 : 1
+                            Behavior on scale { ScaleAnimator { duration: 140; easing.type: Easing.OutCubic } }
+                        }
+                        // the grey look (Settings > Dock > Tint), only drawn when it is on
+                        Loader {
+                            active: dock.dc.tint === true
+                            anchors.fill: ico
+                            sourceComponent: MultiEffect {
+                                source: ico; colorization: 1.0; colorizationColor: "#e4e4e7"
+                                scale: appM.containsMouse ? 1.16 : 1
+                                Behavior on scale { ScaleAnimator { duration: 140 } }
+                            }
+                        }
+                        // open: a dot, the focused one a longer line
+                        Rectangle {
+                            visible: app.running
+                            radius: 2
+                            color: "#F6F5F4"
+                            opacity: app.act ? 1 : 0.5
+                            width: dock.vert ? 4 : (app.act ? 14 : 5)
+                            height: dock.vert ? (app.act ? 14 : 5) : 4
+                            x: dock.edge === "left" ? 0 : (dock.edge === "right" ? parent.width - width : (parent.width - width) / 2)
+                            y: dock.vert ? (parent.height - height) / 2 : parent.height - height
+                            Behavior on width { NumberAnimation { duration: 160 } }
+                            Behavior on height { NumberAnimation { duration: 160 } }
+                        }
+                        MouseArea {
+                            id: appM
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                if (modelData.tl) modelData.tl.activate()
+                                else if (modelData.entry) modelData.entry.execute()
+                            }
                         }
                     }
                 }
-            }
 
-            Rectangle {
-                visible: dock.dc.media !== false && dock.player !== null
-                width: dock.vert ? 30 : 1
-                height: dock.vert ? 1 : 30
-                color: Qt.rgba(1, 1, 1, 0.12)
-            }
-
-            Grid {
-                visible: dock.dc.media !== false && dock.player !== null
-                spacing: 8
-                columns: dock.vert ? 1 : 3
-                horizontalItemAlignment: Grid.AlignHCenter
-                verticalItemAlignment: Grid.AlignVCenter
-                RoundImage {
-                    width: 38
-                    height: 38
-                    cornerRadius: 12
-                    fallback: ""
-                    source: dock.player && dock.player.trackArtUrl ? dock.player.trackArtUrl : ""
-                }
-                // what is playing, written out (Settings > Dock > Now playing text)
-                Column {
-                    visible: dock.dc.nowText !== false
-                    width: dock.vert ? 50 : 130
-                    T { width: parent.width; elide: Text.ElideRight; horizontalAlignment: dock.vert ? Text.AlignHCenter : Text.AlignLeft; font.pixelSize: dock.vert ? 10 : 12; font.bold: true; text: dock.player ? (dock.player.trackTitle || "") : "" }
-                    T { width: parent.width; elide: Text.ElideRight; horizontalAlignment: dock.vert ? Text.AlignHCenter : Text.AlignLeft; font.pixelSize: dock.vert ? 9 : 10; color: "#a8a8ad"; text: dock.player ? (dock.player.trackArtist || "") : "" }
-                }
                 Rectangle {
-                    width: 34
-                    height: 34
-                    radius: 17
-                    color: playMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(1, 1, 1, 0.07)
-                    Behavior on color { ColorAnimation { duration: 140 } }
-                    T { anchors.centerIn: parent; text: dock.player && dock.player.isPlaying ? "" : ""; font.pixelSize: 12 }
-                    MouseArea {
-                        id: playMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: if (dock.player) dock.player.togglePlaying()
+                    visible: dock.showMedia
+                    width: dock.vert ? 30 : 1
+                    height: dock.vert ? 1 : 30
+                    color: Qt.rgba(1, 1, 1, 0.12)
+                }
+
+                // the song that plays
+                Grid {
+                    visible: dock.showMedia
+                    spacing: 8
+                    columns: dock.vert ? 1 : 3
+                    horizontalItemAlignment: Grid.AlignHCenter
+                    verticalItemAlignment: Grid.AlignVCenter
+                    RoundImage {
+                        width: 38; height: 38; cornerRadius: 12; fallback: ""
+                        source: dock.player && dock.player.trackArtUrl ? dock.player.trackArtUrl : ""
+                    }
+                    Column {
+                        visible: dock.dc.nowText !== false && !dock.vert
+                        width: 130
+                        T { width: parent.width; elide: Text.ElideRight; font.pixelSize: 12; font.bold: true; text: dock.player ? (dock.player.trackTitle || "") : "" }
+                        T { width: parent.width; elide: Text.ElideRight; font.pixelSize: 10; color: "#a8a8ad"; text: dock.player ? (dock.player.trackArtist || "") : "" }
+                    }
+                    Rectangle {
+                        width: 34; height: 34; radius: 17
+                        color: playM.containsMouse ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(1, 1, 1, 0.07)
+                        Behavior on color { ColorAnimation { duration: 140 } }
+                        MIcon { anchors.centerIn: parent; size: 16
+                            name: dock.player && dock.player.isPlaying ? "pause" : "play_arrow"
+                            glyph: String.fromCodePoint(dock.player && dock.player.isPlaying ? 0xF03E4 : 0xF040A) }
+                        MouseArea { id: playM; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: if (dock.player) dock.player.togglePlaying() }
                     }
                 }
-            }
 
-            Rectangle {
-                visible: dock.dc.appsButton !== false
-                width: 40
-                height: 40
-                radius: 14
-                color: appsMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.14) : Qt.rgba(1, 1, 1, 0.06)
-                Behavior on color { ColorAnimation { duration: 140 } }
-                T { anchors.centerIn: parent; text: ""; font.pixelSize: 16 }
-                MouseArea {
-                    id: appsMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-launch\""])
+                // all apps (the launcher)
+                Rectangle {
+                    visible: dock.dc.appsButton !== false
+                    width: 40; height: 40; radius: 14
+                    color: appsM.containsMouse ? Qt.rgba(1, 1, 1, 0.14) : Qt.rgba(1, 1, 1, 0.06)
+                    Behavior on color { ColorAnimation { duration: 140 } }
+                    MIcon { anchors.centerIn: parent; name: "apps"; glyph: String.fromCodePoint(0xF003B); size: 18; color: "#F6F5F4" }
+                    MouseArea { id: appsM; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                        onClicked: Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-launch\""]) }
                 }
             }
         }
-    }
 
-    // a soft click on the dock's buttons (Settings > Sfx & sounds)
-    SfxTap {}
+        // a soft click on the dock's buttons (Settings > Sfx & sounds)
+        SfxTap {}
+    }
 }

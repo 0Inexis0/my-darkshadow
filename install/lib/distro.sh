@@ -28,8 +28,8 @@ if [ "$FAMILY" = fedora ] && [ -e "${OSTREE_BOOTED:-/run/ostree-booted}" ]; then
 PKG_DESKTOP=(hyprland hyprlock hypridle xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent qt5-wayland qt6-wayland)
 PKG_SHELL=(quickshell qt6-multimedia waybar swaync awww cava kitty fish fastfetch nautilus matugen)
 PKG_TOOLS=(wf-recorder grim slurp wl-clipboard libnotify xdg-user-dirs jq curl python playerctl brightnessctl pamixer
-           swayosd imagemagick zenity networkmanager bluez bluez-utils pipewire pipewire-pulse wireplumber
-           btop cmatrix peaclock pavucontrol gnome-calendar overskride hyprsunset upower power-profiles-daemon)
+           imagemagick zenity networkmanager bluez bluez-utils pipewire pipewire-pulse wireplumber
+           btop cmatrix peaclock pavucontrol gnome-calendar hyprsunset upower power-profiles-daemon)
 PKG_FONTS=(ttf-jetbrains-mono-nerd ttf-nerd-fonts-symbols noto-fonts noto-fonts-emoji inter-font)
 PKG_LOOK=(papirus-icon-theme gnome-themes-extra adw-gtk-theme bibata-cursor-theme-bin)
 ARCH_PKGS=("${PKG_DESKTOP[@]}" "${PKG_SHELL[@]}" "${PKG_TOOLS[@]}" "${PKG_FONTS[@]}" "${PKG_LOOK[@]}")
@@ -48,7 +48,7 @@ FPKG_DESKTOP=(hyprland hyprlock hypridle hyprsunset hyprpolkitagent xdg-desktop-
               qt5-qtwayland qt6-qtwayland)
 FPKG_SHELL=(quickshell qt6-qtmultimedia waybar SwayNotificationCenter awww cava kitty fish fastfetch nautilus matugen)
 FPKG_TOOLS=(wf-recorder grim slurp wl-clipboard libnotify xdg-user-dirs jq curl python3 playerctl brightnessctl pamixer
-            swayosd ImageMagick zenity NetworkManager bluez pipewire pipewire-pulseaudio wireplumber
+            ImageMagick zenity NetworkManager bluez pipewire pipewire-pulseaudio wireplumber
             btop cmatrix pavucontrol gnome-calendar upower power-profiles-daemon tar xz unzip)
 FPKG_FONTS=(rsms-inter-fonts google-noto-sans-fonts google-noto-emoji-fonts)
 FPKG_LOOK=(papirus-icon-theme adw-gtk3-theme)

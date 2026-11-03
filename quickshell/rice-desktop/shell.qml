@@ -136,8 +136,12 @@ ShellRoot {
             }
         }
     }
+    // desktop.json is read as soon as it changes (no more starting a program 5 times a second to look at it);
+    // the flags (flat, lite) and the accent color every 3 seconds
+    Trigger { path: root.home + "/.config/rice/desktop.json"; every: 1500
+        onContent: function(t) { if (!cfgProc.running) cfgProc.running = true } }
     Timer {
-        interval: 200
+        interval: 3000
         running: true
         repeat: true
         onTriggered: { if (!cfgProc.running) cfgProc.running = true }

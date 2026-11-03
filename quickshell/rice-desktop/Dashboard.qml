@@ -273,26 +273,29 @@ PanelWindow {
     Process {
         id: cfgProc
         // (gaming mode and "no blur & transparency" count as a change of the settings too)
-        command: ["bash", "-c", "cat \"$HOME/.config/rice/dashboard.json\" 2>/dev/null; [ -e \"$HOME/.config/rice/gaming-on\" ] && echo G; [ -e \"$HOME/.cache/rice/flat\" ] && echo F; echo '@@'; cat \"$HOME/.cache/rice/dashboard-open\" 2>/dev/null"]
+        command: ["bash", "-c", "cat \"$HOME/.config/rice/dashboard.json\" 2>/dev/null; [ -e \"$HOME/.config/rice/gaming-on\" ] && echo G; [ -e \"$HOME/.cache/rice/flat\" ] && echo F"]
         stdout: StdioCollector {
             onStreamFinished: {
-                const q = text.split("@@")
-                if (q[0] !== db.rawCfg) { db.rawCfg = q[0]; if (!fullProc.running) fullProc.running = true }
-                const o = q.length > 1 ? q[1].trim() : ""
-                if (db.cmdSeen && o.length > 0 && o !== db.lastCmd) {
-                    const w = o.split(/\s+/)
-                    const want = w[1] && w[1] !== "-" ? w[1] : ""
-                    if (db.open && w[2] === "toggle" && (want === "" || want === db.tab)) db.close()
-                    else if (db.open && want !== "") db.tab = want
-                    else db.show(want, false)
-                    if (w[3] === "edit") db.editing = true
-                }
-                db.lastCmd = o
-                db.cmdSeen = true
+                if (text !== db.rawCfg) { db.rawCfg = text; if (!fullProc.running) fullProc.running = true }
             }
         }
     }
-    Timer { interval: 300; running: true; repeat: true; triggeredOnStart: true; onTriggered: if (!cfgProc.running) cfgProc.running = true }
+    // the settings file: read when it changes; the flags (gaming, flat) are looked at every few seconds
+    Trigger { name: ""; path: Quickshell.env("HOME") + "/.config/rice/dashboard.json"; every: 4000
+        onContent: function(t) { if (!cfgProc.running) cfgProc.running = true } }
+    Timer { interval: 3000; running: true; repeat: true; triggeredOnStart: true; onTriggered: if (!cfgProc.running) cfgProc.running = true }
+    // open requests (rice-dashboard open / the bar's clock / the hot edge)
+    Trigger {
+        name: "dashboard-open"
+        onFired: function(o) {
+            const w = o.split(/\s+/)
+            const want = w[1] && w[1] !== "-" ? w[1] : ""
+            if (db.open && w[2] === "toggle" && (want === "" || want === db.tab)) db.close()
+            else if (db.open && want !== "") db.tab = want
+            else db.show(want, false)
+            if (w[3] === "edit") db.editing = true
+        }
+    }
 
     Process {
         id: statsProc

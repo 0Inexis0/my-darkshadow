@@ -75,7 +75,7 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 **NixOS**: see [Installation](#installation) below. Then log out and pick Hyprland, and press `SUPER + U`.
 
 ## Features
-**Settings app** (`SUPER+U`), sixteen pages in five groups (touch an arrow to open one) and a search: Home, Sfx & sounds, DarkShadow bar, Bar layout, Hyprland, Recorder, Dashboard, Launcher, Theme, Cursors, Notifications, Idle & Lockscreen, Widgets, Hot corners, Dock, Services.
+**Settings app** (`SUPER+U`), fifteen pages in five groups (touch an arrow to open one) and a search: Home, Sfx & sounds, DarkShadow bar, Bar layout, Hyprland, Recorder, Dashboard, Launcher, Theme, Cursors, Notifications, Idle & Lockscreen, Widgets, Dock, Services.
 
 | Area | What you get |
 | --- | --- |
@@ -83,11 +83,10 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 | **Bar styles** | Flat, Floating, Islands, **One island**; group styles None, Pills, Segmented |
 | **Autohide** | bar slides in when the pointer touches the screen edge |
 | **Distro logo** | the logo of your distro (NixOS, Arch, CachyOS, Fedora, Nobara, EndeavourOS ...) in the bar, the dashboard, the welcome window and Settings, picked automatically |
-| **Hot corner** | touch a screen corner for a panel with Keep Awake, screen recording, screenshots, quick toggles (Wi-Fi, Bluetooth, Do Not Disturb, Gaming mode, microphone, Settings) and now playing; sections, toggles, corner, look and animation are set in Settings > Hot corners |
 | **Desktop widgets** | frosted glass over your blurred wallpaper (or plain cards), auto-hide while windows are open; clock, calendar, weather, music, resources (CPU, RAM, GPU), user card, battery and a see-through audio visualizer (Bars like cava in a terminal, Mirror, Wave, Dots, in your Theme color, a gradient or rainbow), a to-do list, a focus timer and a note; three widget styles (DarkShadow, Google, Outline); colors that turn light or dark with your wallpaper; a widget editor on the desktop to add, move, resize and style them |
 | **Dashboard** | slides up from the bottom of the screen (SUPER + ALT + D or push the pointer against the bottom edge): Dashboard (weather, calendar, usage, music), Wallpaper (big wallpaper cards, search, random), Performance (CPU, GPU, storage, network, memory, battery), About (your computer, distro, updates); cards you can remove, add, resize and move, looks Shadow, Graphite, Aurora and Frost |
 | **Bar layout** | drag and drop the modules of the bar between left, center and right: launcher, workspaces, window title, music, clock, tray, volume, Bluetooth, Wi-Fi, battery, notifications, power |
-| **Dock** | pinned apps, hover to reveal, media player, tinted icons |
+| **Dock** | bottom, left or right edge, pinned and open apps, hover to reveal, media player, tinted icons |
 | **Hyprland** | gaps, borders, rounding, blur, shadows and animations from sliders, no config editing |
 | **Theme** | 21 color schemes: Auto and Grey from your wallpaper, six monochrome (Mono, Slate, Stone, Steel, Ash, Ink) and thirteen colors (Navy, Ocean, Sky, Teal, Mint, Forest, Lime, Gold, Sunset, Ember, Rose, Orchid, Violet). They recolor Waybar, borders, notifications and the lock screen |
 | **Notification center** | Deck: switches (Wi-Fi, Bluetooth, Do Not Disturb, night light, keep awake), power modes, notifications, media, volume and brightness, power buttons; floating or against the edge, left or right, any size, blur and transparency |
@@ -100,7 +99,7 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 | **Cursors** | Bibata, Hyprcursor themes (Rose Pine) and packs you can download in Settings: Catppuccin, Phinger; live preview |
 | **Fonts** | one place to set the main and icon fonts |
 | **Welcome intro** | once after installing: night falls over the desktop, a few words, the moon logo draws itself in, "Take a look" opens it up again and Settings starts a short tour (it lights up one part at a time). Play it again with `rice-welcome show`, only the tour: `rice-welcome tour` |
-| **Performance & gaming** | one switch turns off all blur and transparency (Hyprland, kitty, bar, launcher, notifications, dashboard, hot corner, dock, widgets); Gaming mode with options to keep blur, animations, shadows or gaps, Do Not Disturb (Settings > Services) |
+| **Performance & gaming** | one switch turns off all blur and transparency (Hyprland, kitty, bar, launcher, notifications, dashboard, dock, widgets); Gaming mode with options to keep blur, animations, shadows or gaps, Do Not Disturb (Settings > Services) |
 | **Your settings everywhere** | `./sync.sh` saves your Settings choices to `settings/`, `./install.sh` puts them on your other computers (files you changed there are kept) |
 | **Installer** | interactive (Install, Update, Choose, Restore), backs up everything, supports Arch, CachyOS, Fedora and NixOS, warns when Hyprland is too old |
 
@@ -133,7 +132,7 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 | `Fn` volume / brightness keys, headset `+` `-` | volume, mute, microphone, brightness |
 | `Print` / `SHIFT + Print` | screenshot of a region / the whole screen |
 | `SUPER + SHIFT + R` | record a region (press again to stop) |
-| `SUPER + A` | open the hot corner panel |
+| `SUPER + A` | dashboard on its Control tab (quick switches) |
 | `SUPER + ALT + W` | edit desktop widgets (add, move, resize, style) |
 | `SUPER + ALT + D` | dashboard (slides up from the bottom; pushing the pointer against the bottom edge opens it too) |
 | `SUPER + W` | wallpapers (Wallpaper tab of the dashboard) |
@@ -186,7 +185,7 @@ Run `rice-update` (or `./install.sh --update` in the repo), or press **Update no
 | `quickshell/` | Settings app (`rice-settings`) and widgets/dock (`rice-desktop`) |
 | `config/` | dotfiles installed to `~/.config` (Hyprland, Waybar, ...) |
 | `install/` | installer UI and distro detection |
-| `lua/` | Hyprland add-ons: keybinds, widgets autostart, hot corner |
+| `lua/` | Hyprland add-ons: keybinds, widgets autostart |
 | `wallpapers/` | original wallpapers, copied to `~/Pictures/Wallpapers` |
 | `sounds/` | notification sounds (made by `install/tools/make-sounds.py`, CC0) |
 | `VERSION` | the current version, used by the update check |

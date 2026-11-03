@@ -105,24 +105,13 @@ PanelWindow {
         open = true
     }
     function hide() { open = false }
-    property string lastCmd: ""
-    property bool cmdSeen: false
-    Process {
-        id: trig
-        command: ["bash", "-c", "cat \"$HOME/.cache/rice/bluetooth-open\" 2>/dev/null"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const o = text.trim()
-                if (wm.cmdSeen && o !== "" && o !== wm.lastCmd) {
-                    const x = parseFloat(o.split(" ")[1])
-                    if (wm.open) wm.hide(); else wm.show(isNaN(x) ? wm.width - 200 : x)
-                }
-                wm.lastCmd = o
-                wm.cmdSeen = true
-            }
+    Trigger {
+        name: "bluetooth-open"
+        onFired: function(o) {
+            const x = parseFloat(o.split(" ")[1])
+            if (wm.open) wm.hide(); else wm.show(isNaN(x) ? wm.width - 200 : x)
         }
     }
-    Timer { interval: 200; running: true; repeat: true; triggeredOnStart: true; onTriggered: if (!trig.running) trig.running = true }
 
     // ---------- window ----------
     visible: open || t > 0.01

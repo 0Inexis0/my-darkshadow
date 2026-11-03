@@ -59,7 +59,6 @@ hl.on("hyprland.start", function ()
    hl.exec_cmd("swaync")
    hl.exec_cmd("hypridle")
    hl.exec_cmd("$HOME/.local/bin/border-sync")
-   hl.exec_cmd("swayosd-server")
    hl.exec_cmd("$HOME/.local/bin/ws-watch")
  end)
 
@@ -101,7 +100,7 @@ hl.env("HYPRCURSOR_SIZE", "24")
 hl.config({
     general = {
         gaps_in  = 7,
-        gaps_out = 12,
+        gaps_out = 5,
 
         border_size = 0,
 

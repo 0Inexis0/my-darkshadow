@@ -12,7 +12,7 @@ Item {
 
     readonly property var gapsSpec: [
         { key: "general.gaps_in", type: "slider", label: "Inner gaps", desc: "Gaps between windows", min: 0, max: 40, step: 1, unit: " px", def: 5 },
-        { key: "general.gaps_out", type: "slider", label: "Outer gaps", desc: "Gaps between windows and the screen edges", min: 0, max: 80, step: 1, unit: " px", def: 20 },
+        { key: "general.gaps_out", type: "slider", label: "Outer gaps", desc: "Gaps between windows and the screen edges", min: 0, max: 80, step: 1, unit: " px", def: 5 },
         { key: "general.gaps_workspaces", type: "slider", label: "Workspace gaps", desc: "Gaps between workspaces", min: 0, max: 100, step: 1, unit: " px", def: 0 }
     ]
     readonly property var bordersSpec: [

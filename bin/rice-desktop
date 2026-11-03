@@ -5,6 +5,12 @@ running() { pgrep -f "quickshell/rice-desktop" >/dev/null; }
 [ "$1" = start ] && "$HOME/.local/bin/desktop-set" edit off >/dev/null 2>&1
 case "$1" in
   start|ensure)
+    # the request files the shell watches (launcher, menus, dashboard): they exist from the start, so the
+    # shell can watch them instead of looking at them several times a second
+    mkdir -p "$HOME/.cache/rice"
+    for f in launcher-open wifi-open bluetooth-open power-open volume-open dashboard-open; do
+      [ -e "$HOME/.cache/rice/$f" ] || : >"$HOME/.cache/rice/$f"
+    done
     "$HOME/.local/bin/rice-bar" enabled 2>/dev/null || "$HOME/.local/bin/waybar-autohide" ensure >/dev/null 2>&1 &
     [ -x "$HOME/.local/bin/rice-ws-watch" ] && setsid -f "$HOME/.local/bin/rice-ws-watch" >/dev/null 2>&1
     [ -x "$HOME/.local/bin/rice-update" ] && setsid -f "$HOME/.local/bin/rice-update" watch >/dev/null 2>&1

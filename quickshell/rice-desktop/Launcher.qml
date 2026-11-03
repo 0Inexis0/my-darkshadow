@@ -132,29 +132,19 @@ PanelWindow {
     Process {
         id: rsProc
         command: ["bash", "-c", "\"$HOME/.local/bin/rice-rofi\" state 2>/dev/null"]
-        stdout: StdioCollector { onStreamFinished: { try { ln.rs = JSON.parse(text) } catch (e) { } } }
+        running: true
+        stdout: StdioCollector { onStreamFinished: { try { ln.rs = JSON.parse(text) } catch (e) { console.warn("launcher: bad rice-rofi state") } } }
     }
+    // the launcher settings are re-read as soon as Settings > Launcher changes them, not only when it opens
+    Trigger { path: Quickshell.env("HOME") + "/.config/rice/rofi.json"; every: 3000
+        onContent: function(t) { if (!rsProc.running) rsProc.running = true } }
     Process {
         id: usageProc
         command: ["bash", "-c", "cat \"$HOME/.cache/rice/launcher-usage.json\" 2>/dev/null"]
         stdout: StdioCollector { onStreamFinished: { try { ln.usage = JSON.parse(text) } catch (e) { } } }
     }
     // rice-launch writes a line into this file: open it, or close it when it is already open
-    property string lastCmd: ""
-    property bool cmdSeen: false
-    Process {
-        id: trigProc
-        command: ["bash", "-c", "cat \"$HOME/.cache/rice/launcher-open\" 2>/dev/null"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const o = text.trim()
-                if (ln.cmdSeen && o !== "" && o !== ln.lastCmd) { if (ln.open) ln.hide(); else ln.show() }
-                ln.lastCmd = o
-                ln.cmdSeen = true
-            }
-        }
-    }
-    Timer { interval: 200; running: true; repeat: true; triggeredOnStart: true; onTriggered: if (!trigProc.running) trigProc.running = true }
+    Trigger { name: "launcher-open"; onFired: function(o) { if (ln.open) ln.hide(); else ln.show() } }
 
     // ---------- window ----------
     visible: open || t > 0.01

@@ -9,6 +9,7 @@
   rice-bar layout-reset           the default layout
   rice-bar on | off               off: use Waybar again (the old bar), on: the DarkShadow bar again
   rice-bar enabled                exit code 0 while the DarkShadow bar is on
+  rice-bar migrate                installer: a config from before the DarkShadow bar (or none) turns it on once
   rice-bar start                  autostart: Waybar only when the DarkShadow bar is off
 Modules: launcher workspaces title media clock tray volume network bluetooth battery notifications power
 """
@@ -72,6 +73,7 @@ def load():
             except Exception:
                 c[k] = d
     c["layout"] = clean_layout(raw.get("layout", DEFAULT_LAYOUT) if "layout" in raw else DEFAULT_LAYOUT)
+    c["v"] = raw.get("v", 1) if isinstance(raw.get("v", 1), int) else 1
     return c
 
 
@@ -125,6 +127,16 @@ def main(a):
         c["enabled"] = False
         save(c)
         waybar_start()
+    elif cmd == "migrate":
+        try:
+            raw = json.load(open(CFG))
+        except Exception:
+            raw = {}
+        if raw.get("v", 1) < 2:
+            c["enabled"] = True
+        c["v"] = 2
+        save(c)
+        print("DarkShadow bar " + ("on" if c["enabled"] else "off (your choice)"))
     elif cmd == "enabled":
         sys.exit(0 if c["enabled"] else 1)
     elif cmd == "start":

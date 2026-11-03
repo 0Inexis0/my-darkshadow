@@ -4,7 +4,7 @@ mkdir -p "$HOME/.cache/rice"
 cat > "$cfg" <<CONF
 [general]
 bars = 64
-framerate = 30
+framerate = 24
 [input]
 method = pipewire
 source = auto

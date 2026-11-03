@@ -51,7 +51,11 @@ Item {
                 if (p.length > 0) {
                     // rises at once, falls softly
                     const o = vz.bars, q = []
-                    for (let i = 0; i < p.length; i++) { const a = o[i] !== undefined ? o[i] : 0; q.push(p[i] >= a ? p[i] : a * 0.8 + p[i] * 0.2) }
+                    let loud = 0
+                    for (let i = 0; i < p.length; i++) { const a = o[i] !== undefined ? o[i] : 0; const v = p[i] >= a ? p[i] : a * 0.8 + p[i] * 0.2; q.push(v); if (v > loud) loud = v }
+                    // silence: draw the empty picture once, then nothing (no work 30 times a second for no sound)
+                    if (loud < 0.5 && vz.quiet) return
+                    vz.quiet = loud < 0.5
                     vz.bars = q
                     cv.requestPaint()
                 }
@@ -60,6 +64,7 @@ Item {
     }
 
     // everything is drawn here
+    property bool quiet: false
     Canvas {
         id: cv
         anchors.fill: parent

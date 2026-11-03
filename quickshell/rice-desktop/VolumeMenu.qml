@@ -45,24 +45,13 @@ PanelWindow {
     }
     function show(x) { cx = x; barProc.running = true; open = true }
     function hide() { open = false }
-    property string lastCmd: ""
-    property bool cmdSeen: false
-    Process {
-        id: trig
-        command: ["bash", "-c", "cat \"$HOME/.cache/rice/volume-open\" 2>/dev/null"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const o = text.trim()
-                if (vm.cmdSeen && o !== "" && o !== vm.lastCmd) {
-                    const x = parseFloat(o.split(" ")[1])
-                    if (vm.open) vm.hide(); else vm.show(isNaN(x) ? vm.width - 200 : x)
-                }
-                vm.lastCmd = o
-                vm.cmdSeen = true
-            }
+    Trigger {
+        name: "volume-open"
+        onFired: function(o) {
+            const x = parseFloat(o.split(" ")[1])
+            if (vm.open) vm.hide(); else vm.show(isNaN(x) ? vm.width - 200 : x)
         }
     }
-    Timer { interval: 200; running: true; repeat: true; triggeredOnStart: true; onTriggered: if (!trig.running) trig.running = true }
 
     visible: open || t > 0.01
     color: "transparent"

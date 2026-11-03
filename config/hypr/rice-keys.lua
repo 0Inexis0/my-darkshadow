@@ -18,7 +18,7 @@ hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd(bin .. "rice-media bright-down"
 hl.bind("Print",               hl.dsp.exec_cmd(bin .. "rice-hotcorner shot region"))
 hl.bind("SHIFT + Print",       hl.dsp.exec_cmd(bin .. "rice-hotcorner shot full"))
 hl.bind("SUPER + SHIFT + R",   hl.dsp.exec_cmd(bin .. "rice-hotcorner record region"))   -- press again to stop
-hl.bind("SUPER + A",           hl.dsp.exec_cmd(bin .. "rice-hotcorner open"))
+hl.bind("SUPER + A",           hl.dsp.exec_cmd(bin .. "rice-dashboard open control"))   -- quick switches
 -- widget editor on the desktop (Esc or Done to finish)
 hl.bind("SUPER + ALT + W",     hl.dsp.exec_cmd(bin .. "desktop-set edit toggle"))
 -- dashboard (also: point at the middle of the bar edge)
