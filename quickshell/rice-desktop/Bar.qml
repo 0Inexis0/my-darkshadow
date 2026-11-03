@@ -174,25 +174,16 @@ PanelWindow {
             // every workspace has the same width, so nothing in the row moves; what moves is one marker that slides.
             // The sliding and the popping run as Animators, on the render thread: they stay smooth even while the
             // shell is busy (the desktop widgets coming back when you switch to an empty workspace)
-            readonly property real cw: dots ? 28 : (pac ? 20 : 18)
+            readonly property real cw: dots ? 16 : (pac ? 20 : 18)
             readonly property int count: bar.maxWs()
             readonly property int fi: bar.focusedId - 1
             readonly property bool fiOk: fi >= 0 && fi < count
-            width: count * cw; height: bar.barH
-
-            // dots: the pill of the active workspace
-            Rectangle {
-                visible: wsm.dots && wsm.fiOk
-                width: 30; height: 12; radius: 6
-                anchors.verticalCenter: parent.verticalCenter
-                color: bar.fg
-                x: Math.max(0, wsm.fi) * wsm.cw + (wsm.cw - width) / 2
-                Behavior on x { XAnimator { duration: 320; easing.type: Easing.OutBack; easing.overshoot: 1.15 } }
-            }
+            width: wsRow.width; height: bar.barH
 
             Row {
                 id: wsRow
                 anchors.verticalCenter: parent.verticalCenter
+                spacing: wsm.dots ? 7 : 0
                 Repeater {
                     model: wsm.count
                     delegate: Item {
@@ -200,17 +191,17 @@ PanelWindow {
                         readonly property int wid: index + 1
                         readonly property bool act: bar.focusedId === wid
                         readonly property bool occ: bar.occupied(wid)
-                        width: wsm.cw; height: bar.barH
+                        width: wsm.dots && act ? 40 : wsm.cw; height: bar.barH
+                        Behavior on width { enabled: wsm.dots; NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 1.4 } }
 
-                        // dots: a dot (the pill covers the active one)
+                        // dots: a dot, the active one stretched into a pill
                         Rectangle {
                             visible: wsm.dots
                             anchors.centerIn: parent
-                            width: 12; height: 12; radius: 6
-                            color: occ ? Qt.rgba(0.965, 0.961, 0.957, 0.6) : Qt.rgba(0.965, 0.961, 0.957, 0.24)
-                            opacity: act ? 0 : 1
-                            scale: wm.containsMouse ? 1.2 : 1
-                            Behavior on opacity { OpacityAnimator { duration: 160 } }
+                            width: parent.width; height: 14; radius: 7
+                            color: act ? bar.fg : (occ ? Qt.rgba(0.965, 0.961, 0.957, 0.62) : Qt.rgba(0.965, 0.961, 0.957, 0.24))
+                            scale: wm.containsMouse && !act ? 1.18 : 1
+                            Behavior on color { ColorAnimation { duration: 200 } }
                             Behavior on scale { ScaleAnimator { duration: 120 } }
                         }
                         // pacman: pac-dots; the one Pac-Man sits on is gone, the ones he has passed are eaten
@@ -345,7 +336,8 @@ PanelWindow {
                 glyph: String.fromCodePoint(bar.muted ? 0xF0581 : (bar.vol < 0.34 ? 0xF057F : (bar.vol < 0.67 ? 0xF0580 : 0xF057E))) }
             MouseArea { id: vm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
                 onClicked: function(m) {
-                    if (m.button === Qt.RightButton) { const p = mapToItem(null, width / 2, 0); bar.run("\"$HOME/.local/bin/rice-volume\" menu " + Math.round(p.x)); return }
+                    // left: the sound menu, right: mute
+                    if (m.button === Qt.LeftButton) { const p = mapToItem(null, width / 2, 0); bar.run("\"$HOME/.local/bin/rice-volume\" menu " + Math.round(p.x)); return }
                     if (bar.sink && bar.sink.audio) bar.sink.audio.muted = !bar.sink.audio.muted
                 }
                 onWheel: function(e) { if (bar.sink && bar.sink.audio) bar.sink.audio.volume = Math.max(0, Math.min(1, bar.sink.audio.volume + (e.angleDelta.y > 0 ? 0.04 : -0.04))) } }
@@ -364,7 +356,6 @@ PanelWindow {
                 glyph: String.fromCodePoint(bar.svc.network ? 0xF05A9 : 0xF05AA) }
             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
                 onClicked: function(m) {
-                    if (m.button === Qt.RightButton) { bar.run("\"$HOME/.local/bin/wifi-menu\""); return }
                     const p = mapToItem(null, width / 2, 0)
                     bar.run("\"$HOME/.local/bin/rice-wifi\" " + Math.round(p.x))
                 } }
@@ -378,7 +369,6 @@ PanelWindow {
                 glyph: String.fromCodePoint(bar.svc.bluetooth ? 0xF00AF : 0xF00B2) }
             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
                 onClicked: function(m) {
-                    if (m.button === Qt.RightButton) { bar.run("overskride || blueman-manager"); return }
                     const p = mapToItem(null, width / 2, 0)
                     bar.run("\"$HOME/.local/bin/rice-bluetooth\" " + Math.round(p.x))
                 } }
@@ -413,7 +403,6 @@ PanelWindow {
                 Behavior on color { ColorAnimation { duration: 150 } } }
             MouseArea { id: pm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
                 onClicked: function(m) {
-                    if (m.button === Qt.RightButton) { bar.run("\"$HOME/.local/bin/rice-power\" lock"); return }
                     const p = mapToItem(null, width / 2, 0)
                     bar.run("\"$HOME/.local/bin/rice-power\" " + Math.round(p.x))
                 } }

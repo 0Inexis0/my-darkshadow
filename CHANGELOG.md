@@ -1,5 +1,13 @@
 # Changelog
 
+## V3.21
+- Bar: the workspace dots are back to the pill that stretches, a bit bigger
+- Bar: left click on the volume icon opens the sound menu, right click mutes. Wi-Fi, Bluetooth and power open only their own menus now (the old overskride / nmtui windows and the right-click lock are gone)
+- Dashboard: a Settings card in the Control tab opens the Settings app right on the page you want (Settings, Bar, Launcher, Theme, Notifications, Dock). `rice-settings PAGE` does the same. An older saved Control layout is reset once so the card shows up
+- Dashboard: the colors stand out on the blurred glass: the accent is made light enough even when the wallpaper is dark, and the cards, lines and grey text are a little brighter
+- Notifications: no outlines around popups and the panel any more (Settings > Notifications > Border brings them back)
+- Hot corners are gone: the page left Settings and the hot corner no longer runs
+
 ## V3.20
 - Bar: switching workspaces stays smooth even when the desktop widgets come back on an empty workspace. The workspaces keep one width each and a single marker slides to the active one; the sliding runs on the graphics thread now (Pac-Man too)
 - Bar: the launcher button looks like before V3.19 again

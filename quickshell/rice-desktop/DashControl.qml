@@ -2,7 +2,7 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 
-// Control tab: switches, volume, brightness, power mode, capture and session buttons.
+// Control tab: switches, volume, brightness, power mode, capture, session buttons and shortcuts into Settings.
 Item {
     id: c
     property var d
@@ -61,6 +61,10 @@ Item {
         d.close()
         Quickshell.execDetached(["bash", "-c", "sleep 0.45; \"$HOME/.local/bin/rice-hotcorner\" \"$1\" \"$2\"", "_", cmd, arg])
     }
+    function settings(pg) {
+        d.close()
+        Quickshell.execDetached(["bash", "-c", "sleep 0.3; \"$HOME/.local/bin/rice-settings\" \"$1\"", "_", String(pg)])
+    }
     function session(w) {
         d.close()
         Quickshell.execDetached(["bash", "-c", "sleep 0.3; \"$HOME/.local/bin/rice-services\" session \"$1\"", "_", w])
@@ -80,16 +84,18 @@ Item {
             { id: "bright", name: "Brightness", sizes: [[3, 1], [4, 1], [5, 1], [6, 1]] },
             { id: "modes", name: "Power mode", sizes: [[7, 1], [5, 1], [6, 1], [4, 1], [4, 2]] },
             { id: "capture", name: "Capture", sizes: [[5, 1], [4, 1], [6, 1], [4, 2]] },
-            { id: "session", name: "Session", sizes: [[7, 1], [6, 1], [5, 1], [4, 2]] }
+            { id: "session", name: "Session", sizes: [[7, 1], [6, 1], [5, 1], [4, 2]] },
+            { id: "settings", name: "Settings", sizes: [[3, 1], [4, 1], [5, 1], [6, 1], [3, 2]] }
         ]
         defaults: c.d.side ? [
             { id: "switches", x: 0, y: 0, w: 6, h: 2 }, { id: "volume", x: 0, y: 2, w: 6, h: 1 }, { id: "bright", x: 0, y: 3, w: 6, h: 1 },
-            { id: "modes", x: 0, y: 4, w: 6, h: 1 }, { id: "session", x: 0, y: 5, w: 6, h: 1 }
+            { id: "modes", x: 0, y: 4, w: 3, h: 1 }, { id: "settings", x: 3, y: 4, w: 3, h: 1 }, { id: "session", x: 0, y: 5, w: 6, h: 1 }
         ] : [
             { id: "switches", x: 0, y: 0, w: 5, h: 2 }, { id: "volume", x: 5, y: 0, w: 4, h: 1 }, { id: "bright", x: 9, y: 0, w: 3, h: 1 },
-            { id: "modes", x: 5, y: 1, w: 7, h: 1 }, { id: "capture", x: 0, y: 2, w: 5, h: 1 }, { id: "session", x: 5, y: 2, w: 7, h: 1 }
+            { id: "modes", x: 5, y: 1, w: 4, h: 1 }, { id: "settings", x: 9, y: 1, w: 3, h: 1 },
+            { id: "capture", x: 0, y: 2, w: 5, h: 1 }, { id: "session", x: 5, y: 2, w: 7, h: 1 }
         ]
-        comps: ({ switches: switchesC, volume: volumeC, bright: brightC, modes: modesC, capture: captureC, session: sessionC })
+        comps: ({ switches: switchesC, volume: volumeC, bright: brightC, modes: modesC, capture: captureC, session: sessionC, settings: settingsC })
     }
 
     // ================= cards =================
@@ -295,6 +301,50 @@ Item {
                             DText { anchors.horizontalCenter: parent.horizontalCenter; visible: parent.parent.width > 62; text: modelData.n; font.pixelSize: 10; color: c.p.sub }
                         }
                         MouseArea { id: sm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: c.session(modelData.w) }
+                    }
+                }
+            }
+        }
+    }
+    Component {
+        id: settingsC
+        DCard {
+            id: st
+            p: c.p
+            // shortcuts into the Settings app, each opens it on that page
+            readonly property var btns: [
+                { n: "Settings", i: "settings", g: 0xF0493, pg: 0 },
+                { n: "Bar", i: "toolbar", g: 0xF0A1A, pg: 2 },
+                { n: "Launcher", i: "apps", g: 0xF003B, pg: 7 },
+                { n: "Theme", i: "palette", g: 0xF03D8, pg: 8 },
+                { n: "Alerts", i: "notifications", g: 0xF009A, pg: 10 },
+                { n: "Dock", i: "dock_to_bottom", g: 0xF0B7F, pg: 14 }
+            ]
+            readonly property int rowsN: Math.max(1, Math.min(2, Math.floor((height - 44 + 8) / 48)))
+            readonly property int per: Math.max(3, Math.min(Math.ceil(btns.length / rowsN), Math.floor((width - 24 + 8) / 42)))
+            DText { x: 16; y: 12; text: "Settings"; font.pixelSize: 12; font.weight: Font.Medium; color: c.p.sub }
+            Grid {
+                x: 12; y: 34
+                width: parent.width - 24; height: parent.height - 34 - 10
+                columns: st.per
+                spacing: 8
+                Repeater {
+                    model: st.btns.slice(0, st.per * st.rowsN)
+                    Rectangle {
+                        width: (parent.width - (st.per - 1) * 8) / st.per
+                        height: Math.min(parent.height, (parent.height - (st.rowsN - 1) * 8) / st.rowsN)
+                        radius: Math.min(16, c.p.cardRadius - 4)
+                        color: gm.containsMouse ? c.p.card2 : c.p.track
+                        Behavior on color { ColorAnimation { duration: 140 } }
+                        scale: gm.pressed ? 0.95 : 1
+                        Behavior on scale { NumberAnimation { duration: 90 } }
+                        Column {
+                            anchors.centerIn: parent
+                            spacing: 1
+                            MIcon { anchors.horizontalCenter: parent.horizontalCenter; name: modelData.i; glyph: c.d.md(modelData.g); size: 18; color: c.p.text }
+                            DText { anchors.horizontalCenter: parent.horizontalCenter; visible: parent.parent.width > 58 && parent.parent.height > 44; text: modelData.n; font.pixelSize: 10; color: c.p.sub }
+                        }
+                        MouseArea { id: gm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: c.settings(modelData.pg) }
                     }
                 }
             }

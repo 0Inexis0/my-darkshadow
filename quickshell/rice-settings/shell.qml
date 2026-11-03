@@ -182,6 +182,17 @@ FloatingWindow {
     }
     readonly property string presetTool: home + "/.local/bin/waybar-preset"
     property int page: 0
+    // rice-settings PAGE: open on that page (the Settings card of the dashboard uses it)
+    Process {
+        command: ["bash", "-c", "f=\"$HOME/.cache/rice/settings-page\"; [ -f \"$f\" ] && cat \"$f\" && rm -f \"$f\""]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const n = parseInt(text.trim())
+                if (!isNaN(n) && n >= 0 && n < win.pages.length) win.page = n
+            }
+        }
+    }
     property var presets: []
     property var st: ({})
     property string status: ""
@@ -303,7 +314,7 @@ FloatingWindow {
         { page: 0 },
         { sep: true },
         { group: "look", name: "Appearance", icon: "\udb80\udfd8", pages: [8, 9, 14] },
-        { group: "desk", name: "Desktop", icon: "\uf108", pages: [12, 13, 4, 11] },
+        { group: "desk", name: "Desktop", icon: "\uf108", pages: [12, 4, 11] },
         { group: "bar", name: "Bar & launcher", icon: "\uf0c9", pages: [2, 3, 6, 7] },
         { group: "snd", name: "Sound & alerts", icon: "\uf028", pages: [1, 10] },
         { group: "sys", name: "System", icon: "\uf013", pages: [5, 15] }
@@ -914,7 +925,6 @@ FloatingWindow {
             PageSlot { idx: 10; cur: win.page; NotificationsPage { anchors.fill: parent; ctl: win } }
             PageSlot { idx: 11; cur: win.page; IdlePage { anchors.fill: parent; ctl: win } }
             PageSlot { idx: 12; cur: win.page; DesktopPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 13; cur: win.page; HotCornersPage { anchors.fill: parent; ctl: win } }
             PageSlot { idx: 14; cur: win.page; InterfacePage { anchors.fill: parent; ctl: win } }
             PageSlot { idx: 15; cur: win.page; ServicesPage { anchors.fill: parent; ctl: win } }
         }

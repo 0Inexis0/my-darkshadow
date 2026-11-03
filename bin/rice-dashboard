@@ -38,7 +38,7 @@ WAYBAR = HOME + "/.config/waybar"
 
 TABS = ["dashboard", "control", "tasks", "wallpaper", "performance", "about"]
 OLD_TABS = ["dashboard", "wallpaper", "performance", "about"]   # the tabs before Control and Tasks came
-TABS_V = 2
+TABS_V = 3
 # cards of the new Dashboard tab: when the config is from before them, a saved layout without any of them is dropped (once)
 HOME_NEW = ("hero", "quick", "now", "week", "pulse", "tasks")
 DEFAULTS = {
@@ -104,6 +104,9 @@ def clean_layouts(v, migrate=False):
         if (tab not in TABS and not (tab.endswith("-side") and tab[:-5] in TABS)) or not isinstance(lst, list):
             continue
         if migrate and tab in ("dashboard", "dashboard-side") and not any(isinstance(i, dict) and i.get("id") in HOME_NEW for i in lst):
+            continue
+        # V3.21: the Control tab got a Settings card; an older saved Control layout goes back to the default once
+        if migrate and tab in ("control", "control-side") and not any(isinstance(i, dict) and i.get("id") == "settings" for i in lst):
             continue
         items = []
         for it in lst:

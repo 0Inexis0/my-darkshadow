@@ -150,20 +150,33 @@ PanelWindow {
     readonly property real op: cfg.opacity !== undefined ? cfg.opacity : 0.9
     // dark or light text on top of the wallpaper color
     function lum(c) { const x = hx(c); return 0.299 * x[0] + 0.587 * x[1] + 0.114 * x[2] }
-    readonly property string accFg: lum(acc) > 0.55 ? "#0d0d0d" : "#F6F5F4"
+    // the wallpaper color, made light enough to stand out on the dark blurred glass (a dark green wallpaper gives a
+    // dark green accent that disappears on the blur otherwise)
+    function vivid(c) {
+        let k = 0
+        while (k < 0.9 && lum(mixHex(c, "#ffffff", k)) < 0.6) k += 0.08
+        return mixHex(c, "#ffffff", k)
+    }
+    function mixHex(a, b, k) {
+        const x = hx(a), y = hx(b)
+        const h = function(v) { const n = Math.round(Math.max(0, Math.min(1, v)) * 255).toString(16); return n.length < 2 ? "0" + n : n }
+        return "#" + h(x[0] * (1 - k) + y[0] * k) + h(x[1] * (1 - k) + y[1] * k) + h(x[2] * (1 - k) + y[2] * k)
+    }
+    readonly property string accV: vivid(acc)
+    readonly property string accFg: lum(accV) > 0.55 ? "#0d0d0d" : "#F6F5F4"
     readonly property var barRgb: cfg.bar && cfg.bar.rgb && (cfg.bar.rgb[0] + cfg.bar.rgb[1] + cfg.bar.rgb[2]) < 200 ? cfg.bar.rgb : [12, 12, 14]
     readonly property string style: cfg.style ? cfg.style : "shadow"
     readonly property var p: style === "graphite" ? ({
         // warm grey, soft and solid, your color as the accent
         bg: Qt.rgba(0.11, 0.11, 0.122, op), solidBg: "#1c1c1f", card: Qt.rgba(1, 1, 1, 0.055), card2: Qt.rgba(1, 1, 1, 0.085),
-        text: "#ECECEE", sub: "#9a9aa3", primary: mix(acc, "#ffffff", 0.42), inkOn: "#141416",
-        container: mix(acc, "#2a2a2e", 0.74), onContainer: mix(acc, "#ffffff", 0.62),
+        text: "#ECECEE", sub: "#a8a8b0", primary: accV, inkOn: "#141416",
+        container: mix(accV, "#2a2a2e", 0.62), onContainer: mix(accV, "#ffffff", 0.55),
         line: "transparent", track: Qt.rgba(1, 1, 1, 0.09), radius: 30, cardRadius: 22, tabStyle: "underline", dark: true, glow: false
     }) : style === "aurora" ? ({
         // deep and dark, tinted by your wallpaper colors, with a soft glow
         bg: mix(acc, "#06060a", 0.88, op), solidBg: mix(acc, "#06060a", 0.88), card: mix(acc, "#16161c", 0.8, 0.72), card2: mix(acc, "#1e1e26", 0.72, 0.8),
-        text: "#EEEAF2", sub: "#a9a4b0", primary: mix(acc, "#ffffff", 0.2), inkOn: mix(acc, "#000000", 0.85),
-        container: mix(acc, "#16161c", 0.55), onContainer: mix(acc, "#ffffff", 0.78),
+        text: "#EEEAF2", sub: "#b4afba", primary: accV, inkOn: mix(acc, "#000000", 0.85),
+        container: mix(accV, "#16161c", 0.5), onContainer: mix(accV, "#ffffff", 0.7),
         line: Qt.rgba(1, 1, 1, 0.05), track: Qt.rgba(1, 1, 1, 0.09), radius: 34, cardRadius: 26, tabStyle: "pill", dark: true, glow: true
     }) : style === "frost" ? ({
         // light frosted glass
@@ -173,10 +186,10 @@ PanelWindow {
         line: Qt.rgba(0, 0, 0, 0.05), track: Qt.rgba(0, 0, 0, 0.08), radius: 30, cardRadius: 22, tabStyle: "segment", dark: false, glow: false
     }) : ({
         // Shadow: the color of your bar (black glass), details in your wallpaper color (like the hot corner)
-        bg: Qt.rgba(barRgb[0] / 255, barRgb[1] / 255, barRgb[2] / 255, op), solidBg: "#0c0c0e", card: Qt.rgba(1, 1, 1, 0.05), card2: Qt.rgba(1, 1, 1, 0.08),
-        text: "#F6F5F4", sub: "#8f8f98", primary: acc, inkOn: accFg,
-        container: mix(acc, "#141416", 0.8), onContainer: mix(acc, "#ffffff", 0.55),
-        line: Qt.rgba(1, 1, 1, 0.07), track: Qt.rgba(1, 1, 1, 0.1), radius: 28, cardRadius: 20, tabStyle: "segment", dark: true, glow: false
+        bg: Qt.rgba(barRgb[0] / 255, barRgb[1] / 255, barRgb[2] / 255, Math.max(op, 0.82)), solidBg: "#0c0c0e", card: Qt.rgba(1, 1, 1, 0.075), card2: Qt.rgba(1, 1, 1, 0.11),
+        text: "#F6F5F4", sub: "#b0b0b8", primary: accV, inkOn: accFg,
+        container: mix(accV, "#141416", 0.62), onContainer: mix(accV, "#ffffff", 0.45),
+        line: Qt.rgba(1, 1, 1, 0.09), track: Qt.rgba(1, 1, 1, 0.16), radius: 28, cardRadius: 20, tabStyle: "segment", dark: true, glow: false
     })
 
     // ---------------- window ----------------

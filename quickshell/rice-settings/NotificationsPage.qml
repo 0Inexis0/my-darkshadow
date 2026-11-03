@@ -71,7 +71,7 @@ Item {
                 op: page.v("opacity", 0.8)
                 pop: page.v("popup_opacity", 0.85)
                 surface: page.v("colors", "graphite")
-                edge: page.v("border", "subtle")
+                edge: page.v("border", "none")
                 shadowOn: page.v("shadow", false) === true
                 fam: page.famFor(page.v("font", "sans"))
                 fs: page.v("font_size", 13) / 13
@@ -227,7 +227,7 @@ Item {
                             op: page.v("opacity", 0.8)
                             pop: page.v("popup_opacity", 0.85)
                             surface: page.v("colors", "graphite")
-                            edge: page.v("border", "subtle")
+                            edge: page.v("border", "none")
                             shadowOn: false
                             fam: page.famFor(page.v("font", "sans"))
                             iconSize: 22
@@ -288,7 +288,7 @@ Item {
             label: "Border"
             desc: "Edge around popups and the panel"
             options: [{ label: "Subtle", value: "subtle" }, { label: "Accent", value: "accent" }, { label: "None", value: "none" }]
-            current: page.v("border", "subtle")
+            current: page.v("border", "none")
             onChosen: function(x) { page.setv("border", x) }
         }
         ToggleRow { label: "Shadow"; desc: "Small shadow under popups (off looks cleaner)"; checked: page.v("shadow", false) === true; onToggled: function(x) { page.setv("shadow", x ? "on" : "off") } }

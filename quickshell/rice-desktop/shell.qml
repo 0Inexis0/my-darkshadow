@@ -318,7 +318,5 @@ ShellRoot {
 
     Dock { dc: root.cfg.dock ? root.cfg.dock : ({}) }
 
-    // ---- hot corner (Settings > Hot corners)
-    HotCorner { }
 
 }
