@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# rice-power [X]     open the power menu under the bar (X: where the icon is, pixels from the left)
+# rice-power lock    lock the screen with hyprlock (never logs you out)
+if [ "${1:-}" = lock ]; then
+  if command -v hyprlock >/dev/null 2>&1; then
+    pidof hyprlock >/dev/null || setsid -f hyprlock >/dev/null 2>&1
+  else
+    loginctl lock-session
+  fi
+  exit 0
+fi
+if pgrep -f "quickshell/rice-desktop" >/dev/null 2>&1; then
+  mkdir -p "$HOME/.cache/rice"
+  printf '%s %s\n' "$(date +%s.%N)" "${1:-0}" >"$HOME/.cache/rice/power-open"
+else
+  exec "$0" lock
+fi

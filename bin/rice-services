@@ -205,7 +205,10 @@ def confirm(question):
 def session(what):
     run(["swaync-client", "-cp"])     # close the notification center first
     if what == "lock":
-        if shutil.which("hyprlock"):
+        rp = os.path.expanduser("~/.local/bin/rice-power")
+        if os.path.exists(rp):
+            bg([rp, "lock"])
+        elif shutil.which("hyprlock"):
             if out(["pidof", "hyprlock"]) == "":
                 bg(["hyprlock"])
         else:

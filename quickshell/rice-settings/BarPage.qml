@@ -32,7 +32,21 @@ Item {
         "clock": "12:34", "tray": "󰕰", "volume": "󰕾", "network": "󰖩",
         "bluetooth": "󰂯", "battery": "󰁹 82%", "notifications": "󰂚", "power": "󰐥"
     })
-    readonly property string wsText: page.v("ws_style", "dots") === "pacman" ? "\u25d6 \u2022 \u2022 \u2022" : (page.v("ws_style", "dots") === "letters" ? "A  B  C  D" : "\u25cf  \u2022  \u2022  \u2022")
+    readonly property string wsText: page.v("ws_style", "dots") === "pacman" ? "\u25d6 \u2022 \u2022 \u2022" : (page.v("ws_style", "dots") === "letters" ? "A  B  C  D" : page.v("ws_style", "dots") === "numbers" ? "1  2  3  4" : "\u25cf  \u2022  \u2022  \u2022")
+    readonly property var logos: [
+        ["auto", "Auto", 0], ["apps", "Apps", 0xF003B], ["tux", "Linux", 0xF17C], ["arch", "Arch", 0xF303],
+        ["gentoo", "Gentoo", 0xF30D], ["fedora", "Fedora", 0xF30A], ["debian", "Debian", 0xF306], ["ubuntu", "Ubuntu", 0xF31B],
+        ["nixos", "NixOS", 0xF313], ["cachyos", "CachyOS", 0xF385], ["endeavouros", "Endeavour", 0xF322], ["manjaro", "Manjaro", 0xF312],
+        ["linuxmint", "Mint", 0xF30E], ["opensuse", "openSUSE", 0xF314], ["void", "Void", 0xF32E], ["alpine", "Alpine", 0xF300],
+        ["pop", "Pop!_OS", 0xF32A], ["kali", "Kali", 0xF327], ["centos", "CentOS", 0xF304], ["raspbian", "Raspberry", 0xF315],
+        ["elementary", "elementary", 0xF309], ["zorin", "Zorin", 0xF32F], ["nobara", "Nobara", 0xF380], ["artix", "Artix", 0xF31F],
+        ["slackware", "Slackware", 0xF318], ["mageia", "Mageia", 0xF310], ["rocky", "Rocky", 0xF32B]
+    ]
+    readonly property string logoGlyph: {
+        const k = page.v("logo", "auto")
+        for (let i = 0; i < logos.length; i++) if (logos[i][0] === k && logos[i][2] !== 0) return String.fromCodePoint(logos[i][2])
+        return page.ctl && page.ctl.osGlyph ? page.ctl.osGlyph() : "\uf17c"
+    }
     readonly property var lay: qb.layout ? qb.layout : ({ left: [], center: [], right: [] })
 
     Flickable {
@@ -106,7 +120,7 @@ Item {
                                 color: pl ? prev.pill : "transparent"
                                 border.width: pl ? 1 : 0; border.color: Qt.rgba(1, 1, 1, 0.1)
                                 T { id: pg; anchors.centerIn: parent; kind: modelData === "clock" || modelData === "battery" || modelData === "workspaces" ? "" : "icon"
-                                    text: modelData === "workspaces" ? page.wsText : (page.glyph[modelData] !== undefined ? page.glyph[modelData] : "•")
+                                    text: modelData === "workspaces" ? page.wsText : modelData === "launcher" ? page.logoGlyph : (page.glyph[modelData] !== undefined ? page.glyph[modelData] : "•")
                                     font.pixelSize: 12; color: "#e8e8ec" }
                             }
                         }
@@ -180,6 +194,33 @@ Item {
                 onCommitted: function(x) { page.setv("opacity", x.toFixed(2)) }
             }
 
+            // ---------- launcher icon ----------
+            T { kind: "title"; text: "Launcher icon"; font.pixelSize: 16; font.bold: true; topPadding: 10 }
+            T { kind: "reading"; text: "The button that opens the launcher. Auto picks the logo of the system you run."; color: "#8a8a8a"; font.pixelSize: 12 }
+            Flow {
+                width: parent.width
+                spacing: 8
+                Repeater {
+                    model: page.logos
+                    delegate: Rectangle {
+                        readonly property bool sel: page.v("logo", "auto") === modelData[0]
+                        width: 78; height: 72; radius: 14
+                        color: sel ? "#F6F5F4" : (lgm.containsMouse ? "#1c1c1c" : "#141414")
+                        border.width: 1; border.color: sel ? "#F6F5F4" : "#1f1f1f"
+                        scale: lgm.pressed ? 0.94 : 1
+                        Behavior on color { ColorAnimation { duration: 120 } }
+                        Behavior on scale { NumberAnimation { duration: 100 } }
+                        T { kind: modelData[2] === 0 ? "" : "icon"; anchors.horizontalCenter: parent.horizontalCenter; y: 12
+                            text: modelData[2] === 0 ? "AUTO" : String.fromCodePoint(modelData[2])
+                            font.pixelSize: modelData[2] === 0 ? 13 : 24; font.bold: modelData[2] === 0
+                            color: parent.sel ? "#0d0d0d" : "#F6F5F4" }
+                        T { anchors.horizontalCenter: parent.horizontalCenter; y: 48; text: modelData[1]; font.pixelSize: 10
+                            color: parent.sel ? "#0d0d0d" : "#8a8a8a"; width: parent.width - 8; horizontalAlignment: Text.AlignHCenter; elide: Text.ElideRight }
+                        MouseArea { id: lgm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.setv("logo", modelData[0]) }
+                    }
+                }
+            }
+
             T { kind: "title"; text: "Content"; font.pixelSize: 16; font.bold: true; topPadding: 10 }
             SegRow {
                 label: "Workspaces"
@@ -190,8 +231,8 @@ Item {
             }
             SegRow {
                 label: "Workspace style"
-                desc: "Dots, Pac-Man eating his way along the dots, or letters"
-                options: [ { label: "Dots", value: "dots" }, { label: "Pac-Man", value: "pacman" }, { label: "Letters", value: "letters" } ]
+                desc: "Dots, Pac-Man running to the workspace you open, letters or numbers"
+                options: [ { label: "Dots", value: "dots" }, { label: "Pac-Man", value: "pacman" }, { label: "Letters", value: "letters" }, { label: "Numbers", value: "numbers" } ]
                 current: page.v("ws_style", "dots")
                 onChosen: function(x) { page.setv("ws_style", x) }
             }

@@ -25,7 +25,31 @@ PanelWindow {
     readonly property bool atBottom: bc.position === "bottom"
     readonly property int barH: bc.height ? bc.height : 38
     readonly property int nws: bc.workspaces ? bc.workspaces : 5
-    readonly property string wsStyle: bc.ws_style === "pacman" || bc.ws_style === "letters" ? bc.ws_style : "dots"
+    readonly property string wsStyle: bc.ws_style === "pacman" || bc.ws_style === "letters" || bc.ws_style === "numbers" ? bc.ws_style : "dots"
+    // the launcher button: a distro logo (Nerd Font) or the app grid (Settings > DarkShadow bar > Launcher icon)
+    readonly property var logos: ({
+        tux: 0xF17C, arch: 0xF303, gentoo: 0xF30D, fedora: 0xF30A, debian: 0xF306, ubuntu: 0xF31B, nixos: 0xF313,
+        cachyos: 0xF385, endeavouros: 0xF322, manjaro: 0xF312, linuxmint: 0xF30E, opensuse: 0xF314, void: 0xF32E,
+        alpine: 0xF300, pop: 0xF32A, kali: 0xF327, centos: 0xF304, raspbian: 0xF315, elementary: 0xF309, zorin: 0xF32F,
+        nobara: 0xF380, artix: 0xF31F, slackware: 0xF318, garuda: 0xF303, mageia: 0xF310, rocky: 0xF32B
+    })
+    property var osIds: []
+    Process {
+        id: osProc
+        running: true
+        command: ["bash", "-c", ". /etc/os-release 2>/dev/null; echo \"$ID $ID_LIKE\""]
+        stdout: StdioCollector { onStreamFinished: bar.osIds = text.trim().toLowerCase().split(/\s+/) }
+    }
+    readonly property string logoKey: {
+        const k = bc.logo || "auto"
+        if (k === "apps") return "apps"
+        if (k !== "auto") return logos[k] !== undefined ? k : "apps"
+        for (let i = 0; i < osIds.length; i++) {
+            const id = osIds[i] === "opensuse-tumbleweed" || osIds[i] === "opensuse-leap" ? "opensuse" : osIds[i]
+            if (logos[id] !== undefined) return id
+        }
+        return "tux"
+    }
     readonly property color fg: "#F6F5F4"
     readonly property color dim: Qt.rgba(0.965, 0.961, 0.957, 0.66)
     readonly property color line: Qt.rgba(1, 1, 1, 0.09)
@@ -129,84 +153,113 @@ PanelWindow {
 
     Component { id: mLauncher
         Item { property bool shown: true; width: 22; height: bar.barH
-            MIcon { anchors.centerIn: parent; name: "apps"; glyph: String.fromCodePoint(0xF003B); size: 18; color: lm.containsMouse ? bar.fg : bar.dim
+            MIcon { visible: bar.logoKey === "apps"; anchors.centerIn: parent; name: "apps"; glyph: String.fromCodePoint(0xF003B); size: 18; color: lm.containsMouse ? bar.fg : bar.dim
                 scale: lm.containsMouse ? 1.12 : 1; Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutBack } } }
+            Text { visible: bar.logoKey !== "apps"; anchors.centerIn: parent; anchors.horizontalCenterOffset: 1
+                text: bar.logos[bar.logoKey] !== undefined ? String.fromCodePoint(bar.logos[bar.logoKey]) : ""
+                font.family: Fonts.icons; font.pixelSize: 18; color: bar.fg
+                scale: lm.containsMouse ? 1.15 : 1; Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } } }
             MouseArea { id: lm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("click"); bar.run("\"$HOME/.local/bin/rice-launch\"") } }
         }
     }
 
     Component { id: mWorkspaces
-        Row { property bool shown: true; height: bar.barH; spacing: bar.wsStyle === "dots" ? 7 : 4
-            Repeater {
-                model: bar.maxWs()
-                delegate: Item {
-                    id: cell
-                    readonly property int wid: index + 1
-                    readonly property bool act: bar.focusedId === wid
-                    readonly property bool occ: bar.occupied(wid)
-                    readonly property bool dots: bar.wsStyle === "dots"
-                    readonly property bool pac: bar.wsStyle === "pacman"
-                    width: dots ? (act ? 26 : 10) : (pac ? 16 : 14); height: bar.barH
-                    Behavior on width { NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 1.4 } }
+        Item {
+            id: wsm
+            property bool shown: true
+            readonly property string st: bar.wsStyle
+            readonly property bool pac: st === "pacman"
+            readonly property bool dots: st === "dots"
+            readonly property real cw: dots ? 12 : (pac ? 18 : 16)
+            readonly property real sp: dots ? 7 : 5
+            readonly property int count: bar.maxWs()
+            readonly property int fi: bar.focusedId - 1
+            width: wsRow.width; height: bar.barH
 
-                    // dots: a small dot, the active one stretched into a pill
-                    Rectangle {
-                        visible: cell.dots
-                        anchors.centerIn: parent
-                        width: parent.width; height: act ? 8 : (wm.containsMouse ? 10 : 8); radius: height / 2
-                        color: act ? Look.accent : (occ ? Qt.rgba(0.965, 0.961, 0.957, 0.7) : Qt.rgba(0.965, 0.961, 0.957, 0.2))
-                        Behavior on color { ColorAnimation { duration: 200 } }
-                        Behavior on height { NumberAnimation { duration: 120 } }
-                    }
+            Row {
+                id: wsRow
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: wsm.sp
+                Repeater {
+                    model: wsm.count
+                    delegate: Item {
+                        id: cell
+                        readonly property int wid: index + 1
+                        readonly property bool act: bar.focusedId === wid
+                        readonly property bool occ: bar.occupied(wid)
+                        width: wsm.dots && act ? 32 : wsm.cw; height: bar.barH
+                        Behavior on width { NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 1.4 } }
 
-                    // pacman: the active workspace is Pac-Man, the ones he has passed are eaten
-                    Rectangle {
-                        visible: cell.pac && !act
-                        anchors.centerIn: parent
-                        width: occ ? 7 : 5; height: width; radius: width / 2
-                        color: Qt.rgba(0.965, 0.961, 0.957, wid < bar.focusedId ? 0.1 : (occ ? 0.85 : 0.4))
-                        scale: wm.containsMouse ? 1.4 : 1
-                        Behavior on color { ColorAnimation { duration: 200 } }
-                        Behavior on scale { NumberAnimation { duration: 120 } }
-                    }
-                    Canvas {
-                        id: pc
-                        visible: cell.pac && act
-                        anchors.centerIn: parent
-                        width: 16; height: 16
-                        property real mouth: 0.05
-                        onMouthChanged: requestPaint()
-                        onVisibleChanged: if (visible) requestPaint()
-                        SequentialAnimation on mouth {
-                            running: pc.visible; loops: Animation.Infinite
-                            NumberAnimation { to: 0.27; duration: 220; easing.type: Easing.InOutSine }
-                            NumberAnimation { to: 0.03; duration: 220; easing.type: Easing.InOutSine }
+                        // dots: a dot, the active one stretched into a pill
+                        Rectangle {
+                            visible: wsm.dots
+                            anchors.centerIn: parent
+                            width: parent.width; height: wm.containsMouse && !act ? 12 : 10; radius: height / 2
+                            color: act ? Look.accent : (occ ? Qt.rgba(0.965, 0.961, 0.957, 0.75) : Qt.rgba(0.965, 0.961, 0.957, 0.22))
+                            Behavior on color { ColorAnimation { duration: 200 } }
+                            Behavior on height { NumberAnimation { duration: 120 } }
                         }
-                        onPaint: {
-                            const c = getContext("2d")
-                            c.reset()
-                            c.fillStyle = "#ffd23f"
-                            c.beginPath()
-                            c.moveTo(width / 2, height / 2)
-                            c.arc(width / 2, height / 2, width / 2, mouth * Math.PI, (2 - mouth) * Math.PI)
-                            c.closePath()
-                            c.fill()
+                        // pacman: pac-dots; the one Pac-Man sits on is gone, the ones he has passed are eaten
+                        Rectangle {
+                            visible: wsm.pac
+                            anchors.centerIn: parent
+                            width: occ ? 9 : 6; height: width; radius: width / 2
+                            color: Qt.rgba(0.965, 0.961, 0.957, occ ? 0.9 : 0.45)
+                            opacity: act ? 0 : (wid < bar.focusedId ? 0.25 : 1)
+                            scale: wm.containsMouse ? 1.35 : 1
+                            Behavior on opacity { NumberAnimation { duration: 260 } }
+                            Behavior on scale { NumberAnimation { duration: 120 } }
                         }
+                        // letters (A B C) or numbers (1 2 3)
+                        Text {
+                            visible: !wsm.dots && !wsm.pac
+                            anchors.centerIn: parent
+                            text: wsm.st === "numbers" ? String(wid) : String.fromCharCode(64 + wid)
+                            font.family: Fonts.main; font.pixelSize: 13; font.weight: act ? Font.Bold : Font.Medium
+                            color: act ? Look.accent : (occ ? Qt.rgba(0.965, 0.961, 0.957, 0.9) : Qt.rgba(0.965, 0.961, 0.957, 0.32))
+                            scale: act ? 1.18 : (wm.containsMouse ? 1.12 : 1)
+                            Behavior on color { ColorAnimation { duration: 200 } }
+                            Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
+                        }
+                        MouseArea { id: wm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("select"); bar.goWs(wid) } }
                     }
+                }
+            }
 
-                    // letters: A B C ...
-                    Text {
-                        visible: !cell.dots && !cell.pac
-                        anchors.centerIn: parent
-                        text: String.fromCharCode(65 + index)
-                        font.family: Fonts.main; font.pixelSize: act ? 14 : 12; font.weight: act ? Font.Bold : Font.Normal
-                        color: act ? Look.accent : (occ ? Qt.rgba(0.965, 0.961, 0.957, 0.85) : Qt.rgba(0.965, 0.961, 0.957, 0.3))
-                        scale: wm.containsMouse ? 1.2 : 1
-                        Behavior on color { ColorAnimation { duration: 200 } }
-                        Behavior on font.pixelSize { NumberAnimation { duration: 120 } }
-                        Behavior on scale { NumberAnimation { duration: 120 } }
+            // Pac-Man: still and white; he only chomps while he runs to the workspace you switch to
+            Canvas {
+                id: pac
+                visible: wsm.pac && wsm.fi >= 0 && wsm.fi < wsm.count
+                width: 18; height: 18
+                anchors.verticalCenter: parent.verticalCenter
+                readonly property real tx: Math.max(0, wsm.fi) * (wsm.cw + wsm.sp) + (wsm.cw - width) / 2
+                property bool facingLeft: false
+                property real mouth: 0.2
+                x: tx
+                Behavior on x { NumberAnimation { id: run; duration: 380; easing.type: Easing.InOutCubic } }
+                onTxChanged: { facingLeft = tx < x; chomp.restart() }
+                SequentialAnimation {
+                    id: chomp
+                    loops: 1
+                    SequentialAnimation {
+                        loops: 3
+                        NumberAnimation { target: pac; property: "mouth"; to: 0.02; duration: 65 }
+                        NumberAnimation { target: pac; property: "mouth"; to: 0.26; duration: 65 }
                     }
-                    MouseArea { id: wm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("select"); bar.goWs(wid) } }
+                    NumberAnimation { target: pac; property: "mouth"; to: 0.2; duration: 80 }
+                }
+                transform: Scale { origin.x: 9; xScale: pac.facingLeft ? -1 : 1 }
+                onMouthChanged: requestPaint()
+                onVisibleChanged: if (visible) requestPaint()
+                onPaint: {
+                    const c = getContext("2d")
+                    c.reset()
+                    c.fillStyle = "#F6F5F4"
+                    c.beginPath()
+                    c.moveTo(width / 2, height / 2)
+                    c.arc(width / 2, height / 2, width / 2, mouth * Math.PI, (2 - mouth) * Math.PI)
+                    c.closePath()
+                    c.fill()
                 }
             }
             WheelHandler { acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
@@ -339,7 +392,11 @@ PanelWindow {
             MIcon { anchors.centerIn: parent; name: "power_settings_new"; glyph: String.fromCodePoint(0xF0425); size: 18; color: pm.containsMouse ? "#ff6b6b" : bar.dim
                 Behavior on color { ColorAnimation { duration: 150 } } }
             MouseArea { id: pm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
-                onClicked: function(m) { bar.run(m.button === Qt.RightButton ? "\"$HOME/.local/bin/logout\"" : "\"$HOME/.local/bin/rice-services\" session lock") } }
+                onClicked: function(m) {
+                    if (m.button === Qt.RightButton) { bar.run("\"$HOME/.local/bin/rice-power\" lock"); return }
+                    const p = mapToItem(null, width / 2, 0)
+                    bar.run("\"$HOME/.local/bin/rice-power\" " + Math.round(p.x))
+                } }
         }
     }
 

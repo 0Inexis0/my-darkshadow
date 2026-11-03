@@ -298,6 +298,8 @@ def lua_text(c):
                '    blur = true,\n    ignore_alpha = 0.1,\n})\n')
     out.append('hl.layer_rule({\n    name  = "rice-bluetooth-blur",\n    match = { namespace = "rice-bluetooth" },\n'
                '    blur = true,\n    ignore_alpha = 0.1,\n})\n')
+    out.append('hl.layer_rule({\n    name  = "rice-power-blur",\n    match = { namespace = "rice-power" },\n'
+               '    blur = true,\n    ignore_alpha = 0.1,\n})\n')
     return "".join(out)
 
 
@@ -363,6 +365,7 @@ def state():
     c = load()
     out = dict(c)
     out["themes"] = {k: dict(v) for k, v in THEMES.items()}
+    out["font"] = font_family()
     out["installed"] = shutil.which("rofi") is not None
     try:
         out["wallpaper"] = open(HOME + "/.cache/hyprquickpaper-current").read().strip()

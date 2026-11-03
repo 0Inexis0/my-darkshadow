@@ -24,6 +24,9 @@ PanelWindow {
     readonly property real alpha: rs.transparency === false ? 1 : (rs.opacity !== undefined ? rs.opacity : 0.82)
     readonly property bool icons: rs.icons !== false
     readonly property int fs: rs.font_size ? rs.font_size : 13
+    // the same font as Rofi: rice-rofi's font (your mono font) at the same size (Rofi sizes are points)
+    readonly property string ff: rs.font ? rs.font : Fonts.mono
+    readonly property int px: Math.round(fs * 4 / 3)
     readonly property int nlines: rs.lines ? rs.lines : 8
     readonly property real rad: lay === "bar" ? 0 : (rs.radius !== undefined ? rs.radius : 18)
     readonly property real cw: lay === "bar" ? width : (lay === "grid" ? Math.max(rs.width ? rs.width : 620, 720) : (lay === "split" ? Math.max(rs.width ? rs.width : 620, 860) : (rs.width ? rs.width : 620)))
@@ -166,7 +169,7 @@ PanelWindow {
 
     readonly property real pad: lay === "bar" ? 10 : 14
     readonly property real inputH: lay === "bar" ? 44 : 50
-    readonly property real rowH: Math.max(46, fs * 3.6)
+    readonly property real rowH: Math.max(46, px * 2.8)
     readonly property int gcols: Math.max(3, Math.floor((cw - 2 * pad) / 120))
     readonly property int grows: Math.min(4, Math.max(2, Math.round(nlines / 2.5)))
     readonly property real cellH: 104
@@ -242,7 +245,7 @@ PanelWindow {
                 x: 18; width: parent.width - 36; anchors.verticalCenter: parent.verticalCenter
                 text: ln.query
                 color: ln.col(ln.th.fg); selectionColor: ln.col(ln.th.sel); selectedTextColor: ln.col(ln.th.selfg)
-                font.family: Fonts.main; font.pixelSize: ln.fs + 3
+                font.family: ln.ff; font.pixelSize: ln.px
                 clip: true
                 onTextChanged: { if (text !== ln.query) { ln.query = text; if (activeFocus) Sfx.play("type") } }
                 Keys.onPressed: function(e) {
@@ -257,7 +260,7 @@ PanelWindow {
                     else if (e.key === Qt.Key_PageDown) { ln.move(ln.nlines); e.accepted = true }
                     else if (e.key === Qt.Key_PageUp) { ln.move(-ln.nlines); e.accepted = true }
                 }
-                DText { visible: input.text.length === 0; text: "Search"; font.family: Fonts.main; font.pixelSize: ln.fs + 3; color: ln.col(ln.th.dim) }
+                DText { visible: input.text.length === 0; text: "Search"; font.family: ln.ff; font.pixelSize: ln.px; color: ln.col(ln.th.dim) }
             }
         }
 
@@ -306,13 +309,13 @@ PanelWindow {
                     sourceSize.width: 64; sourceSize.height: 64; asynchronous: true
                 }
                 DText { visible: modelData.kind === "calc"; x: 14; width: ln.rowH - 18; anchors.verticalCenter: parent.verticalCenter; horizontalAlignment: Text.AlignHCenter
-                    text: "="; font.family: Fonts.main; font.pixelSize: ln.fs + 8; font.weight: Font.DemiBold; color: parent.sel ? ln.col(ln.th.selfg) : ln.col(ln.th.dim) }
+                    text: "="; font.family: ln.ff; font.pixelSize: ln.fs + 8; font.weight: Font.DemiBold; color: parent.sel ? ln.col(ln.th.selfg) : ln.col(ln.th.dim) }
                 DText {
                     x: (ln.icons || modelData.kind === "calc" ? ln.rowH : 0) + 8 + (row.sel ? 3 : 0)
                     Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
                     width: parent.width - x - 16
                     anchors.verticalCenter: parent.verticalCenter
-                    elide: Text.ElideRight; text: modelData.name; font.family: Fonts.main; font.pixelSize: ln.fs + 2
+                    elide: Text.ElideRight; text: modelData.name; font.family: ln.ff; font.pixelSize: ln.px
                     color: parent.sel ? ln.col(ln.th.selfg) : ln.col(ln.th.fg)
                 }
                 MouseArea { anchors.fill: parent; hoverEnabled: true; onPositionChanged: { ln.noScroll = true; ln.cur = index; ln.noScroll = false } onClicked: ln.activate(modelData) }
@@ -362,7 +365,7 @@ PanelWindow {
                 DText {
                     x: 6; y: 64; width: parent.width - 12; horizontalAlignment: Text.AlignHCenter
                     elide: Text.ElideRight; maximumLineCount: 2; wrapMode: Text.WordWrap
-                    text: modelData.name; font.family: Fonts.main; font.pixelSize: ln.fs - 1
+                    text: modelData.name; font.family: ln.ff; font.pixelSize: ln.px - 2
                     color: parent.sel ? ln.col(ln.th.selfg) : ln.col(ln.th.fg)
                 }
                 MouseArea { anchors.fill: parent; hoverEnabled: true; onPositionChanged: { ln.noScroll = true; ln.cur = index; ln.noScroll = false } onClicked: ln.activate(modelData) }
@@ -400,12 +403,12 @@ PanelWindow {
                 Image { visible: ln.icons && modelData.kind !== "calc"; x: 10; anchors.verticalCenter: parent.verticalCenter; width: 26; height: 26
                     source: ln.icons ? ln.iconOf(modelData) : ""; sourceSize.width: 52; sourceSize.height: 52; asynchronous: true }
                 DText { id: bt; x: ln.icons ? 44 : 14; width: parent.width - x - 10; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
-                    text: modelData.name; font.family: Fonts.main; font.pixelSize: ln.fs; color: parent.sel ? ln.col(ln.th.selfg) : ln.col(ln.th.fg) }
+                    text: modelData.name; font.family: ln.ff; font.pixelSize: ln.px - 1; color: parent.sel ? ln.col(ln.th.selfg) : ln.col(ln.th.fg) }
                 MouseArea { anchors.fill: parent; hoverEnabled: true; onPositionChanged: { ln.noScroll = true; ln.cur = index; ln.noScroll = false } onClicked: ln.activate(modelData) }
             }
         }
 
-        DText { visible: ln.query !== "" && ln.results.length === 0 && ln.lay !== "bar"; x: ln.leftW + ln.pad + 16; y: ln.pad + ln.inputH + 20; text: "Nothing found"; font.family: Fonts.main; font.pixelSize: ln.fs; color: ln.col(ln.th.dim) }
+        DText { visible: ln.query !== "" && ln.results.length === 0 && ln.lay !== "bar"; x: ln.leftW + ln.pad + 16; y: ln.pad + ln.inputH + 20; text: "Nothing found"; font.family: ln.ff; font.pixelSize: ln.px; color: ln.col(ln.th.dim) }
     }
     // smooth scrolling: the wheel and the keys move the view with an easing animation
     property bool noScroll: false
