@@ -782,7 +782,7 @@ def popup_css(c, acc, on_acc):
         "accent":  "background: %s;\n  border: 1px solid %s;\n  border-left: 4px solid %s;\n  border-radius: 10px;" % (bgc(pop), line, acc),
         "glow":    "background: %s;\n  border: 1px solid %s;\n  border-radius: %dpx;\n  box-shadow: 0 0 16px %s;" % (bgc(pop), acc, r, hex_rgba(acc, 0.45)),
         "island":  "background: rgb(0, 0, 0);\n  border: none;\n  border-radius: 28px;\n  padding: 12px 18px;",
-        "light":   "background: rgba(246, 245, 244, %.2f);\n  border: 1px solid " + ("transparent" if c["border"] == "none" else "rgba(0, 0, 0, 0.08)") + ";\n  border-radius: %dpx;" % (max(pop, 0.9), r),
+        "light":   "background: rgba(246, 245, 244, %.2f);\n  border: 1px solid %s;\n  border-radius: %dpx;" % (max(pop, 0.9), "transparent" if c["border"] == "none" else "rgba(0, 0, 0, 0.08)", r),
     }
     out = ["/* popup style: %s */" % st, "%s {\n  %s\n}" % (P, rules[st])]
     if st == "pill":
@@ -978,12 +978,17 @@ def shell_engine():
 
 
 def apply(c, reload_hypr=False):
-    write_config(c)
-    write_css(c)
+    # the blur rules first: a broken swaync style must never cost the shell its blur
+    for f in (write_config, write_css):
+        try:
+            f(c)
+        except Exception as e:
+            print("rice-notify: %s skipped (%s)" % (f.__name__, e), file=sys.stderr)
     old = open(LUA).read() if os.path.exists(LUA) else None
     new = lua_text(c)
     changed = old != new
     if changed:
+        os.makedirs(os.path.dirname(LUA), exist_ok=True)
         open(LUA, "w").write(new)
     if wire_hypr():
         changed = True

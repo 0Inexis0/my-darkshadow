@@ -1,5 +1,8 @@
 # Changelog
 
+## V3.26
+- Bug fixes
+
 ## V3.25
 - Bug fixes
 
