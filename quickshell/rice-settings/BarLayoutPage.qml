@@ -119,12 +119,12 @@ Item {
         Rectangle {
             width: parent.width
             height: 128
-            radius: 16
-            border.width: 1
-            border.color: "#1f1f1f"
+            radius: M3.rL
+            border.width: 0
+            border.color: M3.outlineVariant
             gradient: Gradient {
-                GradientStop { position: 0; color: "#2a2740" }
-                GradientStop { position: 1; color: "#12131a" }
+                GradientStop { position: 0; color: M3.stageTop }
+                GradientStop { position: 1; color: M3.stageBottom }
             }
             Rectangle {
                 id: barBg
@@ -173,7 +173,7 @@ Item {
                     property var list: []
                     text: list.map(function(m) { return page.chip(m).label }).join("  ·  ")
                     font.pixelSize: 10
-                    color: "#7a7a84"
+                    color: M3.inkDim
                     elide: Text.ElideRight
                 }
                 Names { list: page.lay.left || []; x: 0; width: zLeft.width; horizontalAlignment: Text.AlignLeft; leftPadding: 10 }
@@ -187,8 +187,8 @@ Item {
             id: zHidden
             zone: "available"; page: page; wrap: true
             width: parent.width; height: 70
-            color: hot ? Qt.rgba(1, 1, 1, 0.06) : "#121212"
-            border.color: hot ? Qt.rgba(1, 1, 1, 0.35) : "#1f1f1f"
+            color: hot ? Qt.rgba(1, 1, 1, 0.06) : M3.surfaceLow
+            border.color: hot ? Qt.rgba(1, 1, 1, 0.35) : M3.outlineVariant
             items: page.chips(page.lay.available)
         }
 

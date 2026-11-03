@@ -30,7 +30,7 @@ Column {
     T {
         width: parent.width
         text: "Run any command with a key combination. Removing one takes effect after Reload Hyprland."
-        color: "#8a8a8a"
+        color: M3.inkDim
         font.pixelSize: 12
         wrapMode: Text.WordWrap
     }
@@ -41,7 +41,7 @@ Column {
             width: page.width
             height: 44
             radius: 10
-            color: "#141414"
+            color: M3.surfaceC
             T { x: 16; anchors.verticalCenter: parent.verticalCenter; text: modelData.keys; font.bold: true; font.pixelSize: 13 }
             T {
                 x: 190
@@ -75,7 +75,7 @@ Column {
     T {
         visible: page.custom.length === 0
         text: "No custom keybinds yet."
-        color: "#8a8a8a"
+        color: M3.inkDim
         font.pixelSize: 13
     }
 

@@ -64,23 +64,23 @@ Item {
                 visible: Prefs.previews
                 width: parent.width
                 height: 230
-                radius: 16
+                radius: M3.rL
                 clip: true
-                border.width: 1
-                border.color: "#1f1f1f"
+                border.width: 0
+                border.color: M3.outlineVariant
                 gradient: Gradient {
-                    GradientStop { position: 0; color: "#2a2740" }
-                    GradientStop { position: 1; color: "#12131a" }
+                    GradientStop { position: 0; color: M3.stageTop }
+                    GradientStop { position: 1; color: M3.stageBottom }
                 }
                 readonly property var th: (page.rs.themes && page.rs.themes[page.v("theme", "shadow")]) ? page.rs.themes[page.v("theme", "shadow")]
-                                          : ({ bg: "#0d0d0d", alt: "#1a1a1a", sel: "#F6F5F4", fg: "#F6F5F4" })
+                                          : ({ bg: "#0d0d0d", alt: M3.surfaceHigh, sel: "#F6F5F4", fg: "#F6F5F4" })
                 readonly property real sc: width / 1920 * 1.35
                 readonly property string lay: page.v("layout", "list")
                 readonly property string pos: page.v("position", "center")
                 readonly property real alpha: page.v("transparency", true) === true ? page.v("opacity", 0.82) : 1
                 function withAlpha(c, a) { const q = Qt.color(c); return Qt.rgba(q.r, q.g, q.b, a) }
                 function lum(c) { const q = Qt.color(c); return 0.299 * q.r + 0.587 * q.g + 0.114 * q.b }
-                readonly property color selFg: lum(th.sel) > 0.55 ? "#111111" : "#F6F5F4"
+                readonly property color selFg: lum(th.sel) > 0.55 ? M3.surfaceLow : "#F6F5F4"
                 readonly property int rows: Math.min(5, page.v("lines", 8))
 
                 Rectangle { x: 50; y: 30; width: 220; height: 120; radius: 10; color: Qt.rgba(1, 1, 1, 0.05) }
@@ -172,7 +172,7 @@ Item {
                     anchors.right: parent.right; anchors.rightMargin: 12; anchors.top: parent.top; anchors.topMargin: 8
                     text: "Preview"
                     font.pixelSize: 10
-                    color: "#7a7a84"
+                    color: M3.inkDim
                 }
             }
 
@@ -189,9 +189,9 @@ Item {
                         width: 124
                         height: 84
                         radius: 14
-                        color: "#141414"
+                        color: M3.surfaceC
                         border.width: on ? 2 : 1
-                        border.color: on ? "#F6F5F4" : (tMouse.containsMouse ? "#3a3a3a" : "#2a2a2a")
+                        border.color: on ? M3.primary : (tMouse.containsMouse ? M3.outline : M3.surfaceHighest)
                         Behavior on border.color { ColorAnimation { duration: 140 } }
 
                         Rectangle {

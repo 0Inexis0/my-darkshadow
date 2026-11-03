@@ -12,31 +12,50 @@ Item {
     signal released(real v)
     readonly property bool sfxOwn: true     // a soft tick for every step while dragging
     width: 200
-    height: 24
+    height: Math.max(32, Math.round(30 * Prefs.sliderThick))
     readonly property real pos: to > from ? Math.max(0, Math.min(1, (shown - from) / (to - from))) : 0
 
+    // Material 3 slider: a thick track split by a thin handle, the part before it in your color
+    readonly property real hx: (sl.width - 4) * sl.pos
     Rectangle {
         anchors.verticalCenter: parent.verticalCenter
-        width: parent.width
-        height: 4
-        radius: 2
-        color: "#2a2a2a"
-        Rectangle {
-            width: parent.width * sl.pos
-            height: parent.height
-            radius: 2
-            color: "#F6F5F4"
-            Behavior on width { enabled: !sl.dragging; NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-        }
+        x: 0
+        width: Math.max(0, sl.hx - 5)
+        height: Math.round(14 * Prefs.sliderThick)
+        radius: height / 2
+        color: M3.primary
+        Behavior on width { enabled: !sl.dragging; NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
     }
     Rectangle {
-        width: 16
-        height: 16
-        radius: 8
-        color: "#F6F5F4"
         anchors.verticalCenter: parent.verticalCenter
-        x: (sl.width - width) * sl.pos
-        Behavior on x { enabled: !sl.dragging; NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+        x: sl.hx + 9
+        width: Math.max(0, sl.width - x)
+        height: Math.round(14 * Prefs.sliderThick)
+        radius: height / 2
+        color: M3.surfaceHighest
+        Behavior on x { enabled: !sl.dragging; NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+        // the end stop
+        Rectangle { anchors.right: parent.right; anchors.rightMargin: 5; anchors.verticalCenter: parent.verticalCenter; width: 4; height: 4; radius: 2; color: M3.primary; visible: parent.width > 14 }
+    }
+    Rectangle {
+        width: 4
+        height: Math.round((sl.dragging ? 32 : 28) * Math.max(1, Prefs.sliderThick * 0.9))
+        radius: 2
+        color: M3.primary
+        anchors.verticalCenter: parent.verticalCenter
+        x: sl.hx
+        Behavior on x { enabled: !sl.dragging; NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+        Behavior on height { NumberAnimation { duration: 120 } }
+        // the value while you drag
+        Rectangle {
+            visible: sl.dragging
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: -34
+            width: Math.max(34, vt.implicitWidth + 16); height: 26; radius: 13
+            color: M3.ink
+            T { id: vt; anchors.centerIn: parent; font.pixelSize: 11; font.bold: true; color: M3.surface
+                text: Math.abs(sl.step) >= 1 ? Math.round(sl.shown) : Number(sl.shown).toFixed(2) }
+        }
     }
     MouseArea {
         anchors.fill: parent

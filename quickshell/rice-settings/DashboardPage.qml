@@ -58,13 +58,13 @@ Item {
             visible: Prefs.previews
             width: parent.width
             height: 200
-            radius: 16
+            radius: M3.rL
             clip: true
-            border.width: 1
-            border.color: "#1f1f1f"
+            border.width: 0
+            border.color: M3.outlineVariant
             gradient: Gradient {
-                GradientStop { position: 0; color: "#2a2740" }
-                GradientStop { position: 1; color: "#101117" }
+                GradientStop { position: 0; color: M3.stageTop }
+                GradientStop { position: 1; color: M3.stageBottom }
             }
             // the bar and the panel hanging from its middle
 
@@ -104,9 +104,9 @@ Item {
                     width: (parent.width - 30) / 4
                     height: 26 + (width - 24) * 0.53 + 44
                     radius: 14
-                    color: lm.containsMouse ? "#191919" : "#141414"
+                    color: lm.containsMouse ? M3.surfaceHigh : M3.surfaceC
                     border.width: on ? 2 : 1
-                    border.color: on ? "#F6F5F4" : (lm.containsMouse ? "#3a3a3a" : "#222222")
+                    border.color: on ? M3.primary : (lm.containsMouse ? M3.outline : M3.surfaceHighest)
                     Behavior on border.color { ColorAnimation { duration: 140 } }
                     scale: lm.pressed ? 0.98 : 1
                     Behavior on scale { NumberAnimation { duration: 90 } }
@@ -121,7 +121,7 @@ Item {
                         anchors.bottom: parent.bottom; anchors.bottomMargin: 12
                         spacing: 1
                         T { text: modelData.n; font.pixelSize: 13; font.bold: true }
-                        T { kind: "reading"; text: modelData.d; font.pixelSize: 10; color: "#8a8a8a"; width: parent.parent.width - 50; elide: Text.ElideRight }
+                        T { kind: "reading"; text: modelData.d; font.pixelSize: 10; color: M3.inkDim; width: parent.parent.width - 50; elide: Text.ElideRight }
                     }
                     Rectangle {
                         visible: parent.on
@@ -208,15 +208,15 @@ Item {
                 width: parent.width
                 height: 58
                 radius: 12
-                color: "#141414"
+                color: M3.surfaceC
                 border.width: 1
-                border.color: "#1f1f1f"
+                border.color: M3.outlineVariant
                 opacity: on ? 1 : 0.6
                 Column {
                     x: 16; anchors.verticalCenter: parent.verticalCenter
                     spacing: 2
                     T { text: page.info(modelData).n; font.pixelSize: 14; font.bold: true }
-                    T { kind: "reading"; text: page.info(modelData).d; font.pixelSize: 11; color: "#8a8a8a" }
+                    T { kind: "reading"; text: page.info(modelData).d; font.pixelSize: 11; color: M3.inkDim }
                 }
                 Row {
                     anchors.right: parent.right; anchors.rightMargin: 14
@@ -247,9 +247,9 @@ Item {
         property bool active: true
         signal clicked()
         width: 32; height: 32; radius: 9
-        color: am.containsMouse && active ? "#262626" : "#1a1a1a"
+        color: am.containsMouse && active ? M3.surfaceHighest : M3.surfaceHigh
         border.width: 1
-        border.color: "#2a2a2a"
+        border.color: M3.surfaceHighest
         opacity: active ? 1 : 0.35
         T { anchors.centerIn: parent; text: ar.glyph; font.pixelSize: 16 }
         MouseArea { id: am; anchors.fill: parent; hoverEnabled: true; enabled: ar.active; cursorShape: Qt.PointingHandCursor; onClicked: ar.clicked() }

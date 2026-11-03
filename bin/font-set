@@ -10,8 +10,12 @@ DIR = HOME + "/.config/rice"
 CFG = DIR + "/fonts.json"
 BIN = HOME + "/.local/bin"
 KITTY_DIR = HOME + "/.config/kitty"
-DEF = "JetBrainsMono Nerd Font"
+DEF = "JetBrainsMono Nerd Font"          # terminal (kitty) and Nerd Font icons
+UI = "Google Sans Flex"                  # the interface font since V3.23 (rice-fonts installs it)
+UI_FALLBACK = ["Google Sans Flex", "Rubik", "Inter"]
 KEYS = ["main", "numbers", "title", "mono", "icons", "reading"]
+UI_KEYS = ["main", "numbers", "title", "reading"]
+V = 2
 
 
 def run(a, t=5):
@@ -26,7 +30,45 @@ def load():
         j = json.load(open(CFG))
     except Exception:
         j = {}
-    return {k: (j.get(k) or DEF) for k in KEYS}
+    out = {k: (j.get(k) or default(k)) for k in KEYS}
+    out["v"] = j.get("v", 1) if j else V
+    return out
+
+
+def ui_font():
+    fams = families() or []
+    low = [f.lower() for f in fams]
+    for f in UI_FALLBACK:
+        if f.lower() in low:
+            return f
+    return DEF
+
+
+def default(k):
+    return ui_font() if k in UI_KEYS else DEF
+
+
+def cmd_migrate():
+    """v1 used JetBrainsMono Nerd Font for everything: the interface roles move to Google Sans Flex"""
+    try:
+        j = json.load(open(CFG))
+    except Exception:
+        j = {}
+    if j.get("v", 1) >= V:
+        print("Fonts: up to date")
+        return
+    ui = ui_font()
+    for k in UI_KEYS:
+        if not j.get(k) or j.get(k) == DEF:
+            if ui == UI:
+                j[k] = ui
+            else:
+                j.pop(k, None)     # not chosen: follows Google Sans Flex once it is installed
+    for k in ("mono", "icons"):
+        j.setdefault(k, DEF)
+    j["v"] = V
+    save(j)
+    print("Fonts: interface uses %s" % ui)
 
 
 def save(c):
@@ -80,6 +122,7 @@ def cmd_set(key, val):
         sys.exit("Not installed: %s%s" % (val, ("  (try: " + ", ".join(near) + ")") if near else ""))
     fam = next((f for f in (fams or []) if f.lower() == val.lower()), val)
     c = load()
+    c["v"] = V
     c[key] = fam
     save(c)
     if key in ("main", "icons"):
@@ -91,13 +134,15 @@ def cmd_set(key, val):
 
 def main(a):
     if len(a) < 2:
-        sys.exit("usage: font-set state|list|set ROLE FAMILY|reset")
+        sys.exit("usage: font-set state|list|set ROLE FAMILY|reset|migrate")
     if a[1] == "state":
         print(json.dumps(load()))
     elif a[1] == "list":
         print("\n".join(families() or []))
     elif a[1] == "set" and len(a) >= 4:
         cmd_set(a[2], " ".join(a[3:]))
+    elif a[1] == "migrate":
+        cmd_migrate()
     elif a[1] == "reset":
         if os.path.exists(CFG):
             os.remove(CFG)

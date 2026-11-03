@@ -98,8 +98,14 @@ def fonts():
         f = json.load(open(FONTS))
     except Exception:
         f = {}
-    d = "JetBrainsMono Nerd Font"
-    return (f.get("numbers") or f.get("main") or d).replace('"', ""), (f.get("main") or d).replace('"', "")
+    d = "Google Sans Flex"     # the interface font since V3.23; old configs had JetBrains everywhere
+
+    def g(k):
+        v = f.get(k) or ""
+        if not v or (f.get("v", 1) < 2 and v == "JetBrainsMono Nerd Font"):
+            return ""
+        return v.replace('"', "")
+    return g("numbers") or g("main") or d, g("main") or d
 
 
 def accent():

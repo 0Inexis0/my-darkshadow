@@ -46,13 +46,13 @@ Item {
             Rectangle {
                 width: parent.width
                 height: 150
-                radius: 16
+                radius: M3.rL
                 clip: true
-                border.width: 1
-                border.color: "#1f1f1f"
+                border.width: 0
+                border.color: M3.outlineVariant
                 gradient: Gradient {
-                    GradientStop { position: 0; color: "#2b2840" }
-                    GradientStop { position: 1; color: "#14141c" }
+                    GradientStop { position: 0; color: M3.stageTop }
+                    GradientStop { position: 1; color: M3.stageBottom }
                 }
                 Rectangle { x: 40; y: 26; width: 180; height: 60; radius: 10; color: Qt.rgba(1, 1, 1, 0.07) }
                 Rectangle { x: parent.width - 260; y: 18; width: 200; height: 76; radius: 10; color: Qt.rgba(1, 1, 1, 0.05) }
@@ -78,7 +78,7 @@ Item {
                             model: ["#e06c75", "#61afef", "#e5c07b", "#98c379", "#c678dd", "#56b6c2"]
                             delegate: Rectangle {
                                 width: 34; height: 34; radius: 10
-                                color: page.dv("tint", false) === true ? "#9a9aa4" : modelData
+                                color: page.dv("tint", false) === true ? M3.inkDim : modelData
                                 opacity: 0.9
                             }
                         }
@@ -88,14 +88,14 @@ Item {
                     anchors.centerIn: parent
                     visible: page.dv("enabled", false) !== true
                     text: "Dock is off"
-                    color: "#8a8a94"
+                    color: M3.inkDim
                     font.pixelSize: 13
                 }
                 T {
                     anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 10
                     visible: page.dv("enabled", false) === true && page.dv("blur", true) === true && page.dv("background", true) !== false
                     text: "blur on"
-                    color: "#8a8a94"
+                    color: M3.inkDim
                     font.pixelSize: 10
                 }
             }
@@ -182,7 +182,7 @@ Item {
                 width: parent.width
                 topPadding: 14
                 text: "Lock screen options moved to Idle & Lockscreen."
-                color: "#8a8a8a"
+                color: M3.inkDim
                 font.pixelSize: 12
             }
         }

@@ -168,17 +168,17 @@ Item {
                         height: 74
                         radius: 14
                         opacity: avail ? 1 : 0.45
-                        color: tm.containsMouse && avail ? "#1c1c1c" : "#141414"
+                        color: tm.containsMouse && avail ? M3.surfaceHigh : M3.surfaceC
                         border.width: 1
-                        border.color: on ? "#4a4a4a" : "#1f1f1f"
+                        border.color: on ? M3.primary : M3.outlineVariant
                         Behavior on color { ColorAnimation { duration: 120 } }
                         Behavior on border.color { ColorAnimation { duration: 200 } }
                         Rectangle {
                             x: 14; anchors.verticalCenter: parent.verticalCenter
                             width: 40; height: 40; radius: 12
-                            color: tile.on ? "#F6F5F4" : "#202020"
+                            color: tile.on ? M3.primary : M3.surfaceHighest
                             Behavior on color { ColorAnimation { duration: 200 } }
-                            T { kind: "icon"; anchors.centerIn: parent; text: modelData.g; font.pixelSize: 16; color: tile.on ? "#0d0d0d" : "#F6F5F4" }
+                            T { kind: "icon"; anchors.centerIn: parent; text: modelData.g; font.pixelSize: 16; color: tile.on ? M3.inkPrimary : "#F6F5F4" }
                         }
                         Column {
                             x: 66; anchors.verticalCenter: parent.verticalCenter
@@ -189,7 +189,7 @@ Item {
                                 kind: "reading"
                                 text: !tile.avail ? "Not installed" : (tile.on ? "On" : (modelData.offText || "Off"))
                                 font.pixelSize: 11
-                                color: "#8a8a8a"
+                                color: M3.inkDim
                             }
                         }
                         Sw {
@@ -220,41 +220,13 @@ Item {
                 }
             }
 
-            SectionTitle { text: "Gaming mode"; sub: "Also in the hot corner. Choose what stays on while you play." }
-            Rectangle {
-                width: col.width
-                height: 74
-                radius: 14
-                color: gm.containsMouse ? "#1c1c1c" : "#141414"
-                border.width: 1
-                border.color: page.fx.gaming ? "#4a4a4a" : "#1f1f1f"
-                Behavior on color { ColorAnimation { duration: 120 } }
-                Rectangle {
-                    x: 14; anchors.verticalCenter: parent.verticalCenter
-                    width: 44; height: 44; radius: 13
-                    color: page.fx.gaming ? "#F6F5F4" : "#202020"
-                    Behavior on color { ColorAnimation { duration: 200 } }
-                    T { kind: "icon"; anchors.centerIn: parent; text: "\uf11b"; font.pixelSize: 18; color: page.fx.gaming ? "#0d0d0d" : "#F6F5F4" }
-                }
-                Column {
-                    x: 72; anchors.verticalCenter: parent.verticalCenter
-                    width: parent.width - 72 - 70
-                    spacing: 2
-                    T { text: "Gaming mode"; font.pixelSize: 14; font.bold: true }
-                    T {
-                        kind: "reading"; font.pixelSize: 11; color: "#8a8a8a"; width: parent.width; elide: Text.ElideRight
-                        text: page.fx.gaming ? "On: everything you did not keep below is off" : "Off. Turns off animations, blur, transparency, shadows and gaps"
-                    }
-                }
-                Sw { anchors.right: parent.right; anchors.rightMargin: 16; anchors.verticalCenter: parent.verticalCenter; checked: page.fx.gaming === true }
-                MouseArea { id: gm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.setGaming(!(page.fx.gaming === true)) }
+            // gaming mode lives in its own page now: Gaming hub
+            SettingRow {
+                label: "Gaming mode"
+                desc: "Moved to Gaming hub, with performance and your game launchers"
+                reserved: 120
+                Btn { anchors.right: parent.right; anchors.rightMargin: 14; anchors.verticalCenter: parent.verticalCenter; text: "Open"; onClicked: page.ctl.page = 16 }
             }
-            ToggleRow { label: "Keep blur & transparency"; desc: "Off: everything is solid while you play (faster)"; checked: page.fxOpt("keep_blur"); onToggled: function(v) { page.setOpt("keep_blur", v) } }
-            ToggleRow { label: "Keep animations"; desc: "Windows and workspaces still animate"; checked: page.fxOpt("keep_anim"); onToggled: function(v) { page.setOpt("keep_anim", v) } }
-            ToggleRow { label: "Keep shadows"; desc: "Shadows under windows"; checked: page.fxOpt("keep_shadows"); onToggled: function(v) { page.setOpt("keep_shadows", v) } }
-            ToggleRow { label: "Keep gaps"; desc: "Space between windows and around the screen"; checked: page.fxOpt("keep_gaps"); onToggled: function(v) { page.setOpt("keep_gaps", v) } }
-            ToggleRow { label: "Do Not Disturb"; desc: "No notification popups while gaming mode is on"; checked: page.fxOpt("dnd"); onToggled: function(v) { page.setOpt("dnd", v) } }
-            ToggleRow { label: "Dashboard at the bottom edge"; desc: "Off: the pointer at the bottom of the screen does not open the dashboard while you play"; checked: page.fxOpt("edge"); onToggled: function(v) { page.setOpt("edge", v) } }
 
             SectionTitle { text: "System services"; sub: "Background services. Start and stop ask for your password for system services." }
             Repeater {
@@ -263,13 +235,13 @@ Item {
                     width: col.width
                     height: 64
                     radius: 14
-                    color: "#141414"
+                    color: M3.surfaceC
                     border.width: 1
-                    border.color: "#1f1f1f"
+                    border.color: M3.outlineVariant
                     Rectangle {
                         x: 18; anchors.verticalCenter: parent.verticalCenter
                         width: 9; height: 9; radius: 4.5
-                        color: modelData.active ? "#7bd88f" : "#5a5a5a"
+                        color: modelData.active ? "#7bd88f" : M3.primary
                     }
                     Column {
                         x: 38; anchors.verticalCenter: parent.verticalCenter
@@ -277,9 +249,9 @@ Item {
                         Row {
                             spacing: 8
                             T { text: modelData.label; font.pixelSize: 14; font.bold: true }
-                            T { kind: "mono"; text: modelData.name; font.pixelSize: 10; color: "#6a6a72"; anchors.verticalCenter: parent.verticalCenter }
+                            T { kind: "mono"; text: modelData.name; font.pixelSize: 10; color: M3.inkDim; anchors.verticalCenter: parent.verticalCenter }
                         }
-                        T { kind: "reading"; text: (modelData.active ? "Running" : "Stopped") + "  ·  " + modelData.desc; font.pixelSize: 11; color: "#8a8a8a" }
+                        T { kind: "reading"; text: (modelData.active ? "Running" : "Stopped") + "  ·  " + modelData.desc; font.pixelSize: 11; color: M3.inkDim }
                     }
                     Row {
                         anchors.right: parent.right; anchors.rightMargin: 14
@@ -301,41 +273,14 @@ Item {
                 visible: (page.sv.units || []).length === 0
                 text: "No services found (systemd is needed for this list)."
                 font.pixelSize: 12
-                color: "#7a7a84"
+                color: M3.inkDim
             }
 
-            T { kind: "title"; text: "Fonts"; font.pixelSize: 16; font.bold: true; topPadding: 18 }
-            T {
-                width: parent.width
-                kind: "reading"
-                text: "Type the name of an installed font family and press Enter. Applies to the settings window, desktop widgets, Waybar (main + icons) and kitty (monospace)."
-                color: "#8a8a8a"
-                font.pixelSize: 12
-                wrapMode: Text.WordWrap
-            }
-
-            Repeater {
-                model: page.roles
-                delegate: SettingRow {
-                    reserved: 270
-                    label: modelData.label
-                    desc: modelData.desc
-                    Field {
-                        id: fld
-                        width: 240
-                        anchors.right: parent.right
-                        anchors.rightMargin: 16
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: page.fonts[modelData.key] !== undefined ? page.fonts[modelData.key] : ""
-                        placeholder: "Font family"
-                        onAccepted: page.applyFont(modelData.key, text)
-                    }
-                }
-            }
-
-            Row {
-                spacing: 8
-                Pill { label: "Reset fonts"; onClicked: resetProc.running = true }
+            SettingRow {
+                label: "Fonts"
+                desc: "Moved to Appearance > Fonts, with samples"
+                reserved: 120
+                Btn { anchors.right: parent.right; anchors.rightMargin: 14; anchors.verticalCenter: parent.verticalCenter; text: "Open"; onClicked: page.ctl.page = 19 }
             }
 
             T { kind: "title"; text: "Autostart"; font.pixelSize: 16; font.bold: true; topPadding: 18 }
@@ -347,12 +292,12 @@ Item {
     component Sw: Rectangle {
         property bool checked: false
         width: 40; height: 22; radius: 11
-        color: checked ? "#F6F5F4" : "#2a2a2a"
+        color: checked ? M3.primary : M3.surfaceHighest
         Behavior on color { ColorAnimation { duration: 160 } }
         Rectangle {
             width: 16; height: 16; radius: 8; y: 3
             x: parent.checked ? parent.width - width - 3 : 3
-            color: parent.checked ? "#0d0d0d" : "#8a8a8a"
+            color: parent.checked ? M3.inkPrimary : M3.inkDim
             Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
         }
     }

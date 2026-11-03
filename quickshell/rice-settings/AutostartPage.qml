@@ -30,7 +30,7 @@ Column {
     T {
         width: parent.width
         text: "Programs started when Hyprland starts. They run at your next login."
-        color: "#8a8a8a"
+        color: M3.inkDim
         font.pixelSize: 12
         wrapMode: Text.WordWrap
     }
@@ -41,7 +41,7 @@ Column {
             width: page.width
             height: 44
             radius: 10
-            color: "#141414"
+            color: M3.surfaceC
             T {
                 x: 16
                 anchors.verticalCenter: parent.verticalCenter
@@ -96,7 +96,7 @@ Column {
     T {
         width: parent.width
         text: "Switch off an entry to comment it out in your config (a backup is kept). Changes apply at the next login."
-        color: "#8a8a8a"
+        color: M3.inkDim
         font.pixelSize: 12
         wrapMode: Text.WordWrap
     }

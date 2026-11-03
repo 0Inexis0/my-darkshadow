@@ -25,7 +25,7 @@ PanelWindow {
     readonly property bool icons: rs.icons !== false
     readonly property int fs: rs.font_size ? rs.font_size : 13
     // the same font as Rofi: rice-rofi's font (your mono font) at the same size (Rofi sizes are points)
-    readonly property string ff: rs.font ? rs.font : Fonts.mono
+    readonly property string ff: Fonts.main
     readonly property int px: Math.round(fs * 4 / 3)
     readonly property int nlines: rs.lines ? rs.lines : 8
     readonly property real rad: lay === "bar" ? 0 : (rs.radius !== undefined ? rs.radius : 18)

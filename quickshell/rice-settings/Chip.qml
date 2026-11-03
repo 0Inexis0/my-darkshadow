@@ -11,10 +11,10 @@ Rectangle {
 
     height: 32
     width: chipRow.implicitWidth + 16
-    radius: 9
-    color: "#1a1a1a"
+    radius: 10
+    color: M3.surfaceHigh
     border.width: 1
-    border.color: "#2a2a2a"
+    border.color: M3.outlineVariant
 
     Row {
         id: chipRow

@@ -9,7 +9,7 @@ Item {
         const l = page.ctl.schemes || []
         const k = peekKey.length > 0 ? peekKey : page.ctl.colorMode
         for (let i = 0; i < l.length; i++) if (l[i].key === k) return l[i]
-        return l.length > 0 ? l[0] : ({ name: "", preview: ["#111111", "#888888", "#eeeeee"] })
+        return l.length > 0 ? l[0] : ({ name: "", preview: [M3.surfaceLow, "#888888", "#eeeeee"] })
     }
     function group(kind) { return (page.ctl.schemes || []).filter(s => s.kind === kind) }
     function currentName() {
@@ -32,7 +32,7 @@ Item {
             radius: 16
             clip: true
             border.width: 1
-            border.color: "#1f1f1f"
+            border.color: M3.outlineVariant
             gradient: Gradient {
                 orientation: Gradient.Horizontal
                 GradientStop { position: 0; color: Qt.darker(tprev.surf, 1.5) }
@@ -75,7 +75,7 @@ Item {
                         width: 92; height: 26; radius: 13
                         color: tprev.acc
                         T { anchors.centerIn: parent; text: "Button"; font.pixelSize: 11; font.bold: true
-                            color: (0.299 * tprev.acc.r + 0.587 * tprev.acc.g + 0.114 * tprev.acc.b) > 0.55 ? "#111111" : "#F6F5F4" }
+                            color: (0.299 * tprev.acc.r + 0.587 * tprev.acc.g + 0.114 * tprev.acc.b) > 0.55 ? M3.surfaceLow : "#F6F5F4" }
                     }
                 }
             }

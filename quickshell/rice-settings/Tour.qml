@@ -122,7 +122,7 @@ Item {
             width: parent.width - 36
             spacing: 8
             T { text: tour.step ? tour.step.title : ""; kind: "title"; font.pixelSize: 18; font.bold: true; width: parent.width; wrapMode: Text.WordWrap }
-            T { text: tour.step ? tour.step.body : ""; font.pixelSize: 13; color: "#a8a8b0"; width: parent.width; wrapMode: Text.WordWrap; lineHeight: 1.15 }
+            T { text: tour.step ? tour.step.body : ""; font.pixelSize: 13; color: M3.inkDim; width: parent.width; wrapMode: Text.WordWrap; lineHeight: 1.15 }
             Item { width: 1; height: 6 }
             Item {
                 width: parent.width
@@ -135,7 +135,7 @@ Item {
                         model: tour.steps.length
                         Rectangle {
                             width: index === tour.index ? 18 : 6; height: 6; radius: 3
-                            color: index === tour.index ? "#F6F5F4" : Qt.rgba(1, 1, 1, 0.22)
+                            color: index === tour.index ? M3.primary : Qt.rgba(1, 1, 1, 0.22)
                             Behavior on width { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
                         }
                     }
@@ -148,7 +148,7 @@ Item {
                         visible: tour.index < tour.steps.length - 1
                         width: skipT.implicitWidth + 22; height: 34; radius: 17
                         color: skipM.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
-                        T { id: skipT; anchors.centerIn: parent; text: "Skip"; font.pixelSize: 13; color: "#a8a8b0" }
+                        T { id: skipT; anchors.centerIn: parent; text: "Skip"; font.pixelSize: 13; color: M3.inkDim }
                         MouseArea { id: skipM; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: tour.stop() }
                     }
                     Rectangle {

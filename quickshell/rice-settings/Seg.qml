@@ -1,28 +1,38 @@
 import QtQuick
 
+// Material 3 connected button group: the chosen one is filled and gets round corners all around.
 Row {
     id: seg
     property var options: []
     property string current: ""
     signal chosen(string value)
-    spacing: 4
+    spacing: 2
 
     Repeater {
         model: seg.options
         delegate: Rectangle {
-            width: segText.implicitWidth + 26
-            height: 32
-            radius: 9
-            color: seg.current === modelData.value ? "#F6F5F4" : (segMouse.containsMouse ? "#262626" : "#1a1a1a")
-            border.width: 1
-            border.color: "#2a2a2a"
-            Behavior on color { ColorAnimation { duration: 140 } }
-            T {
-                id: segText
+            readonly property bool on: seg.current === modelData.value
+            readonly property bool first: index === 0
+            readonly property bool last: index === seg.options.length - 1
+            width: segText.implicitWidth + (on ? 40 : 28)
+            height: 36
+            radius: on ? 18 : 10
+            color: on ? M3.primary : (segMouse.containsMouse ? M3.surfaceHighest : M3.surfaceHigh)
+            Behavior on color { ColorAnimation { duration: 160 } }
+            Behavior on radius { NumberAnimation { duration: M3.d(260); easing.type: M3.springy; easing.overshoot: 1.4 } }
+            Behavior on width { NumberAnimation { duration: M3.d(300); easing.type: M3.springy; easing.overshoot: 1.4 } }
+            Row {
                 anchors.centerIn: parent
-                text: modelData.label
-                font.pixelSize: 12
-                color: seg.current === modelData.value ? "#0d0d0d" : "#F6F5F4"
+                spacing: 6
+                Icon { visible: parent.parent.on; name: "check"; glyph: "\uf00c"; size: 14; color: M3.inkPrimary; anchors.verticalCenter: parent.verticalCenter }
+                T {
+                    id: segText
+                    text: modelData.label
+                    font.pixelSize: 13
+                    font.weight: parent.parent.on ? Font.DemiBold : Font.Normal
+                    color: parent.parent.on ? M3.inkPrimary : M3.ink
+                    anchors.verticalCenter: parent.verticalCenter
+                }
             }
             MouseArea {
                 id: segMouse

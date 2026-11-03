@@ -78,13 +78,13 @@ Item {
             id: prev
             width: parent.width
             height: 214
-            radius: 16
+            radius: M3.rL
             clip: true
-            border.width: 1
-            border.color: "#1f1f1f"
+            border.width: 0
+            border.color: M3.outlineVariant
             gradient: Gradient {
-                GradientStop { position: 0; color: "#2a2540" }
-                GradientStop { position: 1; color: "#12131a" }
+                GradientStop { position: 0; color: M3.stageTop }
+                GradientStop { position: 1; color: M3.stageBottom }
             }
 
             // a little screen showing what you get
@@ -223,9 +223,9 @@ Item {
                     height: 150
                     radius: 14
                     clip: true
-                    color: rcMouse.containsMouse ? "#1c1c1c" : "#141414"
+                    color: rcMouse.containsMouse ? M3.surfaceHigh : M3.surfaceC
                     border.width: 1
-                    border.color: rcMouse.containsMouse ? "#3a3a3a" : "#1f1f1f"
+                    border.color: rcMouse.containsMouse ? M3.outline : M3.outlineVariant
                     Behavior on color { ColorAnimation { duration: 140 } }
                     Rectangle {
                         id: th
@@ -259,7 +259,7 @@ Item {
                         T {
                             width: parent.width
                             text: page.fmtSize(modelData.mb) + (modelData.sec > 0 ? " · " + page.fmtTime(modelData.sec) : "") + " · " + modelData.time
-                            font.pixelSize: 10; color: "#8a8a8a"; elide: Text.ElideRight
+                            font.pixelSize: 10; color: M3.inkDim; elide: Text.ElideRight
                         }
                     }
                     MouseArea {
@@ -276,7 +276,7 @@ Item {
             visible: (page.info.recordings || []).length === 0
             width: parent.width
             text: "Nothing recorded yet. Use Record screen above, or your record shortcut."
-            color: "#8a8a8a"; font.pixelSize: 12; wrapMode: Text.WordWrap
+            color: M3.inkDim; font.pixelSize: 12; wrapMode: Text.WordWrap
         }
         Row {
             topPadding: 4
@@ -287,7 +287,7 @@ Item {
             width: parent.width
             topPadding: 6
             text: "Tip: Reddit, Discord and other sites compress videos again. For posts, 1080p at 60 fps with High quality is a good balance."
-            color: "#8a8a8a"; font.pixelSize: 11; wrapMode: Text.WordWrap
+            color: M3.inkDim; font.pixelSize: 11; wrapMode: Text.WordWrap
         }
     }
 }

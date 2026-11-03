@@ -75,15 +75,17 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 **NixOS**: see [Installation](#installation) below. Then log out and pick Hyprland, and press `SUPER + U`.
 
 ## Features
-**Settings app** (`SUPER+U`), fifteen pages in five groups (touch an arrow to open one) and a search: Home, Sfx & sounds, DarkShadow bar, Bar layout, Hyprland, Recorder, Dashboard, Launcher, Theme, Cursors, Notifications, Idle & Lockscreen, Widgets, Dock, Services.
+**Settings app** (`SUPER+U`) in the spirit of Material 3: a navigation rail (Home, Wallpaper, Appearance, Motion, Desktop, Bar, Sound, System, Gaming, About) with tabs, Google icons, colors made from your theme and a search over every setting.
+
+**Font**: the whole interface uses **Google Sans Flex** (and Google Sans Code for codes), both open source under the SIL Open Font License; the terminal keeps JetBrainsMono Nerd Font.
 
 | Area | What you get |
 | --- | --- |
-| **DarkShadow bar** | the Quickshell bar: style Flat, Island, Islands or Pills, position top or bottom, size, transparency, workspaces as dots, Pac-Man or letters, clock with seconds, a switch back to Waybar |
+| **DarkShadow bar** | the Quickshell bar: style Flat, Island, Islands, Pills or Notch, auto-hide, a soft shadow, position top or bottom, size, transparency, workspaces as dots, Pac-Man or letters, clock with seconds, a switch back to Waybar |
 | **Bar styles** | Flat, Floating, Islands, **One island**; group styles None, Pills, Segmented |
 | **Autohide** | bar slides in when the pointer touches the screen edge |
 | **Distro logo** | the logo of your distro (NixOS, Arch, CachyOS, Fedora, Nobara, EndeavourOS ...) in the bar, the dashboard, the welcome window and Settings, picked automatically |
-| **Desktop widgets** | frosted glass over your blurred wallpaper (or plain cards), auto-hide while windows are open; clock, calendar, weather, music, resources (CPU, RAM, GPU), user card, battery and a see-through audio visualizer (Bars like cava in a terminal, Mirror, Wave, Dots, in your Theme color, a gradient or rainbow), a to-do list, a focus timer and a note; three widget styles (DarkShadow, Google, Outline); colors that turn light or dark with your wallpaper; a widget editor on the desktop to add, move, resize and style them |
+| **Desktop widgets** | frosted glass over your blurred wallpaper (or plain cards), auto-hide while windows are open; clock, calendar, weather, music, resources (CPU, RAM, GPU), user card, battery gauges in soft shapes (CPU, RAM, GPU, heat, battery), the date in a flower, and a see-through audio visualizer (Bars like cava in a terminal, Mirror, Wave, Dots, in your Theme color, a gradient or rainbow), a to-do list, a focus timer and a note; three widget styles (DarkShadow, Google, Outline); colors that turn light or dark with your wallpaper; a widget editor on the desktop to add, move, resize and style them |
 | **Dashboard** | slides up from the bottom of the screen (SUPER + ALT + D or push the pointer against the bottom edge): Dashboard (weather, calendar, usage, music), Wallpaper (big wallpaper cards, search, random), Performance (CPU, GPU, storage, network, memory, battery), About (your computer, distro, updates); cards you can remove, add, resize and move, looks Shadow, Graphite, Aurora and Frost |
 | **Bar layout** | drag and drop the modules of the bar between left, center and right: launcher, workspaces, window title, music, clock, tray, volume, Bluetooth, Wi-Fi, battery, notifications, power |
 | **Dock** | bottom, left or right edge, pinned and open apps, hover to reveal, media player, tinted icons |
@@ -91,13 +93,16 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 | **Theme** | 21 color schemes: Auto and Grey from your wallpaper, six monochrome (Mono, Slate, Stone, Steel, Ash, Ink) and thirteen colors (Navy, Ocean, Sky, Teal, Mint, Forest, Lime, Gold, Sunset, Ember, Rose, Orchid, Violet). They recolor Waybar, borders, notifications and the lock screen |
 | **Notification center** | Deck: switches (Wi-Fi, Bluetooth, Do Not Disturb, night light, keep awake), power modes, notifications, media, volume and brightness, power buttons; floating or against the edge, left or right, any size, blur and transparency |
 | **Notifications** | swaync popups and panel: position, layout, widgets (title, Do Not Disturb, media, volume, quick buttons), size, timeout, icon size, three styles (DarkShadow Shell, Dark, Google), opacity, radius, blur, live preview and a test button |
-| **Sfx & sounds** | interface sounds in the shell's own parts (clicks, switches, sliders, typing), seven packs (Tap, Soft, Pluck, Keys, Crystal, Bubble, Retro), volume, each sound on or off, quiet music for the welcome; ten notification sounds (Glass, Droplet, Chime, Bubble, Marimba, Aurora, Ping, Harp, Keys, Ripple) or Off |
+| **Sfx & sounds** | interface sounds in the shell's own parts (clicks, switches, sliders, typing), eight packs (Pebble, Tap, Soft, Pluck, Keys, Crystal, Bubble, Retro), volume, each sound on or off, quiet music for the welcome; ten notification sounds (Glass, Droplet, Chime, Bubble, Marimba, Aurora, Ping, Harp, Keys, Ripple) or Off |
 | **Search** | "Search anything!" in Settings finds every setting ("bar position", "blur", "clock font") and jumps to it |
 | **Updates** | a notification when a new version is out ("Update is Available!"), version and Update now button in the About tab of the dashboard, `rice-update` in a terminal |
 | **Idle & Lockscreen** | lock, screen-off and sleep timers; lock screen with Big / Stacked / Minimal clock in seven fonts (white hours, grey minutes), center or left layout, greeting, avatar, Pill / Box / Line password field, power buttons, screenshot / wallpaper / color background and media, resources, weather and notification lines |
 | **Launcher** | the built-in DarkShadow Launcher: 5 themes (Shadow, Graphite, Midnight, Rose, Paper), layouts list / grid / full-width bar / split (wallpaper on the left), position top, center or bottom, width, rows, corner radius, transparency, blur, font size, icons |
 | **Cursors** | Bibata, Hyprcursor themes (Rose Pine) and packs you can download in Settings: Catppuccin, Phinger; live preview |
-| **Fonts** | one place to set the main and icon fonts |
+| **Appearance** | Colors (every color role of your theme), Fonts (typography: text size, heavier headings, rounded letters, the Material 3 type scale), Components (switch icons, corner shape, slider thickness, wavy progress) |
+| **Motion** | Hyprland animation styles (calm, lively, bouncy, snappy, minimal) and speed, spring and easing graphs, durations, a shape you can throw |
+| **Keyboard** | up to four layouts, the one in use, the keys that switch them, search over every layout |
+| **Game bar** | `SUPER + G`: CPU and GPU with their heat, RAM, ping, screenshot, record, microphone, power mode, gaming mode, Do Not Disturb, volume and brightness over your game |
 | **Welcome intro** | once after installing: night falls over the desktop, a few words, the moon logo draws itself in, "Take a look" opens it up again and Settings starts a short tour (it lights up one part at a time). Play it again with `rice-welcome show`, only the tour: `rice-welcome tour` |
 | **Performance & gaming** | one switch turns off all blur and transparency (Hyprland, kitty, bar, launcher, notifications, dashboard, dock, widgets); Gaming mode with options to keep blur, animations, shadows or gaps, Do Not Disturb (Settings > Services) |
 | **Your settings everywhere** | `./sync.sh` saves your Settings choices to `settings/`, `./install.sh` puts them on your other computers (files you changed there are kept) |
@@ -133,6 +138,7 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 | `Print` / `SHIFT + Print` | screenshot of a region / the whole screen |
 | `SUPER + SHIFT + R` | record a region (press again to stop) |
 | `SUPER + A` | dashboard on its Control tab (quick switches) |
+| `SUPER + G` | game bar |
 | `SUPER + ALT + W` | edit desktop widgets (add, move, resize, style) |
 | `SUPER + ALT + D` | dashboard (slides up from the bottom; pushing the pointer against the bottom edge opens it too) |
 | `SUPER + W` | wallpapers (Wallpaper tab of the dashboard) |

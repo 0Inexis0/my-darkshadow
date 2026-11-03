@@ -14,8 +14,8 @@ Rectangle {
     readonly property real k: width / 1920             // screen pixels -> preview pixels
     readonly property real op: v("style", "glass") === "solid" || v("flat", false) ? 1 : v("opacity", 0.8)
     readonly property color base: light ? "#f4f4f6" : (v("colors", "graphite") === "black" ? "#000000"
-                                  : v("colors", "graphite") === "slate" ? "#181b22" : "#121214")
-    readonly property color fg: light ? "#141414" : "#F6F5F4"
+                                  : v("colors", "graphite") === "slate" ? "#181b22" : M3.surfaceLow)
+    readonly property color fg: light ? M3.surfaceC : "#F6F5F4"
     readonly property color tile: light ? Qt.rgba(0, 0, 0, 0.07) : Qt.rgba(1, 1, 1, 0.08)
     readonly property real gap: floating ? Math.max(4, v("margin", 10) * k * 1.6) : 0
 
@@ -25,9 +25,9 @@ Rectangle {
     // the desktop
     gradient: Gradient {
         orientation: Gradient.Horizontal
-        GradientStop { position: 0; color: "#2b2440" }
-        GradientStop { position: 0.55; color: "#162030" }
-        GradientStop { position: 1; color: "#0f1a1c" }
+        GradientStop { position: 0; color: M3.stageTop }
+        GradientStop { position: 0.55; color: M3.surfaceC }
+        GradientStop { position: 1; color: M3.stageBottom }
     }
     Rectangle { x: m.width * 0.08; y: m.height * 0.62; width: m.width * 0.5; height: m.width * 0.5; radius: width / 2; color: "#3a2f63"; opacity: 0.35 }
     Rectangle { x: m.width * 0.55; y: -m.height * 0.3; width: m.width * 0.45; height: width; radius: width / 2; color: "#1f5050"; opacity: 0.3 }
@@ -155,7 +155,7 @@ Rectangle {
         }
     }
 
-    T {
+    T { scaled: false;
         anchors.left: parent.left; anchors.bottom: parent.bottom; anchors.margins: 10
         text: m.floating ? "Floating" : "Against the edge"
         font.pixelSize: 11; color: "#F6F5F4"; opacity: 0.5

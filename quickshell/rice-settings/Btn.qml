@@ -1,18 +1,28 @@
 import QtQuick
 
+// A Material 3 button. variant: "tonal" (default), "filled" (same as primary: true), "outlined", "text", "danger".
+// The corners close a little while you press it.
 Rectangle {
     id: b
     property string text: ""
     property string icon: ""
+    property string sym: ""          // a Google icon by name (falls back to icon)
     property bool primary: false
+    property string variant: primary ? "filled" : "tonal"
     signal clicked()
-    width: Math.max(120, row.implicitWidth + 36)
-    height: 38
-    radius: 12
-    color: primary ? (m.containsMouse ? "#ffffff" : "#F6F5F4")
-                   : (m.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.06))
-    border.width: primary ? 0 : 1
-    border.color: Qt.rgba(1, 1, 1, 0.06)
+    readonly property color ink: variant === "filled" ? M3.inkPrimary
+                               : variant === "danger" ? M3.inkErrorC
+                               : (variant === "outlined" || variant === "text") ? M3.primary : M3.inkSecondaryC
+    width: Math.max(variant === "text" ? 64 : 120, row.implicitWidth + 36)
+    height: 40
+    radius: m.pressed ? 12 * M3.shapeK : 20 * M3.shapeK
+    Behavior on radius { NumberAnimation { duration: 160 } }
+    color: variant === "filled" ? (m.containsMouse ? Qt.lighter(M3.primary, 1.08) : M3.primary)
+         : variant === "danger" ? (m.containsMouse ? Qt.lighter(M3.errorContainer, 1.15) : M3.errorContainer)
+         : variant === "outlined" || variant === "text" ? (m.containsMouse ? M3.alpha(M3.primary, 0.1) : "transparent")
+         : (m.containsMouse ? M3.surfaceHighest : M3.secondaryContainer)
+    border.width: variant === "outlined" ? 1 : 0
+    border.color: M3.outline
     Behavior on color { ColorAnimation { duration: 120 } }
     scale: m.pressed ? 0.97 : 1
     Behavior on scale { NumberAnimation { duration: 90 } }
@@ -21,8 +31,8 @@ Rectangle {
         id: row
         anchors.centerIn: parent
         spacing: 8
-        T { kind: "icon"; visible: b.icon.length > 0; text: b.icon; font.pixelSize: 14; color: b.primary ? "#0d0d0d" : "#F6F5F4"; anchors.verticalCenter: parent.verticalCenter }
-        T { text: b.text; font.pixelSize: 13; font.bold: b.primary; color: b.primary ? "#0d0d0d" : "#F6F5F4"; anchors.verticalCenter: parent.verticalCenter }
+        Icon { visible: b.icon.length > 0 || b.sym.length > 0; name: b.sym; glyph: b.icon; size: 16; color: b.ink; anchors.verticalCenter: parent.verticalCenter }
+        T { text: b.text; font.pixelSize: 13; font.weight: Font.Medium; color: b.ink; anchors.verticalCenter: parent.verticalCenter }
     }
     MouseArea {
         id: m

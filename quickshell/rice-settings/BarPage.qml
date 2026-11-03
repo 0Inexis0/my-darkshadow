@@ -81,13 +81,13 @@ Item {
                 visible: Prefs.previews
                 width: parent.width
                 height: 128
-                radius: 16
+                radius: M3.rL
                 clip: true
-                border.width: 1
-                border.color: "#1f1f1f"
+                border.width: 0
+                border.color: M3.outlineVariant
                 gradient: Gradient {
-                    GradientStop { position: 0; color: "#2a2740" }
-                    GradientStop { position: 1; color: "#12131a" }
+                    GradientStop { position: 0; color: M3.stageTop }
+                    GradientStop { position: 1; color: M3.stageBottom }
                 }
                 readonly property string sty: page.v("style", "islands")
                 readonly property bool atTop: page.v("position", "top") === "top"
@@ -104,7 +104,8 @@ Item {
                     property bool soft: false
                     visible: mods.length > 0
                     height: prev.h
-                    width: pr.width + (soft ? 18 : 0)
+                    implicitWidth: pr.width + (soft ? 18 : 0)
+                    width: implicitWidth
                     radius: height / 2
                     color: soft ? prev.pill : "transparent"
                     border.width: soft ? 1 : 0
@@ -143,35 +144,53 @@ Item {
                         border.width: 1; border.color: Qt.rgba(1, 1, 1, 0.1)
                     }
                     readonly property real edge: prev.sty === "island" ? 14 : (prev.sty === "flat" ? 12 : 0)
-                    PZone { x: pbar.edge; mods: page.lay.left || []; soft: prev.sty === "islands" }
-                    PZone { x: (pbar.width - width) / 2; mods: page.lay.center || []; soft: prev.sty === "islands" }
-                    PZone { x: pbar.width - width - pbar.edge; mods: page.lay.right || []; soft: prev.sty === "islands" }
+                    PZone { x: pbar.edge; mods: page.lay.left || []; soft: prev.sty === "islands" || prev.sty === "notch" }
+                    // notch: the middle grows out of the screen edge
+                    PZone { x: (pbar.width - width) / 2; mods: page.lay.center || []; soft: prev.sty === "islands" || prev.sty === "notch"
+                        readonly property bool notch: prev.sty === "notch"
+                        y: notch ? (prev.atTop ? -10 : 0) : 0
+                        height: notch ? prev.h + 10 : prev.h
+                        width: implicitWidth + (notch ? 30 : 0)
+                        radius: notch ? 14 : height / 2 }
+                    PZone { x: pbar.width - width - pbar.edge; mods: page.lay.right || []; soft: prev.sty === "islands" || prev.sty === "notch" }
                 }
-                T { text: "Preview"; font.pixelSize: 10; color: "#7a7a84"; anchors.right: parent.right; anchors.rightMargin: 12; anchors.bottom: parent.bottom; anchors.bottomMargin: 8 }
+                T { text: "Preview"; font.pixelSize: 10; color: M3.inkDim; anchors.right: parent.right; anchors.rightMargin: 12; anchors.bottom: parent.bottom; anchors.bottomMargin: 8 }
             }
 
             // ---------- bar layout shortcut ----------
             Rectangle {
                 width: parent.width; height: 62; radius: 14
-                color: blMouse.containsMouse ? "#1c1c1c" : "#161616"
-                border.width: 1; border.color: "#1f1f1f"
+                color: blMouse.containsMouse ? M3.surfaceHigh : M3.surfaceHigh
+                border.width: 1; border.color: M3.outlineVariant
                 Behavior on color { ColorAnimation { duration: 120 } }
                 Column {
                     anchors.left: parent.left; anchors.leftMargin: 18; anchors.verticalCenter: parent.verticalCenter; spacing: 3
                     T { text: "Bar layout"; font.pixelSize: 14; font.bold: true }
-                    T { kind: "reading"; text: "Drag modules around: left, center, right, order"; color: "#8a8a8a"; font.pixelSize: 12 }
+                    T { kind: "reading"; text: "Drag modules around: left, center, right, order"; color: M3.inkDim; font.pixelSize: 12 }
                 }
-                T { kind: "icon"; anchors.right: parent.right; anchors.rightMargin: 18; anchors.verticalCenter: parent.verticalCenter; text: ""; color: "#8a8a8a" }
+                T { kind: "icon"; anchors.right: parent.right; anchors.rightMargin: 18; anchors.verticalCenter: parent.verticalCenter; text: ""; color: M3.inkDim }
                 MouseArea { id: blMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.ctl.page = 3 }
             }
 
             T { kind: "title"; text: "Style"; font.pixelSize: 16; font.bold: true; topPadding: 10 }
             SegRow {
                 label: "Bar style"
-                desc: "Flat bar, one floating pill, an island for each side, or a pill for every module"
-                options: [ { label: "Flat", value: "flat" }, { label: "Island", value: "island" }, { label: "Islands", value: "islands" }, { label: "Pills", value: "pills" } ]
+                desc: "Flat, one pill, an island per side, a pill per module, or a notch that grows out of the edge"
+                options: [ { label: "Flat", value: "flat" }, { label: "Island", value: "island" }, { label: "Islands", value: "islands" }, { label: "Pills", value: "pills" }, { label: "Notch", value: "notch" } ]
                 current: page.v("style", "islands")
                 onChosen: function(x) { page.setv("style", x) }
+            }
+            ToggleRow {
+                label: "Auto-hide"
+                desc: "The bar slides away and windows get the space; point at the screen edge to bring it back"
+                checked: page.v("autohide", false) === true
+                onToggled: function(x) { page.setv("autohide", x ? "on" : "off") }
+            }
+            ToggleRow {
+                label: "Shadow"
+                desc: "A soft shadow under the bar so it floats above the wallpaper"
+                checked: page.v("shadow", true) !== false
+                onToggled: function(x) { page.setv("shadow", x ? "on" : "off") }
             }
             SegRow {
                 label: "Position"
@@ -197,7 +216,7 @@ Item {
 
             // ---------- launcher icon ----------
             T { kind: "title"; text: "Launcher icon"; font.pixelSize: 16; font.bold: true; topPadding: 10 }
-            T { kind: "reading"; text: "The button that opens the launcher. Auto picks the logo of the system you run."; color: "#8a8a8a"; font.pixelSize: 12 }
+            T { kind: "reading"; text: "The button that opens the launcher. Auto picks the logo of the system you run."; color: M3.inkDim; font.pixelSize: 12 }
             Flow {
                 width: parent.width
                 spacing: 8
@@ -206,17 +225,17 @@ Item {
                     delegate: Rectangle {
                         readonly property bool sel: page.v("logo", "auto") === modelData[0]
                         width: 78; height: 72; radius: 14
-                        color: sel ? "#F6F5F4" : (lgm.containsMouse ? "#1c1c1c" : "#141414")
-                        border.width: 1; border.color: sel ? "#F6F5F4" : "#1f1f1f"
+                        color: sel ? M3.primary : (lgm.containsMouse ? M3.surfaceHigh : M3.surfaceC)
+                        border.width: 1; border.color: sel ? M3.primary : M3.outlineVariant
                         scale: lgm.pressed ? 0.94 : 1
                         Behavior on color { ColorAnimation { duration: 120 } }
                         Behavior on scale { NumberAnimation { duration: 100 } }
-                        T { kind: modelData[2] === 0 ? "" : "icon"; anchors.horizontalCenter: parent.horizontalCenter; y: 12
+                        T { scaled: false; kind: modelData[2] === 0 ? "" : "icon"; anchors.horizontalCenter: parent.horizontalCenter; y: 12
                             text: modelData[2] === 0 ? "AUTO" : String.fromCodePoint(modelData[2])
                             font.pixelSize: modelData[2] === 0 ? 13 : 24; font.bold: modelData[2] === 0
-                            color: parent.sel ? "#0d0d0d" : "#F6F5F4" }
+                            color: parent.sel ? M3.inkPrimary : "#F6F5F4" }
                         T { anchors.horizontalCenter: parent.horizontalCenter; y: 48; text: modelData[1]; font.pixelSize: 10
-                            color: parent.sel ? "#0d0d0d" : "#8a8a8a"; width: parent.width - 8; horizontalAlignment: Text.AlignHCenter; elide: Text.ElideRight }
+                            color: parent.sel ? M3.inkPrimary : M3.inkDim; width: parent.width - 8; horizontalAlignment: Text.AlignHCenter; elide: Text.ElideRight }
                         MouseArea { id: lgm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.setv("logo", modelData[0]) }
                     }
                 }

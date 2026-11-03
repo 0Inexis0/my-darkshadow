@@ -36,8 +36,8 @@ Item {
     function bgc(a) { return Qt.rgba(baseRgb[0] / 255, baseRgb[1] / 255, baseRgb[2] / 255, a) }
 
     readonly property bool lightText: look === "light" || (surface === "white" && look !== "island")
-    readonly property color fg: lightText ? "#141414" : "#F6F5F4"
-    readonly property color dim: lightText ? "#5c5c64" : "#9a9aa4"
+    readonly property color fg: lightText ? M3.surfaceC : "#F6F5F4"
+    readonly property color dim: lightText ? "#5c5c64" : M3.inkDim
     readonly property real r: look === "pill" ? height / 2 : look === "minimal" ? 8 : look === "accent" ? 10
                             : look === "island" ? Math.min(28, height / 2) : look === "google" ? baseRadius + 8 : baseRadius
 
@@ -91,7 +91,7 @@ Item {
             width: Math.min(m.iconSize, parent.height - 12); height: width
             radius: (m.look === "pill" || m.look === "island") ? width / 2 : Math.max(5, width * 0.3)
             color: m.acc
-            T { kind: "icon"; anchors.centerIn: parent; text: ""; font.pixelSize: ico.width * 0.45; color: m.accFg }
+            T { scaled: false; kind: "icon"; anchors.centerIn: parent; text: ""; font.pixelSize: ico.width * 0.45; color: m.accFg }
         }
         Column {
             anchors.left: ico.right
@@ -109,7 +109,7 @@ Item {
                     font.family: m.fam.length > 0 ? m.fam : Fonts.family("main")
                     font.pixelSize: 13 * m.fs
                     font.bold: true
-                    color: (m.look === "island") ? "#F6F5F4" : m.fg
+                    color: (m.look === "island") ? M3.primary : m.fg
                     width: parent.width - 30 * m.fs
                     elide: Text.ElideRight
                 }
@@ -118,7 +118,7 @@ Item {
                     text: "now"
                     font.family: m.fam.length > 0 ? m.fam : Fonts.family("main")
                     font.pixelSize: 10 * m.fs
-                    color: (m.look === "island") ? "#9a9aa4" : m.dim
+                    color: (m.look === "island") ? M3.inkDim : m.dim
                 }
             }
             Text {
@@ -127,7 +127,7 @@ Item {
                 text: "This is how your notifications look."
                 font.family: m.fam.length > 0 ? m.fam : Fonts.family("main")
                 font.pixelSize: 11 * m.fs
-                color: (m.look === "island") ? "#9a9aa4" : m.dim
+                color: (m.look === "island") ? M3.inkDim : m.dim
                 elide: Text.ElideRight
             }
         }

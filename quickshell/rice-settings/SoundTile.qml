@@ -12,10 +12,10 @@ Rectangle {
     readonly property bool sfxOwn: true     // it plays its own sound when picked
 
     height: 84
-    radius: 14
-    color: selected ? Qt.rgba(1, 1, 1, 0.07) : (m.containsMouse ? "#1a1a1a" : "#141414")
-    border.width: selected ? 2 : 1
-    border.color: selected ? "#F6F5F4" : (m.containsMouse ? "#3a3a3a" : "#2a2a2a")
+    radius: M3.rL
+    color: selected ? M3.secondaryContainer : (m.containsMouse ? M3.surfaceHigh : M3.surfaceC)
+    border.width: selected ? 2 : 0
+    border.color: selected ? M3.primary : (m.containsMouse ? M3.outline : M3.surfaceHighest)
     Behavior on color { ColorAnimation { duration: 140 } }
     Behavior on border.color { ColorAnimation { duration: 140 } }
     scale: m.pressed ? 0.97 : 1
@@ -39,7 +39,7 @@ Rectangle {
                 width: 5
                 radius: 2.5
                 height: Math.max(4, 30 * modelData * k)
-                color: tile.selected ? "#F6F5F4" : "#8a8a8a"
+                color: tile.selected ? M3.primary : M3.inkDim
                 Behavior on color { ColorAnimation { duration: 140 } }
                 SequentialAnimation on k {
                     running: tile.playing

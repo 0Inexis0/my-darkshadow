@@ -134,7 +134,7 @@ def accent():
 
 
 FONT_STACKS = {
-    "sans": '"Inter", "Inter Variable", "Rubik", "Noto Sans", "Cantarell", "Symbols Nerd Font", "JetBrainsMono Nerd Font", sans-serif',
+    "sans": '"Google Sans Flex", "Inter", "Inter Variable", "Rubik", "Noto Sans", "Cantarell", "Symbols Nerd Font", "JetBrainsMono Nerd Font", sans-serif',
     "rounded": '"Rubik", "Nunito", "Quicksand", "Inter", "Noto Sans", "Symbols Nerd Font", "JetBrainsMono Nerd Font", sans-serif',
     "mono": '"JetBrainsMono Nerd Font", "JetBrains Mono", monospace',
 }

@@ -374,8 +374,9 @@ quiet_fish() {
   printf '# DarkShadow'"'"'s Shell: no "Welcome to fish" message\nset -g fish_greeting\n' >"$HOME/.config/fish/conf.d/darkshadows.fish"
 }
 step_fonts() {
-  task "Fonts: Inter, Rubik, Nerd Font icons, clock fonts" timeout 400 "$ROOT/bin/rice-fonts"
+  task "Fonts: Google Sans Flex & Code, Inter, Rubik, Nerd Font icons, clock fonts" timeout 400 "$ROOT/bin/rice-fonts"
   command -v fc-cache >/dev/null 2>&1 && task "Refreshing the font cache" timeout 120 fc-cache -f
+  task "Google Sans Flex as the interface font" t "$ROOT/bin/font-set" migrate
   task "Dark theme for apps, Papirus icons, Bibata cursor" set_look
   if fc-list 2>/dev/null | grep -qi "JetBrainsMono Nerd"; then ok "JetBrains Mono Nerd Font (icons) is installed"
   else warn "JetBrains Mono Nerd Font is missing: icons will show as boxes"; fi
@@ -531,7 +532,8 @@ step_finish() {
   task "Theme colors for the wallpaper picker" patch_colors
   # last: it must stay the last module Hyprland loads
   [ -x "$BIN/rice-effects" ] && task "Blur, transparency and gaming mode" t "$BIN/rice-effects" apply --no-reload
-  [ -x "$BIN/rice-fonts" ] && T=400 task "Fonts: Inter, Rubik, Material Symbols, Nerd Font icons (skips what you have)" t "$BIN/rice-fonts"
+  [ -x "$BIN/rice-fonts" ] && T=400 task "Fonts: Google Sans Flex & Code, Material Symbols, Nerd Font icons (skips what you have)" t "$BIN/rice-fonts"
+  [ -x "$BIN/font-set" ] && task "Google Sans Flex as the interface font" t "$BIN/font-set" migrate
   if [ -x "$BIN/rice-cursor" ]; then
     local cf; cf="$(mktemp)"
     T=240 task "Cursor packs: Rose Pine (Hyprcursor), Catppuccin, Phinger" cursor_packs "$cf"

@@ -10,7 +10,8 @@ import Quickshell.Widgets
 import QtQuick
 
 // The DarkShadow bar: the bar of this shell, made in Quickshell (Settings > DarkShadow bar and Bar layout).
-// Styles: flat, island (one pill), islands (a pill for each side), pills (a pill for each module).
+// Styles: flat, island (one pill), islands (a pill for each side), pills (a pill for each module), notch (the middle
+// grows out of the screen edge, the sides are islands). Auto-hide: it slides away and a thin strip at the edge brings it back.
 // What sits where comes from ~/.config/rice/bar.json (layout: left, center, right).
 PanelWindow {
     id: bar
@@ -18,7 +19,14 @@ PanelWindow {
     // ---------- settings (~/.config/rice/bar.json) ----------
     property var bc: ({})
     readonly property bool on: bc.enabled !== false     // no bar.json yet (a fresh install or an update) = on
-    readonly property string sty: bc.style === "flat" || bc.style === "islands" || bc.style === "pills" ? bc.style : "island"
+    readonly property string sty: bc.style === "flat" || bc.style === "islands" || bc.style === "pills" || bc.style === "notch" ? bc.style : "island"
+    readonly property bool notch: sty === "notch"
+    readonly property bool hideOn: bc.autohide === true
+    readonly property bool shadowOn: bc.shadow !== false && !Look.flat
+    // auto-hide: shown while the pointer is on it (and a moment after it leaves)
+    property bool peek: false
+    readonly property bool shownBar: !hideOn || peek
+    Timer { id: leaveT; interval: 700; onTriggered: bar.peek = false }
     readonly property bool island: sty === "island"
     readonly property bool floating: sty !== "flat"
     readonly property var lay: bc.layout ? bc.layout : ({ left: ["launcher", "workspaces", "title"], center: ["clock"], right: ["media", "tray", "volume", "network", "battery", "notifications", "power"] })
@@ -75,7 +83,15 @@ PanelWindow {
     color: "transparent"
     anchors { top: !atBottom; bottom: atBottom; left: true; right: true }
     implicitHeight: barH + gap * 2
-    exclusionMode: ExclusionMode.Auto
+    exclusionMode: hideOn ? ExclusionMode.Ignore : ExclusionMode.Auto
+    // auto-hide: only a thin strip at the edge takes the pointer while the bar is away
+    mask: Region { item: bar.shownBar ? hitAll : hitStrip }
+    Item { id: hitAll; anchors.fill: parent }
+    Item { id: hitStrip; width: parent.width; height: 3; y: bar.atBottom ? parent.height - 3 : 0 }
+    HoverHandler {
+        enabled: bar.hideOn
+        onHoveredChanged: { if (hovered) { leaveT.stop(); bar.peek = true } else leaveT.restart() }
+    }
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.namespace: "rice-bar"
 
@@ -446,9 +462,12 @@ PanelWindow {
         x: bar.gap; y: bar.gap
         width: parent.width - 2 * bar.gap
         height: bar.barH
-        opacity: bar.on ? 1 : 0
+        opacity: bar.on && bar.shownBar ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: 240 } }
-        transform: Translate { y: bar.on ? 0 : (bar.atBottom ? 12 : -12); Behavior on y { NumberAnimation { duration: 320; easing.type: Easing.OutCubic } } }
+        transform: Translate {
+            y: !bar.on ? (bar.atBottom ? 12 : -12) : (bar.shownBar ? 0 : (bar.atBottom ? 1 : -1) * (bar.barH + bar.gap * 2 + 4))
+            Behavior on y { NumberAnimation { duration: 360; easing.type: bar.shownBar ? Easing.OutBack : Easing.InCubic; easing.overshoot: 0.8 } }
+        }
 
         // island / flat: one background behind everything
         Rectangle {
@@ -462,11 +481,59 @@ PanelWindow {
                 anchors.bottom: bar.atBottom ? undefined : parent.bottom; anchors.top: bar.atBottom ? parent.top : undefined }
         }
 
-        readonly property bool soft: bar.sty === "islands"
+        readonly property bool soft: bar.sty === "islands" || bar.notch
+
+        // a soft shadow under every background (the bar floats above the wallpaper)
+        Repeater {
+            model: bar.shadowOn ? (bar.sty === "island" ? [body] : (bar.sty === "flat" ? [] : (bar.notch ? [zl, zr] : (bar.sty === "islands" ? [zl, zc, zr] : [])))) : []
+            delegate: Rectangle {
+                readonly property var src: modelData
+                visible: src.visible !== false && src.width > 0
+                x: src === body ? 0 : src.x; y: (src === body ? 0 : src.y) + 3
+                width: src.width; height: bar.barH
+                radius: height / 2
+                color: "transparent"
+                Rectangle { anchors.fill: parent; anchors.margins: -1; radius: parent.radius + 1; color: Qt.rgba(0, 0, 0, 0.18) }
+                Rectangle { anchors.fill: parent; anchors.margins: -3; radius: parent.radius + 3; color: Qt.rgba(0, 0, 0, 0.08) }
+            }
+        }
+
+        // notch: the middle grows out of the screen edge, with soft inward curves where it meets the edge
+        Canvas {
+            id: notchBg
+            visible: bar.notch && zc.any
+            readonly property real ear: 14
+            width: zc.width + 2 * ear + 24
+            height: bar.barH + bar.gap
+            x: zc.x - ear - 12
+            y: bar.atBottom ? 0 : -bar.gap
+            property color fill: Qt.rgba(0.02, 0.02, 0.025, Math.max(bar.alpha, Look.flat ? 1 : 0.92))
+            onFillChanged: requestPaint()
+            onWidthChanged: requestPaint()
+            onHeightChanged: requestPaint()
+            onVisibleChanged: requestPaint()
+            transform: Scale { origin.y: notchBg.height / 2; yScale: bar.atBottom ? -1 : 1 }
+            onPaint: {
+                const c = getContext("2d"); c.reset()
+                const W = width, H = height, e = ear, r = Math.min(20, H / 2)
+                c.beginPath()
+                c.moveTo(0, 0)
+                c.arcTo(e, 0, e, e, e)
+                c.lineTo(e, H - r)
+                c.arcTo(e, H, e + r, H, r)
+                c.lineTo(W - e - r, H)
+                c.arcTo(W - e, H, W - e, H - r, r)
+                c.lineTo(W - e, e)
+                c.arcTo(W - e, 0, W, 0, e)
+                c.closePath()
+                c.fillStyle = fill
+                c.fill()
+            }
+        }
         readonly property real edge: bar.sty === "island" ? 16 : (bar.sty === "flat" ? 14 : 0)
         Zone { id: zl; mods: bar.lay.left || []; soft: body.soft
             x: body.edge; y: 0 }
-        Zone { id: zc; mods: bar.lay.center || []; soft: body.soft
+        Zone { id: zc; mods: bar.lay.center || []; soft: body.soft && !bar.notch
             x: (body.width - width) / 2; y: 0 }
         Zone { id: zr; mods: bar.lay.right || []; soft: body.soft
             x: body.width - width - body.edge; y: 0 }

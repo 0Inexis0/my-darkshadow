@@ -18,16 +18,16 @@ SettingRow {
             anchors.verticalCenter: parent.verticalCenter
             color: row.valid(hexIn.text) ? hexIn.text : "#000000"
             border.width: 1
-            border.color: "#3a3a3a"
+            border.color: M3.outline
         }
         Rectangle {
             width: 112
             height: 34
             radius: 9
             anchors.verticalCenter: parent.verticalCenter
-            color: "#101010"
+            color: M3.surfaceLow
             border.width: 1
-            border.color: hexIn.activeFocus ? "#5a5a5a" : "#2a2a2a"
+            border.color: hexIn.activeFocus ? M3.primary : M3.surfaceHighest
             TextInput {
                 id: hexIn
                 onTextChanged: if (activeFocus) Sfx.play("type")
@@ -36,7 +36,7 @@ SettingRow {
                 anchors.rightMargin: 10
                 verticalAlignment: TextInput.AlignVCenter
                 color: "#F6F5F4"
-                font.family: "JetBrainsMono Nerd Font"
+                font.family: Fonts.code
                 font.pixelSize: 13
                 text: row.hex
                 maximumLength: 7

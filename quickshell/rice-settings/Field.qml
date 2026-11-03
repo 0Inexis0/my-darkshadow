@@ -5,11 +5,11 @@ Rectangle {
     property alias text: input.text
     property string placeholder: ""
     signal accepted()
-    height: 38
-    radius: 10
-    color: "#141414"
-    border.width: 1
-    border.color: input.activeFocus ? "#5a5a5a" : "#2a2a2a"
+    height: 44
+    radius: 12
+    color: M3.surfaceHigh
+    border.width: input.activeFocus ? 2 : 1
+    border.color: input.activeFocus ? M3.primary : M3.outlineVariant
 
     TextInput {
         id: input
@@ -18,8 +18,8 @@ Rectangle {
         anchors.leftMargin: 14
         anchors.rightMargin: 14
         verticalAlignment: TextInput.AlignVCenter
-        color: "#F6F5F4"
-        font.family: "JetBrainsMono Nerd Font"
+        color: M3.ink
+        font.family: Fonts.main
         font.pixelSize: 13
         clip: true
         selectByMouse: true
@@ -30,7 +30,7 @@ Rectangle {
         anchors.leftMargin: 14
         anchors.verticalCenter: parent.verticalCenter
         text: f.placeholder
-        color: "#6a6a6a"
+        color: M3.inkDim
         font.pixelSize: 13
         visible: input.text.length === 0
     }

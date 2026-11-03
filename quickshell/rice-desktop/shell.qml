@@ -38,7 +38,12 @@ ShellRoot {
         { id: "battery", name: "Battery", icon: "\uf240", card: true },
         { id: "todo", name: "To-do", icon: "\uf14a", card: true },
         { id: "focus", name: "Focus", icon: "\uf017", card: true },
-        { id: "notes", name: "Note", icon: "\uf249", card: true }
+        { id: "notes", name: "Note", icon: "\uf249", card: true },
+        { id: "gauge", name: "Gauge", icon: "\uf4bc", card: true,
+          styles: [["pentagon", "Pentagon"], ["cookie", "Cookie"], ["flower", "Flower"], ["clover", "Clover"], ["hexagon", "Hexagon"], ["sun", "Sun"], ["circle", "Circle"]],
+          optKey: "metric", opts: [["cpu", "CPU"], ["ram", "RAM"], ["gpu", "GPU"], ["temp", "CPU heat"], ["battery", "Battery"]], optDefault: "cpu" },
+        { id: "date", name: "Date", icon: "\uf073", card: true,
+          styles: [["flower", "Flower"], ["cookie", "Cookie"], ["clover", "Clover"], ["sun", "Sun"], ["square", "Square"], ["circle", "Circle"]] }
     ]
     property var wins: ({})
     function reg(id, w) { const n = Object.assign({}, wins); n[id] = w; wins = n }
@@ -47,7 +52,8 @@ ShellRoot {
     function styleOf(id) {
         const w = wins[id]
         if (w && w.sty) return w.sty
-        return id === "clock" ? (cfg.clock && cfg.clock.style ? cfg.clock.style : "digital") : (id === "visualizer" ? "bars" : "")
+        if (id !== "clock" && wc(id).style) return wc(id).style
+        return id === "clock" ? (cfg.clock && cfg.clock.style ? cfg.clock.style : "digital") : (id === "visualizer" ? "bars" : (id === "gauge" ? "pentagon" : (id === "date" ? "flower" : "")))
     }
     // the second choice of a widget (visualizer color, clock font)
     function optOf(id, key, dflt) {
@@ -295,6 +301,25 @@ ShellRoot {
     }
     // audio visualizer: see-through, at the bottom of the screen by default, never takes clicks
     WidgetWindow {
+        id: gaugeWin
+        wid: "gauge"; wc: root.wc("gauge"); active: root.on("gauge"); editing: root.editing; hidden: root.hideWidgets
+        bw: root.sw; bh: root.sh; cw: 220; ch: 220; defX: 40; defY: 140
+        onMoved: function(id, x, y) { root.savePos(id, x, y) }
+        Component.onCompleted: root.reg(wid, gaugeWin)
+        GaugeWidget { anchors.fill: parent; pal: gaugeWin.pal; bg: gaugeWin.bgv; running: root.on("gauge") && !root.hideWidgets
+            shape: gaugeWin.sty !== "" ? gaugeWin.sty : (root.wc("gauge").style || "pentagon")
+            metric: root.optOf("gauge", "metric", "cpu") }
+    }
+    WidgetWindow {
+        id: dateWin
+        wid: "date"; wc: root.wc("date"); active: root.on("date"); editing: root.editing; hidden: root.hideWidgets
+        bw: root.sw; bh: root.sh; cw: 190; ch: 190; defX: 290; defY: 140
+        onMoved: function(id, x, y) { root.savePos(id, x, y) }
+        Component.onCompleted: root.reg(wid, dateWin)
+        DateWidget { anchors.fill: parent; pal: dateWin.pal; bg: dateWin.bgv; running: root.on("date") && !root.hideWidgets
+            shape: dateWin.sty !== "" ? dateWin.sty : (root.wc("date").style || "flower") }
+    }
+    WidgetWindow {
         id: vizWin
         wid: "visualizer"; wc: root.wc("visualizer"); active: root.on("visualizer"); editing: root.editing; hidden: root.hideWidgets
         free: true; passive: true
@@ -318,6 +343,7 @@ ShellRoot {
     PowerMenu { }
     VolumeMenu { }
     VolumeOsd { }
+    GamePanel { }
     WallPreview { path: dash.previewPath }
 
     Dock { dc: root.cfg.dock ? root.cfg.dock : ({}) }

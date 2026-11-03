@@ -19,7 +19,7 @@ Item {
         refresh.restart()
     }
     function famFor(k) {
-        return k === "sans" ? "Inter" : k === "rounded" ? "Rubik" : k === "mono" ? "JetBrainsMono Nerd Font" : ""
+        return k === "sans" ? Fonts.main : k === "rounded" ? "Rubik" : k === "mono" ? "JetBrainsMono Nerd Font" : ""
     }
     function preview(name, vol) {
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-sound\" play \"$1\" \"$2\"", "_", name, String(vol)])
@@ -43,15 +43,15 @@ Item {
             visible: Prefs.previews
             width: parent.width
             height: 170
-            radius: 16
+            radius: M3.rL
             clip: true
             gradient: Gradient {
                 orientation: Gradient.Horizontal
-                GradientStop { position: 0; color: "#1b1a22" }
-                GradientStop { position: 1; color: "#0e0f12" }
+                GradientStop { position: 0; color: M3.stageTop }
+                GradientStop { position: 1; color: M3.stageBottom }
             }
             border.width: 1
-            border.color: "#1f1f1f"
+            border.color: M3.outlineVariant
 
             T {
                 anchors.centerIn: parent
@@ -202,9 +202,9 @@ Item {
                     width: (styles.width - 20) / 3
                     height: 96
                     radius: 14
-                    color: "#141414"
+                    color: M3.surfaceC
                     border.width: on ? 2 : 1
-                    border.color: on ? "#F6F5F4" : (sMouse.containsMouse ? "#3a3a3a" : "#2a2a2a")
+                    border.color: on ? M3.primary : (sMouse.containsMouse ? M3.outline : M3.surfaceHighest)
                     Behavior on border.color { ColorAnimation { duration: 140 } }
                     Rectangle {
                         x: 8; y: 8
@@ -213,8 +213,8 @@ Item {
                         clip: true
                         gradient: Gradient {
                             orientation: Gradient.Horizontal
-                            GradientStop { position: 0; color: "#2a2836" }
-                            GradientStop { position: 1; color: "#15161a" }
+                            GradientStop { position: 0; color: M3.stageTop }
+                            GradientStop { position: 1; color: M3.stageBottom }
                         }
                         PopupMock {
                             anchors.centerIn: parent
@@ -342,9 +342,9 @@ Item {
                     width: (pstyles.width - 20) / 3
                     height: 196
                     radius: 14
-                    color: "#141414"
+                    color: M3.surfaceC
                     border.width: on ? 2 : 1
-                    border.color: on ? "#F6F5F4" : (pMouse.containsMouse ? "#3a3a3a" : "#2a2a2a")
+                    border.color: on ? M3.primary : (pMouse.containsMouse ? M3.outline : M3.surfaceHighest)
                     Behavior on border.color { ColorAnimation { duration: 140 } }
                     Rectangle {
                         x: 8; y: 8
@@ -353,8 +353,8 @@ Item {
                         clip: true
                         gradient: Gradient {
                             orientation: Gradient.Horizontal
-                            GradientStop { position: 0; color: "#3a3150" }
-                            GradientStop { position: 1; color: "#1a2a3a" }
+                            GradientStop { position: 0; color: M3.stageTop }
+                            GradientStop { position: 1; color: M3.stageBottom }
                         }
                         PanelMock {
                             anchors.centerIn: parent
@@ -379,7 +379,7 @@ Item {
                         y: 160
                         text: modelData.d
                         font.pixelSize: 11
-                        color: "#8a8a8a"
+                        color: M3.inkDim
                     }
                     MouseArea {
                         id: pMouse

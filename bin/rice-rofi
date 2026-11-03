@@ -122,6 +122,9 @@ def lua_text(c):
                '    blur = true,\n    ignore_alpha = 0.1,\n})\n')
     out.append('hl.layer_rule({\n    name  = "rice-osd-blur",\n    match = { namespace = "rice-osd" },\n'
                '    blur = true,\n    ignore_alpha = 0.1,\n})\n')
+    # the game bar: only the panel blurs, not the light dim over the game (that one is below ignore_alpha)
+    out.append('hl.layer_rule({\n    name  = "rice-gamebar-blur",\n    match = { namespace = "rice-gamebar" },\n'
+               '    blur = true,\n    ignore_alpha = 0.5,\n})\n')
     return "".join(out)
 
 

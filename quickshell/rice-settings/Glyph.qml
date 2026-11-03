@@ -13,7 +13,7 @@ Item {
         text: g.glyph
         font.pixelSize: 14
         opacity: g.active ? 1 : 0.2
-        color: gMouse.containsMouse && g.active ? "#F6F5F4" : "#8a8a8a"
+        color: gMouse.containsMouse && g.active ? M3.primary : M3.inkDim
     }
     MouseArea {
         id: gMouse

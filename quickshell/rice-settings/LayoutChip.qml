@@ -15,9 +15,9 @@ Rectangle {
     height: 36
     width: compact ? 38 : row.implicitWidth + 26
     radius: 11
-    color: m.containsMouse ? "#242424" : "#1b1b1b"
+    color: m.containsMouse ? M3.surfaceHighest : "#1b1b1b"
     border.width: 1
-    border.color: m.containsMouse ? "#3a3a3a" : "#2a2a2a"
+    border.color: m.containsMouse ? M3.outline : M3.surfaceHighest
     opacity: dimmed ? 0.25 : 1
     Behavior on opacity { NumberAnimation { duration: 140 } }
     Behavior on color { ColorAnimation { duration: 120 } }

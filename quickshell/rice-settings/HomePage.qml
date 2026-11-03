@@ -123,54 +123,85 @@ Item {
             width: flick.width - 48
             spacing: 12
 
-            // the logo, moving: the moon floats and sways, the stars twinkle (your picture is in the sidebar)
-            MoonLogo {
-                id: homeLogo
-                objectName: "homeLogo"
-                anchors.horizontalCenter: parent.horizontalCenter
-                size: 136
-                running: page.visible
-            }
-
-            T {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: page.greeting() + ", " + page.user
-                font.pixelSize: 26
-                font.bold: true
-            }
-            T {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: page.now.toLocaleDateString(Qt.locale("en_US"), "dddd, d MMMM") + "  \u00b7  " + page.now.toLocaleTimeString(Qt.locale("en_US"), "HH:mm")
-                color: "#8a8a8a"
-                font.pixelSize: 13
-            }
-
-            Row {
-                anchors.horizontalCenter: parent.horizontalCenter
-                spacing: 8
-                topPadding: 2
-                bottomPadding: 6
-                Repeater {
-                    model: [
-                        { i: "\udb80\udfd8", t: "Theme \u00b7 " + page.themeName() },
-                        { i: "\uf017", t: "Up " + page.uptime },
-                        { i: page.ctl.osGlyph(), t: page.ctl.osName }
-                    ]
-                    delegate: Rectangle {
-                        visible: modelData.t.length > 3
-                        height: 30
-                        width: chip.implicitWidth + 26
-                        radius: 15
-                        color: "#141414"
-                        border.width: 1
-                        border.color: "#222222"
-                        Row {
-                            id: chip
-                            anchors.centerIn: parent
-                            spacing: 7
-                            T { kind: "icon"; text: modelData.i; font.pixelSize: 12; color: "#c8c8cc"; anchors.verticalCenter: parent.verticalCenter }
-                            T { text: modelData.t; font.pixelSize: 12; color: "#c8c8cc"; anchors.verticalCenter: parent.verticalCenter }
+            // ---------- hello: a tonal card with the time, your theme and the moon ----------
+            Rectangle {
+                id: hero
+                width: parent.width
+                height: 214
+                radius: M3.rXL
+                color: M3.primaryContainer
+                clip: true
+                // calm shapes in the corner, they turn slowly
+                // two soft shapes that slowly change form: a rounded square turns into a circle and back, a pill breathes
+                Rectangle {
+                    id: shapeA
+                    width: 200; height: 200; x: parent.width - 300; y: -70
+                    color: M3.alpha(M3.primary, 0.14)
+                    radius: 40
+                    SequentialAnimation on radius {
+                        running: page.visible; loops: Animation.Infinite
+                        NumberAnimation { to: 100; duration: 4200; easing.type: Easing.InOutSine }
+                        NumberAnimation { to: 40; duration: 4200; easing.type: Easing.InOutSine }
+                    }
+                    RotationAnimation on rotation { from: 0; to: 360; duration: 48000; loops: Animation.Infinite; running: page.visible }
+                }
+                Rectangle {
+                    width: 150; height: 64; radius: 32; x: parent.width - 360; y: 140; rotation: -24
+                    color: M3.alpha(M3.tertiary, 0.22)
+                    SequentialAnimation on scale {
+                        running: page.visible; loops: Animation.Infinite
+                        NumberAnimation { to: 1.12; duration: 3000; easing.type: Easing.InOutSine }
+                        NumberAnimation { to: 0.94; duration: 3000; easing.type: Easing.InOutSine }
+                    }
+                }
+                MoonLogo {
+                    id: homeLogo
+                    objectName: "homeLogo"
+                    anchors.right: parent.right; anchors.rightMargin: 26
+                    anchors.verticalCenter: parent.verticalCenter
+                    size: 160
+                    running: page.visible
+                }
+                Column {
+                    x: 28; y: 24
+                    width: parent.width - 28 - 200
+                    spacing: 6
+                    T { text: "WELCOME BACK"; font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2; color: M3.alpha(M3.inkPrimaryC, 0.75) }
+                    T { kind: "title"; text: page.greeting() + ", " + page.user; font.pixelSize: 30; font.weight: Font.Medium; color: M3.inkPrimaryC
+                        width: parent.width; elide: Text.ElideRight }
+                    T { text: page.now.toLocaleDateString(Qt.locale("en_US"), "dddd, d MMMM") + "  \u00b7  " + page.now.toLocaleTimeString(Qt.locale("en_US"), "HH:mm")
+                        color: M3.alpha(M3.inkPrimaryC, 0.8); font.pixelSize: 13 }
+                    Flow {
+                        width: parent.width
+                        spacing: 6
+                        topPadding: 4
+                        Repeater {
+                            model: [
+                                { i: "\udb80\udfd8", t: "Theme \u00b7 " + page.themeName() },
+                                { i: "\uf017", t: "Up " + page.uptime },
+                                { i: page.ctl.osGlyph(), t: page.ctl.osName }
+                            ]
+                            delegate: Rectangle {
+                                visible: modelData.t.length > 3
+                                height: 28
+                                width: chip.implicitWidth + 24
+                                radius: 14
+                                color: M3.alpha(M3.inkPrimaryC, 0.12)
+                                Row {
+                                    id: chip
+                                    anchors.centerIn: parent
+                                    spacing: 7
+                                    T { kind: "icon"; text: modelData.i; font.pixelSize: 11; color: M3.inkPrimaryC; anchors.verticalCenter: parent.verticalCenter }
+                                    T { text: modelData.t; font.pixelSize: 12; color: M3.inkPrimaryC; anchors.verticalCenter: parent.verticalCenter }
+                                }
+                            }
                         }
+                    }
+                    Row {
+                        spacing: 8
+                        topPadding: 6
+                        Btn { text: "Wallpaper"; sym: "wallpaper"; icon: "\uf03e"; primary: true; onClicked: page.ctl.page = 18 }
+                        Btn { text: "Gaming hub"; sym: "sports_esports"; icon: "\uf11b"; onClicked: page.ctl.page = 16 }
                     }
                 }
             }
@@ -180,11 +211,11 @@ Item {
                 height: 84
                 radius: 16
                 border.width: 1
-                border.color: "#222222"
+                border.color: M3.surfaceHighest
                 gradient: Gradient {
                     orientation: Gradient.Horizontal
                     GradientStop { position: 0; color: "#1a1922" }
-                    GradientStop { position: 1; color: "#121214" }
+                    GradientStop { position: 1; color: M3.surfaceLow }
                 }
                 Rectangle {
                     id: bulb
@@ -203,7 +234,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 4
                     T { text: "Make yourself at home"; font.pixelSize: 14; font.bold: true }
-                    T { kind: "reading"; width: parent.width; text: page.tips[page.tip]; color: "#9a9aa4"; font.pixelSize: 12; wrapMode: Text.WordWrap }
+                    T { kind: "reading"; width: parent.width; text: page.tips[page.tip]; color: M3.inkDim; font.pixelSize: 12; wrapMode: Text.WordWrap }
                 }
                 SequentialAnimation {
                     id: tipFade
@@ -223,9 +254,9 @@ Item {
                 width: parent.width
                 height: 76
                 radius: 14
-                color: "#141414"
+                color: M3.surfaceC
                 border.width: 1
-                border.color: page.lite ? "#4a4a4f" : "#1f1f1f"
+                border.color: page.lite ? M3.primary : M3.outlineVariant
                 Behavior on border.color { ColorAnimation { duration: 160 } }
                 Rectangle {
                     id: litei
@@ -243,7 +274,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 2
                     T { text: "Light mode"; font.pixelSize: 13; font.bold: true }
-                    T { kind: "reading"; text: "Running slow? No blur or shadows, widgets rest when a window covers them. Animations stay"; color: "#8a8a8a"; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
+                    T { kind: "reading"; text: "Running slow? No blur or shadows, widgets rest when a window covers them. Animations stay"; color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
                 }
                 Tog {
                     id: litetog
@@ -263,9 +294,9 @@ Item {
                 width: parent.width
                 height: 76
                 radius: 14
-                color: "#141414"
+                color: M3.surfaceC
                 border.width: 1
-                border.color: on ? "#4a4a4f" : "#1f1f1f"
+                border.color: on ? M3.primary : M3.outlineVariant
                 Behavior on border.color { ColorAnimation { duration: 160 } }
                 Rectangle {
                     id: ahi
@@ -283,7 +314,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 2
                     T { text: "Auto-hide widgets"; font.pixelSize: 13; font.bold: true }
-                    T { kind: "reading"; text: page.lite ? "On while Light mode is on" : "Widgets hide while a window covers the screen, and come back on an empty desktop"; color: "#8a8a8a"; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
+                    T { kind: "reading"; text: page.lite ? "On while Light mode is on" : "Widgets hide while a window covers the screen, and come back on an empty desktop"; color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
                 }
                 Tog {
                     id: ahtog
@@ -302,9 +333,9 @@ Item {
                 width: parent.width
                 height: 64
                 radius: 14
-                color: "#141414"
+                color: M3.surfaceC
                 border.width: 1
-                border.color: "#1f1f1f"
+                border.color: M3.outlineVariant
                 Rectangle {
                     id: starsi
                     x: 14
@@ -321,7 +352,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 2
                     T { text: "Falling stars"; font.pixelSize: 13; font.bold: true }
-                    T { kind: "reading"; text: "Comets falling across this window"; color: "#8a8a8a"; font.pixelSize: 11; width: parent.width; elide: Text.ElideRight }
+                    T { kind: "reading"; text: "Comets falling across this window"; color: M3.inkDim; font.pixelSize: 11; width: parent.width; elide: Text.ElideRight }
                 }
                 Tog {
                     id: starstog
@@ -340,28 +371,28 @@ Item {
                 spacing: 10
                 Repeater {
                     model: [
-                        { i: "\udb80\udfd8", t: "Theme", d: "Colors & schemes", p: 8 },
-                        { i: "\uf03e", t: "Wallpaper", d: "Pick a new one", p: -1 },
-                        { i: "\uf0f3", t: "Notifications", d: "Popups & panel", p: 10 },
-                        { i: "\uf023", t: "Lock screen", d: "Idle & lock", p: 11 },
-                        { i: "\uf0c9", t: "Waybar", d: "Bar layout & style", p: 2 },
-                        { i: "\uf002", t: "Rofi", d: "App launcher", p: 7 }
+                        { i: "\udb80\udfd8", s: "palette", t: "Theme", d: "Colors & schemes", p: 8 },
+                        { i: "\uf03e", s: "wallpaper", t: "Wallpaper", d: "Pick a new one", p: 18 },
+                        { i: "\uf0f3", s: "notifications", t: "Notifications", d: "Popups & panel", p: 10 },
+                        { i: "\uf0c9", s: "toolbar", t: "Bar", d: "Style, layout, workspaces", p: 2 },
+                        { i: "\uf002", s: "apps", t: "Launcher", d: "Themes and styles", p: 7 },
+                        { i: "\uf11b", s: "sports_esports", t: "Gaming hub", d: "Gaming mode, launchers", p: 16 }
                     ]
                     delegate: Rectangle {
                         width: (quick.width - 20) / 3
-                        height: 76
-                        radius: 14
-                        color: qMouse.containsMouse ? "#1b1b1d" : "#141414"
-                        border.width: 1
-                        border.color: qMouse.containsMouse ? "#333333" : "#1f1f1f"
+                        height: 80
+                        radius: qMouse.pressed ? M3.rM : M3.rL
+                        color: qMouse.containsMouse ? M3.surfaceHigh : M3.surfaceC
                         Behavior on color { ColorAnimation { duration: 140 } }
+                        Behavior on radius { NumberAnimation { duration: 160 } }
                         Rectangle {
                             id: qi
-                            x: 14
+                            x: 16
                             anchors.verticalCenter: parent.verticalCenter
-                            width: 40; height: 40; radius: 12
-                            color: Qt.rgba(1, 1, 1, 0.06)
-                            T { kind: "icon"; anchors.centerIn: parent; text: modelData.i; font.pixelSize: 17 }
+                            width: 44; height: 44; radius: qMouse.containsMouse ? 14 : 22
+                            color: M3.secondaryContainer
+                            Behavior on radius { NumberAnimation { duration: 260; easing.type: Easing.OutBack } }
+                            Icon { anchors.centerIn: parent; name: modelData.s || ""; glyph: modelData.i; size: 20; color: M3.inkSecondaryC }
                         }
                         Column {
                             anchors.left: qi.right
@@ -371,7 +402,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: 2
                             T { text: modelData.t; font.pixelSize: 13; font.bold: true; width: parent.width; elide: Text.ElideRight }
-                            T { kind: "reading"; text: modelData.d; font.pixelSize: 11; color: "#8a8a8a"; width: parent.width; elide: Text.ElideRight }
+                            T { kind: "reading"; text: modelData.d; font.pixelSize: 11; color: M3.inkDim; width: parent.width; elide: Text.ElideRight }
                         }
                         MouseArea {
                             id: qMouse
@@ -398,7 +429,7 @@ Item {
                     id: profHead
                     spacing: 8
                     T { text: "Profiles"; font.pixelSize: 14; font.bold: true; anchors.verticalCenter: parent.verticalCenter }
-                    T { kind: "reading"; text: page.profiles.length > 0 ? "How fast this computer runs, and how much power it uses" : ""; color: "#8a8a8a"; font.pixelSize: 11; anchors.verticalCenter: parent.verticalCenter }
+                    T { kind: "reading"; text: page.profiles.length > 0 ? "How fast this computer runs, and how much power it uses" : ""; color: M3.inkDim; font.pixelSize: 11; anchors.verticalCenter: parent.verticalCenter }
                 }
                 Row {
                     visible: page.profiles.length > 0
@@ -417,9 +448,9 @@ Item {
                             width: (profBox.width - 10 * (page.profiles.length - 1)) / Math.max(1, page.profiles.length)
                             height: 84
                             radius: 14
-                            color: on ? "#F6F5F4" : (pMouse.containsMouse ? "#1b1b1d" : "#141414")
+                            color: on ? M3.primary : (pMouse.containsMouse ? "#1b1b1d" : M3.surfaceC)
                             border.width: 1
-                            border.color: on ? "#F6F5F4" : (pMouse.containsMouse ? "#333333" : "#1f1f1f")
+                            border.color: on ? M3.primary : (pMouse.containsMouse ? M3.outline : M3.outlineVariant)
                             Behavior on color { ColorAnimation { duration: 160 } }
                             Rectangle {
                                 id: pi
@@ -427,7 +458,7 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 width: 42; height: 42; radius: 13
                                 color: pc.on ? Qt.rgba(0, 0, 0, 0.10) : Qt.rgba(1, 1, 1, 0.06)
-                                T { kind: "icon"; anchors.centerIn: parent; text: modelData.i; font.pixelSize: 19; color: pc.on ? "#0d0d0d" : "#F6F5F4" }
+                                T { kind: "icon"; anchors.centerIn: parent; text: modelData.i; font.pixelSize: 19; color: pc.on ? M3.inkPrimary : "#F6F5F4" }
                             }
                             Column {
                                 anchors.left: pi.right
@@ -436,8 +467,8 @@ Item {
                                 anchors.rightMargin: 10
                                 anchors.verticalCenter: parent.verticalCenter
                                 spacing: 3
-                                T { text: modelData.t; font.pixelSize: 14; font.bold: true; color: pc.on ? "#0d0d0d" : "#F6F5F4"; width: parent.width; elide: Text.ElideRight }
-                                T { kind: "reading"; text: modelData.d; font.pixelSize: 11; color: pc.on ? "#3a3a3e" : "#8a8a8a"; width: parent.width; elide: Text.ElideRight }
+                                T { text: modelData.t; font.pixelSize: 14; font.bold: true; color: pc.on ? M3.inkPrimary : "#F6F5F4"; width: parent.width; elide: Text.ElideRight }
+                                T { kind: "reading"; text: modelData.d; font.pixelSize: 11; color: pc.on ? "#3a3a3e" : M3.inkDim; width: parent.width; elide: Text.ElideRight }
                             }
                             MouseArea {
                                 id: pMouse
@@ -456,7 +487,7 @@ Item {
                     wrapMode: Text.WordWrap
                     kind: "reading"
                     font.pixelSize: 12
-                    color: "#8a8a8a"
+                    color: M3.inkDim
                     text: "Power modes need power-profiles-daemon, and it is not running on this computer. Install it and turn it on: sudo systemctl enable --now power-profiles-daemon (on NixOS: services.power-profiles-daemon.enable = true)."
                 }
             }
@@ -476,9 +507,9 @@ Item {
                 width: parent.width
                 height: 168
                 radius: 12
-                color: "#141414"
+                color: M3.surfaceC
                 border.width: 1
-                border.color: "#1f1f1f"
+                border.color: M3.outlineVariant
                 readonly property var scr: Quickshell.screens && Quickshell.screens.length > 0 ? Quickshell.screens[0] : null
                 readonly property real sw: scr ? scr.width : 1920
                 readonly property real sh: scr ? scr.height : 1080
@@ -498,8 +529,8 @@ Item {
                     border.color: "#3a3a40"
                     clip: true
                     gradient: Gradient {
-                        GradientStop { position: 0.0; color: "#1b1b24" }
-                        GradientStop { position: 1.0; color: "#0e0e12" }
+                        GradientStop { position: 0; color: M3.stageTop }
+                        GradientStop { position: 1; color: M3.stageBottom }
                     }
                     // the bar
                     Rectangle { x: 0; y: 0; width: parent.width; height: 5; color: "#26262c" }
@@ -511,9 +542,9 @@ Item {
                         x: Math.round((mon.width - width) / 2)
                         y: Math.round((mon.height - height) / 2)
                         radius: 4
-                        color: "#141414"
+                        color: M3.surfaceC
                         border.width: 1
-                        border.color: "#8a8a92"
+                        border.color: M3.inkDim
                         Rectangle { x: 0; y: 0; width: Math.round(parent.width * 0.26); height: parent.height; color: "#1c1c1f"; radius: 4 }
                         Repeater {
                             model: 5
@@ -521,7 +552,7 @@ Item {
                                 x: 4; y: 8 + index * 9
                                 width: Math.round(miniWin.width * 0.26) - 8
                                 height: 4; radius: 2
-                                color: index === 0 ? "#F6F5F4" : "#3a3a40"
+                                color: index === 0 ? M3.primary : "#3a3a40"
                             }
                         }
                         Repeater {
@@ -546,8 +577,8 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 4
                     T { text: Math.round(szPrev.ww) + " \u00d7 " + Math.round(szPrev.wh) + " px"; font.pixelSize: 20; font.bold: true }
-                    T { kind: "reading"; text: Math.round(szPrev.ww * 100 / szPrev.sw) + " % of the screen width, " + Math.round(szPrev.wh * 100 / szPrev.sh) + " % of its height"; color: "#8a8a8a"; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
-                    T { kind: "reading"; text: "Preview: the small window follows the slider. It is applied when you let go."; color: "#6a6a72"; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
+                    T { kind: "reading"; text: Math.round(szPrev.ww * 100 / szPrev.sw) + " % of the screen width, " + Math.round(szPrev.wh * 100 / szPrev.sh) + " % of its height"; color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
+                    T { kind: "reading"; text: "Preview: the small window follows the slider. It is applied when you let go."; color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
                 }
             }
 
@@ -595,15 +626,15 @@ Item {
                 width: parent.width
                 height: 128
                 radius: 12
-                color: "#141414"
+                color: M3.surfaceC
                 border.width: 1
-                border.color: "#1f1f1f"
+                border.color: M3.outlineVariant
                 Column {
                     x: 16; y: 14
                     width: 190
                     spacing: 4
                     T { text: "Try it"; font.pixelSize: 14 }
-                    T { kind: "reading"; text: "Scroll in the box. The speed above changes how far one notch goes."; color: "#8a8a8a"; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
+                    T { kind: "reading"; text: "Scroll in the box. The speed above changes how far one notch goes."; color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
                 }
                 Rectangle {
                     x: 226; y: 12
@@ -612,7 +643,7 @@ Item {
                     radius: 9
                     color: "#0e0e0f"
                     border.width: 1
-                    border.color: "#1c1c1e"
+                    border.color: M3.outlineVariant
                     clip: true
                     Flickable {
                         id: tryFlick

@@ -5,6 +5,7 @@ Item {
     id: ri
     property string source: ""
     property real cornerRadius: width / 2
+    property int res: 256        // the size it is decoded at (bigger for big pictures)
     property string fallback: ""
 
     Image {
@@ -15,8 +16,8 @@ Item {
         visible: false
         asynchronous: true
         cache: false
-        sourceSize.width: 256
-        sourceSize.height: 256
+        sourceSize.width: ri.res
+        sourceSize.height: ri.res
     }
     Item {
         id: msk
@@ -35,8 +36,8 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: ri.cornerRadius
-        color: "#202022"
+        color: M3.outlineVariant
         visible: img.status !== Image.Ready
-        T { anchors.centerIn: parent; text: ri.fallback; font.pixelSize: parent.width * 0.42; color: "#8a8a8a" }
+        T { scaled: false; anchors.centerIn: parent; text: ri.fallback; font.pixelSize: parent.width * 0.42; color: M3.inkDim }
     }
 }

@@ -8,10 +8,11 @@ Rectangle {
     signal peek(string key, bool on)
     width: 104
     height: 76
-    radius: 14
-    color: "#141414"
-    border.width: selected ? 2 : 1
-    border.color: selected ? "#F6F5F4" : (m.containsMouse ? "#3a3a3a" : "#2a2a2a")
+    radius: M3.rL
+    color: selected ? M3.secondaryContainer : (m.containsMouse ? M3.surfaceHigh : M3.surfaceC)
+    Behavior on color { ColorAnimation { duration: 160 } }
+    border.width: selected ? 2 : 0
+    border.color: selected ? M3.primary : (m.containsMouse ? M3.outline : M3.surfaceHighest)
     Behavior on border.color { ColorAnimation { duration: 140 } }
     scale: m.containsMouse ? 1.03 : 1
     Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
@@ -30,8 +31,8 @@ Rectangle {
             visible: t.selected
             anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 5
             width: 14; height: 14; radius: 7
-            color: "#F6F5F4"
-            T { anchors.centerIn: parent; text: "✓"; font.pixelSize: 9; color: "#0d0d0d"; font.bold: true }
+            color: M3.primary
+            T { anchors.centerIn: parent; text: "✓"; font.pixelSize: 9; color: M3.inkPrimary; font.bold: true }
         }
     }
     T {

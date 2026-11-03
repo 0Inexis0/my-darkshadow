@@ -90,7 +90,7 @@ Item {
                 clip: true
                 color: "#0c0c0e"
                 border.width: 1
-                border.color: "#262626"
+                border.color: M3.surfaceHighest
 
                 Image {
                     anchors.fill: parent
@@ -104,8 +104,8 @@ Item {
                     anchors.fill: parent
                     visible: page.v("background", "screenshot") === "screenshot"
                     gradient: Gradient {
-                        GradientStop { position: 0; color: "#2a2f3a" }
-                        GradientStop { position: 1; color: "#14161c" }
+                        GradientStop { position: 0; color: M3.stageTop }
+                        GradientStop { position: 1; color: M3.stageBottom }
                     }
                 }
                 Rectangle {
@@ -119,7 +119,7 @@ Item {
                     visible: page.v("avatar", true) && page.v("has_face", false)
                     width: 96 * pv.s; height: width; radius: width / 2
                     x: pv.px(width); y: pv.py(pv.ys.avatar, height)
-                    color: "#2a2a2a"
+                    color: M3.surfaceHighest
                     border.width: 1
                     border.color: pv.acc
                     RoundImage { anchors.fill: parent; anchors.margins: 1; source: "file://" + Quickshell.env("HOME") + "/.face" }
@@ -164,7 +164,7 @@ Item {
                     color: page.v("accent_clock", false) ? pv.acc : "#F6F5F4"
                     x: pv.px(implicitWidth); y: 48 * pv.s - implicitHeight / 2
                 }
-                T {
+                T { scaled: false
                     visible: page.v("date", true)
                     text: page.now.toLocaleDateString(Qt.locale("en_US"), "dddd, d MMMM")
                     font.pixelSize: (pv.st === "minimal" ? 14 : 18) * 1.33 * pv.s
@@ -288,7 +288,7 @@ Item {
             spacing: 8
             topPadding: 4
             T { text: "Clock font"; font.pixelSize: 14 }
-            T { kind: "reading"; text: "The clock stays white and grey. Fonts that are not here yet download when you pick them."; color: "#8a8a8a"; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
+            T { kind: "reading"; text: "The clock stays white and grey. Fonts that are not here yet download when you pick them."; color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
             Grid {
                 id: cfGrid
                 width: parent.width
@@ -303,9 +303,9 @@ Item {
                         width: (cfGrid.width - 30) / 4
                         height: 92
                         radius: 14
-                        color: fm.containsMouse ? "#1c1c1c" : "#141414"
+                        color: fm.containsMouse ? M3.surfaceHigh : M3.surfaceC
                         border.width: on ? 2 : 1
-                        border.color: on ? "#F6F5F4" : "#1f1f1f"
+                        border.color: on ? M3.primary : M3.outlineVariant
                         Behavior on color { ColorAnimation { duration: 120 } }
                         Behavior on border.color { ColorAnimation { duration: 160 } }
                         scale: fm.pressed ? 0.97 : 1
@@ -325,7 +325,7 @@ Item {
                             y: parent.height - 26
                             text: ft.here ? modelData.n : modelData.n + "  \u2193"
                             font.pixelSize: 11
-                            color: ft.on ? "#F6F5F4" : "#9a9aa4"
+                            color: ft.on ? M3.primary : M3.inkDim
                         }
                         MouseArea { id: fm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                             onClicked: { page.setv("clock_font", modelData.k); if (!ft.here) page.ctl.status = "Downloading " + modelData.n + "..." } }

@@ -25,20 +25,20 @@ Item {
         transformOrigin: Item.Top
         Behavior on opacity {
             SequentialAnimation {
-                PauseAnimation { duration: slot.on ? 90 : 0 }
-                NumberAnimation { duration: slot.on ? 260 : 90; easing.type: slot.on ? Easing.OutCubic : Easing.InCubic }
+                PauseAnimation { duration: slot.on ? M3.d(90) : 0 }
+                NumberAnimation { duration: slot.on ? M3.d(260) : M3.d(90); easing.type: slot.on ? Easing.OutCubic : Easing.InCubic }
             }
         }
         Behavior on scale {
             SequentialAnimation {
-                PauseAnimation { duration: slot.on ? 90 : 0 }
-                NumberAnimation { duration: slot.on ? 420 : 90; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.05, 0.7, 0.1, 1, 1, 1] }
+                PauseAnimation { duration: slot.on ? M3.d(90) : 0 }
+                NumberAnimation { duration: slot.on ? M3.d(M3.bouncy ? 520 : 420) : M3.d(90); easing.type: slot.on && M3.bouncy ? Easing.OutBack : Easing.OutCubic; easing.overshoot: 1.15 }
             }
         }
         Behavior on y {
             SequentialAnimation {
-                PauseAnimation { duration: slot.on ? 90 : 0 }
-                NumberAnimation { duration: slot.on ? 420 : 90; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.05, 0.7, 0.1, 1, 1, 1] }
+                PauseAnimation { duration: slot.on ? M3.d(90) : 0 }
+                NumberAnimation { duration: slot.on ? M3.d(M3.bouncy ? 520 : 420) : M3.d(90); easing.type: slot.on && M3.bouncy ? Easing.OutBack : Easing.OutCubic; easing.overshoot: 1.15 }
             }
         }
     }

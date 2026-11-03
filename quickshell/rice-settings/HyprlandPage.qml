@@ -7,8 +7,9 @@ Item {
     property int tab: 0
     property bool confirmReset: false
 
-    readonly property var tabs: ["Gaps", "Borders", "Layout", "Rounding & Opacity", "Blur", "Animations", "Keybinds", "Monitors"]
-    readonly property var comps: [gapsC, bordersC, layoutC, roundC, blurC, animC, bindsC, monC]
+    // animations moved to Settings > Motion
+    readonly property var tabs: ["Gaps", "Borders", "Layout", "Rounding & Opacity", "Blur", "Keybinds", "Monitors"]
+    readonly property var comps: [gapsC, bordersC, layoutC, roundC, blurC, bindsC, monC]
 
     readonly property var gapsSpec: [
         { key: "general.gaps_in", type: "slider", label: "Inner gaps", desc: "Gaps between windows", min: 0, max: 40, step: 1, unit: " px", def: 5 },
@@ -24,7 +25,11 @@ Item {
     readonly property var layoutSpec: [
         { key: "general.layout", type: "seg", label: "Layout", desc: "How windows are arranged",
           options: [{ label: "Dwindle", value: "dwindle" }, { label: "Master", value: "master" }, { label: "Scrolling", value: "scrolling" }, { label: "Monocle", value: "monocle" }] },
-        { key: "dwindle.preserve_split", type: "toggle", label: "Preserve split", desc: "Keep the split direction when windows close (Dwindle)" }
+        { key: "dwindle.preserve_split", type: "toggle", label: "Preserve split", desc: "Keep the split direction when windows close (Dwindle)" },
+        { key: "general.snap.enabled", type: "toggle", label: "Window magnet", desc: "Floating windows snap to each other and to the screen edges" },
+        { key: "general.snap.window_gap", type: "slider", label: "Magnet reach: windows", desc: "How close a window must come to snap to another", min: 0, max: 60, step: 1, unit: " px", def: 10 },
+        { key: "general.snap.monitor_gap", type: "slider", label: "Magnet reach: screen edges", desc: "How close a window must come to snap to the edge", min: 0, max: 60, step: 1, unit: " px", def: 10 },
+        { key: "general.snap.border_overlap", type: "toggle", label: "Overlap borders", desc: "Snapped windows share one border line instead of two" }
     ]
     readonly property var roundSpec: [
         { key: "decoration.rounding", type: "slider", label: "Corner rounding", desc: "Radius of window corners", min: 0, max: 40, step: 1, unit: " px", def: 10 },
@@ -64,16 +69,16 @@ Item {
                 width: tabText.implicitWidth + 24
                 height: 30
                 radius: 9
-                color: page.tab === index ? "#F6F5F4" : (tabMouse.containsMouse ? "#262626" : "#1a1a1a")
+                color: page.tab === index ? M3.primary : (tabMouse.containsMouse ? M3.surfaceHighest : M3.surfaceHigh)
                 border.width: 1
-                border.color: "#2a2a2a"
+                border.color: M3.surfaceHighest
                 Behavior on color { ColorAnimation { duration: 140 } }
                 T {
                     id: tabText
                     anchors.centerIn: parent
                     text: modelData
                     font.pixelSize: 12
-                    color: page.tab === index ? "#0d0d0d" : "#F6F5F4"
+                    color: page.tab === index ? M3.inkPrimary : "#F6F5F4"
                 }
                 MouseArea {
                     id: tabMouse

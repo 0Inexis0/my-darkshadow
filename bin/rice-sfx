@@ -25,9 +25,9 @@ CFG = DIR + "/sfx.json"
 SND = HOME + "/.local/share/rice/sounds/sfx"
 CACHE = HOME + "/.cache/rice"
 MUSIC_PID = CACHE + "/sfx-music.pid"
-PACKS = ["tap", "soft", "pluck", "keys", "crystal", "bubble", "retro"]
+PACKS = ["pebble", "tap", "soft", "pluck", "keys", "crystal", "bubble", "retro"]
 EVENTS = ["click", "switch", "slider", "typing", "music"]
-DEFAULTS = {"enabled": True, "volume": 45, "pack": "tap",
+DEFAULTS = {"enabled": True, "volume": 45, "pack": "pebble",
             "click": True, "switch": True, "slider": True, "typing": True, "music": True}
 # which setting each sound belongs to
 KIND = {"click": "click", "select": "click", "done": "click", "switch-on": "switch", "switch-off": "switch",

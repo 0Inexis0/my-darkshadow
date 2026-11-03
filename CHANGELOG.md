@@ -1,5 +1,23 @@
 # Changelog
 
+## V3.23
+- A new look everywhere, in the spirit of Material 3 / Google: tonal colors made from your theme, round shapes, springy motion and Google icons (Material Symbols)
+- Google Sans Flex is the interface font of the whole shell: Settings, the bar, the launcher, notifications, the dashboard, the desktop widgets and the lock screen. Google Sans Code is used for codes and numbers in Settings. Both are open source (SIL Open Font License); the installer and `rice-fonts` download them. The terminal (kitty) keeps JetBrainsMono Nerd Font. Older setups that used JetBrains everywhere move to Google Sans Flex once (`font-set migrate`); a font you picked yourself stays
+- Settings, redesigned: a navigation rail with groups and tabs, a bigger window, search, Google icons, new previews and theme tiles
+- Settings > Wallpaper: your wallpaper, the colors it gives the shell, and all your wallpapers to pick from
+- Settings > Appearance > Colors: every color role (primary, containers, tertiary, error, the surfaces) made from your key color; click one to copy it
+- Settings > Appearance > Fonts: typography with a text size, heavier headings, rounded letters (Google Sans Flex has a roundness axis) and the 15 Material 3 type roles in your fonts, with your own sample text
+- Settings > Appearance > Components: icons in switches, corner shape (round, soft, square), slider thickness, wavy progress lines and loaders with their thickness, and every kind of button, all with live samples
+- Settings > Motion: Hyprland animations moved here, with styles (calm, lively, bouncy, snappy, minimal). New: the spring and easing curves drawn as graphs you can play, the duration tokens, and a shape you can throw that springs back home
+- Settings > System > Keyboard: up to four keyboard layouts, the one in use now, a button for the next one, the keys that switch them, and a search over every layout of your computer
+- Settings > Gaming hub (gaming mode and what stays on, power mode, your game launchers and tools) and Settings > About
+- Game bar: SUPER + G opens a panel over your game with CPU and GPU in soft shapes with wavy rings (and their heat), RAM, ping, screenshot, recording, microphone, power mode, gaming mode, Do Not Disturb, volume and brightness. It reads anything only while it is open
+- Desktop widgets: Gauge (CPU, RAM, GPU, CPU heat or battery in a pentagon, cookie, flower, clover, hexagon, sun or circle, with a wavy ring) and Date (today in a flower, cookie, clover ...). Add them in the widget editor (SUPER + ALT + W)
+- Bar: a new Notch style (the middle grows out of the screen edge, the sides are islands), Auto-hide (the bar slides away and windows get the space, point at the edge to bring it back) and a soft shadow under it
+- Hyprland > Layout: window magnet: floating windows snap to each other and to the screen edges, with how close they must come
+- Sounds: the new Pebble click sounds are the default
+- `rice-stats` also reports CPU and GPU temperature, and the GPU load of AMD and Intel cards
+
 ## V3.22
 - Fix: after an update the DarkShadow bar did not show up (with no bar.json yet it counted as off). It is on now when you never chose otherwise, and the installer switches it on once for everyone coming from an older version
 - Much less work in the background, most noticeable on laptops: the shell used to start small programs about 30 times a second to check whether the launcher, the menus or the dashboard should open and whether a setting changed. It now watches those files and reads them only when they change

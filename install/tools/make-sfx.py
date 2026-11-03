@@ -173,6 +173,28 @@ def tap():
     }
 
 
+def pebble():
+    """Material-like: very short, dry and precise ticks with a soft round body (V3.23, the default pack)"""
+    def tk(f, body=0.006, air=0.0009, g=0.5):
+        # a pitched body that dies in a few ms, and a breath of high air on top
+        return mix(sine(f, 0.03, body), tick(0.006, 2600, 9000, air) * g)
+    def thump(f=95, d=0.05, dec=0.012):
+        return sine(f, d, dec, glide=0.85, glide_t=0.02)
+    return {
+        "click": tk(1650, 0.007, 0.0010, 0.45),
+        "switch-on": seq((tk(1250, 0.006), 0), (tk(1900, 0.008), 0.032)),
+        "switch-off": mix(seq((tk(1500, 0.006), 0), (tk(1050, 0.007), 0.032)), thump() * 0.5),
+        "slide": tk(3900, 0.0018, 0.0006, 0.3),
+        "type": tick(0.006, 2200, 8000, 0.0011),
+        "select": tk(3900, 0.0025, 0.0008, 0.35),
+        "done": seq((tk(1650, 0.01), 0), (bell(2349, 0.32, 0.09), 0.045), (bell(3136, 0.36, 0.11), 0.10)),
+        "page-next": mix(tk(1760, 0.01, 0.0015, 0.6), band(rng.normal(0, 1, int(SR * 0.025)), 1800, 7000) * env(int(SR * 0.025), 0.004, 0.006) * 0.25),
+        "page-prev": mix(tk(1320, 0.01, 0.0015, 0.6), band(rng.normal(0, 1, int(SR * 0.025)), 1500, 6000) * env(int(SR * 0.025), 0.004, 0.006) * 0.25),
+        "add": seq((tk(1400, 0.006), 0), (tk(2100, 0.009), 0.04)),
+        "remove": seq((tk(1600, 0.006), 0), (tk(1000, 0.009), 0.04)),
+    }
+
+
 def soft():
     """quiet wooden taps"""
     def wood(f, d=0.06, dec=0.012):
@@ -410,9 +432,14 @@ def main():
     if "--extra" in os.sys.argv:      # only the newer events; the others stay as they are
         write_extra()
         return
+    if "--pebble" in os.sys.argv:     # only the Pebble pack
+        for ev, snd in pebble().items():
+            write(os.path.join(OUT, "pebble", ev + ".wav"), norm(snd, PEAK[ev]))
+        print("pebble written")
+        return
     if os.path.isdir(OUT):
         shutil.rmtree(OUT)
-    packs = {"tap": tap, "soft": soft, "pluck": pluck_pack, "keys": keys, "crystal": crystal, "bubble": bubble, "retro": retro}
+    packs = {"pebble": pebble, "tap": tap, "soft": soft, "pluck": pluck_pack, "keys": keys, "crystal": crystal, "bubble": bubble, "retro": retro}
     gain = {"pluck": 1.6, "retro": 0.65, "keys": 1.1}       # about the same loudness for every pack
     for name, fn in packs.items():
         for ev, s in fn().items():

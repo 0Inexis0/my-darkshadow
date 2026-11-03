@@ -16,7 +16,9 @@ Item {
         { key: "battery", label: "Battery", icon: "\uf240", desc: "Charge and time left" },
         { key: "todo", label: "To-do", icon: "\uf14a", desc: "Tasks to tick off" },
         { key: "focus", label: "Focus timer", icon: "\uf017", desc: "Work and break timer" },
-        { key: "notes", label: "Note", icon: "\uf249", desc: "A note on the desktop" }
+        { key: "notes", label: "Note", icon: "\uf249", desc: "A note on the desktop" },
+        { key: "gauge", label: "Gauge", icon: "\uf4bc", desc: "CPU, RAM, GPU or heat in a soft shape" },
+        { key: "date", label: "Date", icon: "\uf073", desc: "Today in a flower or cookie shape" }
     ]
 
     // widget styles (Settings > Widgets > Theme)
@@ -102,9 +104,9 @@ Item {
                 width: parent.width
                 height: 72
                 radius: 14
-                color: edMouse.containsMouse ? "#1c1c1c" : "#141414"
+                color: edMouse.containsMouse ? M3.surfaceHigh : M3.surfaceC
                 border.width: 1
-                border.color: "#2a2a2a"
+                border.color: M3.surfaceHighest
                 Behavior on color { ColorAnimation { duration: 140 } }
                 Rectangle {
                     x: 16; anchors.verticalCenter: parent.verticalCenter
@@ -116,9 +118,9 @@ Item {
                     x: 72; anchors.verticalCenter: parent.verticalCenter
                     spacing: 3
                     T { text: "Edit widgets"; font.pixelSize: 15; font.bold: true }
-                    T { kind: "reading"; text: "Add, move, resize and style widgets right on your desktop"; font.pixelSize: 12; color: "#8a8a8a" }
+                    T { kind: "reading"; text: "Add, move, resize and style widgets right on your desktop"; font.pixelSize: 12; color: M3.inkDim }
                 }
-                T { kind: "icon"; anchors.right: parent.right; anchors.rightMargin: 18; anchors.verticalCenter: parent.verticalCenter; text: "\uf054"; color: "#8a8a8a" }
+                T { kind: "icon"; anchors.right: parent.right; anchors.rightMargin: 18; anchors.verticalCenter: parent.verticalCenter; text: "\uf054"; color: M3.inkDim }
                 MouseArea {
                     id: edMouse
                     anchors.fill: parent
@@ -133,7 +135,7 @@ Item {
             T {
                 width: parent.width
                 text: "Switch a widget on to put it on the desktop. Edit widgets opens the editor on your desktop: add widgets, drag them, pull a corner to resize, change style and opacity. Shortcut: SUPER + ALT + W."
-                color: "#8a8a8a"
+                color: M3.inkDim
                 font.pixelSize: 12
                 wrapMode: Text.WordWrap
             }
@@ -171,9 +173,9 @@ Item {
                             height: 146
                             radius: 14
                             readonly property bool on: page.wOn(modelData.key)
-                            color: cardMouse.containsMouse ? "#1c1c1c" : "#141414"
+                            color: cardMouse.containsMouse ? M3.surfaceHigh : M3.surfaceC
                             border.width: 1
-                            border.color: card.on ? "#5a5a5a" : "#1f1f1f"
+                            border.color: card.on ? M3.primary : M3.outlineVariant
                             Behavior on color { ColorAnimation { duration: 140 } }
                             Behavior on border.color { ColorAnimation { duration: 200 } }
 
@@ -190,9 +192,9 @@ Item {
                                 width: 40
                                 height: 40
                                 radius: 12
-                                color: card.on ? "#F6F5F4" : "#202020"
+                                color: card.on ? M3.primary : M3.surfaceHighest
                                 Behavior on color { ColorAnimation { duration: 200 } }
-                                T { anchors.centerIn: parent; text: modelData.icon; font.pixelSize: 18; color: card.on ? "#0d0d0d" : "#F6F5F4" }
+                                T { anchors.centerIn: parent; text: modelData.icon; font.pixelSize: 18; color: card.on ? M3.inkPrimary : "#F6F5F4" }
                             }
                             Column {
                                 x: 14
@@ -200,7 +202,7 @@ Item {
                                 anchors.bottomMargin: 14
                                 spacing: 3
                                 T { text: modelData.label; font.pixelSize: 14; font.bold: true }
-                                T { text: modelData.desc; font.pixelSize: 10; color: "#8a8a8a" }
+                                T { text: modelData.desc; font.pixelSize: 10; color: M3.inkDim }
                             }
                             Tog {
                                 anchors.right: parent.right
@@ -237,7 +239,7 @@ Item {
 
             // ---------- theme ----------
             T { kind: "title"; text: "Theme"; font.pixelSize: 16; font.bold: true; topPadding: 14 }
-            T { width: parent.width; text: "How the widget cards look. Google takes the color of your Theme."; color: "#8a8a8a"; font.pixelSize: 12; wrapMode: Text.WordWrap }
+            T { width: parent.width; text: "How the widget cards look. Google takes the color of your Theme."; color: M3.inkDim; font.pixelSize: 12; wrapMode: Text.WordWrap }
             Row {
                 id: themeRow
                 width: parent.width
@@ -250,9 +252,9 @@ Item {
                         width: (themeRow.width - 20) / 3
                         height: 150
                         radius: 14
-                        color: tm.containsMouse ? "#1c1c1c" : "#141414"
+                        color: tm.containsMouse ? M3.surfaceHigh : M3.surfaceC
                         border.width: on ? 2 : 1
-                        border.color: on ? "#F6F5F4" : "#1f1f1f"
+                        border.color: on ? M3.primary : M3.outlineVariant
                         Behavior on color { ColorAnimation { duration: 120 } }
                         Behavior on border.color { ColorAnimation { duration: 160 } }
                         scale: tm.pressed ? 0.98 : 1
@@ -292,7 +294,7 @@ Item {
                             }
                         }
                         T { x: 12; y: 110; text: modelData.n; font.pixelSize: 13; font.bold: true }
-                        T { x: 12; y: 130 - 4; width: parent.width - 24; text: modelData.d; font.pixelSize: 10; color: "#8a8a8a"; elide: Text.ElideRight }
+                        T { x: 12; y: 130 - 4; width: parent.width - 24; text: modelData.d; font.pixelSize: 10; color: M3.inkDim; elide: Text.ElideRight }
                         MouseArea { id: tm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.ctl.setWidgetTheme(modelData.k) }
                     }
                 }
@@ -330,7 +332,7 @@ Item {
 
             // ---------- to-do ----------
             T { kind: "title"; text: "To-do list"; font.pixelSize: 16; font.bold: true; topPadding: 14 }
-            T { width: parent.width; text: "The tasks of the To-do widget. On the desktop, click the widget once to type in it. In a terminal: rice-todo add \"buy milk\"."; color: "#8a8a8a"; font.pixelSize: 12; wrapMode: Text.WordWrap }
+            T { width: parent.width; text: "The tasks of the To-do widget. On the desktop, click the widget once to type in it. In a terminal: rice-todo add \"buy milk\"."; color: M3.inkDim; font.pixelSize: 12; wrapMode: Text.WordWrap }
             Field {
                 id: todoField
                 width: parent.width
@@ -343,14 +345,14 @@ Item {
                     width: col.width
                     height: 44
                     radius: 12
-                    color: "#141414"
+                    color: M3.surfaceC
                     border.width: 1
-                    border.color: "#1f1f1f"
+                    border.color: M3.outlineVariant
                     Rectangle {
                         id: tbx
                         x: 14; anchors.verticalCenter: parent.verticalCenter
                         width: 20; height: 20; radius: 10
-                        color: modelData.done ? "#F6F5F4" : "transparent"
+                        color: modelData.done ? M3.primary : "transparent"
                         border.width: modelData.done ? 0 : 2
                         border.color: "#6a6a70"
                         T { visible: modelData.done; anchors.centerIn: parent; kind: "icon"; text: "\uf00c"; font.pixelSize: 10; color: "#0d0d0d" }
@@ -370,7 +372,7 @@ Item {
                         id: dl
                         anchors.right: parent.right; anchors.rightMargin: 16
                         anchors.verticalCenter: parent.verticalCenter
-                        kind: "icon"; text: "\uf00d"; font.pixelSize: 13; color: "#8a8a8a"
+                        kind: "icon"; text: "\uf00d"; font.pixelSize: 13; color: M3.inkDim
                         MouseArea { anchors.fill: parent; anchors.margins: -8; cursorShape: Qt.PointingHandCursor; onClicked: page.todoDo(["remove", index]) }
                     }
                 }
@@ -423,7 +425,7 @@ Item {
                 spacing: 8
                 topPadding: 4
                 T { text: "Clock font"; font.pixelSize: 14 }
-                T { kind: "reading"; text: "The same fonts as the lock screen clock. They show on the Digital and Line styles. Fonts that are not here yet download when you pick them."; color: "#8a8a8a"; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
+                T { kind: "reading"; text: "The same fonts as the lock screen clock. They show on the Digital and Line styles. Fonts that are not here yet download when you pick them."; color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
                 Grid {
                     id: cfGrid
                     width: parent.width
@@ -438,9 +440,9 @@ Item {
                             width: (cfGrid.width - 30) / 4
                             height: 92
                             radius: 14
-                            color: fm.containsMouse ? "#1c1c1c" : "#141414"
+                            color: fm.containsMouse ? M3.surfaceHigh : M3.surfaceC
                             border.width: on ? 2 : 1
-                            border.color: on ? "#F6F5F4" : "#1f1f1f"
+                            border.color: on ? M3.primary : M3.outlineVariant
                             Behavior on color { ColorAnimation { duration: 120 } }
                             Behavior on border.color { ColorAnimation { duration: 160 } }
                             scale: fm.pressed ? 0.97 : 1
@@ -460,7 +462,7 @@ Item {
                                 y: parent.height - 26
                                 text: ft.here ? modelData.n : modelData.n + "  \u2193"
                                 font.pixelSize: 11
-                                color: ft.on ? "#F6F5F4" : "#9a9aa4"
+                                color: ft.on ? M3.primary : M3.inkDim
                             }
                             MouseArea { id: fm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                                 onClicked: { page.ctl.dwset("clock", "font", modelData.k); if (!ft.here) page.ctl.status = "Downloading " + modelData.n + "..." } }

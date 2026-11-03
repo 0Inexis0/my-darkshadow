@@ -15,9 +15,9 @@ Rectangle {
     width: parent ? parent.width : 400
     height: inner.implicitHeight + 28
     radius: 12
-    color: "#141414"
+    color: M3.surfaceC
     border.width: 1
-    border.color: "#1f1f1f"
+    border.color: M3.outlineVariant
     clip: true
     Behavior on height { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
 
@@ -48,7 +48,7 @@ Rectangle {
         width: zc.width - 32
         spacing: 10
 
-        T { text: zc.title; font.pixelSize: 12; color: "#8a8a8a" }
+        T { text: zc.title; font.pixelSize: 12; color: M3.inkDim }
 
         Flow {
             width: parent.width
@@ -80,15 +80,15 @@ Rectangle {
                 width: 32
                 height: 32
                 radius: 9
-                color: zc.adding ? "#F6F5F4" : (plusMouse.containsMouse ? "#262626" : "#1a1a1a")
+                color: zc.adding ? M3.primary : (plusMouse.containsMouse ? M3.surfaceHighest : M3.surfaceHigh)
                 border.width: 1
-                border.color: "#2a2a2a"
+                border.color: M3.surfaceHighest
                 Behavior on color { ColorAnimation { duration: 160 } }
                 T {
                     anchors.centerIn: parent
                     text: zc.adding ? "−" : "+"
                     font.pixelSize: 16
-                    color: zc.adding ? "#0d0d0d" : "#F6F5F4"
+                    color: zc.adding ? M3.inkPrimary : "#F6F5F4"
                 }
                 MouseArea {
                     id: plusMouse
@@ -113,9 +113,9 @@ Rectangle {
                     width: addText.implicitWidth + 26
                     radius: 9
                     opacity: 0
-                    color: addMouse.containsMouse ? "#262626" : "#101010"
+                    color: addMouse.containsMouse ? M3.surfaceHighest : M3.surfaceLow
                     border.width: 1
-                    border.color: "#3a3a3a"
+                    border.color: M3.outline
                     Behavior on color { ColorAnimation { duration: 140 } }
                     Component.onCompleted: optIn.start()
                     SequentialAnimation {
@@ -139,7 +139,7 @@ Rectangle {
             visible: zc.adding && zc.available.length === 0
             text: "Every module is already placed in the bar."
             font.pixelSize: 12
-            color: "#8a8a8a"
+            color: M3.inkDim
         }
     }
 }

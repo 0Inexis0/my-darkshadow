@@ -24,6 +24,11 @@ SPEC = {
     "general.hover_icon_on_border": ("bool",),
     "general.layout": ("str", ["dwindle", "master", "scrolling", "monocle"]),
     "dwindle.preserve_split": ("bool",),
+    # Settings > Hyprland > Layout: floating windows snap to each other and to the screen edges (magnet)
+    "general.snap.enabled": ("bool",),
+    "general.snap.window_gap": ("int", 0, 60),
+    "general.snap.monitor_gap": ("int", 0, 60),
+    "general.snap.border_overlap": ("bool",),
     "decoration.rounding": ("int", 0, 40),
     "decoration.rounding_power": ("float", 2.0, 10.0),
     "decoration.active_opacity": ("float", 0.1, 1.0),
@@ -125,13 +130,65 @@ def mon_rate(x):
     return ("%.2f" % float(x)).rstrip("0").rstrip(".")
 
 
-def anim_lines(pct):
+# Motion styles (Settings > Motion). calm = the curves of hyprland.lua; the spring ones use Hyprland's spring curves.
+#   name: (curve definitions, {leaf: (speed, curve kind, curve name, style)})
+SPRINGS = {
+    "ds-soft": (1, 150, 19),        # mass, stiffness, dampening: settles without a wobble
+    "ds-lively": (1, 190, 15),      # a small overshoot
+    "ds-bouncy": (1, 230, 11),      # a playful bounce
+}
+MOTION = {
+    "calm": None,
+    "lively": {
+        "windows": (6, "spring", "ds-lively", "popin 88%"), "windowsIn": (6, "spring", "ds-lively", "popin 82%"),
+        "windowsOut": (5, "bezier", "quick", "popin 92%"), "windowsMove": (6, "spring", "ds-soft", None),
+        "workspaces": (7, "spring", "ds-soft", "slidefade 18%"), "specialWorkspace": (5, "spring", "ds-soft", "slidefadevert 8%"),
+        "layersIn": (5, "spring", "ds-lively", "popin 92%"), "layersOut": (3, "bezier", "quick", "popin 95%"),
+        "fade": (4, "bezier", "smooth", None),
+    },
+    "bouncy": {
+        "windows": (6, "spring", "ds-bouncy", "popin 80%"), "windowsIn": (6, "spring", "ds-bouncy", "popin 75%"),
+        "windowsOut": (5, "bezier", "quick", "popin 90%"), "windowsMove": (6, "spring", "ds-lively", None),
+        "workspaces": (8, "spring", "ds-lively", "slide"), "specialWorkspace": (5, "spring", "ds-lively", "slidevert"),
+        "layersIn": (5, "spring", "ds-bouncy", "popin 88%"), "layersOut": (3, "bezier", "quick", "popin 95%"),
+        "fade": (4, "bezier", "smooth", None),
+    },
+    "snappy": {
+        "windows": (2.5, "bezier", "quick", "popin 95%"), "windowsIn": (2.5, "bezier", "quick", "popin 92%"),
+        "windowsOut": (2, "bezier", "quick", "popin 95%"), "windowsMove": (2, "bezier", "quick", None),
+        "workspaces": (3, "bezier", "easeOutQuint", "slide"), "specialWorkspace": (2.5, "bezier", "quick", "slidevert"),
+        "layersIn": (2, "bezier", "quick", "fade"), "layersOut": (2, "bezier", "quick", "fade"),
+        "fade": (2.5, "bezier", "quick", None),
+    },
+    "minimal": {
+        # windows have no "fade" style in Hyprland: popin at 100% does not grow, so only the fade is left
+        "windows": (3, "bezier", "linearish", "popin 100%"), "windowsIn": (3, "bezier", "linearish", "popin 100%"),
+        "windowsOut": (3, "bezier", "linearish", "popin 100%"), "windowsMove": (3, "bezier", "quick", None),
+        "workspaces": (3, "bezier", "linearish", "fade"), "specialWorkspace": (3, "bezier", "linearish", "fade"),
+        "layersIn": (2, "bezier", "linearish", "fade"), "layersOut": (2, "bezier", "linearish", "fade"),
+        "fade": (3, "bezier", "linearish", None),
+    },
+}
+
+
+def spring_lines():
+    return ['hl.curve("%s", { type = "spring", mass = %d, stiffness = %d, dampening = %d })' % (n, m, k, d)
+            for n, (m, k, d) in SPRINGS.items()]
+
+
+def anim_lines(pct, style="calm"):
     out = []
-    for leaf, sp, bz, style in ANIMS:
+    plan = MOTION.get(style)
+    if plan:
+        out += spring_lines()
+    for leaf, sp, bz, st0 in ANIMS:
+        kind, curve, st = "bezier", bz, st0
+        if plan and leaf in plan:
+            sp, kind, curve, st = plan[leaf]
         spd = round(sp * 100.0 / pct, 2)
-        st = (', style = "%s"' % style) if style else ""
-        out.append('hl.animation({ leaf = "%s", enabled = true, speed = %s, bezier = "%s"%s })'
-                   % (leaf, lua(float(spd)), bz, st))
+        stx = (', style = "%s"' % st) if st else ""
+        out.append('hl.animation({ leaf = "%s", enabled = true, speed = %s, %s = "%s"%s })'
+                   % (leaf, lua(float(spd)), kind, curve, stx))
     return out
 
 
@@ -140,7 +197,7 @@ def load():
         s = json.load(open(ST))
     except Exception:
         s = {}
-    for k, d in (("opts", {}), ("borders", {}), ("anim", {}), ("monitors", {}), ("binds", []), ("autostart", [])):
+    for k, d in (("opts", {}), ("borders", {}), ("anim", {}), ("monitors", {}), ("binds", []), ("autostart", []), ("kbd", {})):
         s.setdefault(k, d)
     return s
 
@@ -157,9 +214,11 @@ def generate(s):
     a = s["anim"]
     if "enabled" in a:
         L.append("pcall(hl.config, { animations = { enabled = %s } })" % lua(bool(a["enabled"])))
-    if a.get("speed") and int(a["speed"]) != 100:
-        for ln in anim_lines(int(a["speed"])):
+    if (a.get("speed") and int(a["speed"]) != 100) or a.get("style", "calm") != "calm":
+        for ln in anim_lines(int(a.get("speed") or 100), a.get("style", "calm")):
             L.append("pcall(function() %s end)" % ln)
+    if s["kbd"].get("layouts"):
+        L.append("pcall(hl.config, %s)" % kbd_lua(s["kbd"]))
     for name, m in s["monitors"].items():
         L.append("pcall(hl.monitor, { output = %s, mode = %s, position = %s, scale = %s })"
                  % (json.dumps(name), json.dumps(m["mode"]), json.dumps(m["position"]), lua(float(m["scale"]))))
@@ -217,7 +276,8 @@ def cmd_state():
         "opts": opts,
         "borders": {"mode": b.get("mode", "wallpaper"), "active": b.get("active", "#F6F5F4"),
                     "inactive": b.get("inactive", "#444444")},
-        "anim": {"enabled": s["anim"].get("enabled", True), "speed": int(s["anim"].get("speed", 100))},
+        "anim": {"enabled": s["anim"].get("enabled", True), "speed": int(s["anim"].get("speed", 100)),
+                 "style": s["anim"].get("style", "calm")},
     }))
 
 
@@ -291,7 +351,17 @@ def cmd_anim_speed(v):
     s = load()
     s["anim"]["speed"] = pct
     save(s)
-    for ln in anim_lines(pct):
+    for ln in anim_lines(pct, s["anim"].get("style", "calm")):
+        ev(ln)
+
+
+def cmd_anim_style(v):
+    if v not in MOTION:
+        die("anim-style: " + "|".join(MOTION))
+    s = load()
+    s["anim"]["style"] = v
+    save(s)
+    for ln in anim_lines(int(s["anim"].get("speed", 100)), v):
         ev(ln)
 
 
@@ -457,6 +527,105 @@ def cmd_reload():
     subprocess.run([HOME + "/.local/bin/border-sync"])
 
 
+# ---------- keyboard layouts (Settings > System > Keyboard) ----------
+XKB_LISTS = ["/usr/share/X11/xkb/rules/evdev.lst", "/run/current-system/sw/share/X11/xkb/rules/evdev.lst",
+             "/etc/static/X11/xkb/rules/evdev.lst"]
+COMMON = [("us", "English (US)"), ("gb", "English (UK)"), ("pl", "Polish"), ("de", "German"), ("fr", "French"),
+          ("es", "Spanish"), ("it", "Italian"), ("pt", "Portuguese"), ("br", "Portuguese (Brazil)"), ("ru", "Russian"),
+          ("ua", "Ukrainian"), ("cz", "Czech"), ("sk", "Slovak"), ("hu", "Hungarian"), ("ro", "Romanian"),
+          ("nl", "Dutch"), ("se", "Swedish"), ("no", "Norwegian"), ("dk", "Danish"), ("fi", "Finnish"),
+          ("tr", "Turkish"), ("gr", "Greek"), ("jp", "Japanese"), ("kr", "Korean"), ("cn", "Chinese"), ("ara", "Arabic"),
+          ("il", "Hebrew"), ("in", "Indian"), ("ch", "Swiss"), ("be", "Belgian"), ("latam", "Spanish (Latin American)")]
+
+
+def kbd_lua(k):
+    return "{ input = { kb_layout = %s, kb_variant = %s, kb_options = %s } }" % (
+        json.dumps(k.get("layouts", "us")), json.dumps(k.get("variants", "")), json.dumps(k.get("options", "")))
+
+
+def xkb_layouts():
+    paths = list(XKB_LISTS)
+    try:
+        for d in os.listdir("/nix/store"):
+            if d.endswith("-xkeyboard-config") or "-xkeyboard-config-" in d:
+                paths.append("/nix/store/%s/share/X11/xkb/rules/evdev.lst" % d)
+    except Exception:
+        pass
+    for p in paths:
+        try:
+            txt = open(p).read()
+        except Exception:
+            continue
+        m = re.search(r"! layout\n(.*?)\n\n", txt, re.S)
+        if m:
+            out = []
+            for ln in m.group(1).splitlines():
+                parts = ln.strip().split(None, 1)
+                if len(parts) == 2:
+                    out.append((parts[0], parts[1]))
+            if out:
+                return out
+    return COMMON
+
+
+def kbd_current():
+    """the layouts in use now and the active one, from Hyprland's main keyboard"""
+    s = load()
+    lay = s["kbd"].get("layouts") or ""
+    if not lay:
+        out = sh(["hyprctl", "-j", "getoption", "input:kb_layout"])
+        try:
+            lay = json.loads(out).get("str", "") or "us"
+        except Exception:
+            lay = "us"
+    active = ""
+    try:
+        for kb in json.loads(sh(["hyprctl", "-j", "devices"])).get("keyboards", []):
+            if kb.get("main"):
+                active = kb.get("active_keymap", "")
+                break
+    except Exception:
+        pass
+    return lay, active
+
+
+def cmd_kbd_state():
+    s = load()
+    lay, active = kbd_current()
+    print(json.dumps({"layouts": [x for x in lay.split(",") if x], "active": active,
+                      "options": s["kbd"].get("options", ""),
+                      "all": [{"id": a, "name": b} for a, b in xkb_layouts()]}))
+
+
+def cmd_kbd_set(layouts):
+    lays = [x.strip() for x in layouts.split(",") if re.fullmatch(r"[a-z]{2,6}", x.strip())][:4]
+    if not lays:
+        die("no layout")
+    s = load()
+    s["kbd"]["layouts"] = ",".join(lays)
+    s["kbd"].setdefault("variants", "")
+    if len(lays) > 1 and not s["kbd"].get("options"):
+        s["kbd"]["options"] = "grp:alt_shift_toggle"
+    save(s)
+    ev("hl.config(%s)" % kbd_lua(s["kbd"]))
+    print("Keyboard: " + ", ".join(lays))
+
+
+def cmd_kbd_options(opts):
+    if opts and not re.fullmatch(r"[a-z0-9_:,]+", opts):
+        die("bad options")
+    s = load()
+    s["kbd"]["options"] = opts
+    s["kbd"].setdefault("layouts", kbd_current()[0])
+    save(s)
+    ev("hl.config(%s)" % kbd_lua(s["kbd"]))
+    print("Keyboard switch: " + (opts or "none"))
+
+
+def cmd_kbd_next():
+    sh(["hyprctl", "switchxkblayout", "all", "next"])
+
+
 def cmd_reset_all():
     for f in (ST, PREV, FLAG):
         if os.path.exists(f):
@@ -467,19 +636,21 @@ def cmd_reset_all():
 
 def main(a):
     if len(a) < 2:
-        die("usage: hypr-set state|set|border-mode|border-color|anim-enabled|anim-speed|binds|bind-add|bind-del|"
+        die("usage: hypr-set state|set|border-mode|border-color|anim-enabled|anim-speed|anim-style|binds|bind-add|bind-del|"
             "autostart|autostart-add|autostart-del|autostart-toggle|monitors|monitor-apply|monitor-keep|"
-            "monitor-revert|reload|reset-all")
+            "monitor-revert|reload|reset-all|kbd-state|kbd-set|kbd-options|kbd-next")
     c, r = a[1], a[2:]
     table = {
         "state": (0, cmd_state), "set": (2, cmd_set), "border-mode": (1, cmd_border_mode),
         "border-color": (2, cmd_border_color), "anim-enabled": (1, cmd_anim_enabled),
-        "anim-speed": (1, cmd_anim_speed), "binds": (0, cmd_binds), "bind-add": (2, cmd_bind_add),
+        "anim-speed": (1, cmd_anim_speed), "anim-style": (1, cmd_anim_style), "binds": (0, cmd_binds), "bind-add": (2, cmd_bind_add),
         "bind-del": (1, cmd_bind_del), "autostart": (0, cmd_autostart), "autostart-add": (1, cmd_autostart_add),
         "autostart-del": (1, cmd_autostart_del), "autostart-toggle": (1, cmd_autostart_toggle),
         "monitors": (0, cmd_monitors), "monitor-apply": (4, cmd_monitor_apply),
         "monitor-keep": (0, cmd_monitor_keep), "monitor-revert": (0, cmd_monitor_revert),
         "reload": (0, cmd_reload), "reset-all": (0, cmd_reset_all),
+        "kbd-state": (0, cmd_kbd_state), "kbd-set": (1, cmd_kbd_set), "kbd-options": (1, cmd_kbd_options),
+        "kbd-next": (0, cmd_kbd_next),
     }
     if c not in table or len(r) != table[c][0]:
         die("bad command or arguments: " + c)

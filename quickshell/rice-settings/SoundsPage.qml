@@ -54,15 +54,15 @@ Item {
         Rectangle {
             width: parent.width
             height: 112
-            radius: 16
+            radius: M3.rL
             clip: true
             gradient: Gradient {
                 orientation: Gradient.Horizontal
-                GradientStop { position: 0; color: "#1b1a22" }
-                GradientStop { position: 1; color: "#0e0f12" }
+                GradientStop { position: 0; color: M3.stageTop }
+                GradientStop { position: 1; color: M3.stageBottom }
             }
             border.width: 1
-            border.color: "#1f1f1f"
+            border.color: M3.outlineVariant
             // a little equalizer that dances while sounds are on
             Row {
                 x: 24
@@ -90,7 +90,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 4
                 T { kind: "title"; text: "Sounds of your desktop"; font.pixelSize: 18; font.bold: true }
-                T { kind: "reading"; text: "Clicks, switches and sliders in the shell's own parts. Never in other apps."; color: "#8a8a8a"; font.pixelSize: 12 }
+                T { kind: "reading"; text: "Clicks, switches and sliders in the shell's own parts. Never in other apps."; color: M3.inkDim; font.pixelSize: 12 }
             }
             Tog {
                 anchors.right: parent.right; anchors.rightMargin: 22
@@ -108,6 +108,7 @@ Item {
             spacing: 10
             Repeater {
                 model: [
+                    { k: "pebble", n: "Pebble", b: [0.15, 0.9, 0.2, 0.7, 0.1] },
                     { k: "tap", n: "Tap", b: [0.2, 1, 0.3, 0.9, 0.15] },
                     { k: "soft", n: "Soft", b: [0.35, 0.8, 0.5, 0.3, 0.15] },
                     { k: "pluck", n: "Pluck", b: [0.9, 0.6, 0.45, 0.3, 0.2] },

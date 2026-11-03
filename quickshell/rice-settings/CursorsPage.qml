@@ -55,20 +55,20 @@ Item {
             visible: Prefs.previews
             width: parent.width
             height: 210
-            radius: 16
+            radius: M3.rL
             clip: true
-            border.width: 1
-            border.color: "#1f1f1f"
+            border.width: 0
+            border.color: M3.outlineVariant
             gradient: Gradient {
                 orientation: Gradient.Horizontal
-                GradientStop { position: 0; color: "#1c1b24" }
-                GradientStop { position: 1; color: "#101114" }
+                GradientStop { position: 0; color: M3.stageTop }
+                GradientStop { position: 1; color: M3.stageBottom }
             }
             T {
                 x: 22; y: 18
                 text: "Preview"
                 font.pixelSize: 12
-                color: "#8a8a94"
+                color: M3.inkDim
             }
             T {
                 x: 22; y: 36
@@ -99,7 +99,7 @@ Item {
                                 cache: false
                             }
                         }
-                        T { anchors.horizontalCenter: parent.horizontalCenter; text: modelData.n; font.pixelSize: 11; color: "#9a9aa4" }
+                        T { anchors.horizontalCenter: parent.horizontalCenter; text: modelData.n; font.pixelSize: 11; color: M3.inkDim }
                     }
                 }
             }
@@ -130,9 +130,9 @@ Item {
                     width: (grid.width - 20) / 3
                     height: 92
                     radius: 14
-                    color: tm.containsMouse ? "#191919" : "#141414"
+                    color: tm.containsMouse ? M3.surfaceHigh : M3.surfaceC
                     border.width: on ? 2 : 1
-                    border.color: on ? "#F6F5F4" : (tm.containsMouse ? "#3a3a3a" : "#222222")
+                    border.color: on ? M3.primary : (tm.containsMouse ? M3.outline : M3.surfaceHighest)
                     Behavior on border.color { ColorAnimation { duration: 140 } }
                     Row {
                         x: 14; y: 14
@@ -185,14 +185,14 @@ Item {
                 width: parent ? parent.width : 400
                 height: 64
                 radius: 14
-                color: "#141414"
+                color: M3.surfaceC
                 border.width: 1
-                border.color: "#1f1f1f"
+                border.color: M3.outlineVariant
                 Column {
                     x: 18; anchors.verticalCenter: parent.verticalCenter
                     spacing: 3
                     T { text: modelData.name; font.pixelSize: 14; font.bold: true }
-                    T { kind: "reading"; text: modelData.installed ? "Installed  ·  " + modelData.themes.join(", ") : modelData.desc; font.pixelSize: 11; color: "#8a8a8a" }
+                    T { kind: "reading"; text: modelData.installed ? "Installed  ·  " + modelData.themes.join(", ") : modelData.desc; font.pixelSize: 11; color: M3.inkDim }
                 }
                 Btn {
                     anchors.right: parent.right; anchors.rightMargin: 14

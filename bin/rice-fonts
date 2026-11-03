@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Installs the fonts DarkShadow's Shell uses (Inter, Rubik, Material Symbols Rounded and the six
-# lock screen clock fonts) for the current user.
+# Installs the fonts DarkShadow's Shell uses (Google Sans Flex and Google Sans Code, Inter, Rubik, Material Symbols
+# Rounded and the six lock screen clock fonts) for the current user.
 # Works on any distro (NixOS too): files go to ~/.local/share/fonts, no root needed.
 #   rice-fonts           install what is missing
 #   rice-fonts status    show what is installed
@@ -29,7 +29,7 @@ CLOCK_FONTS=(
 )
 
 if [ "${1:-}" = "status" ]; then
-  for f in Inter Rubik "Material Symbols Rounded" "Bebas Neue" Orbitron Outfit "Space Grotesk" Unbounded "Big Shoulders Display"; do if has "$f"; then echo "$f: installed"; else echo "$f: missing"; fi; done
+  for f in "Google Sans Flex" "Google Sans Code" Inter Rubik "Material Symbols Rounded" "Bebas Neue" Orbitron Outfit "Space Grotesk" Unbounded "Big Shoulders Display"; do if has "$f"; then echo "$f: installed"; else echo "$f: missing"; fi; done
   exit 0
 fi
 
@@ -38,6 +38,21 @@ mkdir -p "$dir"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 changed=0
+
+# Google Sans Flex (the interface font since V3.23) and Google Sans Code: open source, SIL Open Font License
+for e in "Google Sans Flex|$GF/googlesansflex/GoogleSansFlex%5BROND%2Copsz%2Cslnt%2Cwdth%2Cwght%5D.ttf|GoogleSansFlex-Variable.ttf" \
+         "Google Sans Code|$GF/googlesanscode/GoogleSansCode%5Bwght%5D.ttf|GoogleSansCode-Variable.ttf"; do
+  IFS='|' read -r fam url file <<<"$e"
+  if has "$fam"; then
+    echo "$fam: already installed"
+  elif curl -fsSL -o "$tmp/$file" "$url" && [ "$(head -c 4 "$tmp/$file" | od -An -tx1 | tr -d ' ')" = "00010000" ]; then
+    mv "$tmp/$file" "$dir/$file"
+    echo "$fam: installed"
+    changed=1
+  else
+    echo "$fam: could not download"
+  fi
+done
 
 if has Inter; then
   echo "Inter: already installed"

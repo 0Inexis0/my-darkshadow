@@ -49,9 +49,9 @@ Column {
         width: parent.width
         height: 56
         radius: 12
-        color: "#1c1c1c"
+        color: M3.surfaceHigh
         border.width: 1
-        border.color: "#3a3a3a"
+        border.color: M3.outline
         T {
             x: 16
             anchors.verticalCenter: parent.verticalCenter
@@ -76,9 +76,9 @@ Column {
             width: page.width
             height: inner.implicitHeight + 28
             radius: 12
-            color: "#141414"
+            color: M3.surfaceC
             border.width: 1
-            border.color: "#1f1f1f"
+            border.color: M3.outlineVariant
 
             Column {
                 id: inner
@@ -89,7 +89,7 @@ Column {
 
                 T { text: card.m.name + "   " + card.curRes + " @ " + card.m.rate + " Hz   scale " + card.m.scale; font.bold: true }
 
-                T { text: "Resolution"; color: "#8a8a8a"; font.pixelSize: 12 }
+                T { text: "Resolution"; color: M3.inkDim; font.pixelSize: 12 }
                 Seg {
                     options: card.m.modes.slice(0, 5).map(x => ({ label: x.res, value: x.res }))
                     current: card.curRes
@@ -99,14 +99,14 @@ Column {
                     }
                 }
 
-                T { text: "Refresh rate"; color: "#8a8a8a"; font.pixelSize: 12 }
+                T { text: "Refresh rate"; color: M3.inkDim; font.pixelSize: 12 }
                 Seg {
                     options: page.ratesFor(card.m, card.curRes).slice(0, 6).map(x => ({ label: x + " Hz", value: x }))
                     current: card.m.rate
                     onChosen: function(v) { page.apply(card.m.name, card.curRes, v, card.m.scale) }
                 }
 
-                T { text: "Scale"; color: "#8a8a8a"; font.pixelSize: 12 }
+                T { text: "Scale"; color: M3.inkDim; font.pixelSize: 12 }
                 Seg {
                     options: [
                         { label: "1x", value: "1" },
@@ -124,6 +124,6 @@ Column {
     T {
         visible: page.mons.length === 0
         text: "No monitors found."
-        color: "#8a8a8a"
+        color: M3.inkDim
     }
 }

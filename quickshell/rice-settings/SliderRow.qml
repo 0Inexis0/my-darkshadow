@@ -22,7 +22,7 @@ SettingRow {
             text: (isFinite(sld.shown) ? Number(sld.shown).toFixed(row.decimals) : Number(row.from).toFixed(row.decimals)) + row.unit
             anchors.verticalCenter: parent.verticalCenter
             font.pixelSize: 13
-            color: "#8a8a8a"
+            color: M3.inkDim
         }
         Slide {
             id: sld
