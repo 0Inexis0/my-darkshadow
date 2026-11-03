@@ -217,6 +217,8 @@ def generate(s):
     if (a.get("speed") and int(a["speed"]) != 100) or a.get("style", "calm") != "calm":
         for ln in anim_lines(int(a.get("speed") or 100), a.get("style", "calm")):
             L.append("pcall(function() %s end)" % ln)
+    if "shadow_int" in s:
+        L.append("pcall(hl.config, %s)" % shadow_lua(s["shadow_int"]))
     if s["kbd"].get("layouts"):
         L.append("pcall(hl.config, %s)" % kbd_lua(s["kbd"]))
     for name, m in s["monitors"].items():
@@ -273,7 +275,7 @@ def cmd_state():
             opts[k] = v
     b = s["borders"]
     print(json.dumps({
-        "opts": opts,
+        "opts": opts, "shadow_int": s.get("shadow_int", 60),
         "borders": {"mode": b.get("mode", "wallpaper"), "active": b.get("active", "#F6F5F4"),
                     "inactive": b.get("inactive", "#444444")},
         "anim": {"enabled": s["anim"].get("enabled", True), "speed": int(s["anim"].get("speed", 100)),
@@ -527,6 +529,21 @@ def cmd_reload():
     subprocess.run([HOME + "/.local/bin/border-sync"])
 
 
+# ---------- shadow strength (Settings > Desktop > Windows) ----------
+def shadow_lua(pct):
+    a = max(0, min(255, int(round(int(pct) * 2.55))))
+    return "{ decoration = { shadow = { color = %s } } }" % json.dumps("rgba(000000%02x)" % a)
+
+
+def cmd_shadow_intensity(pct):
+    v = int(clamp(float(pct), 0, 100))
+    s = load()
+    s["shadow_int"] = v
+    save(s)
+    ev("hl.config(%s)" % shadow_lua(v))
+    print("Shadow strength: %d %%" % v)
+
+
 # ---------- keyboard layouts (Settings > System > Keyboard) ----------
 XKB_LISTS = ["/usr/share/X11/xkb/rules/evdev.lst", "/run/current-system/sw/share/X11/xkb/rules/evdev.lst",
              "/etc/static/X11/xkb/rules/evdev.lst"]
@@ -589,21 +606,91 @@ def kbd_current():
     return lay, active
 
 
+def xkb_paths():
+    paths = list(XKB_LISTS)
+    try:
+        for d in os.listdir("/nix/store"):
+            if d.endswith("-xkeyboard-config") or "-xkeyboard-config-" in d:
+                paths.append("/nix/store/%s/share/X11/xkb/rules/evdev.lst" % d)
+    except Exception:
+        pass
+    return paths
+
+
+def xkb_variants(layout):
+    """[(variant, description)] for one layout, from the variant list of xkeyboard-config"""
+    paths = list(XKB_LISTS)
+    try:
+        for d in os.listdir("/nix/store"):
+            if d.endswith("-xkeyboard-config") or "-xkeyboard-config-" in d:
+                paths.append("/nix/store/%s/share/X11/xkb/rules/evdev.lst" % d)
+    except Exception:
+        pass
+    for p in paths:
+        try:
+            txt = open(p).read()
+        except Exception:
+            continue
+        m = re.search(r"! variant\n(.*?)\n\n", txt, re.S)
+        if not m:
+            continue
+        out = []
+        for ln in m.group(1).splitlines():
+            mm = re.match(r"\s*(\S+)\s+(\S+):\s*(.*)", ln)
+            if mm and mm.group(2) == layout:
+                out.append((mm.group(1), mm.group(3)))
+        return out
+    return []
+
+
+def xkb_variant_counts():
+    n = {}
+    for lay in xkb_variants_all():
+        n[lay] = n.get(lay, 0) + 1
+    return n
+
+
+def xkb_variants_all():
+    """the layout of every variant line (for counting)"""
+    for p in xkb_paths():
+        try:
+            txt = open(p).read()
+        except Exception:
+            continue
+        m = re.search(r"! variant\n(.*?)\n\n", txt, re.S)
+        if m:
+            return [mm.group(1) for mm in re.finditer(r"^\s*\S+\s+(\S+):", m.group(1), re.M)]
+    return []
+
+
+def cmd_kbd_variants(layout):
+    print(json.dumps([{"id": a, "name": b} for a, b in xkb_variants(layout)]))
+
+
 def cmd_kbd_state():
     s = load()
     lay, active = kbd_current()
+    cnt = xkb_variant_counts()
     print(json.dumps({"layouts": [x for x in lay.split(",") if x], "active": active,
+                      "variants": (s["kbd"].get("variants") or "").split(","),
                       "options": s["kbd"].get("options", ""),
-                      "all": [{"id": a, "name": b} for a, b in xkb_layouts()]}))
+                      "all": [{"id": a, "name": b, "n": cnt.get(a, 0)} for a, b in xkb_layouts()]}))
 
 
 def cmd_kbd_set(layouts):
-    lays = [x.strip() for x in layouts.split(",") if re.fullmatch(r"[a-z]{2,6}", x.strip())][:4]
+    """LAYOUTS: us,pl or us:intl,pl (layout:variant)"""
+    lays, vars_ = [], []
+    for x in layouts.split(","):
+        lay, _, var = x.strip().partition(":")
+        if re.fullmatch(r"[a-z]{2,6}", lay) and re.fullmatch(r"[A-Za-z0-9_-]*", var):
+            lays.append(lay)
+            vars_.append(var)
+    lays, vars_ = lays[:4], vars_[:4]
     if not lays:
         die("no layout")
     s = load()
     s["kbd"]["layouts"] = ",".join(lays)
-    s["kbd"].setdefault("variants", "")
+    s["kbd"]["variants"] = ",".join(vars_) if any(vars_) else ""
     if len(lays) > 1 and not s["kbd"].get("options"):
         s["kbd"]["options"] = "grp:alt_shift_toggle"
     save(s)
@@ -650,7 +737,8 @@ def main(a):
         "monitor-keep": (0, cmd_monitor_keep), "monitor-revert": (0, cmd_monitor_revert),
         "reload": (0, cmd_reload), "reset-all": (0, cmd_reset_all),
         "kbd-state": (0, cmd_kbd_state), "kbd-set": (1, cmd_kbd_set), "kbd-options": (1, cmd_kbd_options),
-        "kbd-next": (0, cmd_kbd_next),
+        "kbd-next": (0, cmd_kbd_next), "shadow-intensity": (1, cmd_shadow_intensity),
+        "kbd-variants": (1, cmd_kbd_variants),
     }
     if c not in table or len(r) != table[c][0]:
         die("bad command or arguments: " + c)

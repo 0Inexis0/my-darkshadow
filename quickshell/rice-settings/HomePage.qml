@@ -145,6 +145,18 @@ Item {
                     }
                     RotationAnimation on rotation { from: 0; to: 360; duration: 48000; loops: Animation.Infinite; running: page.visible }
                 }
+                // your shape (Appearance > Shapes), breathing near the moon
+                Blob {
+                    width: 92; height: 92; x: parent.width - 250; y: 110
+                    kind: Prefs.accentShape
+                    color: M3.alpha(M3.tertiary, 0.5)
+                    RotationAnimator on rotation { from: 0; to: 360; duration: 30000; loops: Animation.Infinite; running: page.visible }
+                    SequentialAnimation on scale {
+                        running: page.visible; loops: Animation.Infinite
+                        NumberAnimation { to: 1.1; duration: 2600; easing.type: Easing.InOutSine }
+                        NumberAnimation { to: 0.92; duration: 2600; easing.type: Easing.InOutSine }
+                    }
+                }
                 Rectangle {
                     width: 150; height: 64; radius: 32; x: parent.width - 360; y: 140; rotation: -24
                     color: M3.alpha(M3.tertiary, 0.22)

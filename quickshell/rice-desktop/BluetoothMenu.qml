@@ -9,7 +9,10 @@ PanelWindow {
     id: wm
     property bool open: false
     property real t: 0
-    Behavior on t { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+    // t runs evenly; the menu eases on its own: it grows out of the bar (quick start, soft landing) and
+    // folds back up quickly when it closes
+    Behavior on t { NumberAnimation { duration: wm.open ? 520 : 200; easing.type: Easing.Linear } }
+    readonly property real et: 1 - Math.pow(1 - t, 4)
     onOpenChanged: t = open ? 1 : 0
 
     // ---------- look ----------
@@ -124,21 +127,22 @@ PanelWindow {
     MouseArea { anchors.fill: parent; onClicked: wm.hide() }
 
     readonly property int shown: Math.min(Math.max(nets.length, 1), maxRows)
-    readonly property real listH: shown * rowH
+    readonly property real listH: shown * rowH + (nets.length === 0 && radio && scanning ? 52 : 0)
     Rectangle {
         id: card
         width: wm.cardW
         height: head.height + 14 + wm.listH + (wm.msg !== "" ? 34 : 0) + 14
+        Behavior on height { NumberAnimation { duration: 360; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
         Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
         x: Math.max(12, Math.min(wm.width - width - 12, wm.cx - width / 2))
         y: wm.atBottom ? wm.height - wm.barSpace - height : wm.barSpace
         radius: 20
         color: wm.bg
         border.width: 1; border.color: wm.line
-        opacity: wm.t
-        scale: 0.96 + 0.04 * wm.t
+        opacity: Math.min(1, wm.et * 1.6)
+        scale: 0.9 + 0.1 * wm.et
         transformOrigin: wm.atBottom ? Item.Bottom : Item.Top
-        transform: Translate { y: (1 - wm.t) * (wm.atBottom ? 10 : -10) }
+        transform: Translate { y: (1 - wm.et) * (wm.atBottom ? 26 : -26) }
         focus: true
         Keys.onEscapePressed: wm.hide()
         MouseArea { anchors.fill: parent }
@@ -176,6 +180,18 @@ PanelWindow {
             x: 18; y: head.height + 24; width: parent.width - 36; horizontalAlignment: Text.AlignHCenter
             text: wm.radio ? (wm.scanning ? "Looking for devices…" : "No devices. Press refresh to search") : "Bluetooth is off"
             color: wm.dim; font.family: Fonts.main; font.pixelSize: 13
+        }
+        // while it looks: your shape (Settings > Appearance > Shapes) turns and breathes
+        Blob {
+            visible: wm.nets.length === 0 && wm.radio && wm.scanning
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: head.height + 54
+            width: 34; height: 34
+            kind: Look.shape
+            color: Qt.rgba(1, 1, 1, 0.75)
+            RotationAnimator on rotation { from: 0; to: 360; duration: 2200; loops: Animation.Infinite; running: wm.open && wm.scanning }
+            SequentialAnimation on scale { running: wm.open && wm.scanning; loops: Animation.Infinite
+                NumberAnimation { to: 0.8; duration: 700; easing.type: Easing.InOutSine } NumberAnimation { to: 1; duration: 700; easing.type: Easing.InOutSine } }
         }
         Flickable {
             id: fl

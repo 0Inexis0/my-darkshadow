@@ -66,7 +66,20 @@ def muted(target):
     return "MUTED" in out(["wpctl", "get-volume", target])
 
 
+def shell_notify():
+    """the shell shows notifications itself (rice-cc engine shell): Do Not Disturb lives in cc.json"""
+    try:
+        return json.load(open(os.path.expanduser("~/.config/rice/cc.json"))).get("engine") == "shell"
+    except Exception:
+        return False
+
+
 def dnd_on():
+    if shell_notify():
+        try:
+            return json.load(open(os.path.expanduser("~/.config/rice/cc.json"))).get("dnd") is True
+        except Exception:
+            return False
     return out(["swaync-client", "-D", "-sw"], 2) == "true"
 
 
@@ -102,7 +115,7 @@ def state():
         "bluetooth": bt_on() if have["bluetoothctl"] else False,
         "sound": (not muted("@DEFAULT_AUDIO_SINK@")) if have["wpctl"] else False,
         "mic": (not muted("@DEFAULT_AUDIO_SOURCE@")) if have["wpctl"] else False,
-        "dnd": dnd_on() if have["swaync-client"] else False,
+        "dnd": dnd_on() if (have["swaync-client"] or shell_notify()) else False,
         "awake": awake_on(),
         "nightlight": night_on(),
     }
@@ -144,7 +157,10 @@ def setv(key, on):
                 run(["rfkill", "unblock", "bluetooth"])
             run(["bluetoothctl", "power", "on"], 8)
     elif key == "dnd":
-        run(["swaync-client", "-dn" if on else "-df", "-sw"])
+        if shell_notify():
+            run([BIN + "/rice-cc", "dnd", "on" if on else "off"])
+        else:
+            run(["swaync-client", "-dn" if on else "-df", "-sw"])
     elif key == "awake":
         if awake_on() != on:
             run([BIN + "/rice-hotcorner", "awake"], 6)
@@ -203,7 +219,8 @@ def confirm(question):
 
 
 def session(what):
-    run(["swaync-client", "-cp"])     # close the notification center first
+    if not shell_notify():
+        run(["swaync-client", "-cp"])     # close the notification center first
     if what == "lock":
         rp = os.path.expanduser("~/.local/bin/rice-power")
         if os.path.exists(rp):

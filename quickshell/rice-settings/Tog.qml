@@ -21,7 +21,7 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         x: sw.checked ? sw.width - d - 4 : (tm.pressed ? 2 : (Prefs.switchIcons ? 4 : 8))
         color: sw.checked ? M3.inkPrimary : M3.outline
-        Behavior on x { NumberAnimation { duration: M3.d(M3.bouncy ? 380 : 260); easing.type: M3.bouncy ? Easing.OutBack : Easing.OutCubic; easing.overshoot: 1.7 } }
+        Behavior on x { NumberAnimation { duration: M3.d(M3.bouncy ? 380 : 260); easing.type: M3.bouncy ? Easing.OutBack : Easing.OutCubic; easing.overshoot: 1.7 * Prefs.bounce } }
         Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
         Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
         Behavior on color { ColorAnimation { duration: 180 } }

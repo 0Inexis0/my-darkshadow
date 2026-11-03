@@ -19,8 +19,8 @@ Row {
             radius: on ? 18 : 10
             color: on ? M3.primary : (segMouse.containsMouse ? M3.surfaceHighest : M3.surfaceHigh)
             Behavior on color { ColorAnimation { duration: 160 } }
-            Behavior on radius { NumberAnimation { duration: M3.d(260); easing.type: M3.springy; easing.overshoot: 1.4 } }
-            Behavior on width { NumberAnimation { duration: M3.d(300); easing.type: M3.springy; easing.overshoot: 1.4 } }
+            Behavior on radius { NumberAnimation { duration: M3.d(260); easing.type: M3.springy; easing.overshoot: 1.4 * Prefs.bounce } }
+            Behavior on width { NumberAnimation { duration: M3.d(300); easing.type: M3.springy; easing.overshoot: 1.4 * Prefs.bounce } }
             Row {
                 anchors.centerIn: parent
                 spacing: 6

@@ -56,7 +56,7 @@ local menu        = "hyprlauncher"
 hl.on("hyprland.start", function ()
     hl.exec_cmd("$HOME/.local/bin/rice-bar start")
    hl.exec_cmd("awww-daemon")
-   hl.exec_cmd("swaync")
+   hl.exec_cmd("$HOME/.local/bin/rice-notifyd")
    hl.exec_cmd("hypridle")
    hl.exec_cmd("$HOME/.local/bin/border-sync")
    hl.exec_cmd("$HOME/.local/bin/ws-watch")

@@ -1,5 +1,20 @@
 # Changelog
 
+## V3.24
+- Notifications, rebuilt in the Google style: the shell shows them itself now. Pop-ups look like the control center (the app's icon in your shape, the time, pictures, action buttons, a thin line that shows how long it stays), grow in from their side and slide away; pointing at one keeps it, important ones wait until you close them. The update switches to them once; swaync stays one click away (Settings > Notifications > Shown by)
+- Control center (SUPER + N or the bell on the bar): switches, sliders, music with a wavy, seekable progress line, and your notifications; smooth Material 3 motion when it opens and between Control and Overview
+- Settings > Notifications, cleaned up: a live preview, Send a test, where pop-ups appear, their width, time on screen, six themes for pop-ups and the control center (DarkShadow, Graphite, Black, Slate, Tinted, Light), text size, corners, and transparency and blur for each. The old notification-center style, layout, widgets and colors are gone
+- Dock: its own app menu (search, pin your favourite apps with the pin or a right click). Settings > Dock > Pinned apps: add, remove and reorder them; App menu off opens the launcher as before
+- Your shape everywhere: the shape you pick in Settings > Appearance > Shapes is used for notification icons, the control center, menus, loaders and the dock
+- Edit mode (SUPER + ALT + W) has a new panel on the left: your widgets as chips (how many are active), quick settings (blur, auto-hide, grid, widget style, font), the bar (style, position, auto-hide, modules) and the visualizer (on, top or bottom edge, style, colors, height)
+- New desktop widgets: Sky, Now playing, Player, Play button, Lyrics (synced lyrics from LRCLIB), Storage, CPU · GPU · RAM and a water gauge
+- Bar: the Notch style holds the whole bar, and recording shows as an island in the notch. Fix: recording no longer stays stuck on red, and the microphone mute works
+- Game bar: redesigned with FPS (games started with MangoHud), CPU, GPU, RAM and ping; slower, smoother motion
+- Wavy progress lines and rings in the player, lyrics, play button, control center and gauges (Settings > Appearance > Components > Wavy progress)
+- Settings: a shape library (36 shapes), Windows, Language & region (language, clock format, Celsius or Fahrenheit), System, keyboard variants, bounce, and smoother page and window motion
+- Wi-Fi, Bluetooth, volume and power menus open with softer motion; Bluetooth shows a loader in your shape while it scans
+- Soft shadows under the shell's panels
+
 ## V3.23
 - A new look everywhere, in the spirit of Material 3 / Google: tonal colors made from your theme, round shapes, springy motion and Google icons (Material Symbols)
 - Google Sans Flex is the interface font of the whole shell: Settings, the bar, the launcher, notifications, the dashboard, the desktop widgets and the lock screen. Google Sans Code is used for codes and numbers in Settings. Both are open source (SIL Open Font License); the installer and `rice-fonts` download them. The terminal (kitty) keeps JetBrainsMono Nerd Font. Older setups that used JetBrains everywhere move to Google Sans Flex once (`font-set migrate`); a font you picked yourself stays

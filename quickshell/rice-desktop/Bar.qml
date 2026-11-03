@@ -22,7 +22,7 @@ PanelWindow {
     readonly property string sty: bc.style === "flat" || bc.style === "islands" || bc.style === "pills" || bc.style === "notch" ? bc.style : "island"
     readonly property bool notch: sty === "notch"
     readonly property bool hideOn: bc.autohide === true
-    readonly property bool shadowOn: bc.shadow !== false && !Look.flat
+    readonly property bool shadowOn: bc.shadow !== false && Look.shadows && Look.shadowBar
     // auto-hide: shown while the pointer is on it (and a moment after it leaves)
     property bool peek: false
     readonly property bool shownBar: !hideOn || peek
@@ -82,10 +82,14 @@ PanelWindow {
     visible: on
     color: "transparent"
     anchors { top: !atBottom; bottom: atBottom; left: true; right: true }
-    implicitHeight: barH + gap * 2
-    exclusionMode: hideOn ? ExclusionMode.Ignore : ExclusionMode.Auto
-    // auto-hide: only a thin strip at the edge takes the pointer while the bar is away
-    mask: Region { item: bar.shownBar ? hitAll : hitStrip }
+    // room below for the recording island; windows only keep away from the bar itself
+    implicitHeight: barH + gap * 2 + 54
+    exclusionMode: hideOn ? ExclusionMode.Ignore : ExclusionMode.Normal
+    exclusiveZone: hideOn ? 0 : barH + gap * 2
+    // only the bar (and the recording island) take the pointer; auto-hide: only a thin strip at the edge
+    mask: Region { item: bar.shownBar ? hitBar : hitStrip; Region { item: hitRec } }
+    Item { id: hitBar; width: parent.width; height: bar.barH + bar.gap * 2; y: bar.atBottom ? parent.height - height : 0 }
+    Item { id: hitRec; x: recIsland.x + bar.gap; width: recIsland.width; height: bar.recOn && bar.shownBar ? 54 : 0; y: bar.atBottom ? 0 : bar.barH + bar.gap * 2 }
     Item { id: hitAll; anchors.fill: parent }
     Item { id: hitStrip; width: parent.width; height: 3; y: bar.atBottom ? parent.height - 3 : 0 }
     HoverHandler {
@@ -94,6 +98,39 @@ PanelWindow {
     }
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.namespace: "rice-bar"
+
+    // ---------- screen recording (rice-hotcorner record): the island under the bar ----------
+    property bool recOn: false
+    property real recStart: 0
+    property bool micMuted: false
+    property real nowS: Date.now() / 1000
+    readonly property string recTime: {
+        const t = Math.max(0, Math.floor(nowS - recStart))
+        return two(Math.floor(t / 3600)) + ":" + two(Math.floor(t / 60) % 60) + ":" + two(t % 60)
+    }
+    Trigger {
+        path: bar.home + "/.cache/rice/record.json"
+        every: 2500
+        onContent: function(t) {
+            let j = null
+            try { j = t.trim() !== "" ? JSON.parse(t) : null } catch (e) { j = null }
+            bar.recOn = j !== null
+            if (j) { bar.recStart = j.start || Date.now() / 1000; recCheck.running = true; micProc.running = true }
+        }
+    }
+    Timer { interval: 1000; running: bar.recOn; repeat: true; onTriggered: bar.nowS = Date.now() / 1000 }
+    // a recorder that quit on its own leaves its files behind: check now and then that it still runs
+    Timer { interval: 5000; running: bar.recOn; repeat: true; onTriggered: { if (!recCheck.running) recCheck.running = true; if (!micProc.running) micProc.running = true } }
+    Process {
+        id: recCheck
+        command: ["bash", "-c", "p=$(cat \"$HOME/.cache/rice/record.pid\" 2>/dev/null); [ -n \"$p\" ] && kill -0 \"$p\" 2>/dev/null && echo 1 || { rm -f \"$HOME/.cache/rice/record.pid\" \"$HOME/.cache/rice/record.json\"; echo 0; }"]
+        stdout: StdioCollector { onStreamFinished: if (text.trim() === "0") bar.recOn = false }
+    }
+    Process {
+        id: micProc
+        command: ["bash", "-c", "wpctl get-volume @DEFAULT_AUDIO_SOURCE@ 2>/dev/null"]
+        stdout: StdioCollector { onStreamFinished: bar.micMuted = text.indexOf("MUTED") >= 0 }
+    }
 
     // ---------- the things the bar shows ----------
     readonly property int focusedId: Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : 1
@@ -137,13 +174,22 @@ PanelWindow {
         stdout: StdioCollector { onStreamFinished: { try { bar.svc = JSON.parse(text) } catch (e) { } } }
     }
     Timer { interval: 8000; running: bar.on; repeat: true; triggeredOnStart: true; onTriggered: if (!svcProc.running) svcProc.running = true }
+    Timer { id: svcAgain; interval: 700; onTriggered: if (!svcProc.running) svcProc.running = true }
 
     property var now: new Date()
     Timer { interval: bc.seconds === true ? 1000 : 15000; running: bar.on; repeat: true; triggeredOnStart: true; onTriggered: bar.now = new Date() }
     function two(n) { return n < 10 ? "0" + n : "" + n }
     readonly property string days: "SunMonTueWedThuFriSat"
     readonly property string months: "JanFebMarAprMayJunJulAugSepOctNovDec"
-    readonly property string timeText: two(now.getHours()) + ":" + two(now.getMinutes()) + (bc.seconds === true ? ":" + two(now.getSeconds()) : "")
+    // 24 or 12 hour clock: Settings > Sound & language > Language & region (rice-region)
+    property bool h12: false
+    Trigger {
+        path: bar.home + "/.config/rice/region.json"
+        every: 5000
+        onContent: function(t) { bar.h12 = /"clock": *"12"/.test(t) }
+    }
+    readonly property string timeText: (h12 ? ((now.getHours() + 11) % 12 + 1) : two(now.getHours())) + ":" + two(now.getMinutes())
+                                       + (bc.seconds === true ? ":" + two(now.getSeconds()) : "") + (h12 ? (now.getHours() < 12 ? " AM" : " PM") : "")
     readonly property string dateText: days.substr(now.getDay() * 3, 3) + " " + now.getDate() + " " + months.substr(now.getMonth() * 3, 3)
 
     // ---------- the modules ----------
@@ -406,7 +452,7 @@ PanelWindow {
                 name: bar.svc.dnd ? "notifications_off" : "notifications"
                 glyph: String.fromCodePoint(bar.svc.dnd ? 0xF009B : 0xF009A) }
             MouseArea { anchors.fill: parent; acceptedButtons: Qt.LeftButton | Qt.RightButton; cursorShape: Qt.PointingHandCursor
-                onClicked: function(m) { bar.run(m.button === Qt.RightButton ? "swaync-client -d -sw" : "swaync-client -t -sw") } }
+                onClicked: function(m) { bar.run(m.button === Qt.RightButton ? "\"$HOME/.local/bin/rice-cc\" dnd toggle" : "\"$HOME/.local/bin/rice-cc\" toggle"); svcAgain.restart() } }
         }
     }
 
@@ -459,7 +505,7 @@ PanelWindow {
     // ---------- the bar ----------
     Item {
         id: body
-        x: bar.gap; y: bar.gap
+        x: bar.gap; y: bar.atBottom ? bar.height - bar.barH - bar.gap : bar.gap
         width: parent.width - 2 * bar.gap
         height: bar.barH
         opacity: bar.on && bar.shownBar ? 1 : 0
@@ -481,61 +527,104 @@ PanelWindow {
                 anchors.bottom: bar.atBottom ? undefined : parent.bottom; anchors.top: bar.atBottom ? parent.top : undefined }
         }
 
-        readonly property bool soft: bar.sty === "islands" || bar.notch
+        readonly property bool soft: bar.sty === "islands"
+        readonly property real edge: bar.sty === "island" ? 16 : (bar.sty === "flat" ? 14 : 0)
+        // notch: every zone sits inside one notch in the middle of the edge
+        readonly property real ngap: 22
+        readonly property real nW: (zl.any ? zl.width : 0) + (zc.any ? zc.width : 0) + (zr.any ? zr.width : 0)
+                                   + ngap * Math.max(0, (zl.any ? 1 : 0) + (zc.any ? 1 : 0) + (zr.any ? 1 : 0) - 1)
+        readonly property real nX: Math.round((width - nW) / 2)
 
         // a soft shadow under every background (the bar floats above the wallpaper)
         Repeater {
-            model: bar.shadowOn ? (bar.sty === "island" ? [body] : (bar.sty === "flat" ? [] : (bar.notch ? [zl, zr] : (bar.sty === "islands" ? [zl, zc, zr] : [])))) : []
-            delegate: Rectangle {
+            model: bar.shadowOn ? (bar.sty === "island" ? [body] : (bar.sty === "islands" ? [zl, zc, zr] : [])) : []
+            delegate: Item {
                 readonly property var src: modelData
                 visible: src.visible !== false && src.width > 0
                 x: src === body ? 0 : src.x; y: (src === body ? 0 : src.y) + 3
                 width: src.width; height: bar.barH
-                radius: height / 2
-                color: "transparent"
-                Rectangle { anchors.fill: parent; anchors.margins: -1; radius: parent.radius + 1; color: Qt.rgba(0, 0, 0, 0.18) }
-                Rectangle { anchors.fill: parent; anchors.margins: -3; radius: parent.radius + 3; color: Qt.rgba(0, 0, 0, 0.08) }
+                Rectangle { anchors.fill: parent; anchors.margins: -1; radius: height / 2; color: Qt.rgba(0, 0, 0, 0.18) }
+                Rectangle { anchors.fill: parent; anchors.margins: -3; radius: height / 2; color: Qt.rgba(0, 0, 0, 0.08) }
             }
         }
 
-        // notch: the middle grows out of the screen edge, with soft inward curves where it meets the edge
-        Canvas {
+        // ---------- notch background (and its shadow) ----------
+        NotchShape {
             id: notchBg
-            visible: bar.notch && zc.any
-            readonly property real ear: 14
-            width: zc.width + 2 * ear + 24
+            visible: bar.notch
+            flip: bar.atBottom
+            width: body.nW + 2 * ear + 40
             height: bar.barH + bar.gap
-            x: zc.x - ear - 12
+            x: body.nX - ear - 20
             y: bar.atBottom ? 0 : -bar.gap
-            property color fill: Qt.rgba(0.02, 0.02, 0.025, Math.max(bar.alpha, Look.flat ? 1 : 0.92))
-            onFillChanged: requestPaint()
-            onWidthChanged: requestPaint()
-            onHeightChanged: requestPaint()
-            onVisibleChanged: requestPaint()
-            transform: Scale { origin.y: notchBg.height / 2; yScale: bar.atBottom ? -1 : 1 }
-            onPaint: {
-                const c = getContext("2d"); c.reset()
-                const W = width, H = height, e = ear, r = Math.min(20, H / 2)
-                c.beginPath()
-                c.moveTo(0, 0)
-                c.arcTo(e, 0, e, e, e)
-                c.lineTo(e, H - r)
-                c.arcTo(e, H, e + r, H, r)
-                c.lineTo(W - e - r, H)
-                c.arcTo(W - e, H, W - e, H - r, r)
-                c.lineTo(W - e, e)
-                c.arcTo(W - e, 0, W, 0, e)
-                c.closePath()
-                c.fillStyle = fill
-                c.fill()
+            fill: Qt.rgba(0.02, 0.02, 0.025, Math.max(bar.alpha, Look.flat ? 1 : 0.92))
+            shadow: bar.shadowOn
+        }
+
+        Zone { id: zl; mods: bar.lay.left || []; soft: body.soft
+            x: bar.notch ? body.nX : body.edge; y: 0 }
+        Zone { id: zc; mods: bar.lay.center || []; soft: body.soft
+            x: bar.notch ? body.nX + (zl.any ? zl.width + body.ngap : 0) : (body.width - width) / 2; y: 0 }
+        Zone { id: zr; mods: bar.lay.right || []; soft: body.soft
+            x: bar.notch ? body.nX + body.nW - width : body.width - width - body.edge; y: 0 }
+
+        // ---------- the recording island: hangs under the bar while the screen is recorded ----------
+        Item {
+            id: recIsland
+            readonly property bool on: bar.recOn
+            width: recRow.width + 40 + (bar.notch ? 2 * 14 : 0)
+            height: 46
+            x: bar.notch ? body.nX + body.nW + 14 - width : body.width - width - body.edge
+            y: bar.atBottom ? -height - (bar.notch ? 0 : 6) : bar.barH + (bar.notch ? bar.gap - 1 : 6)
+            opacity: on ? 1 : 0
+            scale: on ? 1 : 0.85
+            visible: opacity > 0.01
+            transformOrigin: bar.atBottom ? Item.Bottom : Item.Top
+            Behavior on opacity { NumberAnimation { duration: 220 } }
+            Behavior on scale { NumberAnimation { duration: 380; easing.type: Easing.OutBack; easing.overshoot: 1.4 } }
+            NotchShape {
+                anchors.fill: parent
+                visible: bar.notch
+                flip: bar.atBottom
+                fill: notchBg.fill
+                shadow: bar.shadowOn
+            }
+            Rectangle {
+                anchors.fill: parent
+                visible: !bar.notch
+                radius: height / 2
+                color: bar.bg
+                border.width: 1; border.color: bar.line
+            }
+            Row {
+                id: recRow
+                anchors.centerIn: parent
+                anchors.verticalCenterOffset: bar.notch ? (bar.atBottom ? 3 : -3) : 0
+                spacing: 16
+                // the red dot breathes while it records
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 14; height: 14; radius: 7; color: "#ff4d4d"
+                    SequentialAnimation on opacity { running: recIsland.on; loops: Animation.Infinite
+                        NumberAnimation { to: 0.35; duration: 700 } NumberAnimation { to: 1; duration: 700 } }
+                }
+                Text { anchors.verticalCenter: parent.verticalCenter; text: bar.recTime; color: bar.fg
+                    font.family: Fonts.numbers; font.pixelSize: 17; font.weight: Font.Medium }
+                Item { width: 2; height: 1 }
+                Item {
+                    width: 26; height: 26; anchors.verticalCenter: parent.verticalCenter
+                    MIcon { anchors.centerIn: parent; size: 19; name: bar.micMuted ? "mic_off" : "mic"
+                        glyph: String.fromCodePoint(bar.micMuted ? 0xF036D : 0xF036C); color: bar.micMuted ? "#ff8a8a" : bar.fg }
+                    MouseArea { anchors.fill: parent; anchors.margins: -6; cursorShape: Qt.PointingHandCursor
+                        onClicked: { bar.run("\"$HOME/.local/bin/rice-volume\" mic"); bar.micMuted = !bar.micMuted } }
+                }
+                Item {
+                    width: 26; height: 26; anchors.verticalCenter: parent.verticalCenter
+                    Rectangle { anchors.centerIn: parent; width: 15; height: 15; radius: 4; color: "transparent"; border.width: 2; border.color: "#ff8a8a" }
+                    MouseArea { anchors.fill: parent; anchors.margins: -6; cursorShape: Qt.PointingHandCursor
+                        onClicked: { bar.recOn = false; bar.run("\"$HOME/.local/bin/rice-hotcorner\" record stop") } }
+                }
             }
         }
-        readonly property real edge: bar.sty === "island" ? 16 : (bar.sty === "flat" ? 14 : 0)
-        Zone { id: zl; mods: bar.lay.left || []; soft: body.soft
-            x: body.edge; y: 0 }
-        Zone { id: zc; mods: bar.lay.center || []; soft: body.soft && !bar.notch
-            x: (body.width - width) / 2; y: 0 }
-        Zone { id: zr; mods: bar.lay.right || []; soft: body.soft
-            x: body.width - width - body.edge; y: 0 }
     }
 }

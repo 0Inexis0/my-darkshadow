@@ -15,6 +15,24 @@ Singleton {
     property string theme: "shadow"
     // text and cards turn light or dark with the wallpaper behind each widget (Settings > Widgets)
     property bool adapt: true
+    // shell shadows (Settings > Desktop > Windows; rice-shadows): shell.qml fills these in from shadows.json
+    property bool shadowsAll: true
+    property bool shadowBar: true
+    property bool shadowPanels: true
+    property bool shadowWidgets: true
+    property bool shadowNotif: true
+    property real shadowSize: 18
+    property real shadowStrength: 0.45
+    readonly property bool shadows: shadowsAll && !flat
+    // your shape (Settings > Appearance > Shapes; settings-app.json): icons, loaders and highlights take it
+    property string shape: "verysunny"
+    // progress lines and rings: wavy or flat, and how thick (Settings > Appearance > Components; settings-app.json)
+    property bool wavy: true
+    property real waveThick: 4
+    // Material 3 motion curves for the panels: in on emphasized-decelerate, out on emphasized-accelerate
+    readonly property var decel: [0.05, 0.7, 0.1, 1, 1, 1]
+    readonly property var accel: [0.3, 0, 0.8, 0.15, 1, 1]
+    readonly property var emph: [0.2, 0, 0, 1, 1, 1]
     // the accent color of your theme (Waybar colors), used by the Google style and the visualizer
     property color accent: "#9ec9bd"
 

@@ -25,3 +25,5 @@ hl.bind("SUPER + ALT + W",     hl.dsp.exec_cmd(bin .. "desktop-set edit toggle")
 hl.bind("SUPER + ALT + D",     hl.dsp.exec_cmd(bin .. "rice-dashboard open"))
 -- the game bar: CPU / GPU, capture, power mode, gaming mode, volume and brightness over your game
 hl.bind("SUPER + G",           hl.dsp.exec_cmd(bin .. "rice-gamebar"))
+-- the control center: switches, sliders, music and notifications
+hl.bind("SUPER + N",           hl.dsp.exec_cmd(bin .. "rice-cc"))

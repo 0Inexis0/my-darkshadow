@@ -14,11 +14,11 @@ HYPRLOCK = HOME + "/.config/hypr/hyprlock.conf"
 SOURCE_LINE = "source = ~/.config/hypr/rice-lock.conf"
 
 WIDGETS = ["weather", "media", "resources", "usercard", "calendar", "visualizer", "battery", "todo", "focus", "notes",
-           "gauge", "date"]
+           "gauge", "date", "sky", "nowring", "player", "playpill", "lyrics", "storage", "trio"]
 # what the widget editor stores per widget (Settings > Desktop > Edit widgets, or SUPER+ALT+W)
 GEOM = ("x", "y", "scale", "w", "h", "opacity", "bg", "style", "flip", "color", "font", "focus", "metric")
 STYLES = {"visualizer": ["bars", "mirror", "wave", "dots"], "clock": ["digital", "line", "cookie", "pixel"],
-          "gauge": ["pentagon", "cookie", "flower", "clover", "hexagon", "sun", "circle"],
+          "gauge": ["water", "pentagon", "cookie", "flower", "clover", "hexagon", "sun", "circle"],
           "date": ["flower", "cookie", "clover", "sun", "square", "circle"]}
 METRICS = ["cpu", "ram", "gpu", "temp", "battery"]
 # visualizer colors; clock fonts (the same ones as the lock screen clock, rice-fonts downloads them)
@@ -30,7 +30,7 @@ DEFAULTS = {
     "widgets": {w: {"enabled": False} for w in WIDGETS},
     "clock": {"enabled": False, "onlyLocked": False, "placement": "draggable", "style": "digital", "font": "default"},
     "dock": {"enabled": False, "position": "bottom", "background": True, "hover": True, "pinnedStartup": False,
-             "media": True, "nowText": True, "pinButton": True, "appsButton": True, "tint": False,
+             "media": True, "nowText": True, "pinButton": True, "appsButton": True, "tint": False, "appMenu": True,
              "opacity": 0.78, "blur": True,
              "apps": ["kitty", "org.gnome.Nautilus", "firefox", "spotify", "discord", "steam"]},
     "lock": {"toolbars": False, "widgets": False, "media": False},
@@ -265,6 +265,22 @@ def main(a):
             c["clock"][k] = v
         else:
             die("unknown clock key: " + k)
+    elif cmd == "dock-apps":
+        # dock-apps '["kitty", "firefox"]'   the pinned apps, in order (Settings > Dock, the dock's app menu)
+        try:
+            l = json.loads(a[2]) if len(a) > 2 else None
+        except ValueError:
+            l = None
+        if not isinstance(l, list):
+            die("dock-apps JSON-LIST")
+        c["dock"]["apps"] = [str(x) for x in l if str(x).strip()][:24]
+    elif cmd in ("dock-pin", "dock-unpin"):
+        if len(a) < 3:
+            die(cmd + " APP-ID")
+        apps = [x for x in c["dock"].get("apps", []) if x != a[2]]
+        if cmd == "dock-pin":
+            apps.append(a[2])
+        c["dock"]["apps"] = apps[:24]
     elif cmd in ("dock", "lock"):
         if len(a) < 4 or a[2] not in c[cmd] or a[2] == "apps":
             die("%s KEY on|off (keys: %s)" % (cmd, ", ".join(k for k in c[cmd] if k != "apps")))
@@ -333,7 +349,7 @@ def main(a):
         lock_conf(c)
     if cmd == "dock" and a[2] == "blur" or cmd in ("dock-blur", "widgets-blur"):
         dock_blur(c)
-    elif cmd not in ("pos", "geom", "wset", "edit", "reset-widget", "widgets-theme", "widgets-adapt"):
+    elif cmd not in ("pos", "geom", "wset", "edit", "reset-widget", "widgets-theme", "widgets-adapt", "dock-apps", "dock-pin", "dock-unpin"):
         ensure_shell()
     elif cmd == "edit" and c["editing"]:
         ensure_shell()

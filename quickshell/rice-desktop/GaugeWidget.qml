@@ -49,9 +49,42 @@ Item {
         }
     }
 
+    readonly property bool water: shape === "water"
+    // water: a pentagon that fills up like a glass, the surface a slow wave
+    Item {
+        id: glass
+        anchors.fill: parent
+        visible: gw.water
+        Blob { id: glassBg; anchors.fill: parent; kind: "pentagon"; color: gw.pal ? (gw.bg > 0.02 ? gw.pal.shapeFill : "transparent") : "#2b2d31" }
+        Canvas {
+            id: liquid
+            anchors.fill: parent
+            property real lv: gw.val
+            property real ph: 0
+            Behavior on lv { NumberAnimation { duration: 900; easing.type: Easing.OutCubic } }
+            NumberAnimation on ph { from: 0; to: Math.PI * 2; duration: 3000; loops: Animation.Infinite; running: gw.running && gw.water && !Look.lite }
+            onLvChanged: requestPaint(); onPhChanged: requestPaint()
+            renderStrategy: Canvas.Cooperative
+            onPaint: {
+                const c = getContext("2d"); c.reset()
+                // clip to the glass (the same pentagon as its background)
+                glassBg.trace(c, width, height, 1)
+                c.clip()
+                const cy = height / 2, R = Math.min(width, height) / 2 - 1
+                const top = cy - R * 0.9, bot = cy + R * 0.91
+                const level = bot - (bot - top) * Math.max(0.03, Math.min(1, lv / 100))
+                c.beginPath(); c.moveTo(0, height)
+                for (let x = 0; x <= width; x += 4) c.lineTo(x, level + 4 * Math.sin(x / width * Math.PI * 2 + ph))
+                c.lineTo(width, height); c.closePath()
+                c.fillStyle = gw.pal ? gw.pal.primary : "#9ec9bd"
+                c.fill()
+            }
+        }
+    }
     // the shape, turning very slowly
     Blob {
         id: blob
+        visible: !gw.water
         anchors.fill: parent
         kind: gw.shape
         color: gw.pal ? (gw.bg > 0.02 ? gw.pal.cardColor : "transparent") : "#2b2d31"
@@ -62,6 +95,7 @@ Item {
     // the ring
     Canvas {
         id: ring
+        visible: !gw.water
         anchors.centerIn: parent
         width: parent.width * 0.7; height: width
         property real v: gw.val
@@ -83,7 +117,7 @@ Item {
             if (v < 99) { c.beginPath(); c.arc(cx, cy, r, start + len + 0.32, start + Math.PI * 2 - 0.32); c.stroke() }
             c.strokeStyle = gw.fill
             c.beginPath()
-            const n = Math.max(10, Math.round(len * r / 2.5)), amp = 2.2 * Math.sin(Math.PI * Math.min(1, v / 100))
+            const n = Math.max(10, Math.round(len * r / 2.5)), amp = (Look.wavy ? 2.2 : 0) * Math.sin(Math.PI * Math.min(1, v / 100))
             for (let i = 0; i <= n; i++) {
                 const a = start + len * i / n
                 const rr = r + amp * Math.sin(a * 10 - ph)
@@ -93,7 +127,18 @@ Item {
             c.stroke()
         }
     }
+    // water: the name above, the number over the surface
     Column {
+        visible: gw.water
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: parent.height * 0.27
+        spacing: -2
+        T { anchors.horizontalCenter: parent.horizontalCenter; text: gw.label.split(" · ")[0]; font.pixelSize: Math.round(gw.width * 0.075); color: gw.pal ? gw.pal.fg2 : "#c8c8cc" }
+        T { kind: "number"; anchors.horizontalCenter: parent.horizontalCenter; text: gw.big + gw.unit; font.pixelSize: Math.round(gw.width * 0.16); font.weight: Font.Bold
+            color: gw.val > 55 ? (gw.pal ? gw.pal.inkOn : "#10201c") : gw.ink }
+    }
+    Column {
+        visible: !gw.water
         anchors.centerIn: parent
         spacing: 0
         T { kind: "icon"; anchors.horizontalCenter: parent.horizontalCenter; text: gw.sym; font.pixelSize: Math.round(gw.width * 0.08); color: gw.pal ? gw.pal.fg3 : "#8a8a8f" }

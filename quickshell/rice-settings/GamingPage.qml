@@ -85,7 +85,7 @@ Item {
             height: 156
             radius: M3.rXL
             color: page.fx.gaming ? M3.primaryContainer : M3.surfaceC
-            Behavior on color { ColorAnimation { duration: 300 } }
+            Behavior on color { ColorAnimation { duration: M3.d(600) } }
             clip: true
             // a soft shape in the corner that turns when gaming mode switches
             Rectangle {
@@ -93,15 +93,15 @@ Item {
                 x: parent.width - 270; y: -70
                 rotation: page.fx.gaming ? 45 : 20
                 color: page.fx.gaming ? M3.alpha(M3.primary, 0.22) : M3.alpha(M3.ink, 0.04)
-                Behavior on rotation { NumberAnimation { duration: 700; easing.type: Easing.OutBack } }
-                Behavior on color { ColorAnimation { duration: 300 } }
+                Behavior on rotation { NumberAnimation { duration: M3.d(1400); easing.type: Easing.BezierSpline; easing.bezierCurve: [0.2, 0, 0, 1, 1, 1] } }
+                Behavior on color { ColorAnimation { duration: M3.d(600) } }
             }
             Rectangle {
                 x: 24; anchors.verticalCenter: parent.verticalCenter
                 width: 72; height: 72; radius: page.fx.gaming ? 24 : 36
                 color: page.fx.gaming ? M3.primary : M3.surfaceHighest
-                Behavior on radius { NumberAnimation { duration: 400; easing.type: Easing.OutBack } }
-                Behavior on color { ColorAnimation { duration: 300 } }
+                Behavior on radius { NumberAnimation { duration: M3.d(700); easing.type: Easing.BezierSpline; easing.bezierCurve: [0.05, 0.7, 0.1, 1, 1, 1] } }
+                Behavior on color { ColorAnimation { duration: M3.d(500) } }
                 T { kind: "icon"; anchors.centerIn: parent; text: ""; font.pixelSize: 30; color: page.fx.gaming ? M3.inkPrimary : M3.ink }
             }
             Column {
@@ -163,14 +163,14 @@ Item {
                     width: 128; height: 112; radius: M3.rL
                     color: lm.containsMouse ? M3.surfaceHigh : M3.surfaceC
                     scale: lm.pressed ? 0.95 : 1
-                    Behavior on color { ColorAnimation { duration: 140 } }
-                    Behavior on scale { NumberAnimation { duration: 100 } }
+                    Behavior on color { ColorAnimation { duration: M3.d(220) } }
+                    Behavior on scale { NumberAnimation { duration: M3.d(260); easing.type: Easing.BezierSpline; easing.bezierCurve: [0.05, 0.7, 0.1, 1, 1, 1] } }
                     Image {
                         anchors.horizontalCenter: parent.horizontalCenter; y: 18
                         width: 44; height: 44; sourceSize.width: 88; sourceSize.height: 88
                         source: Quickshell.iconPath(modelData.e.icon || "applications-games", true)
                         scale: lm.containsMouse ? 1.1 : 1
-                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
+                        Behavior on scale { NumberAnimation { duration: M3.d(420); easing.type: Easing.OutBack; easing.overshoot: 1.4 * Prefs.bounce } }
                     }
                     T { anchors.horizontalCenter: parent.horizontalCenter; y: 74; width: parent.width - 16; horizontalAlignment: Text.AlignHCenter
                         elide: Text.ElideRight; text: modelData.n; font.pixelSize: 13; font.weight: Font.Medium }

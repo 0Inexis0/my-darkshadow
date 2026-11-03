@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Started with Hyprland instead of plain swaync: swaync shows notifications unless the shell does it itself
+# (Settings > Notifications > Shown by: DarkShadow; rice-cc engine shell).
+if grep -q '"engine": *"shell"' "$HOME/.config/rice/cc.json" 2>/dev/null; then
+  exit 0
+fi
+exec swaync "$@"

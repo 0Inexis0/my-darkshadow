@@ -28,7 +28,13 @@ Singleton {
     property real sliderThick: 1.0        // 0.6 .. 1.6 times the normal track
     property bool wavy: true              // progress shown as a wave (sliders while dragging, loaders, music)
     property int progressThick: 4         // 2 .. 8 px
-    property string shape: "round"        // round | soft | square: how round cards and buttons are
+    property string shape: "round"        // (older setting, kept for reading old files)
+    property real cornerScale: 1.0        // Appearance > Shapes > Corners: 0.3 .. 1.5 times the normal corners
+    property string accentShape: "verysunny"   // Appearance > Shapes: the shape of the avatar, the hero and highlights
+    property real bounce: 1.0             // Motion > Bounce: 0 = no overshoot, 2 = twice as bouncy
+    function setCornerScale(v) { cornerScale = Math.max(0.3, Math.min(1.5, Math.round(v * 20) / 20)); save("cornerScale", cornerScale) }
+    function setAccentShape(v) { accentShape = v; save("accentShape", v) }
+    function setBounce(v) { bounce = Math.max(0, Math.min(2, Math.round(v * 10) / 10)); save("bounce", bounce) }
     function setSwitchIcons(v) { switchIcons = v; save("switchIcons", v) }
     function setSliderThick(v) { sliderThick = Math.max(0.6, Math.min(1.6, Math.round(v * 10) / 10)); save("sliderThick", sliderThick) }
     function setWavy(v) { wavy = v; save("wavy", v) }
@@ -74,7 +80,10 @@ Singleton {
                     if (j.sliderThick !== undefined) prefs.sliderThick = Math.max(0.6, Math.min(1.6, Number(j.sliderThick)))
                     if (j.wavy !== undefined) prefs.wavy = j.wavy !== false
                     if (j.progressThick !== undefined) prefs.progressThick = Math.max(2, Math.min(8, Number(j.progressThick)))
-                    if (["round", "soft", "square"].indexOf(j.shape) >= 0) prefs.shape = j.shape
+                    if (["round", "soft", "square"].indexOf(j.shape) >= 0) { prefs.shape = j.shape; if (j.cornerScale === undefined) prefs.cornerScale = j.shape === "square" ? 0.4 : (j.shape === "soft" ? 0.7 : 1) }
+                    if (j.cornerScale !== undefined) prefs.cornerScale = Math.max(0.3, Math.min(1.5, Number(j.cornerScale)))
+                    if (typeof j.accentShape === "string" && j.accentShape !== "") prefs.accentShape = j.accentShape
+                    if (j.bounce !== undefined) prefs.bounce = Math.max(0, Math.min(2, Number(j.bounce)))
                     if (j.size !== undefined) prefs.size = Math.max(0.75, Math.min(1.5, Number(j.size)))
                 } catch (e) { }
             }

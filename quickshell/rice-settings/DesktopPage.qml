@@ -18,7 +18,14 @@ Item {
         { key: "focus", label: "Focus timer", icon: "\uf017", desc: "Work and break timer" },
         { key: "notes", label: "Note", icon: "\uf249", desc: "A note on the desktop" },
         { key: "gauge", label: "Gauge", icon: "\uf4bc", desc: "CPU, RAM, GPU or heat in a soft shape" },
-        { key: "date", label: "Date", icon: "\uf073", desc: "Today in a flower or cookie shape" }
+        { key: "date", label: "Date", icon: "\uf073", desc: "Today in a flower or cookie shape" },
+        { key: "sky", label: "Sky", icon: "\uf0c2", desc: "The weather as a tilted pill" },
+        { key: "nowring", label: "Now playing", icon: "\uf001", desc: "The song in a round label" },
+        { key: "player", label: "Player", icon: "\uf144", desc: "Cover, seek line and buttons" },
+        { key: "playpill", label: "Play button", icon: "\uf04b", desc: "A big cookie to play and pause" },
+        { key: "lyrics", label: "Lyrics", icon: "\uf075", desc: "The words in time with the song" },
+        { key: "storage", label: "Storage", icon: "\uf0a0", desc: "Used and free disk space" },
+        { key: "trio", label: "CPU · GPU · RAM", icon: "\uf2db", desc: "Three small shapes" }
     ]
 
     // widget styles (Settings > Widgets > Theme)

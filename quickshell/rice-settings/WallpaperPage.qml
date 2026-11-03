@@ -122,7 +122,7 @@ Item {
                         source: "file://" + (modelData.thumb || modelData.path)
                         scale: wm.containsMouse && !wt.on ? 1.03 : 1
                         Behavior on scale { NumberAnimation { duration: M3.d(220); easing.type: Easing.OutCubic } }
-                        Behavior on anchors.margins { NumberAnimation { duration: M3.d(220); easing.type: M3.springy; easing.overshoot: 1.6 } }
+                        Behavior on anchors.margins { NumberAnimation { duration: M3.d(220); easing.type: M3.springy; easing.overshoot: 1.6 * Prefs.bounce } }
                     }
                     Rectangle {
                         visible: wt.on

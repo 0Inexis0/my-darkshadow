@@ -11,7 +11,10 @@ PanelWindow {
     id: vm
     property bool open: false
     property real t: 0
-    Behavior on t { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+    // t runs evenly; the menu eases on its own: it grows out of the bar (quick start, soft landing) and
+    // folds back up quickly when it closes
+    Behavior on t { NumberAnimation { duration: vm.open ? 520 : 200; easing.type: Easing.Linear } }
+    readonly property real et: 1 - Math.pow(1 - t, 4)
     onOpenChanged: t = open ? 1 : 0
 
     readonly property color fg: "#F6F5F4"
@@ -135,10 +138,10 @@ PanelWindow {
         color: vm.bg
         border.width: 1; border.color: vm.line
         clip: true
-        opacity: vm.t
-        scale: 0.96 + 0.04 * vm.t
+        opacity: Math.min(1, vm.et * 1.6)
+        scale: 0.9 + 0.1 * vm.et
         transformOrigin: vm.atBottom ? Item.Bottom : Item.Top
-        transform: Translate { y: (1 - vm.t) * (vm.atBottom ? 10 : -10) }
+        transform: Translate { y: (1 - vm.et) * (vm.atBottom ? 26 : -26) }
         Behavior on height { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
         focus: true
         Keys.onEscapePressed: vm.hide()

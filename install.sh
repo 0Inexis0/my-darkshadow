@@ -522,7 +522,8 @@ step_finish() {
   [ "${WANT[4]:-0}" = 1 ] && have_settings && step_settings
   [ -f "$HOME/.config/waybar/config.jsonc" ] && task "Waybar: ${DISTRO_NAME} logo" t "$BIN/waybar-set" distro-icon on
   [ -x "$BIN/desktop-set" ] && task "Desktop widgets settings" t "$BIN/desktop-set" state
-  command -v swaync >/dev/null 2>&1 && task "Notifications style" t "$BIN/rice-notify" apply
+  [ -x "$BIN/rice-cc" ] && task "Notifications shown by the shell (Google-style pop-ups and control center)" t "$BIN/rice-cc" migrate
+  task "Notifications style and blur" t "$BIN/rice-notify" apply
   command -v hyprlock >/dev/null 2>&1 && task "Lock screen and idle timers" t "$BIN/rice-lock" apply
   task "Launcher and bar blur" t "$BIN/rice-rofi" apply
   [ -x "$BIN/rice-bar" ] && task "DarkShadow bar (Waybar stays off)" t bash -c "\"$BIN/rice-bar\" migrate && \"$BIN/rice-bar\" start"

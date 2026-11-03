@@ -1,3 +1,4 @@
+import Quickshell
 import QtQuick
 
 Item {
@@ -8,6 +9,25 @@ Item {
         const c = page.ctl.dst.dock
         return c && c[k] !== undefined ? c[k] : d
     }
+    // ---------- pinned apps (the dock shows them first, in this order) ----------
+    readonly property var pins: page.ctl && page.ctl.dst.dock && page.ctl.dst.dock.apps ? page.ctl.dst.dock.apps : []
+    property string q: ""
+    function idOf(e) { return (e.id || "").replace(/\.desktop$/, "") }
+    function entry(id) { return DesktopEntries.heuristicLookup(id) }
+    function setPins(l) {
+        const d = JSON.parse(JSON.stringify(page.ctl.dst)); d.dock = d.dock || {}; d.dock.apps = l; page.ctl.dst = d
+        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" dock-apps \"$1\"", "_", JSON.stringify(l)])
+        page.ctl.status = "Dock: " + l.length + " pinned apps"
+    }
+    function pin(id) { if (pins.indexOf(id) < 0) setPins(pins.concat([id])) }
+    function unpin(id) { setPins(pins.filter(function(x) { return x !== id })) }
+    function move(i, d) { const l = pins.slice(); const j = i + d; if (j < 0 || j >= l.length) return; const t = l[i]; l[i] = l[j]; l[j] = t; setPins(l) }
+    readonly property var found: {
+        const s = q.trim().toLowerCase()
+        const l = DesktopEntries.applications.values.filter(function(e) { return !e.noDisplay && (s === "" || (e.name || "").toLowerCase().indexOf(s) >= 0) })
+        return l.slice().sort(function(a, b) { return (a.name || "").localeCompare(b.name || "") }).slice(0, 48)
+    }
+
     function lv(k) {
         const c = page.ctl.dst.lock
         return !!(c && c[k] === true)
@@ -171,6 +191,78 @@ Item {
                 checked: page.dv("appsButton", true) === true
                 onToggled: function(v) { page.ctl.dset("dock", "appsButton", v ? "on" : "off") }
             }
+            ToggleRow {
+                label: "App menu"
+                desc: "The apps button opens the dock's own app menu (with pins); off: it opens the launcher"
+                checked: page.dv("appMenu", true) === true
+                onToggled: function(v) { page.ctl.dset("dock", "appMenu", v ? "on" : "off") }
+            }
+
+            // ---------- pinned apps ----------
+            SectionTitle { text: "Pinned apps"; sub: page.pins.length + " on the dock, in this order. Pin more below, or right-click an app in the dock's app menu." }
+            Flow {
+                width: parent.width
+                spacing: 8
+                Repeater {
+                    model: page.pins
+                    delegate: Rectangle {
+                        id: chip
+                        readonly property var e: page.entry(modelData)
+                        readonly property int pi: index
+                        readonly property string pid: modelData
+                        height: 52; width: pr.implicitWidth + 24; radius: 26
+                        color: M3.secondaryContainer
+                        Row {
+                            id: pr
+                            anchors.centerIn: parent
+                            spacing: 6
+                            Item { width: 34; height: 34; anchors.verticalCenter: parent.verticalCenter
+                                Blob { anchors.fill: parent; kind: Prefs.accentShape; color: M3.alpha(M3.primary, 0.25) }
+                                Image { anchors.centerIn: parent; width: 24; height: 24; sourceSize.width: 48; sourceSize.height: 48; source: Quickshell.iconPath(chip.e ? (chip.e.icon || "application-x-executable") : chip.pid, "application-x-executable") } }
+                            T { text: chip.e ? chip.e.name : chip.pid; font.pixelSize: 13; color: M3.inkSecondaryC; anchors.verticalCenter: parent.verticalCenter }
+                            Repeater {
+                                model: [{ s: "chevron_left", g: "‹", d: -1 }, { s: "chevron_right", g: "›", d: 1 }, { s: "close", g: "×", d: 0 }]
+                                delegate: Rectangle {
+                                    width: 26; height: 26; radius: 13; anchors.verticalCenter: parent.verticalCenter
+                                    color: bm.containsMouse ? M3.alpha(M3.ink, 0.12) : "transparent"
+                                    Icon { anchors.centerIn: parent; name: modelData.s; glyph: modelData.g; size: 15; color: M3.inkSecondaryC }
+                                    MouseArea { id: bm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                                        onClicked: modelData.d === 0 ? page.unpin(chip.pid) : page.move(chip.pi, modelData.d) }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Field {
+                width: parent.width
+                placeholder: "Search apps to pin ..."
+                onTextChanged: page.q = text
+            }
+            Flow {
+                width: parent.width
+                spacing: 8
+                Repeater {
+                    model: page.found
+                    delegate: Rectangle {
+                        readonly property string aid: page.idOf(modelData)
+                        readonly property bool on: page.pins.indexOf(aid) >= 0
+                        width: ar.implicitWidth + 24; height: 44; radius: on ? 22 : 12
+                        color: on ? M3.primary : (am.containsMouse ? M3.surfaceHigh : M3.surfaceC)
+                        Behavior on radius { NumberAnimation { duration: M3.d(240); easing.type: M3.springy; easing.overshoot: 1.6 * Prefs.bounce } }
+                        Behavior on color { ColorAnimation { duration: 160 } }
+                        Row {
+                            id: ar; anchors.centerIn: parent; spacing: 8
+                            Image { width: 22; height: 22; sourceSize.width: 44; sourceSize.height: 44; anchors.verticalCenter: parent.verticalCenter; source: Quickshell.iconPath(modelData.icon || "application-x-executable", "application-x-executable") }
+                            T { text: modelData.name; font.pixelSize: 13; color: parent.parent.on ? M3.inkPrimary : M3.ink; anchors.verticalCenter: parent.verticalCenter }
+                            Icon { name: "keep"; glyph: ""; size: 15; filled: parent.parent.on; visible: parent.parent.on || am.containsMouse; color: parent.parent.on ? M3.inkPrimary : M3.inkDim; anchors.verticalCenter: parent.verticalCenter }
+                        }
+                        MouseArea { id: am; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                            onClicked: parent.on ? page.unpin(parent.aid) : page.pin(parent.aid) }
+                    }
+                }
+            }
+
             ToggleRow {
                 label: "Tint app icons"
                 desc: "Paint icons in a single neutral tone"

@@ -9,7 +9,10 @@ PanelWindow {
     id: pw
     property bool open: false
     property real t: 0
-    Behavior on t { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+    // t runs evenly; the menu eases on its own: it grows out of the bar (quick start, soft landing) and
+    // folds back up quickly when it closes
+    Behavior on t { NumberAnimation { duration: pw.open ? 520 : 200; easing.type: Easing.Linear } }
+    readonly property real et: 1 - Math.pow(1 - t, 4)
     onOpenChanged: t = open ? 1 : 0
 
     readonly property color fg: "#F6F5F4"
@@ -71,10 +74,10 @@ PanelWindow {
         radius: 20
         color: pw.bg
         border.width: 1; border.color: pw.line
-        opacity: pw.t
-        scale: 0.96 + 0.04 * pw.t
+        opacity: Math.min(1, pw.et * 1.6)
+        scale: 0.9 + 0.1 * pw.et
         transformOrigin: pw.atBottom ? Item.Bottom : Item.Top
-        transform: Translate { y: (1 - pw.t) * (pw.atBottom ? 10 : -10) }
+        transform: Translate { y: (1 - pw.et) * (pw.atBottom ? 26 : -26) }
         focus: true
         Keys.onEscapePressed: pw.hide()
         MouseArea { anchors.fill: parent }

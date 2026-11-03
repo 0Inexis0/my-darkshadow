@@ -15,7 +15,7 @@ Scope {
     property bool hovering: false
     readonly property bool on: dc.enabled === true
     readonly property bool autoHide: dc.hover !== false
-    readonly property bool reveal: on && (!autoHide || pinned || hovering)
+    readonly property bool reveal: on && (!autoHide || pinned || hovering || apps.open)
     readonly property string edge: dc.position === "left" || dc.position === "right" ? dc.position : "bottom"
     readonly property bool vert: edge === "left" || edge === "right"
     readonly property real alpha: Look.flat ? 1 : (dc.opacity !== undefined ? Number(dc.opacity) : 0.78)
@@ -32,6 +32,7 @@ Scope {
         if (!initDone && dc.enabled !== undefined) { pinned = dc.pinnedStartup === true; initDone = true }
     }
     Timer { id: hideTimer; interval: 600; onTriggered: dock.hovering = false }
+    DockApps { id: apps; dock: dock }
 
     function pickPlayer() {
         const l = Mpris.players.values
@@ -251,7 +252,8 @@ Scope {
                     Behavior on color { ColorAnimation { duration: 140 } }
                     MIcon { anchors.centerIn: parent; name: "apps"; glyph: String.fromCodePoint(0xF003B); size: 18; color: "#F6F5F4" }
                     MouseArea { id: appsM; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                        onClicked: Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-launch\""]) }
+                        // the dock's own app menu (Settings > Dock > App menu), else the launcher
+                        onClicked: { if (dock.dc.appMenu !== false) apps.open = !apps.open; else Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-launch\""]) } }
                 }
             }
         }

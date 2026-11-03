@@ -146,8 +146,8 @@ Item {
             onCommitted: function(v) { page.ctl.setAnim("speed", Math.round(v)) }
         }
 
-        // ---------- this window ----------
-        SectionTitle { text: "Settings"; sub: "How this window moves: pages, switches, the rail and the tabs." }
+        // ---------- spring physics ----------
+        SectionTitle { text: "Spring physics"; sub: "Motion in Settings is made of springs: stiffness and damping instead of a duration and a curve. Spatial springs may bounce, effects never do." }
         SegRow {
             label: "Feel"
             desc: "Expressive springs a little, Standard glides"
@@ -157,10 +157,22 @@ Item {
         }
         SliderRow {
             label: "Speed"
-            desc: "How fast Settings animates"
+            desc: "Scales every spring and duration in Settings"
             from: 0.5; to: 2; step: 0.05; decimals: 2; unit: "x"
             value: Prefs.motionSpeed
             onCommitted: function(v) { Prefs.setMotionSpeed(v) }
+        }
+        SliderRow {
+            label: "Bounce"
+            desc: "0 takes the overshoot out of every spring; 2 makes it twice as playful"
+            from: 0; to: 2; step: 0.1; decimals: 1; unit: "×"
+            value: Prefs.bounce
+            onCommitted: function(v) { Prefs.setBounce(v) }
+        }
+        Row {
+            spacing: 8
+            Btn { text: "Reset motion"; sym: "restart_alt"; icon: ""; variant: "text"
+                onClicked: { Prefs.setMotion("expressive"); Prefs.setMotionSpeed(1); Prefs.setBounce(1) } }
         }
 
         // ---------- try it ----------
@@ -194,9 +206,9 @@ Item {
                         x: index === 0 ? (tc.go ? tc.width - width - 18 : 18) : (tc.width - width) / 2
                         y: 66 + (index === 1 ? (40 - height) / 2 : 5)
                         color: M3.primary
-                        Behavior on x { NumberAnimation { duration: M3.d(M3.bouncy ? 600 : 420); easing.type: M3.bouncy ? Easing.OutBack : Easing.InOutCubic; easing.overshoot: 1.6 } }
-                        Behavior on width { NumberAnimation { duration: M3.d(M3.bouncy ? 600 : 420); easing.type: M3.bouncy ? Easing.OutBack : Easing.OutCubic; easing.overshoot: 1.6 } }
-                        Behavior on height { NumberAnimation { duration: M3.d(M3.bouncy ? 600 : 420); easing.type: M3.bouncy ? Easing.OutBack : Easing.OutCubic; easing.overshoot: 1.6 } }
+                        Behavior on x { NumberAnimation { duration: M3.d(M3.bouncy ? 600 : 420); easing.type: M3.bouncy ? Easing.OutBack : Easing.InOutCubic; easing.overshoot: 1.6 * Prefs.bounce } }
+                        Behavior on width { NumberAnimation { duration: M3.d(M3.bouncy ? 600 : 420); easing.type: M3.bouncy ? Easing.OutBack : Easing.OutCubic; easing.overshoot: 1.6 * Prefs.bounce } }
+                        Behavior on height { NumberAnimation { duration: M3.d(M3.bouncy ? 600 : 420); easing.type: M3.bouncy ? Easing.OutBack : Easing.OutCubic; easing.overshoot: 1.6 * Prefs.bounce } }
                         Behavior on radius { NumberAnimation { duration: M3.d(360); easing.type: Easing.OutCubic } }
                     }
                     MouseArea { id: tcm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: tc.go = !tc.go }
@@ -216,9 +228,10 @@ Item {
                 delegate: SpringGraph {
                     width: (sGrid.width - (sGrid.columns - 1) * 10) / sGrid.columns
                     name: modelData.n
-                    zeta: modelData.z
-                    stiff: modelData.k
-                    info: "ζ " + modelData.z.toFixed(2) + " · k " + modelData.k
+                    // Bounce changes the damping of the springs that may overshoot
+                    zeta: Math.max(0.25, Math.min(1, 1 - (1 - modelData.z) * Prefs.bounce))
+                    stiff: modelData.k * Prefs.motionSpeed * Prefs.motionSpeed
+                    info: "ζ " + zeta.toFixed(2) + " · k " + Math.round(stiff)
                 }
             }
         }
@@ -304,7 +317,7 @@ Item {
                 property real vy: 0
                 property bool held: false
                 readonly property real k: M3.bouncy ? 260 : 320
-                readonly property real c: M3.bouncy ? 11 : 30
+                readonly property real c: (M3.bouncy ? 11 : 30) / Math.max(0.35, Prefs.bounce)
                 width: 72; height: 72
                 x: pad.width / 2 - 36 + ox
                 y: pad.height / 2 - 36 + oy
@@ -316,7 +329,7 @@ Item {
                     width: 72 * (1 + blob.sp * 0.35); height: 72 * (1 - blob.sp * 0.22)
                     radius: blob.held ? 22 : height / 2
                     color: M3.primary
-                    Behavior on radius { NumberAnimation { duration: M3.d(260); easing.type: Easing.OutBack; easing.overshoot: 2 } }
+                    Behavior on radius { NumberAnimation { duration: M3.d(260); easing.type: Easing.OutBack; easing.overshoot: 2 * Prefs.bounce } }
                     Icon { anchors.centerIn: parent; rotation: -blob.rotation; name: "pan_tool"; glyph: ""; size: 24; color: M3.inkPrimary; filled: blob.held }
                 }
                 Timer {

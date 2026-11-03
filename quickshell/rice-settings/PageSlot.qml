@@ -1,11 +1,13 @@
 import QtQuick
 
-// One settings page. Material "fade through": the old page fades away quickly,
-// then the new one fades in while it grows slightly and rises into place.
+// One settings page. Material 3 "shared axis": the page you leave slips away a little in the direction you go
+// and fades out fast, the new one comes in from the other side on the emphasized-decelerate curve.
+// Tabs of a group move sideways, groups of the rail move up or down.
 Item {
     id: slot
     property int idx: 0
     property int cur: 0
+    property var nav: null            // the window: navX / navY tell the direction
     readonly property bool on: idx === cur
     default property alias content: inner.data
 
@@ -15,31 +17,44 @@ Item {
     enabled: on
     z: on ? 1 : 0
 
+    readonly property var decel: [0.05, 0.7, 0.1, 1, 1, 1]
+    readonly property var accel: [0.3, 0, 0.8, 0.15, 1, 1]
+    readonly property real dx: nav ? nav.navX * 56 : 0
+    readonly property real dy: nav ? nav.navY * 40 : 24
+
+    onOnChanged: {
+        outAnim.stop(); inAnim.stop()
+        if (on) {
+            inner.x = slot.dx; inner.y = slot.dy; inner.opacity = 0; inner.scale = 0.985
+            inAnim.start()
+        } else {
+            outX.to = -slot.dx * 0.5; outY.to = -slot.dy * 0.5
+            outAnim.start()
+        }
+    }
+    Component.onCompleted: { inner.opacity = on ? 1 : 0 }
+
+    ParallelAnimation {
+        id: inAnim
+        SequentialAnimation {
+            PauseAnimation { duration: M3.d(70) }
+            NumberAnimation { target: inner; property: "opacity"; to: 1; duration: M3.d(260); easing.type: Easing.BezierSpline; easing.bezierCurve: slot.decel }
+        }
+        NumberAnimation { target: inner; property: "x"; to: 0; duration: M3.d(480); easing.type: Easing.BezierSpline; easing.bezierCurve: slot.decel }
+        NumberAnimation { target: inner; property: "y"; to: 0; duration: M3.d(480); easing.type: Easing.BezierSpline; easing.bezierCurve: slot.decel }
+        NumberAnimation { target: inner; property: "scale"; to: 1; duration: M3.d(480); easing.type: Easing.BezierSpline; easing.bezierCurve: slot.decel }
+    }
+    ParallelAnimation {
+        id: outAnim
+        NumberAnimation { target: inner; property: "opacity"; to: 0; duration: M3.d(110); easing.type: Easing.BezierSpline; easing.bezierCurve: slot.accel }
+        NumberAnimation { id: outX; target: inner; property: "x"; duration: M3.d(160); easing.type: Easing.BezierSpline; easing.bezierCurve: slot.accel }
+        NumberAnimation { id: outY; target: inner; property: "y"; duration: M3.d(160); easing.type: Easing.BezierSpline; easing.bezierCurve: slot.accel }
+    }
+
     Item {
         id: inner
         width: parent.width
         height: parent.height
-        opacity: slot.on ? 1 : 0
-        scale: slot.on ? 1 : (slot.idx < slot.cur ? 0.97 : 0.95)
-        y: slot.on ? 0 : 18
         transformOrigin: Item.Top
-        Behavior on opacity {
-            SequentialAnimation {
-                PauseAnimation { duration: slot.on ? M3.d(90) : 0 }
-                NumberAnimation { duration: slot.on ? M3.d(260) : M3.d(90); easing.type: slot.on ? Easing.OutCubic : Easing.InCubic }
-            }
-        }
-        Behavior on scale {
-            SequentialAnimation {
-                PauseAnimation { duration: slot.on ? M3.d(90) : 0 }
-                NumberAnimation { duration: slot.on ? M3.d(M3.bouncy ? 520 : 420) : M3.d(90); easing.type: slot.on && M3.bouncy ? Easing.OutBack : Easing.OutCubic; easing.overshoot: 1.15 }
-            }
-        }
-        Behavior on y {
-            SequentialAnimation {
-                PauseAnimation { duration: slot.on ? M3.d(90) : 0 }
-                NumberAnimation { duration: slot.on ? M3.d(M3.bouncy ? 520 : 420) : M3.d(90); easing.type: slot.on && M3.bouncy ? Easing.OutBack : Easing.OutCubic; easing.overshoot: 1.15 }
-            }
-        }
     }
 }

@@ -40,8 +40,15 @@ ShellRoot {
         { id: "focus", name: "Focus", icon: "\uf017", card: true },
         { id: "notes", name: "Note", icon: "\uf249", card: true },
         { id: "gauge", name: "Gauge", icon: "\uf4bc", card: true,
-          styles: [["pentagon", "Pentagon"], ["cookie", "Cookie"], ["flower", "Flower"], ["clover", "Clover"], ["hexagon", "Hexagon"], ["sun", "Sun"], ["circle", "Circle"]],
+          styles: [["water", "Water"], ["pentagon", "Pentagon"], ["cookie", "Cookie"], ["flower", "Flower"], ["clover", "Clover"], ["hexagon", "Hexagon"], ["sun", "Sun"], ["circle", "Circle"]],
           optKey: "metric", opts: [["cpu", "CPU"], ["ram", "RAM"], ["gpu", "GPU"], ["temp", "CPU heat"], ["battery", "Battery"]], optDefault: "cpu" },
+        { id: "sky", name: "Sky", icon: "\uf0c2", card: true },
+        { id: "nowring", name: "Now playing", icon: "\uf001", card: true },
+        { id: "player", name: "Player", icon: "\uf144", card: true },
+        { id: "playpill", name: "Play button", icon: "\uf04b", card: true },
+        { id: "lyrics", name: "Lyrics", icon: "\uf075", card: true },
+        { id: "storage", name: "Storage", icon: "\uf0a0", card: true },
+        { id: "trio", name: "CPU · GPU · RAM", icon: "\uf2db", card: true },
         { id: "date", name: "Date", icon: "\uf073", card: true,
           styles: [["flower", "Flower"], ["cookie", "Cookie"], ["clover", "Clover"], ["sun", "Sun"], ["square", "Square"], ["circle", "Circle"]] }
     ]
@@ -151,6 +158,35 @@ ShellRoot {
         running: true
         repeat: true
         onTriggered: { if (!cfgProc.running) cfgProc.running = true }
+    }
+
+    // wavy progress (Settings > Appearance > Components keeps it in settings-app.json)
+    Trigger {
+        path: root.home + "/.config/rice/settings-app.json"
+        every: 4000
+        onContent: function(t) {
+            let j = {}
+            try { j = t.trim() !== "" ? JSON.parse(t) : {} } catch (e) { j = {} }
+            Look.wavy = j.wavy !== false
+            if (typeof j.accentShape === "string" && j.accentShape !== "") Look.shape = j.accentShape
+            Look.waveThick = j.progressThick !== undefined ? Math.max(2, Math.min(8, Number(j.progressThick))) : 4
+        }
+    }
+    // shell shadows (rice-shadows)
+    Trigger {
+        path: root.home + "/.config/rice/shadows.json"
+        every: 4000
+        onContent: function(t) {
+            let j = {}
+            try { j = t.trim() !== "" ? JSON.parse(t) : {} } catch (e) { j = {} }
+            Look.shadowsAll = j.enabled !== false
+            Look.shadowBar = j.bar !== false
+            Look.shadowPanels = j.panels !== false
+            Look.shadowWidgets = j.widgets !== false
+            Look.shadowNotif = j.notifications !== false
+            Look.shadowSize = j.size !== undefined ? j.size : 18
+            Look.shadowStrength = (j.strength !== undefined ? j.strength : 45) / 100
+        }
     }
 
     Process {
@@ -320,6 +356,62 @@ ShellRoot {
             shape: dateWin.sty !== "" ? dateWin.sty : (root.wc("date").style || "flower") }
     }
     WidgetWindow {
+        id: skyWin
+        wid: "sky"; wc: root.wc("sky"); active: root.on("sky"); editing: root.editing; hidden: root.hideWidgets
+        bw: root.sw; bh: root.sh; cw: 220; ch: 220; defX: 40; defY: 60
+        onMoved: function(id, x, y) { root.savePos(id, x, y) }
+        Component.onCompleted: root.reg(wid, skyWin)
+        SkyWidget { anchors.fill: parent; pal: skyWin.pal; bg: skyWin.bgv; running: root.on("sky") && !root.hideWidgets }
+    }
+    WidgetWindow {
+        id: nowringWin
+        wid: "nowring"; wc: root.wc("nowring"); active: root.on("nowring"); editing: root.editing; hidden: root.hideWidgets
+        bw: root.sw; bh: root.sh; cw: 210; ch: 210; defX: 380; defY: 380
+        onMoved: function(id, x, y) { root.savePos(id, x, y) }
+        Component.onCompleted: root.reg(wid, nowringWin)
+        NowRingWidget { anchors.fill: parent; pal: nowringWin.pal; bg: nowringWin.bgv; running: root.on("nowring") && !root.hideWidgets }
+    }
+    WidgetWindow {
+        id: playerWin
+        wid: "player"; wc: root.wc("player"); active: root.on("player"); editing: root.editing; hidden: root.hideWidgets
+        bw: root.sw; bh: root.sh; cw: 320; ch: 380; defX: root.sw - 360; defY: root.sh - 470
+        onMoved: function(id, x, y) { root.savePos(id, x, y) }
+        Component.onCompleted: root.reg(wid, playerWin)
+        PlayerWidget { anchors.fill: parent; pal: playerWin.pal; bg: playerWin.bgv; running: root.on("player") && !root.hideWidgets }
+    }
+    WidgetWindow {
+        id: playpillWin
+        wid: "playpill"; wc: root.wc("playpill"); active: root.on("playpill"); editing: root.editing; hidden: root.hideWidgets
+        bw: root.sw; bh: root.sh; cw: 430; ch: 150; defX: 440; defY: root.sh - 240
+        onMoved: function(id, x, y) { root.savePos(id, x, y) }
+        Component.onCompleted: root.reg(wid, playpillWin)
+        PlayPillWidget { anchors.fill: parent; pal: playpillWin.pal; bg: playpillWin.bgv; running: root.on("playpill") && !root.hideWidgets }
+    }
+    WidgetWindow {
+        id: lyricsWin
+        wid: "lyrics"; wc: root.wc("lyrics"); active: root.on("lyrics"); editing: root.editing; hidden: root.hideWidgets
+        bw: root.sw; bh: root.sh; cw: 320; ch: 320; defX: 40; defY: root.sh - 420
+        onMoved: function(id, x, y) { root.savePos(id, x, y) }
+        Component.onCompleted: root.reg(wid, lyricsWin)
+        LyricsWidget { anchors.fill: parent; pal: lyricsWin.pal; bg: lyricsWin.bgv; running: root.on("lyrics") && !root.hideWidgets }
+    }
+    WidgetWindow {
+        id: storageWin
+        wid: "storage"; wc: root.wc("storage"); active: root.on("storage"); editing: root.editing; hidden: root.hideWidgets
+        bw: root.sw; bh: root.sh; cw: 330; ch: 76; defX: 660; defY: 440
+        onMoved: function(id, x, y) { root.savePos(id, x, y) }
+        Component.onCompleted: root.reg(wid, storageWin)
+        StorageWidget { anchors.fill: parent; pal: storageWin.pal; bg: storageWin.bgv; running: root.on("storage") && !root.hideWidgets }
+    }
+    WidgetWindow {
+        id: trioWin
+        wid: "trio"; wc: root.wc("trio"); active: root.on("trio"); editing: root.editing; hidden: root.hideWidgets
+        bw: root.sw; bh: root.sh; cw: 330; ch: 104; defX: 660; defY: 530
+        onMoved: function(id, x, y) { root.savePos(id, x, y) }
+        Component.onCompleted: root.reg(wid, trioWin)
+        TrioWidget { anchors.fill: parent; pal: trioWin.pal; bg: trioWin.bgv; running: root.on("trio") && !root.hideWidgets }
+    }
+    WidgetWindow {
         id: vizWin
         wid: "visualizer"; wc: root.wc("visualizer"); active: root.on("visualizer"); editing: root.editing; hidden: root.hideWidgets
         free: true; passive: true
@@ -344,6 +436,8 @@ ShellRoot {
     VolumeMenu { }
     VolumeOsd { }
     GamePanel { }
+    Notifs { id: notifs }
+    ControlCenter { nf: notifs }
     WallPreview { path: dash.previewPath }
 
     Dock { dc: root.cfg.dock ? root.cfg.dock : ({}) }

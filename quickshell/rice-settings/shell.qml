@@ -314,7 +314,11 @@ FloatingWindow {
         { name: "Motion", icon: "\uf1e6" },
         { name: "Colors", icon: "\uf53f" },
         { name: "Components", icon: "\uf1de" },
-        { name: "Keyboard", icon: "\uf11c" }
+        { name: "Keyboard", icon: "\uf11c" },
+        { name: "Shapes", icon: "\uf5fd" },
+        { name: "Windows", icon: "\uf2d0" },
+        { name: "Language & region", icon: "\uf1ab" },
+        { name: "System", icon: "\uf108" }
     ]
 
 
@@ -323,12 +327,12 @@ FloatingWindow {
         { page: 0 },
         { sep: true },
         { group: "wall", name: "Wallpaper", icon: "\uf03e", sym: "wallpaper", pages: [18], caption: "Wallpaper and the colors it gives" },
-        { group: "look", name: "Appearance", icon: "\udb80\udfd8", sym: "palette", pages: [8, 21, 19, 22, 9, 14], caption: "Theme, colors, fonts, components, cursors and the dock" },
+        { group: "look", name: "Appearance", icon: "\udb80\udfd8", sym: "palette", pages: [8, 21, 19, 24, 22, 9, 14], caption: "Theme, colors, fonts, shapes, components, cursors and the dock" },
         { group: "motion", name: "Motion", icon: "\uf1e6", sym: "animation", pages: [20], caption: "How windows and Settings move" },
-        { group: "desk", name: "Desktop", icon: "\uf108", sym: "desktop_windows", pages: [12, 4, 11], caption: "Widgets, windows and the lock screen" },
+        { group: "desk", name: "Desktop", icon: "\uf108", sym: "desktop_windows", pages: [12, 25, 4, 11], caption: "Widgets, windows, Hyprland and the lock screen" },
         { group: "bar", name: "Bar & launcher", icon: "\uf0c9", sym: "toolbar", pages: [2, 3, 6, 7], caption: "The bar, the dashboard and the launcher" },
-        { group: "snd", name: "Sound & alerts", icon: "\uf028", sym: "graphic_eq", pages: [1, 10], caption: "Sounds and notifications" },
-        { group: "sys", name: "System", icon: "\uf013", sym: "settings", pages: [5, 23, 15], caption: "Recording, keyboard and services" },
+        { group: "snd", name: "Sound & language", icon: "\uf028", sym: "graphic_eq", pages: [1, 10, 26], caption: "Sounds, notifications, language and region" },
+        { group: "sys", name: "System", icon: "\uf013", sym: "settings", pages: [27, 5, 23, 15], caption: "This computer, recording, keyboard and services" },
         { group: "game", name: "Gaming", icon: "\uf11b", sym: "sports_esports", pages: [16], caption: "Play without distractions" },
         { group: "about", name: "About", icon: "\uf05a", sym: "info", pages: [17], caption: "Version, system and credits" }
     ]
@@ -394,13 +398,26 @@ FloatingWindow {
         }
         return { ys: ys, hs: hs, vis: vis, gbg: gbg, total: y }
     }
-    onPageChanged: { openFor(page); const n = Object.assign({}, lastIn); n[railOf(page)] = page; lastIn = n }
+    // where the next page comes from (Material 3 shared axis): tabs of one group slide sideways,
+    // another group comes up or down like the rail
+    property int prevPage: 0
+    property int navX: 0
+    property int navY: 0
+    function navFrom(a, b) {
+        const ra = railOf(a), rb = railOf(b)
+        if (ra === rb) {
+            const l = rail[ra].pages
+            navX = l.indexOf(b) >= l.indexOf(a) ? 1 : -1; navY = 0
+        } else { navX = 0; navY = rb >= ra ? 1 : -1 }
+    }
+    onPageChanged: { navFrom(prevPage, page); prevPage = page; openFor(page); const n = Object.assign({}, lastIn); n[railOf(page)] = page; lastIn = n }
     Component.onCompleted: openFor(page)
 
     readonly property string hyprTool: home + "/.local/bin/hypr-set"
     property var hv: ({})
     property var hb: ({ mode: "wallpaper", active: "#F6F5F4", inactive: "#444444" })
     property var ha: ({ enabled: true, speed: 100 })
+    property int hShadowInt: 60
 
     function hrun(args, msg) {
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/hypr-set\" \"$@\"", "_"].concat(args.map(a => String(a))))
@@ -513,6 +530,7 @@ FloatingWindow {
                     if (j.opts) win.hv = j.opts
                     if (j.borders) win.hb = j.borders
                     if (j.anim) win.ha = j.anim
+                    if (j.shadow_int !== undefined) win.hShadowInt = j.shadow_int
                 } catch (e) { }
             }
         }
@@ -534,7 +552,9 @@ FloatingWindow {
         Behavior on color { ColorAnimation { duration: 300 } }
         focus: true
         Keys.onEscapePressed: win.closeNow()
-        NumberAnimation on opacity { from: 0; to: 1; duration: 240; easing.type: Easing.OutCubic }
+        // opening: fades in and settles from a touch smaller (Material 3 emphasized-decelerate)
+        NumberAnimation on opacity { from: 0; to: 1; duration: 320; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.05, 0.7, 0.1, 1, 1, 1] }
+        NumberAnimation on scale { from: 0.965; to: 1; duration: 560; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.05, 0.7, 0.1, 1, 1, 1] }
 
         // falling stars over the whole window, behind everything (they stay put while the pages change)
         StarField {
@@ -564,12 +584,14 @@ FloatingWindow {
             y: 18
             width: 52
             height: 52
-            Rectangle {
+            // your shape (Appearance > Shapes), turning slowly behind your letter
+            Blob {
                 anchors.fill: parent
-                radius: width / 2
+                kind: Prefs.accentShape
                 color: M3.primaryContainer
-                T { anchors.centerIn: parent; text: win.userName.length ? win.userName[0].toUpperCase() : "?"; font.pixelSize: 20; font.bold: true; color: M3.inkPrimaryC }
+                RotationAnimator on rotation { from: 0; to: 360; duration: 40000; loops: Animation.Infinite; running: win.visible }
             }
+            T { anchors.centerIn: parent; text: win.userName.length ? win.userName[0].toUpperCase() : "?"; font.pixelSize: 20; font.bold: true; color: M3.inkPrimaryC }
             RoundImage {
                 id: avImg
                 anchors.fill: parent
@@ -638,7 +660,7 @@ FloatingWindow {
                             radius: 16
                             color: ri.on ? M3.secondaryContainer : M3.surfaceHigh
                             opacity: ri.on || rim.containsMouse ? 1 : 0
-                            Behavior on width { NumberAnimation { duration: M3.d(M3.bouncy ? 420 : 320); easing.type: M3.bouncy ? Easing.OutBack : Easing.OutCubic; easing.overshoot: 1.5 } }
+                            Behavior on width { NumberAnimation { duration: M3.d(M3.bouncy ? 420 : 320); easing.type: M3.bouncy ? Easing.OutBack : Easing.OutCubic; easing.overshoot: 1.5 * Prefs.bounce } }
                             Behavior on opacity { NumberAnimation { duration: 160 } }
                             Behavior on color { ColorAnimation { duration: 200 } }
                         }
@@ -809,8 +831,8 @@ FloatingWindow {
                 height: 3
                 radius: 1.5
                 color: M3.primary
-                Behavior on x { NumberAnimation { duration: M3.d(M3.bouncy ? 420 : 320); easing.type: M3.bouncy ? Easing.OutBack : Easing.OutCubic; easing.overshoot: 1.2 } }
-                Behavior on width { NumberAnimation { duration: M3.d(M3.bouncy ? 420 : 320); easing.type: M3.bouncy ? Easing.OutBack : Easing.OutCubic; easing.overshoot: 1.2 } }
+                Behavior on x { NumberAnimation { duration: M3.d(M3.bouncy ? 420 : 320); easing.type: M3.bouncy ? Easing.OutBack : Easing.OutCubic; easing.overshoot: 1.2 * Prefs.bounce } }
+                Behavior on width { NumberAnimation { duration: M3.d(M3.bouncy ? 420 : 320); easing.type: M3.bouncy ? Easing.OutBack : Easing.OutCubic; easing.overshoot: 1.2 * Prefs.bounce } }
             }
             Rectangle { x: 0; y: 44; width: parent.width; height: 1; color: M3.outlineVariant }
         }
@@ -824,29 +846,33 @@ FloatingWindow {
             clip: true
 
 
-            PageSlot { idx: 0; cur: win.page; HomePage { id: homePage; anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 1; cur: win.page; SoundsPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 2; cur: win.page; BarPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 3; cur: win.page; BarLayoutPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 4; cur: win.page; HyprlandPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 5; cur: win.page; RecorderPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 6; cur: win.page; DashboardPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 7; cur: win.page; RofiPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 8; cur: win.page; ThemePage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 9; cur: win.page; CursorsPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 10; cur: win.page; NotificationsPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 11; cur: win.page; IdlePage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 12; cur: win.page; DesktopPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 14; cur: win.page; InterfacePage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 15; cur: win.page; ServicesPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 16; cur: win.page; GamingPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 17; cur: win.page; AboutPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 18; cur: win.page; WallpaperPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 19; cur: win.page; FontsPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 20; cur: win.page; MotionPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 21; cur: win.page; ColorsPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 22; cur: win.page; ComponentsPage { anchors.fill: parent; ctl: win } }
-            PageSlot { idx: 23; cur: win.page; KeyboardPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 0; cur: win.page; HomePage { id: homePage; anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 1; cur: win.page; SoundsPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 2; cur: win.page; BarPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 3; cur: win.page; BarLayoutPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 4; cur: win.page; HyprlandPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 5; cur: win.page; RecorderPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 6; cur: win.page; DashboardPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 7; cur: win.page; RofiPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 8; cur: win.page; ThemePage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 9; cur: win.page; CursorsPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 10; cur: win.page; NotificationsPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 11; cur: win.page; IdlePage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 12; cur: win.page; DesktopPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 14; cur: win.page; InterfacePage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 15; cur: win.page; ServicesPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 16; cur: win.page; GamingPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 17; cur: win.page; AboutPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 18; cur: win.page; WallpaperPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 19; cur: win.page; FontsPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 20; cur: win.page; MotionPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 21; cur: win.page; ColorsPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 22; cur: win.page; ComponentsPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 23; cur: win.page; KeyboardPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 24; cur: win.page; ShapesPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 25; cur: win.page; WindowsPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 26; cur: win.page; RegionPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 27; cur: win.page; SystemPage { anchors.fill: parent; ctl: win } }
         }
 
         // results: the setting, and where it is (page > section)

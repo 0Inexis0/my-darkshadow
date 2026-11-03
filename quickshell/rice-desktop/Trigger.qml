@@ -32,7 +32,7 @@ Item {
             if (o !== "") tr.last = o
             tr.primed = true
         }
-        onLoadFailed: tr.primed = true
+        onLoadFailed: { if (tr.prevText !== "") { tr.prevText = ""; tr.content("") } tr.primed = true }
     }
     Timer { interval: tr.every; running: tr.path !== ""; repeat: true; onTriggered: fv.reload() }
 }

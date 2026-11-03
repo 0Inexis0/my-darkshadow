@@ -44,7 +44,7 @@ Item {
                             border.width: parent.on ? 0 : 2; border.color: M3.outline
                             Behavior on color { ColorAnimation { duration: 140 } }
                             Icon { anchors.centerIn: parent; name: "check"; glyph: ""; size: 14; color: M3.inkPrimary; scale: parent.parent.on ? 1 : 0
-                                Behavior on scale { NumberAnimation { duration: M3.d(220); easing.type: M3.springy; easing.overshoot: 2 } } }
+                                Behavior on scale { NumberAnimation { duration: M3.d(220); easing.type: M3.springy; easing.overshoot: 2 * Prefs.bounce } } }
                             MouseArea { anchors.fill: parent; anchors.margins: -6; cursorShape: Qt.PointingHandCursor; onClicked: page[modelData.k] = !page[modelData.k] }
                         }
                         T { text: modelData.n; font.pixelSize: 13; anchors.verticalCenter: parent.verticalCenter }
@@ -61,7 +61,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             color: "transparent"; border.width: 2; border.color: page.radioSel === index ? M3.primary : M3.outline
                             Rectangle { anchors.centerIn: parent; width: page.radioSel === index ? 10 : 0; height: width; radius: width / 2; color: M3.primary
-                                Behavior on width { NumberAnimation { duration: M3.d(220); easing.type: M3.springy; easing.overshoot: 2 } } }
+                                Behavior on width { NumberAnimation { duration: M3.d(220); easing.type: M3.springy; easing.overshoot: 2 * Prefs.bounce } } }
                             MouseArea { anchors.fill: parent; anchors.margins: -6; cursorShape: Qt.PointingHandCursor; onClicked: page.radioSel = index }
                         }
                         T { text: modelData; font.pixelSize: 13; anchors.verticalCenter: parent.verticalCenter }
@@ -98,14 +98,13 @@ Item {
             }
         }
 
-        // ---------- shape ----------
-        SectionTitle { text: "Shape"; sub: "How round cards, buttons and fields are in Settings." }
-        SegRow {
-            label: "Corners"
-            desc: "Round is the Material 3 look"
-            options: [{ label: "Round", value: "round" }, { label: "Soft", value: "soft" }, { label: "Square", value: "square" }]
-            current: Prefs.shape
-            onChosen: function(x) { Prefs.setShape(x); page.ctl.status = "Corners: " + x }
+        // ---------- shape: now on its own page ----------
+        SettingRow {
+            label: "Corners and shapes"
+            desc: "How round things are, and your shape: Appearance > Shapes"
+            reserved: 140
+            Btn { anchors.right: parent.right; anchors.rightMargin: 14; anchors.verticalCenter: parent.verticalCenter
+                text: "Shapes"; sym: "interests"; icon: ""; onClicked: page.ctl.page = 24 }
         }
 
         // ---------- sliders ----------
@@ -131,6 +130,11 @@ Item {
 
         // ---------- progress ----------
         SectionTitle { text: "Progress indicators"; sub: "Music, loaders and gauges. The wave calms down near 0 % and 100 %." }
+        Row {
+            spacing: 8
+            Btn { text: "Reset components"; sym: "restart_alt"; icon: ""; variant: "text"
+                onClicked: { Prefs.setSwitchIcons(true); Prefs.setSliderThick(1); Prefs.setWavy(true); Prefs.setProgressThick(4) } }
+        }
         ToggleRow { label: "Wavy progress"; desc: "Off: flat lines everywhere"; checked: Prefs.wavy; onToggled: function(v) { Prefs.setWavy(v) } }
         SliderRow {
             label: "Thickness"
@@ -184,7 +188,7 @@ Item {
                 Rectangle {
                     width: 56; height: 56; radius: fm.pressed ? 28 : 16 * M3.shapeK
                     color: M3.primaryContainer
-                    Behavior on radius { NumberAnimation { duration: M3.d(260); easing.type: M3.springy; easing.overshoot: 1.6 } }
+                    Behavior on radius { NumberAnimation { duration: M3.d(260); easing.type: M3.springy; easing.overshoot: 1.6 * Prefs.bounce } }
                     Icon { anchors.centerIn: parent; name: "edit"; glyph: ""; size: 22; color: M3.inkPrimaryC }
                     MouseArea { id: fm; anchors.fill: parent; cursorShape: Qt.PointingHandCursor }
                 }

@@ -62,6 +62,14 @@ def play(name, vol):
 
 
 def dnd():
+    # the shell shows notifications itself (rice-cc engine shell): its own Do Not Disturb, and no swaync-client
+    # call (that would start swaync again through D-Bus)
+    try:
+        cc = json.load(open(HOME + "/.config/rice/cc.json"))
+        if cc.get("engine") == "shell":
+            return cc.get("dnd") is True
+    except Exception:
+        pass
     if not shutil.which("swaync-client"):
         return False
     try:

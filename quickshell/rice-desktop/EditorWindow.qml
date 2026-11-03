@@ -259,7 +259,7 @@ PanelWindow {
         readonly property real fy: ed.selWin ? ed.selWin.py : 0
         readonly property real fw: ed.selWin ? ed.selWin.dispW : 0
         readonly property real fh: ed.selWin ? ed.selWin.dispH : 0
-        readonly property bool below: fy + fh + 16 + height < ed.height - 130
+        readonly property bool below: fy + fh + 16 + height < ed.height - 60
         x: Math.max(12, Math.min(ed.width - width - 12, fx + fw / 2 - width / 2))
         y: below ? fy + fh + 16 : Math.max(12, fy - height - 16)
         Behavior on y { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
@@ -331,113 +331,43 @@ PanelWindow {
         }
     }
 
-    // ---------- hint ----------
+    // ---------- edit mode: the panel on the left, the way out on the right ----------
+    // a calm frame around the screen while you edit
     Rectangle {
-        anchors.horizontalCenter: parent.horizontalCenter
-        y: 18
-        width: hintRow.implicitWidth + 28
-        height: 34
-        radius: 17
-        color: Qt.rgba(0.06, 0.06, 0.07, 0.88)
-        border.width: 1
-        border.color: Qt.rgba(1, 1, 1, 0.08)
-        Row {
-            id: hintRow
-            anchors.centerIn: parent
-            spacing: 10
-            T { kind: "icon"; text: ""; font.pixelSize: 13; anchors.verticalCenter: parent.verticalCenter }
-            T { text: "Editing widgets  ·  drag to move  ·  pull a corner to resize  ·  arrows nudge  ·  Esc to finish"; font.pixelSize: 12; color: "#d0d0d4"; anchors.verticalCenter: parent.verticalCenter }
-        }
+        anchors.fill: parent; anchors.margins: 8
+        radius: 28
+        color: "transparent"
+        border.width: 2; border.color: Qt.rgba(1, 1, 1, 0.12 * panel.et)
     }
-
-    // ---------- widget bar ----------
+    EditPanel {
+        id: panel
+        ed: ed
+        x: 20; anchors.verticalCenter: parent.verticalCenter
+        shown: ed.visible
+        z: 30
+    }
     Rectangle {
-        id: bar
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 24
-        width: barRow.implicitWidth + 28
-        height: 92
-        radius: 22
-        color: Qt.rgba(0.05, 0.05, 0.06, 0.94)
-        border.width: 1
-        border.color: Qt.rgba(1, 1, 1, 0.08)
-        // stop clicks from reaching the background (which deselects)
-        MouseArea { anchors.fill: parent }
-
+        id: exitBtn
+        anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 22
+        width: exitRow.implicitWidth + 32; height: 42; radius: em.pressed ? 14 : 21
+        color: em.containsMouse ? Qt.rgba(1, 1, 1, 0.92) : Qt.rgba(0.06, 0.06, 0.07, 0.85)
+        border.width: 1; border.color: Qt.rgba(1, 1, 1, 0.1)
+        opacity: panel.et; transform: Translate { y: (1 - panel.et) * -20 }
+        Behavior on color { ColorAnimation { duration: 160 } }
+        Behavior on radius { NumberAnimation { duration: 200 } }
         Row {
-            id: barRow
-            anchors.centerIn: parent
-            spacing: 6
-            Repeater {
-                model: ed.cat
-                delegate: Item {
-                    width: 66
-                    height: 72
-                    readonly property bool on: ed.root.enabledOf(modelData.id)
-                    readonly property bool picked: ed.sel === modelData.id
-                    Rectangle {
-                        id: ib
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        y: 2
-                        width: 44; height: 44; radius: 13
-                        color: parent.picked ? "#F6F5F4" : (wm.containsMouse ? "#2a2a2e" : (parent.on ? "#202024" : "#141416"))
-                        border.width: 1
-                        border.color: parent.on ? Qt.rgba(1, 1, 1, 0.14) : Qt.rgba(1, 1, 1, 0.05)
-                        scale: wm.pressed ? 0.92 : (wm.containsMouse ? 1.06 : 1)
-                        Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-                        Behavior on color { ColorAnimation { duration: 120 } }
-                        T { kind: "icon"; anchors.centerIn: parent; text: modelData.icon; font.pixelSize: 18
-                            color: parent.parent.picked ? "#0d0d0d" : (parent.parent.on ? "#F6F5F4" : "#8a8a90") }
-                        // + badge for widgets not on the desktop yet
-                        Rectangle {
-                            visible: !parent.parent.on && wm.containsMouse
-                            width: 16; height: 16; radius: 8
-                            x: parent.width - 11; y: -5
-                            color: "#F6F5F4"
-                            T { anchors.centerIn: parent; text: "+"; font.pixelSize: 12; font.bold: true; color: "#0d0d0d" }
-                        }
-                    }
-                    T {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        y: 50
-                        width: parent.width
-                        horizontalAlignment: Text.AlignHCenter
-                        elide: Text.ElideRight
-                        text: modelData.name
-                        font.pixelSize: 10
-                        color: parent.on ? "#e8e8ec" : "#7a7a80"
-                    }
-                    Rectangle {
-                        visible: parent.on
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        y: 66; width: 4; height: 4; radius: 2
-                        color: "#F6F5F4"
-                    }
-                    MouseArea {
-                        id: wm
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: ed.pick(modelData.id)
-                    }
-                }
-            }
-            Rectangle { width: 1; height: 52; color: Qt.rgba(1, 1, 1, 0.08); anchors.verticalCenter: parent.verticalCenter }
-            EdIcon { big: true; icon: ""; tip: "Snap to grid"; active: ed.grid; anchors.verticalCenter: parent.verticalCenter; onClicked: ed.grid = !ed.grid }
-            EdIcon { big: true; icon: ""; tip: "Reset all positions"; anchors.verticalCenter: parent.verticalCenter; onClicked: { ed.root.resetAll(); ed.sel = "" } }
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                width: doneT.implicitWidth + 34
-                height: 40
-                radius: 12
-                color: dm.containsMouse ? "#ffffff" : "#F6F5F4"
-                scale: dm.pressed ? 0.95 : 1
-                Behavior on scale { NumberAnimation { duration: 90 } }
-                T { id: doneT; anchors.centerIn: parent; text: "Done"; font.pixelSize: 13; font.bold: true; color: "#0d0d0d" }
-                MouseArea { id: dm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ed.root.finishEditing() }
-            }
+            id: exitRow; anchors.centerIn: parent; spacing: 8
+            MIcon { size: 17; name: "logout"; glyph: "\uf08b"; color: em.containsMouse ? "#0d0d0d" : "#F6F5F4"; anchors.verticalCenter: parent.verticalCenter }
+            T { text: "Exit edit mode"; font.pixelSize: 13; font.weight: Font.Medium; color: em.containsMouse ? "#0d0d0d" : "#F6F5F4"; anchors.verticalCenter: parent.verticalCenter }
         }
+        MouseArea { id: em; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ed.root.finishEditing() }
+    }
+    // the keys, once, quietly
+    T {
+        anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.bottom; anchors.bottomMargin: 20
+        text: "Drag to move  ·  pull a corner to resize  ·  arrows nudge  ·  Delete removes  ·  Esc to finish"
+        font.pixelSize: 12; color: Qt.rgba(1, 1, 1, 0.55)
+        opacity: panel.et
     }
 
     // ---------- small parts ----------

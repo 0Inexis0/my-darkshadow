@@ -55,7 +55,7 @@ Singleton {
     readonly property color stageBottom: surfaceLow
 
     // shape: corner sizes
-    readonly property real shapeK: Prefs.shape === "square" ? 0.4 : (Prefs.shape === "soft" ? 0.7 : 1)
+    readonly property real shapeK: Prefs.cornerScale
     readonly property int rS: Math.round(10 * shapeK)
     readonly property int rM: Math.round(16 * shapeK)
     readonly property int rL: Math.round(24 * shapeK)
