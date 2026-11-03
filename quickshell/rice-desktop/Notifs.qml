@@ -7,7 +7,7 @@ import QtQuick
 // control center shows. Their look follows Settings > Notifications (~/.config/rice/notify.json): theme,
 // transparency, blur, place, width, how long they stay, corners and text size. With swaync all of this sleeps.
 Scope {
-    id: nf
+    id: nfy
     property bool shellMode: false
     property bool dnd: false
     readonly property var list: srvLoader.item ? srvLoader.item.trackedNotifications.values : []
@@ -29,7 +29,7 @@ Scope {
     readonly property int radius: v("radius", 22) + 4
     readonly property int fontSize: v("font_size", 13)
     readonly property bool images: v("images", true)
-    NPal { id: popPal; theme: nf.theme; alpha: nf.popupAlpha }
+    NPal { id: popPal; theme: nfy.theme; alpha: nfy.popupAlpha }
     readonly property var pal: popPal
 
     Trigger {
@@ -38,82 +38,111 @@ Scope {
         onContent: function(t) {
             let j = {}
             try { j = t.trim() !== "" ? JSON.parse(t) : {} } catch (e) { j = {} }
-            nf.shellMode = j.engine === "shell"
-            nf.dnd = j.dnd === true
+            nfy.shellMode = j.engine === "shell"
+            nfy.dnd = j.dnd === true
         }
     }
     Trigger {
         path: Quickshell.env("HOME") + "/.config/rice/notify.json"
         every: 4000
-        onContent: function(t) { try { nf.ns = t.trim() !== "" ? JSON.parse(t) : {} } catch (e) { } }
+        onContent: function(t) { try { nfy.ns = t.trim() !== "" ? JSON.parse(t) : {} } catch (e) { } }
     }
     // the server starts a moment after the switch, so swaync has let go of the notification name
     property bool srvOn: false
     onShellModeChanged: { if (!shellMode) srvOn = false; else srvT.restart() }
-    Timer { id: srvT; interval: 1500; onTriggered: nf.srvOn = nf.shellMode }
+    Timer { id: srvT; interval: 1500; onTriggered: nfy.srvOn = nfy.shellMode }
     Loader {
         id: srvLoader
-        active: nf.srvOn
+        active: nfy.srvOn
         source: "NotifServer.qml"
     }
     Connections {
         target: srvLoader.item
         ignoreUnknownSignals: true
-        function onArrived(n) { nf.arrive(n) }
+        function onArrived(n) { nfy.arrive(n) }
     }
 
     function urgent(n) { return n.urgency === 2 }
+    // every pop-up is {key, n}: pop-ups are found by their number, so closing one never depends on the
+    // notification object (it is gone as soon as it is dismissed)
+    property int seq: 0
+    property var drops: []             // keys to dismiss for good once they are gone
     function arrive(n) {
-        if (nf.dnd && !urgent(n)) return
-        const p = pops.slice(); p.unshift(n)
-        if (p.length > 4) leave(p[p.length - 1])
+        if (nfy.dnd && !urgent(n)) return
+        const e = { key: ++nfy.seq, n: n }
+        const p = pops.slice(); p.unshift(e)
         pops = p
+        if (p.length > 4) leave(p[p.length - 1].key)
+        try { n.closed.connect(function() { nfy.leave(e.key) }) } catch (x) { }
         Quickshell.execDetached(["bash", "-c", "SWAYNC_APP_NAME=\"$1\" \"$HOME/.local/bin/rice-sound\" notify", "_", n.appName || ""])
     }
-    // a pop-up first plays its way out, then leaves the list
-    function leave(n) {
-        if (leaving.indexOf(n) >= 0 || pops.indexOf(n) < 0) return
-        leaving = leaving.concat([n])
+    function find(key) { for (let i = 0; i < pops.length; i++) if (pops[i].key === key) return pops[i]; return null }
+    // a pop-up first plays its way out, then leaves the list (and only then is the notification let go)
+    function leave(key, andDismiss) {
+        const e = find(key)
+        if (!e) return
+        if (andDismiss && drops.indexOf(key) < 0) drops = drops.concat([key])
+        if (leaving.indexOf(key) >= 0) return
+        leaving = leaving.concat([key])
         goneT.restart()
     }
     Timer {
-        id: goneT; interval: 260
-        onTriggered: { const l = nf.leaving; nf.pops = nf.pops.filter(function(x) { return l.indexOf(x) < 0 }); nf.leaving = [] }
+        id: goneT; interval: 280
+        onTriggered: {
+            const l = nfy.leaving
+            const gone = nfy.pops.filter(function(x) { return l.indexOf(x.key) >= 0 })
+            nfy.pops = nfy.pops.filter(function(x) { return l.indexOf(x.key) < 0 })
+            nfy.leaving = []
+            const d = nfy.drops
+            nfy.drops = d.filter(function(k) { return l.indexOf(k) < 0 })
+            gone.forEach(function(x) { if (d.indexOf(x.key) >= 0) { try { x.n.dismiss() } catch (e) { } } })
+        }
     }
-    function unpop(n) { leave(n) }
-    function dismiss(n) { leave(n); try { n.dismiss() } catch (e) { } }
-    function clearAll() { const l = list.slice(); pops.forEach(function(x) { nf.leave(x) }); l.forEach(function(n) { try { n.dismiss() } catch (e) { } }) }
+    function unpop(key) { leave(key, false) }
+    function dismissPop(key) { leave(key, true) }
+    // from the control center's list
+    function dismiss(n) {
+        for (let i = 0; i < pops.length; i++) if (pops[i].n === n) { leave(pops[i].key, true); return }
+        try { n.dismiss() } catch (e) { }
+    }
+    function clearAll() {
+        const l = list.slice()
+        pops.forEach(function(x) { nfy.leave(x.key) })
+        l.forEach(function(n) { try { n.dismiss() } catch (e) { } })
+    }
     function setDnd(on) { dnd = on; Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-cc\" dnd " + (on ? "on" : "off")]) }
 
     // ---------- the pop-ups ----------
     PanelWindow {
         id: popWin
-        visible: nf.shellMode && nf.pops.length > 0
+        visible: nfy.shellMode && nfy.pops.length > 0
         color: "transparent"
-        anchors { top: nf.posY === "top"; bottom: nf.posY === "bottom"; right: nf.posX === "right"; left: nf.posX === "left" }
+        anchors { top: nfy.posY === "top"; bottom: nfy.posY === "bottom"; right: nfy.posX === "right"; left: nfy.posX === "left" }
         margins { top: 50; bottom: 10; left: 4; right: 4 }
-        implicitWidth: nf.popW + 40
+        implicitWidth: nfy.popW + 40
         implicitHeight: Math.max(10, popCol.implicitHeight + 40)
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "rice-notify-popup"
         Column {
             id: popCol
-            x: 20; y: nf.posY === "top" ? 16 : parent.height - height - 16
+            x: 20; y: nfy.posY === "top" ? 16 : parent.height - height - 16
             width: parent.width - 40
             spacing: 10
             // the others slide softly to make room
             move: Transition { NumberAnimation { properties: "y"; duration: 460; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
             Repeater {
-                model: nf.pops
+                model: nfy.pops
                 delegate: NotifCard {
+                    required property var modelData
+                    readonly property int key: modelData.key
                     width: popCol.width
-                    n: modelData
-                    nf: nf
+                    n: modelData.n
+                    nf: nfy
                     popup: true
-                    out: nf.leaving.indexOf(modelData) >= 0
-                    onClosed: nf.dismiss(modelData)
-                    onTimedOut: nf.unpop(modelData)
+                    out: nfy.leaving.indexOf(key) >= 0
+                    onClosed: nfy.dismissPop(key)
+                    onTimedOut: nfy.unpop(key)
                 }
             }
         }

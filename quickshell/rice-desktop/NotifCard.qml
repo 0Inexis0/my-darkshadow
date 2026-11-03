@@ -63,26 +63,38 @@ Item {
     }
     HoverHandler { id: hov }
 
-    // the icon, in your shape
+    // the icon, in your shape; a picture (a profile photo, an avatar) fills a circle instead
+    readonly property string iconSrc: {
+        const n = nc.n
+        if (!n) return ""
+        if (n.appIcon && n.appIcon !== "") return n.appIcon.indexOf("/") === 0 ? "file://" + n.appIcon : Quickshell.iconPath(n.appIcon, true)
+        return Quickshell.iconPath((n.appName || "dialog-information").toLowerCase(), true)
+    }
+    readonly property bool picture: {
+        const a = nc.n && nc.n.appIcon ? String(nc.n.appIcon) : ""
+        return a.indexOf("/") === 0 || a.indexOf("file:") === 0 || a.indexOf("image://") === 0
+    }
     Item {
         id: ic
         x: 16; y: 16; width: 46; height: 46
-        Blob { anchors.fill: parent; kind: Look.shape; color: nc.urgent ? Qt.rgba(1, 0.42, 0.42, 0.35) : nc.pal.container
+        Blob { anchors.fill: parent; kind: Look.shape; visible: !nc.picture || icImg.status !== Image.Ready
+            color: nc.urgent ? Qt.rgba(1, 0.42, 0.42, 0.35) : nc.pal.container
             RotationAnimator on rotation { from: 0; to: 360; duration: 30000; loops: Animation.Infinite; running: nc.popup && !Look.lite } }
         Image {
             id: icImg
             anchors.centerIn: parent
             width: 26; height: 26
             sourceSize.width: 64; sourceSize.height: 64
-            source: {
-                const n = nc.n
-                if (!n) return ""
-                if (n.appIcon && n.appIcon !== "") return n.appIcon.indexOf("/") === 0 ? "file://" + n.appIcon : Quickshell.iconPath(n.appIcon, true)
-                return Quickshell.iconPath((n.appName || "dialog-information").toLowerCase(), true)
-            }
-            visible: status === Image.Ready
+            source: nc.iconSrc
+            visible: !nc.picture && status === Image.Ready
         }
-        MIcon { anchors.centerIn: parent; size: 20; filled: true; name: nc.urgent ? "warning" : "notifications"; glyph: ""
+        RoundImage {
+            anchors.fill: parent
+            visible: nc.picture && icImg.status === Image.Ready
+            source: nc.picture ? nc.iconSrc : ""
+            cornerRadius: width / 2
+        }
+        MIcon { anchors.centerIn: parent; size: 20; filled: true; name: nc.urgent ? "warning" : "notifications"; glyph: ""
             color: nc.urgent ? "#FFB4AB" : nc.pal.inkContainer; visible: icImg.status !== Image.Ready }
     }
     Column {
