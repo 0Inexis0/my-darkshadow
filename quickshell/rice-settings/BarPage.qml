@@ -144,15 +144,15 @@ Item {
                         border.width: 1; border.color: Qt.rgba(1, 1, 1, 0.1)
                     }
                     readonly property real edge: prev.sty === "island" ? 14 : (prev.sty === "flat" ? 12 : 0)
-                    PZone { x: pbar.edge; mods: page.lay.left || []; soft: prev.sty === "islands" || prev.sty === "notch" }
+                    PZone { x: pbar.edge; mods: page.lay.left || []; soft: prev.sty === "islands" || prev.sty === "notch" || prev.sty === "google" }
                     // notch: the middle grows out of the screen edge
-                    PZone { x: (pbar.width - width) / 2; mods: page.lay.center || []; soft: prev.sty === "islands" || prev.sty === "notch"
+                    PZone { x: (pbar.width - width) / 2; mods: page.lay.center || []; soft: prev.sty === "islands" || prev.sty === "notch" || prev.sty === "google"
                         readonly property bool notch: prev.sty === "notch"
                         y: notch ? (prev.atTop ? -10 : 0) : 0
                         height: notch ? prev.h + 10 : prev.h
                         width: implicitWidth + (notch ? 30 : 0)
                         radius: notch ? 14 : height / 2 }
-                    PZone { x: pbar.width - width - pbar.edge; mods: page.lay.right || []; soft: prev.sty === "islands" || prev.sty === "notch" }
+                    PZone { x: pbar.width - width - pbar.edge; mods: page.lay.right || []; soft: prev.sty === "islands" || prev.sty === "notch" || prev.sty === "google" }
                 }
                 T { text: "Preview"; font.pixelSize: 10; color: M3.inkDim; anchors.right: parent.right; anchors.rightMargin: 12; anchors.bottom: parent.bottom; anchors.bottomMargin: 8 }
             }
@@ -175,8 +175,8 @@ Item {
             T { kind: "title"; text: "Style"; font.pixelSize: 16; font.bold: true; topPadding: 10 }
             SegRow {
                 label: "Bar style"
-                desc: "Flat, one pill, an island per side, a pill per module, or a notch that grows out of the edge"
-                options: [ { label: "Flat", value: "flat" }, { label: "Island", value: "island" }, { label: "Islands", value: "islands" }, { label: "Pills", value: "pills" }, { label: "Notch", value: "notch" } ]
+                desc: "Flat, one pill, an island per side, a pill per module, a notch that grows out of the edge, or Google (tonal pills in your theme color)"
+                options: [ { label: "Flat", value: "flat" }, { label: "Island", value: "island" }, { label: "Islands", value: "islands" }, { label: "Pills", value: "pills" }, { label: "Notch", value: "notch" }, { label: "Google", value: "google" } ]
                 current: page.v("style", "islands")
                 onChosen: function(x) { page.setv("style", x) }
             }

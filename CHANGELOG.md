@@ -1,5 +1,8 @@
 # Changelog
 
+## V3.28
+- New bar style: Google. Tonal pills in your theme color, the launcher and the active workspace (with its number) in your key color, the time and date in a tinted pill of their own, soft highlights when you point at a module. Settings > DarkShadow bar > Style, or Edit mode > Bar
+
 ## V3.27
 - Bug fixes
 

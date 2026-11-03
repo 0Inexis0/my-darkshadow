@@ -2,7 +2,7 @@
 """rice-bar: the DarkShadow bar, the Quickshell bar of this shell (Settings > DarkShadow bar and Bar layout).
 
   rice-bar state                  JSON for the settings app (options and layout)
-  rice-bar set KEY VALUE          style (flat|island|islands|pills|notch), autohide, shadow, position (top|bottom), height, opacity,
+  rice-bar set KEY VALUE          style (flat|island|islands|pills|notch|google), autohide, shadow, position (top|bottom), height, opacity,
                                   workspaces, seconds, ws_style (dots|pacman|letters|numbers), logo (auto|apps|arch|gentoo|...)
   rice-bar layout-set JSON        {"left": [...], "center": [...], "right": [...]}
   rice-bar layout-add ZONE NAME [BEFORE]   put a module on the bar (ZONE left|center|right)
@@ -23,7 +23,7 @@ DIR = HOME + "/.config/rice"
 CFG = DIR + "/bar.json"
 DEFAULTS = {"enabled": True, "style": "islands", "position": "top", "height": 38, "workspaces": 5,
             "seconds": False, "opacity": 0.72, "ws_style": "dots", "logo": "auto", "autohide": False, "shadow": True}
-CHOICES = {"style": ("flat", "island", "islands", "pills", "notch"), "position": ("top", "bottom"),
+CHOICES = {"style": ("flat", "island", "islands", "pills", "notch", "google"), "position": ("top", "bottom"),
            "ws_style": ("dots", "pacman", "letters", "numbers"),
            "logo": ("auto", "apps", "tux", "arch", "gentoo", "fedora", "debian", "ubuntu", "nixos", "cachyos", "endeavouros",
                     "manjaro", "linuxmint", "opensuse", "void", "alpine", "pop", "kali", "centos", "raspbian",

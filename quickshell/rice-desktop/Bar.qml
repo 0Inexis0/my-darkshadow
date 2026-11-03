@@ -11,7 +11,8 @@ import QtQuick
 
 // The DarkShadow bar: the bar of this shell, made in Quickshell (Settings > DarkShadow bar and Bar layout).
 // Styles: flat, island (one pill), islands (a pill for each side), pills (a pill for each module), notch (the middle
-// grows out of the screen edge, the sides are islands). Auto-hide: it slides away and a thin strip at the edge brings it back.
+// grows out of the screen edge, the sides are islands), google (Material 3: tonal pills in your theme color, the
+// launcher and the active workspace in your key color, the clock in its own tinted pill, soft state layers on hover). Auto-hide: it slides away and a thin strip at the edge brings it back.
 // What sits where comes from ~/.config/rice/bar.json (layout: left, center, right).
 PanelWindow {
     id: bar
@@ -19,8 +20,11 @@ PanelWindow {
     // ---------- settings (~/.config/rice/bar.json) ----------
     property var bc: ({})
     readonly property bool on: bc.enabled !== false     // no bar.json yet (a fresh install or an update) = on
-    readonly property string sty: bc.style === "flat" || bc.style === "islands" || bc.style === "pills" || bc.style === "notch" ? bc.style : "island"
+    readonly property string sty: bc.style === "flat" || bc.style === "islands" || bc.style === "pills" || bc.style === "notch" || bc.style === "google" ? bc.style : "island"
     readonly property bool notch: sty === "notch"
+    readonly property bool goo: sty === "google"
+    // the Google style's colors: tonal, made from your theme color (the same as the control center)
+    NPal { id: gp; theme: "shell"; alpha: Math.min(1, bar.alpha + 0.14) }
     readonly property bool hideOn: bc.autohide === true
     readonly property bool shadowOn: bc.shadow !== false && Look.shadows && Look.shadowBar
     // auto-hide: shown while the pointer is on it (and a moment after it leaves)
@@ -58,11 +62,11 @@ PanelWindow {
         }
         return "tux"
     }
-    readonly property color fg: "#F6F5F4"
-    readonly property color dim: Qt.rgba(0.965, 0.961, 0.957, 0.66)
-    readonly property color line: Qt.rgba(1, 1, 1, 0.09)
+    readonly property color fg: goo ? gp.fg : "#F6F5F4"
+    readonly property color dim: goo ? gp.dim : Qt.rgba(0.965, 0.961, 0.957, 0.66)
+    readonly property color line: goo ? "transparent" : Qt.rgba(1, 1, 1, 0.09)
     readonly property real alpha: Look.flat ? 1 : (bc.opacity !== undefined ? bc.opacity : 0.72)
-    readonly property color bg: Qt.rgba(0.05, 0.05, 0.05, alpha)
+    readonly property color bg: goo ? gp.surface : Qt.rgba(0.05, 0.05, 0.05, alpha)
     readonly property real gap: floating ? 8 : 0
     property string cfgText: ""
     readonly property string home: Quickshell.env("HOME")
@@ -212,12 +216,17 @@ PanelWindow {
     }
 
     Component { id: mLauncher
-        Item { property bool shown: true; width: 22; height: bar.barH
-            MIcon { visible: bar.logoKey === "apps"; anchors.centerIn: parent; name: "apps"; glyph: String.fromCodePoint(0xF003B); size: 18; color: lm.containsMouse ? bar.fg : bar.dim
+        Item { property bool shown: true; width: bar.goo ? bar.barH - 8 : 22; height: bar.barH
+            // Google: the launcher sits in a circle of your key color
+            Rectangle { visible: bar.goo; anchors.centerIn: parent; width: parent.width; height: width; radius: lm.pressed ? width * 0.3 : width / 2
+                color: gp.primary; scale: lm.containsMouse ? 1.06 : 1
+                Behavior on radius { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
+                Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutBack } } }
+            MIcon { visible: bar.logoKey === "apps"; anchors.centerIn: parent; name: "apps"; glyph: String.fromCodePoint(0xF003B); size: 18; color: bar.goo ? gp.inkPrimary : (lm.containsMouse ? bar.fg : bar.dim)
                 scale: lm.containsMouse ? 1.12 : 1; Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutBack } } }
             Text { visible: bar.logoKey !== "apps"; anchors.centerIn: parent; anchors.horizontalCenterOffset: 1
                 text: bar.logos[bar.logoKey] !== undefined ? String.fromCodePoint(bar.logos[bar.logoKey]) : ""
-                font.family: Fonts.icons; font.pixelSize: 18; color: bar.fg
+                font.family: Fonts.icons; font.pixelSize: bar.goo ? 17 : 18; color: bar.goo ? gp.inkPrimary : bar.fg
                 scale: lm.containsMouse ? 1.15 : 1; Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } } }
             MouseArea { id: lm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("click"); bar.run("\"$HOME/.local/bin/rice-launch\"") } }
         }
@@ -257,8 +266,14 @@ PanelWindow {
                         Rectangle {
                             visible: wsm.dots
                             anchors.centerIn: parent
-                            width: parent.width; height: 14; radius: 7
-                            color: act ? bar.fg : (occ ? Qt.rgba(0.965, 0.961, 0.957, 0.62) : Qt.rgba(0.965, 0.961, 0.957, 0.24))
+                            width: parent.width; height: bar.goo && act ? 22 : (bar.goo ? 10 : 14); radius: height / 2
+                            Behavior on height { NumberAnimation { duration: 260; easing.type: Easing.OutBack } }
+                            color: bar.goo ? (act ? gp.primary : (occ ? gp.inkContainer : gp.track))
+                                           : (act ? bar.fg : (occ ? Qt.rgba(0.965, 0.961, 0.957, 0.62) : Qt.rgba(0.965, 0.961, 0.957, 0.24)))
+                            // Google: the active workspace shows its number
+                            Text { anchors.centerIn: parent; visible: bar.goo; opacity: act ? 1 : 0; text: String(wid)
+                                color: gp.inkPrimary; font.family: Fonts.main; font.pixelSize: 12; font.weight: Font.Bold
+                                Behavior on opacity { NumberAnimation { duration: 200 } } }
                             scale: wm.containsMouse && !act ? 1.18 : 1
                             Behavior on color { ColorAnimation { duration: 200 } }
                             Behavior on scale { ScaleAnimator { duration: 120 } }
@@ -350,12 +365,19 @@ PanelWindow {
 
     Component { id: mClock
         Item { property bool shown: true; height: bar.barH
-            width: Math.max(ct.implicitWidth, cd.implicitWidth) + 12
-            Text { id: ct; anchors.centerIn: parent; text: bar.timeText; color: bar.fg; font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.Medium
+            width: bar.goo ? gRow.width + 8 : Math.max(ct.implicitWidth, cd.implicitWidth) + 12
+            // Google: the time, then the date, side by side
+            Row { id: gRow; visible: bar.goo; anchors.centerIn: parent; spacing: 8
+                Text { anchors.verticalCenter: parent.verticalCenter; text: bar.timeText; color: gp.inkContainer
+                    font.family: Fonts.main; font.pixelSize: 15; font.weight: Font.DemiBold }
+                Rectangle { anchors.verticalCenter: parent.verticalCenter; width: 4; height: 4; radius: 2; color: gp.inkContainer; opacity: 0.5 }
+                Text { anchors.verticalCenter: parent.verticalCenter; text: bar.dateText; color: gp.inkContainer; opacity: 0.8
+                    font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium } }
+            Text { id: ct; visible: !bar.goo; anchors.centerIn: parent; text: bar.timeText; color: bar.fg; font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.Medium
                 opacity: cm.containsMouse ? 0 : 1; scale: cm.containsMouse ? 0.9 : 1
                 Behavior on opacity { NumberAnimation { duration: 160 } }
                 Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } } }
-            Text { id: cd; anchors.centerIn: parent; text: bar.dateText; color: bar.fg; font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.Medium
+            Text { id: cd; visible: !bar.goo; anchors.centerIn: parent; text: bar.dateText; color: bar.fg; font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.Medium
                 opacity: cm.containsMouse ? 1 : 0; scale: cm.containsMouse ? 1 : 1.1
                 Behavior on opacity { NumberAnimation { duration: 160 } }
                 Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } } }
@@ -476,24 +498,32 @@ PanelWindow {
         readonly property bool any: row.width > 0
         visible: any
         height: bar.barH
-        width: row.width + (soft ? 28 : 0)
+        // Google: the zone with the clock gets a tinted pill of its own
+        readonly property bool tint: bar.goo && mods.length === 1 && mods[0] === "clock"
+        width: row.width + (soft ? (bar.goo ? 12 : 28) : 0)
         radius: height / 2
-        color: soft ? bar.bg : "transparent"
+        color: soft ? (tint ? gp.container : bar.bg) : "transparent"
         border.width: soft ? 1 : 0
         border.color: bar.line
         Row {
             id: row
             anchors.centerIn: parent
-            spacing: bar.sty === "pills" ? 8 : 14
+            spacing: bar.sty === "pills" ? 8 : (bar.goo ? 2 : 14)
             Repeater {
                 model: zone.mods
                 delegate: Item {
                     id: slot
                     readonly property bool shown: ld.status === Loader.Ready && ld.item && ld.item.shown !== false
                     readonly property bool pill: bar.sty === "pills"
+                    // Google: every module has room around it and a soft state layer when you point at it
+                    readonly property bool lay: bar.goo && modelData !== "launcher" && !zone.tint
                     visible: shown
-                    width: shown ? ld.width + (pill ? 24 : 0) : 0
+                    width: shown ? ld.width + (pill ? 24 : 0) + (lay ? 16 : (bar.goo ? 4 : 0)) : 0
                     height: bar.barH
+                    HoverHandler { id: sh; enabled: slot.lay }
+                    Rectangle { visible: slot.lay; anchors.centerIn: parent; width: parent.width; height: bar.barH - 8; radius: height / 2
+                        color: bar.fg; opacity: sh.hovered ? 0.1 : 0
+                        Behavior on opacity { NumberAnimation { duration: 160 } } }
                     Rectangle { visible: slot.pill; anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: bar.barH
                         radius: height / 2; color: bar.bg; border.width: 1; border.color: bar.line }
                     Loader { id: ld; anchors.centerIn: parent; sourceComponent: bar.compFor(modelData) }
@@ -527,7 +557,7 @@ PanelWindow {
                 anchors.bottom: bar.atBottom ? undefined : parent.bottom; anchors.top: bar.atBottom ? parent.top : undefined }
         }
 
-        readonly property bool soft: bar.sty === "islands"
+        readonly property bool soft: bar.sty === "islands" || bar.goo
         readonly property real edge: bar.sty === "island" ? 16 : (bar.sty === "flat" ? 14 : 0)
         // notch: every zone sits inside one notch in the middle of the edge
         readonly property real ngap: 22
@@ -537,7 +567,7 @@ PanelWindow {
 
         // a soft shadow under every background (the bar floats above the wallpaper)
         Repeater {
-            model: bar.shadowOn ? (bar.sty === "island" ? [body] : (bar.sty === "islands" ? [zl, zc, zr] : [])) : []
+            model: bar.shadowOn ? (bar.sty === "island" ? [body] : (bar.sty === "islands" || bar.goo ? [zl, zc, zr] : [])) : []
             delegate: Item {
                 readonly property var src: modelData
                 visible: src.visible !== false && src.width > 0
