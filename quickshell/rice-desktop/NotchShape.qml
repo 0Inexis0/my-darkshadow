@@ -30,9 +30,12 @@ Item {
         onPaint: {
             const c = getContext("2d"); c.reset()
             const W = width, H = n.height, e = n.ear, r = Math.min(n.corner, (H - e) / 1.2)
+            // the shadow only outside the shape, so a see-through notch stays evenly see-through (and blurred)
             if (n.shadow) {
-                c.save(); c.shadowColor = "rgba(0,0,0,0.45)"; c.shadowBlur = 10; c.shadowOffsetY = 3
-                n.path(c, W, H, e, r, 0); c.fillStyle = n.fill; c.fill(); c.restore()
+                c.save(); c.shadowColor = "rgba(0,0,0,0.35)"; c.shadowBlur = 10; c.shadowOffsetY = 3
+                n.path(c, W, H, e, r, 0); c.fillStyle = "#000"; c.fill(); c.restore()
+                c.save(); c.globalCompositeOperation = "destination-out"
+                n.path(c, W, H, e, r, 0); c.fillStyle = "#000"; c.fill(); c.restore()
             }
             n.path(c, W, H, e, r, 0)
             c.fillStyle = n.fill

@@ -144,15 +144,15 @@ Item {
                         border.width: 1; border.color: Qt.rgba(1, 1, 1, 0.1)
                     }
                     readonly property real edge: prev.sty === "island" ? 14 : (prev.sty === "flat" ? 12 : 0)
-                    PZone { x: pbar.edge; mods: page.lay.left || []; soft: prev.sty === "islands" || prev.sty === "notch" || prev.sty === "google" || prev.sty === "dynamic" }
+                    PZone { x: pbar.edge; mods: page.lay.left || []; soft: prev.sty === "islands" || prev.sty === "notch" || prev.sty === "dynamic" }
                     // notch: the middle grows out of the screen edge
-                    PZone { x: (pbar.width - width) / 2; mods: page.lay.center || []; soft: prev.sty === "islands" || prev.sty === "notch" || prev.sty === "google" || prev.sty === "dynamic"
+                    PZone { x: (pbar.width - width) / 2; mods: page.lay.center || []; soft: prev.sty === "islands" || prev.sty === "notch" || prev.sty === "dynamic"
                         readonly property bool notch: prev.sty === "notch"
                         y: notch ? (prev.atTop ? -10 : 0) : 0
                         height: notch ? prev.h + 10 : prev.h
                         width: implicitWidth + (notch ? 30 : 0)
                         radius: notch ? 14 : height / 2 }
-                    PZone { x: pbar.width - width - pbar.edge; mods: page.lay.right || []; soft: prev.sty === "islands" || prev.sty === "notch" || prev.sty === "google" || prev.sty === "dynamic" }
+                    PZone { x: pbar.width - width - pbar.edge; mods: page.lay.right || []; soft: prev.sty === "islands" || prev.sty === "notch" || prev.sty === "dynamic" }
                 }
                 T { text: "Preview"; font.pixelSize: 10; color: M3.inkDim; anchors.right: parent.right; anchors.rightMargin: 12; anchors.bottom: parent.bottom; anchors.bottomMargin: 8 }
             }
@@ -175,16 +175,16 @@ Item {
             T { kind: "title"; text: "Style"; font.pixelSize: 16; font.bold: true; topPadding: 10 }
             SegRow {
                 label: "Bar style"
-                desc: "Google: tonal pills in your theme color. Dynamic: Google with an island that grows"
-                options: [ { label: "Flat", value: "flat" }, { label: "Island", value: "island" }, { label: "Islands", value: "islands" }, { label: "Pills", value: "pills" }, { label: "Notch", value: "notch" }, { label: "Google", value: "google" }, { label: "Dynamic", value: "dynamic" } ]
-                current: page.v("style", "islands")
+                desc: "Dynamic: tonal pills in your theme color and an island in the middle that grows"
+                options: [ { label: "Flat", value: "flat" }, { label: "Island", value: "island" }, { label: "Islands", value: "islands" }, { label: "Pills", value: "pills" }, { label: "Notch", value: "notch" }, { label: "Dynamic", value: "dynamic" } ]
+                current: page.v("style", "islands") === "google" ? "dynamic" : page.v("style", "islands")
                 onChosen: function(x) { page.setv("style", x) }
             }
             // ---------- Dynamic: what the island grows into ----------
             Column {
                 width: parent.width
                 spacing: 8
-                visible: page.v("style", "islands") === "dynamic"
+                visible: page.v("style", "islands") === "dynamic" || page.v("style", "islands") === "google"
                 T { kind: "title"; text: "Dynamic island"; font.pixelSize: 16; font.bold: true; topPadding: 6 }
                 T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; color: M3.inkDim; font.pixelSize: 12
                     text: "The clock in the middle grows into what happens right now, on springs, with your shape and wavy progress. Scroll on it for the volume, right-click it for the dashboard." }

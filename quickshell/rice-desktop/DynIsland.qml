@@ -97,8 +97,6 @@ Item {
         radius: isl.big ? 30 : height / 2
         Behavior on radius { NumberAnimation { duration: 300; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
         color: isl.pal ? isl.pal.surface : "#141414"
-        border.width: 1
-        border.color: isl.pal ? Qt.rgba(isl.pal.primary.r, isl.pal.primary.g, isl.pal.primary.b, isl.mode === "idle" ? 0.35 : 0.22) : "transparent"
         clip: true
         // the player tints the island with your key color
         Rectangle {

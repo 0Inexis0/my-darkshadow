@@ -1,5 +1,12 @@
 # Changelog
 
+## V3.30
+- The Google bar style is gone; Dynamic has its look (a bar that used Google switches to Dynamic)
+- Changing the bar style is animated: the old look folds away and the new one settles in
+- Bar layout: modules grow in when they appear and fold away when they go, and the others slide to make room (music that pauses or starts, a module you add)
+- Notch: transparency and blur work (it was nearly solid before); its shadow stays outside the shape
+- Dynamic: the island has no outline any more
+
 ## V3.29
 - New bar style: Dynamic. The Google look, and in the middle an island that grows out of the clock on springs:
   - point at it (or click it) while music plays: the player, with the cover in your shape, a wavy progress line you can drag and a play button that changes shape while it plays

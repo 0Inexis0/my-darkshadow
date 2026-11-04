@@ -270,7 +270,7 @@ Item {
                 icon: "toolbar"; glyph: ""; title: "Bar"
                 sub: (ep.bc.style || "islands") + "  ·  " + (ep.bc.position || "top") + (ep.bc.autohide === true ? "  ·  auto-hide" : "")
                 Label { text: "Style" }
-                Pills { options: [["flat", "Flat"], ["island", "Island"], ["islands", "Islands"], ["pills", "Pills"], ["notch", "Notch"], ["google", "Google"], ["dynamic", "Dynamic"]]; current: ep.bc.style || "islands"
+                Pills { options: [["flat", "Flat"], ["island", "Island"], ["islands", "Islands"], ["pills", "Pills"], ["notch", "Notch"], ["dynamic", "Dynamic"]]; current: ep.bc.style === "google" ? "dynamic" : (ep.bc.style || "islands")
                     onChosen: function(v) { ep.setBar("style", v) } }
                 Label { text: "Edge" }
                 Pills { options: [["top", "Top"], ["bottom", "Bottom"]]; current: ep.bc.position || "top"; onChosen: function(v) { ep.setBar("position", v) } }

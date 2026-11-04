@@ -111,7 +111,7 @@ def lua_text(c):
                    '    blur = true,\n    ignore_alpha = 0.1,\n})\n')
     # the Quickshell bar (rice-bar) blurs the same way
     out.append('hl.layer_rule({\n    name  = "rice-bar-blur",\n    match = { namespace = "rice-bar" },\n'
-               '    blur = true,\n    ignore_alpha = 0.1,\n})\n')
+               '    blur = true,\n    ignore_alpha = 0.25,\n})\n')
     out.append('hl.layer_rule({\n    name  = "rice-wifi-blur",\n    match = { namespace = "rice-wifi" },\n'
                '    blur = true,\n    ignore_alpha = 0.1,\n})\n')
     out.append('hl.layer_rule({\n    name  = "rice-bluetooth-blur",\n    match = { namespace = "rice-bluetooth" },\n'

@@ -11,10 +11,10 @@ import QtQuick
 
 // The DarkShadow bar: the bar of this shell, made in Quickshell (Settings > DarkShadow bar and Bar layout).
 // Styles: flat, island (one pill), islands (a pill for each side), pills (a pill for each module), notch (the middle
-// grows out of the screen edge, the sides are islands), google (Material 3: tonal pills in your theme color, the
-// launcher and the active workspace in your key color, the clock in its own tinted pill, soft state layers on hover),
-// dynamic (the Google look, and in the middle an island that grows into the player, the volume, the workspace,
-// notifications and recording: DynIsland.qml). Auto-hide: it slides away and a thin strip at the edge brings it back.
+// grows out of the screen edge, the sides are islands), dynamic (Material 3: tonal pills in your theme color, the
+// launcher and the active workspace in your key color, soft state layers on hover, and in the middle an island that
+// grows into the player, the volume, the workspace, notifications and recording: DynIsland.qml). The old "google"
+// style is dynamic now. Auto-hide: it slides away and a thin strip at the edge brings it back.
 // What sits where comes from ~/.config/rice/bar.json (layout: left, center, right).
 PanelWindow {
     id: bar
@@ -22,10 +22,27 @@ PanelWindow {
     // ---------- settings (~/.config/rice/bar.json) ----------
     property var bc: ({})
     readonly property bool on: bc.enabled !== false     // no bar.json yet (a fresh install or an update) = on
-    readonly property string sty: bc.style === "flat" || bc.style === "islands" || bc.style === "pills" || bc.style === "notch" || bc.style === "google" || bc.style === "dynamic" ? bc.style : "island"
+    // the style asked for; the bar fades and settles into it (sty follows want once the old look has gone)
+    readonly property string want: bc.style === "google" ? "dynamic"
+        : (bc.style === "flat" || bc.style === "islands" || bc.style === "pills" || bc.style === "notch" || bc.style === "dynamic" ? bc.style : "island")
+    property string sty: "island"
+    property real swap: 0                       // 0 shown .. 1 gone (while the style changes)
+    property bool styReady: false
+    onWantChanged: {
+        if (!styReady) { sty = want; return }
+        if (want !== sty) styAnim.restart()
+    }
+    Timer { running: true; interval: 1200; onTriggered: { bar.sty = bar.want; bar.styReady = true } }
+    SequentialAnimation {
+        id: styAnim
+        NumberAnimation { target: bar; property: "swap"; to: 1; duration: 170; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.accel }
+        ScriptAction { script: bar.sty = bar.want }
+        PauseAnimation { duration: 60 }
+        NumberAnimation { target: bar; property: "swap"; to: 0; duration: 520; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.decel }
+    }
     readonly property bool notch: sty === "notch"
     readonly property bool dyn: sty === "dynamic"
-    readonly property bool goo: sty === "google" || dyn          // the Material 3 look (dynamic uses it too)
+    readonly property bool goo: dyn                              // the Material 3 look of the Dynamic style
     property var nf: null                                         // Notifs.qml, for the island
     readonly property bool islandNotifs: on && dyn && bc.island_notifs !== false
     readonly property bool islandVolume: on && dyn && bc.island_volume !== false
@@ -365,9 +382,13 @@ PanelWindow {
     }
 
     Component { id: mMedia
-        Text { readonly property bool shown: bar.track !== ""; height: bar.barH; verticalAlignment: Text.AlignVCenter
+        Text { id: mt; readonly property bool shown: bar.track !== ""; height: bar.barH; verticalAlignment: Text.AlignVCenter
             width: Math.min(implicitWidth, 220); elide: Text.ElideRight
-            text: "\u266a  " + bar.track
+            // the last song stays written while the module folds away (paused, stopped)
+            property string keep: ""
+            Component.onCompleted: keep = bar.track
+            Connections { target: bar; function onTrackChanged() { if (bar.track !== "") mt.keep = bar.track } }
+            text: "\u266a  " + keep
             color: bar.dim; font.family: Fonts.main; font.pixelSize: 12 }
     }
 
@@ -508,15 +529,18 @@ PanelWindow {
         height: bar.barH
         // Google: the zone with the clock gets a tinted pill of its own
         readonly property bool tint: bar.goo && mods.length === 1 && mods[0] === "clock"
-        width: row.width + (soft ? (bar.goo ? 12 : 28) : 0)
+        // the gap between modules lives inside each module, so a module that comes or goes slides the others
+        readonly property real sp: bar.sty === "pills" ? 8 : (bar.goo ? 2 : 14)
+        width: Math.max(0, row.width - sp) + (soft && any ? (bar.goo ? 12 : 28) : 0)
         radius: height / 2
         color: soft ? (tint ? gp.container : bar.bg) : "transparent"
+        Behavior on color { ColorAnimation { duration: 300 } }
         border.width: soft ? 1 : 0
         border.color: bar.line
         Row {
             id: row
             anchors.centerIn: parent
-            spacing: bar.sty === "pills" ? 8 : (bar.goo ? 2 : 14)
+            spacing: 0
             Repeater {
                 model: zone.mods
                 delegate: Item {
@@ -525,14 +549,22 @@ PanelWindow {
                     readonly property bool pill: bar.sty === "pills"
                     // Google: every module has room around it and a soft state layer when you point at it
                     readonly property bool lay: bar.goo && modelData !== "launcher" && !zone.tint
-                    visible: shown
-                    width: shown ? ld.width + (pill ? 24 : 0) + (lay ? 16 : (bar.goo ? 4 : 0)) : 0
+                    // it grows in when it appears (a new module, music that starts) and folds away when it goes
+                    property bool born: false
+                    Timer { running: true; interval: 40 + index * 45; onTriggered: slot.born = true }
+                    property real k: born && shown ? 1 : 0
+                    Behavior on k { NumberAnimation { duration: slot.k < 0.5 ? 420 : 300; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
+                    readonly property real full: ld.width + (pill ? 24 : 0) + (lay ? 16 : (bar.goo ? 4 : 0))
+                    visible: k > 0.01
+                    width: (full + zone.sp) * k
                     height: bar.barH
+                    opacity: Math.min(1, k * 1.4)
+                    scale: 0.7 + 0.3 * k
                     HoverHandler { id: sh; enabled: slot.lay }
-                    Rectangle { visible: slot.lay; anchors.centerIn: parent; width: parent.width; height: bar.barH - 8; radius: height / 2
+                    Rectangle { visible: slot.lay; anchors.centerIn: parent; width: slot.full; height: bar.barH - 8; radius: height / 2
                         color: bar.fg; opacity: sh.hovered ? 0.1 : 0
                         Behavior on opacity { NumberAnimation { duration: 160 } } }
-                    Rectangle { visible: slot.pill; anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: bar.barH
+                    Rectangle { visible: slot.pill; anchors.centerIn: parent; width: slot.full; height: bar.barH
                         radius: height / 2; color: bar.bg; border.width: 1; border.color: bar.line }
                     Loader { id: ld; anchors.centerIn: parent; sourceComponent: bar.compFor(modelData) }
                 }
@@ -546,12 +578,13 @@ PanelWindow {
         x: bar.gap; y: bar.atBottom ? bar.height - bar.barH - bar.gap : bar.gap
         width: parent.width - 2 * bar.gap
         height: bar.barH
-        opacity: bar.on && bar.shownBar ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: 240 } }
-        transform: Translate {
+        opacity: (bar.on && bar.shownBar ? 1 : 0) * (1 - bar.swap)
+        Behavior on opacity { enabled: !styAnim.running; NumberAnimation { duration: 240 } }
+        transform: [Scale { origin.x: body.width / 2; origin.y: bar.atBottom ? body.height : 0; xScale: 1 - 0.035 * bar.swap; yScale: 1 - 0.2 * bar.swap },
+                    Translate { y: (bar.atBottom ? 8 : -8) * bar.swap }, Translate {
             y: !bar.on ? (bar.atBottom ? 12 : -12) : (bar.shownBar ? 0 : (bar.atBottom ? 1 : -1) * (bar.barH + bar.gap * 2 + 4))
             Behavior on y { NumberAnimation { duration: 360; easing.type: bar.shownBar ? Easing.OutBack : Easing.InCubic; easing.overshoot: 0.8 } }
-        }
+        }]
 
         // island / flat: one background behind everything
         Rectangle {
@@ -595,7 +628,7 @@ PanelWindow {
             height: bar.barH + bar.gap
             x: body.nX - ear - 20
             y: bar.atBottom ? 0 : -bar.gap
-            fill: Qt.rgba(0.02, 0.02, 0.025, Math.max(bar.alpha, Look.flat ? 1 : 0.92))
+            fill: Qt.rgba(0.02, 0.02, 0.025, Look.flat ? 1 : bar.alpha)
             shadow: bar.shadowOn
         }
 
