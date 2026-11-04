@@ -429,14 +429,14 @@ ShellRoot {
     // ---- dashboard (middle of the bar edge, SUPER + W for wallpapers)
     Dashboard { id: dash }
     Launcher { }
-    Bar { }
+    Bar { id: mainBar; nf: notifs }
     WifiMenu { }
     BluetoothMenu { }
     PowerMenu { }
     VolumeMenu { }
-    VolumeOsd { }
+    VolumeOsd { islandTakes: mainBar.islandVolume }
     GamePanel { }
-    Notifs { id: notifs }
+    Notifs { id: notifs; islandTakes: mainBar.islandNotifs && notifs.shellMode }
     ControlCenter { nf: notifs }
     WallPreview { path: dash.previewPath }
 

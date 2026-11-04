@@ -67,8 +67,15 @@ Scope {
     // notification object (it is gone as soon as it is dismissed)
     property int seq: 0
     property var drops: []             // keys to dismiss for good once they are gone
+    signal showed(var n)               // the Dynamic bar's island shows it
+    property bool islandTakes: false   // the island shows notifications, so only urgent ones pop up
     function arrive(n) {
         if (nfy.dnd && !urgent(n)) return
+        nfy.showed(n)
+        if (islandTakes && !urgent(n)) {
+            Quickshell.execDetached(["bash", "-c", "SWAYNC_APP_NAME=\"$1\" \"$HOME/.local/bin/rice-sound\" notify", "_", n.appName || ""])
+            return
+        }
         const e = { key: ++nfy.seq, n: n }
         const p = pops.slice(); p.unshift(e)
         pops = p

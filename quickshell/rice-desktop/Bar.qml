@@ -12,7 +12,9 @@ import QtQuick
 // The DarkShadow bar: the bar of this shell, made in Quickshell (Settings > DarkShadow bar and Bar layout).
 // Styles: flat, island (one pill), islands (a pill for each side), pills (a pill for each module), notch (the middle
 // grows out of the screen edge, the sides are islands), google (Material 3: tonal pills in your theme color, the
-// launcher and the active workspace in your key color, the clock in its own tinted pill, soft state layers on hover). Auto-hide: it slides away and a thin strip at the edge brings it back.
+// launcher and the active workspace in your key color, the clock in its own tinted pill, soft state layers on hover),
+// dynamic (the Google look, and in the middle an island that grows into the player, the volume, the workspace,
+// notifications and recording: DynIsland.qml). Auto-hide: it slides away and a thin strip at the edge brings it back.
 // What sits where comes from ~/.config/rice/bar.json (layout: left, center, right).
 PanelWindow {
     id: bar
@@ -20,9 +22,13 @@ PanelWindow {
     // ---------- settings (~/.config/rice/bar.json) ----------
     property var bc: ({})
     readonly property bool on: bc.enabled !== false     // no bar.json yet (a fresh install or an update) = on
-    readonly property string sty: bc.style === "flat" || bc.style === "islands" || bc.style === "pills" || bc.style === "notch" || bc.style === "google" ? bc.style : "island"
+    readonly property string sty: bc.style === "flat" || bc.style === "islands" || bc.style === "pills" || bc.style === "notch" || bc.style === "google" || bc.style === "dynamic" ? bc.style : "island"
     readonly property bool notch: sty === "notch"
-    readonly property bool goo: sty === "google"
+    readonly property bool dyn: sty === "dynamic"
+    readonly property bool goo: sty === "google" || dyn          // the Material 3 look (dynamic uses it too)
+    property var nf: null                                         // Notifs.qml, for the island
+    readonly property bool islandNotifs: on && dyn && bc.island_notifs !== false
+    readonly property bool islandVolume: on && dyn && bc.island_volume !== false
     // the Google style's colors: tonal, made from your theme color (the same as the control center)
     NPal { id: gp; theme: "shell"; alpha: Math.min(1, bar.alpha + 0.14) }
     readonly property bool hideOn: bc.autohide === true
@@ -87,11 +93,13 @@ PanelWindow {
     color: "transparent"
     anchors { top: !atBottom; bottom: atBottom; left: true; right: true }
     // room below for the recording island; windows only keep away from the bar itself
-    implicitHeight: barH + gap * 2 + 54
+    implicitHeight: barH + gap * 2 + (dyn ? 196 : 54)
     exclusionMode: hideOn ? ExclusionMode.Ignore : ExclusionMode.Normal
     exclusiveZone: hideOn ? 0 : barH + gap * 2
     // only the bar (and the recording island) take the pointer; auto-hide: only a thin strip at the edge
-    mask: Region { item: bar.shownBar ? hitBar : hitStrip; Region { item: hitRec } }
+    mask: Region { item: bar.shownBar ? hitBar : hitStrip; Region { item: hitRec } Region { item: hitIsl } }
+    // the island when it has grown out of the bar
+    Item { id: hitIsl; x: bar.gap + isl.x; y: body.y + isl.y; width: bar.dyn && bar.shownBar ? isl.width : 0; height: isl.height }
     Item { id: hitBar; width: parent.width; height: bar.barH + bar.gap * 2; y: bar.atBottom ? parent.height - height : 0 }
     Item { id: hitRec; x: recIsland.x + bar.gap; width: recIsland.width; height: bar.recOn && bar.shownBar ? 54 : 0; y: bar.atBottom ? 0 : bar.barH + bar.gap * 2 }
     Item { id: hitAll; anchors.fill: parent }
@@ -567,7 +575,7 @@ PanelWindow {
 
         // a soft shadow under every background (the bar floats above the wallpaper)
         Repeater {
-            model: bar.shadowOn ? (bar.sty === "island" ? [body] : (bar.sty === "islands" || bar.goo ? [zl, zc, zr] : [])) : []
+            model: bar.shadowOn ? (bar.sty === "island" ? [body] : (bar.dyn ? [zl, zr] : (bar.sty === "islands" || bar.goo ? [zl, zc, zr] : []))) : []
             delegate: Item {
                 readonly property var src: modelData
                 visible: src.visible !== false && src.width > 0
@@ -593,15 +601,26 @@ PanelWindow {
 
         Zone { id: zl; mods: bar.lay.left || []; soft: body.soft
             x: bar.notch ? body.nX : body.edge; y: 0 }
-        Zone { id: zc; mods: bar.lay.center || []; soft: body.soft
+        Zone { id: zc; mods: bar.dyn ? [] : (bar.lay.center || []); soft: body.soft
             x: bar.notch ? body.nX + (zl.any ? zl.width + body.ngap : 0) : (body.width - width) / 2; y: 0 }
         Zone { id: zr; mods: bar.lay.right || []; soft: body.soft
             x: bar.notch ? body.nX + body.nW - width : body.width - width - body.edge; y: 0 }
 
+        // ---------- dynamic: the island in the middle ----------
+        DynIsland {
+            id: isl
+            visible: bar.dyn
+            bar: bar
+            pal: gp
+            nf: bar.nf
+            x: Math.round((body.width - width) / 2)
+            y: bar.atBottom ? bar.barH - height : 0
+        }
+
         // ---------- the recording island: hangs under the bar while the screen is recorded ----------
         Item {
             id: recIsland
-            readonly property bool on: bar.recOn
+            readonly property bool on: bar.recOn && !bar.dyn
             width: recRow.width + 40 + (bar.notch ? 2 * 14 : 0)
             height: 46
             x: bar.notch ? body.nX + body.nW + 14 - width : body.width - width - body.edge

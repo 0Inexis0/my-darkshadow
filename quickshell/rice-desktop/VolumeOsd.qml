@@ -21,7 +21,8 @@ PanelWindow {
     property real t: 0
     Behavior on t { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
     onShownChanged: t = shown ? 1 : 0
-    function pop(isMic) { if (!ready) return; mic = isMic; shown = true; hideTimer.restart() }
+    property bool islandTakes: false    // the Dynamic bar's island shows it instead
+    function pop(isMic) { if (!ready || islandTakes) return; mic = isMic; shown = true; hideTimer.restart() }
     Timer { id: hideTimer; interval: 1400; onTriggered: osd.shown = false }
     onVolChanged: pop(false)
     onMutedChanged: pop(false)

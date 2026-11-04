@@ -1,5 +1,16 @@
 # Changelog
 
+## V3.29
+- New bar style: Dynamic. The Google look, and in the middle an island that grows out of the clock on springs:
+  - point at it (or click it) while music plays: the player, with the cover in your shape, a wavy progress line you can drag and a play button that changes shape while it plays
+  - the volume or the microphone changes: a wavy level you can drag (instead of the pop-up at the bottom)
+  - you switch workspace: which one you are on
+  - a notification comes in: its icon in your shape and a wave that runs out while it stays (urgent ones still pop up)
+  - the screen is recorded: the time, the microphone and stop
+  - while music plays the clock gets a small cover and an equalizer; scroll on it for the volume, right-click it for the dashboard
+- Settings > DarkShadow bar > Dynamic island: music on hover, volume, workspaces and notifications, each on or off
+- The idea of an island that grows from the clock comes from hyprdots by fedyaqq34356; ours is written from scratch in the shell's own Material 3 style
+
 ## V3.28
 - New bar style: Google. Tonal pills in your theme color, the launcher and the active workspace (with its number) in your key color, the time and date in a tinted pill of their own, soft highlights when you point at a module. Settings > DarkShadow bar > Style, or Edit mode > Bar
 

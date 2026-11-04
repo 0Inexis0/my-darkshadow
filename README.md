@@ -81,7 +81,7 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 
 | Area | What you get |
 | --- | --- |
-| **DarkShadow bar** | the Quickshell bar: style Flat, Island, Islands, Pills, Notch or Google, auto-hide, a soft shadow, position top or bottom, size, transparency, workspaces as dots, Pac-Man or letters, clock with seconds, a switch back to Waybar |
+| **DarkShadow bar** | the Quickshell bar: style Flat, Island, Islands, Pills, Notch, Google or Dynamic (an island in the middle that grows into the player, volume, workspaces, notifications and recording), auto-hide, a soft shadow, position top or bottom, size, transparency, workspaces as dots, Pac-Man or letters, clock with seconds, a switch back to Waybar |
 | **Bar styles** | Flat, Floating, Islands, **One island**; group styles None, Pills, Segmented |
 | **Autohide** | bar slides in when the pointer touches the screen edge |
 | **Distro logo** | the logo of your distro (NixOS, Arch, CachyOS, Fedora, Nobara, EndeavourOS ...) in the bar, the dashboard, the welcome window and Settings, picked automatically |
@@ -204,5 +204,8 @@ Run `rice-update` (or `./install.sh --update` in the repo), or press **Update no
 
 To release a new version, put the new number in `VERSION` (for example `2.03`) and push. Everyone gets the update notification within a few hours.
 
+## Thanks
+The idea of the Dynamic bar's island, a clock that grows into the player, notifications and more, comes from [hyprdots](https://github.com/fedyaqq34356/hyprdots) by fedyaqq34356. The island here is written from scratch.
+
 ## License
-Not chosen yet. Add a `LICENSE` file before sharing widely.
+MIT, see `LICENSE`.

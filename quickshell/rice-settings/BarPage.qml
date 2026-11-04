@@ -144,15 +144,15 @@ Item {
                         border.width: 1; border.color: Qt.rgba(1, 1, 1, 0.1)
                     }
                     readonly property real edge: prev.sty === "island" ? 14 : (prev.sty === "flat" ? 12 : 0)
-                    PZone { x: pbar.edge; mods: page.lay.left || []; soft: prev.sty === "islands" || prev.sty === "notch" || prev.sty === "google" }
+                    PZone { x: pbar.edge; mods: page.lay.left || []; soft: prev.sty === "islands" || prev.sty === "notch" || prev.sty === "google" || prev.sty === "dynamic" }
                     // notch: the middle grows out of the screen edge
-                    PZone { x: (pbar.width - width) / 2; mods: page.lay.center || []; soft: prev.sty === "islands" || prev.sty === "notch" || prev.sty === "google"
+                    PZone { x: (pbar.width - width) / 2; mods: page.lay.center || []; soft: prev.sty === "islands" || prev.sty === "notch" || prev.sty === "google" || prev.sty === "dynamic"
                         readonly property bool notch: prev.sty === "notch"
                         y: notch ? (prev.atTop ? -10 : 0) : 0
                         height: notch ? prev.h + 10 : prev.h
                         width: implicitWidth + (notch ? 30 : 0)
                         radius: notch ? 14 : height / 2 }
-                    PZone { x: pbar.width - width - pbar.edge; mods: page.lay.right || []; soft: prev.sty === "islands" || prev.sty === "notch" || prev.sty === "google" }
+                    PZone { x: pbar.width - width - pbar.edge; mods: page.lay.right || []; soft: prev.sty === "islands" || prev.sty === "notch" || prev.sty === "google" || prev.sty === "dynamic" }
                 }
                 T { text: "Preview"; font.pixelSize: 10; color: M3.inkDim; anchors.right: parent.right; anchors.rightMargin: 12; anchors.bottom: parent.bottom; anchors.bottomMargin: 8 }
             }
@@ -175,10 +175,47 @@ Item {
             T { kind: "title"; text: "Style"; font.pixelSize: 16; font.bold: true; topPadding: 10 }
             SegRow {
                 label: "Bar style"
-                desc: "Flat, one pill, an island per side, a pill per module, a notch that grows out of the edge, or Google (tonal pills in your theme color)"
-                options: [ { label: "Flat", value: "flat" }, { label: "Island", value: "island" }, { label: "Islands", value: "islands" }, { label: "Pills", value: "pills" }, { label: "Notch", value: "notch" }, { label: "Google", value: "google" } ]
+                desc: "Google: tonal pills in your theme color. Dynamic: Google with an island that grows"
+                options: [ { label: "Flat", value: "flat" }, { label: "Island", value: "island" }, { label: "Islands", value: "islands" }, { label: "Pills", value: "pills" }, { label: "Notch", value: "notch" }, { label: "Google", value: "google" }, { label: "Dynamic", value: "dynamic" } ]
                 current: page.v("style", "islands")
                 onChosen: function(x) { page.setv("style", x) }
+            }
+            // ---------- Dynamic: what the island grows into ----------
+            Column {
+                width: parent.width
+                spacing: 8
+                visible: page.v("style", "islands") === "dynamic"
+                T { kind: "title"; text: "Dynamic island"; font.pixelSize: 16; font.bold: true; topPadding: 6 }
+                T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; color: M3.inkDim; font.pixelSize: 12
+                    text: "The clock in the middle grows into what happens right now, on springs, with your shape and wavy progress. Scroll on it for the volume, right-click it for the dashboard." }
+                ToggleRow {
+                    width: parent.width
+                    label: "Music on hover"
+                    desc: "Point at the island while music plays to open the player (a click always opens it)"
+                    checked: page.v("island_hover", true) !== false
+                    onToggled: function(x) { page.setv("island_hover", x ? "on" : "off") }
+                }
+                ToggleRow {
+                    width: parent.width
+                    label: "Volume and microphone"
+                    desc: "The island shows the volume instead of the pop-up at the bottom"
+                    checked: page.v("island_volume", true) !== false
+                    onToggled: function(x) { page.setv("island_volume", x ? "on" : "off") }
+                }
+                ToggleRow {
+                    width: parent.width
+                    label: "Workspaces"
+                    desc: "Shows which workspace you switched to"
+                    checked: page.v("island_ws", true) !== false
+                    onToggled: function(x) { page.setv("island_ws", x ? "on" : "off") }
+                }
+                ToggleRow {
+                    width: parent.width
+                    label: "Notifications"
+                    desc: "New notifications grow out of the island instead of popping up (urgent ones still pop up). Needs Shown by: DarkShadow"
+                    checked: page.v("island_notifs", true) !== false
+                    onToggled: function(x) { page.setv("island_notifs", x ? "on" : "off") }
+                }
             }
             ToggleRow {
                 label: "Auto-hide"
