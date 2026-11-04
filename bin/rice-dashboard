@@ -5,6 +5,10 @@
   rice-dashboard set KEY VALUE          change a setting
   rice-dashboard tabs a,b,c             tabs and their order (dashboard control tasks wallpaper performance about)
   rice-dashboard open [TAB] [--edit]    open it (toggle when it is already open on that tab); --edit: edit mode
+                                        V3.34: without the classic dashboard (the default) it opens the bar's
+                                        island instead: today (calendar, weather) or system; control: the
+                                        control center; wallpaper: the wallpaper picker
+  rice-dashboard island [today|system]  open the island's card (toggle)
   rice-dashboard layout TAB JSON        cards of a tab: [{"id": "cpu", "w": 5, "h": 1}, ...]
   rice-dashboard reset-layout TAB       back to the default cards
   rice-dashboard blur                   write the blur rule for Hyprland (rice-dashboard.lua)
@@ -45,14 +49,14 @@ DEFAULTS = {
     "enabled": True, "position": "bottom", "hover": False, "edge": True, "wallpaper_key": True, "style": "shadow",
     "width": 1000, "scale": 1.0, "delay": 150, "trigger": 320, "close_on_leave": True, "speed": 1.0,
     "tabs": list(TABS), "default_tab": "dashboard", "blur": True, "opacity": 0.9, "animation": "slide",
-    "hotspot": "bar", "attach": True, "layouts": {},
+    "hotspot": "bar", "attach": True, "layouts": {}, "classic": False,
 }
 INTS = {"width": (760, 1500), "delay": (0, 900), "trigger": (80, 900)}
 FLOATS = {"scale": (0.75, 1.4), "speed": (0.5, 2.0), "opacity": (0.35, 1.0)}
 CHOICES = {"position": ["bottom", "top", "left", "right"], "style": ["shadow", "graphite", "aurora", "frost"], "default_tab": TABS,
            "animation": ["slide", "fade", "none"], "hotspot": ["bar", "edge"]}
 OLD_STYLES = {"darkshadow": "shadow", "end4": "frost", "caelestia": "aurora"}
-BOOLS = ("enabled", "hover", "edge", "wallpaper_key", "close_on_leave", "blur", "attach")
+BOOLS = ("enabled", "hover", "edge", "wallpaper_key", "close_on_leave", "blur", "attach", "classic")
 HYPR = HOME + "/.config/hypr"
 
 
@@ -218,7 +222,43 @@ def ensure_shell():
         pass
 
 
+def bar_on():
+    """the DarkShadow bar (the island lives in it) is on"""
+    try:
+        return json.load(open(DIR + "/bar.json")).get("enabled", True) is not False
+    except Exception:
+        return True
+
+
+def classic(c=None):
+    """the old dashboard: chosen in Settings > Dashboard, or the only one there is when the bar is Waybar"""
+    c = c or load()
+    return c["enabled"] and (c["classic"] or not bar_on())
+
+
+def island(tab, toggle=True):
+    os.makedirs(CACHE, exist_ok=True)
+    open(CACHE + "/island-open", "w").write("%f %s %s\n" % (time.time(), tab if tab in ("today", "system") else "today",
+                                                             "toggle" if toggle else "open"))
+    ensure_shell()
+
+
+def walls_picker():
+    os.makedirs(CACHE, exist_ok=True)
+    open(CACHE + "/walls-open", "w").write("%f toggle\n" % time.time())
+    ensure_shell()
+
+
 def open_tab(tab, toggle=True, edit=False):
+    if not classic():
+        # the dashboard's parts live elsewhere now
+        if tab == "control":
+            subprocess.Popen([BIN + "/rice-cc", "open"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+        elif tab == "wallpaper":
+            walls_picker()
+        else:
+            island("system" if tab in ("performance", "about") else "today", toggle)
+        return
     os.makedirs(CACHE, exist_ok=True)
     tab = tab if tab in TABS else ""
     open(OPEN, "w").write("%f %s %s %s\n" % (time.time(), tab or "-", "toggle" if toggle else "open", "edit" if edit else "-"))
@@ -533,6 +573,9 @@ def main(a):
         except Exception:
             c["opacity"] = round(clamp(c["bar"]["alpha"], 0.55, 1.0), 2)
         c["accent"] = accent()
+        # the classic dashboard only runs when it is chosen (or the bar is Waybar)
+        if not classic(c):
+            c["enabled"] = False
         # rice-effects: no blur and no transparency (Lite or gaming mode); gaming mode also keeps the
         # bottom edge free (unless Settings > Services > Gaming mode says otherwise)
         try:
@@ -594,10 +637,14 @@ def main(a):
         open_tab(args[0] if args else "", toggle="--no-toggle" not in a and "--edit" not in a, edit="--edit" in a)
     elif cmd == "wallpaper":
         c = load()
-        if c["enabled"] and c["wallpaper_key"] and "wallpaper" in c["tabs"]:
+        if not classic(c):
+            walls_picker()
+        elif c["enabled"] and c["wallpaper_key"] and "wallpaper" in c["tabs"]:
             open_tab("wallpaper")
         else:
             os.execv(BIN + "/rice-wallpaper", [BIN + "/rice-wallpaper"])
+    elif cmd == "island":
+        island(a[2] if len(a) > 2 else "today")
     elif cmd == "stats":
         stats()
     elif cmd == "about":

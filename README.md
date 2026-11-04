@@ -86,7 +86,8 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 | **Autohide** | bar slides in when the pointer touches the screen edge |
 | **Distro logo** | the logo of your distro (NixOS, Arch, CachyOS, Fedora, Nobara, EndeavourOS ...) in the bar, the dashboard, the welcome window and Settings, picked automatically |
 | **Desktop widgets** | frosted glass over your blurred wallpaper (or plain cards), auto-hide while windows are open; clock, calendar, weather, music, resources (CPU, RAM, GPU), user card, battery gauges in soft shapes (CPU, RAM, GPU, heat, battery), the date in a flower, and a see-through audio visualizer (Bars like cava in a terminal, Mirror, Wave, Dots, in your Theme color, a gradient or rainbow), a to-do list, a focus timer and a note; three widget styles (DarkShadow, Google, Outline); colors that turn light or dark with your wallpaper; Sky, Now playing, Player, Play button, Lyrics, Storage and CPU · GPU · RAM; Edit mode with a side panel for widgets, quick settings, the bar and the visualizer |
-| **Dashboard** | slides up from the bottom of the screen (SUPER + ALT + D or push the pointer against the bottom edge): Dashboard (weather, calendar, usage, music), Wallpaper (big wallpaper cards, search, random), Performance (CPU, GPU, storage, network, memory, battery), About (your computer, distro, updates); cards you can remove, add, resize and move, looks Shadow, Graphite, Aurora and Frost |
+| **Today & System** | the dashboard lives in the bar: click the clock (or SUPER + ALT + D) and a Material 3 card grows out of the bar with today (calendar, weather, the day as a wave) and System (CPU, GPU and RAM in wavy rings, the disk); right-click for System. The classic dashboard is one switch away (Settings > Dashboard) |
+| **Wallpaper picker** | SUPER + W: your wallpapers in a sheet with search, shuffle and keys; colors follow |
 | **Bar layout** | drag and drop the modules of the bar between left, center and right: launcher, workspaces, window title, music, clock, tray, volume, Bluetooth, Wi-Fi, battery, notifications, power |
 | **Dock** | bottom, left or right edge, its own app menu with search, pinned favourite apps (also in Settings > Dock), open apps, hover to reveal, media player, tinted icons |
 | **Hyprland** | gaps, borders, rounding, blur, shadows and animations from sliders, no config editing |
@@ -137,12 +138,12 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 | `Fn` volume / brightness keys, headset `+` `-` | volume, mute, microphone, brightness |
 | `Print` / `SHIFT + Print` | screenshot of a region / the whole screen |
 | `SUPER + SHIFT + R` | record a region (press again to stop) |
-| `SUPER + A` | dashboard on its Control tab (quick switches) |
+| `SUPER + A` | control center (quick switches) |
 | `SUPER + G` | game bar |
 | `SUPER + N` | control center (notifications) |
 | `SUPER + ALT + W` | edit desktop widgets (add, move, resize, style) |
-| `SUPER + ALT + D` | dashboard (slides up from the bottom; pushing the pointer against the bottom edge opens it too) |
-| `SUPER + W` | wallpapers (Wallpaper tab of the dashboard) |
+| `SUPER + ALT + D` | today & system card from the bar (the classic dashboard when it is on) |
+| `SUPER + W` | wallpaper picker |
 
 ## Installation
 

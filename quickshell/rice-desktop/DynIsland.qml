@@ -1,4 +1,5 @@
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Pipewire
 import QtQuick
 
@@ -31,40 +32,99 @@ Item {
     readonly property bool micMuted: source && source.audio ? source.audio.muted : false
 
     // ---------- what it shows ----------
-    property string flash: ""                  // volume | mic | ws | notif (for a moment)
+    // the island in the bar: the time, or for a moment the volume, the microphone or the workspace, or the recording
+    // the card beside the bar: a notification, the info card (today, system) or the player
+    property string flash: ""                  // volume | mic | ws (for a moment)
     property bool hoverOpen: false
-    property bool pinned: false                // clicked open
+    property bool pinned: false                // the player, opened from the info card
     property var note: null                    // the notification it shows
-    readonly property string mode: flash !== "" ? flash
-        : ((pinned || hoverOpen) && pl.has ? "media"
-        : (bar && bar.recOn ? "rec" : "idle"))
-    function show(what, ms) { if (flash === "notif") return; flash = what; flashT.interval = ms; flashT.restart() }
-    Timer { id: flashT; onTriggered: { isl.flash = ""; isl.note = null } }
+    property bool infoOpen: false
+    property string infoTab: "today"           // today | system
+    readonly property string mode: flash !== "" ? flash : (bar && bar.recOn ? "rec" : "idle")
+    readonly property string cardWant: note ? "notif"
+        : (infoOpen ? "info" : ((pinned || hoverOpen) && pl.has && !ghost ? "media" : ""))
+    readonly property bool big: cardWant !== ""
+    function show(what, ms) { flash = what; flashT.interval = ms; flashT.restart() }
+    Timer { id: flashT; onTriggered: isl.flash = "" }
+    // no island on the bar: only the card shows (the clock or a key asked for it), in the middle of the bar
+    property bool ghost: false
+    function openInfo(tab, toggle) {
+        if (toggle && infoOpen && infoTab === tab) { infoOpen = false; return }
+        infoTab = tab; pinned = false; hoverOpen = false; infoOpen = true
+        if (!hovering) pinT.restart()
+    }
 
     property bool ready: false
     Timer { running: true; interval: 2500; onTriggered: isl.ready = true }
     readonly property real vol: bar ? bar.vol : 0
     readonly property bool muted: bar ? bar.muted : false
-    onVolChanged: if (ready && on("island_volume")) show("volume", 1600)
-    onMutedChanged: if (ready && on("island_volume")) show("volume", 1600)
-    onMicMutedChanged: if (ready && on("island_volume")) show("mic", 1600)
+    onVolChanged: if (ready && !ghost && on("island_volume")) show("volume", 1600)
+    onMutedChanged: if (ready && !ghost && on("island_volume")) show("volume", 1600)
+    onMicMutedChanged: if (ready && !ghost && on("island_volume")) show("mic", 1600)
     readonly property int wsId: bar ? bar.focusedId : 1
-    onWsIdChanged: if (ready && on("island_ws") && flash !== "notif" && flash !== "volume") show("ws", 1100)
+    onWsIdChanged: if (ready && !ghost && on("island_ws") && flash !== "volume") show("ws", 1100)
     Connections {
         target: isl.nf
         ignoreUnknownSignals: true
         function onShowed(n) {
-            if (!isl.on("island_notifs")) return
-            flashT.stop()
-            isl.note = n; isl.flash = "notif"
+            if (isl.ghost || !isl.on("island_notifs")) return
+            isl.note = n
             noteRun.stop(); isl.noteLeft = 1; noteRun.duration = isl.noteLife; noteRun.start()
+        }
+    }
+    // rice-dashboard open / island: the info card (the dashboard is the island now)
+    Trigger {
+        path: Quickshell.env("HOME") + "/.cache/rice/island-open"
+        every: 1500
+        onFired: function(line) {
+            const p = String(line).trim().split(/\s+/)
+            if (p.length < 2) return
+            isl.openInfo(p[1] === "system" ? "system" : "today", p[2] !== "open")
         }
     }
     // it stays while the wave runs out; pointing at it holds the wave
     readonly property int noteLife: nf ? Math.max(3, nf.timeout) * 1000 : 5000
     property real noteLeft: 1
     NumberAnimation { id: noteRun; target: isl; property: "noteLeft"; to: 0; paused: running && isl.hovering }
-    onNoteLeftChanged: if (noteLeft <= 0.001 && flash === "notif") { flash = ""; note = null }
+    onNoteLeftChanged: if (noteLeft <= 0.001 && note) note = null
+
+
+    // ---------- what the info card reads ----------
+    // the weather (rice-weather, at most every half hour)
+    property string wCond: ""
+    property string wTemp: ""
+    property string wPlace: ""
+    Process {
+        id: wProc
+        command: ["bash", "-c", "f=\"$HOME/.cache/rice/weather.txt\"; [ -n \"$(find \"$f\" -mmin -30 2>/dev/null)\" ] || \"$HOME/.local/bin/rice-weather\" >/dev/null 2>&1; cat \"$f\" 2>/dev/null"]
+        stdout: StdioCollector { onStreamFinished: {
+            const p = text.trim().split("|")
+            if (p.length >= 2) { isl.wCond = p[0].trim(); isl.wTemp = p[1].trim().replace(/^\+/, ""); isl.wPlace = (p[2] || "").trim() } } }
+    }
+    onInfoOpenChanged: if (infoOpen && !wProc.running) wProc.running = true
+    function wIcon(c) {
+        const t = String(c).toLowerCase(), h = new Date().getHours(), night = h >= 20 || h < 6
+        if (t.indexOf("thunder") >= 0) return "thunderstorm"
+        if (t.indexOf("snow") >= 0 || t.indexOf("sleet") >= 0 || t.indexOf("ice") >= 0 || t.indexOf("blizzard") >= 0) return "ac_unit"
+        if (t.indexOf("rain") >= 0 || t.indexOf("drizzle") >= 0 || t.indexOf("shower") >= 0) return "rainy"
+        if (t.indexOf("fog") >= 0 || t.indexOf("mist") >= 0 || t.indexOf("haze") >= 0) return "foggy"
+        if (t.indexOf("partly") >= 0) return night ? "nights_stay" : "partly_cloudy_day"
+        if (t.indexOf("cloud") >= 0 || t.indexOf("overcast") >= 0) return "cloud"
+        if (t.indexOf("clear") >= 0 || t.indexOf("sunny") >= 0) return night ? "clear_night" : "sunny"
+        return t === "" ? "cloud" : (night ? "clear_night" : "partly_cloudy_day")
+    }
+    // the system numbers, only while System is open (rice-dashboard stats)
+    property var st: ({})
+    property var disk0: null
+    Process {
+        id: stProc
+        running: isl.big && isl.cardMode === "info" && isl.infoTab === "system"
+        command: ["bash", "-c", "exec \"$HOME/.local/bin/rice-dashboard\" stats"]
+        stdout: SplitParser { onRead: function(line) {
+            try { const j = JSON.parse(line); isl.st = j; if (j.disks && j.disks.length > 0) isl.disk0 = j.disks[0] } catch (e) { } } }
+    }
+    function gb(b) { return b >= 1073741824 ? (b / 1073741824).toFixed(b >= 107374182400 ? 0 : 1) + " GB" : Math.round(b / 1048576) + " MB" }
+    function upText(sec) { const h = Math.floor(sec / 3600), m = Math.floor(sec / 60) % 60; return (h > 0 ? h + " h " : "") + m + " min" }
 
     // ---------- its size ----------
     readonly property real tw: {
@@ -75,23 +135,20 @@ Item {
         }
         return idleRow.implicitWidth + 30
     }
-    readonly property bool big: mode === "media" || mode === "notif"
-    // what the island in the bar shows while the card is open: the time (or the recording)
-    readonly property string pillMode: big ? (bar && bar.recOn ? "rec" : "idle") : mode
+    readonly property string pillMode: mode
     property color fill: pal ? pal.surface : "#141414"
     property bool flatRest: false
     property real areaW: 1920                    // how wide the bar is (the card stays inside it)
     // its width in the bar
-    readonly property real restW: big ? ((bar && bar.recOn ? recRow.implicitWidth : idleRow.implicitWidth) + 30) : tw
+    readonly property real restW: ghost ? 0 : tw
     width: restW; height: bh
     Behavior on width { SpringAnimation { spring: Look.lite ? 6 : 3.6; damping: Look.lite ? 0.6 : 0.3; epsilon: 0.4 } }
 
     // the card: which one it shows (kept while it closes)
     property string cardMode: "media"
-    onBigChanged: if (big) cardMode = mode
-    onModeChanged: if (big) cardMode = mode
-    readonly property real cw: cardMode === "notif" ? 440 : 470
-    readonly property real ch: cardMode === "notif" ? 96 : 184
+    onCardWantChanged: if (cardWant !== "") cardMode = cardWant
+    readonly property real cw: cardMode === "notif" ? 440 : (cardMode === "info" ? 520 : 470)
+    readonly property real ch: cardMode === "notif" ? 96 : (cardMode === "info" ? 318 : 184)
     readonly property bool cardShown: card.opacity > 0.01
     // the part of the screen it takes (the bar lets the pointer through everywhere else)
     readonly property real ux: cardShown ? Math.min(0, card.x) : 0
@@ -99,25 +156,26 @@ Item {
     readonly property real uw: (cardShown ? Math.max(width, card.x + card.width) : width) - ux
     readonly property real uh: (cardShown ? Math.max(height, card.y + card.height) : height) - uy
 
-    // pointing at it: opens the player; it closes a moment after the pointer leaves (a clicked one waits longer)
+    // pointing at it: opens the player; cards close a moment after the pointer leaves (opened ones wait longer)
     readonly property bool hovering: hov.hovered || hovC.hovered
     HoverHandler { id: hov }
     onHoveringChanged: {
-        if (hovering) { closeT.stop(); pinT.stop(); if (on("island_hover") && !big) openT.restart() }
-        else { openT.stop(); closeT.restart(); if (pinned) pinT.restart() }
+        if (hovering) { closeT.stop(); pinT.stop(); if (on("island_hover") && !big && !ghost) openT.restart() }
+        else { openT.stop(); closeT.restart(); if (pinned || infoOpen) pinT.restart() }
     }
     Timer { id: openT; interval: 260; onTriggered: isl.hoverOpen = pl.has }
     Timer { id: closeT; interval: 450; onTriggered: isl.hoverOpen = false }
-    Timer { id: pinT; interval: 3500; onTriggered: isl.pinned = false }
+    Timer { id: pinT; interval: 3500; onTriggered: { isl.pinned = false; isl.infoOpen = false } }
     // the player closes by itself when nothing plays any more
     onPlayingChanged: if (!playing && !hovering) { pinT.restart(); closeT.restart() }
     readonly property bool playing: pl.playing
 
     // ---------- the shape ----------
-    Shadow { anchors.fill: bg; radius: bg.radius; on: Look.shadows && Look.shadowBar && !isl.flatRest; size: Look.shadowSize * 0.5; strength: Look.shadowStrength }
+    Shadow { anchors.fill: bg; radius: bg.radius; on: Look.shadows && Look.shadowBar && !isl.flatRest && !isl.ghost; size: Look.shadowSize * 0.5; strength: Look.shadowStrength }
     Rectangle {
         id: bg
         anchors.fill: parent
+        visible: !isl.ghost
         radius: height / 2
         // inside the notch or a pill with modules it has no color of its own (no darker band)
         color: isl.flatRest ? Qt.rgba(isl.fill.r, isl.fill.g, isl.fill.b, 0) : isl.fill
@@ -128,10 +186,8 @@ Item {
             id: fIdle; name: "idle"; width: idleRow.implicitWidth + 30; height: isl.bh
             MouseArea {
                 anchors.fill: parent; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
-                onClicked: function(m) {
-                    if (m.button === Qt.LeftButton && pl.has) { isl.pinned = !isl.pinned; return }
-                    isl.bar.run("\"$HOME/.local/bin/rice-dashboard\" open")
-                }
+                // left: today (calendar, weather), right: system (what the computer is doing)
+                onClicked: function(m) { isl.openInfo(m.button === Qt.RightButton ? "system" : "today", true) }
                 onWheel: function(e) { if (isl.bar.sink && isl.bar.sink.audio) isl.bar.sink.audio.volume = Math.max(0, Math.min(1, isl.bar.sink.audio.volume + (e.angleDelta.y > 0 ? 0.04 : -0.04))) }
             }
             Row {
@@ -143,7 +199,7 @@ Item {
                     RotationAnimator on rotation { from: 0; to: 360; duration: 9000; loops: Animation.Infinite; running: pl.playing && !Look.lite } }
                 Text { anchors.verticalCenter: parent.verticalCenter; text: isl.bar ? isl.bar.timeText : ""
                     color: isl.pal ? isl.pal.fg : "white"; font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.DemiBold }
-                Eq { visible: pl.playing; anchors.verticalCenter: parent.verticalCenter; h: 14; running: isl.pillMode === "idle" }
+                Eq { visible: pl.playing; anchors.verticalCenter: parent.verticalCenter; h: 14; go: isl.pillMode === "idle" }
             }
         }
 
@@ -276,6 +332,7 @@ Item {
     Rectangle {
         id: card
         property real t: isl.big ? 1 : 0
+        onTChanged: if (t < 0.01 && !isl.big) isl.cardMode = ""
         Behavior on t { NumberAnimation { duration: isl.big ? 520 : 220; easing.type: Easing.BezierSpline; easing.bezierCurve: isl.big ? Look.decel : Look.accel } }
         width: isl.cw; height: isl.ch
         Behavior on width { SpringAnimation { spring: 3.6; damping: 0.32; epsilon: 0.4 } }
@@ -306,6 +363,147 @@ Item {
             }
         }
 
+
+        // ---------- the info card: today (calendar, weather, the day) and system (CPU, GPU, RAM, disk) ----------
+        Face {
+            id: fInfo
+            name: "info"; inCard: true; width: 520; height: 318
+            readonly property var pp: isl.pal
+            // tabs: a pill of your key color slides under the one that is open
+            Item {
+                id: tabs
+                anchors.horizontalCenter: parent.horizontalCenter; y: isl.down ? 14 : 14
+                width: tabRow.width + 8; height: 38
+                Rectangle { anchors.fill: parent; radius: height / 2; color: fInfo.pp ? fInfo.pp.card : "#222" }
+                Rectangle {
+                    id: tabPill
+                    readonly property var cur: isl.infoTab === "system" ? tSys : tToday
+                    x: 4 + cur.x; y: 4; width: cur.width; height: parent.height - 8; radius: height / 2
+                    color: fInfo.pp ? fInfo.pp.primary : "white"
+                    Behavior on x { SpringAnimation { spring: 4; damping: 0.4; epsilon: 0.3 } }
+                    Behavior on width { SpringAnimation { spring: 4; damping: 0.4; epsilon: 0.3 } }
+                }
+                Row {
+                    id: tabRow
+                    x: 4; y: 4; height: parent.height - 8
+                    Tab { id: tToday; label: "Today"; icon: "calendar_today"; on: isl.infoTab === "today"; onHit: isl.infoTab = "today" }
+                    Tab { id: tSys; label: "System"; icon: "memory"; on: isl.infoTab === "system"; onHit: isl.infoTab = "system" }
+                    Tab { visible: pl.has; label: "Music"; icon: "music_note"; on: false
+                        onHit: { isl.infoOpen = false; isl.pinned = true; if (!isl.hovering) pinT.restart() } }
+                }
+            }
+
+            // ---------- today ----------
+            Item {
+                id: today
+                x: 0; y: 62; width: parent.width; height: parent.height - 62
+                opacity: isl.infoTab === "today" ? 1 : 0
+                visible: opacity > 0.01
+                Behavior on opacity { NumberAnimation { duration: 220 } }
+                transform: Translate { x: isl.infoTab === "today" ? 0 : -24; Behavior on x { NumberAnimation { duration: 320; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.decel } } }
+                property var now: new Date()
+                Timer { interval: 30000; running: fInfo.act; repeat: true; triggeredOnStart: true; onTriggered: today.now = new Date() }
+                readonly property var days: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+                readonly property var months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+                // left: the day and the weather
+                Column {
+                    x: 22; y: 4; width: 228; spacing: 2
+                    Text { text: today.days[today.now.getDay()]; color: fInfo.pp ? fInfo.pp.primary : "#aaa"; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.DemiBold }
+                    Text { text: today.now.getDate() + " " + today.months[today.now.getMonth()]; color: fInfo.pp ? fInfo.pp.fg : "white"; font.family: Fonts.main; font.pixelSize: 26; font.weight: Font.DemiBold }
+                }
+                Item {
+                    x: 22; y: 74; width: 228; height: 72
+                    Item { id: wIc; width: 66; height: 66; anchors.verticalCenter: parent.verticalCenter
+                        Blob { anchors.fill: parent; kind: Look.shape; color: fInfo.pp ? fInfo.pp.container : "#333"
+                            RotationAnimator on rotation { from: 0; to: 360; duration: 40000; loops: Animation.Infinite; running: fInfo.act && !Look.lite } }
+                        MIcon { anchors.centerIn: parent; size: 30; filled: true; glyph: ""; name: isl.wIcon(isl.wCond); color: fInfo.pp ? fInfo.pp.inkContainer : "white" } }
+                    Column {
+                        anchors.left: wIc.right; anchors.leftMargin: 14; anchors.verticalCenter: parent.verticalCenter; spacing: 1
+                        width: parent.width - 80
+                        Text { text: isl.wTemp !== "" ? isl.wTemp : "--"; color: fInfo.pp ? fInfo.pp.fg : "white"; font.family: Fonts.main; font.pixelSize: 26; font.weight: Font.DemiBold }
+                        Text { width: parent.width; elide: Text.ElideRight; text: isl.wCond !== "" ? isl.wCond : "No weather yet"; color: fInfo.pp ? fInfo.pp.fg : "white"; font.family: Fonts.main; font.pixelSize: 13 }
+                        Text { width: parent.width; elide: Text.ElideRight; visible: text !== ""; text: isl.wPlace; color: fInfo.pp ? fInfo.pp.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 11 }
+                    }
+                }
+                // how much of the day has gone, as a wave
+                readonly property real dayFrac: (now.getHours() * 60 + now.getMinutes()) / 1440
+                Text { x: 22; y: 170; text: "Day"; color: fInfo.pp ? fInfo.pp.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 12 }
+                Text { x: 250 - width; y: 170; text: Math.round(today.dayFrac * 100) + "%"; color: fInfo.pp ? fInfo.pp.dim : "#aaa"; font.family: Fonts.numbers; font.pixelSize: 12 }
+                WavyLine { x: 22; y: 190; width: 228; height: 20; value: today.dayFrac; moving: fInfo.act
+                    color: fInfo.pp ? fInfo.pp.primary : "white"; track: fInfo.pp ? fInfo.pp.track : "#444" }
+
+                // right: the month
+                Item {
+                    id: cal
+                    x: 270; y: 0; width: 230; height: parent.height - 10
+                    property int off: 0
+                    Connections { target: isl; function onInfoOpenChanged() { if (isl.infoOpen) cal.off = 0 } }
+                    readonly property var first: new Date(today.now.getFullYear(), today.now.getMonth() + off, 1)
+                    readonly property int lead: (first.getDay() + 6) % 7          // Monday first
+                    readonly property int count: new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate()
+                    Text { x: 4; y: 4; text: today.months[cal.first.getMonth()] + " " + cal.first.getFullYear()
+                        color: fInfo.pp ? fInfo.pp.fg : "white"; font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.DemiBold }
+                    Row {
+                        anchors.right: parent.right; y: 0; spacing: 2
+                        Btn { width: 28; height: 28; icon: "chevron_left"; onHit: cal.off-- }
+                        Btn { width: 28; height: 28; icon: "chevron_right"; onHit: cal.off++ }
+                    }
+                    Grid {
+                        id: grid
+                        y: 34; columns: 7; columnSpacing: 0; rowSpacing: 0
+                        readonly property real cw: cal.width / 7
+                        Repeater {
+                            model: ["M", "T", "W", "T", "F", "S", "S"]
+                            delegate: Text { width: grid.cw; height: 22; horizontalAlignment: Text.AlignHCenter; text: modelData
+                                color: fInfo.pp ? fInfo.pp.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 11; font.weight: Font.Medium }
+                        }
+                        Repeater {
+                            model: 42
+                            delegate: Item {
+                                readonly property int d: index - cal.lead + 1
+                                readonly property bool inMonth: d >= 1 && d <= cal.count
+                                readonly property bool isToday: inMonth && cal.off === 0 && d === today.now.getDate()
+                                width: grid.cw; height: 27
+                                visible: index < 35 || cal.lead + cal.count > 35
+                                Blob { anchors.centerIn: parent; width: 26; height: 26; visible: parent.isToday; kind: Look.shape
+                                    color: fInfo.pp ? fInfo.pp.primary : "white" }
+                                Text { anchors.centerIn: parent; visible: parent.inMonth; text: parent.d
+                                    color: parent.isToday ? (fInfo.pp ? fInfo.pp.inkPrimary : "black") : (fInfo.pp ? fInfo.pp.fg : "white")
+                                    font.family: Fonts.main; font.pixelSize: 12; font.weight: parent.isToday ? Font.Bold : Font.Normal }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ---------- system ----------
+            Item {
+                id: sys
+                x: 0; y: 62; width: parent.width; height: parent.height - 62
+                opacity: isl.infoTab === "system" ? 1 : 0
+                visible: opacity > 0.01
+                Behavior on opacity { NumberAnimation { duration: 220 } }
+                transform: Translate { x: isl.infoTab === "system" ? 0 : 24; Behavior on x { NumberAnimation { duration: 320; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.decel } } }
+                Row {
+                    anchors.horizontalCenter: parent.horizontalCenter; y: 6
+                    spacing: 26
+                    Ring { label: "CPU"; value: isl.st.cpu ? isl.st.cpu.usage / 100 : 0; temp: isl.st.cpu ? isl.st.cpu.temp : null }
+                    Ring { label: "GPU"; value: isl.st.gpu && isl.st.gpu.usage !== null ? isl.st.gpu.usage / 100 : 0; temp: isl.st.gpu ? isl.st.gpu.temp : null
+                        none: !isl.st.gpu || isl.st.gpu.usage === null }
+                    Ring { label: "RAM"; value: isl.st.mem ? isl.st.mem.pct / 100 : 0
+                        sub: isl.st.mem ? isl.gb(isl.st.mem.used) + " / " + isl.gb(isl.st.mem.total) : "" }
+                }
+                // the disk, as a wave
+                readonly property var disk: isl.disk0
+                Text { x: 32; y: 166; text: "Disk  " + (sys.disk ? sys.disk.mount : "/"); color: fInfo.pp ? fInfo.pp.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 12 }
+                Text { x: parent.width - 32 - width; y: 166; text: sys.disk ? isl.gb(sys.disk.used) + " / " + isl.gb(sys.disk.total) : ""
+                    color: fInfo.pp ? fInfo.pp.dim : "#aaa"; font.family: Fonts.numbers; font.pixelSize: 12 }
+                WavyLine { x: 32; y: 186; width: parent.width - 64; height: 20; value: sys.disk ? sys.disk.pct / 100 : 0; moving: false
+                    color: fInfo.pp ? fInfo.pp.primary : "white"; track: fInfo.pp ? fInfo.pp.track : "#444" }
+                Text { x: 32; y: 216; text: isl.st.uptime ? "Up " + isl.upText(isl.st.uptime) : ""; color: fInfo.pp ? fInfo.pp.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 11 }
+            }
+        }
+
         // ---------- a notification ----------
         Face {
             name: "notif"; inCard: true; width: 440; height: 96
@@ -314,7 +512,7 @@ Item {
                 id: nIc
                 x: 16; y: 16; width: 46; height: 46
                 Blob { anchors.fill: parent; kind: Look.shape; color: isl.pal ? isl.pal.container : "#333"
-                    RotationAnimator on rotation { from: 0; to: 360; duration: 24000; loops: Animation.Infinite; running: isl.mode === "notif" && !Look.lite } }
+                    RotationAnimator on rotation { from: 0; to: 360; duration: 24000; loops: Animation.Infinite; running: isl.cardMode === "notif" && isl.big && !Look.lite } }
                 Image { id: nImg; anchors.centerIn: parent; width: 24; height: 24; sourceSize.width: 48; sourceSize.height: 48
                     source: { const n = isl.note; if (!n) return ""
                         if (n.appIcon && n.appIcon !== "") return n.appIcon.indexOf("/") === 0 ? "file://" + n.appIcon : Quickshell.iconPath(n.appIcon, true)
@@ -336,13 +534,13 @@ Item {
                 value: isl.noteLeft; handle: false; moving: true; thick: 3
                 color: isl.pal ? isl.pal.primary : "white"; track: isl.pal ? isl.pal.track : "#444" }
             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                onClicked: { isl.flash = ""; isl.bar.run("\"$HOME/.local/bin/rice-cc\" open") } }
+                onClicked: { isl.note = null; isl.bar.run("\"$HOME/.local/bin/rice-cc\" open") } }
             Rectangle {
                 anchors.right: parent.right; anchors.rightMargin: 10; y: 10; width: 28; height: 28; radius: 14
                 color: xm.containsMouse ? (isl.pal ? isl.pal.cardHi : "#444") : "transparent"
                 MIcon { anchors.centerIn: parent; size: 15; name: "close"; glyph: ""; color: isl.pal ? isl.pal.dim : "#aaa" }
                 MouseArea { id: xm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                    onClicked: { if (isl.note && isl.nf) isl.nf.dismiss(isl.note); isl.flash = ""; isl.note = null } }
+                    onClicked: { if (isl.note && isl.nf) isl.nf.dismiss(isl.note); isl.note = null } }
             }
         }
 
@@ -363,7 +561,7 @@ Item {
                 Text { width: parent.width; elide: Text.ElideRight; text: pl.artist; color: isl.pal ? isl.pal.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 13 }
             }
             // a wave that moves while it plays
-            Eq { x: parent.width - 58; y: 22; h: 22; bars: 5; running: pl.playing && isl.mode === "media" }
+            Eq { x: parent.width - 58; y: 22; h: 22; bars: 5; go: pl.playing && isl.cardMode === "media" && isl.big }
             Text { x: 16; y: 110; width: 38; text: pl.clock(pl.pos); color: isl.pal ? isl.pal.dim : "#aaa"; font.family: Fonts.numbers; font.pixelSize: 11 }
             WavyLine {
                 x: 56; y: 105; width: parent.width - 112; height: 22
@@ -401,7 +599,7 @@ Item {
         id: fc
         property string name: ""
         property bool inCard: false
-        readonly property bool act: inCard ? isl.mode === name : isl.pillMode === name
+        readonly property bool act: inCard ? (isl.big && isl.cardMode === name) : isl.pillMode === name
         x: (parent.width - width) / 2
         y: isl.down ? 0 : parent.height - height
         // it comes in once the shape has (nearly) grown to it, so it is never seen cut
@@ -417,7 +615,7 @@ Item {
         id: eq
         property int bars: 4
         property real h: 14
-        property bool running: true
+        property bool go: true
         spacing: 2.5
         Repeater {
             model: eq.bars
@@ -428,7 +626,7 @@ Item {
                 property real lv: 0.4
                 height: Math.max(4, eq.h * lv)
                 SequentialAnimation on lv {
-                    running: eq.running && !Look.lite; loops: Animation.Infinite
+                    running: eq.go && !Look.lite; loops: Animation.Infinite
                     NumberAnimation { to: 1.0; duration: 260 + index * 70; easing.type: Easing.InOutSine }
                     NumberAnimation { to: 0.3 + (index % 2) * 0.15; duration: 300 + index * 50; easing.type: Easing.InOutSine }
                     NumberAnimation { to: 0.75; duration: 220 + index * 90; easing.type: Easing.InOutSine }
@@ -436,6 +634,45 @@ Item {
                 }
             }
         }
+    }
+    component Tab: Item {
+        id: tb
+        property string label: ""
+        property string icon: ""
+        property bool on: false
+        signal hit()
+        width: visible ? tr.implicitWidth + 28 : 0; height: parent ? parent.height : 30
+        Row { id: tr; anchors.centerIn: parent; spacing: 6
+            MIcon { anchors.verticalCenter: parent.verticalCenter; size: 16; filled: tb.on; name: tb.icon; glyph: ""
+                color: tb.on ? (isl.pal ? isl.pal.inkPrimary : "black") : (isl.pal ? isl.pal.fg : "white") }
+            Text { anchors.verticalCenter: parent.verticalCenter; text: tb.label; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium
+                color: tb.on ? (isl.pal ? isl.pal.inkPrimary : "black") : (isl.pal ? isl.pal.fg : "white")
+                Behavior on color { ColorAnimation { duration: 200 } } } }
+        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: tb.hit() }
+    }
+    // a wavy ring with a number in the middle (System)
+    component Ring: Item {
+        id: rg
+        property string label: ""
+        property real value: 0
+        property var temp: null
+        property string sub: ""
+        property bool none: false
+        width: 120; height: 150
+        Behavior on value { NumberAnimation { duration: 600; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
+        Item {
+            width: 104; height: 104; anchors.horizontalCenter: parent.horizontalCenter
+            WavyArc { anchors.fill: parent; value: rg.none ? 0 : rg.value; moving: true; thick: Math.max(4, Look.waveThick)
+                color: rg.value > 0.85 ? "#ffb4ab" : (isl.pal ? isl.pal.primary : "white"); track: isl.pal ? isl.pal.track : "#444" }
+            Column { anchors.centerIn: parent; spacing: 0
+                Text { anchors.horizontalCenter: parent.horizontalCenter; text: rg.none ? "--" : Math.round(rg.value * 100) + "%"
+                    color: isl.pal ? isl.pal.fg : "white"; font.family: Fonts.main; font.pixelSize: 20; font.weight: Font.DemiBold }
+                Text { anchors.horizontalCenter: parent.horizontalCenter; text: rg.temp !== null && rg.temp !== undefined ? rg.temp + "°" : ""
+                    visible: text !== ""; color: isl.pal ? isl.pal.dim : "#aaa"; font.family: Fonts.numbers; font.pixelSize: 11 } }
+        }
+        Column { y: 110; anchors.horizontalCenter: parent.horizontalCenter; spacing: 1
+            Text { anchors.horizontalCenter: parent.horizontalCenter; text: rg.label; color: isl.pal ? isl.pal.fg : "white"; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium }
+            Text { anchors.horizontalCenter: parent.horizontalCenter; text: rg.sub; visible: text !== ""; color: isl.pal ? isl.pal.dim : "#aaa"; font.family: Fonts.numbers; font.pixelSize: 10 } }
     }
     component Btn: Item {
         id: bt

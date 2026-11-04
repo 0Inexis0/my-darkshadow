@@ -112,6 +112,9 @@ def lua_text(c):
     # the Quickshell bar (rice-bar) blurs the same way
     out.append('hl.layer_rule({\n    name  = "rice-bar-blur",\n    match = { namespace = "rice-bar" },\n'
                '    blur = true,\n    ignore_alpha = 0.25,\n})\n')
+    # the wallpaper picker: the sheet is blurred, the dim scrim around it is not
+    out.append('hl.layer_rule({\n    name  = "rice-walls-blur",\n    match = { namespace = "rice-walls" },\n'
+               '    blur = true,\n    ignore_alpha = 0.4,\n})\n')
     out.append('hl.layer_rule({\n    name  = "rice-wifi-blur",\n    match = { namespace = "rice-wifi" },\n'
                '    blur = true,\n    ignore_alpha = 0.1,\n})\n')
     out.append('hl.layer_rule({\n    name  = "rice-bluetooth-blur",\n    match = { namespace = "rice-bluetooth" },\n'

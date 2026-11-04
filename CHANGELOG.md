@@ -1,5 +1,16 @@
 # Changelog
 
+## V3.34
+- The dashboard moved into the bar. Click the clock (or press SUPER + ALT + D) and a Material 3 card grows out of the bar:
+  - Today: the date, the weather with its icon in your shape, the day as a wavy line, and the month with today in your shape
+  - System: CPU, GPU and RAM in wavy rings (with their heat), the disk as a wave, how long the computer has been on
+  - Music: the player; tabs slide on a pill of your key color, the card closes a moment after the pointer leaves
+  - right-click the clock for System; it works in every bar style, with or without the island
+- SUPER + W opens a new wallpaper picker: a sheet with search, shuffle, arrow keys and Enter, the current one with a check in your shape
+- SUPER + A opens the control center
+- The classic dashboard is off; Settings > Dashboard > Classic dashboard brings it back (and it stays while the bar is Waybar)
+- Updates swap the shell's changed files in all at once, so Quickshell never shows a "Config reload failed" in the middle of an update
+
 ## V3.33
 - The island's player and notifications open as a card just beside the bar (below it, or above a bar at the bottom), so the bar is never covered; the island in the bar keeps showing the time
 - Fix: the player card stayed open: it closes a moment after the pointer leaves, a clicked one after a few seconds, and by itself when nothing plays any more

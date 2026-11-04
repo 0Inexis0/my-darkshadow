@@ -99,7 +99,24 @@ copy_tree() { # copy_tree SRC_DIR DST_DIR
     rel="${f#"$src"/}"
     if [ -e "$dst/$rel" ] || [ -L "$dst/$rel" ]; then kept_files+=("$f"); else new_files+=("$f"); fi
   done < <(find -L "$src" -type f ! -name '*.bak*' ! -name '.gitkeep' ! -name shell.qml -print0)
-  for f in "${new_files[@]}" "${kept_files[@]}"; do put "$f" "$dst/${f#"$src"/}"; done
+  for f in "${new_files[@]}"; do put "$f" "$dst/${f#"$src"/}"; done
+  # the changed ones are written next to their old selves first and then swapped in all at once, so a running
+  # Quickshell never reloads with half of the new files (a new Bar.qml with an old DynIsland.qml); files that
+  # did not change are not touched at all
+  local d rel2
+  local -a staged=()
+  for f in "${kept_files[@]}"; do
+    d="$dst/${f#"$src"/}"
+    if [ "$DRY_RUN" = 1 ]; then continue; fi
+    put "$f" "$d.rice-new"
+    if cmp -s "$d.rice-new" "$d"; then rm -f "$d.rice-new"; continue; fi
+    rel2="${d#"$HOME"/}"
+    mkdir -p "$BK/$(dirname "$rel2")"
+    cp -aL "$d" "$BK/$rel2" 2>/dev/null || true
+    [ -L "$d" ] && rm -f "$d"
+    staged+=("$d")
+  done
+  for d in "${staged[@]}"; do mv -f "$d.rice-new" "$d"; done
   [ -f "$src/shell.qml" ] && put "$src/shell.qml" "$dst/shell.qml"
   return 0
 }

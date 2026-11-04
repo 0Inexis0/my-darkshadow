@@ -53,6 +53,28 @@ Item {
     PageScroll {
         anchors.fill: parent
 
+        // ---------- V3.34: the dashboard became the bar's island ----------
+        Rectangle {
+            width: parent.width
+            height: newCol.implicitHeight + 32
+            radius: M3.rL
+            color: M3.surfaceC
+            Column {
+                id: newCol
+                x: 20; y: 16; width: parent.width - 40
+                spacing: 6
+                T { text: "The dashboard lives in the bar now"; font.pixelSize: 16; font.bold: true }
+                T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; color: M3.inkDim; font.pixelSize: 12
+                    text: "Click the clock (or press SUPER + ALT + D): a card grows out of the bar with today (calendar, weather, the day as a wave) and System (CPU, GPU and RAM in wavy rings, the disk). Right-click opens System. SUPER + A opens the control center, SUPER + W the wallpaper picker, and the music is in the island. Turn the classic dashboard on below if you miss it." }
+            }
+        }
+        ToggleRow {
+            label: "Classic dashboard"
+            desc: "The old dashboard that slides out of the screen edge, with its tabs and cards (it is also used while the bar is Waybar)"
+            checked: page.v("classic", false) === true
+            onToggled: function(x) { page.setv("classic", x) }
+        }
+
         // ---------- hero ----------
         Rectangle {
             visible: Prefs.previews

@@ -120,7 +120,7 @@ PanelWindow {
     color: "transparent"
     anchors { top: !atBottom; bottom: atBottom; left: true; right: true }
     // room below for the recording island; windows only keep away from the bar itself
-    implicitHeight: barH + gap * 2 + (hasIsland || dyn ? 196 : 54)      // room for the island to grow (any style)
+    implicitHeight: barH + gap * 2 + 340      // room for the island's cards (the bar lets the pointer through there)
     exclusionMode: hideOn ? ExclusionMode.Ignore : ExclusionMode.Normal
     exclusiveZone: hideOn ? 0 : barH + gap * 2
     // only the bar (and the recording island) take the pointer; auto-hide: only a thin strip at the edge
@@ -680,7 +680,9 @@ PanelWindow {
         // ---------- dynamic: the island in the middle ----------
         DynIsland {
             id: isl
-            visible: bar.hasIsland && bar.islSlot !== null
+            // without the island module only its cards show (the clock, SUPER + ALT + D, notifications stay pop-ups)
+            visible: bar.on
+            ghost: !(bar.hasIsland && bar.islSlot !== null)
             bar: bar
             pal: gp
             nf: bar.nf

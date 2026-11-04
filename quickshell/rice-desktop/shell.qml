@@ -429,6 +429,7 @@ ShellRoot {
     // ---- dashboard (middle of the bar edge, SUPER + W for wallpapers)
     Dashboard { id: dash }
     Launcher { }
+    WallPicker { }
     Bar { id: mainBar; nf: notifs }
     WifiMenu { }
     BluetoothMenu { }
