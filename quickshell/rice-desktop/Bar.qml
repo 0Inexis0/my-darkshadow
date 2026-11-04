@@ -547,7 +547,7 @@ PanelWindow {
             id: ip
             property bool shown: true
             width: Math.round(isl.restW); height: bar.barH
-            Behavior on width { SpringAnimation { spring: 3.6; damping: 0.32; epsilon: 0.4 } }
+            Behavior on width { NumberAnimation { duration: Look.lite ? 260 : 460; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
             // where it is in the bar (follows the slot, the row and the zone as they move)
             readonly property real bx: parent && parent.parent && parent.parent.parent && parent.parent.parent.parent
                 ? x + parent.x + parent.parent.x + parent.parent.parent.x + parent.parent.parent.parent.x : 0

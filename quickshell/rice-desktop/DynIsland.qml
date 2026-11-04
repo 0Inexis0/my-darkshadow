@@ -197,7 +197,8 @@ Item {
     // its width in the bar
     readonly property real restW: ghost ? 0 : tw
     width: Math.round(restW); height: bh
-    Behavior on width { SpringAnimation { spring: Look.lite ? 6 : 3; damping: Look.lite ? 0.6 : 0.32; epsilon: 0.25 } }
+    // a calm change of width: the modules beside it and the notch move with it, so no bounce here
+    Behavior on width { NumberAnimation { duration: Look.lite ? 260 : 460; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
 
     // the card: which one it shows (kept while it closes)
     property string cardMode: "media"
@@ -236,16 +237,17 @@ Item {
         // inside the notch or a pill with modules it has no color of its own (no darker band)
         color: isl.flatRest ? Qt.rgba(isl.fill.r, isl.fill.g, isl.fill.b, 0) : isl.fill
         clip: true
+        // the whole island: left click today (calendar, weather), right click system, the wheel the volume;
+        // it works whatever the island shows (the recording's buttons and the volume line sit on top of it)
+        MouseArea {
+            anchors.fill: parent; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
+            onClicked: function(m) { isl.openInfo(m.button === Qt.RightButton ? "system" : (isl.cfg.island_tab || "today"), true) }
+            onWheel: function(e) { if (isl.bar.sink && isl.bar.sink.audio) isl.bar.sink.audio.volume = Math.max(0, Math.min(1, isl.bar.sink.audio.volume + (e.angleDelta.y > 0 ? 0.04 : -0.04))) }
+        }
 
         // ---------- idle: the time ----------
         Face {
             id: fIdle; name: "idle"; width: idleRow.implicitWidth + 30; height: isl.bh
-            MouseArea {
-                anchors.fill: parent; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
-                // left: today (calendar, weather), right: system (what the computer is doing)
-                onClicked: function(m) { isl.openInfo(m.button === Qt.RightButton ? "system" : (isl.cfg.island_tab || "today"), true) }
-                onWheel: function(e) { if (isl.bar.sink && isl.bar.sink.audio) isl.bar.sink.audio.volume = Math.max(0, Math.min(1, isl.bar.sink.audio.volume + (e.angleDelta.y > 0 ? 0.04 : -0.04))) }
-            }
             Row {
                 id: idleRow
                 // on whole pixels, so the time is sharp and sits straight in the middle
@@ -771,7 +773,10 @@ Item {
         scale: act ? 1 : 0.94
         visible: opacity > 0.01
         enabled: act
-        Behavior on opacity { NumberAnimation { duration: fc.act ? 420 : 120; easing.type: Easing.Linear } }
+        // the old face leaves first, then the new one comes in (they never show on top of each other)
+        Behavior on opacity { SequentialAnimation {
+            PauseAnimation { duration: fc.act ? 140 : 0 }
+            NumberAnimation { target: fc; property: "opacity"; duration: fc.act ? 320 : 120; easing.type: Easing.Linear } } }
         Behavior on scale { NumberAnimation { duration: 520; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.decel } }
     }
     // a small equalizer: round bars in your key color that bounce while music plays

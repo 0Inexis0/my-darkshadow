@@ -1,5 +1,10 @@
 # Changelog
 
+## V3.41
+- Fix: while the screen was recorded the island could not be clicked open; a click anywhere on the island works now, whatever it shows
+- Fix: switching workspace made the bar shake at the end: the island and the notch change their width calmly now, without a bounce
+- The island's faces no longer show on top of each other: the old one leaves first, then the new one comes in
+
 ## V3.40
 - Notch: with the island in it, the island sits exactly in the middle of the screen and the notch reaches as far to both sides
 - The weather beside the time (and in Today) is a solid icon, all in your key color
