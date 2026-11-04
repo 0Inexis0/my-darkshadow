@@ -30,7 +30,7 @@ Item {
     readonly property var glyph: ({
         "launcher": "󰀻", "workspaces": "󰇘", "title": "󰖲", "media": "󰝚",
         "clock": "12:34", "tray": "󰕰", "volume": "󰕾", "network": "󰖩",
-        "bluetooth": "󰂯", "battery": "󰁹 82%", "notifications": "󰂚", "power": "󰐥"
+        "bluetooth": "󰂯", "battery": "󰁹 82%", "notifications": "󰂚", "power": "󰐥", "island": "12:34 \u25ac"
     })
     readonly property string wsText: page.v("ws_style", "dots") === "pacman" ? "\u25d6 \u2022 \u2022 \u2022" : (page.v("ws_style", "dots") === "letters" ? "A  B  C  D" : page.v("ws_style", "dots") === "numbers" ? "1  2  3  4" : "\u25cf  \u2022  \u2022  \u2022")
     readonly property var logos: [
@@ -185,9 +185,10 @@ Item {
                 width: parent.width
                 spacing: 8
                 visible: page.v("style", "islands") === "dynamic" || page.v("style", "islands") === "google"
+                         || ["left", "center", "right"].some(function(z) { return (page.lay[z] || []).indexOf("island") >= 0 })
                 T { kind: "title"; text: "Dynamic island"; font.pixelSize: 16; font.bold: true; topPadding: 6 }
                 T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; color: M3.inkDim; font.pixelSize: 12
-                    text: "The clock in the middle grows into what happens right now, on springs, with your shape and wavy progress. Scroll on it for the volume, right-click it for the dashboard." }
+                    text: "The island grows into what happens right now, on springs, with your shape and wavy progress. Scroll on it for the volume, right-click it for the dashboard. It is a module in Bar layout too: put it in any zone, with other modules beside it, in any style (in the notch it is part of the notch)." }
                 ToggleRow {
                     width: parent.width
                     label: "Music on hover"

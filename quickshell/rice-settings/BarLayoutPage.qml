@@ -12,7 +12,8 @@ Item {
         "launcher": ["\udb80\udc3b", "Launcher"], "workspaces": ["\udb80\uddd8", "Workspaces"], "title": ["\udb81\uddb2", "Window title"],
         "media": ["\udb81\udf5a", "Music"], "clock": ["\udb80\udd50", "Clock"], "tray": ["\udb81\udd70", "Tray"],
         "volume": ["\udb81\udd7e", "Volume"], "network": ["\udb81\udda9", "Wi-Fi"], "bluetooth": ["\udb80\udcaf", "Bluetooth"],
-        "battery": ["\udb80\udc79", "Battery"], "notifications": ["\udb80\udc9a", "Notifications"], "power": ["\udb81\udc25", "Power"]
+        "battery": ["\udb80\udc79", "Battery"], "notifications": ["\udb80\udc9a", "Notifications"], "power": ["\udb81\udc25", "Power"],
+        "island": ["\u25ac", "Island"]
     })
     readonly property var subsAll: []
     readonly property var defaults: ({

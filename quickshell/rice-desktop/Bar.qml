@@ -44,8 +44,8 @@ PanelWindow {
     readonly property bool dyn: sty === "dynamic"
     readonly property bool goo: dyn                              // the Material 3 look of the Dynamic style
     property var nf: null                                         // Notifs.qml, for the island
-    readonly property bool islandNotifs: on && dyn && bc.island_notifs !== false
-    readonly property bool islandVolume: on && dyn && bc.island_volume !== false
+    readonly property bool islandNotifs: hasIsland && bc.island_notifs !== false
+    readonly property bool islandVolume: hasIsland && bc.island_volume !== false
     // the Google style's colors: tonal, made from your theme color (the same as the control center)
     NPal { id: gp; theme: "shell"; alpha: Math.min(1, bar.alpha + 0.14) }
     readonly property bool hideOn: bc.autohide === true
@@ -56,7 +56,15 @@ PanelWindow {
     Timer { id: leaveT; interval: 700; onTriggered: bar.peek = false }
     readonly property bool island: sty === "island"
     readonly property bool floating: sty !== "flat"
-    readonly property var lay: bc.layout ? bc.layout : ({ left: ["launcher", "workspaces", "title"], center: ["clock"], right: ["media", "tray", "volume", "network", "battery", "notifications", "power"] })
+    readonly property var layRaw: bc.layout ? bc.layout : ({ left: ["launcher", "workspaces", "title"], center: ["clock"], right: ["media", "tray", "volume", "network", "battery", "notifications", "power"] })
+    function laid(l, k) { return (l.left || []).indexOf(k) >= 0 || (l.center || []).indexOf(k) >= 0 || (l.right || []).indexOf(k) >= 0 }
+    // the island is a module of the layout ("island", any zone, any style, with modules beside it). Dynamic without
+    // it in the layout puts it in the middle, as before
+    readonly property var lay: dyn && !laid(layRaw, "island")
+        ? ({ left: layRaw.left || [], center: ["island"], right: layRaw.right || [] }) : layRaw
+    readonly property bool hasIsland: on && laid(lay, "island")
+    property Item islSlot: null                 // where the island sits in its zone
+    readonly property bool islAlone: ["left", "center", "right"].some(function(z) { const m = lay[z] || []; return m.length === 1 && m[0] === "island" })
     readonly property bool atBottom: bc.position === "bottom"
     readonly property int barH: bc.height ? bc.height : 38
     readonly property int nws: bc.workspaces ? bc.workspaces : 5
@@ -236,6 +244,7 @@ PanelWindow {
         case "battery": return mBattery
         case "notifications": return mNotify
         case "power": return mPower
+        case "island": return mIsland
         }
         return null
     }
@@ -507,6 +516,22 @@ PanelWindow {
         }
     }
 
+    // the island's place in its zone: as wide as the island at rest; the island itself floats on top (it grows
+    // out of the bar), centred on this place
+    Component { id: mIsland
+        Item {
+            id: ip
+            property bool shown: true
+            width: isl.restW; height: bar.barH
+            Behavior on width { SpringAnimation { spring: 3.6; damping: 0.32; epsilon: 0.4 } }
+            // where it is in the bar (follows the slot, the row and the zone as they move)
+            readonly property real bx: parent && parent.parent && parent.parent.parent && parent.parent.parent.parent
+                ? x + parent.x + parent.parent.x + parent.parent.parent.x + parent.parent.parent.parent.x : 0
+            Component.onCompleted: bar.islSlot = ip
+            Component.onDestruction: if (bar.islSlot === ip) bar.islSlot = null
+        }
+    }
+
     Component { id: mPower
         Item { property bool shown: true; width: 22; height: bar.barH
             MIcon { anchors.centerIn: parent; name: "power_settings_new"; glyph: String.fromCodePoint(0xF0425); size: 18; color: pm.containsMouse ? "#ff6b6b" : bar.dim
@@ -529,13 +554,14 @@ PanelWindow {
         height: bar.barH
         // Google: the zone with the clock gets a tinted pill of its own
         readonly property bool tint: bar.goo && mods.length === 1 && mods[0] === "clock"
+        readonly property bool onlyIsland: mods.length === 1 && mods[0] === "island"
         // the gap between modules lives inside each module, so a module that comes or goes slides the others
         readonly property real sp: bar.sty === "pills" ? 8 : (bar.goo ? 2 : 14)
-        width: Math.max(0, row.width - sp) + (soft && any ? (bar.goo ? 12 : 28) : 0)
+        width: Math.max(0, row.width - sp) + (soft && any && !onlyIsland ? (bar.goo ? 12 : 28) : 0)
         radius: height / 2
-        color: soft ? (tint ? gp.container : bar.bg) : "transparent"
+        color: soft && !onlyIsland ? (tint ? gp.container : bar.bg) : "transparent"
         Behavior on color { ColorAnimation { duration: 300 } }
-        border.width: soft ? 1 : 0
+        border.width: soft && !onlyIsland ? 1 : 0
         border.color: bar.line
         Row {
             id: row
@@ -548,7 +574,7 @@ PanelWindow {
                     readonly property bool shown: ld.status === Loader.Ready && ld.item && ld.item.shown !== false
                     readonly property bool pill: bar.sty === "pills"
                     // Google: every module has room around it and a soft state layer when you point at it
-                    readonly property bool lay: bar.goo && modelData !== "launcher" && !zone.tint
+                    readonly property bool lay: bar.goo && modelData !== "launcher" && modelData !== "island" && !zone.tint
                     // it grows in when it appears (a new module, music that starts) and folds away when it goes
                     property bool born: false
                     Timer { running: true; interval: 40 + index * 45; onTriggered: slot.born = true }
@@ -608,10 +634,10 @@ PanelWindow {
 
         // a soft shadow under every background (the bar floats above the wallpaper)
         Repeater {
-            model: bar.shadowOn ? (bar.sty === "island" ? [body] : (bar.dyn ? [zl, zr] : (bar.sty === "islands" || bar.goo ? [zl, zc, zr] : []))) : []
+            model: bar.shadowOn ? (bar.sty === "island" ? [body] : (bar.sty === "islands" || bar.goo ? [zl, zc, zr] : [])) : []
             delegate: Item {
                 readonly property var src: modelData
-                visible: src.visible !== false && src.width > 0
+                visible: src.visible !== false && src.width > 0 && src.onlyIsland !== true
                 x: src === body ? 0 : src.x; y: (src === body ? 0 : src.y) + 3
                 width: src.width; height: bar.barH
                 Rectangle { anchors.fill: parent; anchors.margins: -1; radius: height / 2; color: Qt.rgba(0, 0, 0, 0.18) }
@@ -634,7 +660,7 @@ PanelWindow {
 
         Zone { id: zl; mods: bar.lay.left || []; soft: body.soft
             x: bar.notch ? body.nX : body.edge; y: 0 }
-        Zone { id: zc; mods: bar.dyn ? [] : (bar.lay.center || []); soft: body.soft
+        Zone { id: zc; mods: bar.lay.center || []; soft: body.soft
             x: bar.notch ? body.nX + (zl.any ? zl.width + body.ngap : 0) : (body.width - width) / 2; y: 0 }
         Zone { id: zr; mods: bar.lay.right || []; soft: body.soft
             x: bar.notch ? body.nX + body.nW - width : body.width - width - body.edge; y: 0 }
@@ -642,18 +668,23 @@ PanelWindow {
         // ---------- dynamic: the island in the middle ----------
         DynIsland {
             id: isl
-            visible: bar.dyn
+            visible: bar.hasIsland && bar.islSlot !== null
             bar: bar
             pal: gp
             nf: bar.nf
-            x: Math.round((body.width - width) / 2)
+            // in the notch it is the notch's own color, so at rest it is part of it
+            fill: bar.notch ? notchBg.fill : (bar.goo ? gp.surface : Qt.rgba(bar.bg.r, bar.bg.g, bar.bg.b, Math.min(1, bar.alpha + 0.14)))
+            // at rest it only casts a shadow when it stands alone (not inside the notch or a pill with modules)
+            flatRest: bar.notch || !bar.islAlone
+            readonly property real cx: bar.islSlot ? bar.islSlot.bx + bar.islSlot.width / 2 : body.width / 2
+            x: Math.round(Math.max(0, Math.min(body.width - width, cx - width / 2)))
             y: bar.atBottom ? bar.barH - height : 0
         }
 
         // ---------- the recording island: hangs under the bar while the screen is recorded ----------
         Item {
             id: recIsland
-            readonly property bool on: bar.recOn && !bar.dyn
+            readonly property bool on: bar.recOn && !bar.hasIsland
             width: recRow.width + 40 + (bar.notch ? 2 * 14 : 0)
             height: 46
             x: bar.notch ? body.nX + body.nW + 14 - width : body.width - width - body.edge

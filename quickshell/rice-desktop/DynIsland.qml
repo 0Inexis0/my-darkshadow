@@ -76,6 +76,10 @@ Item {
     }
     readonly property real th: mode === "media" ? 184 : (mode === "notif" ? 96 : bh)
     readonly property bool big: th > bh + 1
+    property color fill: pal ? pal.surface : "#141414"
+    property bool flatRest: false
+    // its width at rest (the place it keeps in the bar): the time, or the recording
+    readonly property real restW: big || mode === "media" || mode === "notif" ? ((bar && bar.recOn ? recRow.implicitWidth : idleRow.implicitWidth) + 30) : tw
     // a spring (a touch of bounce), calmer in Light mode
     width: tw; height: th
     Behavior on width { SpringAnimation { spring: Look.lite ? 6 : 3.6; damping: Look.lite ? 0.6 : 0.3; epsilon: 0.4 } }
@@ -90,13 +94,13 @@ Item {
     Timer { id: closeT; interval: 420; onTriggered: isl.hoverOpen = false }
 
     // ---------- the shape ----------
-    Shadow { anchors.fill: bg; radius: bg.radius; on: Look.shadows && Look.shadowBar; size: isl.big ? Look.shadowSize : Look.shadowSize * 0.5; strength: Look.shadowStrength }
+    Shadow { anchors.fill: bg; radius: bg.radius; on: Look.shadows && Look.shadowBar && (isl.big || !isl.flatRest); size: isl.big ? Look.shadowSize : Look.shadowSize * 0.5; strength: Look.shadowStrength }
     Rectangle {
         id: bg
         anchors.fill: parent
         radius: isl.big ? 30 : height / 2
         Behavior on radius { NumberAnimation { duration: 300; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
-        color: isl.pal ? isl.pal.surface : "#141414"
+        color: isl.fill
         clip: true
         // the player tints the island with your key color
         Rectangle {

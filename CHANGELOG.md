@@ -1,5 +1,10 @@
 # Changelog
 
+## V3.31
+- The island is a module now: Settings > Bar layout (or Edit mode > Bar) puts it in any zone, with other modules beside it (workspaces, launcher, clock ...), in every bar style. In the notch it is part of the notch and grows out of it; when it shows the volume it makes room and the modules beside it slide away
+- Dynamic without the island in its layout keeps it in the middle, as before
+- Settings > DarkShadow bar > Dynamic island shows whenever the island is on the bar
+
 ## V3.30
 - The Google bar style is gone; Dynamic has its look (a bar that used Google switches to Dynamic)
 - Changing the bar style is animated: the old look folds away and the new one settles in
