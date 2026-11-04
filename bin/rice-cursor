@@ -291,6 +291,11 @@ def apply(c):
     theme, size = c["theme"], c["size"]
     ts = themes()
     t = ts.get(theme)
+    if t is None:
+        # the saved theme is not on this computer (a package that did not install): a theme that is,
+        # never a name Hyprland cannot find (that leaves no cursor at all)
+        theme = xfallback(ts)
+        t = ts.get(theme)
     hypr = theme
     if t and t["kind"] == "hyprcursor":
         # Hyprland draws the Hyprcursor theme; apps that only know Xcursor get a normal theme

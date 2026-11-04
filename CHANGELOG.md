@@ -1,5 +1,11 @@
 # Changelog
 
+## V3.43
+- Fix (Fedora, CachyOS and others): one Hyprland setting or keybind that a Hyprland build does not know stopped the whole config, so Hyprland fell back to its emergency config (only SUPER + Enter worked, no bar). Such settings are skipped now and the rest works; what was skipped is in ~/.cache/rice/hypr-errors.log, with a notification
+- Fix: no cursor when the chosen cursor theme was not installed: a theme that is on the computer is used instead
+- NVIDIA: the installer turns on the software cursor (a hardware cursor is often invisible on NVIDIA) and sets the NVIDIA video variables
+- The monitor uses its preferred mode instead of 1920x1080 at 144 Hz
+
 ## V3.42
 - Visualizer: it listens to what your speakers or headphones play (it could pick up the microphone, so it only moved on claps) and follows you when you switch the output; it is livelier (30 frames a second, less smoothing)
 - Visualizer: How high they go: Calm, Normal, High or Max (Edit mode > Visualizer)

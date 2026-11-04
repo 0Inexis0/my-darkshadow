@@ -524,9 +524,33 @@ step_apps() {
 }
 copy_bins() { local f; for f in "$ROOT"/bin/*; do [ -f "$f" ] && put "$f" "$BIN/$(basename "$f")"; done; return 0; }
 
+# NVIDIA: Hyprland draws the cursor itself (a hardware cursor is often invisible there) and the video
+# libraries are told which driver to use
+write_gpu() {
+  local f="$HOME/.config/hypr/rice-gpu.lua"
+  if [ -e /proc/driver/nvidia/version ] || { command -v lspci >/dev/null 2>&1 && lspci 2>/dev/null | grep -qiE 'vga.*nvidia|3d.*nvidia'; }; then
+    mkdir -p "$HOME/.config/hypr"
+    cat >"$f" <<'LUA'
+-- written by DarkShadow's Shell for NVIDIA graphics (install.sh)
+-- the cursor is drawn in software: with a hardware cursor it can be invisible on NVIDIA
+hl.config({ cursor = { no_hardware_cursors = true } })
+hl.env("LIBVA_DRIVER_NAME", "nvidia")
+hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
+hl.env("NVD_BACKEND", "direct")
+LUA
+    echo "NVIDIA: software cursor"
+  else
+    rm -f "$f"; echo "no NVIDIA card"
+  fi
+}
 wire_hypr() {
   local lua="$HOME/.config/hypr/hyprland.lua" m
   [ -f "$lua" ] || return 0
+  # settings this Hyprland does not know are skipped instead of stopping the whole config
+  if [ -f "$HOME/.config/hypr/rice-guard.lua" ] && ! grep -q 'rice-guard' "$lua"; then
+    printf '%s\n%s\n\n' "-- DarkShadow's Shell: settings this Hyprland does not know are skipped instead of stopping the config" 'pcall(require, "rice-guard")' | cat - "$lua" >"$lua.rice-new" && mv -f "$lua.rice-new" "$lua"
+  fi
+  if [ -f "$HOME/.config/hypr/rice-gpu.lua" ] && ! grep -q 'rice-gpu' "$lua"; then printf '\npcall(require, "rice-gpu")\n' >>"$lua"; fi
   for m in rice-settings rice-desktop rice-keys; do
     if [ -f "$HOME/.config/hypr/$m.lua" ] && ! grep -q "^[[:space:]]*require(\"$m\")" "$lua"; then
       printf '\nrequire("%s")\n' "$m" >>"$lua"
@@ -551,6 +575,7 @@ step_finish() {
   task "Remembering your backup folder" first_backup
   task "Remembering where this copy lives (for updates)" remember_repo
   task "Version V$RICE_VERSION" remember_version
+  task "Graphics card (NVIDIA cursor)" write_gpu
   task "Loading the shell's modules in Hyprland" wire_hypr
   local fx; fx="$(mktemp)"
   task "Fitting the config to this computer" fixup "$fx"

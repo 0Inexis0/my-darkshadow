@@ -97,6 +97,9 @@ hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("$HOME/.local/bin/rice-volume do
 hl.bind("XF86AudioMute",        hl.dsp.exec_cmd("$HOME/.local/bin/rice-volume mute"), { locked = true })
 hl.bind("XF86AudioMicMute",     hl.dsp.exec_cmd("$HOME/.local/bin/rice-volume mic"),  { locked = true })
 """
+    # V3.43: settings this Hyprland does not know are skipped instead of stopping the whole config (rice-guard.lua)
+    if "rice-guard" not in n and os.path.exists(os.path.join(hypr, "rice-guard.lua")):
+        n = '-- DarkShadow\'s Shell: settings this Hyprland does not know are skipped instead of stopping the config\npcall(require, "rice-guard")\n\n' + n
     # V3.22: outer gaps 5 by default (only when it still has the old default 12; Settings > Hyprland changes it)
     n = re.sub(r'^(\s*gaps_out\s*=\s*)12(\s*,)', r'\g<1>5\2', n, count=1, flags=re.M)
     if n != s:

@@ -17,6 +17,9 @@
 -- require("myColors")
 
 
+-- DarkShadow's Shell: settings this Hyprland does not know are skipped instead of stopping the config
+pcall(require, "rice-guard")
+
 ------------------
 ---- MONITORS ----
 ------------------
@@ -28,7 +31,7 @@
 -- See https://wiki.hypr.land/Configuring/Basics/Monitors/
 hl.monitor({
     output   = "",
-    mode     = "1920x1080@144hz",
+    mode     = "preferred",
     position = "auto",
     scale    = "1",
 })
