@@ -1,5 +1,8 @@
 # Changelog
 
+## V3.39
+- Bug fixes
+
 ## V3.38
 - The dashboard is gone for good: the bar's island does its work. Settings > Dashboard became Settings > Dynamic island, with a live picture of the island and new options: weather and date beside the time, the charger as a wave (laptops), which tab a click opens (Today, System, About) and how fast the card closes
 - Every workspace has its own color (your key color turned around the color wheel), in the bar and in the island

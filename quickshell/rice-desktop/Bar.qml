@@ -485,7 +485,7 @@ PanelWindow {
                     if (bar.sink && bar.sink.audio) bar.sink.audio.muted = !bar.sink.audio.muted
                 }
                 onWheel: function(e) { if (bar.sink && bar.sink.audio) bar.sink.audio.volume = Math.max(0, Math.min(1, bar.sink.audio.volume + (e.angleDelta.y > 0 ? 0.04 : -0.04))) } }
-            HoverLine { on: vm.containsMouse; full: 16 * Math.min(1, bar.vol) }   // how loud, as a line under the icon
+            HoverLine { on: vm.containsMouse; full: 16 * Math.min(1, bar.vol); color: bar.fg }   // how loud, as a line under the icon
         }
     }
 
@@ -499,7 +499,7 @@ PanelWindow {
                     const p = mapToItem(null, width / 2, 0)
                     bar.run("\"$HOME/.local/bin/rice-wifi\" " + Math.round(p.x))
                 } }
-            HoverLine { on: nm.containsMouse }
+            HoverLine { on: nm.containsMouse; color: bar.fg }
         }
     }
 
@@ -513,7 +513,7 @@ PanelWindow {
                     const p = mapToItem(null, width / 2, 0)
                     bar.run("\"$HOME/.local/bin/rice-bluetooth\" " + Math.round(p.x))
                 } }
-            HoverLine { on: bm.containsMouse }
+            HoverLine { on: bm.containsMouse; color: bar.fg }
         }
     }
 
@@ -536,7 +536,7 @@ PanelWindow {
                 glyph: String.fromCodePoint(bar.svc.dnd ? 0xF009B : 0xF009A) }
             MouseArea { id: dm; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton; cursorShape: Qt.PointingHandCursor
                 onClicked: function(m) { bar.run(m.button === Qt.RightButton ? "\"$HOME/.local/bin/rice-cc\" dnd toggle" : "\"$HOME/.local/bin/rice-cc\" toggle"); svcAgain.restart() } }
-            HoverLine { on: dm.containsMouse }
+            HoverLine { on: dm.containsMouse; color: bar.fg }
         }
     }
 
@@ -569,18 +569,6 @@ PanelWindow {
         }
     }
 
-    // a short line under a module while you point at it (it grows out from the middle)
-    component HoverLine: Rectangle {
-        property bool on: false
-        property real full: 16
-        anchors.horizontalCenter: parent.horizontalCenter; y: Math.round(parent.height / 2 + 13)
-        height: 2; radius: 1
-        width: on ? full : 4
-        color: bar.fg
-        opacity: on ? 0.9 : 0
-        Behavior on width { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
-        Behavior on opacity { NumberAnimation { duration: 160 } }
-    }
     // each workspace has its own color: your key color turned around the color wheel
     function wsTint(id) {
         const c = gp.primary
