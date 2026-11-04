@@ -377,18 +377,36 @@ FocusScope {
                             Behavior on color { ColorAnimation { duration: 200 } }
                             RotationAnimator on rotation { from: 0; to: 360; duration: 1600; loops: Animation.Infinite; running: passArea.checking } }
                         MIcon { anchors.centerIn: parent; size: 18; name: root && root.phase === "done" ? "lock_open" : "lock"; glyph: ""; color: pal.inkPrimary } }
-                    // what you typed, as small shapes that pop in
+                    // what you typed: full shapes in your accent that grow in slowly, turning a little as they
+                    // settle (the Material 3 emphasized curve); while it checks they ripple like Google's loader
+                    property real ripple: 0
+                    NumberAnimation on ripple { from: 0; to: 1; duration: 1100; loops: Animation.Infinite; running: passArea.checking }
                     Row {
                         id: dots
                         anchors.left: lk.right; anchors.leftMargin: 14; anchors.verticalCenter: parent.verticalCenter
-                        spacing: 6
+                        spacing: 7
                         Repeater {
-                            model: root ? Math.max(0, Math.min(root.pass.length, Math.floor((passArea.width - 90) / 18))) : 0
-                            delegate: Blob {
-                                width: 12; height: 12; kind: Look.shape; color: pal.fg
-                                scale: 0
-                                Component.onCompleted: scale = 1
-                                Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 2.6 } }
+                            model: root ? Math.max(0, Math.min(root.pass.length, Math.floor((passArea.width - 110) / 23))) : 0
+                            delegate: Item {
+                                id: dot
+                                required property int index
+                                width: 16; height: 16
+                                property real p: 0
+                                Component.onCompleted: p = 1
+                                Behavior on p { NumberAnimation { duration: 520; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
+                                // the wave while it checks: each one a moment after the one before
+                                readonly property real bob: passArea.checking ? Math.sin(2 * Math.PI * (field.ripple - dot.index * 0.09)) : 0
+                                Blob {
+                                    anchors.centerIn: parent
+                                    width: 16; height: 16
+                                    kind: Look.shape
+                                    color: passArea.wrong ? "#ff8a80" : pal.primary
+                                    Behavior on color { ColorAnimation { duration: 260 } }
+                                    scale: 0.2 + 0.8 * dot.p + (passArea.checking ? 0.12 * Math.max(0, dot.bob) : 0)
+                                    opacity: Math.min(1, dot.p * 1.6) * (passArea.checking ? 0.65 + 0.35 * Math.max(0, dot.bob) : 1)
+                                    rotation: -120 * (1 - dot.p)
+                                    transform: Translate { y: (1 - dot.p) * 6 - (passArea.checking ? 3 * Math.max(0, dot.bob) : 0) }
+                                }
                             }
                         }
                     }

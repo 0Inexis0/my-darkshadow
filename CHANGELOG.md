@@ -1,5 +1,8 @@
 # Changelog
 
+## V3.51
+- Lock screen: the password shapes are bigger, full and in your accent; they grow in slowly and turn a little as they settle (Material 3 motion), ripple like Google's loader while the password is checked and turn red on a wrong one
+
 ## V3.50
 - Fix: you could not type your password on the lock screen (and it showed without your wallpaper and settings): the screens of the lock did not reach its state, so the field stayed read-only. They get it through a shared object now
 
