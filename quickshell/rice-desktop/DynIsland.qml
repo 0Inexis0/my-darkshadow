@@ -182,8 +182,8 @@ Item {
     property real areaW: 1920                    // how wide the bar is (the card stays inside it)
     // its width in the bar
     readonly property real restW: ghost ? 0 : tw
-    width: restW; height: bh
-    Behavior on width { SpringAnimation { spring: Look.lite ? 6 : 3.6; damping: Look.lite ? 0.6 : 0.3; epsilon: 0.4 } }
+    width: Math.round(restW); height: bh
+    Behavior on width { SpringAnimation { spring: Look.lite ? 6 : 3; damping: Look.lite ? 0.6 : 0.32; epsilon: 0.25 } }
 
     // the card: which one it shows (kept while it closes)
     property string cardMode: "media"
@@ -204,7 +204,7 @@ Item {
         if (hovering) { closeT.stop(); pinT.stop(); if (on("island_hover") && !big && !ghost) openT.restart() }
         else { openT.stop(); closeT.restart(); if (pinned || infoOpen) pinT.restart() }
     }
-    Timer { id: openT; interval: 260; onTriggered: isl.hoverOpen = pl.has }
+    Timer { id: openT; interval: 340; onTriggered: isl.hoverOpen = pl.has }
     Timer { id: closeT; interval: 450; onTriggered: isl.hoverOpen = false }
     Timer { id: pinT; interval: 3500; onTriggered: { isl.pinned = false; isl.infoOpen = false } }
     // the player closes by itself when nothing plays any more
@@ -234,7 +234,8 @@ Item {
             }
             Row {
                 id: idleRow
-                anchors.centerIn: parent
+                // on whole pixels, so the time is sharp and sits straight in the middle
+                x: Math.round((parent.width - width) / 2); y: Math.round((parent.height - height) / 2)
                 spacing: 9
                 ShapeImage { visible: pl.playing; width: 22; height: 22; anchors.verticalCenter: parent.verticalCenter
                     kind: Look.shape; source: pl.art; empty: isl.pal ? isl.pal.container : "#333"; fallbackColor: isl.pal ? isl.pal.inkContainer : "#ccc"
@@ -377,12 +378,13 @@ Item {
         // (a container transform: size, place and corners morph together, with a little overshoot)
         property real t: isl.big ? 1 : 0
         onTChanged: if (t < 0.01 && !isl.big) isl.cardMode = ""
-        Behavior on t { NumberAnimation { duration: isl.big ? (Look.lite ? 360 : 640) : 260
-            easing.type: isl.big ? Easing.OutBack : Easing.InCubic; easing.overshoot: Look.lite ? 0 : 1.05 } }
+        // slow and soft on the way in, quicker on the way out
+        Behavior on t { NumberAnimation { duration: isl.big ? (Look.lite ? 420 : 900) : 380
+            easing.type: isl.big ? Easing.OutBack : Easing.InOutCubic; easing.overshoot: Look.lite ? 0 : 0.9 } }
         property real cwA: isl.cw
         property real chA: isl.ch
-        Behavior on cwA { SpringAnimation { spring: 3.6; damping: 0.34; epsilon: 0.4 } }
-        Behavior on chA { SpringAnimation { spring: 3.6; damping: 0.34; epsilon: 0.4 } }
+        Behavior on cwA { SpringAnimation { spring: 2.4; damping: 0.36; epsilon: 0.4 } }
+        Behavior on chA { SpringAnimation { spring: 2.4; damping: 0.36; epsilon: 0.4 } }
         readonly property real tc: Math.max(0, t)
         width: Math.max(isl.bh, isl.width + (cwA - isl.width) * tc)
         height: Math.max(isl.bh * 0.6, isl.bh + (chA - isl.bh) * tc)
@@ -714,15 +716,15 @@ Item {
         property string name: ""
         property bool inCard: false
         readonly property bool act: inCard ? (isl.big && isl.cardMode === name) : isl.pillMode === name
-        x: (parent.width - width) / 2
-        y: isl.down ? 0 : parent.height - height
+        x: Math.round((parent.width - width) / 2)
+        y: isl.down ? 0 : Math.round(parent.height - height)
         // it comes in once the shape has (nearly) grown to it, so it is never seen cut
         opacity: act && parent.width >= width * 0.82 && parent.height >= height * 0.82 ? 1 : 0
         scale: act ? 1 : 0.94
         visible: opacity > 0.01
         enabled: act
-        Behavior on opacity { NumberAnimation { duration: fc.act ? 260 : 90; easing.type: Easing.Linear } }
-        Behavior on scale { NumberAnimation { duration: 320; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.decel } }
+        Behavior on opacity { NumberAnimation { duration: fc.act ? 420 : 120; easing.type: Easing.Linear } }
+        Behavior on scale { NumberAnimation { duration: 520; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.decel } }
     }
     // a small equalizer: round bars in your key color that bounce while music plays
     component Eq: Row {

@@ -547,7 +547,7 @@ PanelWindow {
         Item {
             id: ip
             property bool shown: true
-            width: isl.restW; height: bar.barH
+            width: Math.round(isl.restW); height: bar.barH
             Behavior on width { SpringAnimation { spring: 3.6; damping: 0.32; epsilon: 0.4 } }
             // where it is in the bar (follows the slot, the row and the zone as they move)
             readonly property real bx: parent && parent.parent && parent.parent.parent && parent.parent.parent.parent
@@ -590,7 +590,7 @@ PanelWindow {
         border.color: bar.line
         Row {
             id: row
-            anchors.centerIn: parent
+            x: Math.round((parent.width - width) / 2); y: Math.round((parent.height - height) / 2)
             spacing: 0
             Repeater {
                 model: zone.mods
@@ -686,7 +686,7 @@ PanelWindow {
         Zone { id: zl; mods: bar.lay.left || []; soft: body.soft
             x: bar.notch ? body.nX : body.edge; y: 0 }
         Zone { id: zc; mods: bar.lay.center || []; soft: body.soft
-            x: bar.notch ? body.nX + (zl.any ? zl.width + body.ngap : 0) : (body.width - width) / 2; y: 0 }
+            x: Math.round(bar.notch ? body.nX + (zl.any ? zl.width + body.ngap : 0) : (body.width - width) / 2); y: 0 }
         Zone { id: zr; mods: bar.lay.right || []; soft: body.soft
             x: bar.notch ? body.nX + body.nW - width : body.width - width - body.edge; y: 0 }
 

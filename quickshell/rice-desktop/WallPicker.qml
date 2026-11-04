@@ -35,6 +35,10 @@ PanelWindow {
     property string query: ""
     readonly property var shown: query === "" ? all : all.filter(function(w) { return w.name.toLowerCase().indexOf(wp.query.toLowerCase()) >= 0 })
     property int sel: 0
+    // the list changed (you typed): the cards come in again, one after another
+    property real ft: 1
+    NumberAnimation { id: ftA; target: wp; property: "ft"; from: 0; to: 1; duration: 520; easing.type: Easing.Linear }
+    onQueryChanged: if (open) { ftA.restart(); grid.contentY = grid.originY }
     Process {
         id: list
         command: ["bash", "-c", "\"$HOME/.local/bin/rice-dashboard\" walls"]
@@ -131,7 +135,7 @@ PanelWindow {
             boundsBehavior: Flickable.StopAtBounds
             // the wheel: farther per notch, and it glides there (touchpads scroll as they are)
             property real goal: 0
-            NumberAnimation { id: glide; target: grid; property: "contentY"; duration: 380; easing.type: Easing.OutCubic }
+            NumberAnimation { id: glide; target: grid; property: "contentY"; duration: 300; easing.type: Easing.OutCubic }
             function scrollBy(dy) {
                 const top = grid.originY, bottom = Math.max(grid.originY, grid.contentHeight + grid.originY - grid.height)
                 goal = Math.max(top, Math.min(bottom, (glide.running ? goal : contentY) + dy))
@@ -140,8 +144,8 @@ PanelWindow {
             WheelHandler {
                 acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                 onWheel: function(e) {
-                    if (e.pixelDelta.y !== 0) { glide.stop(); grid.contentY = Math.max(grid.originY, Math.min(Math.max(grid.originY, grid.contentHeight + grid.originY - grid.height), grid.contentY - e.pixelDelta.y * 1.4)) }
-                    else grid.scrollBy(-e.angleDelta.y / 120 * grid.cellHeight * 0.9)
+                    if (e.pixelDelta.y !== 0) { glide.stop(); grid.contentY = Math.max(grid.originY, Math.min(Math.max(grid.originY, grid.contentHeight + grid.originY - grid.height), grid.contentY - e.pixelDelta.y * 2.2)) }
+                    else grid.scrollBy(-e.angleDelta.y / 120 * grid.cellHeight * 1.6)
                 }
             }
             delegate: Item {
@@ -149,9 +153,17 @@ PanelWindow {
                 width: grid.cellWidth; height: grid.cellHeight
                 readonly property bool cur: modelData.path === wp.current
                 readonly property bool picked: index === wp.sel
-                // comes in one after another when the sheet opens
-                readonly property real it: wp.ease((wp.t - Math.min(index, 18) * 0.025) / 0.55)
-                opacity: it
+                // comes in one after another when the sheet opens, and again when what you type changes the list
+                readonly property real it: Math.min(wp.ease((wp.t - Math.min(index, 18) * 0.025) / 0.55),
+                                                    wp.ease((wp.ft - Math.min(index, 14) * 0.03) / 0.5))
+                // while scrolling, the ones at the top and bottom edge are a little smaller and fainter
+                readonly property real edge: {
+                    const top = cell.y - grid.contentY, bot = top + cell.height
+                    const out = Math.max(0, -top, bot - grid.height)
+                    return Math.min(1, out / cell.height)
+                }
+                opacity: it * (1 - 0.55 * edge)
+                scale: (0.94 + 0.06 * it) * (1 - 0.08 * edge)
                 transform: Translate { y: (1 - cell.it) * 18 }
                 Rectangle {
                     id: frame
@@ -159,13 +171,17 @@ PanelWindow {
                     radius: cell.cur ? 28 : 20
                     Behavior on radius { NumberAnimation { duration: 260; easing.type: Easing.OutBack } }
                     color: pal.card
-                    scale: cm.pressed ? 0.96 : (cm.containsMouse || cell.picked ? 1.02 : 1)
+                    property real popS: 1
+                    scale: popS * (cm.containsMouse || cell.picked ? 1.02 : 1)
                     Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutBack } }
                     RoundImage { anchors.fill: parent; anchors.margins: cell.cur ? 4 : 0; cornerRadius: frame.radius - (cell.cur ? 4 : 0); source: "file://" + modelData.thumb }
                     Rectangle { anchors.fill: parent; radius: frame.radius; color: "transparent"
                         border.width: cell.cur ? 3 : (cell.picked ? 2 : 0); border.color: cell.cur ? pal.primary : Qt.rgba(pal.fg.r, pal.fg.g, pal.fg.b, 0.6) }
                     // the one you have: a check in your shape
-                    Item { visible: cell.cur; width: 30; height: 30; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 10
+                    Item { visible: scale > 0.01; scale: cell.cur ? 1 : 0; rotation: cell.cur ? 0 : -90
+                        Behavior on scale { NumberAnimation { duration: 420; easing.type: Easing.OutBack; easing.overshoot: 2 } }
+                        Behavior on rotation { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
+                        width: 30; height: 30; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 10
                         Blob { anchors.fill: parent; kind: Look.shape; color: pal.primary }
                         MIcon { anchors.centerIn: parent; size: 16; filled: true; name: "check"; glyph: ""; color: pal.inkPrimary } }
                     // its name on hover
@@ -178,8 +194,30 @@ PanelWindow {
                         Text { id: nm; anchors.centerIn: parent; width: Math.min(implicitWidth, parent.width - 20); elide: Text.ElideRight
                             text: modelData.name; color: "white"; font.family: Fonts.main; font.pixelSize: 11 }
                     }
+                    // picking one: a ripple of your key color from where you clicked, and the card pops
+                    Item {
+                        anchors.fill: parent; clip: true
+                        Rectangle {
+                            id: rip
+                            property real r: 0
+                            property real cx: 0
+                            property real cy: 0
+                            x: cx - r; y: cy - r; width: 2 * r; height: 2 * r; radius: r
+                            color: pal.primary; opacity: 0
+                        }
+                        ParallelAnimation {
+                            id: ripA
+                            NumberAnimation { target: rip; property: "r"; from: 0; to: frame.width * 1.2; duration: 620; easing.type: Easing.OutCubic }
+                            NumberAnimation { target: rip; property: "opacity"; from: 0.45; to: 0; duration: 620; easing.type: Easing.InQuad }
+                        }
+                    }
+                    SequentialAnimation {
+                        id: pop
+                        NumberAnimation { target: frame; property: "popS"; to: 0.93; duration: 110; easing.type: Easing.OutQuad }
+                        NumberAnimation { target: frame; property: "popS"; to: 1; duration: 520; easing.type: Easing.OutBack; easing.overshoot: 2.4 }
+                    }
                     MouseArea { id: cm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                        onClicked: { wp.sel = index; wp.apply(modelData.path) } }
+                        onClicked: function(m) { rip.cx = m.x; rip.cy = m.y; ripA.restart(); pop.restart(); wp.sel = index; wp.apply(modelData.path) } }
                 }
             }
             // nothing found / no wallpapers

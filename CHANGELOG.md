@@ -1,5 +1,10 @@
 # Changelog
 
+## V3.37
+- The island opens slower and softer when you point at it or click it (and closes a little quicker), its content fades in more gently
+- The island and the bar sit on whole pixels: the time is sharp and straight in the notch
+- Wallpaper picker: the wheel scrolls faster; cards come in one after another again when you type, a ripple of your key color and a small pop when you pick one, the check grows in, and the cards at the edges shrink and fade a little while you scroll
+
 ## V3.36
 - The island is the clock now: the Clock module is gone and your old clock became the island. A new install starts with the Dynamic style and the island in the middle
 - Bar layout: five ready-made Material 3 layouts (Island, Focus, Everything, Minimal, All in the middle) to start from
