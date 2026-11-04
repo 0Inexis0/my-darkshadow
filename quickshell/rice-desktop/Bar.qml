@@ -67,6 +67,8 @@ PanelWindow {
     readonly property bool islAlone: ["left", "center", "right"].some(function(z) { const m = lay[z] || []; return m.length === 1 && m[0] === "island" })
     readonly property bool atBottom: bc.position === "bottom"
     readonly property int barH: bc.height ? bc.height : 38
+    // tray icons: Settings > DarkShadow bar > Tray icon size (never taller than the bar)
+    readonly property int traySize: Math.min(barH - 8, bc.tray_size ? bc.tray_size : 18)
     readonly property int nws: bc.workspaces ? bc.workspaces : 5
     readonly property string wsStyle: bc.ws_style === "pacman" || bc.ws_style === "letters" || bc.ws_style === "numbers" ? bc.ws_style : "dots"
     // the launcher button: a distro logo (Nerd Font) or the app grid (Settings > DarkShadow bar > Launcher icon)
@@ -124,7 +126,7 @@ PanelWindow {
     // only the bar (and the recording island) take the pointer; auto-hide: only a thin strip at the edge
     mask: Region { item: bar.shownBar ? hitBar : hitStrip; Region { item: hitRec } Region { item: hitIsl } }
     // the island when it has grown out of the bar
-    Item { id: hitIsl; x: bar.gap + isl.x; y: body.y + isl.y; width: bar.dyn && bar.shownBar ? isl.width : 0; height: isl.height }
+    Item { id: hitIsl; x: bar.gap + isl.x + isl.ux; y: body.y + isl.y + isl.uy; width: isl.visible && bar.shownBar ? isl.uw : 0; height: isl.uh }
     Item { id: hitBar; width: parent.width; height: bar.barH + bar.gap * 2; y: bar.atBottom ? parent.height - height : 0 }
     Item { id: hitRec; x: recIsland.x + bar.gap; width: recIsland.width; height: bar.recOn && bar.shownBar ? 54 : 0; y: bar.atBottom ? 0 : bar.barH + bar.gap * 2 }
     Item { id: hitAll; anchors.fill: parent }
@@ -440,8 +442,8 @@ PanelWindow {
                 model: SystemTray.items
                 delegate: Item {
                     id: ti
-                    width: 16; height: bar.barH
-                    IconImage { anchors.centerIn: parent; implicitSize: 16; source: modelData.icon
+                    width: bar.traySize; height: bar.barH
+                    IconImage { anchors.centerIn: parent; implicitSize: bar.traySize; source: modelData.icon
                         scale: tm.containsMouse ? 1.15 : 1; Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutBack } } }
                     MouseArea {
                         id: tm; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
@@ -683,6 +685,7 @@ PanelWindow {
             pal: gp
             nf: bar.nf
             // in the notch it is the notch's own color, so at rest it is part of it
+            areaW: body.width
             fill: bar.notch ? notchBg.fill : (bar.goo ? gp.surface : Qt.rgba(bar.bg.r, bar.bg.g, bar.bg.b, Math.min(1, bar.alpha + 0.14)))
             // at rest it only casts a shadow when it stands alone (not inside the notch or a pill with modules)
             flatRest: bar.notch || !bar.islAlone

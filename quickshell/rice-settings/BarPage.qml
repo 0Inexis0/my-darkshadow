@@ -245,6 +245,13 @@ Item {
                 onChosen: function(x) { page.setv("height", x) }
             }
             SliderRow {
+                label: "Tray icon size"
+                desc: "How big the app icons in the tray are"
+                from: 12; to: 28; step: 1; decimals: 0
+                value: page.v("tray_size", 18)
+                onCommitted: function(x) { page.setv("tray_size", Math.round(x)) }
+            }
+            SliderRow {
                 label: "Transparency"
                 desc: "Lower is more see-through. Blur sits behind it when blur is on"
                 from: 0.3; to: 1; step: 0.02; decimals: 2

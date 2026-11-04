@@ -1,5 +1,10 @@
 # Changelog
 
+## V3.33
+- The island's player and notifications open as a card just beside the bar (below it, or above a bar at the bottom), so the bar is never covered; the island in the bar keeps showing the time
+- Fix: the player card stayed open: it closes a moment after the pointer leaves, a clicked one after a few seconds, and by itself when nothing plays any more
+- Tray icons are bigger (18 px) and adjustable: Settings > DarkShadow bar > Tray icon size (12 to 28)
+
 ## V3.32
 - Fix: the island was cut off when it grew in the notch (and in every style but Dynamic): the bar keeps room for it now
 - The island's content comes in once the shape has grown, so a card is never seen cut while it opens or closes

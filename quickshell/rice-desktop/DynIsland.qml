@@ -12,6 +12,9 @@ import QtQuick
 //           wave that runs out while it stays
 //   rec     the screen is being recorded: the time, the microphone and stop
 // Everything moves on springs (Material 3 spatial motion); the content fades in after the shape has grown.
+// The small things (time, volume, workspace, recording) change the island in the bar itself; the player and
+// notifications open as a card just beside the bar (below it, or above it for a bar at the bottom), so the bar
+// is never covered.
 Item {
     id: isl
     property var bar: null
@@ -60,61 +63,65 @@ Item {
     // it stays while the wave runs out; pointing at it holds the wave
     readonly property int noteLife: nf ? Math.max(3, nf.timeout) * 1000 : 5000
     property real noteLeft: 1
-    NumberAnimation { id: noteRun; target: isl; property: "noteLeft"; to: 0; paused: running && hov.hovered }
+    NumberAnimation { id: noteRun; target: isl; property: "noteLeft"; to: 0; paused: running && isl.hovering }
     onNoteLeftChanged: if (noteLeft <= 0.001 && flash === "notif") { flash = ""; note = null }
 
     // ---------- its size ----------
     readonly property real tw: {
         switch (mode) {
-        case "media": return 470
-        case "notif": return 440
         case "volume": case "mic": return 300
         case "ws": return Math.max(190, wsRow.implicitWidth + 40)
         case "rec": return recRow.implicitWidth + 30
         }
         return idleRow.implicitWidth + 30
     }
-    readonly property real th: mode === "media" ? 184 : (mode === "notif" ? 96 : bh)
-    readonly property bool big: th > bh + 1
+    readonly property bool big: mode === "media" || mode === "notif"
+    // what the island in the bar shows while the card is open: the time (or the recording)
+    readonly property string pillMode: big ? (bar && bar.recOn ? "rec" : "idle") : mode
     property color fill: pal ? pal.surface : "#141414"
     property bool flatRest: false
-    // its width at rest (the place it keeps in the bar): the time, or the recording
-    readonly property real restW: big || mode === "media" || mode === "notif" ? ((bar && bar.recOn ? recRow.implicitWidth : idleRow.implicitWidth) + 30) : tw
-    // a spring (a touch of bounce), calmer in Light mode
-    width: tw; height: th
+    property real areaW: 1920                    // how wide the bar is (the card stays inside it)
+    // its width in the bar
+    readonly property real restW: big ? ((bar && bar.recOn ? recRow.implicitWidth : idleRow.implicitWidth) + 30) : tw
+    width: restW; height: bh
     Behavior on width { SpringAnimation { spring: Look.lite ? 6 : 3.6; damping: Look.lite ? 0.6 : 0.3; epsilon: 0.4 } }
-    Behavior on height { SpringAnimation { spring: Look.lite ? 6 : 3.6; damping: Look.lite ? 0.6 : 0.32; epsilon: 0.4 } }
 
-    // the hover that opens the player
-    HoverHandler {
-        id: hov
-        onHoveredChanged: { if (hovered) { closeT.stop(); if (isl.on("island_hover")) openT.restart() } else { openT.stop(); closeT.restart() } }
+    // the card: which one it shows (kept while it closes)
+    property string cardMode: "media"
+    onBigChanged: if (big) cardMode = mode
+    onModeChanged: if (big) cardMode = mode
+    readonly property real cw: cardMode === "notif" ? 440 : 470
+    readonly property real ch: cardMode === "notif" ? 96 : 184
+    readonly property bool cardShown: card.opacity > 0.01
+    // the part of the screen it takes (the bar lets the pointer through everywhere else)
+    readonly property real ux: cardShown ? Math.min(0, card.x) : 0
+    readonly property real uy: cardShown ? Math.min(0, card.y) : 0
+    readonly property real uw: (cardShown ? Math.max(width, card.x + card.width) : width) - ux
+    readonly property real uh: (cardShown ? Math.max(height, card.y + card.height) : height) - uy
+
+    // pointing at it: opens the player; it closes a moment after the pointer leaves (a clicked one waits longer)
+    readonly property bool hovering: hov.hovered || hovC.hovered
+    HoverHandler { id: hov }
+    onHoveringChanged: {
+        if (hovering) { closeT.stop(); pinT.stop(); if (on("island_hover") && !big) openT.restart() }
+        else { openT.stop(); closeT.restart(); if (pinned) pinT.restart() }
     }
     Timer { id: openT; interval: 260; onTriggered: isl.hoverOpen = pl.has }
-    Timer { id: closeT; interval: 420; onTriggered: isl.hoverOpen = false }
+    Timer { id: closeT; interval: 450; onTriggered: isl.hoverOpen = false }
+    Timer { id: pinT; interval: 3500; onTriggered: isl.pinned = false }
+    // the player closes by itself when nothing plays any more
+    onPlayingChanged: if (!playing && !hovering) { pinT.restart(); closeT.restart() }
+    readonly property bool playing: pl.playing
 
     // ---------- the shape ----------
-    Shadow { anchors.fill: bg; radius: bg.radius; on: Look.shadows && Look.shadowBar && (isl.big || !isl.flatRest); size: isl.big ? Look.shadowSize : Look.shadowSize * 0.5; strength: Look.shadowStrength }
+    Shadow { anchors.fill: bg; radius: bg.radius; on: Look.shadows && Look.shadowBar && !isl.flatRest; size: Look.shadowSize * 0.5; strength: Look.shadowStrength }
     Rectangle {
         id: bg
         anchors.fill: parent
-        radius: isl.big ? 30 : height / 2
-        Behavior on radius { NumberAnimation { duration: 300; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
-        // inside the notch or a pill with modules it has no color of its own at rest (no darker band)
-        color: isl.flatRest && !isl.big ? Qt.rgba(isl.fill.r, isl.fill.g, isl.fill.b, 0) : isl.fill
-        Behavior on color { ColorAnimation { duration: 220 } }
+        radius: height / 2
+        // inside the notch or a pill with modules it has no color of its own (no darker band)
+        color: isl.flatRest ? Qt.rgba(isl.fill.r, isl.fill.g, isl.fill.b, 0) : isl.fill
         clip: true
-        // the player tints the island with your key color
-        Rectangle {
-            anchors.fill: parent; radius: parent.radius
-            opacity: isl.mode === "media" ? 1 : 0
-            Behavior on opacity { NumberAnimation { duration: 300 } }
-            gradient: Gradient {
-                orientation: Gradient.Horizontal
-                GradientStop { position: 0; color: isl.pal ? Qt.rgba(isl.pal.primary.r, isl.pal.primary.g, isl.pal.primary.b, 0.2) : "transparent" }
-                GradientStop { position: 0.7; color: "transparent" }
-            }
-        }
 
         // ---------- idle: the time ----------
         Face {
@@ -136,7 +143,7 @@ Item {
                     RotationAnimator on rotation { from: 0; to: 360; duration: 9000; loops: Animation.Infinite; running: pl.playing && !Look.lite } }
                 Text { anchors.verticalCenter: parent.verticalCenter; text: isl.bar ? isl.bar.timeText : ""
                     color: isl.pal ? isl.pal.fg : "white"; font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.DemiBold }
-                Eq { visible: pl.playing; anchors.verticalCenter: parent.verticalCenter; h: 14; running: isl.mode === "idle" }
+                Eq { visible: pl.playing; anchors.verticalCenter: parent.verticalCenter; h: 14; running: isl.pillMode === "idle" }
             }
         }
 
@@ -148,7 +155,7 @@ Item {
                 anchors.centerIn: parent
                 spacing: 12
                 Rectangle { anchors.verticalCenter: parent.verticalCenter; width: 12; height: 12; radius: 6; color: "#ff5a5a"
-                    SequentialAnimation on opacity { running: isl.mode === "rec"; loops: Animation.Infinite
+                    SequentialAnimation on opacity { running: isl.pillMode === "rec"; loops: Animation.Infinite
                         NumberAnimation { to: 0.35; duration: 700 } NumberAnimation { to: 1; duration: 700 } } }
                 Text { anchors.verticalCenter: parent.verticalCenter; text: isl.bar ? isl.bar.recTime : ""
                     color: isl.pal ? isl.pal.fg : "white"; font.family: Fonts.numbers; font.pixelSize: 14; font.weight: Font.Medium }
@@ -262,9 +269,46 @@ Item {
             }
         }
 
+    }
+
+    // ---------- the card: the player or a notification, just beside the bar ----------
+    Shadow { anchors.fill: card; radius: card.radius; on: Look.shadows && Look.shadowBar; opacity: card.opacity; size: Look.shadowSize; strength: Look.shadowStrength }
+    Rectangle {
+        id: card
+        property real t: isl.big ? 1 : 0
+        Behavior on t { NumberAnimation { duration: isl.big ? 520 : 220; easing.type: Easing.BezierSpline; easing.bezierCurve: isl.big ? Look.decel : Look.accel } }
+        width: isl.cw; height: isl.ch
+        Behavior on width { SpringAnimation { spring: 3.6; damping: 0.32; epsilon: 0.4 } }
+        Behavior on height { SpringAnimation { spring: 3.6; damping: 0.32; epsilon: 0.4 } }
+        // centred on the island, but always on the screen
+        x: Math.max(-isl.x, Math.min(isl.areaW - isl.x - width, (isl.width - width) / 2))
+        y: isl.down ? isl.bh + 8 : -height - 8
+        radius: 30
+        color: isl.fill
+        visible: opacity > 0.01
+        opacity: Math.min(1, t * 1.5)
+        // it grows out of the island: from the island's side, small and a little narrower
+        transform: Scale {
+            origin.x: card.width / 2; origin.y: isl.down ? 0 : card.height
+            xScale: 0.7 + 0.3 * card.t; yScale: 0.4 + 0.6 * card.t
+        }
+        clip: true
+        HoverHandler { id: hovC }
+        // the player tints the card with your key color
+        Rectangle {
+            anchors.fill: parent; radius: parent.radius
+            opacity: isl.cardMode === "media" ? 1 : 0
+            Behavior on opacity { NumberAnimation { duration: 300 } }
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0; color: isl.pal ? Qt.rgba(isl.pal.primary.r, isl.pal.primary.g, isl.pal.primary.b, 0.2) : "transparent" }
+                GradientStop { position: 0.7; color: "transparent" }
+            }
+        }
+
         // ---------- a notification ----------
         Face {
-            name: "notif"; width: 440; height: 96
+            name: "notif"; inCard: true; width: 440; height: 96
             readonly property var n: isl.note
             Item {
                 id: nIc
@@ -304,7 +348,7 @@ Item {
 
         // ---------- the player ----------
         Face {
-            name: "media"; width: 470; height: 184
+            name: "media"; inCard: true; width: 470; height: 184
             ShapeImage {
                 x: 16; y: 16; width: 78; height: 78
                 kind: Look.shape; source: pl.art
@@ -356,11 +400,12 @@ Item {
     component Face: Item {
         id: fc
         property string name: ""
-        readonly property bool act: isl.mode === name
-        x: (bg.width - width) / 2
-        y: isl.down ? 0 : bg.height - height
+        property bool inCard: false
+        readonly property bool act: inCard ? isl.mode === name : isl.pillMode === name
+        x: (parent.width - width) / 2
+        y: isl.down ? 0 : parent.height - height
         // it comes in once the shape has (nearly) grown to it, so it is never seen cut
-        opacity: act && bg.width >= width * 0.82 && bg.height >= height * 0.82 ? 1 : 0
+        opacity: act && parent.width >= width * 0.82 && parent.height >= height * 0.82 ? 1 : 0
         scale: act ? 1 : 0.94
         visible: opacity > 0.01
         enabled: act
