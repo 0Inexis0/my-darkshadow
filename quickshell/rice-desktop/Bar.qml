@@ -118,7 +118,7 @@ PanelWindow {
     color: "transparent"
     anchors { top: !atBottom; bottom: atBottom; left: true; right: true }
     // room below for the recording island; windows only keep away from the bar itself
-    implicitHeight: barH + gap * 2 + (dyn ? 196 : 54)
+    implicitHeight: barH + gap * 2 + (hasIsland || dyn ? 196 : 54)      // room for the island to grow (any style)
     exclusionMode: hideOn ? ExclusionMode.Ignore : ExclusionMode.Normal
     exclusiveZone: hideOn ? 0 : barH + gap * 2
     // only the bar (and the recording island) take the pointer; auto-hide: only a thin strip at the edge
@@ -323,14 +323,24 @@ PanelWindow {
                             Behavior on opacity { OpacityAnimator { duration: 260 } }
                             Behavior on scale { ScaleAnimator { duration: 120 } }
                         }
-                        // letters (A B C) or numbers (1 2 3)
+                        // letters (A B C) or numbers (1 2 3); Dynamic: the active one sits in a pill of your key color
+                        Rectangle {
+                            visible: bar.goo && !wsm.dots && !wsm.pac
+                            anchors.centerIn: parent
+                            width: 22; height: 22; radius: 11
+                            color: gp.primary
+                            opacity: act ? 1 : 0
+                            scale: act ? 1 : 0.5
+                            Behavior on opacity { NumberAnimation { duration: 200 } }
+                            Behavior on scale { NumberAnimation { duration: 280; easing.type: Easing.OutBack } }
+                        }
                         Text {
                             visible: !wsm.dots && !wsm.pac
                             anchors.centerIn: parent
                             text: wsm.st === "numbers" ? String(wid) : String.fromCharCode(64 + wid)
                             font.family: Fonts.main; font.pixelSize: 14; font.weight: act ? Font.Bold : Font.Medium
-                            color: act ? bar.fg : (occ ? Qt.rgba(0.965, 0.961, 0.957, 0.9) : Qt.rgba(0.965, 0.961, 0.957, 0.32))
-                            scale: act ? 1.18 : (wm.containsMouse ? 1.12 : 1)
+                            color: bar.goo ? (act ? gp.inkPrimary : (occ ? gp.fg : gp.dim)) : (act ? bar.fg : (occ ? Qt.rgba(0.965, 0.961, 0.957, 0.9) : Qt.rgba(0.965, 0.961, 0.957, 0.32)))
+                            scale: act ? (bar.goo ? 1 : 1.18) : (wm.containsMouse ? 1.12 : 1)
                             Behavior on scale { ScaleAnimator { duration: 220; easing.type: Easing.OutBack } }
                         }
                         MouseArea { id: wm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: bar.goWs(wid) }

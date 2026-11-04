@@ -1,5 +1,11 @@
 # Changelog
 
+## V3.32
+- Fix: the island was cut off when it grew in the notch (and in every style but Dynamic): the bar keeps room for it now
+- The island's content comes in once the shape has grown, so a card is never seen cut while it opens or closes
+- In the notch, and in a pill with other modules, the island has no darker band of its own at rest
+- The island shows workspaces in your workspace style (dots, Pac-Man, letters, numbers), and Dynamic puts the active letter or number in a pill of your key color
+
 ## V3.31
 - The island is a module now: Settings > Bar layout (or Edit mode > Bar) puts it in any zone, with other modules beside it (workspaces, launcher, clock ...), in every bar style. In the notch it is part of the notch and grows out of it; when it shows the volume it makes room and the modules beside it slide away
 - Dynamic without the island in its layout keeps it in the middle, as before

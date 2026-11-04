@@ -100,7 +100,9 @@ Item {
         anchors.fill: parent
         radius: isl.big ? 30 : height / 2
         Behavior on radius { NumberAnimation { duration: 300; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
-        color: isl.fill
+        // inside the notch or a pill with modules it has no color of its own at rest (no darker band)
+        color: isl.flatRest && !isl.big ? Qt.rgba(isl.fill.r, isl.fill.g, isl.fill.b, 0) : isl.fill
+        Behavior on color { ColorAnimation { duration: 220 } }
         clip: true
         // the player tints the island with your key color
         Rectangle {
@@ -197,14 +199,64 @@ Item {
                 Text { anchors.verticalCenter: parent.verticalCenter; text: "Workspace"; color: isl.pal ? isl.pal.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 12; font.weight: Font.Medium; rightPadding: 4 }
                 Repeater {
                     model: isl.bar ? Math.min(10, isl.bar.maxWs()) : 5
-                    delegate: Rectangle {
-                        readonly property bool act: isl.wsId === index + 1
+                    // follows Settings > DarkShadow bar > Workspace style: dots, Pac-Man, letters or numbers
+                    delegate: Item {
+                        id: wc
+                        readonly property int wid: index + 1
+                        readonly property bool act: isl.wsId === wid
+                        readonly property string st: isl.bar ? isl.bar.wsStyle : "dots"
                         anchors.verticalCenter: parent.verticalCenter
-                        width: act ? 30 : 8; height: act ? 20 : 8; radius: height / 2
+                        width: st === "dots" ? (act ? 30 : 8) : (st === "pacman" ? 16 : 22)
+                        height: 22
                         Behavior on width { SpringAnimation { spring: 4; damping: 0.35 } }
-                        Behavior on height { SpringAnimation { spring: 4; damping: 0.35 } }
-                        color: act ? (isl.pal ? isl.pal.primary : "white") : (isl.pal ? isl.pal.track : "#555")
-                        Text { anchors.centerIn: parent; visible: parent.act; text: index + 1; color: isl.pal ? isl.pal.inkPrimary : "black"; font.family: Fonts.main; font.pixelSize: 11; font.weight: Font.Bold }
+                        // dots: the active one a pill with its number
+                        Rectangle {
+                            visible: wc.st === "dots"
+                            anchors.centerIn: parent
+                            width: parent.width; height: wc.act ? 20 : 8; radius: height / 2
+                            Behavior on height { SpringAnimation { spring: 4; damping: 0.35 } }
+                            color: wc.act ? (isl.pal ? isl.pal.primary : "white") : (isl.pal ? isl.pal.track : "#555")
+                            Text { anchors.centerIn: parent; visible: wc.act; text: wc.wid; color: isl.pal ? isl.pal.inkPrimary : "black"; font.family: Fonts.main; font.pixelSize: 11; font.weight: Font.Bold }
+                        }
+                        // letters / numbers: the active one in a round pill of your key color
+                        Rectangle {
+                            visible: wc.st === "letters" || wc.st === "numbers"
+                            anchors.centerIn: parent; width: 22; height: 22; radius: 11
+                            color: isl.pal ? isl.pal.primary : "white"
+                            opacity: wc.act ? 1 : 0; scale: wc.act ? 1 : 0.4
+                            Behavior on opacity { NumberAnimation { duration: 180 } }
+                            Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.OutBack } }
+                        }
+                        Text {
+                            visible: wc.st === "letters" || wc.st === "numbers"
+                            anchors.centerIn: parent
+                            text: wc.st === "numbers" ? String(wc.wid) : String.fromCharCode(64 + wc.wid)
+                            color: wc.act ? (isl.pal ? isl.pal.inkPrimary : "black") : (isl.pal ? isl.pal.dim : "#aaa")
+                            font.family: Fonts.main; font.pixelSize: 12; font.weight: wc.act ? Font.Bold : Font.Medium
+                        }
+                        // Pac-Man: dots he has eaten fade, he sits on the one you are on
+                        Rectangle {
+                            visible: wc.st === "pacman" && !wc.act
+                            anchors.centerIn: parent; width: 6; height: 6; radius: 3
+                            color: isl.pal ? isl.pal.fg : "white"
+                            opacity: wc.wid < isl.wsId ? 0.25 : 0.8
+                        }
+                        Canvas {
+                            visible: wc.st === "pacman" && wc.act
+                            anchors.centerIn: parent; width: 16; height: 16
+                            property real mouth: 0.22
+                            SequentialAnimation on mouth {
+                                running: wc.act && wc.st === "pacman" && isl.mode === "ws"; loops: Animation.Infinite
+                                NumberAnimation { to: 0.02; duration: 120 } NumberAnimation { to: 0.26; duration: 120 }
+                            }
+                            onMouthChanged: requestPaint()
+                            onVisibleChanged: if (visible) requestPaint()
+                            onPaint: {
+                                const c = getContext("2d"); c.reset()
+                                c.fillStyle = isl.pal ? isl.pal.primary : "#ffd84a"
+                                c.beginPath(); c.moveTo(8, 8); c.arc(8, 8, 8, mouth * Math.PI, (2 - mouth) * Math.PI); c.closePath(); c.fill()
+                            }
+                        }
                     }
                 }
             }
@@ -307,11 +359,12 @@ Item {
         readonly property bool act: isl.mode === name
         x: (bg.width - width) / 2
         y: isl.down ? 0 : bg.height - height
-        opacity: act ? 1 : 0
+        // it comes in once the shape has (nearly) grown to it, so it is never seen cut
+        opacity: act && bg.width >= width * 0.82 && bg.height >= height * 0.82 ? 1 : 0
         scale: act ? 1 : 0.94
         visible: opacity > 0.01
         enabled: act
-        Behavior on opacity { NumberAnimation { duration: fc.act ? 260 : 120; easing.type: Easing.Linear } }
+        Behavior on opacity { NumberAnimation { duration: fc.act ? 260 : 90; easing.type: Easing.Linear } }
         Behavior on scale { NumberAnimation { duration: 320; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.decel } }
     }
     // a small equalizer: round bars in your key color that bounce while music plays
