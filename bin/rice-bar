@@ -11,7 +11,7 @@
   rice-bar enabled                exit code 0 while the DarkShadow bar is on
   rice-bar migrate                installer: a config from before the DarkShadow bar (or none) turns it on once
   rice-bar start                  autostart: Waybar only when the DarkShadow bar is off
-Modules: launcher workspaces title media clock tray volume network bluetooth battery notifications power island
+Modules: launcher workspaces title media island tray volume network bluetooth battery notifications power
 """
 import json
 import os
@@ -21,7 +21,7 @@ import sys
 HOME = os.path.expanduser("~")
 DIR = HOME + "/.config/rice"
 CFG = DIR + "/bar.json"
-DEFAULTS = {"enabled": True, "style": "islands", "position": "top", "height": 38, "workspaces": 5,
+DEFAULTS = {"enabled": True, "style": "dynamic", "position": "top", "height": 38, "workspaces": 5,
             "seconds": False, "opacity": 0.72, "ws_style": "dots", "logo": "auto", "autohide": False, "shadow": True,
             "island_hover": True, "island_volume": True, "island_ws": True, "island_notifs": True, "tray_size": 18}
 CHOICES = {"style": ("flat", "island", "islands", "pills", "notch", "dynamic"), "position": ("top", "bottom"),
@@ -31,10 +31,11 @@ CHOICES = {"style": ("flat", "island", "islands", "pills", "notch", "dynamic"), 
                     "elementary", "zorin", "nobara", "artix", "slackware", "mageia", "rocky")}
 BOOLS = ("enabled", "seconds", "autohide", "shadow", "island_hover", "island_volume", "island_ws", "island_notifs")
 RANGES = {"height": (28, 56), "workspaces": (3, 10), "opacity": (0.3, 1.0), "tray_size": (12, 28)}
-MODULES = ["launcher", "workspaces", "title", "media", "clock", "tray", "volume", "network", "bluetooth", "battery",
-           "notifications", "power", "island"]
-DEFAULT_LAYOUT = {"left": ["launcher", "workspaces", "title"], "center": ["clock"],
-                  "right": ["media", "tray", "volume", "bluetooth", "network", "battery", "notifications", "power"]}
+# V3.36: the island is the clock (the old "clock" module becomes the island)
+MODULES = ["launcher", "workspaces", "title", "media", "island", "tray", "volume", "network", "bluetooth", "battery",
+           "notifications", "power"]
+DEFAULT_LAYOUT = {"left": ["launcher", "workspaces", "title"], "center": ["island"],
+                  "right": ["tray", "volume", "bluetooth", "network", "battery", "notifications", "power"]}
 
 
 def clean_layout(raw):
@@ -44,6 +45,8 @@ def clean_layout(raw):
     for z in ("left", "center", "right"):
         out[z] = []
         for m in (raw.get(z) if isinstance(raw, dict) and isinstance(raw.get(z), list) else []):
+            if m == "clock":
+                m = "island"
             if m in MODULES and m not in seen:
                 seen.add(m)
                 out[z].append(m)

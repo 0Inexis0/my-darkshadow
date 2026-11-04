@@ -10,15 +10,15 @@ Item {
 
     readonly property var info: ({
         "launcher": ["\udb80\udc3b", "Launcher"], "workspaces": ["\udb80\uddd8", "Workspaces"], "title": ["\udb81\uddb2", "Window title"],
-        "media": ["\udb81\udf5a", "Music"], "clock": ["\udb80\udd50", "Clock"], "tray": ["\udb81\udd70", "Tray"],
+        "media": ["\udb81\udf5a", "Music"], "tray": ["\udb81\udd70", "Tray"],
         "volume": ["\udb81\udd7e", "Volume"], "network": ["\udb81\udda9", "Wi-Fi"], "bluetooth": ["\udb80\udcaf", "Bluetooth"],
         "battery": ["\udb80\udc79", "Battery"], "notifications": ["\udb80\udc9a", "Notifications"], "power": ["\udb81\udc25", "Power"],
-        "island": ["\u25ac", "Island"]
+        "island": ["\udb80\udd50", "Island (clock)"]
     })
     readonly property var subsAll: []
     readonly property var defaults: ({
-        left: ["launcher", "workspaces", "title"], center: ["clock"],
-        right: ["media", "tray", "volume", "bluetooth", "network", "battery", "notifications", "power"]
+        left: ["launcher", "workspaces", "title"], center: ["island"],
+        right: ["tray", "volume", "bluetooth", "network", "battery", "notifications", "power"]
     })
 
     // the bar's settings (rice-bar)
@@ -38,9 +38,38 @@ Item {
     property var apps: []
     function pull() {
         if (dragName !== "") return
-        if (qb.layout) lay = JSON.parse(JSON.stringify(qb.layout))
+        if (qb.layout) {
+            const l = JSON.parse(JSON.stringify(qb.layout))
+            for (const z of ["left", "center", "right", "available"]) l[z] = (l[z] || []).map(function(m) { return m === "clock" ? "island" : m })
+                .filter(function(m, i, a) { return a.indexOf(m) === i })
+            lay = l
+        }
     }
     Component.onCompleted: pull()
+
+    // ready-made layouts (the island in the middle is the clock and everything that happens)
+    readonly property var presets: [
+        { k: "island", n: "Island", d: "Launcher and workspaces, the island, your status",
+          l: { left: ["launcher", "workspaces"], center: ["island"], right: ["tray", "volume", "network", "battery", "notifications", "power"] } },
+        { k: "focus", n: "Focus", d: "The window you work in, the island, a few icons",
+          l: { left: ["workspaces", "title"], center: ["island"], right: ["volume", "network", "battery", "power"] } },
+        { k: "full", n: "Everything", d: "All modules, music on the left",
+          l: { left: ["launcher", "workspaces", "media"], center: ["island"], right: ["tray", "bluetooth", "network", "volume", "battery", "notifications", "power"] } },
+        { k: "minimal", n: "Minimal", d: "Workspaces, the island, volume and power",
+          l: { left: ["workspaces"], center: ["island"], right: ["volume", "power"] } },
+        { k: "center", n: "All in the middle", d: "One group in the middle: great with the Notch style",
+          l: { left: [], center: ["workspaces", "island", "volume", "network", "battery"], right: [] } }
+    ]
+    function same(a, b) { return JSON.stringify(a || []) === JSON.stringify(b || []) }
+    function isPreset(l) { return same(lay.left, l.left) && same(lay.center, l.center) && same(lay.right, l.right) }
+    function usePreset(pr) {
+        const n = { left: pr.l.left.slice(), center: pr.l.center.slice(), right: pr.l.right.slice() }
+        const used = n.left.concat(n.center, n.right)
+        n.available = Object.keys(info).filter(function(k) { return used.indexOf(k) < 0 })
+        lay = n
+        page.qrun(["layout-set", JSON.stringify({ left: n.left, center: n.center, right: n.right })])
+        page.ctl.status = "Bar layout: " + pr.n
+    }
 
     function chip(n) {
         let i = info[n]
@@ -110,6 +139,56 @@ Item {
         x: 24
         width: parent.width - 48
         spacing: 10
+
+        SectionTitle {
+            text: "Layouts"
+            sub: "Pick one to start from, then change it below. The island in the middle is your clock, and it grows into music, volume, notifications and today."
+        }
+        Flow {
+            width: parent.width
+            spacing: 10
+            Repeater {
+                model: page.presets
+                delegate: Rectangle {
+                    id: pc
+                    readonly property bool on: page.isPreset(modelData.l)
+                    width: (parent.width - 20) / 3; height: 116
+                    radius: on ? 28 : 18
+                    Behavior on radius { NumberAnimation { duration: 260; easing.type: Easing.OutBack } }
+                    color: on ? M3.primaryContainer : (pm.containsMouse ? M3.surfaceHigh : M3.surfaceC)
+                    Behavior on color { ColorAnimation { duration: 180 } }
+                    scale: pm.pressed ? 0.97 : 1
+                    Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } }
+                    // a small bar: zones as tonal pills, the island in your key color
+                    Item {
+                        x: 14; y: 14; width: parent.width - 28; height: 26
+                        Row {
+                            id: lRow; spacing: 3; anchors.verticalCenter: parent.verticalCenter
+                            visible: modelData.l.left.length > 0
+                            Repeater { model: modelData.l.left; delegate: Rectangle { width: 9; height: 9; radius: 4.5; color: pc.on ? M3.inkPrimaryC : M3.inkDim; opacity: 0.8 } }
+                        }
+                        Row {
+                            anchors.centerIn: parent; spacing: 3
+                            Repeater { model: modelData.l.center
+                                delegate: Rectangle { anchors.verticalCenter: parent.verticalCenter
+                                    width: modelData === "island" ? 44 : 9; height: modelData === "island" ? 18 : 9; radius: height / 2
+                                    color: modelData === "island" ? M3.primary : (pc.on ? M3.inkPrimaryC : M3.inkDim); opacity: modelData === "island" ? 1 : 0.8 } }
+                        }
+                        Row {
+                            anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; spacing: 3
+                            Repeater { model: modelData.l.right; delegate: Rectangle { width: 9; height: 9; radius: 4.5; color: pc.on ? M3.inkPrimaryC : M3.inkDim; opacity: 0.8 } }
+                        }
+                    }
+                    Column {
+                        x: 16; y: 52; width: parent.width - 32; spacing: 3
+                        T { text: modelData.n; font.pixelSize: 14; font.bold: true; color: pc.on ? M3.inkPrimaryC : M3.ink }
+                        T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight
+                            text: modelData.d; font.pixelSize: 11; color: pc.on ? M3.inkPrimaryC : M3.inkDim }
+                    }
+                    MouseArea { id: pm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.usePreset(modelData) }
+                }
+            }
+        }
 
         SectionTitle {
             text: "Bar layout"

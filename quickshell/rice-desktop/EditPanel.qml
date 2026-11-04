@@ -40,13 +40,13 @@ Item {
     readonly property var modules: [
         { k: "launcher", n: "Launcher", i: "apps", g: "" }, { k: "workspaces", n: "Workspaces", i: "view_week", g: "" },
         { k: "title", n: "Window", i: "title", g: "" }, { k: "media", n: "Music", i: "music_note", g: "" },
-        { k: "clock", n: "Clock", i: "schedule", g: "" }, { k: "tray", n: "Tray", i: "more_horiz", g: "" },
+        { k: "tray", n: "Tray", i: "more_horiz", g: "" },
         { k: "volume", n: "Volume", i: "volume_up", g: "" }, { k: "network", n: "Wi-Fi", i: "wifi", g: "" },
         { k: "bluetooth", n: "Bluetooth", i: "bluetooth", g: "" }, { k: "battery", n: "Battery", i: "battery_full", g: "" },
         { k: "notifications", n: "Notifications", i: "notifications", g: "" }, { k: "power", n: "Power", i: "power_settings_new", g: "" },
-        { k: "island", n: "Island", i: "call_to_action", g: "" }
+        { k: "island", n: "Island (clock)", i: "schedule", g: "" }
     ]
-    function lay() { return bc.layout ? bc.layout : { left: ["launcher", "workspaces", "title"], center: ["clock"], right: ["media", "tray", "volume", "bluetooth", "network", "battery", "notifications", "power"] } }
+    function lay() { return bc.layout ? bc.layout : { left: ["launcher", "workspaces", "title"], center: ["island"], right: ["tray", "volume", "bluetooth", "network", "battery", "notifications", "power"] } }
     function hasMod(k) { const l = lay(); return (l.left || []).indexOf(k) >= 0 || (l.center || []).indexOf(k) >= 0 || (l.right || []).indexOf(k) >= 0 }
     function toggleMod(k) {
         const l = JSON.parse(JSON.stringify(lay()))

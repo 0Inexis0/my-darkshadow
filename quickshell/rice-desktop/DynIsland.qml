@@ -1,5 +1,6 @@
 import Quickshell
 import Quickshell.Io
+import Quickshell.Wayland
 import Quickshell.Services.Pipewire
 import QtQuick
 
@@ -44,13 +45,24 @@ Item {
     readonly property string cardWant: note ? "notif"
         : (infoOpen ? "info" : ((pinned || hoverOpen) && pl.has && !ghost ? "media" : ""))
     readonly property bool big: cardWant !== ""
-    function show(what, ms) { flash = what; flashT.interval = ms; flashT.restart() }
+    function show(what, ms) { if (flash !== what) bump.restart(); flash = what; flashT.interval = ms; flashT.restart() }
+    // something new in the island: it gives a small squeeze, like a drop landing
+    property real squeeze: 0
+    SequentialAnimation {
+        id: bump
+        NumberAnimation { target: isl; property: "squeeze"; to: 1; duration: 110; easing.type: Easing.OutQuad }
+        NumberAnimation { target: isl; property: "squeeze"; to: 0; duration: 420; easing.type: Easing.OutBack; easing.overshoot: 2.2 }
+    }
     Timer { id: flashT; onTriggered: isl.flash = "" }
     // no island on the bar: only the card shows (the clock or a key asked for it), in the middle of the bar
     property bool ghost: false
+    // the cards you opened (not the ones that come and go by themselves): Esc, the desktop or another window close them
+    readonly property bool sticky: big && (infoOpen || pinned)
+    function closeCards() { infoOpen = false; pinned = false; hoverOpen = false }
+    Connections { target: ToplevelManager; function onActiveToplevelChanged() { if (isl.sticky) isl.closeCards() } }
     function openInfo(tab, toggle) {
         if (toggle && infoOpen && infoTab === tab) { infoOpen = false; return }
-        infoTab = tab; pinned = false; hoverOpen = false; infoOpen = true
+        infoTab = tab; pinned = false; hoverOpen = false; infoOpen = true; bump.restart()
         if (!hovering) pinT.restart()
     }
 
@@ -68,7 +80,7 @@ Item {
         ignoreUnknownSignals: true
         function onShowed(n) {
             if (isl.ghost || !isl.on("island_notifs")) return
-            isl.note = n
+            isl.note = n; bump.restart()
             noteRun.stop(); isl.noteLeft = 1; noteRun.duration = isl.noteLife; noteRun.start()
         }
     }
@@ -79,7 +91,7 @@ Item {
         onFired: function(line) {
             const p = String(line).trim().split(/\s+/)
             if (p.length < 2) return
-            isl.openInfo(p[1] === "system" ? "system" : "today", p[2] !== "open")
+            isl.openInfo(p[1] === "system" || p[1] === "about" ? p[1] : "today", p[2] !== "open")
         }
     }
     // it stays while the wave runs out; pointing at it holds the wave
@@ -125,6 +137,35 @@ Item {
     }
     function gb(b) { return b >= 1073741824 ? (b / 1073741824).toFixed(b >= 107374182400 ? 0 : 1) + " GB" : Math.round(b / 1048576) + " MB" }
     function upText(sec) { const h = Math.floor(sec / 3600), m = Math.floor(sec / 60) % 60; return (h > 0 ? h + " h " : "") + m + " min" }
+
+
+    // the About tab: the system's name, DarkShadow's Shell and its updates
+    property string osName: "Linux"
+    Process {
+        running: true
+        command: ["bash", "-c", ". /etc/os-release 2>/dev/null; echo \"${PRETTY_NAME:-${NAME:-Linux}}\""]
+        stdout: StdioCollector { onStreamFinished: if (text.trim() !== "") isl.osName = text.trim() }
+    }
+    property var up: ({ installed: "", latest: "", update: false, news: [], checked: 0 })
+    property bool checking: false
+    Process {
+        id: upCache
+        command: ["bash", "-c", "cat \"$HOME/.cache/rice/update.json\" 2>/dev/null"]
+        stdout: StdioCollector { onStreamFinished: { try { if (text.trim() !== "") isl.up = JSON.parse(text) } catch (e) { } } }
+    }
+    Process {
+        id: upProc
+        command: ["bash", "-c", "\"$HOME/.local/bin/rice-update\" check --json 2>/dev/null"]
+        stdout: StdioCollector { onStreamFinished: { try { if (text.trim() !== "") isl.up = JSON.parse(text) } catch (e) { } isl.checking = false } }
+    }
+    function checkUpdates() { if (!upProc.running) { checking = true; upProc.running = true } }
+    readonly property bool aboutOpen: big && cardMode === "info" && infoTab === "about"
+    onAboutOpenChanged: if (aboutOpen) { upCache.running = true; if (Date.now() / 1000 - (up.checked || 0) > 1800) checkUpdates() }
+    function ago(t) {
+        if (!t) return "never"
+        const m = Math.floor((Date.now() / 1000 - t) / 60)
+        return m < 1 ? "just now" : (m < 60 ? m + " min ago" : (m < 1440 ? Math.floor(m / 60) + " h ago" : Math.floor(m / 1440) + " d ago"))
+    }
 
     // ---------- its size ----------
     readonly property real tw: {
@@ -176,6 +217,7 @@ Item {
         id: bg
         anchors.fill: parent
         visible: !isl.ghost
+        transform: Scale { origin.x: bg.width / 2; origin.y: bg.height / 2; xScale: 1 + 0.035 * isl.squeeze; yScale: 1 - 0.09 * isl.squeeze }
         radius: height / 2
         // inside the notch or a pill with modules it has no color of its own (no darker band)
         color: isl.flatRest ? Qt.rgba(isl.fill.r, isl.fill.g, isl.fill.b, 0) : isl.fill
@@ -331,24 +373,26 @@ Item {
     Shadow { anchors.fill: card; radius: card.radius; on: Look.shadows && Look.shadowBar; opacity: card.opacity; size: Look.shadowSize; strength: Look.shadowStrength }
     Rectangle {
         id: card
+        // it is the island growing: at 0 it sits exactly on the island, at 1 it is the card beside the bar
+        // (a container transform: size, place and corners morph together, with a little overshoot)
         property real t: isl.big ? 1 : 0
         onTChanged: if (t < 0.01 && !isl.big) isl.cardMode = ""
-        Behavior on t { NumberAnimation { duration: isl.big ? 520 : 220; easing.type: Easing.BezierSpline; easing.bezierCurve: isl.big ? Look.decel : Look.accel } }
-        width: isl.cw; height: isl.ch
-        Behavior on width { SpringAnimation { spring: 3.6; damping: 0.32; epsilon: 0.4 } }
-        Behavior on height { SpringAnimation { spring: 3.6; damping: 0.32; epsilon: 0.4 } }
+        Behavior on t { NumberAnimation { duration: isl.big ? (Look.lite ? 360 : 640) : 260
+            easing.type: isl.big ? Easing.OutBack : Easing.InCubic; easing.overshoot: Look.lite ? 0 : 1.05 } }
+        property real cwA: isl.cw
+        property real chA: isl.ch
+        Behavior on cwA { SpringAnimation { spring: 3.6; damping: 0.34; epsilon: 0.4 } }
+        Behavior on chA { SpringAnimation { spring: 3.6; damping: 0.34; epsilon: 0.4 } }
+        readonly property real tc: Math.max(0, t)
+        width: Math.max(isl.bh, isl.width + (cwA - isl.width) * tc)
+        height: Math.max(isl.bh * 0.6, isl.bh + (chA - isl.bh) * tc)
         // centred on the island, but always on the screen
         x: Math.max(-isl.x, Math.min(isl.areaW - isl.x - width, (isl.width - width) / 2))
-        y: isl.down ? isl.bh + 8 : -height - 8
-        radius: 30
+        y: isl.down ? (isl.bh + 8) * Math.min(1, tc) : isl.bh - height - (isl.bh + 8) * Math.min(1, tc)
+        radius: Math.min(height / 2, isl.bh / 2 + (30 - isl.bh / 2) * Math.min(1, tc))
         color: isl.fill
         visible: opacity > 0.01
-        opacity: Math.min(1, t * 1.5)
-        // it grows out of the island: from the island's side, small and a little narrower
-        transform: Scale {
-            origin.x: card.width / 2; origin.y: isl.down ? 0 : card.height
-            xScale: 0.7 + 0.3 * card.t; yScale: 0.4 + 0.6 * card.t
-        }
+        opacity: t < 0.02 ? 0 : Math.min(1, t * 4)
         clip: true
         HoverHandler { id: hovC }
         // the player tints the card with your key color
@@ -377,7 +421,7 @@ Item {
                 Rectangle { anchors.fill: parent; radius: height / 2; color: fInfo.pp ? fInfo.pp.card : "#222" }
                 Rectangle {
                     id: tabPill
-                    readonly property var cur: isl.infoTab === "system" ? tSys : tToday
+                    readonly property var cur: isl.infoTab === "system" ? tSys : (isl.infoTab === "about" ? tAbout : tToday)
                     x: 4 + cur.x; y: 4; width: cur.width; height: parent.height - 8; radius: height / 2
                     color: fInfo.pp ? fInfo.pp.primary : "white"
                     Behavior on x { SpringAnimation { spring: 4; damping: 0.4; epsilon: 0.3 } }
@@ -388,6 +432,7 @@ Item {
                     x: 4; y: 4; height: parent.height - 8
                     Tab { id: tToday; label: "Today"; icon: "calendar_today"; on: isl.infoTab === "today"; onHit: isl.infoTab = "today" }
                     Tab { id: tSys; label: "System"; icon: "memory"; on: isl.infoTab === "system"; onHit: isl.infoTab = "system" }
+                    Tab { id: tAbout; label: "About"; icon: "info"; on: isl.infoTab === "about"; onHit: isl.infoTab = "about" }
                     Tab { visible: pl.has; label: "Music"; icon: "music_note"; on: false
                         onHit: { isl.infoOpen = false; isl.pinned = true; if (!isl.hovering) pinT.restart() } }
                 }
@@ -476,6 +521,75 @@ Item {
                 }
             }
 
+
+            // ---------- about: your system and DarkShadow's Shell (with updates) ----------
+            Item {
+                id: ab
+                x: 0; y: 62; width: parent.width; height: parent.height - 62
+                opacity: isl.infoTab === "about" ? 1 : 0
+                visible: opacity > 0.01
+                Behavior on opacity { NumberAnimation { duration: 220 } }
+                transform: Translate { x: isl.infoTab === "about" ? 0 : 24; Behavior on x { NumberAnimation { duration: 320; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.decel } } }
+                // the system: its logo in your shape, its name
+                Item {
+                    id: osIc
+                    x: 28; y: 8; width: 96; height: 96
+                    Blob { anchors.fill: parent; kind: Look.shape; color: fInfo.pp ? fInfo.pp.primary : "white"
+                        RotationAnimator on rotation { from: 0; to: 360; duration: 36000; loops: Animation.Infinite; running: ab.visible && !Look.lite } }
+                    Text { anchors.centerIn: parent; anchors.horizontalCenterOffset: 2
+                        text: isl.bar && isl.bar.logos[isl.bar.logoKey] !== undefined ? String.fromCodePoint(isl.bar.logos[isl.bar.logoKey]) : String.fromCodePoint(0xF17C)
+                        font.family: Fonts.icons; font.pixelSize: 44; color: fInfo.pp ? fInfo.pp.inkPrimary : "black" }
+                }
+                Column {
+                    x: 142; y: 18; width: parent.width - 142 - 24; spacing: 3
+                    Text { text: "Your system"; color: fInfo.pp ? fInfo.pp.primary : "#aaa"; font.family: Fonts.main; font.pixelSize: 12; font.weight: Font.DemiBold }
+                    Text { width: parent.width; elide: Text.ElideRight; text: isl.osName; color: fInfo.pp ? fInfo.pp.fg : "white"; font.family: Fonts.main; font.pixelSize: 24; font.weight: Font.DemiBold }
+                    Text { width: parent.width; elide: Text.ElideRight; text: "DarkShadow's Shell" + (isl.up.installed ? "  V" + isl.up.installed : "")
+                        color: fInfo.pp ? fInfo.pp.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 13 }
+                }
+                // updates
+                Rectangle {
+                    x: 24; y: 124; width: parent.width - 48; height: 104; radius: 24
+                    color: isl.up.update ? (fInfo.pp ? fInfo.pp.container : "#333") : (fInfo.pp ? fInfo.pp.card : "#222")
+                    Behavior on color { ColorAnimation { duration: 260 } }
+                    Item { id: upIc; x: 18; anchors.verticalCenter: parent.verticalCenter; width: 48; height: 48
+                        Blob { anchors.fill: parent; kind: isl.up.update ? Look.shape : "circle"; color: fInfo.pp ? (isl.up.update ? fInfo.pp.primary : fInfo.pp.cardHi) : "#444"
+                            RotationAnimator on rotation { from: 0; to: 360; duration: 2400; loops: Animation.Infinite; running: isl.checking && ab.visible } }
+                        MIcon { anchors.centerIn: parent; size: 22; filled: true; glyph: ""
+                            name: isl.checking ? "sync" : (isl.up.update ? "system_update_alt" : "check_circle")
+                            color: fInfo.pp ? (isl.up.update ? fInfo.pp.inkPrimary : fInfo.pp.fg) : "white" } }
+                    Column {
+                        anchors.left: upIc.right; anchors.leftMargin: 14; anchors.right: upBtn.left; anchors.rightMargin: 10
+                        anchors.verticalCenter: parent.verticalCenter; spacing: 2
+                        Text { width: parent.width; elide: Text.ElideRight
+                            text: isl.checking && !isl.up.installed ? "Looking for updates" : (isl.up.update ? "Update V" + isl.up.latest + " is ready" : "You are up to date")
+                            color: isl.up.update ? (fInfo.pp ? fInfo.pp.inkContainer : "white") : (fInfo.pp ? fInfo.pp.fg : "white")
+                            font.family: Fonts.main; font.pixelSize: 15; font.weight: Font.DemiBold }
+                        Text { width: parent.width; elide: Text.ElideRight; maximumLineCount: 2; wrapMode: Text.WordWrap
+                            text: isl.up.update && isl.up.news && isl.up.news.length > 0 ? isl.up.news[0] : (isl.checking ? "Asking GitHub ..." : "Checked " + isl.ago(isl.up.checked))
+                            color: fInfo.pp ? fInfo.pp.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 12 }
+                        // a wave while it looks
+                        WavyLine { visible: isl.checking; width: parent.width; height: 14; value: 1; handle: false; moving: true; thick: 3
+                            color: fInfo.pp ? fInfo.pp.primary : "white"; track: "transparent" }
+                    }
+                    Rectangle {
+                        id: upBtn
+                        anchors.right: parent.right; anchors.rightMargin: 16; anchors.verticalCenter: parent.verticalCenter
+                        width: ubt.implicitWidth + 36; height: 42; radius: ubm.pressed ? 14 : 21
+                        Behavior on radius { NumberAnimation { duration: 200 } }
+                        color: isl.up.update ? (fInfo.pp ? fInfo.pp.primary : "white") : (fInfo.pp ? fInfo.pp.cardHi : "#444")
+                        Text { id: ubt; anchors.centerIn: parent; text: isl.up.update ? "Update now" : "Check"
+                            color: isl.up.update ? (fInfo.pp ? fInfo.pp.inkPrimary : "black") : (fInfo.pp ? fInfo.pp.fg : "white")
+                            font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.DemiBold }
+                        MouseArea { id: ubm; anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                if (isl.up.update) { isl.infoOpen = false; Quickshell.execDetached(["bash", "-c", "t=\"${TERMINAL:-kitty}\"; command -v \"$t\" >/dev/null || t=kitty; exec \"$t\" -e \"$HOME/.local/bin/rice-update\""]) }
+                                else isl.checkUpdates()
+                            } }
+                    }
+                }
+            }
+
             // ---------- system ----------
             Item {
                 id: sys
@@ -512,7 +626,7 @@ Item {
                 id: nIc
                 x: 16; y: 16; width: 46; height: 46
                 Blob { anchors.fill: parent; kind: Look.shape; color: isl.pal ? isl.pal.container : "#333"
-                    RotationAnimator on rotation { from: 0; to: 360; duration: 24000; loops: Animation.Infinite; running: isl.cardMode === "notif" && isl.big && !Look.lite } }
+                    RotationAnimator on rotation { from: 0; to: 360; duration: 24000; loops: Animation.Infinite; running: isl.big && isl.cardMode === "notif" && !Look.lite } }
                 Image { id: nImg; anchors.centerIn: parent; width: 24; height: 24; sourceSize.width: 48; sourceSize.height: 48
                     source: { const n = isl.note; if (!n) return ""
                         if (n.appIcon && n.appIcon !== "") return n.appIcon.indexOf("/") === 0 ? "file://" + n.appIcon : Quickshell.iconPath(n.appIcon, true)
@@ -561,7 +675,7 @@ Item {
                 Text { width: parent.width; elide: Text.ElideRight; text: pl.artist; color: isl.pal ? isl.pal.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 13 }
             }
             // a wave that moves while it plays
-            Eq { x: parent.width - 58; y: 22; h: 22; bars: 5; go: pl.playing && isl.cardMode === "media" && isl.big }
+            Eq { x: parent.width - 58; y: 22; h: 22; bars: 5; go: isl.big && pl.playing && isl.cardMode === "media" }
             Text { x: 16; y: 110; width: 38; text: pl.clock(pl.pos); color: isl.pal ? isl.pal.dim : "#aaa"; font.family: Fonts.numbers; font.pixelSize: 11 }
             WavyLine {
                 x: 56; y: 105; width: parent.width - 112; height: 22

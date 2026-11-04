@@ -110,7 +110,8 @@ PanelWindow {
                             else if (e.key === Qt.Key_Left) { wp.sel = Math.max(0, wp.sel - 1); e.accepted = true }
                             else if (e.key === Qt.Key_Down) { wp.sel = Math.min(wp.shown.length - 1, wp.sel + cols); e.accepted = true }
                             else if (e.key === Qt.Key_Up) { wp.sel = Math.max(0, wp.sel - cols); e.accepted = true }
-                            if (e.accepted) grid.positionViewAtIndex(wp.sel, GridView.Contain)
+                            if (e.accepted) { const y0 = grid.contentY; grid.positionViewAtIndex(wp.sel, GridView.Contain); const y1 = grid.contentY
+                                if (y1 !== y0) { grid.contentY = y0; grid.scrollBy(y1 - y0) } }
                         }
                     }
                 }
@@ -128,6 +129,21 @@ PanelWindow {
             cellWidth: Math.floor(width / cols); cellHeight: Math.round(cellWidth * 0.68)
             model: wp.shown
             boundsBehavior: Flickable.StopAtBounds
+            // the wheel: farther per notch, and it glides there (touchpads scroll as they are)
+            property real goal: 0
+            NumberAnimation { id: glide; target: grid; property: "contentY"; duration: 380; easing.type: Easing.OutCubic }
+            function scrollBy(dy) {
+                const top = grid.originY, bottom = Math.max(grid.originY, grid.contentHeight + grid.originY - grid.height)
+                goal = Math.max(top, Math.min(bottom, (glide.running ? goal : contentY) + dy))
+                glide.stop(); glide.from = contentY; glide.to = goal; glide.start()
+            }
+            WheelHandler {
+                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                onWheel: function(e) {
+                    if (e.pixelDelta.y !== 0) { glide.stop(); grid.contentY = Math.max(grid.originY, Math.min(Math.max(grid.originY, grid.contentHeight + grid.originY - grid.height), grid.contentY - e.pixelDelta.y * 1.4)) }
+                    else grid.scrollBy(-e.angleDelta.y / 120 * grid.cellHeight * 0.9)
+                }
+            }
             delegate: Item {
                 id: cell
                 width: grid.cellWidth; height: grid.cellHeight

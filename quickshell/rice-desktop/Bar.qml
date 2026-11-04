@@ -23,8 +23,8 @@ PanelWindow {
     property var bc: ({})
     readonly property bool on: bc.enabled !== false     // no bar.json yet (a fresh install or an update) = on
     // the style asked for; the bar fades and settles into it (sty follows want once the old look has gone)
-    readonly property string want: bc.style === "google" ? "dynamic"
-        : (bc.style === "flat" || bc.style === "islands" || bc.style === "pills" || bc.style === "notch" || bc.style === "dynamic" ? bc.style : "island")
+    readonly property string want: bc.style === "google" || bc.style === undefined ? "dynamic"
+        : (bc.style === "flat" || bc.style === "islands" || bc.style === "pills" || bc.style === "notch" || bc.style === "island" ? bc.style : "dynamic")
     property string sty: "island"
     property real swap: 0                       // 0 shown .. 1 gone (while the style changes)
     property bool styReady: false
@@ -56,7 +56,10 @@ PanelWindow {
     Timer { id: leaveT; interval: 700; onTriggered: bar.peek = false }
     readonly property bool island: sty === "island"
     readonly property bool floating: sty !== "flat"
-    readonly property var layRaw: bc.layout ? bc.layout : ({ left: ["launcher", "workspaces", "title"], center: ["clock"], right: ["media", "tray", "volume", "network", "battery", "notifications", "power"] })
+    // V3.36: the island is the clock (an old "clock" in the layout is the island now)
+    function noClock(l) { return (l || []).map(function(m) { return m === "clock" ? "island" : m }) }
+    readonly property var layRaw: bc.layout ? ({ left: noClock(bc.layout.left), center: noClock(bc.layout.center), right: noClock(bc.layout.right) })
+        : ({ left: ["launcher", "workspaces", "title"], center: ["island"], right: ["tray", "volume", "bluetooth", "network", "battery", "notifications", "power"] })
     function laid(l, k) { return (l.left || []).indexOf(k) >= 0 || (l.center || []).indexOf(k) >= 0 || (l.right || []).indexOf(k) >= 0 }
     // the island is a module of the layout ("island", any zone, any style, with modules beside it). Dynamic without
     // it in the layout puts it in the middle, as before
@@ -124,7 +127,14 @@ PanelWindow {
     exclusionMode: hideOn ? ExclusionMode.Ignore : ExclusionMode.Normal
     exclusiveZone: hideOn ? 0 : barH + gap * 2
     // only the bar (and the recording island) take the pointer; auto-hide: only a thin strip at the edge
-    mask: Region { item: bar.shownBar ? hitBar : hitStrip; Region { item: hitRec } Region { item: hitIsl } }
+    mask: Region { item: bar.shownBar ? hitBar : hitStrip; Region { item: hitRec } Region { item: hitIsl } Region { item: hitMenu } }
+    Item { id: hitMenu; x: bar.gap + trayMenu.x; y: body.y + trayMenu.y; width: trayMenu.visible ? trayMenu.width : 0; height: trayMenu.height }
+    // a card of the island or the tray menu is open: Esc, a click on the desktop (shell.qml) or another window closes it
+    readonly property bool sticky: isl.sticky || trayMenu.open
+    function closeCards() { isl.closeCards(); trayMenu.close() }
+    onStickyChanged: if (sticky) keyCatch.forceActiveFocus()
+    Item { id: keyCatch; focus: true; Keys.onEscapePressed: bar.closeCards() }
+    WlrLayershell.keyboardFocus: sticky ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     // the island when it has grown out of the bar
     Item { id: hitIsl; x: bar.gap + isl.x + isl.ux; y: body.y + isl.y + isl.uy; width: isl.visible && bar.shownBar ? isl.uw : 0; height: isl.uh }
     Item { id: hitBar; width: parent.width; height: bar.barH + bar.gap * 2; y: bar.atBottom ? parent.height - height : 0 }
@@ -448,9 +458,12 @@ PanelWindow {
                     MouseArea {
                         id: tm; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
                         cursorShape: Qt.PointingHandCursor
+                        // left: the app, right: its menu in the shell's look (with Close app), middle: its second action
                         onClicked: function(m) {
                             if (m.button === Qt.RightButton || modelData.onlyMenu) {
-                                if (modelData.hasMenu) { const p = ti.mapToItem(null, 0, bar.barH + bar.gap); modelData.display(bar, p.x, p.y) }
+                                const p = ti.mapToItem(body, ti.width / 2, 0)
+                                if (trayMenu.open && trayMenu.item === modelData) trayMenu.close()
+                                else trayMenu.show(modelData, p.x)
                             } else if (m.button === Qt.MiddleButton) modelData.secondaryActivate()
                             else modelData.activate()
                         }
@@ -694,6 +707,16 @@ PanelWindow {
             readonly property real cx: bar.islSlot ? bar.islSlot.bx + bar.islSlot.width / 2 : body.width / 2
             x: Math.round(Math.max(0, Math.min(body.width - width, cx - width / 2)))
             y: bar.atBottom ? bar.barH - height : 0
+        }
+
+        // ---------- the tray menu ----------
+        TrayMenu {
+            id: trayMenu
+            pal: gp
+            down: !bar.atBottom
+            areaW: body.width
+            y: down ? bar.barH + 8 : -height - 8
+            z: 40
         }
 
         // ---------- the recording island: hangs under the bar while the screen is recorded ----------

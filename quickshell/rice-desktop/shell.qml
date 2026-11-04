@@ -1,5 +1,6 @@
 import Quickshell
 import Quickshell.Io
+import Quickshell.Wayland
 import QtQuick
 
 ShellRoot {
@@ -431,6 +432,16 @@ ShellRoot {
     Launcher { }
     WallPicker { }
     Bar { id: mainBar; nf: notifs }
+    // a click on the desktop closes the bar's open card or tray menu (it lies under the windows, over the wallpaper)
+    PanelWindow {
+        visible: mainBar.sticky
+        color: "transparent"
+        anchors { top: true; bottom: true; left: true; right: true }
+        exclusionMode: ExclusionMode.Ignore
+        WlrLayershell.layer: WlrLayer.Bottom
+        WlrLayershell.namespace: "rice-island-catch"
+        MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons; onPressed: mainBar.closeCards() }
+    }
     WifiMenu { }
     BluetoothMenu { }
     PowerMenu { }

@@ -1,5 +1,14 @@
 # Changelog
 
+## V3.36
+- The island is the clock now: the Clock module is gone and your old clock became the island. A new install starts with the Dynamic style and the island in the middle
+- Bar layout: five ready-made Material 3 layouts (Island, Focus, Everything, Minimal, All in the middle) to start from
+- The island's card has an About tab: your system with its logo in your shape, DarkShadow's Shell and its updates (Update now, Check)
+- The card is the island growing: size, place and corners morph together with a little bounce; the island gives a small squeeze when something new comes in
+- Esc, a click on the desktop or on another window closes the island's card and the tray menu
+- Tray: right-click an app for its menu in the shell's look (submenus, checks) with Close app at the bottom, which ends the app in the background
+- Wallpaper picker: the wheel scrolls farther and glides, the arrow keys glide too
+
 ## V3.35
 - Bug fixes
 
