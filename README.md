@@ -34,11 +34,16 @@
 
 ## Screenshots
 <p align="center">
-  <img src="assets/screenshot.png" alt="DarkShadow's Shell: desktop with widgets" width="100%">
+  <img src="assets/screenshot-desktop.png" alt="DarkShadow's Shell: the desktop with widgets, the island in the notch and the visualizer" width="100%"><br>
+  <sub>The desktop: widgets in your shape with wavy rings, the dynamic island in the notch and the visualizer</sub>
 </p>
 <p align="center">
-  <img src="assets/screenshot-home.png" alt="The Settings app (SUPER + U) over the desktop widgets" width="100%"><br>
-  <sub>The Settings app (<code>SUPER + U</code>) with desktop widgets, calendar and audio visualizer</sub>
+  <img src="assets/screenshot-settings.png" alt="The Settings app (SUPER + U)" width="100%"><br>
+  <sub>The Settings app (<code>SUPER + U</code>)</sub>
+</p>
+<p align="center">
+  <img src="assets/screenshot-edit.png" alt="Edit mode (SUPER + ALT + W)" width="100%"><br>
+  <sub>Edit mode (<code>SUPER + ALT + W</code>): widgets, quick settings, the bar and the visualizer</sub>
 </p>
 <!-- more screenshots: put the files in assets/ and add them here -->
 
