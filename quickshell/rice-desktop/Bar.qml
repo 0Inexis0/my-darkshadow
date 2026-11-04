@@ -551,6 +551,9 @@ PanelWindow {
             // where it is in the bar (follows the slot, the row and the zone as they move)
             readonly property real bx: parent && parent.parent && parent.parent.parent && parent.parent.parent.parent
                 ? x + parent.x + parent.parent.x + parent.parent.parent.x + parent.parent.parent.parent.x : 0
+            // where it is inside its zone (without the zone's own place, so the notch can centre on it)
+            readonly property real inZone: parent && parent.parent && parent.parent.parent
+                ? x + parent.x + parent.parent.x + parent.parent.parent.x : 0
             Component.onCompleted: bar.islSlot = ip
             Component.onDestruction: if (bar.islSlot === ip) bar.islSlot = null
         }
@@ -662,7 +665,16 @@ PanelWindow {
         readonly property real ngap: 22
         readonly property real nW: (zl.any ? zl.width : 0) + (zc.any ? zc.width : 0) + (zr.any ? zr.width : 0)
                                    + ngap * Math.max(0, (zl.any ? 1 : 0) + (zc.any ? 1 : 0) + (zr.any ? 1 : 0) - 1)
-        readonly property real nX: Math.round((width - nW) / 2)
+        // with the island in the notch, the island sits exactly in the middle of the screen and the notch
+        // reaches as far to both sides (the shorter side gets a little more room)
+        readonly property string islZone: !bar.notch || !bar.islSlot ? ""
+            : ((bar.lay.left || []).indexOf("island") >= 0 ? "left" : ((bar.lay.center || []).indexOf("island") >= 0 ? "center"
+            : ((bar.lay.right || []).indexOf("island") >= 0 ? "right" : "")))
+        readonly property real islRel: islZone === "" ? -1
+            : (islZone === "left" ? 0 : (islZone === "center" ? (zl.any ? zl.width + ngap : 0) : nW - zr.width)) + bar.islSlot.inZone + bar.islSlot.width / 2
+        readonly property bool islMid: islRel >= 0
+        readonly property real nX: islMid ? Math.round(width / 2 - islRel) : Math.round((width - nW) / 2)
+        readonly property real nHalf: islMid ? Math.max(islRel, nW - islRel) : nW / 2
 
         // a soft shadow under every background (the bar floats above the wallpaper)
         Repeater {
@@ -682,9 +694,9 @@ PanelWindow {
             id: notchBg
             visible: bar.notch
             flip: bar.atBottom
-            width: body.nW + 2 * ear + 40
+            width: Math.round(2 * body.nHalf) + 2 * ear + 40
             height: bar.barH + bar.gap
-            x: body.nX - ear - 20
+            x: Math.round(body.width / 2 - body.nHalf) - ear - 20
             y: bar.atBottom ? 0 : -bar.gap
             fill: Qt.rgba(0.02, 0.02, 0.025, Look.flat ? 1 : bar.alpha)
             shadow: bar.shadowOn

@@ -1,5 +1,9 @@
 # Changelog
 
+## V3.40
+- Notch: with the island in it, the island sits exactly in the middle of the screen and the notch reaches as far to both sides
+- The weather beside the time (and in Today) is a solid icon, all in your key color
+
 ## V3.39
 - Bug fixes
 

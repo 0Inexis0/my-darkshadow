@@ -118,6 +118,15 @@ Item {
     onInfoOpenChanged: if (infoOpen && !wProc.running) wProc.running = true
     Timer { interval: 1800000; repeat: true; triggeredOnStart: true; running: isl.visible && !isl.ghost && isl.cfg.island_weather !== false
         onTriggered: if (!wProc.running) wProc.running = true }
+    function wGlyph(c) {
+        const s = String(c).toLowerCase()
+        if (s.indexOf("thunder") >= 0) return ""
+        if (s.indexOf("snow") >= 0 || s.indexOf("sleet") >= 0 || s.indexOf("ice") >= 0) return ""
+        if (s.indexOf("rain") >= 0 || s.indexOf("drizzle") >= 0 || s.indexOf("shower") >= 0) return ""
+        if (s.indexOf("fog") >= 0 || s.indexOf("mist") >= 0) return ""
+        if (s.indexOf("cloud") >= 0 || s.indexOf("overcast") >= 0) return ""
+        return ""
+    }
     function wIcon(c) {
         const t = String(c).toLowerCase(), h = new Date().getHours(), night = h >= 20 || h < 6
         if (t.indexOf("thunder") >= 0) return "thunderstorm"
@@ -253,7 +262,9 @@ Item {
                 Row {
                     visible: isl.cfg.island_weather !== false && isl.wTemp !== ""
                     anchors.verticalCenter: parent.verticalCenter; spacing: 4
-                    MIcon { anchors.verticalCenter: parent.verticalCenter; size: 16; filled: true; glyph: ""; name: isl.wIcon(isl.wCond); color: isl.pal ? isl.pal.primary : "white" }
+                    // a solid weather glyph (Nerd Font), fully in your key color
+                    Text { anchors.verticalCenter: parent.verticalCenter; text: isl.wGlyph(isl.wCond); font.family: Fonts.icons; font.pixelSize: 15
+                        color: isl.pal ? isl.pal.primary : "white" }
                     Text { anchors.verticalCenter: parent.verticalCenter; text: isl.wTemp.replace(/[CF]$/, ""); color: isl.pal ? isl.pal.dim : "#aaa"
                         font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium }
                 }
@@ -500,7 +511,7 @@ Item {
                     Item { id: wIc; width: 66; height: 66; anchors.verticalCenter: parent.verticalCenter
                         Blob { anchors.fill: parent; kind: Look.shape; color: fInfo.pp ? fInfo.pp.container : "#333"
                             RotationAnimator on rotation { from: 0; to: 360; duration: 40000; loops: Animation.Infinite; running: fInfo.act && !Look.lite } }
-                        MIcon { anchors.centerIn: parent; size: 30; filled: true; glyph: ""; name: isl.wIcon(isl.wCond); color: fInfo.pp ? fInfo.pp.inkContainer : "white" } }
+                        Text { anchors.centerIn: parent; text: isl.wGlyph(isl.wCond); font.family: Fonts.icons; font.pixelSize: 30; color: fInfo.pp ? fInfo.pp.inkContainer : "white" } }
                     Column {
                         anchors.left: wIc.right; anchors.leftMargin: 14; anchors.verticalCenter: parent.verticalCenter; spacing: 1
                         width: parent.width - 80
