@@ -57,4 +57,7 @@
     !(config.services.tlp.enable or false) && !(config.services.auto-cpufreq.enable or false));
 
   xdg.portal.enable = lib.mkDefault true;
+
+  # the lock screen (the shell's own and hyprlock) checks your password with this PAM service
+  security.pam.services.hyprlock = { };
 }

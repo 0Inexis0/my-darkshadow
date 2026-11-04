@@ -205,7 +205,7 @@ ShellRoot {
 
     Process {
         id: lockProc
-        command: ["bash", "-c", "pgrep -x hyprlock >/dev/null && echo 1 || echo 0"]
+        command: ["bash", "-c", "{ pgrep -x hyprlock >/dev/null || [ -e \"$HOME/.cache/rice/lock-active\" ]; } && echo 1 || echo 0"]
         stdout: StdioCollector { onStreamFinished: root.locked = text.trim() === "1" }
     }
     Timer {

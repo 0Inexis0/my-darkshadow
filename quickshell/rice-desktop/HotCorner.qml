@@ -68,7 +68,7 @@ PanelWindow {
         } else if (cmd === "wallpaper") {
             Quickshell.execDetached(["bash", "-c", "sleep 0.25; \"$HOME/.local/bin/rice-wallpaper\""])
         } else if (cmd === "lock") {
-            Quickshell.execDetached(["bash", "-c", "sleep 0.3; loginctl lock-session || hyprlock"])
+            Quickshell.execDetached(["bash", "-c", "sleep 0.3; setsid -f \"$HOME/.local/bin/rice-lock\" now >/dev/null 2>&1"])
         } else {
             // instant feedback, the real state follows a moment later
             if (cmd === "awake" || cmd === "wifi" || cmd === "bluetooth" || cmd === "dnd" || cmd === "gaming") s[cmd] = !s[cmd]

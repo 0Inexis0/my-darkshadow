@@ -65,8 +65,64 @@ Item {
             width: parent.width
             height: pv.height
 
+            // the DarkShadow lock screen, in small (Preview shows the real one)
+            Rectangle {
+                id: npv
+                visible: page.v("engine", "shell") === "shell"
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: pv.width; height: pv.height; radius: M3.rL; clip: true
+                gradient: Gradient { GradientStop { position: 0; color: M3.stageTop } GradientStop { position: 1; color: M3.stageBottom } }
+                readonly property real s: height / 1080
+                readonly property bool isLeft: page.v("layout", "center") === "left"
+                readonly property string st: page.v("clock", "big")
+                Column {
+                    x: npv.isLeft ? npv.width * 0.08 : (npv.width - width) / 2
+                    y: npv.height * 0.12
+                    width: npv.width * 0.5
+                    spacing: 10 * npv.s
+                    T { anchors.horizontalCenter: npv.isLeft ? undefined : parent.horizontalCenter; visible: page.v("date", true) === true
+                        text: "Wednesday, 4 November"; font.pixelSize: 26 * npv.s; color: M3.ink }
+                    Item {
+                        width: parent.width; height: npv.st === "shape" ? 300 * npv.s : (npv.st === "stacked" ? 300 * npv.s : (npv.st === "minimal" ? 96 * npv.s : 190 * npv.s))
+                        T { visible: npv.st !== "shape" && npv.st !== "stacked"; anchors.horizontalCenter: npv.isLeft ? undefined : parent.horizontalCenter
+                            anchors.verticalCenter: parent.verticalCenter; text: "20:56"; font.family: page.clockFam()
+                            font.pixelSize: (npv.st === "minimal" ? 80 : 168) * npv.s; font.bold: npv.st !== "minimal"; color: M3.ink }
+                        Column { visible: npv.st === "stacked"; anchors.horizontalCenter: npv.isLeft ? undefined : parent.horizontalCenter; spacing: -36 * npv.s
+                            T { text: "20"; font.family: page.clockFam(); font.pixelSize: 160 * npv.s; font.bold: true; color: M3.ink }
+                            T { text: "56"; font.family: page.clockFam(); font.pixelSize: 160 * npv.s; font.bold: true; color: page.v("accent_clock", false) ? M3.primary : M3.inkDim } }
+                        Item { visible: npv.st === "shape"; width: 300 * npv.s; height: width; anchors.horizontalCenter: npv.isLeft ? undefined : parent.horizontalCenter
+                            Blob { anchors.fill: parent; kind: Prefs.accentShape; color: M3.primary }
+                            Column { anchors.centerIn: parent; spacing: -22 * npv.s
+                                T { anchors.horizontalCenter: parent.horizontalCenter; text: "20"; font.family: page.clockFam(); font.pixelSize: 104 * npv.s; font.bold: true; color: M3.inkPrimary }
+                                T { anchors.horizontalCenter: parent.horizontalCenter; text: "56"; font.family: page.clockFam(); font.pixelSize: 104 * npv.s; font.bold: true; color: M3.inkPrimary } } }
+                    }
+                    Row { anchors.horizontalCenter: npv.isLeft ? undefined : parent.horizontalCenter; spacing: 12 * npv.s
+                        Blob { visible: page.v("avatar", true) === true; width: 52 * npv.s; height: width; kind: Prefs.accentShape; color: M3.primaryContainer; anchors.verticalCenter: parent.verticalCenter }
+                        T { visible: page.v("greeting", true) === true; text: "Good evening"; font.pixelSize: 20 * npv.s; color: M3.ink; anchors.verticalCenter: parent.verticalCenter } }
+                    Row { anchors.horizontalCenter: npv.isLeft ? undefined : parent.horizontalCenter; spacing: 10 * npv.s
+                        Repeater { model: [page.v("weather", false) === true, page.v("notifications", true) === true, page.v("resources", false) === true]
+                            delegate: Rectangle { visible: modelData; width: 120 * npv.s; height: 40 * npv.s; radius: height / 2; color: M3.surfaceHigh } } }
+                }
+                // the password: your shape and the dots
+                Rectangle {
+                    readonly property string kind: page.v("input", "pill")
+                    width: 380 * npv.s; height: 56 * npv.s
+                    x: npv.isLeft ? npv.width * 0.08 : (npv.width - width) / 2
+                    y: npv.height * 0.66
+                    radius: kind === "pill" ? height / 2 : (kind === "box" ? 18 * npv.s : 0)
+                    color: kind === "line" ? "transparent" : M3.surfaceHigh
+                    border.width: kind === "line" ? 0 : 2; border.color: M3.primary
+                    Rectangle { visible: parent.kind === "line"; anchors.bottom: parent.bottom; width: parent.width; height: 2; color: M3.primary }
+                    Blob { x: 8 * npv.s; anchors.verticalCenter: parent.verticalCenter; width: 40 * npv.s; height: width; kind: Prefs.accentShape; color: M3.primary }
+                    Row { x: 62 * npv.s; anchors.verticalCenter: parent.verticalCenter; spacing: 6 * npv.s
+                        Repeater { model: 6; delegate: Blob { width: 12 * npv.s; height: width; kind: Prefs.accentShape; color: M3.ink } } }
+                }
+                Row { visible: page.v("power", true) === true; anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 36 * npv.s; spacing: 12 * npv.s
+                    Repeater { model: 3; delegate: Rectangle { width: 52 * npv.s; height: width; radius: width / 2; color: index === 2 ? Qt.rgba(1, 0.42, 0.42, 0.3) : M3.surfaceHigh } } }
+            }
             Rectangle {
                 id: pv
+                visible: page.v("engine", "shell") !== "shell"
                 readonly property real s: height / 1080
                 readonly property bool isLeft: page.v("layout", "center") === "left"
                 readonly property string st: page.v("clock", "big")
@@ -236,7 +292,10 @@ Item {
 
         Row {
             spacing: 10
-            Btn { primary: true; icon: ""; text: "Lock now"; onClicked: Quickshell.execDetached(["bash", "-c", "loginctl lock-session || hyprlock"]) }
+            Btn { primary: true; icon: ""; text: "Lock now"; onClicked: Quickshell.execDetached(["bash", "-c", "setsid -f \"$HOME/.local/bin/rice-lock\" now >/dev/null 2>&1"]) }
+            // the new lock screen in a window: try it without locking (Esc closes it)
+            Btn { visible: page.v("engine", "shell") === "shell"; sym: "visibility"; text: "Preview"
+                onClicked: Quickshell.execDetached(["bash", "-c", "setsid -f \"$HOME/.local/bin/rice-lock\" preview >/dev/null 2>&1"]) }
             Btn { text: "Reset"; onClicked: { Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-lock\" reset"]); page.ctl.status = "Lock screen reset"; refresh.restart() } }
         }
 
@@ -266,8 +325,17 @@ Item {
         ToggleRow { label: "Lock before sleep"; desc: "Always lock the screen before the computer sleeps"; checked: page.v("lock_before_sleep", true) === true; onToggled: function(x) { page.setv("lock_before_sleep", x ? "on" : "off") } }
 
         // ---------- lock screen ----------
-        SectionTitle { text: "Lock screen"; sub: "Changes show up the next time you lock." }
-        ToggleRow { label: "Manage lock screen"; desc: "Off keeps your own hyprlock.conf untouched"; checked: page.v("managed", true) === true; onToggled: function(x) { page.setv("managed", x ? "on" : "off") } }
+        SectionTitle { text: "Lock screen"; sub: "Changes show up the next time you lock. Preview shows it without locking." }
+        SegRow {
+            label: "Lock screen"
+            desc: page.v("engine", "shell") === "shell"
+                  ? "DarkShadow: Material 3, your shape and wavy progress (hyprlock steps in if it ever fails)"
+                  : "hyprlock: the classic lock screen"
+            options: [{ label: "DarkShadow", value: "shell" }, { label: "hyprlock", value: "hyprlock" }]
+            current: page.v("engine", "shell")
+            onChosen: function(x) { page.setv("engine", x) }
+        }
+        ToggleRow { visible: page.v("engine", "shell") === "hyprlock"; label: "Manage lock screen"; desc: "Off keeps your own hyprlock.conf untouched"; checked: page.v("managed", true) === true; onToggled: function(x) { page.setv("managed", x ? "on" : "off") } }
         SegRow {
             label: "Layout"
             desc: "Everything centered, or on the left side"
@@ -277,8 +345,8 @@ Item {
         }
         SegRow {
             label: "Clock style"
-            desc: "Big, stacked hours over minutes, or small at the top"
-            options: [{ label: "Big", value: "big" }, { label: "Stacked", value: "stacked" }, { label: "Minimal", value: "minimal" }]
+            desc: "Big, stacked hours over minutes, small, or inside your shape"
+            options: [{ label: "Big", value: "big" }, { label: "Stacked", value: "stacked" }, { label: "Minimal", value: "minimal" }, { label: "Shape", value: "shape" }]
             current: page.v("clock", "big")
             onChosen: function(x) { page.setv("clock", x) }
         }
@@ -344,7 +412,7 @@ Item {
             current: page.v("input", "pill")
             onChosen: function(x) { page.setv("input", x) }
         }
-        ToggleRow { label: "Power buttons"; desc: "Log out, shut down, sleep and restart"; checked: page.v("power", true) === true; onToggled: function(x) { page.setv("power", x ? "on" : "off") } }
+        ToggleRow { label: "Power buttons"; desc: "Sleep, restart and shut down (in red); restart and shut down ask for a second click"; checked: page.v("power", true) === true; onToggled: function(x) { page.setv("power", x ? "on" : "off") } }
 
         SectionTitle { text: "Background" }
         SegRow {

@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # rice-power [X]     open the power menu under the bar (X: where the icon is, pixels from the left)
-# rice-power lock    lock the screen with hyprlock (never logs you out)
+# rice-power lock    lock the screen (the shell's lock screen, hyprlock as fallback; never logs you out)
 if [ "${1:-}" = lock ]; then
-  if command -v hyprlock >/dev/null 2>&1; then
+  if [ -x "$HOME/.local/bin/rice-lock" ]; then
+    setsid -f "$HOME/.local/bin/rice-lock" now >/dev/null 2>&1
+  elif command -v hyprlock >/dev/null 2>&1; then
     pidof hyprlock >/dev/null || setsid -f hyprlock >/dev/null 2>&1
   else
     loginctl lock-session

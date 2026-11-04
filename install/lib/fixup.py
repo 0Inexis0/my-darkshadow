@@ -97,6 +97,8 @@ hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("$HOME/.local/bin/rice-volume do
 hl.bind("XF86AudioMute",        hl.dsp.exec_cmd("$HOME/.local/bin/rice-volume mute"), { locked = true })
 hl.bind("XF86AudioMicMute",     hl.dsp.exec_cmd("$HOME/.local/bin/rice-volume mic"),  { locked = true })
 """
+    # V3.45: SUPER + L and friends lock with the shell's lock screen (rice-lock now; hyprlock is its fallback)
+    n = n.replace('hl.dsp.exec_cmd("hyprlock")', 'hl.dsp.exec_cmd("$HOME/.local/bin/rice-lock now")')
     # V3.43: settings this Hyprland does not know are skipped instead of stopping the whole config (rice-guard.lua)
     if "rice-guard" not in n and os.path.exists(os.path.join(hypr, "rice-guard.lua")):
         n = '-- DarkShadow\'s Shell: settings this Hyprland does not know are skipped instead of stopping the config\npcall(require, "rice-guard")\n\n' + n
@@ -116,6 +118,16 @@ if os.path.isdir(hypr):
             clamp_lua(os.path.join(hypr, f))
     fix_requires(os.path.join(hypr, "hyprland.lua"))
     migrate_main(os.path.join(hypr, "hyprland.lua"))
+    for extra in ("hyprland-gui.lua",):
+        pth = os.path.join(hypr, extra)
+        try:
+            t = open(pth).read()
+            t2 = t.replace('hl.dsp.exec_cmd("hyprlock")', 'hl.dsp.exec_cmd("$HOME/.local/bin/rice-lock now")')
+            if t2 != t:
+                open(pth, "w").write(t2)
+                changes.append(extra + ": SUPER + L uses the new lock screen")
+        except OSError:
+            pass
 clamp_json(home + "/.config/rice/hypr.json")
 
 for c in changes:

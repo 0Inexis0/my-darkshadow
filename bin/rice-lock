@@ -2,8 +2,15 @@
 """rice-lock: idle timers (hypridle) and the lock screen (hyprlock). Settings > Idle & Lockscreen.
 
   rice-lock state | set KEY VALUE | apply | reset | restore
-  rice-lock greet | notif | weather | media     (text for the lock screen labels)
+  rice-lock now                                 lock the screen (hypridle, SUPER + L, the power menu ...)
+  rice-lock preview                             show the lock screen in a window (Esc closes it)
+  rice-lock greet | notif | notif-count | weather | media     (text for the lock screen)
   rice-lock screen off|on                       (used by hypridle)
+
+V3.45: the lock screen is the shell's own (Quickshell, ~/.config/quickshell/rice-lockscreen), in Material 3.
+It locks with the Wayland session-lock protocol and checks the password with PAM. If it does not lock within a
+few seconds or quits without unlocking, hyprlock takes over, so you are never locked out. engine = hyprlock keeps
+the old hyprlock screen.
 """
 import fcntl
 import json
@@ -35,13 +42,14 @@ DEFAULTS = {
     "date": True, "greeting": True, "avatar": True, "input": "pill", "power": True,
     "background": "screenshot", "blur": 3, "dim": 0.5,
     "media": True, "resources": False, "notifications": True, "weather": False,
+    "engine": "shell",
 }
 INTS = {"lock_after": (0, 120), "screen_off_after": (0, 120), "suspend_after": (0, 240), "blur": (0, 4)}
 FLOATS = {"dim": (0.2, 1.0)}
 # clock fonts (rice-fonts downloads them; "default" is your Numbers font from Settings > Services)
 CLOCK_FONTS = {"default": "", "bebas": "Bebas Neue", "orbitron": "Orbitron", "outfit": "Outfit",
                "grotesk": "Space Grotesk", "unbounded": "Unbounded", "shoulders": "Big Shoulders Display"}
-CHOICES = {"layout": ["center", "left"], "clock": ["big", "stacked", "minimal"], "clock_font": list(CLOCK_FONTS),
+CHOICES = {"engine": ["shell", "hyprlock"], "layout": ["center", "left"], "clock": ["big", "stacked", "minimal", "shape"], "clock_font": list(CLOCK_FONTS),
            "input": ["pill", "box", "line"], "background": ["screenshot", "wallpaper", "color"]}
 
 
@@ -263,7 +271,7 @@ def lock_text(c):
 # ---------------- hypridle ----------------
 def idle_text(c):
     sc = BIN + "/rice-lock screen"
-    g = ["general {", "    lock_cmd = pidof hyprlock || hyprlock"]
+    g = ["general {", "    lock_cmd = %s now" % (BIN + "/rice-lock")]
     if c["lock_before_sleep"]:
         g.append("    before_sleep_cmd = loginctl lock-session")
     g.append("    after_sleep_cmd = %s on" % sc)
@@ -350,6 +358,119 @@ def media():
     print("%s  %s" % (chr(0xF0388), t) if t else "")
 
 
+def notif_count():
+    """how many notifications wait (the shell's own, or swaync's)"""
+    try:
+        if json.load(open(DIR + "/cc.json")).get("engine") == "shell":
+            print(open(HOME + "/.cache/rice/notif-count").read().strip() or "0")
+            return
+    except Exception:
+        pass
+    try:
+        print(int(subprocess.run(["swaync-client", "-c"], capture_output=True, text=True, timeout=2).stdout.strip() or 0))
+    except Exception:
+        print(0)
+
+
+# ---------------- the lock screen itself ----------------
+QS = HOME + "/.config/quickshell"
+LOCKQS = QS + "/rice-lockscreen"
+ACTIVE = HOME + "/.cache/rice/lock-active"
+SHOT = HOME + "/.cache/rice/lock-shot.png"
+# the parts it shares with the desktop shell (copied from rice-desktop when they are newer)
+SHARED = ["Look", "Fonts", "DashFont", "MIcon", "T", "Blob", "ShapeImage", "WavyLine", "WavyArc", "Player",
+          "RoundImage", "NPal", "Trigger", "Shadow"]
+
+
+def sync_shared():
+    for n in SHARED:
+        src, dst = QS + "/rice-desktop/%s.qml" % n, LOCKQS + "/%s.qml" % n
+        try:
+            if os.path.exists(src) and (not os.path.exists(dst) or open(src).read() != open(dst).read()):
+                tmp = dst + ".rice-new"
+                shutil.copyfile(src, tmp)
+                os.replace(tmp, dst)
+        except OSError:
+            pass
+
+
+def qs_bin():
+    return shutil.which("qs") or shutil.which("quickshell")
+
+
+def running(name):
+    return subprocess.run(["pgrep", "-x", name], capture_output=True).returncode == 0
+
+
+def our_lock_running():
+    """the shell's lock screen is up (not just its preview)"""
+    return os.path.exists(ACTIVE) and subprocess.run(["pgrep", "-f", "rice-lockscreen"], capture_output=True).returncode == 0
+
+
+def hyprlock():
+    if shutil.which("hyprlock") and not running("hyprlock"):
+        subprocess.run(["hyprlock"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def wall_path():
+    try:
+        return open(WALL).read().strip()
+    except OSError:
+        return ""
+
+
+def lock_now(preview=False):
+    c = load()
+    qs = qs_bin()
+    if not preview and (running("hyprlock") or our_lock_running()):
+        return
+    if c["engine"] == "hyprlock" or not qs or not os.path.exists(LOCKQS + "/shell.qml"):
+        if not preview:
+            hyprlock()
+        return
+    sync_shared()
+    os.makedirs(HOME + "/.cache/rice", exist_ok=True)
+    # Background: Screenshot: what is on the screen now (taken before the lock covers it)
+    if c["background"] == "screenshot" and shutil.which("grim"):
+        try:
+            subprocess.run(["grim", "-l", "1", SHOT], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=4)
+        except Exception:
+            pass
+    else:
+        try:
+            os.remove(SHOT)
+        except OSError:
+            pass
+    env = dict(os.environ)
+    if preview:
+        env["RICE_LOCK_PREVIEW"] = "1"
+        subprocess.Popen([qs, "-p", LOCKQS], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+        return
+    try:
+        os.remove(ACTIVE)
+    except OSError:
+        pass
+    log = open(HOME + "/.cache/rice/lockscreen.log", "w")
+    p = subprocess.Popen([qs, "-p", LOCKQS], env=env, stdout=log, stderr=log)
+    # it must lock within 6 seconds (the compositor confirms it and the screen writes lock-active)
+    t0 = time.time()
+    while time.time() - t0 < 6 and p.poll() is None and not os.path.exists(ACTIVE):
+        time.sleep(0.1)
+    if not os.path.exists(ACTIVE):
+        p.kill()
+        hyprlock()
+        return
+    rc = p.wait()
+    # it quit, but not by unlocking (a crash): hyprlock takes the lock over (allow_session_lock_restore)
+    if os.path.exists(ACTIVE):
+        try:
+            os.remove(ACTIVE)
+        except OSError:
+            pass
+        if rc != 0:
+            hyprlock()
+
+
 def screen(state):
     # Hyprland 0.55 (Lua) and older releases use different dispatcher syntax; try both.
     cmds = [["hyprctl", "dispatch", "dpms", state],
@@ -370,9 +491,16 @@ def main(argv):
         out = load()
         out["has_face"] = os.path.exists(HOME + "/.face")
         out["accent"] = "#%02x%02x%02x" % accent()
+        out["wall"] = wall_path()
+        out["shot"] = SHOT if out.get("background") == "screenshot" and os.path.exists(SHOT) else ""
+        out["pam"] = "hyprlock" if os.path.exists("/etc/pam.d/hyprlock") else "login"
+        out["shell_ok"] = bool(qs_bin()) and os.path.exists(LOCKQS + "/shell.qml")
         print(json.dumps(out))
         return
-    helpers = {"greet": greet, "notif": notif, "weather": weather, "media": media}
+    if cmd in ("now", "preview"):
+        lock_now(preview=cmd == "preview")
+        return
+    helpers = {"greet": greet, "notif": notif, "notif-count": notif_count, "weather": weather, "media": media}
     if cmd in helpers:
         helpers[cmd]()
         return

@@ -1,5 +1,18 @@
 # Changelog
 
+## V3.45
+- A new lock screen, the shell's own, in Material 3 (Settings > Idle & Lockscreen):
+  - your wallpaper or what was on the screen, blurred and dimmed, coming in slowly
+  - the clock big, stacked, minimal or inside your shape (turning slowly), in your clock font
+  - the day, a greeting with your picture in your shape, chips for the weather, the battery, waiting notifications and CPU / RAM in rings
+  - the music with the cover in your shape, a wavy line you can drag and its buttons
+  - the password shows as small shapes that pop in; a wave runs while it is checked, a wrong one shakes
+  - Sleep, Restart and Shut down (red); Restart and Shut down ask for a second click
+  - Preview shows it in a window without locking (Esc closes it)
+- Safe: it locks with the Wayland session-lock protocol and checks the password with PAM, like hyprlock. If it does not lock within a few seconds, or ever stops while locked, hyprlock takes over, so you are never locked out. hyprlock stays one switch away (Lock screen: hyprlock)
+- SUPER + L, the power menu, the hot corner and the idle timer all use it
+- NixOS: the module sets up the PAM service for the lock screen
+
 ## V3.44
 - Fix: Google icons that should be filled showed the wrong picture (a globe instead of info, a broken play arrow, odd gears and checks): Qt mixed up the glyphs of the filled Material Symbols. Icons are drawn as the font draws them now
 
