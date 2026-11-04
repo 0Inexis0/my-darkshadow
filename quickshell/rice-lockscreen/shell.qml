@@ -51,26 +51,36 @@ ShellRoot {
         if (phase === "checking" || phase === "done" || pass === "") return
         pending = pass
         phase = "checking"; msg = ""
-        if (!pam.active) pam.start()
-        else if (pam.responseRequired) { pam.respond(pending); pending = "" }
+        if (pam.active && pam.responseRequired) { pam.respond(pending); pending = ""; return }
+        if (pam.active) return                 // it asks for the password in a moment (onResponseRequiredChanged)
+        console.log("[lock] checking the password with PAM:", pam.config)
+        if (!pam.start()) {
+            console.warn("[lock] PAM did not start (" + pam.config + ")")
+            fail("Could not check the password (PAM did not start)")
+        }
+    }
+    function fail(text) {
+        tries++
+        phase = "wrong"
+        msg = text
+        pass = ""; pending = ""
+        wrongT.restart()
     }
     PamContext {
         id: pam
         // hyprlock's PAM file when it is there (it is set up for exactly this), else the login rules
         config: root.cfg.pam || "login"
         onResponseRequiredChanged: if (responseRequired && root.pending !== "") { respond(root.pending); root.pending = "" }
-        onPamMessage: if (messageIsError) root.msg = message
-        onCompleted: function(result) {
-            if (result === PamResult.Success) { root.phase = "done"; root.unlock() }
-            else {
-                root.tries++
-                root.phase = "wrong"
-                root.msg = root.msg !== "" ? root.msg : (result === PamResult.MaxTries ? "Too many tries, wait a moment" : "That is not the password")
-                root.pass = ""; root.pending = ""
-                wrongT.restart()
-            }
+        onPamMessage: {
+            console.log("[lock] PAM says:", message, messageIsError ? "(error)" : "")
+            if (messageIsError) root.msg = message
         }
-        onError: function(e) { root.phase = "wrong"; root.msg = "Could not check the password"; root.pass = ""; root.pending = ""; wrongT.restart() }
+        onError: function(e) { console.warn("[lock] PAM error", e); root.msg = "Could not check the password" }
+        onCompleted: function(result) {
+            console.log("[lock] PAM finished:", result === PamResult.Success ? "right password" : "result " + result)
+            if (result === PamResult.Success) { root.phase = "done"; root.pending = ""; root.unlock(); return }
+            root.fail(root.msg !== "" ? root.msg : (result === PamResult.MaxTries ? "Too many tries, wait a moment" : "That is not the password"))
+        }
     }
     Timer { id: wrongT; interval: 2600; onTriggered: if (root.phase === "wrong") { root.phase = "idle"; root.msg = "" } }
 
@@ -86,10 +96,10 @@ ShellRoot {
     WlSessionLock {
         id: lock
         locked: !root.preview
-        onSecureChanged: if (secure) root.tellLocked()
+        onSecureChanged: { console.log("[lock] the compositor locked the session:", secure); if (secure) root.tellLocked() }
         WlSessionLockSurface {
             color: "black"
-            LockView { anchors.fill: parent; root: root; scr: screen }
+            LockView { anchors.fill: parent; focus: true; root: root; scr: screen }
         }
     }
 
@@ -105,7 +115,7 @@ ShellRoot {
             WlrLayershell.namespace: "rice-lock-preview"
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
             color: "black"
-            LockView { anchors.fill: parent; root: root; scr: modelData; isPreview: true }
+            LockView { anchors.fill: parent; focus: true; root: root; scr: modelData; isPreview: true }
         }
     }
 }

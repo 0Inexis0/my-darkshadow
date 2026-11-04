@@ -8,7 +8,7 @@ import QtQuick.Effects
 // the screen) blurred and dimmed, the clock in one of four styles (one inside your shape), the day, a greeting
 // with your picture in your shape, chips (weather, battery, notifications, CPU and RAM in wavy rings), the music
 // with a wavy line, the password as shapes that pop in, and power buttons (Shut down in red).
-Item {
+FocusScope {
     id: lv
     property var root: null
     property var scr: null
@@ -99,7 +99,61 @@ Item {
     // darker, so the text stays readable (Dim)
     Rectangle { anchors.fill: parent; color: "black"; opacity: Math.max(0, Math.min(0.85, 1 - lv.v("dim", 0.5))) * 0.9 * (1 - lv.gone) }
 
+    // ---------- the keyboard ----------
+    // A real (hidden) text field takes what you type: it goes through Qt's whole input path (input methods such as
+    // fcitx included), which plain key handlers miss on some setups. It keeps the focus whatever you click.
+    TextInput {
+        id: keys
+        x: 0; y: 0; width: 1; height: 1
+        clip: true
+        focus: true
+        color: "transparent"; selectionColor: "transparent"; selectedTextColor: "transparent"
+        cursorVisible: false
+        cursorDelegate: Item { }
+        echoMode: TextInput.Password
+        selectByMouse: false
+        maximumLength: 256
+        inputMethodHints: Qt.ImhSensitiveData | Qt.ImhHiddenText | Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
+        readOnly: !lv.root || lv.root.phase === "checking" || lv.root.phase === "done"
+        property bool said: false
+        onTextChanged: {
+            const r = lv.root
+            if (!r) return
+            if (!said && text !== "") { said = true; console.log("[lock] the keyboard works") }
+            if (r.pass === text) return
+            if (r.phase === "wrong") { r.phase = "idle"; r.msg = "" }
+            r.pass = text
+        }
+        // what you type always goes at the end
+        onCursorPositionChanged: if (cursorPosition !== text.length) cursorPosition = text.length
+        onAccepted: if (lv.root) lv.root.submit()
+        Keys.onPressed: function(e) {
+            if (e.key === Qt.Key_Escape) {
+                if (lv.isPreview) Qt.quit()
+                else text = ""
+                e.accepted = true
+            } else if (e.key === Qt.Key_Backspace && (e.modifiers & Qt.ControlModifier)) {
+                if (!readOnly) text = ""
+                e.accepted = true
+            }
+        }
+        onActiveFocusChanged: if (!activeFocus) refocus.restart()
+    }
+    // the same password on every screen (and cleared after a wrong one)
+    Connections {
+        target: lv.root
+        function onPassChanged() { if (keys.text !== lv.root.pass) keys.text = lv.root.pass }
+    }
+    // the screen may get the keyboard a moment after it shows: ask again for a few seconds, and after any click
+    Timer { id: refocus; interval: 50; onTriggered: keys.forceActiveFocus() }
+    Timer { interval: 250; repeat: true; running: !keys.activeFocus && (lv.t < 1 || lv.Window.active); onTriggered: keys.forceActiveFocus() }
+    onVisibleChanged: if (visible) keys.forceActiveFocus()
+    MouseArea { anchors.fill: parent; onPressed: function(m) { keys.forceActiveFocus(); m.accepted = false } }
+
     // ---------- everything else (it leaves a little larger, as the session opens) ----------
+    // One column in the middle of the screen: the day, the clock, the greeting, the chips, the password and the
+    // music. It stays together and centred on every screen size (the clock gets smaller on small screens).
+    readonly property real k: Math.max(0.62, Math.min(1.12, lv.height / 1000))
     Item {
         id: content
         anchors.fill: parent
@@ -108,11 +162,12 @@ Item {
 
         Column {
             id: main
-            readonly property real colW: Math.min(lv.width - 80, 560)
-            width: colW
+            width: Math.min(lv.width - 64, 600)
             x: lv.atLeft ? Math.round(lv.width * 0.08) : Math.round((lv.width - width) / 2)
-            y: Math.round(lv.height * (lv.v("clock", "big") === "shape" ? 0.12 : 0.15))
-            spacing: 18
+            // centred, a little above the middle; it moves smoothly when the music comes or goes
+            y: Math.max(24, Math.round((lv.height - height) / 2 - lv.height * 0.03))
+            Behavior on y { enabled: lv.t >= 1; NumberAnimation { duration: 420; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
+            spacing: Math.round(16 * Math.min(1, lv.k))
 
             // the day
             Text {
@@ -120,7 +175,7 @@ Item {
                 anchors.horizontalCenter: lv.atLeft ? undefined : parent.horizontalCenter
                 text: lv.dateText
                 color: pal.fg; opacity: 0.9 * lv.stg(0)
-                font.family: Fonts.main; font.pixelSize: 22; font.weight: Font.Medium
+                font.family: Fonts.main; font.pixelSize: Math.round(22 * Math.min(1, lv.k)); font.weight: Font.Medium
                 transform: Translate { y: (1 - lv.stg(0)) * 20 }
             }
 
@@ -132,32 +187,33 @@ Item {
                 opacity: lv.stg(1)
                 transform: Translate { y: (1 - lv.stg(1)) * 30 }
                 readonly property string style: lv.v("clock", "big")
+                readonly property real k: lv.k
                 Item {
                     id: cl
                     width: parent.width
-                    height: clock.style === "shape" ? 300 : (clock.style === "stacked" ? 300 : (clock.style === "minimal" ? 96 : 190))
+                    height: Math.round((clock.style === "shape" ? 290 : (clock.style === "stacked" ? 270 : (clock.style === "minimal" ? 96 : 176))) * clock.k)
                     // big: one line, very large
                     Row {
                         visible: clock.style === "big"
                         anchors.horizontalCenter: lv.atLeft ? undefined : parent.horizontalCenter
                         anchors.verticalCenter: parent.verticalCenter
-                        Text { text: lv.hh; color: pal.fg; font.family: lv.clockFont; font.pixelSize: 168; font.weight: Font.DemiBold }
+                        Text { text: lv.hh; color: pal.fg; font.family: lv.clockFont; font.pixelSize: Math.round(160 * clock.k); font.weight: Font.DemiBold }
                         Text { text: ":"; color: lv.minuteColor; opacity: lv.now.getSeconds() % 2 === 0 ? 1 : 0.35
-                            font.family: lv.clockFont; font.pixelSize: 168; font.weight: Font.DemiBold
+                            font.family: lv.clockFont; font.pixelSize: Math.round(160 * clock.k); font.weight: Font.DemiBold
                             Behavior on opacity { NumberAnimation { duration: 300 } } }
-                        Text { text: lv.mm; color: lv.minuteColor; font.family: lv.clockFont; font.pixelSize: 168; font.weight: Font.DemiBold }
+                        Text { text: lv.mm; color: lv.minuteColor; font.family: lv.clockFont; font.pixelSize: Math.round(160 * clock.k); font.weight: Font.DemiBold }
                     }
                     // stacked: the hours over the minutes
                     Column {
                         visible: clock.style === "stacked"
                         anchors.horizontalCenter: lv.atLeft ? undefined : parent.horizontalCenter
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: -36
+                        spacing: Math.round(-34 * clock.k)
                         Text { anchors.horizontalCenter: lv.atLeft ? undefined : parent.horizontalCenter; text: lv.hh; color: pal.fg
-                            font.family: lv.clockFont; font.pixelSize: 160; font.weight: Font.Bold }
+                            font.family: lv.clockFont; font.pixelSize: Math.round(150 * clock.k); font.weight: Font.Bold }
                         Text { anchors.horizontalCenter: lv.atLeft ? undefined : parent.horizontalCenter; text: lv.mm
                             color: lv.v("accent_clock", false) === true ? pal.primary : Qt.rgba(pal.fg.r, pal.fg.g, pal.fg.b, 0.6)
-                            font.family: lv.clockFont; font.pixelSize: 160; font.weight: Font.Bold }
+                            font.family: lv.clockFont; font.pixelSize: Math.round(150 * clock.k); font.weight: Font.Bold }
                     }
                     // minimal: small and light
                     Text {
@@ -165,20 +221,20 @@ Item {
                         anchors.horizontalCenter: lv.atLeft ? undefined : parent.horizontalCenter
                         anchors.verticalCenter: parent.verticalCenter
                         text: lv.hh + ":" + lv.mm; color: pal.fg
-                        font.family: lv.clockFont; font.pixelSize: 80; font.weight: Font.Light
+                        font.family: lv.clockFont; font.pixelSize: Math.round(80 * clock.k); font.weight: Font.Light
                     }
                     // shape: the time inside your shape, which turns slowly
                     Item {
                         visible: clock.style === "shape"
-                        width: 300; height: 300
+                        width: Math.round(290 * clock.k); height: width
                         anchors.horizontalCenter: lv.atLeft ? undefined : parent.horizontalCenter
                         Blob { anchors.fill: parent; kind: Look.shape; color: pal.primary
                             RotationAnimator on rotation { from: 0; to: 360; duration: 60000; loops: Animation.Infinite; running: clock.style === "shape" } }
-                        Column { anchors.centerIn: parent; spacing: -22
+                        Column { anchors.centerIn: parent; spacing: Math.round(-22 * clock.k)
                             Text { anchors.horizontalCenter: parent.horizontalCenter; text: lv.hh; color: pal.inkPrimary
-                                font.family: lv.clockFont; font.pixelSize: 104; font.weight: Font.Bold }
+                                font.family: lv.clockFont; font.pixelSize: Math.round(100 * clock.k); font.weight: Font.Bold }
                             Text { anchors.horizontalCenter: parent.horizontalCenter; text: lv.mm; color: Qt.rgba(pal.inkPrimary.r, pal.inkPrimary.g, pal.inkPrimary.b, 0.7)
-                                font.family: lv.clockFont; font.pixelSize: 104; font.weight: Font.Bold } }
+                                font.family: lv.clockFont; font.pixelSize: Math.round(100 * clock.k); font.weight: Font.Bold } }
                     }
                 }
             }
@@ -192,19 +248,26 @@ Item {
                 transform: Translate { y: (1 - lv.stg(2)) * 26 }
                 ShapeImage {
                     visible: lv.v("avatar", true) !== false
-                    width: 52; height: 52
+                    width: 48; height: 48
                     anchors.verticalCenter: parent.verticalCenter
                     kind: Look.shape
                     source: lv.v("has_face", false) ? "file://" + Quickshell.env("HOME") + "/.face" : ""
                     empty: pal.container; fallbackIcon: "person"; fallbackColor: pal.inkContainer
                 }
-                Text { visible: lv.v("greeting", true) !== false; anchors.verticalCenter: parent.verticalCenter; text: lv.greet
-                    color: pal.fg; font.family: Fonts.main; font.pixelSize: 20; font.weight: Font.Medium }
+                Text { visible: lv.v("greeting", true) !== false && lv.greet !== ""; anchors.verticalCenter: parent.verticalCenter; text: lv.greet
+                    color: pal.fg; font.family: Fonts.main; font.pixelSize: 19; font.weight: Font.Medium }
             }
 
-            // chips: weather, battery, notifications, CPU and RAM
-            Row {
+            // chips: weather, battery, notifications, CPU and RAM (they wrap onto two lines on narrow screens)
+            Flow {
                 id: chips
+                visible: wchip.visible || bchip.visible || nchip.visible || cchip.visible || rchip.visible
+                width: Math.min(lv.width - 64, implicitW)
+                readonly property real implicitW: {
+                    let w = 0, n = 0
+                    for (const c of [wchip, bchip, nchip, cchip, rchip]) if (c.visible) { w += c.width; n++ }
+                    return Math.ceil(w + Math.max(0, n - 1) * spacing) + 2
+                }
                 anchors.horizontalCenter: lv.atLeft ? undefined : parent.horizontalCenter
                 spacing: 10
                 opacity: lv.stg(3)
@@ -220,161 +283,151 @@ Item {
                 Chip { id: rchip; visible: lv.v("resources", false) === true && !!lv.st.mem; ring: lv.st.mem ? lv.st.mem.pct / 100 : 0
                     text: "RAM " + (lv.st.mem ? lv.st.mem.pct : 0) + "%" }
             }
-        }
 
-        // ---------- the password ----------
-        Item {
-            id: passArea
-            width: Math.min(lv.width - 80, 380)
-            height: 56
-            x: lv.atLeft ? main.x : Math.round((lv.width - width) / 2)
-            // under the clock and the chips, never on them
-            y: Math.round(Math.max(lv.height * 0.6, main.y + main.height + 44))
-            opacity: lv.stg(4)
-            readonly property string style: lv.v("input", "pill")
-            readonly property bool wrong: root && root.phase === "wrong"
-            readonly property bool checking: root && root.phase === "checking"
-            // a little shake when the password is wrong
-            property real shake: 0
-            transform: Translate { x: passArea.shake; y: (1 - lv.stg(4)) * 24 }
-            SequentialAnimation {
-                id: shakeA
-                NumberAnimation { target: passArea; property: "shake"; to: -14; duration: 50 }
-                NumberAnimation { target: passArea; property: "shake"; to: 12; duration: 70 }
-                NumberAnimation { target: passArea; property: "shake"; to: -8; duration: 70 }
-                NumberAnimation { target: passArea; property: "shake"; to: 5; duration: 60 }
-                NumberAnimation { target: passArea; property: "shake"; to: 0; duration: 60 }
-            }
-            onWrongChanged: if (wrong) shakeA.restart()
+            Item { width: 1; height: Math.round(14 * Math.min(1, lv.k)) }
 
-            Rectangle {
-                id: field
-                anchors.fill: parent
-                radius: passArea.style === "pill" ? height / 2 : (passArea.style === "box" ? 18 : 0)
-                color: passArea.style === "line" ? "transparent" : (passArea.wrong ? Qt.rgba(1, 0.42, 0.42, 0.18) : pal.surface)
-                Behavior on color { ColorAnimation { duration: 200 } }
-                border.width: passArea.style === "line" ? 0 : (keys.activeFocus || passArea.checking ? 2 : 0)
-                border.color: passArea.wrong ? "#ff8a80" : pal.primary
-                Rectangle { visible: passArea.style === "line"; anchors.bottom: parent.bottom; width: parent.width; height: 2; radius: 1
-                    color: passArea.wrong ? "#ff8a80" : (keys.activeFocus ? pal.primary : Qt.rgba(1, 1, 1, 0.4)) }
-                // a lock in your shape
-                Item { id: lk; x: passArea.style === "line" ? 0 : 8; anchors.verticalCenter: parent.verticalCenter; width: 40; height: 40
-                    Blob { anchors.fill: parent; kind: Look.shape; color: passArea.wrong ? "#ff8a80" : pal.primary
-                        RotationAnimator on rotation { from: 0; to: 360; duration: 1600; loops: Animation.Infinite; running: passArea.checking } }
-                    MIcon { anchors.centerIn: parent; size: 18; name: root && root.phase === "done" ? "lock_open" : "lock"; glyph: ""; color: pal.inkPrimary } }
-                // what you typed, as small shapes that pop in
-                Row {
-                    id: dots
-                    anchors.left: lk.right; anchors.leftMargin: 14; anchors.verticalCenter: parent.verticalCenter
-                    spacing: 6
-                    Repeater {
-                        model: root ? Math.max(0, Math.min(root.pass.length, Math.floor((passArea.width - 80) / 18))) : 0
-                        delegate: Blob {
-                            width: 12; height: 12; kind: Look.shape; color: pal.fg
-                            scale: 0
-                            Component.onCompleted: scale = 1
-                            Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 2.6 } }
+            // ---------- the password ----------
+            Item {
+                id: passArea
+                width: Math.min(parent.width, 380)
+                height: 56 + 30                      // the field and, under it, the wave or the message
+                anchors.horizontalCenter: lv.atLeft ? undefined : parent.horizontalCenter
+                opacity: lv.stg(4)
+                readonly property string style: lv.v("input", "pill")
+                readonly property bool wrong: !!root && root.phase === "wrong"
+                readonly property bool checking: !!root && root.phase === "checking"
+                // a little shake when the password is wrong
+                property real shake: 0
+                transform: Translate { x: passArea.shake; y: (1 - lv.stg(4)) * 24 }
+                SequentialAnimation {
+                    id: shakeA
+                    NumberAnimation { target: passArea; property: "shake"; to: -14; duration: 50 }
+                    NumberAnimation { target: passArea; property: "shake"; to: 12; duration: 70 }
+                    NumberAnimation { target: passArea; property: "shake"; to: -8; duration: 70 }
+                    NumberAnimation { target: passArea; property: "shake"; to: 5; duration: 60 }
+                    NumberAnimation { target: passArea; property: "shake"; to: 0; duration: 60 }
+                }
+                onWrongChanged: if (wrong) shakeA.restart()
+
+                Rectangle {
+                    id: field
+                    width: parent.width; height: 56
+                    radius: passArea.style === "pill" ? height / 2 : (passArea.style === "box" ? 18 : 0)
+                    color: passArea.style === "line" ? "transparent" : (passArea.wrong ? Qt.rgba(1, 0.42, 0.42, 0.18) : pal.surface)
+                    Behavior on color { ColorAnimation { duration: 200 } }
+                    border.width: passArea.style === "line" ? 0 : (keys.activeFocus || passArea.checking || passArea.wrong ? 2 : 0)
+                    border.color: passArea.wrong ? "#ff8a80" : pal.primary
+                    Rectangle { visible: passArea.style === "line"; anchors.bottom: parent.bottom; width: parent.width; height: 2; radius: 1
+                        color: passArea.wrong ? "#ff8a80" : (keys.activeFocus ? pal.primary : Qt.rgba(1, 1, 1, 0.4)) }
+                    // a lock in your shape
+                    Item { id: lk; x: passArea.style === "line" ? 0 : 8; anchors.verticalCenter: parent.verticalCenter; width: 40; height: 40
+                        Blob { anchors.fill: parent; kind: Look.shape; color: passArea.wrong ? "#ff8a80" : pal.primary
+                            Behavior on color { ColorAnimation { duration: 200 } }
+                            RotationAnimator on rotation { from: 0; to: 360; duration: 1600; loops: Animation.Infinite; running: passArea.checking } }
+                        MIcon { anchors.centerIn: parent; size: 18; name: root && root.phase === "done" ? "lock_open" : "lock"; glyph: ""; color: pal.inkPrimary } }
+                    // what you typed, as small shapes that pop in
+                    Row {
+                        id: dots
+                        anchors.left: lk.right; anchors.leftMargin: 14; anchors.verticalCenter: parent.verticalCenter
+                        spacing: 6
+                        Repeater {
+                            model: root ? Math.max(0, Math.min(root.pass.length, Math.floor((passArea.width - 90) / 18))) : 0
+                            delegate: Blob {
+                                width: 12; height: 12; kind: Look.shape; color: pal.fg
+                                scale: 0
+                                Component.onCompleted: scale = 1
+                                Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 2.6 } }
+                            }
                         }
                     }
+                    Text {
+                        anchors.left: lk.right; anchors.leftMargin: 14; anchors.verticalCenter: parent.verticalCenter
+                        visible: !!root && root.pass === ""
+                        text: passArea.checking ? "Checking ..." : (lv.isPreview ? "Password (preview, Esc closes)" : "Enter your password")
+                        color: pal.dim; font.family: Fonts.main; font.pixelSize: 15
+                    }
+                    // Enter, as a button too
+                    Item {
+                        anchors.right: parent.right; anchors.rightMargin: passArea.style === "line" ? 0 : 8; anchors.verticalCenter: parent.verticalCenter
+                        width: 40; height: 40
+                        visible: !!root && root.pass !== "" && !passArea.checking
+                        Rectangle { anchors.fill: parent; radius: 20; color: pal.primary; opacity: gom.containsMouse ? 1 : 0.85 }
+                        MIcon { anchors.centerIn: parent; size: 20; name: "arrow_forward"; glyph: ""; color: pal.inkPrimary }
+                        MouseArea { id: gom; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: if (root) root.submit() }
+                    }
+                }
+                // checking: a wave runs under the field
+                WavyLine {
+                    y: 56 + 10; anchors.horizontalCenter: parent.horizontalCenter
+                    width: parent.width - 40; height: 14
+                    visible: passArea.checking
+                    handle: false; moving: true; thick: 3
+                    SequentialAnimation on value { running: passArea.checking; loops: Animation.Infinite
+                        NumberAnimation { from: 0.15; to: 0.85; duration: 700; easing.type: Easing.InOutSine }
+                        NumberAnimation { from: 0.85; to: 0.15; duration: 700; easing.type: Easing.InOutSine } }
+                    color: pal.primary; track: "transparent"
                 }
                 Text {
-                    anchors.left: lk.right; anchors.leftMargin: 14; anchors.verticalCenter: parent.verticalCenter
-                    visible: root && root.pass === ""
-                    text: passArea.checking ? "Checking ..." : (lv.isPreview ? "Password (preview, Esc closes)" : "Password")
-                    color: pal.dim; font.family: Fonts.main; font.pixelSize: 15
+                    y: 56 + 10
+                    width: parent.width
+                    horizontalAlignment: lv.atLeft ? Text.AlignLeft : Text.AlignHCenter
+                    elide: Text.ElideRight
+                    visible: !!root && root.msg !== "" && !passArea.checking
+                    text: root ? root.msg : ""; color: "#ff8a80"; font.family: Fonts.main; font.pixelSize: 13
                 }
             }
-            // checking: a wave runs under the field
-            WavyLine {
-                anchors.top: field.bottom; anchors.topMargin: 10; anchors.horizontalCenter: parent.horizontalCenter
-                width: parent.width - 40; height: 14
-                visible: passArea.checking
-                handle: false; moving: true; thick: 3
-                // a wave that grows and shrinks while it checks
-                SequentialAnimation on value { running: passArea.checking; loops: Animation.Infinite
-                    NumberAnimation { from: 0.15; to: 0.85; duration: 700; easing.type: Easing.InOutSine }
-                    NumberAnimation { from: 0.85; to: 0.15; duration: 700; easing.type: Easing.InOutSine } }
-                color: pal.primary; track: "transparent"
-            }
-            Text {
-                anchors.top: field.bottom; anchors.topMargin: 12; anchors.horizontalCenter: lv.atLeft ? undefined : parent.horizontalCenter
-                visible: root && root.msg !== "" && !passArea.checking
-                text: root ? root.msg : ""; color: "#ff8a80"; font.family: Fonts.main; font.pixelSize: 13
-            }
-        }
 
-        // ---------- the music ----------
-        Rectangle {
-            id: media
-            visible: lv.v("media", true) !== false && pl.has && lv.first
-            width: Math.min(lv.width - 80, 440); height: 112; radius: 28
-            x: lv.atLeft ? main.x : Math.round((lv.width - width) / 2)
-            y: passArea.y + 104
-            color: pal.surface
-            opacity: lv.stg(5)
-            transform: Translate { y: (1 - lv.stg(5)) * 30 }
-            ShapeImage { x: 14; anchors.verticalCenter: parent.verticalCenter; width: 80; height: 80; kind: Look.shape; source: pl.art
-                empty: pal.container; fallbackColor: pal.inkContainer
-                RotationAnimator on rotation { from: 0; to: 360; duration: 24000; loops: Animation.Infinite; running: pl.playing } }
-            Column {
-                x: 108; y: 16; width: parent.width - 108 - 16; spacing: 2
-                Text { width: parent.width; elide: Text.ElideRight; text: pl.title; color: pal.fg; font.family: Fonts.main; font.pixelSize: 15; font.weight: Font.DemiBold }
-                Text { width: parent.width; elide: Text.ElideRight; text: pl.artist; color: pal.dim; font.family: Fonts.main; font.pixelSize: 12 }
-                WavyLine { width: parent.width; height: 16; value: pl.frac; moving: pl.playing; seekable: true
-                    color: pal.primary; track: pal.track; onMoved: function(v) { pl.seekTo(v) } }
-                Row {
-                    spacing: 14
-                    RoundBtn { icon: "skip_previous"; onHit: pl.prev() }
-                    Item { width: 36; height: 36
-                        Blob { anchors.fill: parent; kind: pl.playing ? Look.shape : "circle"; color: pal.primary
-                            RotationAnimator on rotation { from: 0; to: 360; duration: 12000; loops: Animation.Infinite; running: pl.playing } }
-                        MIcon { anchors.centerIn: parent; size: 18; name: pl.playing ? "pause" : "play_arrow"; glyph: ""; color: pal.inkPrimary }
-                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: pl.toggle() } }
-                    RoundBtn { icon: "skip_next"; onHit: pl.next() }
+            // ---------- the music ----------
+            Rectangle {
+                id: media
+                visible: lv.v("media", true) !== false && pl.has && lv.first
+                width: Math.min(parent.width, 420); height: 104; radius: 28
+                anchors.horizontalCenter: lv.atLeft ? undefined : parent.horizontalCenter
+                color: pal.surface
+                opacity: lv.stg(5)
+                transform: Translate { y: (1 - lv.stg(5)) * 30 }
+                ShapeImage { x: 12; anchors.verticalCenter: parent.verticalCenter; width: 80; height: 80; kind: Look.shape; source: pl.art
+                    empty: pal.container; fallbackColor: pal.inkContainer
+                    RotationAnimator on rotation { from: 0; to: 360; duration: 24000; loops: Animation.Infinite; running: pl.playing } }
+                Column {
+                    x: 106; anchors.verticalCenter: parent.verticalCenter; width: parent.width - 106 - 16; spacing: 2
+                    Text { width: parent.width; elide: Text.ElideRight; text: pl.title; color: pal.fg; font.family: Fonts.main; font.pixelSize: 15; font.weight: Font.DemiBold }
+                    Text { width: parent.width; elide: Text.ElideRight; text: pl.artist; color: pal.dim; font.family: Fonts.main; font.pixelSize: 12 }
+                    WavyLine { width: parent.width; height: 16; value: pl.frac; moving: pl.playing; seekable: true
+                        color: pal.primary; track: pal.track; onMoved: function(v) { pl.seekTo(v) } }
+                    Row {
+                        spacing: 14
+                        RoundBtn { icon: "skip_previous"; onHit: pl.prev() }
+                        Item { width: 34; height: 34
+                            Blob { anchors.fill: parent; kind: pl.playing ? Look.shape : "circle"; color: pal.primary
+                                RotationAnimator on rotation { from: 0; to: 360; duration: 12000; loops: Animation.Infinite; running: pl.playing } }
+                            MIcon { anchors.centerIn: parent; size: 18; name: pl.playing ? "pause" : "play_arrow"; glyph: ""; color: pal.inkPrimary }
+                            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: pl.toggle() } }
+                        RoundBtn { icon: "skip_next"; onHit: pl.next() }
+                    }
                 }
             }
         }
 
         // ---------- power ----------
         Row {
+            id: pwr
             visible: lv.v("power", true) !== false
-            anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 36
+            anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 32
             spacing: 12
             opacity: lv.stg(6)
             property string armed: ""
-            Timer { id: disarm; interval: 3000; onTriggered: parent.armed = "" }
+            Timer { id: disarm; interval: 3000; onTriggered: pwr.armed = "" }
             function act(k, cmd) {
                 if (k !== "suspend" && armed !== k) { armed = k; disarm.restart(); return }
                 armed = ""
                 if (!lv.isPreview) Quickshell.execDetached(["bash", "-c", cmd])
             }
-            Power { k: "suspend"; icon: "bedtime"; label: "Sleep"; onHit: parent.act(k, "systemctl suspend") }
-            Power { k: "reboot"; icon: "restart_alt"; label: "Restart"; onHit: parent.act(k, "systemctl reboot") }
-            Power { k: "poweroff"; icon: "power_settings_new"; label: "Shut down"; red: true; onHit: parent.act(k, "systemctl poweroff") }
+            Power { k: "suspend"; icon: "bedtime"; label: "Sleep"; onHit: pwr.act(k, "systemctl suspend") }
+            Power { k: "reboot"; icon: "restart_alt"; label: "Restart"; onHit: pwr.act(k, "systemctl reboot") }
+            Power { k: "poweroff"; icon: "power_settings_new"; label: "Shut down"; red: true; onHit: pwr.act(k, "systemctl poweroff") }
         }
     }
-
-    // ---------- the keyboard ----------
-    Item {
-        id: keys
-        focus: true
-        Keys.onPressed: function(e) {
-            if (!lv.root) return
-            const r = lv.root
-            if (e.key === Qt.Key_Escape) {
-                if (lv.isPreview) Qt.quit(); else r.pass = ""
-            } else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) r.submit()
-            else if (e.key === Qt.Key_Backspace) {
-                if (r.phase === "checking") return
-                r.pass = (e.modifiers & Qt.ControlModifier) ? "" : r.pass.slice(0, -1)
-            } else if (e.text !== "" && e.text.charCodeAt(0) >= 32 && r.phase !== "checking" && r.phase !== "done") {
-                if (r.phase === "wrong") { r.phase = "idle"; r.msg = "" }
-                r.pass = r.pass + e.text
-            }
-            e.accepted = true
-        }
-    }
-    MouseArea { anchors.fill: parent; z: -1; onClicked: keys.forceActiveFocus() }
 
     function wGlyph(w) {
         const s = String(w).toLowerCase()

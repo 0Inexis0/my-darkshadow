@@ -444,7 +444,8 @@ def lock_now(preview=False):
     env = dict(os.environ)
     if preview:
         env["RICE_LOCK_PREVIEW"] = "1"
-        subprocess.Popen([qs, "-p", LOCKQS], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+        log = open(HOME + "/.cache/rice/lockscreen-preview.log", "w")
+        subprocess.Popen([qs, "-p", LOCKQS], env=env, stdout=log, stderr=log, start_new_session=True)
         return
     try:
         os.remove(ACTIVE)

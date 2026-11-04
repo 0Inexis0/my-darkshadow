@@ -1,5 +1,10 @@
 # Changelog
 
+## V3.46
+- Fix: the lock screen did not take what you typed on some setups. The password now goes through a real text field (input methods such as fcitx included), which keeps the focus whatever you click, and there is an arrow button next to it
+- Fix: the lock screen sat out of place on some screens: everything is one column in the middle now, the clock gets smaller on small screens and the chips wrap instead of running off
+- The lock screen writes what happens (keyboard, PAM) to ~/.cache/rice/lockscreen.log, and the preview to lockscreen-preview.log
+
 ## V3.45
 - A new lock screen, the shell's own, in Material 3 (Settings > Idle & Lockscreen):
   - your wallpaper or what was on the screen, blurred and dimmed, coming in slowly
