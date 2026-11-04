@@ -4,6 +4,7 @@
   rice-lock state | set KEY VALUE | apply | reset | restore
   rice-lock now                                 lock the screen (hypridle, SUPER + L, the power menu ...)
   rice-lock preview                             show the lock screen in a window (Esc closes it)
+  rice-lock test                                lock for real, but it unlocks itself after 30 seconds (try the keyboard)
   rice-lock greet | notif | notif-count | weather | media     (text for the lock screen)
   rice-lock screen off|on                       (used by hypridle)
 
@@ -377,6 +378,7 @@ QS = HOME + "/.config/quickshell"
 LOCKQS = QS + "/rice-lockscreen"
 ACTIVE = HOME + "/.cache/rice/lock-active"
 SHOT = HOME + "/.cache/rice/lock-shot.png"
+FALLBACK = HOME + "/.cache/rice/lock-fallback"
 # the parts it shares with the desktop shell (copied from rice-desktop when they are newer)
 SHARED = ["Look", "Fonts", "DashFont", "MIcon", "T", "Blob", "ShapeImage", "WavyLine", "WavyArc", "Player",
           "RoundImage", "NPal", "Trigger", "Shadow"]
@@ -419,7 +421,7 @@ def wall_path():
         return ""
 
 
-def lock_now(preview=False):
+def lock_now(preview=False, test=False):
     c = load()
     qs = qs_bin()
     if not preview and (running("hyprlock") or our_lock_running()):
@@ -447,10 +449,13 @@ def lock_now(preview=False):
         log = open(HOME + "/.cache/rice/lockscreen-preview.log", "w")
         subprocess.Popen([qs, "-p", LOCKQS], env=env, stdout=log, stderr=log, start_new_session=True)
         return
-    try:
-        os.remove(ACTIVE)
-    except OSError:
-        pass
+    if test:
+        env["RICE_LOCK_TEST"] = "1"
+    for f in (ACTIVE, FALLBACK):
+        try:
+            os.remove(f)
+        except OSError:
+            pass
     log = open(HOME + "/.cache/rice/lockscreen.log", "w")
     p = subprocess.Popen([qs, "-p", LOCKQS], env=env, stdout=log, stderr=log)
     # it must lock within 6 seconds (the compositor confirms it and the screen writes lock-active)
@@ -462,6 +467,15 @@ def lock_now(preview=False):
         hyprlock()
         return
     rc = p.wait()
+    # "Keyboard not working?" on the lock screen: it quit without unlocking, hyprlock takes the lock over
+    if os.path.exists(FALLBACK):
+        for f in (ACTIVE, FALLBACK):
+            try:
+                os.remove(f)
+            except OSError:
+                pass
+        hyprlock()
+        return
     # it quit, but not by unlocking (a crash): hyprlock takes the lock over (allow_session_lock_restore)
     if os.path.exists(ACTIVE):
         try:
@@ -496,10 +510,11 @@ def main(argv):
         out["shot"] = SHOT if out.get("background") == "screenshot" and os.path.exists(SHOT) else ""
         out["pam"] = "hyprlock" if os.path.exists("/etc/pam.d/hyprlock") else "login"
         out["shell_ok"] = bool(qs_bin()) and os.path.exists(LOCKQS + "/shell.qml")
+        out["has_hyprlock"] = bool(shutil.which("hyprlock"))
         print(json.dumps(out))
         return
-    if cmd in ("now", "preview"):
-        lock_now(preview=cmd == "preview")
+    if cmd in ("now", "preview", "test"):
+        lock_now(preview=cmd == "preview", test=cmd == "test")
         return
     helpers = {"greet": greet, "notif": notif, "notif-count": notif_count, "weather": weather, "media": media}
     if cmd in helpers:

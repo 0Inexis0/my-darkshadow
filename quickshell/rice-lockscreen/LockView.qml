@@ -115,11 +115,10 @@ FocusScope {
         maximumLength: 256
         inputMethodHints: Qt.ImhSensitiveData | Qt.ImhHiddenText | Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
         readOnly: !lv.root || lv.root.phase === "checking" || lv.root.phase === "done"
-        property bool said: false
         onTextChanged: {
             const r = lv.root
             if (!r) return
-            if (!said && text !== "") { said = true; console.log("[lock] the keyboard works") }
+            if (!lv.anyKey && text !== "") { lv.anyKey = true; console.log("[lock] the keyboard works") }
             if (r.pass === text) return
             if (r.phase === "wrong") { r.phase = "idle"; r.msg = "" }
             r.pass = text
@@ -128,6 +127,7 @@ FocusScope {
         onCursorPositionChanged: if (cursorPosition !== text.length) cursorPosition = text.length
         onAccepted: if (lv.root) lv.root.submit()
         Keys.onPressed: function(e) {
+            if (!lv.anyKey) { lv.anyKey = true; console.log("[lock] the keyboard works (a key came in)") }
             if (e.key === Qt.Key_Escape) {
                 if (lv.isPreview) Qt.quit()
                 else text = ""
@@ -137,7 +137,10 @@ FocusScope {
                 e.accepted = true
             }
         }
-        onActiveFocusChanged: if (!activeFocus) refocus.restart()
+        onActiveFocusChanged: {
+            console.log("[lock] password field focused:", activeFocus, "screen active:", lv.winActive)
+            if (!activeFocus) refocus.restart()
+        }
     }
     // the same password on every screen (and cleared after a wrong one)
     Connections {
@@ -148,7 +151,22 @@ FocusScope {
     Timer { id: refocus; interval: 50; onTriggered: keys.forceActiveFocus() }
     Timer { interval: 250; repeat: true; running: !keys.activeFocus && (lv.t < 1 || lv.Window.active); onTriggered: keys.forceActiveFocus() }
     onVisibleChanged: if (visible) keys.forceActiveFocus()
-    MouseArea { anchors.fill: parent; onPressed: function(m) { keys.forceActiveFocus(); m.accepted = false } }
+    // the compositor gives this screen the keyboard (Hyprland may do it a moment after the lock): take it at once
+    readonly property bool winActive: Window.active
+    onWinActiveChanged: { console.log("[lock] this screen has the keyboard:", winActive); if (winActive) keys.forceActiveFocus() }
+    Connections { target: lv.root; ignoreUnknownSignals: true; function onSecureTickChanged() { keys.forceActiveFocus(); refocus.restart() } }
+    property bool anyKey: false
+    property bool clicked: false
+    MouseArea {
+        anchors.fill: parent
+        onPressed: function(m) {
+            if (!lv.clicked) { lv.clicked = true; console.log("[lock] mouse click; screen active:", lv.winActive, "field focused:", keys.activeFocus) }
+            keys.forceActiveFocus(); m.accepted = false
+        }
+    }
+    // after a while without a single key: offer hyprlock (the session stays locked while it takes over)
+    property bool waited: false
+    Timer { interval: 7000; running: !lv.isPreview && lv.first; onTriggered: lv.waited = true }
 
     // ---------- everything else (it leaves a little larger, as the session opens) ----------
     // One column in the middle of the screen: the day, the clock, the greeting, the chips, the password and the
@@ -407,6 +425,32 @@ FocusScope {
                     }
                 }
             }
+        }
+
+        // ---------- the way out when the keyboard does not reach the lock screen ----------
+        Rectangle {
+            id: fb
+            visible: !lv.isPreview && lv.first && !lv.anyKey && (lv.clicked || lv.waited) && lv.v("has_hyprlock", false) === true
+            anchors.left: parent.left; anchors.bottom: parent.bottom; anchors.margins: 32
+            height: 52; radius: 26
+            width: fbRow.implicitWidth + 36
+            color: fbm.containsMouse ? pal.cardHi : pal.surface
+            Behavior on color { ColorAnimation { duration: 160 } }
+            Row { id: fbRow; anchors.centerIn: parent; spacing: 10
+                MIcon { anchors.verticalCenter: parent.verticalCenter; size: 20; name: "keyboard"; glyph: ""; color: pal.primary }
+                Column { anchors.verticalCenter: parent.verticalCenter
+                    Text { text: "Keyboard not working?"; color: pal.fg; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.DemiBold }
+                    Text { text: "Switch to the classic lock (hyprlock)"; color: pal.dim; font.family: Fonts.main; font.pixelSize: 11 } } }
+            MouseArea { id: fbm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: if (lv.root) lv.root.fallback() }
+        }
+        // rice-lock test: it unlocks itself
+        Rectangle {
+            visible: !!lv.root && lv.root.testMode === true && lv.first
+            anchors.horizontalCenter: parent.horizontalCenter; anchors.top: parent.top; anchors.topMargin: 24
+            height: 36; radius: 18; width: tst.implicitWidth + 32
+            color: pal.primary
+            Text { id: tst; anchors.centerIn: parent; color: pal.inkPrimary; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.DemiBold
+                text: lv.root ? "Test: it unlocks itself in " + lv.root.testLeft + " s" : "" }
         }
 
         // ---------- power ----------

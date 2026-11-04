@@ -47,6 +47,25 @@ ShellRoot {
     property string phase: "idle"            // idle | checking | wrong | done
     property string msg: ""
     property int tries: 0
+    // rice-lock test: a real lock that unlocks itself after 30 seconds (to try the keyboard without risk)
+    readonly property bool testMode: Quickshell.env("RICE_LOCK_TEST") === "1"
+    property int testLeft: 30
+    Timer {
+        running: root.testMode && lock.secure && root.phase !== "done"
+        interval: 1000; repeat: true
+        onTriggered: { root.testLeft--; if (root.testLeft <= 0) { console.log("[lock] test over: unlocking"); root.phase = "done"; root.unlock() } }
+    }
+    // the keyboard never came: quit WITHOUT unlocking (the session stays locked) and rice-lock starts hyprlock
+    function fallback() {
+        console.warn("[lock] switching to hyprlock (the keyboard did not reach the lock screen)")
+        fbP.running = true
+    }
+    Process {
+        id: fbP
+        command: ["bash", "-c", "mkdir -p \"$HOME/.cache/rice\"; touch \"$HOME/.cache/rice/lock-fallback\""]
+        onExited: Qt.exit(3)
+    }
+    property int secureTick: 0
     function submit() {
         if (phase === "checking" || phase === "done" || pass === "") return
         pending = pass
@@ -96,7 +115,7 @@ ShellRoot {
     WlSessionLock {
         id: lock
         locked: !root.preview
-        onSecureChanged: { console.log("[lock] the compositor locked the session:", secure); if (secure) root.tellLocked() }
+        onSecureChanged: { console.log("[lock] the compositor locked the session:", secure); if (secure) { root.tellLocked(); root.secureTick++ } }
         WlSessionLockSurface {
             color: "black"
             LockView { anchors.fill: parent; focus: true; root: root; scr: screen }

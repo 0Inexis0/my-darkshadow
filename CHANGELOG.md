@@ -1,5 +1,10 @@
 # Changelog
 
+## V3.47
+- Lock screen: it takes the keyboard again as soon as Hyprland hands it over (Hyprland can do that a moment after the lock)
+- Lock screen: if no key reaches it, a button "Keyboard not working?" appears (bottom left): the session stays locked and hyprlock takes over, so you can always type your password
+- `rice-lock test`: locks for real but unlocks itself after 30 seconds, to try the lock screen without risk; what happened is in ~/.cache/rice/lockscreen.log
+
 ## V3.46
 - Fix: the lock screen did not take what you typed on some setups. The password now goes through a real text field (input methods such as fcitx included), which keeps the focus whatever you click, and there is an arrow button next to it
 - Fix: the lock screen sat out of place on some screens: everything is one column in the middle now, the clock gets smaller on small screens and the chips wrap instead of running off
