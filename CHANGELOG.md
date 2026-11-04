@@ -1,5 +1,8 @@
 # Changelog
 
+## V3.50
+- Fix: you could not type your password on the lock screen (and it showed without your wallpaper and settings): the screens of the lock did not reach its state, so the field stayed read-only. They get it through a shared object now
+
 ## V3.49
 - Fix: the lock screen got the keys but did not type them on some setups: every key is handled by the lock screen itself now (letters and digits even when Qt gives a key without its text)
 

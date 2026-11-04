@@ -11,7 +11,9 @@ import QtQuick
 // RICE_LOCK_PREVIEW=1 shows it in a normal full-screen window (Settings > Preview): Esc closes it.
 // The shared parts (Look, Fonts, Blob, WavyLine ...) are copied here from rice-desktop by rice-lock.
 ShellRoot {
-    id: root
+    id: lockShell
+    // the views reach this through LockCtx (an id or a property passed into the lock window was not always seen)
+    Component.onCompleted: LockCtx.root = lockShell
     readonly property bool preview: Quickshell.env("RICE_LOCK_PREVIEW") === "1"
     readonly property string home: Quickshell.env("HOME")
 
@@ -23,9 +25,9 @@ ShellRoot {
         running: true
         command: ["bash", "-c", "\"$HOME/.local/bin/rice-lock\" state 2>/dev/null"]
         stdout: StdioCollector { onStreamFinished: {
-            try { root.cfg = JSON.parse(text) } catch (e) { root.cfg = {} }
-            if (/^#[0-9a-fA-F]{6}$/.test(root.cfg.accent || "")) Look.accent = root.cfg.accent
-            root.ready = true
+            try { lockShell.cfg = JSON.parse(text) } catch (e) { lockShell.cfg = {} }
+            if (/^#[0-9a-fA-F]{6}$/.test(lockShell.cfg.accent || "")) Look.accent = lockShell.cfg.accent
+            lockShell.ready = true
         } }
     }
     // your shape and wavy progress (Settings > Appearance)
@@ -51,9 +53,9 @@ ShellRoot {
     readonly property bool testMode: Quickshell.env("RICE_LOCK_TEST") === "1"
     property int testLeft: 30
     Timer {
-        running: root.testMode && lock.secure && root.phase !== "done"
+        running: lockShell.testMode && lock.secure && lockShell.phase !== "done"
         interval: 1000; repeat: true
-        onTriggered: { root.testLeft--; if (root.testLeft <= 0) { console.log("[lock] test over: unlocking"); root.phase = "done"; root.unlock() } }
+        onTriggered: { lockShell.testLeft--; if (lockShell.testLeft <= 0) { console.log("[lock] test over: unlocking"); lockShell.phase = "done"; lockShell.unlock() } }
     }
     // the keyboard never came: quit WITHOUT unlocking (the session stays locked) and rice-lock starts hyprlock
     function fallback() {
@@ -88,43 +90,43 @@ ShellRoot {
     PamContext {
         id: pam
         // hyprlock's PAM file when it is there (it is set up for exactly this), else the login rules
-        config: root.cfg.pam || "login"
-        onResponseRequiredChanged: if (responseRequired && root.pending !== "") { respond(root.pending); root.pending = "" }
+        config: lockShell.cfg.pam || "login"
+        onResponseRequiredChanged: if (responseRequired && lockShell.pending !== "") { respond(lockShell.pending); lockShell.pending = "" }
         onPamMessage: {
             console.log("[lock] PAM says:", message, messageIsError ? "(error)" : "")
-            if (messageIsError) root.msg = message
+            if (messageIsError) lockShell.msg = message
         }
-        onError: function(e) { console.warn("[lock] PAM error", e); root.msg = "Could not check the password" }
+        onError: function(e) { console.warn("[lock] PAM error", e); lockShell.msg = "Could not check the password" }
         onCompleted: function(result) {
             console.log("[lock] PAM finished:", result === PamResult.Success ? "right password" : "result " + result)
-            if (result === PamResult.Success) { root.phase = "done"; root.pending = ""; root.unlock(); return }
-            root.fail(root.msg !== "" ? root.msg : (result === PamResult.MaxTries ? "Too many tries, wait a moment" : "That is not the password"))
+            if (result === PamResult.Success) { lockShell.phase = "done"; lockShell.pending = ""; lockShell.unlock(); return }
+            lockShell.fail(lockShell.msg !== "" ? lockShell.msg : (result === PamResult.MaxTries ? "Too many tries, wait a moment" : "That is not the password"))
         }
     }
-    Timer { id: wrongT; interval: 2600; onTriggered: if (root.phase === "wrong") { root.phase = "idle"; root.msg = "" } }
+    Timer { id: wrongT; interval: 2600; onTriggered: if (lockShell.phase === "wrong") { lockShell.phase = "idle"; lockShell.msg = "" } }
 
     // ---------- locking and unlocking ----------
     property real out: 0                     // 0 shown .. 1 gone (the way out after the right password)
-    NumberAnimation { id: outA; target: root; property: "out"; to: 1; duration: 420; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.accel
+    NumberAnimation { id: outA; target: lockShell; property: "out"; to: 1; duration: 420; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.accel
         onFinished: { lock.locked = false; quitT.restart() } }
-    Timer { id: quitT; interval: 150; onTriggered: { Quickshell.execDetached(["rm", "-f", root.home + "/.cache/rice/lock-active"]); Qt.quit() } }
+    Timer { id: quitT; interval: 150; onTriggered: { Quickshell.execDetached(["rm", "-f", lockShell.home + "/.cache/rice/lock-active"]); Qt.quit() } }
     function unlock() { outA.restart() }
     // tells rice-lock that the screen is really locked (the compositor confirmed it)
     function tellLocked() { Quickshell.execDetached(["bash", "-c", "mkdir -p \"$HOME/.cache/rice\"; echo $PPID > \"$HOME/.cache/rice/lock-active\""]) }
 
     WlSessionLock {
         id: lock
-        locked: !root.preview
-        onSecureChanged: { console.log("[lock] the compositor locked the session:", secure); if (secure) { root.tellLocked(); root.secureTick++ } }
+        locked: !lockShell.preview
+        onSecureChanged: { console.log("[lock] the compositor locked the session:", secure); if (secure) { lockShell.tellLocked(); lockShell.secureTick++ } }
         WlSessionLockSurface {
             color: "black"
-            LockView { anchors.fill: parent; focus: true; root: root; scr: screen }
+            LockView { anchors.fill: parent; focus: true; scr: screen }
         }
     }
 
     // ---------- preview: the same thing in a window you can close ----------
     Variants {
-        model: root.preview ? Quickshell.screens : []
+        model: lockShell.preview ? Quickshell.screens : []
         PanelWindow {
             required property var modelData
             screen: modelData
@@ -134,7 +136,7 @@ ShellRoot {
             WlrLayershell.namespace: "rice-lock-preview"
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
             color: "black"
-            LockView { anchors.fill: parent; focus: true; root: root; scr: modelData; isPreview: true }
+            LockView { anchors.fill: parent; focus: true; scr: modelData; isPreview: true }
         }
     }
 }

@@ -10,7 +10,8 @@ import QtQuick.Effects
 // with a wavy line, the password as shapes that pop in, and power buttons (Shut down in red).
 FocusScope {
     id: lv
-    property var root: null
+    property var root: LockCtx.root
+    onRootChanged: console.log("[lock] the view has the lock state:", !!root)
     property var scr: null
     property bool isPreview: false
     readonly property var cfg: root ? root.cfg : ({})
