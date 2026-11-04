@@ -125,18 +125,7 @@ FocusScope {
         }
         // what you type always goes at the end
         onCursorPositionChanged: if (cursorPosition !== text.length) cursorPosition = text.length
-        onAccepted: if (lv.root) lv.root.submit()
-        Keys.onPressed: function(e) {
-            if (!lv.anyKey) { lv.anyKey = true; console.log("[lock] the keyboard works (a key came in)") }
-            if (e.key === Qt.Key_Escape) {
-                if (lv.isPreview) Qt.quit()
-                else text = ""
-                e.accepted = true
-            } else if (e.key === Qt.Key_Backspace && (e.modifiers & Qt.ControlModifier)) {
-                if (!readOnly) text = ""
-                e.accepted = true
-            }
-        }
+        Keys.onPressed: function(e) { lv.handleKey(e, "field") }
         onActiveFocusChanged: {
             console.log("[lock] password field focused:", activeFocus, "screen active:", lv.winActive)
             if (!activeFocus) refocus.restart()
@@ -162,13 +151,36 @@ FocusScope {
         if (lv.win && !lv.isPreview) lv.win.requestActivate()
     }
     // keys that reach the view but not the field (no focus item yet): put them in the field anyway
-    Keys.onPressed: function(e) {
-        if (!lv.anyKey) { lv.anyKey = true; console.log("[lock] a key reached the view (not the field)") }
-        keys.forceActiveFocus()
-        if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) { if (lv.root) lv.root.submit() }
-        else if (e.key === Qt.Key_Backspace) { if (!keys.readOnly) keys.text = keys.text.slice(0, -1) }
-        else if (e.key === Qt.Key_Escape) { if (lv.isPreview) Qt.quit(); else keys.text = "" }
-        else if (e.text !== "" && e.text.charCodeAt(0) >= 32 && !keys.readOnly) keys.text = keys.text + e.text
+    Keys.onPressed: function(e) { keys.forceActiveFocus(); lv.handleKey(e, "view") }
+
+    // Every key is handled here (not left to the text field): some setups deliver keys whose text Qt does not
+    // fill in, and the field then ignored them. The log says what kind of key came, never which one.
+    property int logged: 0
+    readonly property var digits: "0123456789"
+    function handleKey(e, where) {
+        const r = lv.root
+        lv.anyKey = true
+        const k = e.key
+        let ch = ""
+        if (e.text !== "" && e.text.charCodeAt(0) >= 32 && e.text.charCodeAt(0) !== 127) ch = e.text
+        else if (!(e.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))) {
+            // a key without text: letters and digits from the key itself
+            if (k >= Qt.Key_A && k <= Qt.Key_Z) {
+                ch = String.fromCharCode(97 + k - Qt.Key_A)
+                if (e.modifiers & Qt.ShiftModifier) ch = ch.toUpperCase()
+            } else if (k >= Qt.Key_0 && k <= Qt.Key_9 && !(e.modifiers & Qt.ShiftModifier)) ch = digits[k - Qt.Key_0]
+            else if (k === Qt.Key_Space) ch = " "
+        }
+        if (lv.logged < 4) {
+            lv.logged++
+            console.log("[lock] key in the " + where + ": printable " + (ch !== "") + ", Qt gave text " + (e.text !== "")
+                        + ", read-only " + keys.readOnly + ", typed so far " + keys.text.length)
+        }
+        if (!r) { e.accepted = true; return }
+        if (k === Qt.Key_Escape) { if (lv.isPreview) Qt.quit(); else keys.text = "" }
+        else if (k === Qt.Key_Return || k === Qt.Key_Enter) r.submit()
+        else if (k === Qt.Key_Backspace) { if (!keys.readOnly) keys.text = (e.modifiers & Qt.ControlModifier) ? "" : keys.text.slice(0, -1) }
+        else if (ch !== "" && !keys.readOnly && keys.text.length < 256) keys.text = keys.text + ch
         e.accepted = true
     }
     onVisibleChanged: if (visible) keys.forceActiveFocus()

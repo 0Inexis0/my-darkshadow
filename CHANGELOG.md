@@ -1,5 +1,8 @@
 # Changelog
 
+## V3.49
+- Fix: the lock screen got the keys but did not type them on some setups: every key is handled by the lock screen itself now (letters and digits even when Qt gives a key without its text)
+
 ## V3.48
 - Lock screen: the password field keeps asking for the focus until it has it (it could get lost when the lock window appears), the lock window asks Hyprland to be activated, and keys that reach the lock screen but not the field go into the field anyway
 
