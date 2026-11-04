@@ -71,36 +71,24 @@ Item {
     }
 
     // the ring
-    Canvas {
+    Item {
         id: ring
         width: 150; height: 150
         anchors.horizontalCenter: parent.horizontalCenter
         y: 52
-        property real v: fo.frac
-        property color fillC: fo.cMain
-        property color trackC: fo.pal ? fo.pal.track : Qt.rgba(1, 1, 1, 0.13)
-        Behavior on v { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
-        onVChanged: requestPaint()
-        onFillCChanged: requestPaint()
-        onTrackCChanged: requestPaint()
-        onPaint: {
-            const c = getContext("2d")
-            c.reset()
-            c.lineWidth = 9
-            c.lineCap = "round"
-            c.strokeStyle = trackC
-            c.beginPath(); c.arc(75, 75, 66, 0, Math.PI * 2); c.stroke()
-            if (v <= 0.002) return
-            c.strokeStyle = fillC
-            c.beginPath(); c.arc(75, 75, 66, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * v); c.stroke()
-        }
+        // the time left, as a wavy ring that moves while it runs
+        WavyArc { anchors.fill: parent; thick: 9; waves: 16; moving: fo.going && fo.running
+            property real v: fo.frac
+            Behavior on v { NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
+            value: Math.max(0.004, v)
+            color: fo.cMain; track: fo.pal ? fo.pal.track : Qt.rgba(1, 1, 1, 0.13) }
         Column {
             anchors.centerIn: parent
             spacing: 0
             T { anchors.horizontalCenter: parent.horizontalCenter; kind: "number"; text: fo.clock(fo.secs); font.pixelSize: 34; font.bold: true; color: fo.cFg }
             T { anchors.horizontalCenter: parent.horizontalCenter; text: fo.mode === "focus" ? "stay with it" : "rest a little"; font.pixelSize: 11; color: fo.cFg3 }
         }
-    }
+        }
 
     // buttons
     Row {

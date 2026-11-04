@@ -297,7 +297,7 @@ FloatingWindow {
         { name: "Bar layout", icon: "\uf0db" },
         { name: "Hyprland", icon: "\uf108" },
         { name: "Recorder", icon: "\uf03d" },
-        { name: "Dashboard", icon: "\uf009" },
+        { name: "Dynamic island", icon: "\uf017" },
         { name: "Launcher", icon: "\uf002" },
         { name: "Theme", icon: "\udb80\udfd8" },
         { name: "Cursors", icon: "\uf245" },
@@ -330,7 +330,7 @@ FloatingWindow {
         { group: "look", name: "Appearance", icon: "\udb80\udfd8", sym: "palette", pages: [8, 21, 19, 24, 22, 9, 14], caption: "Theme, colors, fonts, shapes, components, cursors and the dock" },
         { group: "motion", name: "Motion", icon: "\uf1e6", sym: "animation", pages: [20], caption: "How windows and Settings move" },
         { group: "desk", name: "Desktop", icon: "\uf108", sym: "desktop_windows", pages: [12, 25, 4, 11], caption: "Widgets, windows, Hyprland and the lock screen" },
-        { group: "bar", name: "Bar & launcher", icon: "\uf0c9", sym: "toolbar", pages: [2, 3, 6, 7], caption: "The bar, the dashboard and the launcher" },
+        { group: "bar", name: "Bar & launcher", icon: "\uf0c9", sym: "toolbar", pages: [2, 3, 6, 7], caption: "The bar, the dynamic island and the launcher" },
         { group: "snd", name: "Sound & language", icon: "\uf028", sym: "graphic_eq", pages: [1, 10, 26], caption: "Sounds, notifications, language and region" },
         { group: "sys", name: "System", icon: "\uf013", sym: "settings", pages: [27, 5, 23, 15], caption: "This computer, recording, keyboard and services" },
         { group: "game", name: "Gaming", icon: "\uf11b", sym: "sports_esports", pages: [16], caption: "Play without distractions" },
@@ -852,7 +852,7 @@ FloatingWindow {
             PageSlot { nav: win; idx: 3; cur: win.page; BarLayoutPage { anchors.fill: parent; ctl: win } }
             PageSlot { nav: win; idx: 4; cur: win.page; HyprlandPage { anchors.fill: parent; ctl: win } }
             PageSlot { nav: win; idx: 5; cur: win.page; RecorderPage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 6; cur: win.page; DashboardPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 6; cur: win.page; IslandPage { anchors.fill: parent; ctl: win } }
             PageSlot { nav: win; idx: 7; cur: win.page; RofiPage { anchors.fill: parent; ctl: win } }
             PageSlot { nav: win; idx: 8; cur: win.page; ThemePage { anchors.fill: parent; ctl: win } }
             PageSlot { nav: win; idx: 9; cur: win.page; CursorsPage { anchors.fill: parent; ctl: win } }

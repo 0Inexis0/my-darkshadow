@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""rice-dashboard: the dashboard that drops out of the middle of Waybar (Settings > Dashboard).
+"""rice-dashboard: what is left of the dashboard (V3.38: it is gone, the bar's island took its place).
+  The open and wallpaper commands go to the island, the control center and the wallpaper picker.
 
   rice-dashboard config                 settings as JSON (with bar position and theme accent)
   rice-dashboard set KEY VALUE          change a setting
@@ -231,9 +232,9 @@ def bar_on():
 
 
 def classic(c=None):
-    """the old dashboard: chosen in Settings > Dashboard, or the only one there is when the bar is Waybar"""
-    c = c or load()
-    return c["enabled"] and (c["classic"] or not bar_on())
+    """V3.38: the dashboard is gone (the bar's island took its place); this script keeps its data for the island,
+    the wallpaper picker and Settings (stats, about, walls, wall) and sends the old keys where things live now"""
+    return False
 
 
 def island(tab, toggle=True):

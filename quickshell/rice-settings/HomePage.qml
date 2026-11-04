@@ -619,7 +619,7 @@ Item {
             SectionTitle { text: "Previews"; sub: "The live pictures at the top of some pages." }
             ToggleRow {
                 label: "Show previews"
-                desc: "Bar, Launcher, Notifications, Dashboard and Cursors show a small live picture of your choices"
+                desc: "Bar, Launcher, Notifications and Cursors show a small live picture of your choices"
                 checked: Prefs.previews
                 onToggled: function(v) { Prefs.setPreviews(v) }
             }

@@ -25,7 +25,8 @@ PanelWindow {
     // auto-hide (Settings > Desktop): fades out while windows are open, then the surface goes away
     property bool hidden: false
     property real fk: hidden ? 0 : 1
-    Behavior on fk { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
+    // they come back softly (Material 3 emphasized decelerate) and leave a little quicker
+    Behavior on fk { NumberAnimation { duration: w.hidden ? 240 : 560; easing.type: Easing.BezierSpline; easing.bezierCurve: w.hidden ? Look.accel : Look.decel } }
 
     // current look; the editor changes these while you drag
     property real px: defX
@@ -106,7 +107,8 @@ PanelWindow {
         width: w.dispW
         height: w.dispH
         opacity: w.op * w.fk
-        scale: 0.96 + 0.04 * w.fk
+        scale: 0.92 + 0.08 * w.fk
+        transform: Translate { y: (1 - w.fk) * 16 }
         Behavior on opacity { enabled: !w.hidden && w.fk > 0.99; NumberAnimation { duration: 120 } }
 
         Item {

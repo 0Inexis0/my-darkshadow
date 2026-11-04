@@ -16,7 +16,9 @@ SOURCE_LINE = "source = ~/.config/hypr/rice-lock.conf"
 WIDGETS = ["weather", "media", "resources", "usercard", "calendar", "visualizer", "battery", "todo", "focus", "notes",
            "gauge", "date", "sky", "nowring", "player", "playpill", "lyrics", "storage", "trio"]
 # what the widget editor stores per widget (Settings > Desktop > Edit widgets, or SUPER+ALT+W)
-GEOM = ("x", "y", "scale", "w", "h", "opacity", "bg", "style", "flip", "color", "font", "focus", "metric")
+GEOM = ("x", "y", "scale", "w", "h", "opacity", "bg", "style", "flip", "color", "font", "focus", "metric", "bars", "shape", "gap")
+# the visualizer's bars (Edit mode > Visualizer)
+VIZ = {"bars": ["16", "32", "48", "64"], "shape": ["square", "rounded", "pill"], "gap": ["thin", "normal", "wide"]}
 STYLES = {"visualizer": ["bars", "mirror", "wave", "dots"], "clock": ["digital", "line", "cookie", "pixel"],
           "gauge": ["water", "pentagon", "cookie", "flower", "clover", "hexagon", "sun", "circle"],
           "date": ["flower", "cookie", "clover", "sun", "square", "circle"]}
@@ -118,6 +120,8 @@ def clean_geom(wid, k, v):
             return v if wid == "gauge" and v in METRICS else None
         if k == "focus":
             return int(max(5, min(120, float(v)))) if wid == "focus" else None
+        if k in VIZ:
+            return str(v) if wid == "visualizer" and str(v) in VIZ[k] else None
     except (TypeError, ValueError):
         return None
     return None
@@ -328,7 +332,7 @@ def main(a):
     elif cmd == "reset-widget":
         t = target(c, a[2] if len(a) > 2 else "")
         for k in GEOM:
-            if k not in ("style", "color", "font", "focus", "metric"):
+            if k not in ("style", "color", "font", "focus", "metric", "bars", "shape", "gap"):
                 t.pop(k, None)
     elif cmd == "edit":
         v = a[2] if len(a) > 2 else "toggle"

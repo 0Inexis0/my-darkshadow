@@ -91,6 +91,7 @@ PanelWindow {
                     id: row
                     readonly property bool hot: pw.armed === modelData.key
                     readonly property bool danger: modelData.key === "poweroff" || modelData.key === "reboot"
+                    readonly property bool red: modelData.key === "poweroff"           // Shut down is always red
                     width: col.width; height: 44
                     opacity: 0
                     property real slide: -8
@@ -105,14 +106,14 @@ PanelWindow {
                     }
                     Rectangle {
                         anchors.fill: parent; anchors.topMargin: 2; anchors.bottomMargin: 2; radius: 13
-                        color: row.hot ? (row.danger ? Qt.rgba(1, 0.42, 0.42, 0.22) : Qt.rgba(1, 1, 1, 0.14)) : (rm.containsMouse ? Qt.rgba(1, 1, 1, 0.07) : "transparent")
+                        color: row.hot ? (row.danger ? Qt.rgba(1, 0.42, 0.42, 0.22) : Qt.rgba(1, 1, 1, 0.14)) : (rm.containsMouse ? (row.red ? Qt.rgba(1, 0.42, 0.42, 0.14) : Qt.rgba(1, 1, 1, 0.07)) : "transparent")
                         Behavior on color { ColorAnimation { duration: 140 } }
                     }
                     MIcon { x: 14; anchors.verticalCenter: parent.verticalCenter; size: 19; name: modelData.icon; glyph: String.fromCodePoint(modelData.glyph)
-                        color: row.hot && row.danger ? "#ff8a8a" : pw.fg }
+                        color: (row.hot && row.danger) || row.red ? "#ff8a8a" : pw.fg }
                     Text { x: 46; anchors.verticalCenter: parent.verticalCenter; font.family: Fonts.main; font.pixelSize: 14
                         text: row.hot ? "Click again: " + modelData.label.toLowerCase() : modelData.label
-                        color: row.hot && row.danger ? "#ff8a8a" : pw.fg }
+                        color: (row.hot && row.danger) || row.red ? "#ff8a8a" : pw.fg }
                     MouseArea { id: rm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: pw.run(modelData) }
                 }
             }

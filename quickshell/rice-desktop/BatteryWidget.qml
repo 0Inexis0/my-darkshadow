@@ -45,35 +45,21 @@ Item {
     Item {
         visible: bt.hasMain
         anchors.fill: parent
-        Canvas {
+        Item {
             id: ring
             width: 72; height: 72
             anchors.left: parent.left
             anchors.leftMargin: 18
             anchors.verticalCenter: parent.verticalCenter
-            property real v: Math.max(0, bt.pct)
-            property bool lowC: bt.low
-            Behavior on v { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
-            onVChanged: requestPaint()
-            onLowCChanged: requestPaint()
-            property color trackC: bt.cTrack
-            property color fillC: bt.cMain
-            property color warnC: bt.cWarn
-            onTrackCChanged: requestPaint()
-            onFillCChanged: requestPaint()
-            onPaint: {
-                const c = getContext("2d")
-                c.reset()
-                c.lineWidth = 6
-                c.lineCap = "round"
-                c.strokeStyle = trackC
-                c.beginPath(); c.arc(36, 36, 30, 0, Math.PI * 2); c.stroke()
-                if (v <= 0) return
-                c.strokeStyle = lowC ? warnC : fillC
-                c.beginPath(); c.arc(36, 36, 30, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * v / 100); c.stroke()
-            }
+            WavyArc { anchors.fill: parent; thick: 6; waves: 11; moving: bt.charging
+                property real v: Math.max(0, bt.pct)
+                Behavior on v { NumberAnimation { duration: 700; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
+                value: Math.max(0.01, v / 100)
+                color: bt.low ? bt.cWarn : bt.cMain; track: bt.cTrack }
+            Blob { anchors.centerIn: parent; width: 40; height: 40; kind: Look.shape; color: bt.pal ? bt.pal.chip : Qt.rgba(1, 1, 1, 0.08)
+                RotationAnimator on rotation { from: 0; to: 360; duration: 20000; loops: Animation.Infinite; running: bt.charging && !Look.lite } }
             T { kind: "icon"; anchors.centerIn: parent; text: bt.charging ? "" : ""; font.pixelSize: 18; color: bt.low ? bt.cWarn : bt.cFg2 }
-        }
+                }
         Column {
             anchors.left: ring.right
             anchors.leftMargin: 16

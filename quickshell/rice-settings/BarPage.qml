@@ -180,43 +180,18 @@ Item {
                 current: page.v("style", "islands") === "google" ? "dynamic" : page.v("style", "islands")
                 onChosen: function(x) { page.setv("style", x) }
             }
-            // ---------- Dynamic: what the island grows into ----------
-            Column {
-                width: parent.width
-                spacing: 8
-                visible: page.v("style", "islands") === "dynamic" || page.v("style", "islands") === "google"
-                         || ["left", "center", "right"].some(function(z) { return (page.lay[z] || []).indexOf("island") >= 0 })
-                T { kind: "title"; text: "Dynamic island"; font.pixelSize: 16; font.bold: true; topPadding: 6 }
-                T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; color: M3.inkDim; font.pixelSize: 12
-                    text: "The island grows into what happens right now, on springs, with your shape and wavy progress. Scroll on it for the volume, right-click it for the dashboard. It is a module in Bar layout too: put it in any zone, with other modules beside it, in any style (in the notch it is part of the notch)." }
-                ToggleRow {
-                    width: parent.width
-                    label: "Music on hover"
-                    desc: "Point at the island while music plays to open the player (a click always opens it)"
-                    checked: page.v("island_hover", true) !== false
-                    onToggled: function(x) { page.setv("island_hover", x ? "on" : "off") }
+            // the island has a page of its own now
+            Rectangle {
+                width: parent.width; height: 62; radius: 14
+                color: ilm.containsMouse ? M3.surfaceHigh : M3.surfaceC
+                Behavior on color { ColorAnimation { duration: 120 } }
+                Column {
+                    anchors.left: parent.left; anchors.leftMargin: 18; anchors.verticalCenter: parent.verticalCenter; spacing: 3
+                    T { text: "Dynamic island"; font.pixelSize: 14; font.bold: true }
+                    T { kind: "reading"; text: "What the island in the bar shows and grows into"; color: M3.inkDim; font.pixelSize: 12 }
                 }
-                ToggleRow {
-                    width: parent.width
-                    label: "Volume and microphone"
-                    desc: "The island shows the volume instead of the pop-up at the bottom"
-                    checked: page.v("island_volume", true) !== false
-                    onToggled: function(x) { page.setv("island_volume", x ? "on" : "off") }
-                }
-                ToggleRow {
-                    width: parent.width
-                    label: "Workspaces"
-                    desc: "Shows which workspace you switched to"
-                    checked: page.v("island_ws", true) !== false
-                    onToggled: function(x) { page.setv("island_ws", x ? "on" : "off") }
-                }
-                ToggleRow {
-                    width: parent.width
-                    label: "Notifications"
-                    desc: "New notifications grow out of the island instead of popping up (urgent ones still pop up). Needs Shown by: DarkShadow"
-                    checked: page.v("island_notifs", true) !== false
-                    onToggled: function(x) { page.setv("island_notifs", x ? "on" : "off") }
-                }
+                T { kind: "icon"; anchors.right: parent.right; anchors.rightMargin: 18; anchors.verticalCenter: parent.verticalCenter; text: ""; color: M3.inkDim }
+                MouseArea { id: ilm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.ctl.page = 6 }
             }
             ToggleRow {
                 label: "Auto-hide"

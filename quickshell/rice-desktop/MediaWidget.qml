@@ -11,6 +11,9 @@ Item {
         return l.length > 0 ? l[0] : null
     }
     readonly property var player: pick()
+    property bool running: true
+    // where the song is (asked for once a second while it plays)
+    Player { id: pl; running: me.running && me.visible }
 
     Card { anchors.fill: parent; k: me.bg; pal: me.pal }
 
@@ -50,7 +53,19 @@ Item {
         }
     }
 
+    // how far the song is, as a wave you can drag
+    WavyLine {
+        anchors.left: art.right; anchors.leftMargin: 14
+        anchors.right: ctrls.left; anchors.rightMargin: 10
+        anchors.verticalCenter: ctrls.verticalCenter; height: 18
+        visible: pl.has && pl.length > 0
+        value: pl.frac; moving: pl.playing; seekable: true
+        color: me.pal ? me.pal.primary : "#9ec9bd"; track: me.pal ? me.pal.track : Qt.rgba(1, 1, 1, 0.14)
+        onMoved: function(v) { pl.seekTo(v) }
+    }
+
     Row {
+        id: ctrls
         anchors.right: parent.right
         anchors.rightMargin: 18
         anchors.bottom: parent.bottom
@@ -70,12 +85,15 @@ Item {
                 onClicked: me.player.previous()
             }
         }
-        Rectangle {
+        // play / pause in your shape (a circle while it waits), it turns while music plays
+        Item {
             width: 44
             height: 44
-            radius: 22
-            color: me.pal ? me.pal.primary : "#F6F5F4"
             opacity: me.player ? 1 : 0.35
+            Blob { anchors.fill: parent; kind: me.player && me.player.isPlaying ? Look.shape : "circle"; color: me.pal ? me.pal.primary : "#F6F5F4"
+                scale: pm.pressed ? 0.86 : 1
+                Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
+                RotationAnimator on rotation { from: 0; to: 360; duration: 12000; loops: Animation.Infinite; running: me.player && me.player.isPlaying && !Look.lite } }
             T {
                 anchors.centerIn: parent
                 text: me.player && me.player.isPlaying ? "" : ""
@@ -83,6 +101,7 @@ Item {
                 color: me.pal ? me.pal.inkOn : "#0d0d0d"
             }
             MouseArea {
+                id: pm
                 anchors.fill: parent
                 enabled: me.player !== null
                 cursorShape: Qt.PointingHandCursor

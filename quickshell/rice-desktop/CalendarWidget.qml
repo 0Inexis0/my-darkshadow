@@ -86,12 +86,14 @@ Item {
             delegate: Item {
                 width: grid.cellW
                 height: 34
-                Rectangle {
+                // today in your shape
+                Blob {
                     anchors.centerIn: parent
-                    width: 32
-                    height: 32
-                    radius: 16
-                    color: modelData.today ? (cal.pal ? cal.pal.primary : "#F6F5F4") : "transparent"
+                    width: 32; height: 32
+                    visible: modelData.today
+                    kind: Look.shape
+                    color: cal.pal ? cal.pal.primary : "#F6F5F4"
+                    RotationAnimator on rotation { from: 0; to: 360; duration: 30000; loops: Animation.Infinite; running: modelData.today && !Look.lite }
                 }
                 T {
                     kind: "number"

@@ -512,6 +512,12 @@ step_apps() {
     esac
     task "$n  ->  ~/.config/quickshell/$d" copy_tree "$ROOT/quickshell/$d" "$HOME/.config/quickshell/$d"
   done
+  # V3.38: the dashboard is gone (the bar's island took its place); its old files leave the config too
+  local old
+  for old in Dashboard DashAbout DashControl DashGrid DashHome DashPerf DashTasks DashWalls DCard DRing DSlide WallPreview; do
+    rm -f "$HOME/.config/quickshell/rice-desktop/$old.qml"
+  done
+  rm -f "$HOME/.config/quickshell/rice-settings/DashboardPage.qml" "$HOME/.config/quickshell/rice-settings/DashMini.qml"
   if ! printf '%s' ":$PATH:" | grep -q ":$HOME/.local/bin:"; then
     warn "\$HOME/.local/bin is not in your PATH. Add it in your shell config (fish: fish_add_path \$HOME/.local/bin)"
   fi

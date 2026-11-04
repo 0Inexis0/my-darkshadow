@@ -87,7 +87,7 @@ Item {
                 T { text: "INTERFACE FONT"; font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2; color: M3.alpha(M3.inkPrimaryC, 0.75) }
                 T { kind: "title"; text: Fonts.main; font.pixelSize: 26; font.weight: Font.Medium; color: M3.inkPrimaryC }
                 T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.alpha(M3.inkPrimaryC, 0.85)
-                    text: page.have("Google Sans Flex") ? "Settings, the bar, the launcher, notifications, the dashboard and widgets all use it. Point at Aa to see it bold."
+                    text: page.have("Google Sans Flex") ? "Settings, the bar, the launcher, notifications, the island and widgets all use it. Point at Aa to see it bold."
                                                          : "Google Sans Flex is not installed yet: run rice-fonts (the installer does it for you)." }
                 Btn { visible: page.have("Google Sans Flex") && Fonts.main !== "Google Sans Flex"; text: "Use Google Sans Flex"; sym: "font_download"; icon: ""; primary: true; onClicked: page.useGoogle() }
             }

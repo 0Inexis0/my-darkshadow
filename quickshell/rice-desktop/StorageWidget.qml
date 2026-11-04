@@ -37,21 +37,12 @@ Item {
     Item {
         anchors.centerIn: parent
         width: parent.height - 12; height: width
-        Canvas {
-            anchors.fill: parent
+        WavyArc { anchors.fill: parent; thick: 4; waves: 10; moving: false
             property real f: sw.frac
-            onFChanged: requestPaint()
-            onPaint: {
-                const c = getContext("2d"); c.reset()
-                const r = width / 2 - 3
-                c.lineWidth = 4; c.lineCap = "round"
-                c.strokeStyle = sw.pal ? sw.pal.track : "rgba(255,255,255,0.14)"
-                c.beginPath(); c.arc(width / 2, height / 2, r, 0, Math.PI * 2); c.stroke()
-                c.strokeStyle = sw.pal ? sw.pal.primary : "#9ec9bd"
-                c.beginPath(); c.arc(width / 2, height / 2, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0.01, f)); c.stroke()
-            }
-        }
-        Blob { anchors.centerIn: parent; width: parent.width - 16; height: width; kind: "cookie"; color: sw.pal ? sw.pal.chip : Qt.rgba(1, 1, 1, 0.08) }
+            Behavior on f { NumberAnimation { duration: 700; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
+            value: Math.max(0.01, f)
+            color: sw.frac > 0.9 ? "#ff8a80" : (sw.pal ? sw.pal.primary : "#9ec9bd"); track: sw.pal ? sw.pal.track : Qt.rgba(1, 1, 1, 0.14) }
+        Blob { anchors.centerIn: parent; width: parent.width - 16; height: width; kind: Look.shape; color: sw.pal ? sw.pal.chip : Qt.rgba(1, 1, 1, 0.08) }
         MIcon { anchors.centerIn: parent; size: parent.width * 0.32; name: "storage"; glyph: ""; color: sw.pal ? sw.pal.fg : "#F6F5F4" }
     }
 }

@@ -50,14 +50,15 @@ Item {
 
     Card { anchors.fill: parent; k: we.bg; pal: we.pal }
 
-    T {
+    // the weather's icon inside your shape, which turns slowly
+    Item {
         id: ic
-        kind: "icon"
-        x: 24
+        x: 20
+        width: 76; height: 76
         anchors.verticalCenter: parent.verticalCenter
-        text: we.glyph(we.cond)
-        font.pixelSize: 52
-        color: we.pal ? we.pal.primary : "#F6F5F4"
+        Blob { anchors.fill: parent; kind: Look.shape; color: we.pal ? we.pal.chip : Qt.rgba(1, 1, 1, 0.08)
+            RotationAnimator on rotation { from: 0; to: 360; duration: 40000; loops: Animation.Infinite; running: we.running && !Look.lite } }
+        T { kind: "icon"; anchors.centerIn: parent; text: we.glyph(we.cond); font.pixelSize: 38; color: we.pal ? we.pal.primary : "#F6F5F4" }
     }
     Column {
         anchors.left: ic.right

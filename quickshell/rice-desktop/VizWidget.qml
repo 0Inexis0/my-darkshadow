@@ -13,9 +13,24 @@ Item {
     property bool flip: false
     property var pal: null            // the widget's palette: tells if the wallpaper behind is light
     property var bars: []
-    readonly property int count: 64
+    // Edit mode > Visualizer: how many bars, their ends (square, rounded, pill) and the space between them
+    property int nBars: 64
+    property string shape: "square"
+    property string spacing: "normal"
+    readonly property int count: nBars === 16 || nBars === 32 || nBars === 48 ? nBars : 64
     readonly property real pitch: width / count
-    readonly property real gap: style === "dots" ? 4 : (style === "wave" ? 3 : Math.max(2, Math.min(14, pitch * 0.32)))
+    readonly property real gapK: spacing === "thin" ? 0.16 : (spacing === "wide" ? 0.5 : 0.32)
+    readonly property real gap: style === "dots" ? 4 : (style === "wave" ? 3 : Math.max(2, Math.min(28, pitch * gapK)))
+    // the level of bar i: the loudest of the cava bars it covers
+    function level(b, i) {
+        const k = 64 / count
+        let m = 0
+        for (let j = Math.floor(i * k); j < Math.floor((i + 1) * k); j++) if ((b[j] || 0) > m) m = b[j]
+        return m
+    }
+    onNBarsChanged: cv.requestPaint()
+    onShapeChanged: cv.requestPaint()
+    onSpacingChanged: cv.requestPaint()
     readonly property real bw: Math.max(1, (width - gap * (count - 1)) / count)
 
     readonly property bool lightBg: pal ? pal.light : false
@@ -79,11 +94,13 @@ Item {
                 // a little dimmer at the base, brightest in the middle, fading toward the tip
                 const mir = vz.style === "mirror"
                 const span = mir ? H / 2 : H
+                const rr = vz.shape === "pill" ? 0.5 : (vz.shape === "rounded" ? 0.3 : 0)
                 for (let i = 0; i < n; i++) {
-                    const v = Math.max(0, Math.min(1, (b[i] || 0) / 100))
-                    const h = Math.max(2, Math.round(v * span))
-                    const x = Math.round(i * (vz.bw + vz.gap))
+                    const v = Math.max(0, Math.min(1, vz.level(b, i) / 100))
                     const w = Math.max(1, Math.round(vz.bw))
+                    const r = Math.min(w / 2, Math.max(0, w * rr), 14)
+                    const h = Math.max(Math.max(2, r * 2), Math.round(v * span))
+                    const x = Math.round(i * (vz.bw + vz.gap))
                     const col = vz.colorAt(i)
                     const y0 = mir ? H / 2 : (vz.flip ? 0 : H)           // where the bars start
                     const y1 = mir ? 0 : (vz.flip ? H : 0)               // where a full bar ends
@@ -92,22 +109,24 @@ Item {
                     g.addColorStop(0.5, vz.css(col, 1))
                     g.addColorStop(1, vz.css(col, 0.3))
                     c.fillStyle = g
+                    // a bar: straight, or with round ends
+                    function bar(bx, by, bw2, bh2) { c.beginPath(); if (r > 0.5) c.roundedRect(bx, by, bw2, bh2, r, r); else c.rect(bx, by, bw2, bh2); c.fill() }
                     if (mir) {
-                        c.beginPath(); c.rect(x, H / 2 - h, w, h); c.fill()
+                        bar(x, H / 2 - h, w, h)
                         const g2 = c.createLinearGradient(0, H / 2, 0, H)
                         g2.addColorStop(0, vz.css(col, 0.82))
                         g2.addColorStop(0.5, vz.css(col, 1))
                         g2.addColorStop(1, vz.css(col, 0.3))
                         c.fillStyle = g2
-                        c.beginPath(); c.rect(x, H / 2, w, h); c.fill()
+                        bar(x, H / 2, w, h)
                     } else {
-                        c.beginPath(); c.rect(x, vz.flip ? 0 : H - h, w, h); c.fill()
+                        bar(x, vz.flip ? 0 : H - h, w, h)
                     }
                 }
             } else if (vz.style === "wave") {
                 const pts = []
                 for (let i = 0; i < n; i++) {
-                    const v = (b[i] || 0) / 100
+                    const v = vz.level(b, i) / 100
                     const x = i * W / (n - 1)
                     pts.push([x, vz.flip ? v * H * 0.95 : H - v * H * 0.95])
                 }
@@ -146,7 +165,7 @@ Item {
                 const d = Math.max(2, Math.min(vz.bw, 10))
                 const step = d + 3
                 for (let i = 0; i < n; i++) {
-                    const v = (b[i] || 0) / 100
+                    const v = vz.level(b, i) / 100
                     const k = Math.max(1, Math.round(v * H / step))
                     const x = i * (vz.bw + vz.gap) + vz.bw / 2
                     const col = vz.colorAt(i)

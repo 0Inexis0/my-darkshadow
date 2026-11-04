@@ -1,5 +1,14 @@
 # Changelog
 
+## V3.38
+- The dashboard is gone for good: the bar's island does its work. Settings > Dashboard became Settings > Dynamic island, with a live picture of the island and new options: weather and date beside the time, the charger as a wave (laptops), which tab a click opens (Today, System, About) and how fast the card closes
+- Every workspace has its own color (your key color turned around the color wheel), in the bar and in the island
+- Wi-Fi, Bluetooth, notifications and power get a line under them while you point at them, like the volume (red under power)
+- The time sits straight between the modules beside it
+- Shut down is red in the power menu
+- Visualizer (cava): 16, 32, 48 or 64 bars, square, rounded or pill ends, thin, normal or wide spaces, and up to 700 px tall (Edit mode > Visualizer)
+- Widgets: wavy rings in Resources, Storage, Battery and Focus, a wavy progress line you can drag in Music, your shape behind the weather icon, today in the calendar, the play button and the ring icons; they come back softly and leave quicker
+
 ## V3.37
 - The island opens slower and softer when you point at it or click it (and closes a little quicker), its content fades in more gently
 - The island and the bar sit on whole pixels: the time is sharp and straight in the notch

@@ -273,7 +273,7 @@ ShellRoot {
         bw: root.sw; bh: root.sh; cw: 400; ch: 120; defX: root.sw - 440; defY: 60
         onMoved: function(id, x, y) { root.savePos(id, x, y) }
         Component.onCompleted: root.reg(wid, mediaWin)
-        MediaWidget { anchors.fill: parent; pal: mediaWin.pal; bg: mediaWin.bgv }
+        MediaWidget { anchors.fill: parent; pal: mediaWin.pal; bg: mediaWin.bgv; running: root.on("media") && !root.hideWidgets }
     }
     WidgetWindow {
         id: calWin
@@ -419,7 +419,8 @@ ShellRoot {
         bw: root.sw; bh: root.sh
         defW: root.sw; defH: 180; defX: 0; defY: root.sh - 180
         Component.onCompleted: root.reg(wid, vizWin)
-        VizWidget { anchors.fill: parent; running: root.on("visualizer") && !root.hideWidgets && !Look.lite; style: vizWin.sty !== "" ? vizWin.sty : "bars"; flip: vizWin.flp; pal: vizWin.pal; colorMode: vizWin.vcolor !== "" ? vizWin.vcolor : "accent" }
+        VizWidget { anchors.fill: parent; running: root.on("visualizer") && !root.hideWidgets && !Look.lite; style: vizWin.sty !== "" ? vizWin.sty : "bars"; flip: vizWin.flp; pal: vizWin.pal; colorMode: vizWin.vcolor !== "" ? vizWin.vcolor : "accent"
+            nBars: Number(root.optOf("visualizer", "bars", 64)); shape: root.optOf("visualizer", "shape", "square"); spacing: root.optOf("visualizer", "gap", "normal") }
     }
 
     // reads how bright the wallpaper is in each part of the screen, so every widget can pick dark or light text
@@ -428,7 +429,6 @@ ShellRoot {
     EditorWindow { root: root }
 
     // ---- dashboard (middle of the bar edge, SUPER + W for wallpapers)
-    Dashboard { id: dash }
     Launcher { }
     WallPicker { }
     Bar { id: mainBar; nf: notifs }
@@ -450,7 +450,6 @@ ShellRoot {
     GamePanel { }
     Notifs { id: notifs; islandTakes: mainBar.islandNotifs && notifs.shellMode }
     ControlCenter { nf: notifs }
-    WallPreview { path: dash.previewPath }
 
     Dock { dc: root.cfg.dock ? root.cfg.dock : ({}) }
 

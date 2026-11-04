@@ -75,7 +75,7 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 **NixOS**: see [Installation](#installation) below. Then log out and pick Hyprland, and press `SUPER + U`.
 
 ## Features
-**Settings app** (`SUPER+U`) in the spirit of Material 3: a navigation rail (Home, Wallpaper, Appearance, Motion, Desktop, Bar, Sound, System, Gaming, About) with tabs, Google icons, colors made from your theme and a search over every setting.
+**Settings app** (`SUPER+U`) in the spirit of Material 3: a navigation rail (Home, Wallpaper, Appearance, Motion, Desktop, Bar & island, Sound, System, Gaming, About) with tabs, Google icons, colors made from your theme and a search over every setting.
 
 **Font**: the whole interface uses **Google Sans Flex** (and Google Sans Code for codes), both open source under the SIL Open Font License; the terminal keeps JetBrainsMono Nerd Font.
 
@@ -86,7 +86,7 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 | **Autohide** | bar slides in when the pointer touches the screen edge |
 | **Distro logo** | the logo of your distro (NixOS, Arch, CachyOS, Fedora, Nobara, EndeavourOS ...) in the bar, the dashboard, the welcome window and Settings, picked automatically |
 | **Desktop widgets** | frosted glass over your blurred wallpaper (or plain cards), auto-hide while windows are open; clock, calendar, weather, music, resources (CPU, RAM, GPU), user card, battery gauges in soft shapes (CPU, RAM, GPU, heat, battery), the date in a flower, and a see-through audio visualizer (Bars like cava in a terminal, Mirror, Wave, Dots, in your Theme color, a gradient or rainbow), a to-do list, a focus timer and a note; three widget styles (DarkShadow, Google, Outline); colors that turn light or dark with your wallpaper; Sky, Now playing, Player, Play button, Lyrics, Storage and CPU · GPU · RAM; Edit mode with a side panel for widgets, quick settings, the bar and the visualizer |
-| **Today & System** | the dashboard lives in the bar: click the clock (or SUPER + ALT + D) and a Material 3 card grows out of the bar with today (calendar, weather, the day as a wave) and System (CPU, GPU and RAM in wavy rings, the disk); right-click for System. The classic dashboard is one switch away (Settings > Dashboard) |
+| **Today & System** | the dashboard lives in the bar: click the clock (or SUPER + ALT + D) and a Material 3 card grows out of the bar with today (calendar, weather, the day as a wave) and System (CPU, GPU and RAM in wavy rings, the disk); right-click for System. Settings > Dynamic island: weather and date beside the time, what it grows into (music, volume, workspaces, notifications, the charger), which tab a click opens and how fast the card closes |
 | **Wallpaper picker** | SUPER + W: your wallpapers in a sheet with search, shuffle and keys; colors follow |
 | **Bar layout** | five ready-made Material 3 layouts, and drag and drop the modules between left, center and right: launcher, workspaces, window title, music, the island (your clock), tray (right-click an app: its menu and Close app), volume, Bluetooth, Wi-Fi, battery, notifications, power |
 | **Dock** | bottom, left or right edge, its own app menu with search, pinned favourite apps (also in Settings > Dock), open apps, hover to reveal, media player, tinted icons |
@@ -142,7 +142,7 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 | `SUPER + G` | game bar |
 | `SUPER + N` | control center (notifications) |
 | `SUPER + ALT + W` | edit desktop widgets (add, move, resize, style) |
-| `SUPER + ALT + D` | today & system card from the bar (the classic dashboard when it is on) |
+| `SUPER + ALT + D` | today & system card from the bar's island |
 | `SUPER + W` | wallpaper picker |
 
 ## Installation

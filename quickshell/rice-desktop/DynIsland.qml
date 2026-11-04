@@ -73,6 +73,8 @@ Item {
     onVolChanged: if (ready && !ghost && on("island_volume")) show("volume", 1600)
     onMutedChanged: if (ready && !ghost && on("island_volume")) show("volume", 1600)
     onMicMutedChanged: if (ready && !ghost && on("island_volume")) show("mic", 1600)
+    readonly property bool charging: bar ? bar.charging : false
+    onChargingChanged: if (ready && !ghost && bar && bar.hasBatt && on("island_charge")) show("charge", 2400)
     readonly property int wsId: bar ? bar.focusedId : 1
     onWsIdChanged: if (ready && !ghost && on("island_ws") && flash !== "volume") show("ws", 1100)
     Connections {
@@ -114,6 +116,8 @@ Item {
             if (p.length >= 2) { isl.wCond = p[0].trim(); isl.wTemp = p[1].trim().replace(/^\+/, ""); isl.wPlace = (p[2] || "").trim() } } }
     }
     onInfoOpenChanged: if (infoOpen && !wProc.running) wProc.running = true
+    Timer { interval: 1800000; repeat: true; triggeredOnStart: true; running: isl.visible && !isl.ghost && isl.cfg.island_weather !== false
+        onTriggered: if (!wProc.running) wProc.running = true }
     function wIcon(c) {
         const t = String(c).toLowerCase(), h = new Date().getHours(), night = h >= 20 || h < 6
         if (t.indexOf("thunder") >= 0) return "thunderstorm"
@@ -173,6 +177,7 @@ Item {
         case "volume": case "mic": return 300
         case "ws": return Math.max(190, wsRow.implicitWidth + 40)
         case "rec": return recRow.implicitWidth + 30
+        case "charge": return 300
         }
         return idleRow.implicitWidth + 30
     }
@@ -206,7 +211,7 @@ Item {
     }
     Timer { id: openT; interval: 340; onTriggered: isl.hoverOpen = pl.has }
     Timer { id: closeT; interval: 450; onTriggered: isl.hoverOpen = false }
-    Timer { id: pinT; interval: 3500; onTriggered: { isl.pinned = false; isl.infoOpen = false } }
+    Timer { id: pinT; interval: Math.max(2, isl.cfg.island_close || 4) * 1000; onTriggered: { isl.pinned = false; isl.infoOpen = false } }
     // the player closes by itself when nothing plays any more
     onPlayingChanged: if (!playing && !hovering) { pinT.restart(); closeT.restart() }
     readonly property bool playing: pl.playing
@@ -229,7 +234,7 @@ Item {
             MouseArea {
                 anchors.fill: parent; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
                 // left: today (calendar, weather), right: system (what the computer is doing)
-                onClicked: function(m) { isl.openInfo(m.button === Qt.RightButton ? "system" : "today", true) }
+                onClicked: function(m) { isl.openInfo(m.button === Qt.RightButton ? "system" : (isl.cfg.island_tab || "today"), true) }
                 onWheel: function(e) { if (isl.bar.sink && isl.bar.sink.audio) isl.bar.sink.audio.volume = Math.max(0, Math.min(1, isl.bar.sink.audio.volume + (e.angleDelta.y > 0 ? 0.04 : -0.04))) }
             }
             Row {
@@ -242,6 +247,16 @@ Item {
                     RotationAnimator on rotation { from: 0; to: 360; duration: 9000; loops: Animation.Infinite; running: pl.playing && !Look.lite } }
                 Text { anchors.verticalCenter: parent.verticalCenter; text: isl.bar ? isl.bar.timeText : ""
                     color: isl.pal ? isl.pal.fg : "white"; font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.DemiBold }
+                // Settings > Dynamic island: the date and the weather beside the time
+                Text { visible: isl.cfg.island_date === true; anchors.verticalCenter: parent.verticalCenter; text: isl.bar ? isl.bar.dateText : ""
+                    color: isl.pal ? isl.pal.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium }
+                Row {
+                    visible: isl.cfg.island_weather !== false && isl.wTemp !== ""
+                    anchors.verticalCenter: parent.verticalCenter; spacing: 4
+                    MIcon { anchors.verticalCenter: parent.verticalCenter; size: 16; filled: true; glyph: ""; name: isl.wIcon(isl.wCond); color: isl.pal ? isl.pal.primary : "white" }
+                    Text { anchors.verticalCenter: parent.verticalCenter; text: isl.wTemp.replace(/[CF]$/, ""); color: isl.pal ? isl.pal.dim : "#aaa"
+                        font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium }
+                }
                 Eq { visible: pl.playing; anchors.verticalCenter: parent.verticalCenter; h: 14; go: isl.pillMode === "idle" }
             }
         }
@@ -295,6 +310,27 @@ Item {
             }
         }
 
+        // ---------- the charger: plugged in or out, with how full the battery is ----------
+        Face {
+            name: "charge"; width: 300; height: isl.bh
+            Row {
+                anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 16
+                spacing: 10
+                Item { width: isl.bh - 10; height: width; anchors.verticalCenter: parent.verticalCenter
+                    Blob { anchors.fill: parent; kind: Look.shape; color: isl.bar && isl.bar.charging ? "#9be08f" : (isl.pal ? isl.pal.container : "#333") }
+                    MIcon { anchors.centerIn: parent; size: 16; filled: true; glyph: ""; name: isl.bar && isl.bar.charging ? "bolt" : "battery_full"
+                        color: isl.bar && isl.bar.charging ? "#0f2a0c" : (isl.pal ? isl.pal.inkContainer : "white") } }
+                WavyLine {
+                    width: parent.width - isl.bh - 48; height: 18; anchors.verticalCenter: parent.verticalCenter
+                    value: isl.bar ? isl.bar.battPct / 100 : 0; moving: isl.bar && isl.bar.charging; handle: false
+                    color: isl.bar && isl.bar.charging ? "#9be08f" : (isl.bar && isl.bar.battPct <= 15 ? "#ff8a80" : (isl.pal ? isl.pal.primary : "white"))
+                    track: isl.pal ? isl.pal.track : "#444"
+                }
+                Text { width: 30; anchors.verticalCenter: parent.verticalCenter; horizontalAlignment: Text.AlignRight
+                    text: isl.bar ? isl.bar.battPct + "%" : ""; color: isl.pal ? isl.pal.fg : "white"; font.family: Fonts.numbers; font.pixelSize: 13; font.weight: Font.Medium }
+            }
+        }
+
         // ---------- workspace ----------
         Face {
             name: "ws"; width: isl.tw; height: isl.bh
@@ -321,14 +357,15 @@ Item {
                             anchors.centerIn: parent
                             width: parent.width; height: wc.act ? 20 : 8; radius: height / 2
                             Behavior on height { SpringAnimation { spring: 4; damping: 0.35 } }
-                            color: wc.act ? (isl.pal ? isl.pal.primary : "white") : (isl.pal ? isl.pal.track : "#555")
+                            color: wc.act ? (isl.bar ? isl.bar.wsTint(wc.wid) : "white") : (isl.pal ? isl.pal.track : "#555")
+                            Behavior on color { ColorAnimation { duration: 300 } }
                             Text { anchors.centerIn: parent; visible: wc.act; text: wc.wid; color: isl.pal ? isl.pal.inkPrimary : "black"; font.family: Fonts.main; font.pixelSize: 11; font.weight: Font.Bold }
                         }
                         // letters / numbers: the active one in a round pill of your key color
                         Rectangle {
                             visible: wc.st === "letters" || wc.st === "numbers"
                             anchors.centerIn: parent; width: 22; height: 22; radius: 11
-                            color: isl.pal ? isl.pal.primary : "white"
+                            color: isl.bar ? isl.bar.wsTint(wc.wid) : "white"
                             opacity: wc.act ? 1 : 0; scale: wc.act ? 1 : 0.4
                             Behavior on opacity { NumberAnimation { duration: 180 } }
                             Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.OutBack } }

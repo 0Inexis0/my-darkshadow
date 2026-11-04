@@ -65,7 +65,7 @@ Item {
                         T { id: lt; anchors.centerIn: parent; text: "MIT license"; font.pixelSize: 12; color: M3.inkPrimaryC } }
                 }
                 T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.inkPrimaryC
-                    text: "A Hyprland desktop with its own bar, launcher, dashboard, dock, widgets and this Settings app. Made by shadow." }
+                    text: "A Hyprland desktop with its own bar with a dynamic island, launcher, dock, widgets and this Settings app. Made by shadow." }
                 Row {
                     spacing: 8
                     topPadding: 4

@@ -314,8 +314,8 @@ PanelWindow {
                             anchors.centerIn: parent
                             width: parent.width; height: bar.goo && act ? 22 : (bar.goo ? 10 : 14); radius: height / 2
                             Behavior on height { NumberAnimation { duration: 260; easing.type: Easing.OutBack } }
-                            color: bar.goo ? (act ? gp.primary : (occ ? gp.inkContainer : gp.track))
-                                           : (act ? bar.fg : (occ ? Qt.rgba(0.965, 0.961, 0.957, 0.62) : Qt.rgba(0.965, 0.961, 0.957, 0.24)))
+                            color: bar.goo ? (act ? bar.wsTint(wid) : (occ ? gp.inkContainer : gp.track))
+                                           : (act ? bar.wsTint(wid) : (occ ? Qt.rgba(0.965, 0.961, 0.957, 0.62) : Qt.rgba(0.965, 0.961, 0.957, 0.24)))
                             // Google: the active workspace shows its number
                             Text { anchors.centerIn: parent; visible: bar.goo; opacity: act ? 1 : 0; text: String(wid)
                                 color: gp.inkPrimary; font.family: Fonts.main; font.pixelSize: 12; font.weight: Font.Bold
@@ -340,7 +340,7 @@ PanelWindow {
                             visible: bar.goo && !wsm.dots && !wsm.pac
                             anchors.centerIn: parent
                             width: 22; height: 22; radius: 11
-                            color: gp.primary
+                            color: bar.wsTint(wid)
                             opacity: act ? 1 : 0
                             scale: act ? 1 : 0.5
                             Behavior on opacity { NumberAnimation { duration: 200 } }
@@ -474,8 +474,8 @@ PanelWindow {
     }
 
     Component { id: mVolume
-        Item { property bool shown: true; width: 28; height: bar.barH
-            MIcon { anchors.centerIn: parent; size: 23; color: bar.muted ? bar.dim : bar.fg
+        Item { property bool shown: true; width: 24; height: bar.barH
+            MIcon { anchors.centerIn: parent; size: 22; color: bar.muted ? bar.dim : bar.fg
                 name: bar.muted ? "volume_off" : (bar.vol < 0.34 ? "volume_mute" : (bar.vol < 0.67 ? "volume_down" : "volume_up"))
                 glyph: String.fromCodePoint(bar.muted ? 0xF0581 : (bar.vol < 0.34 ? 0xF057F : (bar.vol < 0.67 ? 0xF0580 : 0xF057E))) }
             MouseArea { id: vm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -485,11 +485,7 @@ PanelWindow {
                     if (bar.sink && bar.sink.audio) bar.sink.audio.muted = !bar.sink.audio.muted
                 }
                 onWheel: function(e) { if (bar.sink && bar.sink.audio) bar.sink.audio.volume = Math.max(0, Math.min(1, bar.sink.audio.volume + (e.angleDelta.y > 0 ? 0.04 : -0.04))) } }
-            Rectangle {   // a small level line under the icon
-                anchors.horizontalCenter: parent.horizontalCenter; y: parent.height / 2 + 14; height: 2; radius: 1
-                width: 16 * Math.min(1, bar.vol); color: bar.fg; opacity: vm.containsMouse ? 0.9 : 0
-                Behavior on opacity { NumberAnimation { duration: 160 } }
-            }
+            HoverLine { on: vm.containsMouse; full: 16 * Math.min(1, bar.vol) }   // how loud, as a line under the icon
         }
     }
 
@@ -498,11 +494,12 @@ PanelWindow {
             MIcon { anchors.centerIn: parent; size: 18; color: bar.svc.network ? bar.fg : bar.dim
                 name: bar.svc.network ? "wifi" : "wifi_off"
                 glyph: String.fromCodePoint(bar.svc.network ? 0xF05A9 : 0xF05AA) }
-            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
+            MouseArea { id: nm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
                 onClicked: function(m) {
                     const p = mapToItem(null, width / 2, 0)
                     bar.run("\"$HOME/.local/bin/rice-wifi\" " + Math.round(p.x))
                 } }
+            HoverLine { on: nm.containsMouse }
         }
     }
 
@@ -511,11 +508,12 @@ PanelWindow {
             MIcon { anchors.centerIn: parent; size: 18; color: bar.svc.bluetooth ? bar.fg : bar.dim
                 name: bar.svc.bluetooth ? "bluetooth" : "bluetooth_disabled"
                 glyph: String.fromCodePoint(bar.svc.bluetooth ? 0xF00AF : 0xF00B2) }
-            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
+            MouseArea { id: bm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
                 onClicked: function(m) {
                     const p = mapToItem(null, width / 2, 0)
                     bar.run("\"$HOME/.local/bin/rice-bluetooth\" " + Math.round(p.x))
                 } }
+            HoverLine { on: bm.containsMouse }
         }
     }
 
@@ -536,8 +534,9 @@ PanelWindow {
             MIcon { anchors.centerIn: parent; size: 18; color: bar.svc.dnd ? bar.dim : bar.fg
                 name: bar.svc.dnd ? "notifications_off" : "notifications"
                 glyph: String.fromCodePoint(bar.svc.dnd ? 0xF009B : 0xF009A) }
-            MouseArea { anchors.fill: parent; acceptedButtons: Qt.LeftButton | Qt.RightButton; cursorShape: Qt.PointingHandCursor
+            MouseArea { id: dm; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton; cursorShape: Qt.PointingHandCursor
                 onClicked: function(m) { bar.run(m.button === Qt.RightButton ? "\"$HOME/.local/bin/rice-cc\" dnd toggle" : "\"$HOME/.local/bin/rice-cc\" toggle"); svcAgain.restart() } }
+            HoverLine { on: dm.containsMouse }
         }
     }
 
@@ -566,7 +565,27 @@ PanelWindow {
                     const p = mapToItem(null, width / 2, 0)
                     bar.run("\"$HOME/.local/bin/rice-power\" " + Math.round(p.x))
                 } }
+            HoverLine { on: pm.containsMouse; color: "#ff6b6b" }
         }
+    }
+
+    // a short line under a module while you point at it (it grows out from the middle)
+    component HoverLine: Rectangle {
+        property bool on: false
+        property real full: 16
+        anchors.horizontalCenter: parent.horizontalCenter; y: Math.round(parent.height / 2 + 13)
+        height: 2; radius: 1
+        width: on ? full : 4
+        color: bar.fg
+        opacity: on ? 0.9 : 0
+        Behavior on width { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+        Behavior on opacity { NumberAnimation { duration: 160 } }
+    }
+    // each workspace has its own color: your key color turned around the color wheel
+    function wsTint(id) {
+        const c = gp.primary
+        const h = (c.hslHue < 0 ? 0.55 : c.hslHue) + (id - 1) * 0.12
+        return Qt.hsla(h - Math.floor(h), Math.max(0.35, c.hslSaturation), c.hslLightness, 1)
     }
 
     // ---------- one side of the bar: a row of modules ----------

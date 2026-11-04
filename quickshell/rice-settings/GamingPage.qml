@@ -140,7 +140,6 @@ Item {
         ToggleRow { label: "Keep shadows"; desc: "Shadows under windows"; checked: page.fxOpt("keep_shadows"); onToggled: function(v) { page.setOpt("keep_shadows", v) } }
         ToggleRow { label: "Keep gaps"; desc: "Space between windows and around the screen"; checked: page.fxOpt("keep_gaps"); onToggled: function(v) { page.setOpt("keep_gaps", v) } }
         ToggleRow { label: "Do Not Disturb"; desc: "No notification popups while gaming mode is on"; checked: page.fxOpt("dnd"); onToggled: function(v) { page.setOpt("dnd", v) } }
-        ToggleRow { label: "Dashboard at the bottom edge"; desc: "Off: the pointer at the bottom of the screen does not open the dashboard while you play"; checked: page.fxOpt("edge"); onToggled: function(v) { page.setOpt("edge", v) } }
 
         SectionTitle { text: "Performance"; sub: "For laptops and older computers, also when you are not playing." }
         ToggleRow { label: "Light mode"; desc: "The visualizer stops and widgets rest while a window covers them"; checked: page.fx.lite === true; onToggled: function(v) { page.setLite(v) } }

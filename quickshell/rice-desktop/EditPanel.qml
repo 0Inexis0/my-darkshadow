@@ -322,10 +322,22 @@ Item {
                 Pills { options: [["accent", "Theme"], ["gradient", "Gradient"], ["rainbow", "Rainbow"], ["mono", "Mono"]]
                     current: ep.root ? ep.root.optOf("visualizer", "color", "accent") : "accent"
                     onChosen: function(v) { ep.root.setOpt("visualizer", "color", v) } }
+                Label { text: "Bars" }
+                Pills { options: [["16", "16"], ["32", "32"], ["48", "48"], ["64", "64"]]
+                    current: ep.root ? String(ep.root.optOf("visualizer", "bars", 64)) : "64"
+                    onChosen: function(v) { ep.root.setOpt("visualizer", "bars", v) } }
+                Label { text: "Bar ends" }
+                Pills { options: [["square", "Square"], ["rounded", "Rounded"], ["pill", "Pill"]]
+                    current: ep.root ? ep.root.optOf("visualizer", "shape", "square") : "square"
+                    onChosen: function(v) { ep.root.setOpt("visualizer", "shape", v) } }
+                Label { text: "Space between" }
+                Pills { options: [["thin", "Thin"], ["normal", "Normal"], ["wide", "Wide"]]
+                    current: ep.root ? ep.root.optOf("visualizer", "gap", "normal") : "normal"
+                    onChosen: function(v) { ep.root.setOpt("visualizer", "gap", v) } }
                 Label { text: "Height  ·  " + Math.round(viz.w ? viz.w.fh : 180) + " px" }
                 Item {
                     width: parent.width; height: 30
-                    readonly property real f: viz.w ? Math.max(0, Math.min(1, (viz.w.fh - 60) / 340)) : 0.35
+                    readonly property real f: viz.w ? Math.max(0, Math.min(1, (viz.w.fh - 60) / 640)) : 0.2
                     Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: 10; radius: 5; color: pal.cardHi }
                     Rectangle { anchors.verticalCenter: parent.verticalCenter; width: Math.max(10, parent.width * parent.f); height: 10; radius: 5; color: pal.primary }
                     Rectangle { x: parent.width * parent.f - 2; anchors.verticalCenter: parent.verticalCenter; width: 4; height: 24; radius: 2; color: pal.primary }
@@ -333,7 +345,7 @@ Item {
                         anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                         function set(x) {
                             const w = viz.w; if (!w) return
-                            const h = Math.round(60 + Math.max(0, Math.min(1, x / width)) * 340)
+                            const h = Math.round(60 + Math.max(0, Math.min(1, x / width)) * 640)
                             w.fh = h; if (!w.flp) w.py = ep.root.sh - h
                         }
                         onPressed: function(m) { set(m.x) }
