@@ -1,5 +1,8 @@
 # Changelog
 
+## V3.44
+- Fix: Google icons that should be filled showed the wrong picture (a globe instead of info, a broken play arrow, odd gears and checks): Qt mixed up the glyphs of the filled Material Symbols. Icons are drawn as the font draws them now
+
 ## V3.43
 - Fix (Fedora, CachyOS and others): one Hyprland setting or keybind that a Hyprland build does not know stopped the whole config, so Hyprland fell back to its emergency config (only SUPER + Enter worked, no bar). Such settings are skipped now and the rest works; what was skipped is in ~/.cache/rice/hypr-errors.log, with a notification
 - Fix: no cursor when the chosen cursor theme was not installed: a theme that is on the computer is used instead

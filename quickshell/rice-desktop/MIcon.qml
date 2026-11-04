@@ -1,7 +1,8 @@
 import QtQuick
 
-// An icon: Material Symbols name ("speed", "memory", ...) or a Nerd Font glyph as fallback. filled: the solid
-// version (Qt 6.7+ reads the font's FILL axis).
+// An icon: Material Symbols name ("speed", "memory", ...) or a Nerd Font glyph as fallback.
+// filled is kept for the callers but not used: Qt's FILL axis on Material Symbols mixes up glyphs (info drew a
+// globe, play_arrow a broken arrow), so every icon is drawn as the font draws it by default.
 Text {
     id: mi
     property string name: ""
@@ -14,7 +15,4 @@ Text {
     color: "#F6F5F4"
     verticalAlignment: Text.AlignVCenter
     horizontalAlignment: Text.AlignHCenter
-    function axes() { try { if (DashFont.symbols) font.variableAxes = { "FILL": filled ? 1 : 0 } } catch (e) { } }
-    Component.onCompleted: if (filled) axes()
-    onFilledChanged: axes()
 }
