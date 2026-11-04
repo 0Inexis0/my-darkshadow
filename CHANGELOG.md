@@ -1,5 +1,8 @@
 # Changelog
 
+## V3.48
+- Lock screen: the password field keeps asking for the focus until it has it (it could get lost when the lock window appears), the lock window asks Hyprland to be activated, and keys that reach the lock screen but not the field go into the field anyway
+
 ## V3.47
 - Lock screen: it takes the keyboard again as soon as Hyprland hands it over (Hyprland can do that a moment after the lock)
 - Lock screen: if no key reaches it, a button "Keyboard not working?" appears (bottom left): the session stays locked and hyprlock takes over, so you can always type your password

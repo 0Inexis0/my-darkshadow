@@ -149,19 +149,40 @@ FocusScope {
     }
     // the screen may get the keyboard a moment after it shows: ask again for a few seconds, and after any click
     Timer { id: refocus; interval: 50; onTriggered: keys.forceActiveFocus() }
-    Timer { interval: 250; repeat: true; running: !keys.activeFocus && (lv.t < 1 || lv.Window.active); onTriggered: keys.forceActiveFocus() }
+    // Quickshell moves this view into the real lock window only once the compositor has locked, and the focus can
+    // get lost on the way: ask for it until the field has it (a cheap check, it stops as soon as it works)
+    Timer { interval: 200; repeat: true; running: !keys.activeFocus; onTriggered: keys.forceActiveFocus() }
+    readonly property var win: Window.window
+    onWinChanged: {
+        console.log("[lock] the view is in a window:", !!win)
+        keys.forceActiveFocus(); refocus.restart()
+    }
+    function activate() {
+        keys.forceActiveFocus()
+        if (lv.win && !lv.isPreview) lv.win.requestActivate()
+    }
+    // keys that reach the view but not the field (no focus item yet): put them in the field anyway
+    Keys.onPressed: function(e) {
+        if (!lv.anyKey) { lv.anyKey = true; console.log("[lock] a key reached the view (not the field)") }
+        keys.forceActiveFocus()
+        if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) { if (lv.root) lv.root.submit() }
+        else if (e.key === Qt.Key_Backspace) { if (!keys.readOnly) keys.text = keys.text.slice(0, -1) }
+        else if (e.key === Qt.Key_Escape) { if (lv.isPreview) Qt.quit(); else keys.text = "" }
+        else if (e.text !== "" && e.text.charCodeAt(0) >= 32 && !keys.readOnly) keys.text = keys.text + e.text
+        e.accepted = true
+    }
     onVisibleChanged: if (visible) keys.forceActiveFocus()
     // the compositor gives this screen the keyboard (Hyprland may do it a moment after the lock): take it at once
     readonly property bool winActive: Window.active
     onWinActiveChanged: { console.log("[lock] this screen has the keyboard:", winActive); if (winActive) keys.forceActiveFocus() }
-    Connections { target: lv.root; ignoreUnknownSignals: true; function onSecureTickChanged() { keys.forceActiveFocus(); refocus.restart() } }
+    Connections { target: lv.root; ignoreUnknownSignals: true; function onSecureTickChanged() { lv.activate(); refocus.restart() } }
     property bool anyKey: false
     property bool clicked: false
     MouseArea {
         anchors.fill: parent
         onPressed: function(m) {
             if (!lv.clicked) { lv.clicked = true; console.log("[lock] mouse click; screen active:", lv.winActive, "field focused:", keys.activeFocus) }
-            keys.forceActiveFocus(); m.accepted = false
+            lv.activate(); m.accepted = false
         }
     }
     // after a while without a single key: offer hyprlock (the session stays locked while it takes over)
