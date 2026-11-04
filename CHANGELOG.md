@@ -1,5 +1,8 @@
 # Changelog
 
+## V3.35
+- Bug fixes
+
 ## V3.34
 - The dashboard moved into the bar. Click the clock (or press SUPER + ALT + D) and a Material 3 card grows out of the bar:
   - Today: the date, the weather with its icon in your shape, the day as a wavy line, and the month with today in your shape

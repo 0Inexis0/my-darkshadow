@@ -117,7 +117,21 @@ copy_tree() { # copy_tree SRC_DIR DST_DIR
     staged+=("$d")
   done
   for d in "${staged[@]}"; do mv -f "$d.rice-new" "$d"; done
-  [ -f "$src/shell.qml" ] && put "$src/shell.qml" "$dst/shell.qml"
+  # shell.qml last, swapped in whole as well (Quickshell must never read it half written)
+  if [ -f "$src/shell.qml" ] && [ "$DRY_RUN" != 1 ]; then
+    d="$dst/shell.qml"
+    if [ -e "$d" ]; then
+      put "$src/shell.qml" "$d.rice-new"
+      if cmp -s "$d.rice-new" "$d"; then rm -f "$d.rice-new"
+      else
+        rel2="${d#"$HOME"/}"; mkdir -p "$BK/$(dirname "$rel2")"; cp -aL "$d" "$BK/$rel2" 2>/dev/null || true
+        [ -L "$d" ] && rm -f "$d"
+        mv -f "$d.rice-new" "$d"
+      fi
+    else
+      put "$src/shell.qml" "$d"
+    fi
+  fi
   return 0
 }
 missing_cmds() {
