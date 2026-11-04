@@ -1,5 +1,10 @@
 # Changelog
 
+## V3.42
+- Visualizer: it listens to what your speakers or headphones play (it could pick up the microphone, so it only moved on claps) and follows you when you switch the output; it is livelier (30 frames a second, less smoothing)
+- Visualizer: How high they go: Calm, Normal, High or Max (Edit mode > Visualizer)
+- Quicker motion: workspaces, the island's faces and width, the card, the modules of the bar and the widgets coming back
+
 ## V3.41
 - Fix: while the screen was recorded the island could not be clicked open; a click anywhere on the island works now, whatever it shows
 - Fix: switching workspace made the bar shake at the end: the island and the notch change their width calmly now, without a bounce

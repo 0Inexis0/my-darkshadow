@@ -326,6 +326,10 @@ Item {
                 Pills { options: [["16", "16"], ["32", "32"], ["48", "48"], ["64", "64"]]
                     current: ep.root ? String(ep.root.optOf("visualizer", "bars", 64)) : "64"
                     onChosen: function(v) { ep.root.setOpt("visualizer", "bars", v) } }
+                Label { text: "How high they go" }
+                Pills { options: [["1", "Calm"], ["1.4", "Normal"], ["2", "High"], ["2.8", "Max"]]
+                    current: ep.root ? String(ep.root.optOf("visualizer", "gain", "1.4")) : "1.4"
+                    onChosen: function(v) { ep.root.setOpt("visualizer", "gain", v) } }
                 Label { text: "Bar ends" }
                 Pills { options: [["square", "Square"], ["rounded", "Rounded"], ["pill", "Pill"]]
                     current: ep.root ? ep.root.optOf("visualizer", "shape", "square") : "square"

@@ -17,6 +17,8 @@ Item {
     property int nBars: 64
     property string shape: "square"
     property string spacing: "normal"
+    property real gain: 1              // how tall the bars go (Edit mode > Visualizer > Height of the bars)
+    onGainChanged: cv.requestPaint()
     readonly property int count: nBars === 16 || nBars === 32 || nBars === 48 ? nBars : 64
     readonly property real pitch: width / count
     readonly property real gapK: spacing === "thin" ? 0.16 : (spacing === "wide" ? 0.5 : 0.32)
@@ -26,7 +28,7 @@ Item {
         const k = 64 / count
         let m = 0
         for (let j = Math.floor(i * k); j < Math.floor((i + 1) * k); j++) if ((b[j] || 0) > m) m = b[j]
-        return m
+        return Math.min(100, m * gain)
     }
     onNBarsChanged: cv.requestPaint()
     onShapeChanged: cv.requestPaint()

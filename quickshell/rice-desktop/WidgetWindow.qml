@@ -26,7 +26,7 @@ PanelWindow {
     property bool hidden: false
     property real fk: hidden ? 0 : 1
     // they come back softly (Material 3 emphasized decelerate) and leave a little quicker
-    Behavior on fk { NumberAnimation { duration: w.hidden ? 240 : 560; easing.type: Easing.BezierSpline; easing.bezierCurve: w.hidden ? Look.accel : Look.decel } }
+    Behavior on fk { NumberAnimation { duration: w.hidden ? 200 : 380; easing.type: Easing.BezierSpline; easing.bezierCurve: w.hidden ? Look.accel : Look.decel } }
 
     // current look; the editor changes these while you drag
     property real px: defX

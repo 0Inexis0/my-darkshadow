@@ -306,7 +306,7 @@ PanelWindow {
                         readonly property bool act: bar.focusedId === wid
                         readonly property bool occ: bar.occupied(wid)
                         width: wsm.dots && act ? 40 : wsm.cw; height: bar.barH
-                        Behavior on width { enabled: wsm.dots; NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 1.4 } }
+                        Behavior on width { enabled: wsm.dots; NumberAnimation { duration: 200; easing.type: Easing.OutBack; easing.overshoot: 1.4 } }
 
                         // dots: a dot, the active one stretched into a pill
                         Rectangle {
@@ -547,7 +547,7 @@ PanelWindow {
             id: ip
             property bool shown: true
             width: Math.round(isl.restW); height: bar.barH
-            Behavior on width { NumberAnimation { duration: Look.lite ? 260 : 460; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
+            Behavior on width { NumberAnimation { duration: Look.lite ? 180 : 300; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
             // where it is in the bar (follows the slot, the row and the zone as they move)
             readonly property real bx: parent && parent.parent && parent.parent.parent && parent.parent.parent.parent
                 ? x + parent.x + parent.parent.x + parent.parent.parent.x + parent.parent.parent.parent.x : 0
@@ -614,7 +614,7 @@ PanelWindow {
                     property bool born: false
                     Timer { running: true; interval: 40 + index * 45; onTriggered: slot.born = true }
                     property real k: born && shown ? 1 : 0
-                    Behavior on k { NumberAnimation { duration: slot.k < 0.5 ? 420 : 300; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
+                    Behavior on k { NumberAnimation { duration: slot.k < 0.5 ? 320 : 220; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
                     readonly property real full: ld.width + (pill ? 24 : 0) + (lay ? 16 : (bar.goo ? 4 : 0))
                     visible: k > 0.01
                     width: (full + zone.sp) * k

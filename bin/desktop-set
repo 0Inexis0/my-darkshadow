@@ -16,9 +16,9 @@ SOURCE_LINE = "source = ~/.config/hypr/rice-lock.conf"
 WIDGETS = ["weather", "media", "resources", "usercard", "calendar", "visualizer", "battery", "todo", "focus", "notes",
            "gauge", "date", "sky", "nowring", "player", "playpill", "lyrics", "storage", "trio"]
 # what the widget editor stores per widget (Settings > Desktop > Edit widgets, or SUPER+ALT+W)
-GEOM = ("x", "y", "scale", "w", "h", "opacity", "bg", "style", "flip", "color", "font", "focus", "metric", "bars", "shape", "gap")
+GEOM = ("x", "y", "scale", "w", "h", "opacity", "bg", "style", "flip", "color", "font", "focus", "metric", "bars", "shape", "gap", "gain")
 # the visualizer's bars (Edit mode > Visualizer)
-VIZ = {"bars": ["16", "32", "48", "64"], "shape": ["square", "rounded", "pill"], "gap": ["thin", "normal", "wide"]}
+VIZ = {"bars": ["16", "32", "48", "64"], "shape": ["square", "rounded", "pill"], "gap": ["thin", "normal", "wide"], "gain": ["1", "1.4", "2", "2.8"]}
 STYLES = {"visualizer": ["bars", "mirror", "wave", "dots"], "clock": ["digital", "line", "cookie", "pixel"],
           "gauge": ["water", "pentagon", "cookie", "flower", "clover", "hexagon", "sun", "circle"],
           "date": ["flower", "cookie", "clover", "sun", "square", "circle"]}
@@ -332,7 +332,7 @@ def main(a):
     elif cmd == "reset-widget":
         t = target(c, a[2] if len(a) > 2 else "")
         for k in GEOM:
-            if k not in ("style", "color", "font", "focus", "metric", "bars", "shape", "gap"):
+            if k not in ("style", "color", "font", "focus", "metric", "bars", "shape", "gap", "gain"):
                 t.pop(k, None)
     elif cmd == "edit":
         v = a[2] if len(a) > 2 else "toggle"

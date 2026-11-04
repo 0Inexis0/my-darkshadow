@@ -198,7 +198,7 @@ Item {
     readonly property real restW: ghost ? 0 : tw
     width: Math.round(restW); height: bh
     // a calm change of width: the modules beside it and the notch move with it, so no bounce here
-    Behavior on width { NumberAnimation { duration: Look.lite ? 260 : 460; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
+    Behavior on width { NumberAnimation { duration: Look.lite ? 180 : 300; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
 
     // the card: which one it shows (kept while it closes)
     property string cardMode: "media"
@@ -219,7 +219,7 @@ Item {
         if (hovering) { closeT.stop(); pinT.stop(); if (on("island_hover") && !big && !ghost) openT.restart() }
         else { openT.stop(); closeT.restart(); if (pinned || infoOpen) pinT.restart() }
     }
-    Timer { id: openT; interval: 340; onTriggered: isl.hoverOpen = pl.has }
+    Timer { id: openT; interval: 280; onTriggered: isl.hoverOpen = pl.has }
     Timer { id: closeT; interval: 450; onTriggered: isl.hoverOpen = false }
     Timer { id: pinT; interval: Math.max(2, isl.cfg.island_close || 4) * 1000; onTriggered: { isl.pinned = false; isl.infoOpen = false } }
     // the player closes by itself when nothing plays any more
@@ -363,13 +363,13 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         width: st === "dots" ? (act ? 30 : 8) : (st === "pacman" ? 16 : 22)
                         height: 22
-                        Behavior on width { SpringAnimation { spring: 4; damping: 0.35 } }
+                        Behavior on width { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
                         // dots: the active one a pill with its number
                         Rectangle {
                             visible: wc.st === "dots"
                             anchors.centerIn: parent
                             width: parent.width; height: wc.act ? 20 : 8; radius: height / 2
-                            Behavior on height { SpringAnimation { spring: 4; damping: 0.35 } }
+                            Behavior on height { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
                             color: wc.act ? (isl.bar ? isl.bar.wsTint(wc.wid) : "white") : (isl.pal ? isl.pal.track : "#555")
                             Behavior on color { ColorAnimation { duration: 300 } }
                             Text { anchors.centerIn: parent; visible: wc.act; text: wc.wid; color: isl.pal ? isl.pal.inkPrimary : "black"; font.family: Fonts.main; font.pixelSize: 11; font.weight: Font.Bold }
@@ -429,7 +429,7 @@ Item {
         property real t: isl.big ? 1 : 0
         onTChanged: if (t < 0.01 && !isl.big) isl.cardMode = ""
         // slow and soft on the way in, quicker on the way out
-        Behavior on t { NumberAnimation { duration: isl.big ? (Look.lite ? 420 : 900) : 380
+        Behavior on t { NumberAnimation { duration: isl.big ? (Look.lite ? 340 : 620) : 280
             easing.type: isl.big ? Easing.OutBack : Easing.InOutCubic; easing.overshoot: Look.lite ? 0 : 0.9 } }
         property real cwA: isl.cw
         property real chA: isl.ch
@@ -775,9 +775,9 @@ Item {
         enabled: act
         // the old face leaves first, then the new one comes in (they never show on top of each other)
         Behavior on opacity { SequentialAnimation {
-            PauseAnimation { duration: fc.act ? 140 : 0 }
-            NumberAnimation { target: fc; property: "opacity"; duration: fc.act ? 320 : 120; easing.type: Easing.Linear } } }
-        Behavior on scale { NumberAnimation { duration: 520; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.decel } }
+            PauseAnimation { duration: fc.act ? 80 : 0 }
+            NumberAnimation { target: fc; property: "opacity"; duration: fc.act ? 200 : 80; easing.type: Easing.Linear } } }
+        Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.decel } }
     }
     // a small equalizer: round bars in your key color that bounce while music plays
     component Eq: Row {

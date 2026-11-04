@@ -1,13 +1,26 @@
 #!/usr/bin/env bash
+# The music for the visualizer (cava), as numbers on stdout. It listens to what your speakers or headphones play
+# (the monitor of the default output), never to the microphone, and follows you when you switch the output.
 cfg="$HOME/.cache/rice/cava-widget.conf"
+log="$HOME/.cache/rice/cava-widget.log"
 mkdir -p "$HOME/.cache/rice"
-cat > "$cfg" <<CONF
+
+sink() { pactl get-default-sink 2>/dev/null || wpctl inspect @DEFAULT_AUDIO_SINK@ 2>/dev/null | sed -n 's/.*node.name = "\(.*\)"/\1/p' | head -1; }
+write_cfg() {
+  local method="pipewire" source="auto"
+  local s; s="$(sink)"
+  if [ -n "$s" ] && command -v pactl >/dev/null 2>&1; then method="pulse"; source="$s.monitor"; fi
+  cat > "$cfg" <<CONF
 [general]
 bars = 64
-framerate = 24
+framerate = 30
+autosens = 1
+sensitivity = 120
+lower_cutoff_freq = 40
+higher_cutoff_freq = 12000
 [input]
-method = pipewire
-source = auto
+method = $method
+source = $source
 [output]
 method = raw
 raw_target = /dev/stdout
@@ -16,6 +29,21 @@ ascii_max_range = 100
 bar_delimiter = 59
 frame_delimiter = 10
 [smoothing]
-noise_reduction = 60
+monstercat = 0
+noise_reduction = 45
 CONF
-exec cava -p "$cfg" 2>>"$HOME/.cache/rice/cava-widget.log"
+}
+
+trap 'kill "$pid" 2>/dev/null; exit 0' TERM INT HUP
+while :; do
+  write_cfg
+  cur="$(sink)"
+  cava -p "$cfg" 2>>"$log" &
+  pid=$!
+  # a new output (headphones, HDMI ...): start again on it
+  while kill -0 "$pid" 2>/dev/null; do
+    sleep 3
+    [ "$(sink)" != "$cur" ] && { kill "$pid" 2>/dev/null; wait "$pid" 2>/dev/null; break; }
+  done
+  kill -0 "$pid" 2>/dev/null || sleep 1
+done

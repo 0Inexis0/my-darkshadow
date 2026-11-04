@@ -420,7 +420,8 @@ ShellRoot {
         defW: root.sw; defH: 180; defX: 0; defY: root.sh - 180
         Component.onCompleted: root.reg(wid, vizWin)
         VizWidget { anchors.fill: parent; running: root.on("visualizer") && !root.hideWidgets && !Look.lite; style: vizWin.sty !== "" ? vizWin.sty : "bars"; flip: vizWin.flp; pal: vizWin.pal; colorMode: vizWin.vcolor !== "" ? vizWin.vcolor : "accent"
-            nBars: Number(root.optOf("visualizer", "bars", 64)); shape: root.optOf("visualizer", "shape", "square"); spacing: root.optOf("visualizer", "gap", "normal") }
+            nBars: Number(root.optOf("visualizer", "bars", 64)); shape: root.optOf("visualizer", "shape", "square"); spacing: root.optOf("visualizer", "gap", "normal")
+            gain: Number(root.optOf("visualizer", "gain", "1.4")) }
     }
 
     // reads how bright the wallpaper is in each part of the screen, so every widget can pick dark or light text
