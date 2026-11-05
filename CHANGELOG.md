@@ -1,5 +1,8 @@
 # Changelog
 
+## V3.62
+- niri: the Dynamic island, menus, dock and widgets now blur what is behind them, windows too, not only the wallpaper (xray off for the shell's layers; niri 26.04 and newer)
+
 ## V3.61
 - Fastfetch (Settings > Desktop > Look & Feel): DarkShadow's moon logo is bigger (as big as the Arch or NixOS logo) with craters and stars in your wallpaper's colors
 - Fastfetch: the small logo looks like pfetch now: a short list in lowercase (os, host, kernel, uptime, pkgs, memory, shell, wm)

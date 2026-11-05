@@ -559,6 +559,11 @@ def layer_rules(f, flat):
         L += block("layer-rule", ['match namespace="^rice-backdrop$"', "place-within-backdrop true"])
     # full-screen layers that animate themselves get no shadow
     L += block("layer-rule", ['match namespace="^rice-(welcome|tour-dim)$"', "shadow { off; }"])
+    # blur that shows what is behind the shell (windows too), not only the wallpaper: xray off for the shell's layers
+    # (the bar / Dynamic Island, menus, dock, widgets ...); the blur region itself still comes from the shell
+    if f.blur and not flat:
+        L += block("layer-rule", ['match namespace="^rice-(bar|bluetooth|cc|dock|dock-apps|gamebar|hotcorner|launcher|notify-popup|power|volume|osd|wallum|walls|widget|wifi)$"']
+                   + block("background-effect", ["xray false"]))
     # blur: the shell asks niri for blur exactly where it draws (Quickshell, ext-background-effect), so no layer
     # gets a rule here: a rule would blur a whole surface, see-through margins included
     return L
