@@ -205,7 +205,7 @@ Item {
                 Item {
                     width: parent.width
                     height: 20
-                    T { text: "Color scheme"; font.pixelSize: 14; font.bold: true; anchors.verticalCenter: parent.verticalCenter }
+                    T { text: I18n.t("Color scheme"); font.pixelSize: 14; font.bold: true; anchors.verticalCenter: parent.verticalCenter }
                     T {
                         anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
                         text: {
@@ -263,7 +263,7 @@ Item {
                     visible: !(pnl.st.schemes && pnl.st.schemes.length > 0)
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
-                    text: "Loading color schemes..."
+                    text: I18n.t("Loading color schemes...")
                     font.pixelSize: 12
                     color: "#7a7a84"
                 }
@@ -280,7 +280,7 @@ Item {
                 anchors.left: ab.right; anchors.leftMargin: 12
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 2
-                T { text: "Keep Awake"; font.pixelSize: 15; font.bold: true }
+                T { text: I18n.t("Keep Awake"); font.pixelSize: 15; font.bold: true }
                 T { text: pnl.st.awake ? "The screen will not lock or sleep" : "Normal power management"; font.pixelSize: 12; color: "#9a9aa4" }
             }
             HcSwitch { anchors.right: parent.right; anchors.rightMargin: 14; anchors.verticalCenter: parent.verticalCenter; checked: pnl.st.awake === true; onToggled: pnl.act("awake", "", false) }
@@ -304,7 +304,7 @@ Item {
                         anchors.left: rb.right; anchors.leftMargin: 12
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 2
-                        T { text: "Screen Recorder"; font.pixelSize: 15; font.bold: true }
+                        T { text: I18n.t("Screen Recorder"); font.pixelSize: 15; font.bold: true }
                         T { text: pnl.st.recording ? "Recording  " + pnl.elapsed() : "Ready"; font.pixelSize: 12; color: pnl.st.recording ? "#ff8080" : "#9a9aa4" }
                     }
                 }
@@ -314,7 +314,7 @@ Item {
                     HcPill { primary: true; glyph: "󰊓"; label: "Fullscreen"; onClicked: pnl.act("record", "full", true) }
                     HcPill { glyph: "󰆞"; label: "Region"; onClicked: pnl.act("record", "region", true) }
                 }
-                HcPill { visible: pnl.st.recording === true; danger: true; glyph: "󰓛"; label: "Stop recording"; onClicked: pnl.act("record", "stop", false) }
+                HcPill { visible: pnl.st.recording === true; danger: true; glyph: "󰓛"; label: I18n.t("Stop recording"); onClicked: pnl.act("record", "stop", false) }
                 Item {
                     width: parent.width
                     height: 22
@@ -331,7 +331,7 @@ Item {
                     visible: !(pnl.st.recordings && pnl.st.recordings.length > 0)
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
-                    text: "No recordings yet"
+                    text: I18n.t("No recordings yet")
                     font.pixelSize: 12
                     color: "#7a7a84"
                     bottomPadding: 4
@@ -412,7 +412,7 @@ Item {
                 Item {
                     width: parent.width
                     height: 20
-                    T { text: "Quick Toggles"; font.pixelSize: 14; font.bold: true; anchors.verticalCenter: parent.verticalCenter }
+                    T { text: I18n.t("Quick Toggles"); font.pixelSize: 14; font.bold: true; anchors.verticalCenter: parent.verticalCenter }
                     T { anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; text: pnl.hoverName; font.pixelSize: 12; color: "#9a9aa4" }
                 }
                 Flow {
@@ -522,7 +522,7 @@ Item {
                         Row {
                             id: allW
                             spacing: 4
-                            T { text: "All wallpapers"; font.pixelSize: 12; color: wm2.containsMouse ? "#F6F5F4" : "#9a9aa4" }
+                            T { text: I18n.t("All wallpapers"); font.pixelSize: 12; color: wm2.containsMouse ? "#F6F5F4" : "#9a9aa4" }
                             T { kind: "icon"; text: "󰇘"; font.pixelSize: 14; color: wm2.containsMouse ? "#F6F5F4" : "#9a9aa4" }
                         }
                         MouseArea { id: wm2; anchors.fill: parent; anchors.margins: -6; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: pnl.act("wallpaper", "", true) }
@@ -569,7 +569,7 @@ Item {
                     visible: !(pnl.st.walls && pnl.st.walls.length > 0)
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
-                    text: "No wallpapers found in ~/Pictures/Wallpapers"
+                    text: I18n.t("No wallpapers found in ~/Pictures/Wallpapers")
                     font.pixelSize: 12
                     color: "#7a7a84"
                 }
@@ -643,7 +643,7 @@ Item {
                         x: 40
                         anchors.verticalCenter: parent.verticalCenter
                         visible: search.text.length === 0
-                        text: "Search apps"
+                        text: I18n.t("Search apps")
                         font.pixelSize: 13
                         color: "#7a7a84"
                     }

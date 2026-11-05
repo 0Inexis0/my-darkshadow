@@ -26,7 +26,7 @@ Column {
 
     Timer { id: refresh; interval: 700; onTriggered: autoProc.running = true }
 
-    T { text: "Custom commands"; font.pixelSize: 15; font.bold: true }
+    T { text: I18n.t("Custom commands"); font.pixelSize: 15; font.bold: true }
     T {
         width: parent.width
         text: "Programs started when " + (Quickshell.env("NIRI_SOCKET") ? "niri" : "Hyprland") + " starts. They run at your next login."
@@ -76,7 +76,7 @@ Column {
         Field {
             id: cmdField
             width: parent.width - addPill.width - 8
-            placeholder: "Command, e.g. discord"
+            placeholder: I18n.t("Command, e.g. discord")
             onAccepted: addPill.clicked()
         }
         Pill {
@@ -92,10 +92,10 @@ Column {
         }
     }
 
-    T { text: "From hyprland.lua"; font.pixelSize: 15; font.bold: true; topPadding: 12 }
+    T { text: I18n.t("From hyprland.lua"); font.pixelSize: 15; font.bold: true; topPadding: 12 }
     T {
         width: parent.width
-        text: "Switch off an entry to comment it out in your config (a backup is kept). Changes apply at the next login."
+        text: I18n.t("Switch off an entry to comment it out in your config (a backup is kept). Changes apply at the next login.")
         color: M3.inkDim
         font.pixelSize: 12
         wrapMode: Text.WordWrap

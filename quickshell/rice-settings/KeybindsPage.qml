@@ -106,9 +106,9 @@ Item {
             color: M3.primaryContainer
             clip: true
             Blob { width: 240; height: 240; x: parent.width - 170; y: -60; kind: "flower"; color: M3.alpha(M3.inkPrimaryC, 0.06) }
-            T { x: 24; y: 20; text: "KEYS TO KNOW"; font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2
+            T { x: 24; y: 20; text: I18n.t("KEYS TO KNOW"); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2
                 color: M3.alpha(M3.inkPrimaryC, 0.75) }
-            T { x: 24; y: 40; kind: "title"; text: "Super is the key with the Windows logo"; font.pixelSize: 22; font.weight: Font.Medium
+            T { x: 24; y: 40; kind: "title"; text: I18n.t("Super is the key with the Windows logo"); font.pixelSize: 22; font.weight: Font.Medium
                 color: M3.inkPrimaryC; width: parent.width - 48; elide: Text.ElideRight }
             Row {
                 x: 24; y: 92
@@ -140,13 +140,13 @@ Item {
                 id: find
                 width: parent.width - tourBtn.width - 12
                 anchors.verticalCenter: parent.verticalCenter
-                placeholder: "Find a key: screenshot, close, workspace ..."
+                placeholder: I18n.t("Find a key: screenshot, close, workspace ...")
                 onTextChanged: page.q = text.trim()
             }
             Btn {
                 id: tourBtn
                 anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-                text: "Show me around"; sym: "tour"; icon: ""; variant: "tonal"
+                text: I18n.t("Show me around"); sym: "tour"; icon: ""; variant: "tonal"
                 onClicked: if (page.ctl && page.ctl.startTour) page.ctl.startTour()
             }
         }
@@ -210,11 +210,11 @@ Item {
 
         // ---------- your own ----------
         SettingRow {
-            label: "Your own keybinds"
-            desc: "Run any app or command with keys you pick"
+            label: I18n.t("Your own keybinds")
+            desc: I18n.t("Run any app or command with keys you pick")
             reserved: 150
             Btn { anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
-                text: "Make one"; sym: "add"; icon: ""; variant: "tonal"; onClicked: if (page.ctl) page.ctl.page = 4 }
+                text: I18n.t("Make one"); sym: "add"; icon: ""; variant: "tonal"; onClicked: if (page.ctl) page.ctl.page = 4 }
         }
     }
 }

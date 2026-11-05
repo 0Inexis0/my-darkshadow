@@ -56,16 +56,16 @@ Item {
                 x: 178; anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - 178 - 24
                 spacing: 6
-                T { kind: "title"; text: "DarkShadow's Shell"; font.pixelSize: 28; font.weight: Font.Medium; color: M3.inkPrimaryC }
+                T { kind: "title"; text: I18n.t("DarkShadow's Shell"); font.pixelSize: 28; font.weight: Font.Medium; color: M3.inkPrimaryC }
                 Row {
                     spacing: 8
                     Rectangle { width: vt.implicitWidth + 20; height: 26; radius: 13; color: M3.primary
                         T { id: vt; anchors.centerIn: parent; text: "V" + (page.info.version || "?"); font.pixelSize: 12; font.bold: true; color: M3.inkPrimary } }
                     Rectangle { width: lt.implicitWidth + 20; height: 26; radius: 13; color: M3.alpha(M3.ink, 0.1)
-                        T { id: lt; anchors.centerIn: parent; text: "MIT license"; font.pixelSize: 12; color: M3.inkPrimaryC } }
+                        T { id: lt; anchors.centerIn: parent; text: I18n.t("MIT license"); font.pixelSize: 12; color: M3.inkPrimaryC } }
                 }
                 T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.inkPrimaryC
-                    text: "A Hyprland and niri desktop with its own bar with a dynamic island, launcher, dock, widgets and this Settings app. Made by shadow." }
+                    text: I18n.t("A Hyprland and niri desktop with its own bar with a dynamic island, launcher, dock, widgets and this Settings app. Made by shadow.") }
                 Row {
                     spacing: 8
                     topPadding: 4
@@ -77,7 +77,7 @@ Item {
         T { visible: page.upd !== ""; text: page.upd; font.pixelSize: 12; color: M3.inkDim; leftPadding: 6 }
 
         // ---------- this computer ----------
-        SectionTitle { text: "This computer"; sub: "What DarkShadow's Shell runs on." }
+        SectionTitle { text: I18n.t("This computer"); sub: I18n.t("What DarkShadow's Shell runs on.") }
         Grid {
             id: grid
             width: parent.width
@@ -113,7 +113,7 @@ Item {
         }
 
         // ---------- made with ----------
-        SectionTitle { text: "Made with"; sub: "Open source projects that make this possible." }
+        SectionTitle { text: I18n.t("Made with"); sub: I18n.t("Open source projects that make this possible.") }
         Flow {
             width: parent.width
             spacing: 8
@@ -135,6 +135,6 @@ Item {
             }
         }
         T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 11; color: M3.inkDim; topPadding: 8
-            text: "Settings follow the ideas of Material 3 (tonal colors from your theme, round shapes, calm motion), drawn our own way." }
+            text: I18n.t("Settings follow the ideas of Material 3 (tonal colors from your theme, round shapes, calm motion), drawn our own way.") }
     }
 }

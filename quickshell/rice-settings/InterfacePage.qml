@@ -101,14 +101,14 @@ Item {
                 T {
                     anchors.centerIn: parent
                     visible: page.dv("enabled", false) !== true
-                    text: "Dock is off"
+                    text: I18n.t("Dock is off")
                     color: M3.inkDim
                     font.pixelSize: 13
                 }
                 T {
                     anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 10
                     visible: page.dv("enabled", false) === true && page.dv("blur", true) === true && page.dv("background", true) !== false
-                    text: "blur on"
+                    text: I18n.t("blur on")
                     color: M3.inkDim
                     font.pixelSize: 10
                 }
@@ -116,45 +116,45 @@ Item {
 
             ToggleRow {
                 label: "Enable"
-                desc: "A minimal dock with your apps on a screen edge (bottom, left or right)"
+                desc: I18n.t("A minimal dock with your apps on a screen edge (bottom, left or right)")
                 checked: page.dv("enabled", false) === true
                 onToggled: function(v) { page.ctl.dset("dock", "enabled", v ? "on" : "off") }
             }
             SegRow {
                 label: "Position"
-                desc: "Which screen edge the dock sits on"
+                desc: I18n.t("Which screen edge the dock sits on")
                 options: [{ label: "Bottom", value: "bottom" }, { label: "Left", value: "left" }, { label: "Right", value: "right" }]
                 current: page.dv("position", "bottom") === "top" ? "bottom" : page.dv("position", "bottom")
                 onChosen: function(x) { page.ctl.dset("dock", "position", x) }
             }
             ToggleRow {
                 label: "Background"
-                desc: "Draw a panel behind the icons"
+                desc: I18n.t("Draw a panel behind the icons")
                 checked: page.dv("background", true) === true
                 onToggled: function(v) { page.ctl.dset("dock", "background", v ? "on" : "off") }
             }
             SliderRow {
                 label: "Opacity"
-                desc: "Lower is more see-through"
+                desc: I18n.t("Lower is more see-through")
                 from: 0.2; to: 1.0; step: 0.02; decimals: 2
                 value: Number(page.dv("opacity", 0.78))
                 onCommitted: function(x) { page.ctl.dset("dock", "opacity", x.toFixed(2)) }
             }
             ToggleRow {
                 label: "Blur"
-                desc: "Blur the desktop behind the dock"
+                desc: I18n.t("Blur the desktop behind the dock")
                 checked: page.dv("blur", true) === true
                 onToggled: function(v) { page.ctl.dset("dock", "blur", v ? "on" : "off") }
             }
             ToggleRow {
-                label: "Hover to reveal"
-                desc: "Hide the dock and slide it in when the pointer touches its screen edge"
+                label: I18n.t("Hover to reveal")
+                desc: I18n.t("Hide the dock and slide it in when the pointer touches its screen edge")
                 checked: page.dv("hover", true) === true
                 onToggled: function(v) { page.ctl.dset("dock", "hover", v ? "on" : "off") }
             }
             ToggleRow {
-                label: "Pinned on startup"
-                desc: "Start with the dock held open"
+                label: I18n.t("Pinned on startup")
+                desc: I18n.t("Start with the dock held open")
                 checked: page.dv("pinnedStartup", false) === true
                 onToggled: function(v) { page.ctl.dset("dock", "pinnedStartup", v ? "on" : "off") }
             }
@@ -162,38 +162,38 @@ Item {
             T { kind: "title"; text: "Buttons"; font.pixelSize: 16; font.bold: true; topPadding: 8 }
 
             ToggleRow {
-                label: "Media player"
-                desc: "The song cover and a play / pause button in the dock"
+                label: I18n.t("Media player")
+                desc: I18n.t("The song cover and a play / pause button in the dock")
                 checked: page.dv("media", true) === true
                 onToggled: function(v) { page.ctl.dset("dock", "media", v ? "on" : "off") }
             }
             ToggleRow {
-                label: "Now playing text"
-                desc: "Write the song title and artist in the dock while something plays"
+                label: I18n.t("Now playing text")
+                desc: I18n.t("Write the song title and artist in the dock while something plays")
                 checked: page.dv("nowText", true) === true
                 onToggled: function(v) { page.ctl.dset("dock", "nowText", v ? "on" : "off") }
             }
             ToggleRow {
-                label: "Show pin button"
-                desc: "Button that holds the dock open"
+                label: I18n.t("Show pin button")
+                desc: I18n.t("Button that holds the dock open")
                 checked: page.dv("pinButton", true) === true
                 onToggled: function(v) { page.ctl.dset("dock", "pinButton", v ? "on" : "off") }
             }
             ToggleRow {
-                label: "Show apps button"
-                desc: "Button that opens the app launcher"
+                label: I18n.t("Show apps button")
+                desc: I18n.t("Button that opens the app launcher")
                 checked: page.dv("appsButton", true) === true
                 onToggled: function(v) { page.ctl.dset("dock", "appsButton", v ? "on" : "off") }
             }
             ToggleRow {
-                label: "App menu"
-                desc: "The apps button opens the dock's own app menu (with pins); off: it opens the launcher"
+                label: I18n.t("App menu")
+                desc: I18n.t("The apps button opens the dock's own app menu (with pins); off: it opens the launcher")
                 checked: page.dv("appMenu", true) === true
                 onToggled: function(v) { page.ctl.dset("dock", "appMenu", v ? "on" : "off") }
             }
 
             // ---------- pinned apps ----------
-            SectionTitle { text: "Pinned apps"; sub: page.pins.length + " on the dock, in this order. Pin more below, or right-click an app in the dock's app menu." }
+            SectionTitle { text: I18n.t("Pinned apps"); sub: page.pins.length + " on the dock, in this order. Pin more below, or right-click an app in the dock's app menu." }
             Flow {
                 width: parent.width
                 spacing: 8
@@ -230,7 +230,7 @@ Item {
             }
             Field {
                 width: parent.width
-                placeholder: "Search apps to pin ..."
+                placeholder: I18n.t("Search apps to pin ...")
                 onTextChanged: page.q = text
             }
             Flow {
@@ -258,8 +258,8 @@ Item {
             }
 
             ToggleRow {
-                label: "Tint app icons"
-                desc: "Paint icons in a single neutral tone"
+                label: I18n.t("Tint app icons")
+                desc: I18n.t("Paint icons in a single neutral tone")
                 checked: page.dv("tint", false) === true
                 onToggled: function(v) { page.ctl.dset("dock", "tint", v ? "on" : "off") }
             }
@@ -267,7 +267,7 @@ Item {
             T {
                 width: parent.width
                 topPadding: 14
-                text: "Lock screen options moved to Idle & Lockscreen."
+                text: I18n.t("Lock screen options moved to Idle & Lockscreen.")
                 color: M3.inkDim
                 font.pixelSize: 12
             }

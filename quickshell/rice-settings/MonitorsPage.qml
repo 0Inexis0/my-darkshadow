@@ -99,7 +99,7 @@ Column {
                     }
                 }
 
-                T { text: "Refresh rate"; color: M3.inkDim; font.pixelSize: 12 }
+                T { text: I18n.t("Refresh rate"); color: M3.inkDim; font.pixelSize: 12 }
                 Seg {
                     options: page.ratesFor(card.m, card.curRes).slice(0, 6).map(x => ({ label: x + " Hz", value: x }))
                     current: card.m.rate
@@ -123,7 +123,7 @@ Column {
 
     T {
         visible: page.mons.length === 0
-        text: "No monitors found."
+        text: I18n.t("No monitors found.")
         color: M3.inkDim
     }
 }

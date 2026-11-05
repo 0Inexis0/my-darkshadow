@@ -93,7 +93,7 @@ Item {
                 spacing: 4
                 Row {
                     spacing: 10
-                    T { kind: "title"; text: "DarkShadow's Shell"; font.pixelSize: 28; font.weight: Font.Medium }
+                    T { kind: "title"; text: I18n.t("DarkShadow's Shell"); font.pixelSize: 28; font.weight: Font.Medium }
                     T { anchors.baseline: parent.children[0].baseline; text: page.info.version ? "V" + page.info.version : ""; font.pixelSize: 16; color: M3.primary }
                 }
                 T { text: (page.info.os || "Linux") + "  ·  " + (page.info.host || ""); font.pixelSize: 13; color: M3.inkDim }
@@ -131,7 +131,7 @@ Item {
         }
 
         // ---------- hardware ----------
-        SectionTitle { text: "Hardware"; sub: "What this computer is made of, and how full it is." }
+        SectionTitle { text: "Hardware"; sub: I18n.t("What this computer is made of, and how full it is.") }
         Grid {
             id: hw
             width: parent.width
@@ -144,13 +144,13 @@ Item {
                 frac: page.n("memt") > 0 ? page.n("memu") / page.n("memt") : 0 }
             Fact { width: hw.cw; icon: "swap_horiz"; glyph: ""; label: "Swap"; value: page.n("swapt") > 0 ? page.gb(page.n("swapu")) + " / " + page.gb(page.n("swapt")) : "No swap"
                 frac: page.n("swapt") > 0 ? page.n("swapu") / page.n("swapt") : 0 }
-            Fact { width: hw.cw; icon: "hard_drive"; glyph: ""; label: "Storage (home)"; value: page.gb(page.n("disku")) + " / " + page.gb(page.n("diskt"))
+            Fact { width: hw.cw; icon: "hard_drive"; glyph: ""; label: I18n.t("Storage (home)"); value: page.gb(page.n("disku")) + " / " + page.gb(page.n("diskt"))
                 frac: page.n("diskt") > 0 ? page.n("disku") / page.n("diskt") : 0 }
-            Fact { width: hw.cw; icon: "schedule"; glyph: ""; label: "Up for"; value: page.info.up }
+            Fact { width: hw.cw; icon: "schedule"; glyph: ""; label: I18n.t("Up for"); value: page.info.up }
         }
 
         // ---------- system and session ----------
-        SectionTitle { text: "Operating system and session" }
+        SectionTitle { text: I18n.t("Operating system and session") }
         Grid {
             id: os
             width: parent.width

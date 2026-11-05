@@ -66,7 +66,7 @@ Item {
                 y: 18
                 width: parent.width - x - 18
                 spacing: 10
-                T { text: "COLORS FROM YOUR WALLPAPER"; font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.1; color: M3.primary }
+                T { text: I18n.t("COLORS FROM YOUR WALLPAPER"); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.1; color: M3.primary }
                 Flow {
                     width: parent.width
                     spacing: 6
@@ -82,7 +82,7 @@ Item {
                 Flow {
                     width: parent.width
                     spacing: 8
-                    Btn { text: "Surprise me"; sym: "shuffle"; icon: ""; primary: true; onClicked: page.randomWall() }
+                    Btn { text: I18n.t("Surprise me"); sym: "shuffle"; icon: ""; primary: true; onClicked: page.randomWall() }
                     Btn { text: "Theme"; sym: "palette"; icon: ""; onClicked: page.ctl.page = 8 }
                     Btn { text: "Folder"; sym: "folder_open"; icon: ""; onClicked: if (page.w.dir) Quickshell.execDetached(["xdg-open", page.w.dir]) }
                 }
@@ -91,7 +91,7 @@ Item {
 
         // ---------- all wallpapers ----------
         SectionTitle {
-            text: "Your wallpapers"
+            text: I18n.t("Your wallpapers")
             sub: page.w.dir ? (page.w.walls.length + " in " + page.w.dir.replace(Quickshell.env("HOME"), "~") + ". Click one to use it.") : "No wallpaper folder found (~/Pictures/Wallpapers)."
         }
         Grid {

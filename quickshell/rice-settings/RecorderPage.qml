@@ -153,38 +153,38 @@ Item {
                 Row {
                     topPadding: 8
                     spacing: 8
-                    Btn { visible: !page.recording; primary: true; icon: ""; text: "Record screen"; onClicked: page.rec("full") }
-                    Btn { visible: !page.recording; icon: ""; text: "Record region"; onClicked: page.rec("region") }
-                    Btn { visible: page.recording; primary: true; icon: ""; text: "Stop recording"; onClicked: page.stopRec() }
+                    Btn { visible: !page.recording; primary: true; icon: ""; text: I18n.t("Record screen"); onClicked: page.rec("full") }
+                    Btn { visible: !page.recording; icon: ""; text: I18n.t("Record region"); onClicked: page.rec("region") }
+                    Btn { visible: page.recording; primary: true; icon: ""; text: I18n.t("Stop recording"); onClicked: page.stopRec() }
                 }
                 T {
                     width: parent.width
                     visible: !page.recording
-                    text: "Settings closes so it is not in the video. Stop with the same shortcut."
+                    text: I18n.t("Settings closes so it is not in the video. Stop with the same shortcut.")
                     font.pixelSize: 11; color: "#8a8a98"; wrapMode: Text.WordWrap
                 }
             }
         }
 
         // ---------- video ----------
-        SectionTitle { text: "Video"; sub: "Bigger and sharper videos are heavier for the computer and take more space." }
+        SectionTitle { text: "Video"; sub: I18n.t("Bigger and sharper videos are heavier for the computer and take more space.") }
         SegRow {
             label: "Resolution"
-            desc: "Native keeps your screen's size; smaller is lighter"
+            desc: I18n.t("Native keeps your screen's size; smaller is lighter")
             options: [{ label: "Native", value: "native" }, { label: "1440p", value: "1440" }, { label: "1080p", value: "1080" }, { label: "720p", value: "720" }]
             current: page.v("rec_res", "native")
             onChosen: function(x) { page.setv("rec_res", x) }
         }
         SegRow {
-            label: "Frame rate"
-            desc: "60 fps is smoother for games and moving windows"
-            options: [{ label: "30 fps", value: "30" }, { label: "60 fps", value: "60" }]
+            label: I18n.t("Frame rate")
+            desc: I18n.t("60 fps is smoother for games and moving windows")
+            options: [{ label: I18n.t("30 fps"), value: "30" }, { label: I18n.t("60 fps"), value: "60" }]
             current: page.v("rec_fps", "60")
             onChosen: function(x) { page.setv("rec_fps", x) }
         }
         SegRow {
             label: "Quality"
-            desc: "How sharp the picture stays; the file size follows"
+            desc: I18n.t("How sharp the picture stays; the file size follows")
             options: [{ label: "Best", value: "best" }, { label: "High", value: "high" }, { label: "Balanced", value: "balanced" }, { label: "Small", value: "small" }]
             current: page.v("rec_quality", "high")
             onChosen: function(x) { page.setv("rec_quality", x) }
@@ -199,18 +199,18 @@ Item {
 
         // ---------- sound ----------
         SectionTitle { text: "Sound" }
-        ToggleRow { label: "Record sound"; desc: "The sound of your computer: games, videos, calls"; checked: page.v("rec_sound", true) === true; onToggled: function(x) { page.setv("rec_sound", x ? "on" : "off") } }
-        ToggleRow { label: "Record microphone"; desc: "Your voice instead (with wf-recorder only one of the two; gpu-screen-recorder can take both)"; checked: page.v("rec_mic", false) === true; onToggled: function(x) { page.setv("rec_mic", x ? "on" : "off") } }
+        ToggleRow { label: I18n.t("Record sound"); desc: I18n.t("The sound of your computer: games, videos, calls"); checked: page.v("rec_sound", true) === true; onToggled: function(x) { page.setv("rec_sound", x ? "on" : "off") } }
+        ToggleRow { label: I18n.t("Record microphone"); desc: I18n.t("Your voice instead (with wf-recorder only one of the two; gpu-screen-recorder can take both)"); checked: page.v("rec_mic", false) === true; onToggled: function(x) { page.setv("rec_mic", x ? "on" : "off") } }
 
         T {
             visible: page.noTool
             width: parent.width
-            text: "No screen recorder found. Install wf-recorder (and slurp for regions)."
+            text: I18n.t("No screen recorder found. Install wf-recorder (and slurp for regions).")
             color: "#e0a050"; font.pixelSize: 12; wrapMode: Text.WordWrap
         }
 
         // ---------- recent ----------
-        SectionTitle { text: "Recent recordings"; sub: "Click one to play it. They are saved in " + (page.info.dir || "Videos/Recordings") + "." }
+        SectionTitle { text: I18n.t("Recent recordings"); sub: "Click one to play it. They are saved in " + (page.info.dir || "Videos/Recordings") + "." }
         Flow {
             id: flow
             width: parent.width
@@ -275,18 +275,18 @@ Item {
         T {
             visible: (page.info.recordings || []).length === 0
             width: parent.width
-            text: "Nothing recorded yet. Use Record screen above, or your record shortcut."
+            text: I18n.t("Nothing recorded yet. Use Record screen above, or your record shortcut.")
             color: M3.inkDim; font.pixelSize: 12; wrapMode: Text.WordWrap
         }
         Row {
             topPadding: 4
             spacing: 8
-            Btn { icon: ""; text: "Open folder"; onClicked: Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-hotcorner\" folder recordings"]) }
+            Btn { icon: ""; text: I18n.t("Open folder"); onClicked: Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-hotcorner\" folder recordings"]) }
         }
         T {
             width: parent.width
             topPadding: 6
-            text: "Tip: Reddit, Discord and other sites compress videos again. For posts, 1080p at 60 fps with High quality is a good balance."
+            text: I18n.t("Tip: Reddit, Discord and other sites compress videos again. For posts, 1080p at 60 fps with High quality is a good balance.")
             color: M3.inkDim; font.pixelSize: 11; wrapMode: Text.WordWrap
         }
     }

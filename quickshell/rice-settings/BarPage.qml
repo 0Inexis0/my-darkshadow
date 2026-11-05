@@ -159,8 +159,8 @@ Item {
                 Behavior on color { ColorAnimation { duration: 120 } }
                 Column {
                     anchors.left: parent.left; anchors.leftMargin: 18; anchors.verticalCenter: parent.verticalCenter; spacing: 3
-                    T { text: "Bar layout"; font.pixelSize: 14; font.bold: true }
-                    T { kind: "reading"; text: "Drag modules around: left, center, right, order"; color: M3.inkDim; font.pixelSize: 12 }
+                    T { text: I18n.t("Bar layout"); font.pixelSize: 14; font.bold: true }
+                    T { kind: "reading"; text: I18n.t("Drag modules around: left, center, right, order"); color: M3.inkDim; font.pixelSize: 12 }
                 }
                 T { kind: "icon"; anchors.right: parent.right; anchors.rightMargin: 18; anchors.verticalCenter: parent.verticalCenter; text: ""; color: M3.inkDim }
                 MouseArea { id: blMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.ctl.page = 3 }
@@ -168,8 +168,8 @@ Item {
 
             T { kind: "title"; text: "Style"; font.pixelSize: 16; font.bold: true; topPadding: 10 }
             SegRow {
-                label: "Bar style"
-                desc: "Dynamic: tonal pills in your theme color and an island in the middle that grows"
+                label: I18n.t("Bar style")
+                desc: I18n.t("Dynamic: tonal pills in your theme color and an island in the middle that grows")
                 options: [ { label: "Flat", value: "flat" }, { label: "Island", value: "island" }, { label: "Islands", value: "islands" }, { label: "Pills", value: "pills" }, { label: "Notch", value: "notch" }, { label: "Dynamic", value: "dynamic" } ]
                 current: page.v("style", "islands") === "google" ? "dynamic" : page.v("style", "islands")
                 onChosen: function(x) { page.setv("style", x) }
@@ -181,56 +181,56 @@ Item {
                 Behavior on color { ColorAnimation { duration: 120 } }
                 Column {
                     anchors.left: parent.left; anchors.leftMargin: 18; anchors.verticalCenter: parent.verticalCenter; spacing: 3
-                    T { text: "Dynamic island"; font.pixelSize: 14; font.bold: true }
-                    T { kind: "reading"; text: "What the island in the bar shows and grows into"; color: M3.inkDim; font.pixelSize: 12 }
+                    T { text: I18n.t("Dynamic island"); font.pixelSize: 14; font.bold: true }
+                    T { kind: "reading"; text: I18n.t("What the island in the bar shows and grows into"); color: M3.inkDim; font.pixelSize: 12 }
                 }
                 T { kind: "icon"; anchors.right: parent.right; anchors.rightMargin: 18; anchors.verticalCenter: parent.verticalCenter; text: ""; color: M3.inkDim }
                 MouseArea { id: ilm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.ctl.page = 6 }
             }
             ToggleRow {
                 label: "Auto-hide"
-                desc: "The bar slides away and windows get the space; point at the screen edge to bring it back"
+                desc: I18n.t("The bar slides away and windows get the space; point at the screen edge to bring it back")
                 checked: page.v("autohide", false) === true
                 onToggled: function(x) { page.setv("autohide", x ? "on" : "off") }
             }
             ToggleRow {
                 label: "Shadow"
-                desc: "A soft shadow under the bar so it floats above the wallpaper"
+                desc: I18n.t("A soft shadow under the bar so it floats above the wallpaper")
                 checked: page.v("shadow", true) !== false
                 onToggled: function(x) { page.setv("shadow", x ? "on" : "off") }
             }
             SegRow {
                 label: "Position"
-                desc: "Top or bottom edge of the screen"
+                desc: I18n.t("Top or bottom edge of the screen")
                 options: [ { label: "Top", value: "top" }, { label: "Bottom", value: "bottom" } ]
                 current: page.v("position", "top")
                 onChosen: function(x) { page.setv("position", x) }
             }
             SegRow {
                 label: "Size"
-                desc: "How tall the bar is"
+                desc: I18n.t("How tall the bar is")
                 options: [ { label: "Compact", value: "32" }, { label: "Normal", value: "38" }, { label: "Large", value: "46" } ]
                 current: String(page.v("height", 38))
                 onChosen: function(x) { page.setv("height", x) }
             }
             SliderRow {
-                label: "Tray icon size"
-                desc: "How big the app icons in the tray are"
+                label: I18n.t("Tray icon size")
+                desc: I18n.t("How big the app icons in the tray are")
                 from: 12; to: 28; step: 1; decimals: 0
                 value: page.v("tray_size", 18)
                 onCommitted: function(x) { page.setv("tray_size", Math.round(x)) }
             }
             SliderRow {
                 label: "Transparency"
-                desc: "Lower is more see-through. Blur sits behind it when blur is on"
+                desc: I18n.t("Lower is more see-through. Blur sits behind it when blur is on")
                 from: 0.3; to: 1; step: 0.02; decimals: 2
                 value: page.v("opacity", 0.72)
                 onCommitted: function(x) { page.setv("opacity", x.toFixed(2)) }
             }
 
             // ---------- launcher icon ----------
-            T { kind: "title"; text: "Launcher icon"; font.pixelSize: 16; font.bold: true; topPadding: 10 }
-            T { kind: "reading"; text: "The button that opens the launcher. Auto picks the logo of the system you run."; color: M3.inkDim; font.pixelSize: 12 }
+            T { kind: "title"; text: I18n.t("Launcher icon"); font.pixelSize: 16; font.bold: true; topPadding: 10 }
+            T { kind: "reading"; text: I18n.t("The button that opens the launcher. Auto picks the logo of the system you run."); color: M3.inkDim; font.pixelSize: 12 }
             Flow {
                 width: parent.width
                 spacing: 8
@@ -258,29 +258,29 @@ Item {
             T { kind: "title"; text: "Content"; font.pixelSize: 16; font.bold: true; topPadding: 10 }
             SegRow {
                 label: "Workspaces"
-                desc: "How many dots are always shown (more appear when you use them)"
+                desc: I18n.t("How many dots are always shown (more appear when you use them)")
                 options: [ { label: "4", value: "4" }, { label: "5", value: "5" }, { label: "6", value: "6" }, { label: "8", value: "8" } ]
                 current: String(page.v("workspaces", 5))
                 onChosen: function(x) { page.setv("workspaces", x) }
             }
             SegRow {
-                label: "Workspace style"
-                desc: "Dots, Pac-Man running to the workspace you open, letters or numbers"
+                label: I18n.t("Workspace style")
+                desc: I18n.t("Dots, Pac-Man running to the workspace you open, letters or numbers")
                 options: [ { label: "Dots", value: "dots" }, { label: "Pac-Man", value: "pacman" }, { label: "Letters", value: "letters" }, { label: "Numbers", value: "numbers" } ]
                 current: page.v("ws_style", "dots")
                 onChosen: function(x) { page.setv("ws_style", x) }
             }
             ToggleRow {
                 label: "Seconds"
-                desc: "Show seconds in the clock"
+                desc: I18n.t("Show seconds in the clock")
                 checked: page.v("seconds", false) === true
                 onToggled: function(x) { page.setv("seconds", x ? "on" : "off") }
             }
 
-            T { kind: "title"; text: "Old bar"; font.pixelSize: 16; font.bold: true; topPadding: 10 }
+            T { kind: "title"; text: I18n.t("Old bar"); font.pixelSize: 16; font.bold: true; topPadding: 10 }
             ToggleRow {
-                label: "Use Waybar instead"
-                desc: "Go back to the old Waybar if the DarkShadow bar gives you trouble. Waybar needs to be installed"
+                label: I18n.t("Use Waybar instead")
+                desc: I18n.t("Go back to the old Waybar if the DarkShadow bar gives you trouble. Waybar needs to be installed")
                 checked: page.v("enabled", true) !== true
                 onToggled: function(x) { Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-bar\" " + (x ? "off" : "on")]); page.ctl.status = x ? "Waybar" : "DarkShadow bar"; refresh.restart() }
             }

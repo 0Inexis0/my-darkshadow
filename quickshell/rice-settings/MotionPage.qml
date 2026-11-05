@@ -94,7 +94,7 @@ Item {
         SectionTitle { text: "Windows"; sub: (Quickshell.env("NIRI_SOCKET") ? "niri" : "Hyprland") + ": opening and closing windows, switching workspaces, pop-ups." }
         ToggleRow {
             label: "Animations"
-            desc: "Off: everything appears at once"
+            desc: I18n.t("Off: everything appears at once")
             checked: page.ha.enabled !== false
             onToggled: function(v) { page.ctl.setAnim("enabled", v) }
         }
@@ -140,43 +140,43 @@ Item {
         }
         SliderRow {
             label: "Speed"
-            desc: "100% is the normal speed of the style; higher is faster"
+            desc: I18n.t("100% is the normal speed of the style; higher is faster")
             from: 50; to: 200; step: 10; unit: " %"
             value: page.ha.speed !== undefined ? page.ha.speed : 100
             onCommitted: function(v) { page.ctl.setAnim("speed", Math.round(v)) }
         }
 
         // ---------- spring physics ----------
-        SectionTitle { text: "Spring physics"; sub: "Motion in Settings is made of springs: stiffness and damping instead of a duration and a curve. Spatial springs may bounce, effects never do." }
+        SectionTitle { text: I18n.t("Spring physics"); sub: I18n.t("Motion in Settings is made of springs: stiffness and damping instead of a duration and a curve. Spatial springs may bounce, effects never do.") }
         SegRow {
             label: "Feel"
-            desc: "Expressive springs a little, Standard glides"
+            desc: I18n.t("Expressive springs a little, Standard glides")
             options: [{ label: "Expressive", value: "expressive" }, { label: "Standard", value: "standard" }]
             current: Prefs.motion
             onChosen: function(x) { Prefs.setMotion(x); page.ctl.status = "Motion: " + x }
         }
         SliderRow {
             label: "Speed"
-            desc: "Scales every spring and duration in Settings"
+            desc: I18n.t("Scales every spring and duration in Settings")
             from: 0.5; to: 2; step: 0.05; decimals: 2; unit: "x"
             value: Prefs.motionSpeed
             onCommitted: function(v) { Prefs.setMotionSpeed(v) }
         }
         SliderRow {
             label: "Bounce"
-            desc: "0 takes the overshoot out of every spring; 2 makes it twice as playful"
+            desc: I18n.t("0 takes the overshoot out of every spring; 2 makes it twice as playful")
             from: 0; to: 2; step: 0.1; decimals: 1; unit: "×"
             value: Prefs.bounce
             onCommitted: function(v) { Prefs.setBounce(v) }
         }
         Row {
             spacing: 8
-            Btn { text: "Reset motion"; sym: "restart_alt"; icon: ""; variant: "text"
+            Btn { text: I18n.t("Reset motion"); sym: "restart_alt"; icon: ""; variant: "text"
                 onClicked: { Prefs.setMotion("expressive"); Prefs.setMotionSpeed(1); Prefs.setBounce(1) } }
         }
 
         // ---------- try it ----------
-        SectionTitle { text: "Try it"; sub: "Click a card to play it with the feel above." }
+        SectionTitle { text: I18n.t("Try it"); sub: I18n.t("Click a card to play it with the feel above.") }
         Grid {
             id: tryGrid
             width: parent.width
@@ -217,7 +217,7 @@ Item {
         }
 
         // ---------- tokens: springs ----------
-        SectionTitle { text: "Springs"; sub: "The motion tokens behind the feel above: spatial ones move things, effect ones fade and recolor. Click one to play it." }
+        SectionTitle { text: "Springs"; sub: I18n.t("The motion tokens behind the feel above: spatial ones move things, effect ones fade and recolor. Click one to play it.") }
         Grid {
             id: sGrid
             width: parent.width
@@ -237,7 +237,7 @@ Item {
         }
 
         // ---------- tokens: easing ----------
-        SectionTitle { text: "Easing curves"; sub: "For changes with a fixed duration. Emphasized is for big moves, standard for small ones." }
+        SectionTitle { text: I18n.t("Easing curves"); sub: I18n.t("For changes with a fixed duration. Emphasized is for big moves, standard for small ones.") }
         Grid {
             id: eGrid
             width: parent.width
@@ -257,7 +257,7 @@ Item {
         }
 
         // ---------- tokens: durations ----------
-        SectionTitle { text: "Durations"; sub: "From a quick tap answer to a whole screen moving. Click a chip to see how long it is." }
+        SectionTitle { text: "Durations"; sub: I18n.t("From a quick tap answer to a whole screen moving. Click a chip to see how long it is.") }
         Rectangle {
             width: parent.width
             height: dFlow.implicitHeight + 74
@@ -297,7 +297,7 @@ Item {
         }
 
         // ---------- gesture ----------
-        SectionTitle { text: "Gesture + spring"; sub: "Throw the shape and let go: the spring takes the speed of your hand and brings it home." }
+        SectionTitle { text: I18n.t("Gesture + spring"); sub: I18n.t("Throw the shape and let go: the spring takes the speed of your hand and brings it home.") }
         Rectangle {
             id: pad
             width: parent.width
@@ -307,7 +307,7 @@ Item {
             clip: true
             // home
             Rectangle { anchors.centerIn: parent; width: 84; height: 84; radius: 42; color: "transparent"; border.width: 2; border.color: M3.alpha(M3.primary, 0.35) }
-            T { anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.bottom; anchors.bottomMargin: 14; text: "Drag and let go"; font.pixelSize: 12; color: M3.inkDim }
+            T { anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.bottom; anchors.bottomMargin: 14; text: I18n.t("Drag and let go"); font.pixelSize: 12; color: M3.inkDim }
             Item {
                 id: blob
                 // offset from home, its speed, and the spring that pulls it back

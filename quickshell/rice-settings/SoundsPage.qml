@@ -89,8 +89,8 @@ Item {
                 x: 110
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 4
-                T { kind: "title"; text: "Sounds of your desktop"; font.pixelSize: 18; font.bold: true }
-                T { kind: "reading"; text: "Clicks, switches and sliders in the shell's own parts. Never in other apps."; color: M3.inkDim; font.pixelSize: 12 }
+                T { kind: "title"; text: I18n.t("Sounds of your desktop"); font.pixelSize: 18; font.bold: true }
+                T { kind: "reading"; text: I18n.t("Clicks, switches and sliders in the shell's own parts. Never in other apps."); color: M3.inkDim; font.pixelSize: 12 }
             }
             Tog {
                 anchors.right: parent.right; anchors.rightMargin: 22
@@ -101,7 +101,7 @@ Item {
         }
 
         // ---------- interface sounds ----------
-        SectionTitle { text: "Sound pack"; sub: "How the clicks and switches sound. Click one to hear it." }
+        SectionTitle { text: I18n.t("Sound pack"); sub: I18n.t("How the clicks and switches sound. Click one to hear it.") }
         Flow {
             id: packs
             width: parent.width
@@ -133,30 +133,30 @@ Item {
         }
         SliderRow {
             label: "Volume"
-            desc: "How loud the interface sounds are, on top of your system volume"
+            desc: I18n.t("How loud the interface sounds are, on top of your system volume")
             from: 0; to: 100; step: 5; unit: " %"
             value: page.v("volume", 45)
             onCommitted: function(x) { page.setv("volume", Math.round(x)); Sfx.play("select") }
         }
 
-        SectionTitle { text: "When to play"; sub: "Turn single sounds on or off." }
-        ToggleRow { label: "Clicks"; desc: "Buttons, cards, the sidebar and the dashboard"; checked: page.v("click", true); onToggled: function(x) { page.setv("click", x) } }
-        ToggleRow { label: "Switches"; desc: "A soft up when something turns on, down when it turns off"; checked: page.v("switch", true); onToggled: function(x) { page.setv("switch", x) } }
-        ToggleRow { label: "Sliders"; desc: "A tiny tick for every step while you drag"; checked: page.v("slider", true); onToggled: function(x) { page.setv("slider", x) } }
-        ToggleRow { label: "Typing"; desc: "Search fields and text boxes"; checked: page.v("typing", true); onToggled: function(x) { page.setv("typing", x) } }
-        ToggleRow { label: "Welcome music"; desc: "Quiet music during the welcome intro and the Settings tour"; checked: page.v("music", true); onToggled: function(x) { page.setv("music", x) } }
+        SectionTitle { text: I18n.t("When to play"); sub: I18n.t("Turn single sounds on or off.") }
+        ToggleRow { label: "Clicks"; desc: I18n.t("Buttons, cards, the sidebar and the dashboard"); checked: page.v("click", true); onToggled: function(x) { page.setv("click", x) } }
+        ToggleRow { label: "Switches"; desc: I18n.t("A soft up when something turns on, down when it turns off"); checked: page.v("switch", true); onToggled: function(x) { page.setv("switch", x) } }
+        ToggleRow { label: "Sliders"; desc: I18n.t("A tiny tick for every step while you drag"); checked: page.v("slider", true); onToggled: function(x) { page.setv("slider", x) } }
+        ToggleRow { label: "Typing"; desc: I18n.t("Search fields and text boxes"); checked: page.v("typing", true); onToggled: function(x) { page.setv("typing", x) } }
+        ToggleRow { label: I18n.t("Welcome music"); desc: I18n.t("Quiet music during the welcome intro and the Settings tour"); checked: page.v("music", true); onToggled: function(x) { page.setv("music", x) } }
 
         Row {
             spacing: 10
             topPadding: 6
-            Btn { icon: ""; text: "Play the music"; onClicked: Sfx.music(true) }
+            Btn { icon: ""; text: I18n.t("Play the music"); onClicked: Sfx.music(true) }
             Btn { icon: ""; text: "Stop"; onClicked: Sfx.music(false) }
-            Btn { icon: ""; text: "Replay the welcome"; onClicked: Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-welcome\" show"]) }
-            Btn { icon: ""; text: "Start the tour"; onClicked: page.ctl.startTour() }
+            Btn { icon: ""; text: I18n.t("Replay the welcome"); onClicked: Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-welcome\" show"]) }
+            Btn { icon: ""; text: I18n.t("Start the tour"); onClicked: page.ctl.startTour() }
         }
 
         // ---------- notification sound (it was in Notifications before) ----------
-        SectionTitle { text: "Notification sound"; sub: "Plays when a notification arrives (Discord, updates, ...). Silent during Do Not Disturb. Click one to hear it." }
+        SectionTitle { text: I18n.t("Notification sound"); sub: I18n.t("Plays when a notification arrives (Discord, updates, ...). Silent during Do Not Disturb. Click one to hear it.") }
         Flow {
             id: sounds
             width: parent.width
@@ -189,8 +189,8 @@ Item {
             }
         }
         SliderRow {
-            label: "Notification sound volume"
-            desc: "How loud the notification sound is, on top of your system volume"
+            label: I18n.t("Notification sound volume")
+            desc: I18n.t("How loud the notification sound is, on top of your system volume")
             from: 0; to: 100; step: 5; unit: " %"
             value: page.nv("sound_volume", 70)
             onCommitted: function(x) {

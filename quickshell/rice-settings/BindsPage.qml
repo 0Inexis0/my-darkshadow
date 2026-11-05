@@ -26,7 +26,7 @@ Column {
 
     Timer { id: refresh; interval: 700; onTriggered: bindsProc.running = true }
 
-    T { text: "Custom keybinds"; font.pixelSize: 15; font.bold: true }
+    T { text: I18n.t("Custom keybinds"); font.pixelSize: 15; font.bold: true }
     T {
         width: parent.width
         text: Quickshell.env("NIRI_SOCKET") ? "Run any command with a key combination. niri takes changes at once." : "Run any command with a key combination. Removing one takes effect after Reload Hyprland."
@@ -74,7 +74,7 @@ Column {
 
     T {
         visible: page.custom.length === 0
-        text: "No custom keybinds yet."
+        text: I18n.t("No custom keybinds yet.")
         color: M3.inkDim
         font.pixelSize: 13
     }
@@ -82,11 +82,11 @@ Column {
     Row {
         width: parent.width
         spacing: 8
-        Field { id: keysField; width: 170; placeholder: "SUPER + X" }
+        Field { id: keysField; width: 170; placeholder: I18n.t("SUPER + X") }
         Field {
             id: cmdField
             width: parent.width - 170 - addPill.width - 16
-            placeholder: "Command, e.g. kitty"
+            placeholder: I18n.t("Command, e.g. kitty")
             onAccepted: addPill.clicked()
         }
         Pill {
@@ -104,7 +104,7 @@ Column {
         }
     }
 
-    T { text: "Active keybinds"; font.pixelSize: 15; font.bold: true; topPadding: 12 }
+    T { text: I18n.t("Active keybinds"); font.pixelSize: 15; font.bold: true; topPadding: 12 }
     Column {
         width: parent.width
         spacing: 3

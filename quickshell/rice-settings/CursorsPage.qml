@@ -107,8 +107,8 @@ Item {
 
         SectionTitle { text: "Size" }
         SliderRow {
-            label: "Cursor size"
-            desc: "24 is normal, bigger is easier to see"
+            label: I18n.t("Cursor size")
+            desc: I18n.t("24 is normal, bigger is easier to see")
             from: 16; to: 64; step: 2; unit: " px"
             value: page.cs.size || 24
             onCommitted: function(x) {
@@ -178,7 +178,7 @@ Item {
                 }
             }
         }
-        SectionTitle { text: "Get more cursors"; sub: "Downloaded from GitHub into ~/.local/share/icons. Hyprcursor themes are drawn by Hyprland itself (sharp at any size); apps use Bibata meanwhile." }
+        SectionTitle { text: I18n.t("Get more cursors"); sub: I18n.t("Downloaded from GitHub into ~/.local/share/icons. Hyprcursor themes are drawn by Hyprland itself (sharp at any size); apps use Bibata meanwhile.") }
         Repeater {
             model: page.cs.packs || []
             delegate: Rectangle {
@@ -206,7 +206,7 @@ Item {
         T {
             visible: !(page.cs.themes && page.cs.themes.length > 0)
             width: parent.width
-            text: "No cursor themes found. Install Bibata: bibata-cursor-theme-bin (Arch, AUR) or bibata-cursors (NixOS)."
+            text: I18n.t("No cursor themes found. Install Bibata: bibata-cursor-theme-bin (Arch, AUR) or bibata-cursors (NixOS).")
             color: "#e0a050"
             font.pixelSize: 12
             wrapMode: Text.WordWrap

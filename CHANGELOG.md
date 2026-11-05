@@ -1,5 +1,8 @@
 # Changelog
 
+## V3.63: languages
+- New: Settings > System > **Languages**: choose the language of Settings from 20: English, Polski, Português (Brasil), Español, Français, Deutsch, Italiano, Nederlands, Русский, Українська, Türkçe, Čeština, Svenska, Română, Magyar, 日本語, 한국어, 简体中文, Bahasa Indonesia, Tiếng Việt. It changes at once and is remembered
+- Translated so far: the menu, the page names and captions, the search box and the first things on Home; the rest stays in English until it is translated (the words are in rice-settings/I18nData.qml: add a line to add or fix a translation)
 ## V3.62
 - niri: the Dynamic island, menus, dock and widgets now blur what is behind them, windows too, not only the wallpaper (xray off for the shell's layers; niri 26.04 and newer)
 

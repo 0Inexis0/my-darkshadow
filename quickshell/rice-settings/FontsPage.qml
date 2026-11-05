@@ -12,12 +12,12 @@ Item {
     function have(f) { return fams.indexOf(f) >= 0 }
 
     readonly property var roles: [
-        { key: "title", label: "Titles", desc: "Headings and big numbers", sample: "Make it yours", px: 30, sym: "title", g: "" },
-        { key: "main", label: "Text", desc: "Everything you read in the interface", sample: "The quick brown fox jumps over the lazy dog", px: 17, sym: "text_fields", g: "" },
-        { key: "reading", label: "Descriptions", desc: "The small lines under settings", sample: "Lower is more see-through. Blur sits behind it.", px: 14, sym: "notes", g: "" },
-        { key: "numbers", label: "Numbers", desc: "Clocks and stats", sample: "12:45  ·  98%  ·  3.14", px: 26, sym: "pin", g: "" },
-        { key: "mono", label: "Monospace", desc: "Terminal (kitty) and code", sample: "~/shadows-shell $ rice-update", px: 15, sym: "terminal", g: "" },
-        { key: "icons", label: "Icon font", desc: "Nerd Font symbols in the bar and widgets", sample: "        ", px: 20, sym: "emoji_symbols", g: "" }
+        { key: "title", label: "Titles", desc: I18n.t("Headings and big numbers"), sample: "Make it yours", px: 30, sym: "title", g: "" },
+        { key: "main", label: "Text", desc: I18n.t("Everything you read in the interface"), sample: "The quick brown fox jumps over the lazy dog", px: 17, sym: "text_fields", g: "" },
+        { key: "reading", label: "Descriptions", desc: I18n.t("The small lines under settings"), sample: "Lower is more see-through. Blur sits behind it.", px: 14, sym: "notes", g: "" },
+        { key: "numbers", label: "Numbers", desc: I18n.t("Clocks and stats"), sample: "12:45  ·  98%  ·  3.14", px: 26, sym: "pin", g: "" },
+        { key: "mono", label: "Monospace", desc: I18n.t("Terminal (kitty) and code"), sample: "~/shadows-shell $ rice-update", px: 15, sym: "terminal", g: "" },
+        { key: "icons", label: I18n.t("Icon font"), desc: I18n.t("Nerd Font symbols in the bar and widgets"), sample: "        ", px: 20, sym: "emoji_symbols", g: "" }
     ]
     readonly property var suggestions: ["Google Sans Flex", "Google Sans Code", "Rubik", "Inter", "Google Sans", "Outfit", "Space Grotesk", "Gabarito", "Readex Pro", "Manrope", "JetBrainsMono Nerd Font", "Iosevka Nerd Font"]
 
@@ -84,16 +84,16 @@ Item {
                 x: 26 + 150; anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - x - 24
                 spacing: 6
-                T { text: "INTERFACE FONT"; font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2; color: M3.alpha(M3.inkPrimaryC, 0.75) }
+                T { text: I18n.t("INTERFACE FONT"); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2; color: M3.alpha(M3.inkPrimaryC, 0.75) }
                 T { kind: "title"; text: Fonts.main; font.pixelSize: 26; font.weight: Font.Medium; color: M3.inkPrimaryC }
                 T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.alpha(M3.inkPrimaryC, 0.85)
                     text: page.have("Google Sans Flex") ? "Settings, the bar, the launcher, notifications, the island and widgets all use it. Point at Aa to see it bold."
                                                          : "Google Sans Flex is not installed yet: run rice-fonts (the installer does it for you)." }
-                Btn { visible: page.have("Google Sans Flex") && Fonts.main !== "Google Sans Flex"; text: "Use Google Sans Flex"; sym: "font_download"; icon: ""; primary: true; onClicked: page.useGoogle() }
+                Btn { visible: page.have("Google Sans Flex") && Fonts.main !== "Google Sans Flex"; text: I18n.t("Use Google Sans Flex"); sym: "font_download"; icon: ""; primary: true; onClicked: page.useGoogle() }
             }
         }
         T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.inkDim; topPadding: 6
-            text: "Type an installed family and press Enter, or pick a suggestion. Monospace is for kitty and code." }
+            text: I18n.t("Type an installed family and press Enter, or pick a suggestion. Monospace is for kitty and code.") }
 
         Repeater {
             model: page.roles
@@ -127,7 +127,7 @@ Item {
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
                             text: card.fam
-                            placeholder: "Font family"
+                            placeholder: I18n.t("Font family")
                             onAccepted: page.applyFont(modelData.key, text)
                         }
                     }
@@ -173,27 +173,27 @@ Item {
         Row {
             spacing: 8
             topPadding: 4
-            Btn { text: "Reset fonts"; sym: "restart_alt"; icon: ""; onClicked: resetProc.running = true }
+            Btn { text: I18n.t("Reset fonts"); sym: "restart_alt"; icon: ""; onClicked: resetProc.running = true }
         }
 
         // ---------- text ----------
-        SectionTitle { text: "Text"; sub: "Size and weight of every label in Settings." }
+        SectionTitle { text: "Text"; sub: I18n.t("Size and weight of every label in Settings.") }
         SliderRow {
-            label: "Text size"
-            desc: "100 % is the normal size"
+            label: I18n.t("Text size")
+            desc: I18n.t("100 % is the normal size")
             from: 85; to: 130; step: 5; unit: " %"
             value: Math.round(Prefs.textScale * 100)
             onCommitted: function(v) { Prefs.setTextScale(v / 100) }
         }
-        ToggleRow { label: "Emphasized headings"; desc: "Titles and headlines one step heavier"; checked: Prefs.emphHeadings; onToggled: function(v) { Prefs.setEmphHeadings(v) } }
-        ToggleRow { label: "Rounded letters"; desc: "Google Sans Flex with soft, round stroke ends"; checked: Prefs.roundText; onToggled: function(v) { Prefs.setRoundText(v) } }
+        ToggleRow { label: I18n.t("Emphasized headings"); desc: I18n.t("Titles and headlines one step heavier"); checked: Prefs.emphHeadings; onToggled: function(v) { Prefs.setEmphHeadings(v) } }
+        ToggleRow { label: I18n.t("Rounded letters"); desc: I18n.t("Google Sans Flex with soft, round stroke ends"); checked: Prefs.roundText; onToggled: function(v) { Prefs.setRoundText(v) } }
 
         // ---------- the type scale ----------
-        SectionTitle { text: "Type scale"; sub: "The 15 text roles of Material 3 in your fonts. Type to try your own words." }
+        SectionTitle { text: I18n.t("Type scale"); sub: I18n.t("The 15 text roles of Material 3 in your fonts. Type to try your own words.") }
         Field {
             width: parent.width
             text: page.sampleText
-            placeholder: "Sample text"
+            placeholder: I18n.t("Sample text")
             onAccepted: page.sampleText = text
             onTextChanged: if (text.length) page.sampleText = text
         }

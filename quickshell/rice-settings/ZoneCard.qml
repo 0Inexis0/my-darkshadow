@@ -137,7 +137,7 @@ Rectangle {
 
         T {
             visible: zc.adding && zc.available.length === 0
-            text: "Every module is already placed in the bar."
+            text: I18n.t("Every module is already placed in the bar.")
             font.pixelSize: 12
             color: M3.inkDim
         }

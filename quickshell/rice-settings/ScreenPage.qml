@@ -72,7 +72,7 @@ Item {
                 x: 140; anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - 140 - 24
                 spacing: 3
-                T { text: "YOUR SCREEN"; font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2; color: M3.alpha(M3.inkPrimaryC, 0.75) }
+                T { text: I18n.t("YOUR SCREEN"); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2; color: M3.alpha(M3.inkPrimaryC, 0.75) }
                 T { kind: "title"; width: parent.width; elide: Text.ElideRight; font.pixelSize: 24; font.weight: Font.Medium; color: M3.inkPrimaryC
                     text: page.m ? page.curRes + "  ·  " + page.m.rate + " Hz" : "Looking for screens ..." }
                 T { font.pixelSize: 12; color: M3.alpha(M3.inkPrimaryC, 0.85)
@@ -94,12 +94,12 @@ Item {
                 anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
                 spacing: 8
                 Btn { text: "Keep"; sym: "check"; icon: ""; primary: true; onClicked: page.keep() }
-                Btn { text: "Go back"; sym: "undo"; icon: ""; variant: "outlined"; onClicked: page.revert() }
+                Btn { text: I18n.t("Go back"); sym: "undo"; icon: ""; variant: "outlined"; onClicked: page.revert() }
             }
         }
 
         // ---------- which screen ----------
-        SectionTitle { visible: page.mons.length > 1; text: "Screens"; sub: "Pick the screen to change." }
+        SectionTitle { visible: page.mons.length > 1; text: "Screens"; sub: I18n.t("Pick the screen to change.") }
         Flow {
             visible: page.mons.length > 1
             width: parent.width
@@ -118,9 +118,9 @@ Item {
         }
 
         // ---------- size ----------
-        SectionTitle { text: "Size"; sub: "How big everything looks: text, windows, the bar. 100 % shows the most; bigger is easier to read on small, sharp screens." }
+        SectionTitle { text: "Size"; sub: I18n.t("How big everything looks: text, windows, the bar. 100 % shows the most; bigger is easier to read on small, sharp screens.") }
         SegRow {
-            label: "Size of everything"
+            label: I18n.t("Size of everything")
             desc: page.m ? "Now " + page.scaleText(page.m.scale) : ""
             options: [{ label: "100 %", value: "1" }, { label: "125 %", value: "1.25" }, { label: "150 %", value: "1.5" }, { label: "200 %", value: "2" }]
             current: page.m ? String(Number(page.m.scale)) : ""
@@ -128,7 +128,7 @@ Item {
         }
 
         // ---------- resolution ----------
-        SectionTitle { text: "Resolution"; sub: "The number of pixels. The first one is your screen's own (the sharpest)." }
+        SectionTitle { text: "Resolution"; sub: I18n.t("The number of pixels. The first one is your screen's own (the sharpest).") }
         Flow {
             width: parent.width
             spacing: 8
@@ -147,7 +147,7 @@ Item {
         }
 
         // ---------- refresh rate ----------
-        SectionTitle { text: "Refresh rate"; sub: "How many times a second the picture changes. Higher is smoother (and uses a little more power on a laptop)." }
+        SectionTitle { text: I18n.t("Refresh rate"); sub: I18n.t("How many times a second the picture changes. Higher is smoother (and uses a little more power on a laptop).") }
         Flow {
             width: parent.width
             spacing: 8

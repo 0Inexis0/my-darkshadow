@@ -105,7 +105,7 @@ Item {
                 height: sum.implicitHeight
                 Text {
                     id: sum
-                    text: "DarkShadow's Shell"
+                    text: I18n.t("DarkShadow's Shell")
                     font.family: m.fam.length > 0 ? m.fam : Fonts.family("main")
                     font.pixelSize: 13 * m.fs
                     font.bold: true
@@ -124,7 +124,7 @@ Item {
             Text {
                 visible: m.showBody
                 width: parent.width
-                text: "This is how your notifications look."
+                text: I18n.t("This is how your notifications look.")
                 font.family: m.fam.length > 0 ? m.fam : Fonts.family("main")
                 font.pixelSize: 11 * m.fs
                 color: (m.look === "island") ? M3.inkDim : m.dim

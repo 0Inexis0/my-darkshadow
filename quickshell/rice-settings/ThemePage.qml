@@ -103,7 +103,7 @@ Item {
             }
         }
 
-        SectionTitle { text: "Dynamic"; sub: "Taken from your wallpaper, they change with it." }
+        SectionTitle { text: "Dynamic"; sub: I18n.t("Taken from your wallpaper, they change with it.") }
         Flow {
             width: parent.width
             spacing: 10
@@ -114,7 +114,7 @@ Item {
             }
         }
 
-        SectionTitle { text: "Monochrome"; sub: "Black, white and quiet greys." }
+        SectionTitle { text: "Monochrome"; sub: I18n.t("Black, white and quiet greys.") }
         Flow {
             width: parent.width
             spacing: 10
@@ -125,7 +125,7 @@ Item {
             }
         }
 
-        SectionTitle { text: "Colors"; sub: "Fixed palettes, the same on every wallpaper." }
+        SectionTitle { text: "Colors"; sub: I18n.t("Fixed palettes, the same on every wallpaper.") }
         Flow {
             width: parent.width
             spacing: 10

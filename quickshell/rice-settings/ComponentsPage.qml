@@ -21,8 +21,8 @@ Item {
         anchors.fill: parent
 
         // ---------- switches ----------
-        SectionTitle { text: "Selection"; sub: "Switches, check boxes, radio buttons and filter chips." }
-        ToggleRow { label: "Icons in switches"; desc: "A check when on, a cross when off"; checked: Prefs.switchIcons; onToggled: function(v) { Prefs.setSwitchIcons(v) } }
+        SectionTitle { text: "Selection"; sub: I18n.t("Switches, check boxes, radio buttons and filter chips.") }
+        ToggleRow { label: I18n.t("Icons in switches"); desc: I18n.t("A check when on, a cross when off"); checked: Prefs.switchIcons; onToggled: function(v) { Prefs.setSwitchIcons(v) } }
         Rectangle {
             width: parent.width; height: 76; radius: M3.rL; color: M3.stageTop
             Row {
@@ -76,7 +76,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 x: 18
                 spacing: 8
-                T { text: "Filter chips"; font.pixelSize: 13; color: M3.inkDim; anchors.verticalCenter: parent.verticalCenter; rightPadding: 8 }
+                T { text: I18n.t("Filter chips"); font.pixelSize: 13; color: M3.inkDim; anchors.verticalCenter: parent.verticalCenter; rightPadding: 8 }
                 Repeater {
                     model: Object.keys(page.filters)
                     delegate: Rectangle {
@@ -100,17 +100,17 @@ Item {
 
         // ---------- shape: now on its own page ----------
         SettingRow {
-            label: "Corners and shapes"
-            desc: "How round things are, and your shape: Appearance > Shapes"
+            label: I18n.t("Corners and shapes")
+            desc: I18n.t("How round things are, and your shape: Appearance > Shapes")
             reserved: 140
             Btn { anchors.right: parent.right; anchors.rightMargin: 14; anchors.verticalCenter: parent.verticalCenter
                 text: "Shapes"; sym: "interests"; icon: ""; onClicked: page.ctl.page = 24 }
         }
 
         // ---------- sliders ----------
-        SectionTitle { text: "Sliders"; sub: "Thicker tracks are easier to grab on a touchpad." }
+        SectionTitle { text: "Sliders"; sub: I18n.t("Thicker tracks are easier to grab on a touchpad.") }
         SliderRow {
-            label: "Slider thickness"
+            label: I18n.t("Slider thickness")
             desc: "×" + Number(Prefs.sliderThick).toFixed(1)
             from: 0.6; to: 1.6; step: 0.1; decimals: 1; unit: "×"
             value: Prefs.sliderThick
@@ -129,16 +129,16 @@ Item {
         }
 
         // ---------- progress ----------
-        SectionTitle { text: "Progress indicators"; sub: "Music, loaders and gauges. The wave calms down near 0 % and 100 %." }
+        SectionTitle { text: I18n.t("Progress indicators"); sub: I18n.t("Music, loaders and gauges. The wave calms down near 0 % and 100 %.") }
         Row {
             spacing: 8
-            Btn { text: "Reset components"; sym: "restart_alt"; icon: ""; variant: "text"
+            Btn { text: I18n.t("Reset components"); sym: "restart_alt"; icon: ""; variant: "text"
                 onClicked: { Prefs.setSwitchIcons(true); Prefs.setSliderThick(1); Prefs.setWavy(true); Prefs.setProgressThick(4) } }
         }
-        ToggleRow { label: "Wavy progress"; desc: "Off: flat lines everywhere"; checked: Prefs.wavy; onToggled: function(v) { Prefs.setWavy(v) } }
+        ToggleRow { label: I18n.t("Wavy progress"); desc: I18n.t("Off: flat lines everywhere"); checked: Prefs.wavy; onToggled: function(v) { Prefs.setWavy(v) } }
         SliderRow {
             label: "Thickness"
-            desc: "Of progress lines and rings"
+            desc: I18n.t("Of progress lines and rings")
             from: 2; to: 8; step: 1; unit: " px"
             value: Prefs.progressThick
             onCommitted: function(v) { Prefs.setProgressThick(v) }
@@ -162,7 +162,7 @@ Item {
         }
 
         // ---------- buttons ----------
-        SectionTitle { text: "Buttons"; sub: "Filled for the main action, tonal for the rest, outlined and text for quiet ones." }
+        SectionTitle { text: "Buttons"; sub: I18n.t("Filled for the main action, tonal for the rest, outlined and text for quiet ones.") }
         Rectangle {
             width: parent.width; height: bflow.implicitHeight + 36; radius: M3.rL; color: M3.surfaceC
             Flow {

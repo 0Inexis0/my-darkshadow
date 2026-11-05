@@ -142,7 +142,7 @@ Item {
 
         SectionTitle {
             text: "Layouts"
-            sub: "Pick one to start from, then change it below. The island in the middle is your clock, and it grows into music, volume, notifications and today."
+            sub: I18n.t("Pick one to start from, then change it below. The island in the middle is your clock, and it grows into music, volume, notifications and today.")
         }
         Flow {
             width: parent.width
@@ -191,7 +191,7 @@ Item {
         }
 
         SectionTitle {
-            text: "Bar layout"
+            text: I18n.t("Bar layout")
             sub: "Drag a module to move it. Drop it between others to change the order, or into \"Not on the bar\" to hide it. "
         }
 
@@ -262,7 +262,7 @@ Item {
             }
         }
 
-        SectionTitle { text: "Not on the bar"; sub: "Drag one up to add it." }
+        SectionTitle { text: I18n.t("Not on the bar"); sub: I18n.t("Drag one up to add it.") }
         LayoutZone {
             id: zHidden
             zone: "available"; page: page; wrap: true
@@ -276,7 +276,7 @@ Item {
             spacing: 10
             topPadding: 6
             Btn {
-                text: "Default layout"
+                text: I18n.t("Default layout")
                 icon: ""
                 onClicked: {
                     const n = { left: page.defaults.left.slice(), center: page.defaults.center.slice(), right: page.defaults.right.slice(), available: [] }

@@ -220,7 +220,7 @@ Item {
 
             SegRow {
                 label: "Style"
-                desc: "List, icon grid, full-width bar, or split (wallpaper on the left)"
+                desc: I18n.t("List, icon grid, full-width bar, or split (wallpaper on the left)")
                 options: [
                     { label: "List", value: "list" },
                     { label: "Grid", value: "grid" },
@@ -232,7 +232,7 @@ Item {
             }
             SegRow {
                 label: "Position"
-                desc: "Where the launcher opens on the screen"
+                desc: I18n.t("Where the launcher opens on the screen")
                 options: [
                     { label: "Top", value: "top" },
                     { label: "Center", value: "center" },
@@ -243,7 +243,7 @@ Item {
             }
             SliderRow {
                 label: "Width"
-                desc: "Not used by the bar style"
+                desc: I18n.t("Not used by the bar style")
                 from: 360; to: 1200; step: 20
                 value: page.v("width", 620)
                 unit: " px"
@@ -251,7 +251,7 @@ Item {
             }
             SliderRow {
                 label: "Rows"
-                desc: "How many results are visible"
+                desc: I18n.t("How many results are visible")
                 from: 3; to: 14; step: 1
                 value: page.v("lines", 8)
                 onCommitted: function(x) { page.setv("lines", Math.round(x)) }
@@ -261,13 +261,13 @@ Item {
 
             ToggleRow {
                 label: "Transparency"
-                desc: "Translucent background; off makes it solid"
+                desc: I18n.t("Translucent background; off makes it solid")
                 checked: page.v("transparency", true) === true
                 onToggled: function(x) { page.setv("transparency", x ? "on" : "off") }
             }
             SliderRow {
                 label: "Opacity"
-                desc: "Lower is more transparent"
+                desc: I18n.t("Lower is more transparent")
                 from: 0.3; to: 1.0; step: 0.02
                 decimals: 2
                 value: page.v("opacity", 0.82)
@@ -275,13 +275,13 @@ Item {
             }
             ToggleRow {
                 label: "Blur"
-                desc: "Blur whatever is behind the launcher (needs transparency)"
+                desc: I18n.t("Blur whatever is behind the launcher (needs transparency)")
                 checked: page.v("blur", true) === true
                 onToggled: function(x) { page.setv("blur", x ? "on" : "off") }
             }
             SliderRow {
-                label: "Corner radius"
-                desc: "Roundness of the window"
+                label: I18n.t("Corner radius")
+                desc: I18n.t("Roundness of the window")
                 from: 0; to: 32; step: 1
                 value: page.v("radius", 18)
                 unit: " px"
@@ -291,16 +291,16 @@ Item {
             T { kind: "title"; text: "Text"; font.pixelSize: 16; font.bold: true; topPadding: 14 }
 
             SliderRow {
-                label: "Font size"
-                desc: "The font comes from Services > Fonts (monospace)"
+                label: I18n.t("Font size")
+                desc: I18n.t("The font comes from Services > Fonts (monospace)")
                 from: 9; to: 20; step: 1
                 value: page.v("font_size", 13)
                 unit: " pt"
                 onCommitted: function(x) { page.setv("font_size", Math.round(x)) }
             }
             ToggleRow {
-                label: "App icons"
-                desc: "Show icons next to the results"
+                label: I18n.t("App icons")
+                desc: I18n.t("Show icons next to the results")
                 checked: page.v("icons", true) === true
                 onToggled: function(x) { page.setv("icons", x ? "on" : "off") }
             }
@@ -312,7 +312,7 @@ Item {
                     width: 150; height: 38; radius: 12
                     color: pMouse.containsMouse ? "#ffffff" : "#F6F5F4"
                     Behavior on color { ColorAnimation { duration: 120 } }
-                    T { anchors.centerIn: parent; text: "Open it"; font.pixelSize: 13; font.bold: true; color: "#0d0d0d" }
+                    T { anchors.centerIn: parent; text: I18n.t("Open it"); font.pixelSize: 13; font.bold: true; color: "#0d0d0d" }
                     MouseArea {
                         id: pMouse
                         anchors.fill: parent

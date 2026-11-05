@@ -78,17 +78,17 @@ Item {
                 x: 140; anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - 140 - 24
                 spacing: 3
-                T { text: "CURRENT LAYOUT"; font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2; color: M3.alpha(M3.inkPrimaryC, 0.75) }
+                T { text: I18n.t("CURRENT LAYOUT"); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2; color: M3.alpha(M3.inkPrimaryC, 0.75) }
                 T { kind: "title"; width: parent.width; elide: Text.ElideRight; font.pixelSize: 24; font.weight: Font.Medium; color: M3.inkPrimaryC
                     text: page.st.layouts.length ? page.nameOf(page.st.layouts[0]) : "…" }
                 T { font.pixelSize: 12; color: M3.alpha(M3.inkPrimaryC, 0.85); text: page.varOf(0) ? "Variant: " + page.varOf(0) : "Default variant" }
                 T { font.pixelSize: 11; color: M3.alpha(M3.inkPrimaryC, 0.7); visible: page.st.active !== ""; text: (Quickshell.env("NIRI_SOCKET") ? "niri" : "Hyprland") + " reports: " + page.st.active }
-                Btn { visible: page.st.layouts.length > 1; text: "Next layout"; sym: "keyboard_tab"; icon: ""; primary: true; onClicked: page.run(["kbd-next"]) }
+                Btn { visible: page.st.layouts.length > 1; text: I18n.t("Next layout"); sym: "keyboard_tab"; icon: ""; primary: true; onClicked: page.run(["kbd-next"]) }
             }
         }
 
         // ---------- your layouts ----------
-        SectionTitle { text: "Your layouts"; sub: "Up to four. The first one is used when you log in." }
+        SectionTitle { text: I18n.t("Your layouts"); sub: I18n.t("Up to four. The first one is used when you log in.") }
         Repeater {
             model: page.st.layouts
             delegate: SettingRow {
@@ -119,19 +119,19 @@ Item {
         }
         SegRow {
             visible: page.st.layouts.length > 1
-            label: "Switch with"
-            desc: "Keys that change the layout"
-            options: [{ label: "Alt + Shift", value: "grp:alt_shift_toggle" }, { label: "Super + Space", value: "grp:win_space_toggle" },
-                      { label: "Caps Lock", value: "grp:caps_toggle" }]
+            label: I18n.t("Switch with")
+            desc: I18n.t("Keys that change the layout")
+            options: [{ label: I18n.t("Alt + Shift"), value: "grp:alt_shift_toggle" }, { label: I18n.t("Super + Space"), value: "grp:win_space_toggle" },
+                      { label: I18n.t("Caps Lock"), value: "grp:caps_toggle" }]
             current: page.st.options
             onChosen: function(x) { const n = Object.assign({}, page.st); n.options = x; page.st = n; page.run(["kbd-options", x]) }
         }
 
         // ---------- every layout ----------
-        SectionTitle { text: "All layouts"; sub: (page.st.all || []).length + " layouts on this computer. Click one for its variants, + adds it." }
+        SectionTitle { text: I18n.t("All layouts"); sub: (page.st.all || []).length + " layouts on this computer. Click one for its variants, + adds it." }
         Field {
             width: parent.width
-            placeholder: "Search language or layout ..."
+            placeholder: I18n.t("Search language or layout ...")
             onTextChanged: page.q = text
         }
         Rectangle {

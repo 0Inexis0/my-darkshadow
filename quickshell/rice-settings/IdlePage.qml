@@ -81,7 +81,7 @@ Item {
                     width: npv.width * 0.5
                     spacing: 10 * npv.s
                     T { anchors.horizontalCenter: npv.isLeft ? undefined : parent.horizontalCenter; visible: page.v("date", true) === true
-                        text: "Wednesday, 4 November"; font.pixelSize: 26 * npv.s; color: M3.ink }
+                        text: I18n.t("Wednesday, 4 November"); font.pixelSize: 26 * npv.s; color: M3.ink }
                     Item {
                         width: parent.width; height: npv.st === "shape" ? 300 * npv.s : (npv.st === "stacked" ? 300 * npv.s : (npv.st === "minimal" ? 96 * npv.s : 190 * npv.s))
                         T { visible: npv.st !== "shape" && npv.st !== "stacked"; anchors.horizontalCenter: npv.isLeft ? undefined : parent.horizontalCenter
@@ -98,7 +98,7 @@ Item {
                     }
                     Row { anchors.horizontalCenter: npv.isLeft ? undefined : parent.horizontalCenter; spacing: 12 * npv.s
                         Blob { visible: page.v("avatar", true) === true; width: 52 * npv.s; height: width; kind: Prefs.accentShape; color: M3.primaryContainer; anchors.verticalCenter: parent.verticalCenter }
-                        T { visible: page.v("greeting", true) === true; text: "Good evening"; font.pixelSize: 20 * npv.s; color: M3.ink; anchors.verticalCenter: parent.verticalCenter } }
+                        T { visible: page.v("greeting", true) === true; text: I18n.t("Good evening"); font.pixelSize: 20 * npv.s; color: M3.ink; anchors.verticalCenter: parent.verticalCenter } }
                     Row { anchors.horizontalCenter: npv.isLeft ? undefined : parent.horizontalCenter; spacing: 10 * npv.s
                         Repeater { model: [page.v("weather", false) === true, page.v("notifications", true) === true, page.v("resources", false) === true]
                             delegate: Rectangle { visible: modelData; width: 120 * npv.s; height: 40 * npv.s; radius: height / 2; color: M3.surfaceHigh } } }
@@ -245,7 +245,7 @@ Item {
                     color: kind === "pill" ? Qt.rgba(1, 1, 1, 0.08) : (kind === "box" ? Qt.rgba(0, 0, 0, 0.35) : "transparent")
                     border.width: kind === "box" ? 1 : 0
                     border.color: pv.acc
-                    T { anchors.centerIn: parent; text: "Enter password"; font.pixelSize: 15 * 1.33 * pv.s; color: "#F6F5F4"; opacity: 0.45 }
+                    T { anchors.centerIn: parent; text: I18n.t("Enter password"); font.pixelSize: 15 * 1.33 * pv.s; color: "#F6F5F4"; opacity: 0.45 }
                     Rectangle { visible: parent.kind === "line"; anchors.bottom: parent.bottom; width: parent.width; height: 2; color: pv.acc }
                 }
                 // power buttons
@@ -284,7 +284,7 @@ Item {
                 T {
                     anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 8
                     visible: page.v("managed", true) === false
-                    text: "Using your own hyprlock.conf"
+                    text: I18n.t("Using your own hyprlock.conf")
                     font.pixelSize: 10; color: "#e0a050"
                 }
             }
@@ -292,7 +292,7 @@ Item {
 
         Row {
             spacing: 10
-            Btn { primary: true; icon: ""; text: "Lock now"; onClicked: Quickshell.execDetached(["bash", "-c", "setsid -f \"$HOME/.local/bin/rice-lock\" now >/dev/null 2>&1"]) }
+            Btn { primary: true; icon: ""; text: I18n.t("Lock now"); onClicked: Quickshell.execDetached(["bash", "-c", "setsid -f \"$HOME/.local/bin/rice-lock\" now >/dev/null 2>&1"]) }
             // the new lock screen in a window: try it without locking (Esc closes it)
             Btn { visible: page.v("engine", "shell") === "shell"; sym: "visibility"; text: "Preview"
                 onClicked: Quickshell.execDetached(["bash", "-c", "setsid -f \"$HOME/.local/bin/rice-lock\" preview >/dev/null 2>&1"]) }
@@ -300,34 +300,34 @@ Item {
         }
 
         // ---------- idle ----------
-        SectionTitle { text: "Idle"; sub: "What happens when you leave the computer. Slide to 0 for Never." }
+        SectionTitle { text: "Idle"; sub: I18n.t("What happens when you leave the computer. Slide to 0 for Never.") }
         SliderRow {
-            label: "Lock after"
+            label: I18n.t("Lock after")
             desc: "Currently: " + page.mins(page.v("lock_after", 5))
             from: 0; to: 60; step: 1; unit: " min"
             value: page.v("lock_after", 5)
             onCommitted: function(x) { page.setv("lock_after", Math.round(x)) }
         }
         SliderRow {
-            label: "Turn screen off after"
+            label: I18n.t("Turn screen off after")
             desc: "Currently: " + page.mins(page.v("screen_off_after", 0))
             from: 0; to: 60; step: 1; unit: " min"
             value: page.v("screen_off_after", 0)
             onCommitted: function(x) { page.setv("screen_off_after", Math.round(x)) }
         }
         SliderRow {
-            label: "Sleep after"
+            label: I18n.t("Sleep after")
             desc: "Currently: " + page.mins(page.v("suspend_after", 15))
             from: 0; to: 120; step: 5; unit: " min"
             value: page.v("suspend_after", 15)
             onCommitted: function(x) { page.setv("suspend_after", Math.round(x)) }
         }
-        ToggleRow { label: "Lock before sleep"; desc: "Always lock the screen before the computer sleeps"; checked: page.v("lock_before_sleep", true) === true; onToggled: function(x) { page.setv("lock_before_sleep", x ? "on" : "off") } }
+        ToggleRow { label: I18n.t("Lock before sleep"); desc: I18n.t("Always lock the screen before the computer sleeps"); checked: page.v("lock_before_sleep", true) === true; onToggled: function(x) { page.setv("lock_before_sleep", x ? "on" : "off") } }
 
         // ---------- lock screen ----------
-        SectionTitle { text: "Lock screen"; sub: "Changes show up the next time you lock. Preview shows it without locking." }
+        SectionTitle { text: I18n.t("Lock screen"); sub: I18n.t("Changes show up the next time you lock. Preview shows it without locking.") }
         SegRow {
-            label: "Lock screen"
+            label: I18n.t("Lock screen")
             desc: page.v("engine", "shell") === "shell"
                   ? "DarkShadow: Material 3, your shape and wavy progress (hyprlock steps in if it ever fails)"
                   : "hyprlock: the classic lock screen"
@@ -335,17 +335,17 @@ Item {
             current: page.v("engine", "shell")
             onChosen: function(x) { page.setv("engine", x) }
         }
-        ToggleRow { visible: page.v("engine", "shell") === "hyprlock"; label: "Manage lock screen"; desc: "Off keeps your own hyprlock.conf untouched"; checked: page.v("managed", true) === true; onToggled: function(x) { page.setv("managed", x ? "on" : "off") } }
+        ToggleRow { visible: page.v("engine", "shell") === "hyprlock"; label: I18n.t("Manage lock screen"); desc: I18n.t("Off keeps your own hyprlock.conf untouched"); checked: page.v("managed", true) === true; onToggled: function(x) { page.setv("managed", x ? "on" : "off") } }
         SegRow {
             label: "Layout"
-            desc: "Everything centered, or on the left side"
+            desc: I18n.t("Everything centered, or on the left side")
             options: [{ label: "Center", value: "center" }, { label: "Left", value: "left" }]
             current: page.v("layout", "center")
             onChosen: function(x) { page.setv("layout", x) }
         }
         SegRow {
-            label: "Clock style"
-            desc: "Big, stacked hours over minutes, small, or inside your shape"
+            label: I18n.t("Clock style")
+            desc: I18n.t("Big, stacked hours over minutes, small, or inside your shape")
             options: [{ label: "Big", value: "big" }, { label: "Stacked", value: "stacked" }, { label: "Minimal", value: "minimal" }, { label: "Shape", value: "shape" }]
             current: page.v("clock", "big")
             onChosen: function(x) { page.setv("clock", x) }
@@ -355,8 +355,8 @@ Item {
             width: parent.width
             spacing: 8
             topPadding: 4
-            T { text: "Clock font"; font.pixelSize: 14 }
-            T { kind: "reading"; text: "The clock stays white and grey. Fonts that are not here yet download when you pick them."; color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
+            T { text: I18n.t("Clock font"); font.pixelSize: 14 }
+            T { kind: "reading"; text: I18n.t("The clock stays white and grey. Fonts that are not here yet download when you pick them."); color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
             Grid {
                 id: cfGrid
                 width: parent.width
@@ -382,7 +382,7 @@ Item {
                             anchors.horizontalCenter: parent.horizontalCenter
                             y: 12
                             textFormat: Text.StyledText
-                            text: "<b>18</b><font color='#8c8c8c'>:36</font>"
+                            text: I18n.t("<b>18</b><font color='#8c8c8c'>:36</font>")
                             font.family: modelData.f !== "" ? modelData.f : Fonts.family("number")
                             font.pixelSize: 34
                             color: "#F6F5F4"
@@ -401,23 +401,23 @@ Item {
                 }
             }
         }
-        ToggleRow { label: "24-hour clock"; checked: page.v("clock_24h", true) === true; onToggled: function(x) { page.setv("clock_24h", x ? "on" : "off") } }
-        ToggleRow { label: "Accent clock"; desc: "Color the clock with your Theme"; checked: page.v("accent_clock", false) === true; onToggled: function(x) { page.setv("accent_clock", x ? "on" : "off") } }
+        ToggleRow { label: I18n.t("24-hour clock"); checked: page.v("clock_24h", true) === true; onToggled: function(x) { page.setv("clock_24h", x ? "on" : "off") } }
+        ToggleRow { label: I18n.t("Accent clock"); desc: I18n.t("Color the clock with your Theme"); checked: page.v("accent_clock", false) === true; onToggled: function(x) { page.setv("accent_clock", x ? "on" : "off") } }
         ToggleRow { label: "Date"; checked: page.v("date", true) === true; onToggled: function(x) { page.setv("date", x ? "on" : "off") } }
-        ToggleRow { label: "Greeting"; desc: "Good morning / evening with your name"; checked: page.v("greeting", true) === true; onToggled: function(x) { page.setv("greeting", x ? "on" : "off") } }
-        ToggleRow { label: "Profile picture"; desc: "Your avatar from Home"; checked: page.v("avatar", true) === true; onToggled: function(x) { page.setv("avatar", x ? "on" : "off") } }
+        ToggleRow { label: "Greeting"; desc: I18n.t("Good morning / evening with your name"); checked: page.v("greeting", true) === true; onToggled: function(x) { page.setv("greeting", x ? "on" : "off") } }
+        ToggleRow { label: I18n.t("Profile picture"); desc: I18n.t("Your avatar from Home"); checked: page.v("avatar", true) === true; onToggled: function(x) { page.setv("avatar", x ? "on" : "off") } }
         SegRow {
-            label: "Password field"
+            label: I18n.t("Password field")
             options: [{ label: "Pill", value: "pill" }, { label: "Box", value: "box" }, { label: "Line", value: "line" }]
             current: page.v("input", "pill")
             onChosen: function(x) { page.setv("input", x) }
         }
-        ToggleRow { label: "Power buttons"; desc: "Sleep, restart and shut down (in red); restart and shut down ask for a second click"; checked: page.v("power", true) === true; onToggled: function(x) { page.setv("power", x ? "on" : "off") } }
+        ToggleRow { label: I18n.t("Power buttons"); desc: I18n.t("Sleep, restart and shut down (in red); restart and shut down ask for a second click"); checked: page.v("power", true) === true; onToggled: function(x) { page.setv("power", x ? "on" : "off") } }
 
         SectionTitle { text: "Background" }
         SegRow {
             label: "Source"
-            desc: "Blurred screenshot, your wallpaper, or a plain color"
+            desc: I18n.t("Blurred screenshot, your wallpaper, or a plain color")
             options: [{ label: "Screenshot", value: "screenshot" }, { label: "Wallpaper", value: "wallpaper" }, { label: "Color", value: "color" }]
             current: page.v("background", "screenshot")
             onChosen: function(x) { page.setv("background", x) }
@@ -430,21 +430,21 @@ Item {
         }
         SliderRow {
             label: "Brightness"
-            desc: "Lower makes the background darker"
+            desc: I18n.t("Lower makes the background darker")
             from: 0.2; to: 1.0; step: 0.05; decimals: 2
             value: page.v("dim", 0.5)
             onCommitted: function(x) { page.setv("dim", x.toFixed(2)) }
         }
 
-        SectionTitle { text: "Widgets"; sub: "Small lines at the bottom of the lock screen." }
-        ToggleRow { label: "Media"; desc: "What is playing right now"; checked: page.v("media", true) === true; onToggled: function(x) { page.setv("media", x ? "on" : "off") } }
-        ToggleRow { label: "Resources"; desc: "CPU, RAM and GPU usage"; checked: page.v("resources", false) === true; onToggled: function(x) { page.setv("resources", x ? "on" : "off") } }
-        ToggleRow { label: "Notifications"; desc: "How many notifications are waiting"; checked: page.v("notifications", true) === true; onToggled: function(x) { page.setv("notifications", x ? "on" : "off") } }
-        ToggleRow { label: "Weather"; desc: "Current weather from wttr.in"; checked: page.v("weather", false) === true; onToggled: function(x) { page.setv("weather", x ? "on" : "off") } }
+        SectionTitle { text: "Widgets"; sub: I18n.t("Small lines at the bottom of the lock screen.") }
+        ToggleRow { label: "Media"; desc: I18n.t("What is playing right now"); checked: page.v("media", true) === true; onToggled: function(x) { page.setv("media", x ? "on" : "off") } }
+        ToggleRow { label: "Resources"; desc: I18n.t("CPU, RAM and GPU usage"); checked: page.v("resources", false) === true; onToggled: function(x) { page.setv("resources", x ? "on" : "off") } }
+        ToggleRow { label: "Notifications"; desc: I18n.t("How many notifications are waiting"); checked: page.v("notifications", true) === true; onToggled: function(x) { page.setv("notifications", x ? "on" : "off") } }
+        ToggleRow { label: "Weather"; desc: I18n.t("Current weather from wttr.in"); checked: page.v("weather", false) === true; onToggled: function(x) { page.setv("weather", x ? "on" : "off") } }
 
         Row {
             topPadding: 8
-            Btn { text: "Restore my original files"; onClicked: { Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-lock\" restore"]); page.ctl.status = "Original hyprlock/hypridle restored"; refresh.restart() } }
+            Btn { text: I18n.t("Restore my original files"); onClicked: { Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-lock\" restore"]); page.ctl.status = "Original hyprlock/hypridle restored"; refresh.restart() } }
         }
     }
 }

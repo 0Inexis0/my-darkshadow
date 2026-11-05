@@ -217,7 +217,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     width: skipT.implicitWidth + 24; height: 40; radius: 20
                     color: skipM.containsMouse ? M3.alpha(M3.primary, 0.08) : "transparent"
-                    T { id: skipT; anchors.centerIn: parent; text: "Skip tour"; font.pixelSize: 14; font.weight: Font.Medium; color: M3.primary }
+                    T { id: skipT; anchors.centerIn: parent; text: I18n.t("Skip tour"); font.pixelSize: 14; font.weight: Font.Medium; color: M3.primary }
                     MouseArea { id: skipM; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: tour.stop() }
                 }
                 Row {
@@ -300,12 +300,12 @@ Item {
                     Column {
                         anchors.verticalCenter: parent.verticalCenter
                         T { text: ai.grow > 0.5 ? "Your song" : "18:22  ·  5°"; font.pixelSize: 12; font.weight: Font.DemiBold; color: "#F6F5F4" }
-                        T { visible: ai.grow > 0.5; opacity: ai.grow; text: "The artist"; font.pixelSize: 10; color: "#9a9aa2" }
+                        T { visible: ai.grow > 0.5; opacity: ai.grow; text: I18n.t("The artist"); font.pixelSize: 10; color: "#9a9aa2" }
                     }
                 }
             }
             T { anchors.bottom: parent.bottom; anchors.bottomMargin: 10; anchors.horizontalCenter: parent.horizontalCenter
-                text: "In the middle of your bar"; font.pixelSize: 11; color: M3.inkDim }
+                text: I18n.t("In the middle of your bar"); font.pixelSize: 11; color: M3.inkDim }
         }
     }
     // the island's card with its tabs
@@ -346,9 +346,9 @@ Item {
                 Row {
                     anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.bottom; anchors.bottomMargin: 12
                     spacing: 14
-                    T { text: "Left click: Today"; font.pixelSize: 10; color: M3.inkDim }
-                    T { text: "Right click: System"; font.pixelSize: 10; color: M3.inkDim }
-                    T { text: "Wheel: volume"; font.pixelSize: 10; color: M3.inkDim }
+                    T { text: I18n.t("Left click: Today"); font.pixelSize: 10; color: M3.inkDim }
+                    T { text: I18n.t("Right click: System"); font.pixelSize: 10; color: M3.inkDim }
+                    T { text: I18n.t("Wheel: volume"); font.pixelSize: 10; color: M3.inkDim }
                 }
             }
         }

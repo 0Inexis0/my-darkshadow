@@ -171,7 +171,7 @@ Item {
                     x: 28; y: 24
                     width: parent.width - 28 - 200
                     spacing: 6
-                    T { text: "WELCOME BACK"; font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2; color: M3.alpha(M3.inkPrimaryC, 0.75) }
+                    T { text: I18n.t("WELCOME BACK"); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2; color: M3.alpha(M3.inkPrimaryC, 0.75) }
                     T { kind: "title"; text: page.greeting() + ", " + page.user; font.pixelSize: 30; font.weight: Font.Medium; color: M3.inkPrimaryC
                         width: parent.width; elide: Text.ElideRight }
                     T { text: page.now.toLocaleDateString(Qt.locale("en_US"), "dddd, d MMMM") + "  \u00b7  " + page.now.toLocaleTimeString(Qt.locale("en_US"), "HH:mm")
@@ -206,7 +206,7 @@ Item {
                         spacing: 8
                         topPadding: 6
                         Btn { text: "Wallpaper"; sym: "wallpaper"; icon: "\uf03e"; primary: true; onClicked: page.ctl.page = 18 }
-                        Btn { text: "Gaming hub"; sym: "sports_esports"; icon: "\uf11b"; onClicked: page.ctl.page = 16 }
+                        Btn { text: I18n.t("Gaming hub"); sym: "sports_esports"; icon: "\uf11b"; onClicked: page.ctl.page = 16 }
                     }
                 }
             }
@@ -214,8 +214,8 @@ Item {
             // Light mode: one switch for slower computers, right on Home
             Rectangle {
                 // found by the search in the sidebar
-                property string label: "Light mode"
-                property string desc: "Running slow? Turn off blur, transparency and shadows, animations stay; performance"
+                property string label: I18n.t("Light mode")
+                property string desc: I18n.t("Running slow? Turn off blur, transparency and shadows, animations stay; performance")
                 property real reserved: 80
                 width: parent.width
                 height: 76
@@ -239,8 +239,8 @@ Item {
                     anchors.rightMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 2
-                    T { text: "Light mode"; font.pixelSize: 13; font.bold: true }
-                    T { kind: "reading"; text: "Running slow? No blur or shadows, widgets rest when a window covers them. Animations stay"; color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
+                    T { text: I18n.t("Light mode"); font.pixelSize: 13; font.bold: true }
+                    T { kind: "reading"; text: I18n.t("Running slow? No blur or shadows, widgets rest when a window covers them. Animations stay"); color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
                 }
                 Tog {
                     id: litetog
@@ -253,8 +253,8 @@ Item {
 
             // Auto-hide widgets: the desktop widgets rest while a window covers the screen
             Rectangle {
-                property string label: "Auto-hide widgets"
-                property string desc: "Hide the desktop widgets while a window covers the screen; floating windows leave them alone"
+                property string label: I18n.t("Auto-hide widgets")
+                property string desc: I18n.t("Hide the desktop widgets while a window covers the screen; floating windows leave them alone")
                 property real reserved: 80
                 readonly property bool on: page.ctl.dst.autoHide === true || page.lite
                 width: parent.width
@@ -279,7 +279,7 @@ Item {
                     anchors.rightMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 2
-                    T { text: "Auto-hide widgets"; font.pixelSize: 13; font.bold: true }
+                    T { text: I18n.t("Auto-hide widgets"); font.pixelSize: 13; font.bold: true }
                     T { kind: "reading"; text: page.lite ? "On while Light mode is on" : "Widgets hide while a window covers the screen, and come back on an empty desktop"; color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
                 }
                 Tog {
@@ -293,8 +293,8 @@ Item {
 
             // the falling stars across this window
             Rectangle {
-                property string label: "Falling stars"
-                property string desc: "Comets falling across this window; turn them off for a calm look"
+                property string label: I18n.t("Falling stars")
+                property string desc: I18n.t("Comets falling across this window; turn them off for a calm look")
                 property real reserved: 80
                 width: parent.width
                 height: 64
@@ -317,8 +317,8 @@ Item {
                     anchors.rightMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 2
-                    T { text: "Falling stars"; font.pixelSize: 13; font.bold: true }
-                    T { kind: "reading"; text: "Comets falling across this window"; color: M3.inkDim; font.pixelSize: 11; width: parent.width; elide: Text.ElideRight }
+                    T { text: I18n.t("Falling stars"); font.pixelSize: 13; font.bold: true }
+                    T { kind: "reading"; text: I18n.t("Comets falling across this window"); color: M3.inkDim; font.pixelSize: 11; width: parent.width; elide: Text.ElideRight }
                 }
                 Tog {
                     id: starstog
@@ -329,7 +329,7 @@ Item {
                 }
             }
 
-            T { kind: "title"; text: "Make it yours"; font.pixelSize: 16; font.bold: true; topPadding: 10 }
+            T { kind: "title"; text: I18n.t("Make it yours"); font.pixelSize: 16; font.bold: true; topPadding: 10 }
 
             Flow {
                 id: quick
@@ -384,7 +384,7 @@ Item {
                 }
             }
 
-            SectionTitle { text: "Settings"; sub: "The things you change most. They apply right away." }
+            SectionTitle { text: "Settings"; sub: I18n.t("The things you change most. They apply right away.") }
 
             // Profiles: Performance, Balanced, Power saver
             Item {
@@ -454,14 +454,14 @@ Item {
                     kind: "reading"
                     font.pixelSize: 12
                     color: M3.inkDim
-                    text: "Power modes need power-profiles-daemon, and it is not running on this computer. Install it and turn it on: sudo systemctl enable --now power-profiles-daemon (on NixOS: services.power-profiles-daemon.enable = true)."
+                    text: I18n.t("Power modes need power-profiles-daemon, and it is not running on this computer. Install it and turn it on: sudo systemctl enable --now power-profiles-daemon (on NixOS: services.power-profiles-daemon.enable = true).")
                 }
             }
 
             SliderRow {
                 id: sizeRow
-                label: "Window size"
-                desc: "Make this Settings window smaller or bigger"
+                label: I18n.t("Window size")
+                desc: I18n.t("Make this Settings window smaller or bigger")
                 from: 75; to: 150; step: 5; unit: " %"
                 value: Math.round(Prefs.size * 100)
                 onCommitted: function(v) { Prefs.setSize(v / 100) }
@@ -544,13 +544,13 @@ Item {
                     spacing: 4
                     T { text: Math.round(szPrev.ww) + " \u00d7 " + Math.round(szPrev.wh) + " px"; font.pixelSize: 20; font.bold: true }
                     T { kind: "reading"; text: Math.round(szPrev.ww * 100 / szPrev.sw) + " % of the screen width, " + Math.round(szPrev.wh * 100 / szPrev.sh) + " % of its height"; color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
-                    T { kind: "reading"; text: "Preview: the small window follows the slider. It is applied when you let go."; color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
+                    T { kind: "reading"; text: I18n.t("Preview: the small window follows the slider. It is applied when you let go."); color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
                 }
             }
 
             ToggleRow {
-                label: "Bar transparency"
-                desc: "Translucent bar with blur; off makes it solid"
+                label: I18n.t("Bar transparency")
+                desc: I18n.t("Translucent bar with blur; off makes it solid")
                 checked: page.ctl.st.transparent === true
                 onToggled: function(v) {
                     page.ctl.setSt("transparent", v)
@@ -558,31 +558,31 @@ Item {
                 }
             }
             ToggleRow {
-                label: "Window blur"
-                desc: "Blur behind the bar, notifications and see-through windows"
+                label: I18n.t("Window blur")
+                desc: I18n.t("Blur behind the bar, notifications and see-through windows")
                 checked: page.ctl.hv["decoration.blur.enabled"] !== false
                 onToggled: function(v) { page.ctl.hset("decoration.blur.enabled", v) }
             }
             ToggleRow {
                 label: "Animations"
-                desc: "Windows and workspaces move smoothly. Off is the lightest"
+                desc: I18n.t("Windows and workspaces move smoothly. Off is the lightest")
                 checked: page.ctl.ha.enabled !== false
                 onToggled: function(v) { page.ctl.setAnim("enabled", v) }
             }
 
-            SectionTitle { text: "Previews"; sub: "The live pictures at the top of some pages." }
+            SectionTitle { text: "Previews"; sub: I18n.t("The live pictures at the top of some pages.") }
             ToggleRow {
-                label: "Show previews"
-                desc: "Bar, Launcher, Notifications and Cursors show a small live picture of your choices"
+                label: I18n.t("Show previews")
+                desc: I18n.t("Bar, Launcher, Notifications and Cursors show a small live picture of your choices")
                 checked: Prefs.previews
                 onToggled: function(v) { Prefs.setPreviews(v) }
             }
 
-            SectionTitle { text: "Scrolling"; sub: "How fast pages move. Try it in the box." }
+            SectionTitle { text: "Scrolling"; sub: I18n.t("How fast pages move. Try it in the box.") }
 
             SliderRow {
-                label: "Settings scroll speed"
-                desc: "Wheel and touchpad scrolling in this window"
+                label: I18n.t("Settings scroll speed")
+                desc: I18n.t("Wheel and touchpad scrolling in this window")
                 from: 0.3; to: 3; step: 0.05; decimals: 2; unit: "x"
                 value: Prefs.scroll
                 onCommitted: function(v) { Prefs.setScroll(v) }
@@ -599,8 +599,8 @@ Item {
                     x: 16; y: 14
                     width: 190
                     spacing: 4
-                    T { text: "Try it"; font.pixelSize: 14 }
-                    T { kind: "reading"; text: "Scroll in the box. The speed above changes how far one notch goes."; color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
+                    T { text: I18n.t("Try it"); font.pixelSize: 14 }
+                    T { kind: "reading"; text: I18n.t("Scroll in the box. The speed above changes how far one notch goes."); color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
                 }
                 Rectangle {
                     x: 226; y: 12
@@ -644,37 +644,37 @@ Item {
                 }
             }
 
-            SectionTitle { text: "Mouse & touchpad"; sub: "System-wide, for every app." }
+            SectionTitle { text: I18n.t("Mouse & touchpad"); sub: I18n.t("System-wide, for every app.") }
 
             SliderRow {
-                label: "Mouse wheel speed"
-                desc: "How far one notch scrolls, everywhere"
+                label: I18n.t("Mouse wheel speed")
+                desc: I18n.t("How far one notch scrolls, everywhere")
                 from: 0.2; to: 3; step: 0.1; decimals: 1; unit: "x"
                 value: page.ctl.hv["input.scroll_factor"] !== undefined ? page.ctl.hv["input.scroll_factor"] : 1
                 onCommitted: function(v) { page.ctl.hset("input.scroll_factor", Math.round(v * 10) / 10) }
             }
             SliderRow {
-                label: "Touchpad scroll speed"
-                desc: "Two-finger scrolling, everywhere"
+                label: I18n.t("Touchpad scroll speed")
+                desc: I18n.t("Two-finger scrolling, everywhere")
                 from: 0.2; to: 3; step: 0.1; decimals: 1; unit: "x"
                 value: page.ctl.hv["input.touchpad.scroll_factor"] !== undefined ? page.ctl.hv["input.touchpad.scroll_factor"] : 1
                 onCommitted: function(v) { page.ctl.hset("input.touchpad.scroll_factor", Math.round(v * 10) / 10) }
             }
             ToggleRow {
-                label: "Natural scrolling"
-                desc: "Touchpad: content follows your fingers, like a phone"
+                label: I18n.t("Natural scrolling")
+                desc: I18n.t("Touchpad: content follows your fingers, like a phone")
                 checked: page.ctl.hv["input.touchpad.natural_scroll"] === true
                 onToggled: function(v) { page.ctl.hset("input.touchpad.natural_scroll", v) }
             }
             ToggleRow {
-                label: "Tap to click"
-                desc: "Touchpad: a light tap is a click"
+                label: I18n.t("Tap to click")
+                desc: I18n.t("Touchpad: a light tap is a click")
                 checked: page.ctl.hv["input.touchpad.tap-to-click"] !== false
                 onToggled: function(v) { page.ctl.hset("input.touchpad.tap-to-click", v) }
             }
             SliderRow {
-                label: "Pointer speed"
-                desc: "How fast the cursor moves"
+                label: I18n.t("Pointer speed")
+                desc: I18n.t("How fast the cursor moves")
                 from: -1; to: 1; step: 0.05; decimals: 2
                 value: page.ctl.hv["input.sensitivity"] !== undefined ? page.ctl.hv["input.sensitivity"] : 0
                 onCommitted: function(v) { page.ctl.hset("input.sensitivity", Math.round(v * 20) / 20) }

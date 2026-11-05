@@ -8,12 +8,12 @@ Item {
     property var fonts: ({})
 
     readonly property var roles: [
-        { key: "main", label: "Main font", desc: "Interface text, e.g. Rubik" },
-        { key: "numbers", label: "Numbers family", desc: "Digits in clocks and stats, e.g. Rubik" },
-        { key: "title", label: "Title family", desc: "Headings, e.g. Gabarito" },
-        { key: "mono", label: "Monospace font", desc: "Terminal, e.g. JetBrains Mono NF" },
-        { key: "icons", label: "Nerd font icons", desc: "Symbols, e.g. JetBrains Mono NF" },
-        { key: "reading", label: "Reading font", desc: "Descriptions, e.g. Readex Pro" }
+        { key: "main", label: I18n.t("Main font"), desc: I18n.t("Interface text, e.g. Rubik") },
+        { key: "numbers", label: I18n.t("Numbers family"), desc: I18n.t("Digits in clocks and stats, e.g. Rubik") },
+        { key: "title", label: I18n.t("Title family"), desc: I18n.t("Headings, e.g. Gabarito") },
+        { key: "mono", label: I18n.t("Monospace font"), desc: I18n.t("Terminal, e.g. JetBrains Mono NF") },
+        { key: "icons", label: I18n.t("Nerd font icons"), desc: I18n.t("Symbols, e.g. JetBrains Mono NF") },
+        { key: "reading", label: I18n.t("Reading font"), desc: I18n.t("Descriptions, e.g. Readex Pro") }
     ]
 
     // ---------- switches and system services (rice-services) ----------
@@ -204,8 +204,8 @@ Item {
             }
             SliderRow {
                 visible: page.sv.have && page.sv.have.hyprsunset === true
-                label: "Night light warmth"
-                desc: "Lower is warmer (more orange)"
+                label: I18n.t("Night light warmth")
+                desc: I18n.t("Lower is warmer (more orange)")
                 from: 2500; to: 6500; step: 100; unit: " K"
                 value: page.sv.night_temp || 4500
                 onCommitted: function(x) {
@@ -216,13 +216,13 @@ Item {
 
             // gaming mode lives in its own page now: Gaming hub
             SettingRow {
-                label: "Gaming mode"
-                desc: "Moved to Gaming hub, with performance and your game launchers"
+                label: I18n.t("Gaming mode")
+                desc: I18n.t("Moved to Gaming hub, with performance and your game launchers")
                 reserved: 120
                 Btn { anchors.right: parent.right; anchors.rightMargin: 14; anchors.verticalCenter: parent.verticalCenter; text: "Open"; onClicked: page.ctl.page = 16 }
             }
 
-            SectionTitle { text: "System services"; sub: "Background services. Start and stop ask for your password for system services." }
+            SectionTitle { text: I18n.t("System services"); sub: I18n.t("Background services. Start and stop ask for your password for system services.") }
             Repeater {
                 model: page.sv.units || []
                 delegate: Rectangle {
@@ -265,14 +265,14 @@ Item {
             }
             T {
                 visible: (page.sv.units || []).length === 0
-                text: "No services found (systemd is needed for this list)."
+                text: I18n.t("No services found (systemd is needed for this list).")
                 font.pixelSize: 12
                 color: M3.inkDim
             }
 
             SettingRow {
                 label: "Fonts"
-                desc: "Moved to Appearance > Fonts, with samples"
+                desc: I18n.t("Moved to Appearance > Fonts, with samples")
                 reserved: 120
                 Btn { anchors.right: parent.right; anchors.rightMargin: 14; anchors.verticalCenter: parent.verticalCenter; text: "Open"; onClicked: page.ctl.page = 19 }
             }

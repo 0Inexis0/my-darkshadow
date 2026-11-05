@@ -8,6 +8,9 @@ import QtQuick
 Singleton {
     id: prefs
     property real scroll: 1.0
+    // the language of Settings (Settings > System > Languages): "en", "pl", "pt-BR" ...
+    property string lang: "en"
+    function setLang(v) { lang = v; save("lang", v) }
     // the live pictures at the top of some pages (Home > Settings > Previews); off by default
     property bool previews: false
     // how Settings moves (Settings > Motion): expressive = a little spring, standard = calm curves; speed 0.5 .. 2
@@ -69,6 +72,7 @@ Singleton {
             onStreamFinished: {
                 try {
                     const j = JSON.parse(text)
+                    if (typeof j.lang === "string" && /^[a-zA-Z-]{2,6}$/.test(j.lang)) prefs.lang = j.lang
                     if (j.scroll !== undefined) prefs.scroll = Math.max(0.3, Math.min(3, Number(j.scroll)))
                     if (j.previews !== undefined) prefs.previews = j.previews === true
                     if (j.motion === "standard" || j.motion === "expressive") prefs.motion = j.motion

@@ -119,45 +119,45 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 6
                 width: 210
-                T { text: "Touch the corner"; font.pixelSize: 18; font.bold: true }
+                T { text: I18n.t("Touch the corner"); font.pixelSize: 18; font.bold: true }
                 T { width: parent.width; text: "Move the pointer into the " + scr.corner.replace("-", " ") + " corner to open the panel."; font.pixelSize: 12; color: "#b0b0bc"; wrapMode: Text.WordWrap }
                 Btn {
                     primary: true
-                    text: "Open it now"
+                    text: I18n.t("Open it now")
                     onClicked: Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-hotcorner\" open"])
                 }
             }
         }
 
         // ---------- general ----------
-        SectionTitle { text: "Hot corner" }
-        ToggleRow { label: "Enable"; desc: "Show the panel when the pointer touches the corner"; checked: page.v("enabled", true) === true; onToggled: function(x) { page.setv("enabled", x ? "on" : "off") } }
+        SectionTitle { text: I18n.t("Hot corner") }
+        ToggleRow { label: "Enable"; desc: I18n.t("Show the panel when the pointer touches the corner"); checked: page.v("enabled", true) === true; onToggled: function(x) { page.setv("enabled", x ? "on" : "off") } }
         SegRow {
             label: "Corner"
-            options: [{ label: "Bottom right", value: "bottom-right" }, { label: "Bottom left", value: "bottom-left" },
-                      { label: "Top right", value: "top-right" }, { label: "Top left", value: "top-left" }]
+            options: [{ label: I18n.t("Bottom right"), value: "bottom-right" }, { label: I18n.t("Bottom left"), value: "bottom-left" },
+                      { label: I18n.t("Top right"), value: "top-right" }, { label: I18n.t("Top left"), value: "top-left" }]
             current: page.v("corner", "bottom-right")
             onChosen: function(x) { page.setv("corner", x) }
         }
         SliderRow {
-            label: "Open delay"
-            desc: "How long the pointer must stay in the corner"
+            label: I18n.t("Open delay")
+            desc: I18n.t("How long the pointer must stay in the corner")
             from: 0; to: 800; step: 25; unit: " ms"
             value: page.v("delay", 150)
             onCommitted: function(x) { page.setv("delay", Math.round(x)) }
         }
         SliderRow {
-            label: "Corner size"
-            desc: "Size of the invisible hot spot"
+            label: I18n.t("Corner size")
+            desc: I18n.t("Size of the invisible hot spot")
             from: 1; to: 16; step: 1; unit: " px"
             value: page.v("trigger", 4)
             onCommitted: function(x) { page.setv("trigger", Math.round(x)) }
         }
-        ToggleRow { label: "Greeting header"; desc: "Your picture, a greeting and the time at the top"; checked: page.v("header", true) === true; onToggled: function(x) { page.setv("header", x ? "on" : "off") } }
-        ToggleRow { label: "Close when the pointer leaves"; desc: "Off keeps it open until you touch the corner again"; checked: page.v("close_on_leave", true) === true; onToggled: function(x) { page.setv("close_on_leave", x ? "on" : "off") } }
+        ToggleRow { label: I18n.t("Greeting header"); desc: I18n.t("Your picture, a greeting and the time at the top"); checked: page.v("header", true) === true; onToggled: function(x) { page.setv("header", x ? "on" : "off") } }
+        ToggleRow { label: I18n.t("Close when the pointer leaves"); desc: I18n.t("Off keeps it open until you touch the corner again"); checked: page.v("close_on_leave", true) === true; onToggled: function(x) { page.setv("close_on_leave", x ? "on" : "off") } }
 
         // ---------- sections ----------
-        SectionTitle { text: "Sections"; sub: "Turn sections on or off and change their order with the arrows." }
+        SectionTitle { text: "Sections"; sub: I18n.t("Turn sections on or off and change their order with the arrows.") }
         Repeater {
             model: page.sectionRows()
             delegate: Rectangle {
@@ -221,7 +221,7 @@ Item {
         }
 
         // ---------- quick toggles ----------
-        SectionTitle { text: "Quick toggles"; sub: "Arrows change the order, x removes. Click a + button to add." }
+        SectionTitle { text: I18n.t("Quick toggles"); sub: I18n.t("Arrows change the order, x removes. Click a + button to add.") }
         Rectangle {
             width: parent.width
             height: tgCol.implicitHeight + 28
@@ -248,7 +248,7 @@ Item {
                             onRemoved: page.setList("toggles", page.hc.toggles.filter(t => t !== modelData))
                         }
                     }
-                    T { visible: !(page.hc.toggles && page.hc.toggles.length > 0); text: "No toggles. Add some below."; color: "#8a8a8a"; font.pixelSize: 12 }
+                    T { visible: !(page.hc.toggles && page.hc.toggles.length > 0); text: I18n.t("No toggles. Add some below."); color: "#8a8a8a"; font.pixelSize: 12 }
                 }
                 Rectangle { width: parent.width; height: 1; color: "#222222" }
                 Flow {
@@ -284,7 +284,7 @@ Item {
         }
 
         // ---------- pinned apps ----------
-        SectionTitle { text: "Pinned apps"; sub: "Shown in the Apps section before you type. Use the app name or its .desktop id." }
+        SectionTitle { text: I18n.t("Pinned apps"); sub: I18n.t("Shown in the Apps section before you type. Use the app name or its .desktop id.") }
         Rectangle {
             width: parent.width
             height: paCol.implicitHeight + 28
@@ -317,7 +317,7 @@ Item {
                     Field {
                         id: appField
                         width: 240
-                        placeholder: "e.g. firefox, kitty, steam"
+                        placeholder: I18n.t("e.g. firefox, kitty, steam")
                         onAccepted: addApp.clicked()
                     }
                     Btn {
@@ -335,23 +335,23 @@ Item {
         }
 
         // ---------- look ----------
-        SectionTitle { text: "Look & animation" }
+        SectionTitle { text: I18n.t("Look & animation") }
         SegRow {
             label: "Animation"
-            desc: "Grow unfolds the panel out of the corner"
+            desc: I18n.t("Grow unfolds the panel out of the corner")
             options: [{ label: "Grow", value: "grow" }, { label: "Slide", value: "slide" }, { label: "Pop", value: "scale" }, { label: "Fade", value: "fade" }]
             current: page.v("animation", "grow")
             onChosen: function(x) { page.setv("animation", x) }
         }
         SliderRow {
-            label: "Animation speed"
+            label: I18n.t("Animation speed")
             from: 0.5; to: 2.0; step: 0.1; decimals: 1; unit: "x"
             value: page.v("speed", 1.0)
             onCommitted: function(x) { page.setv("speed", x.toFixed(1)) }
         }
         SegRow {
             label: "Size"
-            desc: "Makes the whole panel bigger or smaller: text, icons and buttons"
+            desc: I18n.t("Makes the whole panel bigger or smaller: text, icons and buttons")
             options: [{ label: "Small", value: "0.85" }, { label: "Normal", value: "1" }, { label: "Large", value: "1.15" }, { label: "Huge", value: "1.3" }]
             current: {
                 const v = Number(page.v("scale", 1))
@@ -361,31 +361,31 @@ Item {
         }
         SliderRow {
             label: "Scale"
-            desc: "Fine tuning of the size"
+            desc: I18n.t("Fine tuning of the size")
             from: 0.75; to: 1.5; step: 0.05; decimals: 2; unit: "x"
             value: page.v("scale", 1)
             onCommitted: function(x) { page.setv("scale", Number(x.toFixed(2))) }
         }
         SliderRow {
             label: "Width"
-            desc: "How wide the panel is (before scaling)"
+            desc: I18n.t("How wide the panel is (before scaling)")
             from: 300; to: 680; step: 10; unit: " px"
             value: page.v("width", 400)
             onCommitted: function(x) { page.setv("width", Math.round(x)) }
         }
         SliderRow {
-            label: "Corner radius"
+            label: I18n.t("Corner radius")
             from: 0; to: 36; step: 1; unit: " px"
             value: page.v("radius", 26)
             onCommitted: function(x) { page.setv("radius", Math.round(x)) }
         }
 
         // ---------- blur & transparency ----------
-        SectionTitle { text: "Blur & transparency"; sub: "Blur shows the desktop softly through the panel. It needs transparency." }
-        ToggleRow { label: "Blur"; desc: "Blur whatever is behind the panel"; checked: page.v("blur", true) === true; onToggled: function(x) { page.setv("blur", x ? "on" : "off") } }
-        ToggleRow { label: "Transparency"; desc: "Off makes the panel fully solid"; checked: page.v("transparency", true) === true; onToggled: function(x) { page.setv("transparency", x ? "on" : "off") } }
+        SectionTitle { text: I18n.t("Blur & transparency"); sub: I18n.t("Blur shows the desktop softly through the panel. It needs transparency.") }
+        ToggleRow { label: "Blur"; desc: I18n.t("Blur whatever is behind the panel"); checked: page.v("blur", true) === true; onToggled: function(x) { page.setv("blur", x ? "on" : "off") } }
+        ToggleRow { label: "Transparency"; desc: I18n.t("Off makes the panel fully solid"); checked: page.v("transparency", true) === true; onToggled: function(x) { page.setv("transparency", x ? "on" : "off") } }
         SliderRow {
-            label: "Panel opacity"
+            label: I18n.t("Panel opacity")
             desc: page.v("transparency", true) === true ? "Lower is more see-through" : "Turn on Transparency to use this"
             from: 0.3; to: 1.0; step: 0.02; decimals: 2
             value: page.v("opacity", 0.9)
@@ -393,17 +393,17 @@ Item {
             onCommitted: function(x) { page.setv("opacity", x.toFixed(2)) }
         }
         SliderRow {
-            label: "Card brightness"
-            desc: "How much the section cards stand out"
+            label: I18n.t("Card brightness")
+            desc: I18n.t("How much the section cards stand out")
             from: 0.0; to: 0.2; step: 0.01; decimals: 2
             value: page.v("card_alpha", 0.05)
             onCommitted: function(x) { page.setv("card_alpha", x.toFixed(2)) }
         }
-        ToggleRow { label: "Theme tint"; desc: "Mix a little of your Theme color into the panel"; checked: page.v("tint", false) === true; onToggled: function(x) { page.setv("tint", x ? "on" : "off") } }
+        ToggleRow { label: I18n.t("Theme tint"); desc: I18n.t("Mix a little of your Theme color into the panel"); checked: page.v("tint", false) === true; onToggled: function(x) { page.setv("tint", x ? "on" : "off") } }
 
         // ---------- capture ----------
-        SectionTitle { text: "Recording & screenshots"; sub: "Screenshots go to Pictures/Screenshots. Recording size, quality and sound are on the Recorder page." }
-        ToggleRow { label: "Copy screenshots"; desc: "Also put every screenshot on the clipboard"; checked: page.v("clipboard", true) === true; onToggled: function(x) { page.setv("clipboard", x ? "on" : "off") } }
+        SectionTitle { text: I18n.t("Recording & screenshots"); sub: I18n.t("Screenshots go to Pictures/Screenshots. Recording size, quality and sound are on the Recorder page.") }
+        ToggleRow { label: I18n.t("Copy screenshots"); desc: I18n.t("Also put every screenshot on the clipboard"); checked: page.v("clipboard", true) === true; onToggled: function(x) { page.setv("clipboard", x ? "on" : "off") } }
         T {
             readonly property var miss: {
                 const t = page.tools, m = []
@@ -424,7 +424,7 @@ Item {
         Row {
             topPadding: 8
             Btn {
-                text: "Reset hot corner"
+                text: I18n.t("Reset hot corner")
                 onClicked: {
                     Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-hotcorner\" reset"])
                     page.ctl.status = "Hot corner reset"

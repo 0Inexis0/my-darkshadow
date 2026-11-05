@@ -92,15 +92,15 @@ Item {
         Column {
             x: sp.small ? 56 : 68; y: 13; width: parent.width - x - 14
             spacing: 2
-            T { scaled: false; text: "Messages  ·  now"; font.pixelSize: sp.small ? 9 : 11; color: sp.p.dim }
-            T { scaled: false; width: parent.width; elide: Text.ElideRight; text: "Example text"; font.pixelSize: sp.small ? 11 : page.v("font_size", 13) + 1; font.weight: Font.DemiBold; color: sp.p.fg }
-            T { scaled: false; width: parent.width; elide: Text.ElideRight; visible: !sp.small; text: "Did you see the new notifications?"; font.pixelSize: page.v("font_size", 13) - 1; color: sp.p.dim }
+            T { scaled: false; text: I18n.t("Messages  ·  now"); font.pixelSize: sp.small ? 9 : 11; color: sp.p.dim }
+            T { scaled: false; width: parent.width; elide: Text.ElideRight; text: I18n.t("Example text"); font.pixelSize: sp.small ? 11 : page.v("font_size", 13) + 1; font.weight: Font.DemiBold; color: sp.p.fg }
+            T { scaled: false; width: parent.width; elide: Text.ElideRight; visible: !sp.small; text: I18n.t("Did you see the new notifications?"); font.pixelSize: page.v("font_size", 13) - 1; color: sp.p.dim }
             Row {
                 visible: !sp.small; spacing: 6; topPadding: 6
                 Rectangle { width: r1.implicitWidth + 22; height: 28; radius: 14; color: sp.p.container
                     T { id: r1; scaled: false; anchors.centerIn: parent; text: "Reply"; font.pixelSize: 11; color: sp.p.inkContainer } }
                 Rectangle { width: r2.implicitWidth + 22; height: 28; radius: 14; color: sp.p.container
-                    T { id: r2; scaled: false; anchors.centerIn: parent; text: "Mark as read"; font.pixelSize: 11; color: sp.p.inkContainer } }
+                    T { id: r2; scaled: false; anchors.centerIn: parent; text: I18n.t("Mark as read"); font.pixelSize: 11; color: sp.p.inkContainer } }
             }
         }
         Rectangle { visible: !sp.small; anchors.bottom: parent.bottom; anchors.bottomMargin: 6; x: 18; width: (parent.width - 36) * 0.6; height: 3; radius: 2
@@ -111,7 +111,7 @@ Item {
         anchors.fill: parent
 
         SegRow {
-            label: "Shown by"
+            label: I18n.t("Shown by")
             desc: page.engine === "shell" ? "DarkShadow: its own pop-ups and the control center (SUPER + N)" : "swaync: its pop-ups and its panel"
             options: [{ label: "DarkShadow", value: "shell" }, { label: "swaync", value: "swaync" }]
             current: page.engine
@@ -139,49 +139,49 @@ Item {
         }
         Row {
             spacing: 10
-            Btn { primary: true; sym: "send"; icon: ""; text: "Send a test"; onClicked: page.tool("test") }
+            Btn { primary: true; sym: "send"; icon: ""; text: I18n.t("Send a test"); onClicked: page.tool("test") }
             Btn { sym: "right_panel_open"; icon: ""; text: page.engine === "shell" ? "Open control center" : "Open panel"; onClicked: page.tool("panel") }
         }
 
         // ---------- pop-ups ----------
-        SectionTitle { text: "Pop-ups"; sub: "Where they appear and how long they stay. Pointing at one keeps it." }
+        SectionTitle { text: "Pop-ups"; sub: I18n.t("Where they appear and how long they stay. Pointing at one keeps it.") }
         SegRow {
-            label: "Side"; desc: "Of the screen"
+            label: "Side"; desc: I18n.t("Of the screen")
             options: [{ label: "Left", value: "left" }, { label: "Middle", value: "center" }, { label: "Right", value: "right" }]
             current: page.v("pos_x", "right")
             onChosen: function(x) { page.setv("pos_x", x) }
         }
         SegRow {
-            label: "Edge"; desc: "Top or bottom"
+            label: "Edge"; desc: I18n.t("Top or bottom")
             options: [{ label: "Top", value: "top" }, { label: "Bottom", value: "bottom" }]
             current: page.v("pos_y", "top")
             onChosen: function(x) { page.setv("pos_y", x) }
         }
         SliderRow {
-            label: "Width"; desc: "How wide a pop-up is"
+            label: "Width"; desc: I18n.t("How wide a pop-up is")
             from: 300; to: 520; step: 10; unit: " px"
             value: page.v("popup_width", 380)
             onCommitted: function(x) { page.setv("popup_width", Math.round(x)) }
         }
         SliderRow {
-            label: "Time on screen"; desc: "Seconds before a pop-up goes (a thin line shows what is left)"
+            label: I18n.t("Time on screen"); desc: I18n.t("Seconds before a pop-up goes (a thin line shows what is left)")
             from: 2; to: 30; step: 1; unit: " s"
             value: page.v("timeout", 6)
             onCommitted: function(x) { page.setv("timeout", Math.round(x)) }
         }
         ToggleRow {
-            label: "Important ones stay"; desc: "Urgent notifications wait until you close them"
+            label: I18n.t("Important ones stay"); desc: I18n.t("Urgent notifications wait until you close them")
             checked: page.v("critical_sticky", true) === true
             onToggled: function(x) { page.setv("critical_sticky", x ? "on" : "off") }
         }
         ToggleRow {
-            label: "Pictures"; desc: "Show the picture a notification brings (screenshots, covers)"
+            label: "Pictures"; desc: I18n.t("Show the picture a notification brings (screenshots, covers)")
             checked: page.v("images", true) === true
             onToggled: function(x) { page.setv("images", x ? "on" : "off") }
         }
 
         // ---------- the look ----------
-        SectionTitle { text: "Theme"; sub: "For the pop-ups and the control center." }
+        SectionTitle { text: "Theme"; sub: I18n.t("For the pop-ups and the control center.") }
         Grid {
             id: tgrid
             width: parent.width
@@ -213,53 +213,53 @@ Item {
             }
         }
         SliderRow {
-            label: "Text size"; desc: "Of the pop-ups and the notifications in the control center"
+            label: I18n.t("Text size"); desc: I18n.t("Of the pop-ups and the notifications in the control center")
             from: 10; to: 18; step: 1; unit: " px"
             value: page.v("font_size", 13)
             onCommitted: function(x) { page.setv("font_size", Math.round(x)) }
         }
         SliderRow {
-            label: "Corners"; desc: "How round the pop-ups are"
+            label: "Corners"; desc: I18n.t("How round the pop-ups are")
             from: 4; to: 32; step: 1; unit: " px"
             value: page.v("radius", 22)
             onCommitted: function(x) { page.setv("radius", Math.round(x)) }
         }
 
         // ---------- transparency and blur ----------
-        SectionTitle { text: "Transparency & blur"; sub: "Blur shows where the surface is see-through. Light mode and gaming mode make everything solid." }
+        SectionTitle { text: I18n.t("Transparency & blur"); sub: I18n.t("Blur shows where the surface is see-through. Light mode and gaming mode make everything solid.") }
         SliderRow {
-            label: "Pop-ups"; desc: "Lower is more see-through"
+            label: "Pop-ups"; desc: I18n.t("Lower is more see-through")
             from: 0.3; to: 1; step: 0.02; decimals: 2
             value: page.v("popup_opacity", 0.85)
             onCommitted: function(x) { page.setv("popup_opacity", x.toFixed(2)) }
         }
         ToggleRow {
-            label: "Blur behind pop-ups"; desc: "Frosted glass"
+            label: I18n.t("Blur behind pop-ups"); desc: I18n.t("Frosted glass")
             checked: page.v("blur_popups", true) === true
             onToggled: function(x) { page.setv("blur_popups", x ? "on" : "off") }
         }
         SliderRow {
-            label: "Control center"; desc: "Lower is more see-through"
+            label: I18n.t("Control center"); desc: I18n.t("Lower is more see-through")
             from: 0.3; to: 1; step: 0.02; decimals: 2
             value: page.v("opacity", 0.8)
             onCommitted: function(x) { page.setv("opacity", x.toFixed(2)) }
         }
         ToggleRow {
-            label: "Blur behind the control center"; desc: "Frosted glass"
+            label: I18n.t("Blur behind the control center"); desc: I18n.t("Frosted glass")
             checked: page.v("blur", true) === true
             onToggled: function(x) { page.setv("blur", x ? "on" : "off") }
         }
 
         // ---------- swaync only ----------
-        SectionTitle { visible: page.engine === "swaync"; text: "swaync"; sub: "Only while swaync shows your notifications." }
+        SectionTitle { visible: page.engine === "swaync"; text: "swaync"; sub: I18n.t("Only while swaync shows your notifications.") }
         ToggleRow {
             visible: page.engine === "swaync"
-            label: "Keep notifications when clicked"
-            desc: "Clicking opens the app and the notification stays in swaync's panel"
+            label: I18n.t("Keep notifications when clicked")
+            desc: I18n.t("Clicking opens the app and the notification stays in swaync's panel")
             checked: page.v("keep_clicked", true)
             onToggled: function(x) { page.setv("keep_clicked", x ? "on" : "off") }
         }
         T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 11; color: M3.inkDim; topPadding: 6
-            text: "The sound for new notifications is in Sound & language > Sfx & sounds." }
+            text: I18n.t("The sound for new notifications is in Sound & language > Sfx & sounds.") }
     }
 }

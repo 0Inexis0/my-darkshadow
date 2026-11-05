@@ -70,6 +70,7 @@ FloatingWindow {
     property var results: []
     property int searchSel: 0
     property var searchIndex: []
+    Connections { target: I18n; function onLangChanged() { win.searchIndex = [] } }
     readonly property var synonyms: ({
         bar: ["waybar", "bar"], colour: ["color"], colors: ["color", "theme", "scheme"],
         transparent: ["opacity", "transparency"], transparency: ["opacity", "transparency"], seethrough: ["opacity"],
@@ -96,7 +97,7 @@ FloatingWindow {
             if (sl.idx === undefined) continue
             const pg = win.pages[sl.idx]
             if (!pg) continue
-            out.push({ page: sl.idx, label: pg.name, section: "", desc: "Page", pageName: pg.name, item: null, kind: "page" })
+            out.push({ page: sl.idx, label: I18n.t(pg.name), section: "", desc: "Page", pageName: I18n.t(pg.name), item: null, kind: "page" })
             const ctx = { section: "" }
             const walk = function(it) {
                 const kids = it.children || []
@@ -104,11 +105,11 @@ FloatingWindow {
                     const c = kids[k]
                     if (c.sub !== undefined && c.text !== undefined && c.topPadding !== undefined && typeof c.text === "string") {
                         ctx.section = c.text
-                        if (c.text.length) out.push({ page: sl.idx, label: c.text, section: "", desc: c.sub || "", pageName: pg.name, item: c, kind: "section" })
+                        if (c.text.length) out.push({ page: sl.idx, label: c.text, section: "", desc: c.sub || "", pageName: I18n.t(pg.name), item: c, kind: "section" })
                         continue
                     }
                     if (c.reserved !== undefined && c.label !== undefined && typeof c.label === "string" && c.label.length) {
-                        out.push({ page: sl.idx, label: c.label, section: ctx.section, desc: c.desc || "", pageName: pg.name, item: c, kind: "row" })
+                        out.push({ page: sl.idx, label: c.label, section: ctx.section, desc: c.desc || "", pageName: I18n.t(pg.name), item: c, kind: "row" })
                         continue
                     }
                     // a heading made with a plain title text: it names the section too
@@ -119,7 +120,7 @@ FloatingWindow {
                     // a setting with its own layout (like the clock fonts): its 14 px name counts too
                     if (c.kind === "body" && typeof c.text === "string" && c.font && c.font.pixelSize === 14 && !c.font.bold
                             && c.text.length > 2 && c.text.length < 40 && c.text.indexOf("<") < 0) {
-                        out.push({ page: sl.idx, label: c.text, section: ctx.section, desc: "", pageName: pg.name, item: c.parent || c, kind: "row" })
+                        out.push({ page: sl.idx, label: c.text, section: ctx.section, desc: "", pageName: I18n.t(pg.name), item: c.parent || c, kind: "row" })
                     }
                     walk(c)
                 }
@@ -334,7 +335,8 @@ FloatingWindow {
         { name: "System", icon: "\uf108" },
         { name: "Screen", icon: "\uf108" },
         { name: "Look & Feel", icon: "\uf120" },
-        { name: "Keybinds", icon: "\uf11c" }
+        { name: "Keybinds", icon: "\uf11c" },
+        { name: "Languages", icon: "\uf1ab" }
     ]
 
 
@@ -342,18 +344,18 @@ FloatingWindow {
     readonly property var navTree: [
         { page: 0 },
         { sep: true },
-        { group: "wall", name: "Wallpaper", icon: "\uf03e", sym: "wallpaper", pages: [18], caption: "Wallpaper and the colors it gives" },
-        { group: "look", name: "Appearance", icon: "\udb80\udfd8", sym: "palette", pages: [8, 21, 19, 24, 22, 9, 14], caption: "Theme, colors, fonts, shapes, components, cursors and the dock" },
-        { group: "motion", name: "Motion", icon: "\uf1e6", sym: "animation", pages: [20], caption: "How windows and Settings move" },
-        { group: "desk", name: "Desktop", icon: "\uf108", sym: "desktop_windows", pages: [29, 12, 25, 4, 11], caption: "Look & feel, widgets, windows, " + wmLabel + " and the lock screen" },
-        { group: "bar", name: "Bar & launcher", icon: "\uf0c9", sym: "toolbar", pages: [2, 3, 6, 7], caption: "The bar, the dynamic island and the launcher" },
-        { group: "snd", name: "Sound & language", icon: "\uf028", sym: "graphic_eq", pages: [1, 10, 26], caption: "Sounds, notifications, language and region" },
-        { group: "sys", name: "System", icon: "\uf013", sym: "settings", pages: [27, 30, 28, 5, 23, 15], caption: "This computer, keybinds, the screen, recording, keyboard and services" },
-        { group: "game", name: "Gaming", icon: "\uf11b", sym: "sports_esports", pages: [16], caption: "Play without distractions" },
-        { group: "about", name: "About", icon: "\uf05a", sym: "info", pages: [17], caption: "Version, system and credits" }
+        { group: "wall", name: "Wallpaper", icon: "\uf03e", sym: "wallpaper", pages: [18], caption: I18n.t("Wallpaper and the colors it gives") },
+        { group: "look", name: "Appearance", icon: "\udb80\udfd8", sym: "palette", pages: [8, 21, 19, 24, 22, 9, 14], caption: I18n.t("Theme, colors, fonts, shapes, components, cursors and the dock") },
+        { group: "motion", name: "Motion", icon: "\uf1e6", sym: "animation", pages: [20], caption: I18n.t("How windows and Settings move") },
+        { group: "desk", name: "Desktop", icon: "\uf108", sym: "desktop_windows", pages: [29, 12, 25, 4, 11], caption: I18n.t("Look & feel, widgets, windows, %1 and the lock screen", wmLabel) },
+        { group: "bar", name: "Bar & launcher", icon: "\uf0c9", sym: "toolbar", pages: [2, 3, 6, 7], caption: I18n.t("The bar, the dynamic island and the launcher") },
+        { group: "snd", name: "Sound & language", icon: "\uf028", sym: "graphic_eq", pages: [1, 10, 26], caption: I18n.t("Sounds, notifications, language and region") },
+        { group: "sys", name: "System", icon: "\uf013", sym: "settings", pages: [27, 30, 31, 28, 5, 23, 15], caption: I18n.t("This computer, keybinds, the screen, recording, keyboard and services") },
+        { group: "game", name: "Gaming", icon: "\uf11b", sym: "sports_esports", pages: [16], caption: I18n.t("Play without distractions") },
+        { group: "about", name: "About", icon: "\uf05a", sym: "info", pages: [17], caption: I18n.t("Version, system and credits") }
     ]
     // the navigation rail: Home, then one stop per group (Gaming hub and About are groups with one page)
-    readonly property var rail: [{ gid: "", name: "Home", icon: "\uf015", sym: "home", pages: [0], caption: "Your desktop at a glance" }]
+    readonly property var rail: [{ gid: "", name: "Home", icon: "\uf015", sym: "home", pages: [0], caption: I18n.t("Your desktop at a glance") }]
         .concat(navTree.filter(function(n) { return n.group }).map(function(n) { return { gid: n.group, name: n.name, icon: n.icon, sym: n.sym, pages: n.pages, caption: n.caption } }))
     // the tour: where a group's stop on the rail is, and where an item is (in the window's card)
     function railRect(idx) {
@@ -708,7 +710,7 @@ FloatingWindow {
                             width: parent.width - 8
                             horizontalAlignment: Text.AlignHCenter
                             elide: Text.ElideRight
-                            text: modelData.name === "Bar & launcher" ? "Bar" : (modelData.name === "Sound & alerts" ? "Sound" : modelData.name)
+                            text: I18n.lang === "en" && modelData.name === "Bar & launcher" ? "Bar" : I18n.t(modelData.name)
                             font.pixelSize: 11
                             font.weight: ri.on ? Font.DemiBold : Font.Medium
                             color: ri.on ? M3.ink : M3.inkDim
@@ -737,7 +739,7 @@ FloatingWindow {
             kind: "title"
             x: win.railW + 26
             y: 38
-            text: win.pages[win.page] ? win.pages[win.page].name : ""
+            text: win.pages[win.page] ? I18n.t(win.pages[win.page].name) : ""
             font.pixelSize: 30
             font.weight: Font.Medium
             width: Math.max(80, searchBox.x - x - 20)
@@ -796,7 +798,7 @@ FloatingWindow {
             T {
                 x: 42; anchors.verticalCenter: parent.verticalCenter
                 visible: searchIn.text.length === 0
-                text: "Search settings"
+                text: I18n.t("Search settings")
                 color: M3.inkDim; font.pixelSize: 13
             }
             Rectangle {
@@ -837,7 +839,7 @@ FloatingWindow {
                         T {
                             id: tbt
                             anchors.centerIn: parent
-                            text: win.pages[modelData].name
+                            text: I18n.t(win.pages[modelData].name)
                             font.pixelSize: 14
                             font.weight: tb.on ? Font.DemiBold : Font.Medium
                             color: tb.on ? M3.primary : M3.inkDim
@@ -904,6 +906,7 @@ FloatingWindow {
             PageSlot { nav: win; idx: 28; cur: win.page; page: Component { ScreenPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 29; cur: win.page; page: Component { LookFeelPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 30; cur: win.page; page: Component { KeybindsPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 31; cur: win.page; page: Component { LanguagesPage { anchors.fill: parent; ctl: win } } }
         }
 
         // results: the setting, and where it is (page > section)
@@ -967,37 +970,37 @@ FloatingWindow {
             onActiveChanged: if (active) win.tourOn = true
             nav: win
             steps: [
-                { title: "Welcome to DarkShadow's Shell", art: "welcome", icon: "waving_hand", page: 0,
+                { title: I18n.t("Welcome to DarkShadow's Shell"), art: "welcome", icon: "waving_hand", page: 0,
                   body: "A one-minute tour: where things are on your desktop and in Settings. Enter or the arrow keys move on, Esc ends it." },
-                { title: "The Dynamic island", art: "island", spot: "island", icon: "smart_display",
+                { title: I18n.t("The Dynamic island"), art: "island", spot: "island", icon: "smart_display",
                   body: "The pill in the middle of your bar. It shows the time and the weather, and grows for music, the volume, workspace changes, recordings and notifications." },
-                { title: "Click the island for more", art: "islandCard", spot: "island", icon: "touch_app",
+                { title: I18n.t("Click the island for more"), art: "islandCard", spot: "island", icon: "touch_app",
                   body: "A left click opens Today (calendar and weather), a right click System (CPU, GPU and memory, live). About and Music are tabs inside. Scroll over the island to change the volume." },
-                { title: "Find anything", r: 15, icon: "search",
+                { title: I18n.t("Find anything"), r: 15, icon: "search",
                   body: "Type what you want to change, like \"blur\", \"bar position\" or \"terminal\", and jump right to it.",
                   rect: function() { return { x: searchBox.x - 5, y: searchBox.y - 5, w: searchBox.width + 10, h: searchBox.height + 10 } } },
-                { title: "Every part has a place", r: 18, icon: "menu",
+                { title: I18n.t("Every part has a place"), r: 18, icon: "menu",
                   body: "Wallpaper, Appearance, Motion, Desktop, Bar, Sound, System, Gaming and About. Each one has a few tabs at the top.",
                   rect: function() { return { x: navFlick.x - 6, y: navFlick.y - 6, w: navFlick.width + 12, h: Math.min(navFlick.height, railCol.height) + 12 } } },
-                { title: "Bar & launcher", page: 2, r: 14, icon: "toolbar",
+                { title: I18n.t("Bar & launcher"), page: 2, r: 14, icon: "toolbar",
                   body: "The bar's look and place, its modules, the Dynamic island's own settings (what it shows, what a click opens) and the app launcher (" + (win.niri ? "Super + D" : "Super + R") + ").",
                   rect: function() { return win.railRect(2) } },
-                { title: "Wallpaper and colors", page: 18, r: 14, icon: "wallpaper",
+                { title: I18n.t("Wallpaper and colors"), page: 18, r: 14, icon: "wallpaper",
                   body: "Super + W picks a wallpaper, and the colors of everything follow it. Appearance has the theme, fonts, shapes and cursors.",
                   rect: function() { return win.railRect(18) } },
-                { title: "Desktop: Look & Feel and widgets", page: 29, r: 14, icon: "desktop_windows",
+                { title: I18n.t("Desktop: Look & Feel and widgets"), page: 29, r: 14, icon: "desktop_windows",
                   body: "Look & Feel: your terminal, shell and fastfetch. Widgets: a clock, weather, music and more on the desktop (Super + Alt + W moves them). Windows: gaps, borders, corners.",
                   rect: function() { return win.railRect(29) } },
-                { title: "Every key in one place", page: 30, r: 20, icon: "keyboard", art: "keys",
+                { title: I18n.t("Every key in one place"), page: 30, r: 20, icon: "keyboard", art: "keys",
                   body: "System > Keybinds lists all the keys, in groups, with a search. Start with these three. Super is the key with the Windows logo.",
                   rect: function() { return win.rectOf(pagesHolder, 4) } },
                 { title: "Gaming", page: 16, r: 14, icon: "sports_esports",
                   body: "One switch for games: no animations, blur or gaps while you play, and the game bar (Super + G).",
                   rect: function() { return win.railRect(16) } },
-                { title: "This is you", page: 0, r: 22, icon: "account_circle",
+                { title: I18n.t("This is you"), page: 0, r: 22, icon: "account_circle",
                   body: "Click your picture to change it, it shows on the lock screen too. Click the card to come back to Home.",
                   rect: function() { return { x: profile.x - 5, y: profile.y - 5, w: profile.width + 10, h: profile.height + 10 } } },
-                { title: "That's it!", r: 20, icon: "celebration",
+                { title: I18n.t("That's it!"), r: 20, icon: "celebration",
                   body: "Open Settings any time with Super + U. The tour is in System > Keybinds (Show me around). Have fun with your desktop.",
                   rect: function() { return { x: closeBtn.x - 6, y: closeBtn.y - 6, w: closeBtn.width + 12, h: closeBtn.height + 12 } } }
             ]

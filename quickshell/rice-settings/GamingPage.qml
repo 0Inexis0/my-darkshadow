@@ -125,34 +125,34 @@ Item {
                 Icon { anchors.centerIn: parent; name: "space_dashboard"; glyph: "\uf009"; size: 22; color: M3.inkSecondaryC } }
             Column {
                 x: 80; anchors.verticalCenter: parent.verticalCenter; width: parent.width - 80 - 170; spacing: 3
-                T { text: "Game bar  ·  SUPER + G"; font.pixelSize: 14; font.weight: Font.Medium }
+                T { text: I18n.t("Game bar  ·  SUPER + G"); font.pixelSize: 14; font.weight: Font.Medium }
                 T { kind: "reading"; width: parent.width; elide: Text.ElideRight; font.pixelSize: 12; color: M3.inkDim
-                    text: "CPU, GPU, RAM, ping, screenshot, record, mic, power mode, volume and brightness over your game" }
+                    text: I18n.t("CPU, GPU, RAM, ping, screenshot, record, mic, power mode, volume and brightness over your game") }
             }
             Btn { anchors.right: parent.right; anchors.rightMargin: 18; anchors.verticalCenter: parent.verticalCenter
                 text: "Open"; sym: "open_in_new"; icon: ""; primary: true
                 onClicked: Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-gamebar\" open"]) }
         }
 
-        SectionTitle { text: "While you play"; sub: "What stays on in gaming mode." }
-        ToggleRow { label: "Keep blur & transparency"; desc: "Off: everything is solid while you play (faster)"; checked: page.fxOpt("keep_blur"); onToggled: function(v) { page.setOpt("keep_blur", v) } }
-        ToggleRow { label: "Keep animations"; desc: "Windows and workspaces still animate"; checked: page.fxOpt("keep_anim"); onToggled: function(v) { page.setOpt("keep_anim", v) } }
-        ToggleRow { label: "Keep shadows"; desc: "Shadows under windows"; checked: page.fxOpt("keep_shadows"); onToggled: function(v) { page.setOpt("keep_shadows", v) } }
-        ToggleRow { label: "Keep gaps"; desc: "Space between windows and around the screen"; checked: page.fxOpt("keep_gaps"); onToggled: function(v) { page.setOpt("keep_gaps", v) } }
-        ToggleRow { label: "Do Not Disturb"; desc: "No notification popups while gaming mode is on"; checked: page.fxOpt("dnd"); onToggled: function(v) { page.setOpt("dnd", v) } }
+        SectionTitle { text: I18n.t("While you play"); sub: I18n.t("What stays on in gaming mode.") }
+        ToggleRow { label: I18n.t("Keep blur & transparency"); desc: I18n.t("Off: everything is solid while you play (faster)"); checked: page.fxOpt("keep_blur"); onToggled: function(v) { page.setOpt("keep_blur", v) } }
+        ToggleRow { label: I18n.t("Keep animations"); desc: I18n.t("Windows and workspaces still animate"); checked: page.fxOpt("keep_anim"); onToggled: function(v) { page.setOpt("keep_anim", v) } }
+        ToggleRow { label: I18n.t("Keep shadows"); desc: I18n.t("Shadows under windows"); checked: page.fxOpt("keep_shadows"); onToggled: function(v) { page.setOpt("keep_shadows", v) } }
+        ToggleRow { label: I18n.t("Keep gaps"); desc: I18n.t("Space between windows and around the screen"); checked: page.fxOpt("keep_gaps"); onToggled: function(v) { page.setOpt("keep_gaps", v) } }
+        ToggleRow { label: I18n.t("Do Not Disturb"); desc: I18n.t("No notification popups while gaming mode is on"); checked: page.fxOpt("dnd"); onToggled: function(v) { page.setOpt("dnd", v) } }
 
-        SectionTitle { text: "Performance"; sub: "For laptops and older computers, also when you are not playing." }
-        ToggleRow { label: "Light mode"; desc: "The visualizer stops and widgets rest while a window covers them"; checked: page.fx.lite === true; onToggled: function(v) { page.setLite(v) } }
+        SectionTitle { text: "Performance"; sub: I18n.t("For laptops and older computers, also when you are not playing.") }
+        ToggleRow { label: I18n.t("Light mode"); desc: I18n.t("The visualizer stops and widgets rest while a window covers them"); checked: page.fx.lite === true; onToggled: function(v) { page.setLite(v) } }
         SegRow {
             visible: page.havePP
-            label: "Power mode"
-            desc: "power-profiles-daemon: battery life or speed"
+            label: I18n.t("Power mode")
+            desc: I18n.t("power-profiles-daemon: battery life or speed")
             options: [{ label: "Saver", value: "power-saver" }, { label: "Balanced", value: "balanced" }, { label: "Performance", value: "performance" }]
             current: page.profile
             onChosen: function(x) { page.setProfile(x) }
         }
 
-        SectionTitle { text: "Your launchers"; sub: page.found.length ? "Open them from here." : "No game launcher found (Steam, Heroic, Lutris, Prism, Bottles ...)." }
+        SectionTitle { text: I18n.t("Your launchers"); sub: page.found.length ? "Open them from here." : "No game launcher found (Steam, Heroic, Lutris, Prism, Bottles ...)." }
         Flow {
             width: parent.width
             spacing: 10
@@ -179,7 +179,7 @@ Item {
             }
         }
 
-        SectionTitle { text: "Tools"; sub: "Gaming helpers on this computer." }
+        SectionTitle { text: "Tools"; sub: I18n.t("Gaming helpers on this computer.") }
         Flow {
             width: parent.width
             spacing: 8
@@ -208,6 +208,6 @@ Item {
             }
         }
         T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 11; color: M3.inkDim; topPadding: 4
-            text: "Missing ones can be installed with your package manager (gamemode, mangohud, gamescope)." }
+            text: I18n.t("Missing ones can be installed with your package manager (gamemode, mangohud, gamescope).") }
     }
 }

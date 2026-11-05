@@ -42,7 +42,7 @@ Item {
                 x: 180; anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - 180 - 24
                 spacing: 6
-                T { text: "YOUR SHAPE"; font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2; color: M3.alpha(M3.inkPrimaryC, 0.75) }
+                T { text: I18n.t("YOUR SHAPE"); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2; color: M3.alpha(M3.inkPrimaryC, 0.75) }
                 T { kind: "title"; text: page.nm(Prefs.accentShape); font.pixelSize: 28; font.weight: Font.Medium; color: M3.inkPrimaryC }
                 T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.alpha(M3.inkPrimaryC, 0.85)
                     text: "Your avatar in the rail, the Home hero and the highlights of Settings take this shape. " + lib.kinds.length + " shapes, all drawn by the shell." }
@@ -50,7 +50,7 @@ Item {
         }
 
         // ---------- the library ----------
-        SectionTitle { text: "Shape library"; sub: "Click one to make it yours." }
+        SectionTitle { text: I18n.t("Shape library"); sub: I18n.t("Click one to make it yours.") }
         Rectangle {
             width: parent.width
             height: grid.implicitHeight + 32
@@ -97,10 +97,10 @@ Item {
         }
 
         // ---------- corners ----------
-        SectionTitle { text: "Corners"; sub: "How round cards, lists, menus, buttons and fields are in Settings." }
+        SectionTitle { text: "Corners"; sub: I18n.t("How round cards, lists, menus, buttons and fields are in Settings.") }
         SliderRow {
             label: "Corners"
-            desc: "1.0 is the Material 3 look; lower is squarer"
+            desc: I18n.t("1.0 is the Material 3 look; lower is squarer")
             from: 0.3; to: 1.5; step: 0.05; decimals: 2; unit: "×"
             value: Prefs.cornerScale
             onCommitted: function(v) { Prefs.setCornerScale(v) }
@@ -112,7 +112,7 @@ Item {
                 width: (parent.width - 10) * 0.4; height: 110; radius: M3.rL; color: M3.surfaceC
                 T { x: 16; y: 14; text: "Card"; font.pixelSize: 14; font.weight: Font.Medium }
                 T { kind: "reading"; x: 16; y: 36; width: parent.width - 32; wrapMode: Text.WordWrap; font.pixelSize: 11; color: M3.inkDim
-                    text: "Corners grow and shrink with the slider." }
+                    text: I18n.t("Corners grow and shrink with the slider.") }
             }
             Rectangle {
                 width: (parent.width - 10) * 0.6; height: 110; radius: M3.rL; color: M3.surfaceC
@@ -121,7 +121,7 @@ Item {
                     Rectangle {
                         width: parent.width; height: 40; radius: M3.rM; color: M3.secondaryContainer
                         Icon { x: 12; anchors.verticalCenter: parent.verticalCenter; name: "wifi"; glyph: ""; size: 18; color: M3.inkSecondaryC }
-                        T { x: 42; anchors.verticalCenter: parent.verticalCenter; text: "Wi-Fi  ·  connected"; font.pixelSize: 13; color: M3.inkSecondaryC }
+                        T { x: 42; anchors.verticalCenter: parent.verticalCenter; text: I18n.t("Wi-Fi  ·  connected"); font.pixelSize: 13; color: M3.inkSecondaryC }
                     }
                     Row { spacing: 8
                         Btn { text: "Button"; primary: true }
@@ -132,7 +132,7 @@ Item {
         Row {
             spacing: 8
             topPadding: 4
-            Btn { text: "Reset shapes"; sym: "restart_alt"; icon: ""; onClicked: { Prefs.setCornerScale(1); Prefs.setAccentShape("verysunny") } }
+            Btn { text: I18n.t("Reset shapes"); sym: "restart_alt"; icon: ""; onClicked: { Prefs.setCornerScale(1); Prefs.setAccentShape("verysunny") } }
         }
     }
 }

@@ -136,12 +136,12 @@ Item {
             color: M3.primaryContainer
             clip: true
             Blob { width: 260; height: 260; x: parent.width - 190; y: -70; kind: "cookie"; color: M3.alpha(M3.inkPrimaryC, 0.06) }
-            T { x: 22; y: 16; text: "YOUR TERMINAL"; font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2
+            T { x: 22; y: 16; text: I18n.t("YOUR TERMINAL"); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2
                 color: M3.alpha(M3.inkPrimaryC, 0.75) }
             Row {
                 anchors.right: parent.right; anchors.rightMargin: 16; y: 10
                 spacing: 8
-                Btn { text: "Open it"; sym: "terminal"; icon: ""; primary: true; onClicked: page.look(["try"]) }
+                Btn { text: I18n.t("Open it"); sym: "terminal"; icon: ""; primary: true; onClicked: page.look(["try"]) }
             }
             // the window
             Rectangle {
@@ -164,7 +164,7 @@ Item {
                     scaled: false
                     font.family: Fonts.mono; font.pixelSize: 12
                     color: page.pv.fg || "#e5e3e3"
-                    text: "󰉋 ~> fastfetch"
+                    text: I18n.t("󰉋 ~> fastfetch")
                 }
                 Row {
                     x: 16; y: prompt.y + prompt.height + 6
@@ -199,12 +199,12 @@ Item {
         }
 
         // ---------- fastfetch ----------
-        SectionTitle { text: "Fastfetch"; sub: "The logo and the facts about your computer that a terminal shows." }
+        SectionTitle { text: "Fastfetch"; sub: I18n.t("The logo and the facts about your computer that a terminal shows.") }
         Rectangle {
             visible: page.ff.installed === false
             width: parent.width; height: 60; radius: M3.rL
             color: M3.surfaceC
-            T { x: 18; anchors.verticalCenter: parent.verticalCenter; text: "fastfetch is not installed"; font.pixelSize: 14 }
+            T { x: 18; anchors.verticalCenter: parent.verticalCenter; text: I18n.t("fastfetch is not installed"); font.pixelSize: 14 }
             Btn { anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
                 text: "Install"; sym: "download"; icon: ""; onClicked: { page.waiting = true; page.look(["install", "fastfetch"]) } }
         }
@@ -213,14 +213,14 @@ Item {
             width: parent.width; height: 68; radius: M3.rL
             color: M3.tertiaryContainer
             T { x: 18; width: parent.width - 220; anchors.verticalCenter: parent.verticalCenter; wrapMode: Text.WordWrap
-                text: "You use your own fastfetch config: the choices below are saved but not used."
+                text: I18n.t("You use your own fastfetch config: the choices below are saved but not used.")
                 font.pixelSize: 13; color: M3.inkTertiaryC }
             Btn { anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
-                text: "Use DarkShadow's"; sym: "restart_alt"; icon: ""; onClicked: page.look(["fetch-own"]) }
+                text: I18n.t("Use DarkShadow's"); sym: "restart_alt"; icon: ""; onClicked: page.look(["fetch-own"]) }
         }
         ToggleRow {
-            label: "Show it when a terminal opens"
-            desc: "Every new terminal starts with fastfetch (fish, zsh and bash)"
+            label: I18n.t("Show it when a terminal opens")
+            desc: I18n.t("Every new terminal starts with fastfetch (fish, zsh and bash)")
             checked: page.ff.on_open === true
             onToggled: function(v) { page.setFetch("on_open", v ? "on" : "off") }
         }
@@ -236,26 +236,26 @@ Item {
         SegRow {
             label: "Info"
             desc: page.ff.logo === "small" ? "pfetch style: a small logo and a short list (os, host, kernel, uptime, pkgs, memory)" : "How much it tells"
-            options: [{ label: "Everything", value: "full" }, { label: "The main", value: "compact" }, { label: "A little", value: "minimal" }]
+            options: [{ label: "Everything", value: "full" }, { label: I18n.t("The main"), value: "compact" }, { label: I18n.t("A little"), value: "minimal" }]
             current: page.ff.info || "full"
             onChosen: function(v) { page.setFetch("info", v) }
         }
         SegRow {
             label: "Labels"
-            desc: "Words, or icons with the words"
+            desc: I18n.t("Words, or icons with the words")
             options: [{ label: "Words", value: "text" }, { label: "Icons", value: "icons" }]
             current: page.ff.labels || "text"
             onChosen: function(v) { page.setFetch("labels", v) }
         }
         ToggleRow {
-            label: "Wallpaper colors"
-            desc: "The logo and the labels take the colors of your wallpaper"
+            label: I18n.t("Wallpaper colors")
+            desc: I18n.t("The logo and the labels take the colors of your wallpaper")
             checked: (page.ff.colors || "wallpaper") === "wallpaper"
             onToggled: function(v) { page.setFetch("colors", v ? "wallpaper" : "plain") }
         }
 
         // ---------- shell ----------
-        SectionTitle { text: "Shell"; sub: "What you type commands into. New terminals start it, with the same prompt and colors." }
+        SectionTitle { text: "Shell"; sub: I18n.t("What you type commands into. New terminals start it, with the same prompt and colors.") }
         Flow {
             width: parent.width
             spacing: 10
@@ -283,7 +283,7 @@ Item {
         }
 
         // ---------- terminal ----------
-        SectionTitle { text: "Terminal"; sub: "The app Super + Return opens, also for the Wi-Fi menu and updates. It gets your wallpaper colors, font and see-through background." }
+        SectionTitle { text: "Terminal"; sub: I18n.t("The app Super + Return opens, also for the Wi-Fi menu and updates. It gets your wallpaper colors, font and see-through background.") }
         Flow {
             width: parent.width
             spacing: 10

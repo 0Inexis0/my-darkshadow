@@ -7,25 +7,25 @@ Item {
     property var ctl
 
     readonly property var widgets: [
-        { key: "weather", label: "Weather", icon: "", desc: "Temperature and sky" },
-        { key: "media", label: "Media player", icon: "", desc: "Now playing + controls" },
-        { key: "resources", label: "Resources", icon: "", desc: "CPU, RAM and GPU" },
-        { key: "usercard", label: "User card", icon: "", desc: "Greeting and date" },
-        { key: "calendar", label: "Calendar", icon: "", desc: "Month view" },
-        { key: "visualizer", label: "Visualizer", icon: "\uf001", desc: "See-through, at the bottom" },
-        { key: "battery", label: "Battery", icon: "\uf240", desc: "Charge and time left" },
-        { key: "todo", label: "To-do", icon: "\uf14a", desc: "Tasks to tick off" },
-        { key: "focus", label: "Focus timer", icon: "\uf017", desc: "Work and break timer" },
-        { key: "notes", label: "Note", icon: "\uf249", desc: "A note on the desktop" },
-        { key: "gauge", label: "Gauge", icon: "\uf4bc", desc: "CPU, RAM, GPU or heat in a soft shape" },
-        { key: "date", label: "Date", icon: "\uf073", desc: "Today in a flower or cookie shape" },
-        { key: "sky", label: "Sky", icon: "\uf0c2", desc: "The weather as a tilted pill" },
-        { key: "nowring", label: "Now playing", icon: "\uf001", desc: "The song in a round label" },
-        { key: "player", label: "Player", icon: "\uf144", desc: "Cover, seek line and buttons" },
-        { key: "playpill", label: "Play button", icon: "\uf04b", desc: "A big cookie to play and pause" },
-        { key: "lyrics", label: "Lyrics", icon: "\uf075", desc: "The words in time with the song" },
-        { key: "storage", label: "Storage", icon: "\uf0a0", desc: "Used and free disk space" },
-        { key: "trio", label: "CPU · GPU · RAM", icon: "\uf2db", desc: "Three small shapes" }
+        { key: "weather", label: "Weather", icon: "", desc: I18n.t("Temperature and sky") },
+        { key: "media", label: I18n.t("Media player"), icon: "", desc: I18n.t("Now playing + controls") },
+        { key: "resources", label: "Resources", icon: "", desc: I18n.t("CPU, RAM and GPU") },
+        { key: "usercard", label: I18n.t("User card"), icon: "", desc: I18n.t("Greeting and date") },
+        { key: "calendar", label: "Calendar", icon: "", desc: I18n.t("Month view") },
+        { key: "visualizer", label: "Visualizer", icon: "\uf001", desc: I18n.t("See-through, at the bottom") },
+        { key: "battery", label: "Battery", icon: "\uf240", desc: I18n.t("Charge and time left") },
+        { key: "todo", label: "To-do", icon: "\uf14a", desc: I18n.t("Tasks to tick off") },
+        { key: "focus", label: I18n.t("Focus timer"), icon: "\uf017", desc: I18n.t("Work and break timer") },
+        { key: "notes", label: "Note", icon: "\uf249", desc: I18n.t("A note on the desktop") },
+        { key: "gauge", label: "Gauge", icon: "\uf4bc", desc: I18n.t("CPU, RAM, GPU or heat in a soft shape") },
+        { key: "date", label: "Date", icon: "\uf073", desc: I18n.t("Today in a flower or cookie shape") },
+        { key: "sky", label: "Sky", icon: "\uf0c2", desc: I18n.t("The weather as a tilted pill") },
+        { key: "nowring", label: I18n.t("Now playing"), icon: "\uf001", desc: I18n.t("The song in a round label") },
+        { key: "player", label: "Player", icon: "\uf144", desc: I18n.t("Cover, seek line and buttons") },
+        { key: "playpill", label: I18n.t("Play button"), icon: "\uf04b", desc: I18n.t("A big cookie to play and pause") },
+        { key: "lyrics", label: "Lyrics", icon: "\uf075", desc: I18n.t("The words in time with the song") },
+        { key: "storage", label: "Storage", icon: "\uf0a0", desc: I18n.t("Used and free disk space") },
+        { key: "trio", label: I18n.t("CPU · GPU · RAM"), icon: "\uf2db", desc: I18n.t("Three small shapes") }
     ]
 
     // widget styles (Settings > Widgets > Theme)
@@ -118,8 +118,8 @@ Item {
                 Column {
                     x: 72; anchors.verticalCenter: parent.verticalCenter
                     spacing: 3
-                    T { text: "Edit widgets"; font.pixelSize: 15; font.bold: true }
-                    T { kind: "reading"; text: "Add, move, resize and style widgets right on your desktop"; font.pixelSize: 12; color: M3.inkDim }
+                    T { text: I18n.t("Edit widgets"); font.pixelSize: 15; font.bold: true }
+                    T { kind: "reading"; text: I18n.t("Add, move, resize and style widgets right on your desktop"); font.pixelSize: 12; color: M3.inkDim }
                 }
                 T { kind: "icon"; anchors.right: parent.right; anchors.rightMargin: 18; anchors.verticalCenter: parent.verticalCenter; text: "\uf054"; color: M3.inkDim }
                 MouseArea {
@@ -135,7 +135,7 @@ Item {
             }
             T {
                 width: parent.width
-                text: "Switch a widget on to put it on the desktop. Edit widgets opens the editor on your desktop: add widgets, drag them, pull a corner to resize, change style and opacity. Shortcut: SUPER + ALT + W."
+                text: I18n.t("Switch a widget on to put it on the desktop. Edit widgets opens the editor on your desktop: add widgets, drag them, pull a corner to resize, change style and opacity. Shortcut: SUPER + ALT + W.")
                 color: M3.inkDim
                 font.pixelSize: 12
                 wrapMode: Text.WordWrap
@@ -212,14 +212,14 @@ Item {
             }
 
             ToggleRow {
-                label: "Auto-hide widgets"
-                desc: "Hide them while a tiled window is open on the screen; floating windows (Settings, pop-ups) leave them alone. Lighter on the computer"
+                label: I18n.t("Auto-hide widgets")
+                desc: I18n.t("Hide them while a tiled window is open on the screen; floating windows (Settings, pop-ups) leave them alone. Lighter on the computer")
                 checked: page.ctl.dst.autoHide === true
                 onToggled: function(v) { page.ctl.setAutoHide(v) }
             }
             ToggleRow {
-                label: "Blur behind widgets"
-                desc: "Frosted glass: the widgets take the colors of your wallpaper. Off: plain dark cards"
+                label: I18n.t("Blur behind widgets")
+                desc: I18n.t("Frosted glass: the widgets take the colors of your wallpaper. Off: plain dark cards")
                 checked: page.ctl.dst.widgetBlur !== false
                 onToggled: function(v) {
                     const d = JSON.parse(JSON.stringify(page.ctl.dst)); d.widgetBlur = v; page.ctl.dst = d
@@ -229,12 +229,12 @@ Item {
             }
             Row {
                 spacing: 8
-                Pill { label: "Reset widget positions"; onClicked: page.ctl.dreset() }
+                Pill { label: I18n.t("Reset widget positions"); onClicked: page.ctl.dreset() }
             }
 
             // ---------- theme ----------
             T { kind: "title"; text: "Theme"; font.pixelSize: 16; font.bold: true; topPadding: 14 }
-            T { width: parent.width; text: "How the widget cards look. Google takes the color of your Theme."; color: M3.inkDim; font.pixelSize: 12; wrapMode: Text.WordWrap }
+            T { width: parent.width; text: I18n.t("How the widget cards look. Google takes the color of your Theme."); color: M3.inkDim; font.pixelSize: 12; wrapMode: Text.WordWrap }
             Row {
                 id: themeRow
                 width: parent.width
@@ -295,8 +295,8 @@ Item {
                 }
             }
             ToggleRow {
-                label: "Adapt to the wallpaper"
-                desc: "Dark text and light cards on a light wallpaper, light text on a dark one; every widget decides by what is behind it"
+                label: I18n.t("Adapt to the wallpaper")
+                desc: I18n.t("Dark text and light cards on a light wallpaper, light text on a dark one; every widget decides by what is behind it")
                 checked: page.ctl.dst.widgetAdapt !== false
                 onToggled: function(v) { page.ctl.setWidgetAdapt(v) }
             }
@@ -305,33 +305,33 @@ Item {
             T { kind: "title"; text: "Visualizer"; font.pixelSize: 16; font.bold: true; topPadding: 14 }
             SegRow {
                 label: "Style"
-                desc: "Round bars, a mirror, a wave or dots"
+                desc: I18n.t("Round bars, a mirror, a wave or dots")
                 options: [{ label: "Bars", value: "bars" }, { label: "Mirror", value: "mirror" }, { label: "Wave", value: "wave" }, { label: "Dots", value: "dots" }]
                 current: page.wv("visualizer", "style", "bars")
                 onChosen: function(v) { page.ctl.dwset("visualizer", "style", v) }
             }
             SegRow {
                 label: "Color"
-                desc: "Your Theme color, a gradient from it, rainbow, or white (black on a light wallpaper)"
-                options: [{ label: "Theme", value: "accent" }, { label: "Gradient", value: "gradient" }, { label: "Rainbow", value: "rainbow" }, { label: "White / black", value: "mono" }]
+                desc: I18n.t("Your Theme color, a gradient from it, rainbow, or white (black on a light wallpaper)")
+                options: [{ label: "Theme", value: "accent" }, { label: "Gradient", value: "gradient" }, { label: "Rainbow", value: "rainbow" }, { label: I18n.t("White / black"), value: "mono" }]
                 current: page.wv("visualizer", "color", "accent")
                 onChosen: function(v) { page.ctl.dwset("visualizer", "color", v) }
             }
             SegRow {
                 label: "Direction"
-                desc: "Grow up from the bottom, or hang down from the top"
+                desc: I18n.t("Grow up from the bottom, or hang down from the top")
                 options: [{ label: "Up", value: "off" }, { label: "Down", value: "on" }]
                 current: (page.wv("visualizer", "flip", false) === true || page.wv("visualizer", "flip", false) === "on") ? "on" : "off"
                 onChosen: function(v) { page.ctl.dwset("visualizer", "flip", v) }
             }
 
             // ---------- to-do ----------
-            T { kind: "title"; text: "To-do list"; font.pixelSize: 16; font.bold: true; topPadding: 14 }
+            T { kind: "title"; text: I18n.t("To-do list"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
             T { width: parent.width; text: "The tasks of the To-do widget. On the desktop, click the widget once to type in it. In a terminal: rice-todo add \"buy milk\"."; color: M3.inkDim; font.pixelSize: 12; wrapMode: Text.WordWrap }
             Field {
                 id: todoField
                 width: parent.width
-                placeholder: "Add a task and press Enter"
+                placeholder: I18n.t("Add a task and press Enter")
                 onAccepted: { if (text.trim().length > 0) { page.todoDo(["add", text.trim()]); text = "" } }
             }
             Repeater {
@@ -374,37 +374,37 @@ Item {
             }
             Row {
                 visible: page.todos.some(t => t.done)
-                Pill { label: "Clear ticked tasks"; onClicked: page.todoDo(["clear"]) }
+                Pill { label: I18n.t("Clear ticked tasks"); onClicked: page.todoDo(["clear"]) }
             }
 
             T { kind: "title"; text: "Clock"; font.pixelSize: 16; font.bold: true; topPadding: 14 }
 
             ToggleRow {
                 label: "Enable"
-                desc: "Show a clock on the desktop"
+                desc: I18n.t("Show a clock on the desktop")
                 checked: page.cv("enabled", false) === true
                 onToggled: function(v) { page.ctl.dset("clock", "enabled", v ? "on" : "off") }
             }
             ToggleRow {
-                label: "Show only when locked"
-                desc: "Hide it on the desktop"
+                label: I18n.t("Show only when locked")
+                desc: I18n.t("Hide it on the desktop")
                 checked: page.cv("onlyLocked", false) === true
                 onToggled: function(v) { page.ctl.dset("clock", "onlyLocked", v ? "on" : "off") }
             }
             SegRow {
-                label: "Placement strategy"
-                desc: "Move it in the widget editor, or auto-pick a spot"
+                label: I18n.t("Placement strategy")
+                desc: I18n.t("Move it in the widget editor, or auto-pick a spot")
                 options: [
                     { label: "Draggable", value: "draggable" },
-                    { label: "Least busy", value: "leastBusy" },
-                    { label: "Most busy", value: "mostBusy" }
+                    { label: I18n.t("Least busy"), value: "leastBusy" },
+                    { label: I18n.t("Most busy"), value: "mostBusy" }
                 ]
                 current: page.cv("placement", "draggable")
                 onChosen: function(v) { page.ctl.dset("clock", "placement", v) }
             }
             SegRow {
-                label: "Clock style"
-                desc: "Look of the desktop clock"
+                label: I18n.t("Clock style")
+                desc: I18n.t("Look of the desktop clock")
                 options: [
                     { label: "Digital", value: "digital" },
                     { label: "Line", value: "line" },
@@ -419,8 +419,8 @@ Item {
                 width: parent.width
                 spacing: 8
                 topPadding: 4
-                T { text: "Clock font"; font.pixelSize: 14 }
-                T { kind: "reading"; text: "The same fonts as the lock screen clock. They show on the Digital and Line styles. Fonts that are not here yet download when you pick them."; color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
+                T { text: I18n.t("Clock font"); font.pixelSize: 14 }
+                T { kind: "reading"; text: I18n.t("The same fonts as the lock screen clock. They show on the Digital and Line styles. Fonts that are not here yet download when you pick them."); color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
                 Grid {
                     id: cfGrid
                     width: parent.width
@@ -446,7 +446,7 @@ Item {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 y: 12
                                 textFormat: Text.StyledText
-                                text: "<b>18</b><font color='#8c8c8c'>:36</font>"
+                                text: I18n.t("<b>18</b><font color='#8c8c8c'>:36</font>")
                                 font.family: modelData.f !== "" ? modelData.f : Fonts.family("number")
                                 font.pixelSize: 34
                                 color: "#F6F5F4"

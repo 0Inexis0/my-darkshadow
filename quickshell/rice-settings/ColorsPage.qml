@@ -57,17 +57,17 @@ Item {
                 x: 24 + 2 * 46 + 86 + 22; anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - x - 24
                 spacing: 6
-                T { text: "KEY COLOR"; font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2; color: M3.primary }
+                T { text: I18n.t("KEY COLOR"); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2; color: M3.primary }
                 T { kind: "title"; text: page.hex(M3.seed); font.pixelSize: 26; font.weight: Font.Medium }
                 T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.inkDim
-                    text: "Comes from your theme or wallpaper. Every color below is made from it, so the whole shell matches." }
+                    text: I18n.t("Comes from your theme or wallpaper. Every color below is made from it, so the whole shell matches.") }
             }
             Btn { anchors.right: parent.right; anchors.rightMargin: 20; anchors.verticalCenter: parent.verticalCenter
                 text: "Theme"; sym: "palette"; icon: ""; onClicked: page.ctl.page = 8 }
         }
 
         // ---------- roles ----------
-        SectionTitle { text: "Color roles"; sub: "Each role has an \"on\" color for text and icons on top of it. Containers are the soft versions used for groups." }
+        SectionTitle { text: I18n.t("Color roles"); sub: "Each role has an \"on\" color for text and icons on top of it. Containers are the soft versions used for groups." }
         Grid {
             id: grid
             width: parent.width
@@ -95,7 +95,7 @@ Item {
         }
 
         // ---------- surfaces ----------
-        SectionTitle { text: "Surfaces and containment"; sub: "Surfaces stack the interface without shadows: lowest at the back, highest for what is on top." }
+        SectionTitle { text: I18n.t("Surfaces and containment"); sub: I18n.t("Surfaces stack the interface without shadows: lowest at the back, highest for what is on top.") }
         Row {
             id: srow
             width: parent.width
@@ -121,18 +121,18 @@ Item {
             width: parent.width; height: 170; radius: M3.rXL; color: M3.surfaceLowest
             Rectangle {
                 anchors.fill: parent; anchors.margins: 14; radius: M3.rL; color: M3.surfaceC
-                T { x: 16; y: 12; text: "Window · surfaceContainer"; font.pixelSize: 11; color: M3.inkDim }
+                T { x: 16; y: 12; text: I18n.t("Window · surfaceContainer"); font.pixelSize: 11; color: M3.inkDim }
                 Rectangle {
                     x: 14; y: 36; width: parent.width * 0.5 - 21; height: parent.height - 50; radius: M3.rM; color: M3.surfaceHigh
-                    T { x: 14; y: 12; text: "Card · high"; font.pixelSize: 11; color: M3.inkDim }
+                    T { x: 14; y: 12; text: I18n.t("Card · high"); font.pixelSize: 11; color: M3.inkDim }
                     Rectangle { x: 14; y: 36; width: parent.width - 28; height: 30; radius: 15; color: M3.surfaceHighest
-                        T { anchors.centerIn: parent; text: "Field · highest"; font.pixelSize: 11; color: M3.inkDim } }
+                        T { anchors.centerIn: parent; text: I18n.t("Field · highest"); font.pixelSize: 11; color: M3.inkDim } }
                 }
                 Rectangle {
                     x: parent.width * 0.5 + 7; y: 36; width: parent.width * 0.5 - 21; height: parent.height - 50; radius: M3.rM; color: M3.primaryContainer
-                    T { x: 14; y: 12; text: "Selected · primaryContainer"; font.pixelSize: 11; color: M3.inkPrimaryC }
+                    T { x: 14; y: 12; text: I18n.t("Selected · primaryContainer"); font.pixelSize: 11; color: M3.inkPrimaryC }
                     Rectangle { x: 14; y: 36; width: bt.implicitWidth + 30; height: 34; radius: 17; color: M3.primary
-                        T { id: bt; anchors.centerIn: parent; text: "Button · primary"; font.pixelSize: 12; font.weight: Font.Medium; color: M3.inkPrimary } }
+                        T { id: bt; anchors.centerIn: parent; text: I18n.t("Button · primary"); font.pixelSize: 12; font.weight: Font.Medium; color: M3.inkPrimary } }
                 }
             }
         }
