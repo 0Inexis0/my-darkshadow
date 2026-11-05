@@ -31,8 +31,14 @@ PKG_TOOLS=(wf-recorder grim slurp wl-clipboard libnotify xdg-user-dirs jq curl p
            imagemagick zenity networkmanager bluez bluez-utils pipewire pipewire-pulse wireplumber
            btop cmatrix peaclock pavucontrol gnome-calendar hyprsunset upower power-profiles-daemon)
 PKG_FONTS=(ttf-jetbrains-mono-nerd ttf-nerd-fonts-symbols noto-fonts noto-fonts-emoji inter-font)
-PKG_LOOK=(papirus-icon-theme gnome-themes-extra adw-gtk-theme bibata-cursor-theme-bin)
+# adwaita-cursors: a cursor from the repositories, so there is always one (Bibata is in the AUR; without an
+# AUR helper it is downloaded from GitHub)
+PKG_LOOK=(papirus-icon-theme gnome-themes-extra adw-gtk-theme adwaita-cursors bibata-cursor-theme-bin)
 ARCH_PKGS=("${PKG_DESKTOP[@]}" "${PKG_SHELL[@]}" "${PKG_TOOLS[@]}" "${PKG_FONTS[@]}" "${PKG_LOOK[@]}")
+# AUR packages the shell cannot work without (on Arch versions that do not have them in the repositories):
+# yay is built for these by itself. The others (the Bibata cursor, peaclock ...) are skipped without an AUR helper:
+# the installer downloads the cursor from GitHub instead.
+AUR_NEEDED=(quickshell awww matugen niri xwayland-satellite)
 
 # programs the desktop needs at runtime (shown at the end if something is missing)
 NEED_CMDS=(Hyprland hyprlock hypridle waybar qs swaync-client awww matugen cava jq python3 grim slurp wl-copy wf-recorder notify-send)
@@ -60,5 +66,5 @@ FPKG_TOOLS=(wf-recorder grim slurp wl-clipboard libnotify xdg-user-dirs jq curl 
             ImageMagick zenity NetworkManager bluez pipewire pipewire-pulseaudio wireplumber
             btop cmatrix pavucontrol gnome-calendar upower power-profiles-daemon tar xz unzip)
 FPKG_FONTS=(rsms-inter-fonts google-noto-sans-fonts google-noto-emoji-fonts)
-FPKG_LOOK=(papirus-icon-theme adw-gtk3-theme)
+FPKG_LOOK=(papirus-icon-theme adw-gtk3-theme adwaita-cursor-theme)
 FEDORA_PKGS=("${FPKG_DESKTOP[@]}" "${FPKG_SHELL[@]}" "${FPKG_TOOLS[@]}" "${FPKG_FONTS[@]}" "${FPKG_LOOK[@]}")

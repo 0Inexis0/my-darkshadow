@@ -155,7 +155,7 @@ Item {
                     enabled: !rowFlick.dragging && !rowFlick.flicking && !rowFlickWheel.active
                     NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
                 }
-                WheelScroll { id: rowFlickWheel; flick: rowFlick; horizontal: true }
+                WheelScroll { id: rowFlickWheel; flick: rowFlick; horizontal: true; outer: flickWheel }
 
                 Row {
                     id: wrow

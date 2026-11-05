@@ -287,10 +287,46 @@ def xfallback(ts):
     return "Adwaita"
 
 
+BIBATA_URL = "https://github.com/ful1e5/Bibata_Cursor/releases/latest/download/%s.tar.xz"
+
+
+def get_bibata(name="Bibata-Modern-Ice"):
+    """Bibata from GitHub, for this user (its package is in the AUR: without yay it was missing, and with no
+    cursor theme at all Hyprland shows no cursor)"""
+    if not name.startswith("Bibata-"):
+        return False
+    tmp = tempfile.mkdtemp(prefix="rice-bibata-")
+    try:
+        arch = os.path.join(tmp, "b.tar.xz")
+        with urllib.request.urlopen(BIBATA_URL % name, timeout=60) as r, open(arch, "wb") as o:
+            shutil.copyfileobj(r, o)
+        out = os.path.join(tmp, "x")
+        os.makedirs(out)
+        safe_extract(arch, "tar", out)
+        src = os.path.join(out, name)
+        if not os.path.isdir(os.path.join(src, "cursors")):
+            return False
+        os.makedirs(ICONS, exist_ok=True)
+        dst = os.path.join(ICONS, name)
+        if os.path.exists(dst):
+            shutil.rmtree(dst, ignore_errors=True)
+        shutil.move(src, dst)
+        return True
+    except Exception:
+        return False
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def apply(c):
     theme, size = c["theme"], c["size"]
     ts = themes()
     t = ts.get(theme)
+    if (t is None and theme.startswith("Bibata-")) or not any(x["dir"] for x in ts.values()):
+        # the cursor theme is missing (or there is none at all): get Bibata first
+        if get_bibata(theme if theme.startswith("Bibata-") else "Bibata-Modern-Ice"):
+            ts = themes()
+            t = ts.get(theme)
     if t is None:
         # the saved theme is not on this computer (a package that did not install): a theme that is,
         # never a name Hyprland cannot find (that leaves no cursor at all)
@@ -347,7 +383,10 @@ def safe_extract(arch, kind, dst):
             for m in t.getmembers():
                 if m.name.startswith("/") or ".." in m.name.split("/") or m.issym() and os.path.isabs(m.linkname):
                     raise ValueError("bad path in archive")
-            t.extractall(dst)
+            if hasattr(tarfile, "tar_filter"):
+                t.extractall(dst, filter="tar")
+            else:
+                t.extractall(dst)
 
 
 def get_pack(pid):

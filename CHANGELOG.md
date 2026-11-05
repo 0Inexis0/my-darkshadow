@@ -1,5 +1,12 @@
 # Changelog
 
+## V3.59
+- Settings scrolls faster by default, and the scroll speed on Home works again: the "Try it" box no longer stops the page (at its top or bottom the page scrolls on)
+- Home: the "Make yourself at home" tips card is gone
+- Installer (Arch): no more yes/no question about yay. paru or yay are used when you have one; without one, yay is set up only if the shell needs a package that your Arch has only in the AUR (Quickshell, awww, matugen). The rest is skipped: the Bibata cursor comes from GitHub instead. `--aur` gets yay and everything, `--no-aur` never builds it
+- Fix: no mouse cursor after installing without yay: the Bibata cursor is an AUR package, so it was missing and nothing took its place. Now the Adwaita cursor comes from the official repositories as a backup, and the shell downloads Bibata from GitHub by itself whenever it is missing (also at every login)
+- Fix: no mouse cursor on PCs where the screen is plugged into an NVIDIA card while the processor's graphics are on too: the installer now looks at which card drives the screens and draws the cursor in software then (log out and back in once after the update)
+
 ## V3.58: Look & Feel
 - New: Settings > Desktop > **Look & Feel**
   - **Fastfetch**: a live preview of your terminal with fastfetch in it; show it whenever a terminal opens; the logo (your distro's, a small one, DarkShadow's moon or your wallpaper as a picture in kitty, Ghostty and WezTerm), how much it tells, words or icons as labels, and your wallpaper's colors

@@ -79,7 +79,6 @@ Item {
     }
 
     Timer { interval: 15000; running: true; repeat: true; onTriggered: page.now = new Date() }
-    Timer { interval: 7000; running: true; repeat: true; onTriggered: tipFade.restart() }
     Process {
         id: upProc
         command: ["bash", "-c", "cut -d. -f1 /proc/uptime"]
@@ -210,45 +209,6 @@ Item {
                         Btn { text: "Gaming hub"; sym: "sports_esports"; icon: "\uf11b"; onClicked: page.ctl.page = 16 }
                     }
                 }
-            }
-
-            Rectangle {
-                width: parent.width
-                height: 84
-                radius: 16
-                border.width: 1
-                border.color: M3.surfaceHighest
-                gradient: Gradient {
-                    orientation: Gradient.Horizontal
-                    GradientStop { position: 0; color: "#1a1922" }
-                    GradientStop { position: 1; color: M3.surfaceLow }
-                }
-                Rectangle {
-                    id: bulb
-                    x: 18
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 46; height: 46; radius: 14
-                    color: Qt.rgba(1, 1, 1, 0.06)
-                    T { kind: "icon"; anchors.centerIn: parent; text: "\uf0eb"; font.pixelSize: 20 }
-                }
-                Column {
-                    id: tipCol
-                    anchors.left: bulb.right
-                    anchors.leftMargin: 14
-                    anchors.right: parent.right
-                    anchors.rightMargin: 18
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 4
-                    T { text: "Make yourself at home"; font.pixelSize: 14; font.bold: true }
-                    T { kind: "reading"; width: parent.width; text: page.tips[page.tip]; color: M3.inkDim; font.pixelSize: 12; wrapMode: Text.WordWrap }
-                }
-                SequentialAnimation {
-                    id: tipFade
-                    NumberAnimation { target: tipCol; property: "opacity"; to: 0; duration: 220 }
-                    ScriptAction { script: page.tip = (page.tip + 1) % page.tips.length }
-                    NumberAnimation { target: tipCol; property: "opacity"; to: 1; duration: 320 }
-                }
-                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: tipFade.restart() }
             }
 
             // Light mode: one switch for slower computers, right on Home
@@ -659,7 +619,7 @@ Item {
                         contentHeight: tryCol.height + 12
                         boundsBehavior: Flickable.StopAtBounds
                         Behavior on contentY { enabled: !tryFlick.dragging && !tryFlick.flicking && !tryFlickWheel.active; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-                        WheelScroll { id: tryFlickWheel; flick: tryFlick }
+                        WheelScroll { id: tryFlickWheel; flick: tryFlick; outer: flickWheel }
                         Column {
                             id: tryCol
                             x: 10; y: 6

@@ -12,7 +12,7 @@ HAVE_VERSION="$(tr -d ' \r\n' 2>/dev/null <"$HOME/.config/rice/version" || true)
 # shellcheck source=install/lib/distro.sh
 . "$ROOT/install/lib/distro.sh"
 
-ASSUME_YES=0; DRY_RUN=0; MODE=install; SKIP_PKGS=0; PULLED=0; TAKE_SETTINGS_ARG=0; WM_ARG=""
+ASSUME_YES=0; DRY_RUN=0; MODE=install; SKIP_PKGS=0; PULLED=0; TAKE_SETTINGS_ARG=0; WM_ARG=""; AUR_ARG=""
 usage() {
   cat <<U
 DarkShadow's Shell installer V$RICE_VERSION
@@ -24,6 +24,8 @@ Usage: ./install.sh [options]
       --update       get the newest version and update apps, scripts and packages (keeps your configs)
       --use-saved-settings  take the settings saved in this copy (settings/) even where you changed yours
       --wm=hyprland|niri|both   the window manager to set up (asked otherwise; both: pick one at login)
+      --aur          Arch: get yay and every AUR package (without it: only when the shell needs one)
+      --no-aur       Arch: never build yay; AUR packages are skipped (the cursor and fonts come from GitHub)
       --restore      put back the files from the newest backup
   -h, --help         this help
 U
@@ -38,6 +40,8 @@ for a in "$@"; do
     --pulled) MODE=update; PULLED=1 ;;
     --use-saved-settings) TAKE_SETTINGS_ARG=1 ;;
     --wm=hyprland|--wm=niri|--wm=both) WM_ARG="${a#--wm=}" ;;
+    --aur) AUR_ARG=yes ;;
+    --no-aur) AUR_ARG=no ;;
     -h|--help) usage; exit 0 ;;
     *) fail "Unknown option: $a"; usage; exit 2 ;;
   esac
@@ -305,11 +309,21 @@ step_packages() {
       fi
       if [ "${#AUR_PKGS[@]}" -gt 0 ]; then
         local helper; helper="$(aur_helper)"
+        # yay is optional and nothing asks about it: paru or yay are used when you have one; otherwise yay is
+        # built only when the shell itself needs an AUR package (the cursor and the fonts have other ways in),
+        # or when you ask for it (--aur). --no-aur: never.
         if [ -z "$helper" ]; then
-          warn "These come from the AUR: ${AUR_PKGS[*]}"
-          if confirm "Install yay (AUR helper) to get them?"; then
-            info "Building yay. Its output is shown below, answer any question it asks."
+          local p need=()
+          for p in "${AUR_PKGS[@]}"; do
+            case " ${AUR_NEEDED[*]} " in *" $p "*) need+=("$p") ;; esac
+          done
+          if [ "$AUR_ARG" = yes ] || { [ "$AUR_ARG" != no ] && [ "${#need[@]}" -gt 0 ]; }; then
+            [ "${#need[@]}" -gt 0 ] && note "The shell needs these from the AUR: ${need[*]}, so yay is set up for them"
+            info "Building yay (AUR helper). Its output is shown below."
             if install_yay; then ok "yay is installed"; helper=yay; else fail "yay could not be built"; fi
+          else
+            note "No AUR helper: skipping ${AUR_PKGS[*]} (not needed; ./install.sh --aur gets them)"
+            AUR_PKGS=()
           fi
         fi
         if [ -n "$helper" ]; then
@@ -319,7 +333,7 @@ step_packages() {
           note "AUR packages are built on your computer; their output is shown so nothing waits invisibly."
           if "$helper" -S "${extra[@]}" "${AUR_PKGS[@]}"; then ok "AUR packages installed"
           else warn "Some AUR packages failed. Try later: $helper -S ${AUR_PKGS[*]}"; fi
-        else
+        elif [ "${#AUR_PKGS[@]}" -gt 0 ]; then
           warn "Skipped AUR packages. Install them later: ${AUR_PKGS[*]}"
         fi
       fi
@@ -576,17 +590,26 @@ write_gpu() {
   gpus="$(lspci 2>/dev/null | grep -iE 'vga|3d|display' || true)"
   if [ -e /proc/driver/nvidia/version ] || printf '%s\n' "$gpus" | grep -qi nvidia; then nv=1; fi
   if printf '%s\n' "$gpus" | grep -vi nvidia | grep -qiE 'intel|amd|ati |advanced micro|radeon'; then other=1; fi
-  # only when NVIDIA alone drives the screens. A laptop with Intel or AMD graphics next to the NVIDIA card (a
-  # hybrid laptop) draws the desktop on those: a software cursor there only costs smoothness (the desktop felt
-  # like 60 Hz on a 144 Hz screen)
-  if [ "$nv" = 1 ] && [ "$other" = 0 ]; then
+  # which card drives the connected screens: a desktop PC with the screen on the NVIDIA card and the CPU's
+  # graphics turned on as well needs the software cursor too (without it: no cursor at all)
+  local c b drv nvscreen=0
+  for c in /sys/class/drm/card[0-9]*-*; do
+    [ "$(cat "$c/status" 2>/dev/null)" = connected ] || continue
+    b="${c##*/}"
+    drv="$(basename "$(readlink -f "/sys/class/drm/${b%%-*}/device/driver" 2>/dev/null)" 2>/dev/null)"
+    case "$drv" in nvidia*) nvscreen=1 ;; esac
+  done
+  # a software cursor only when NVIDIA drives a screen. A laptop with Intel or AMD graphics next to the NVIDIA
+  # card (a hybrid laptop) draws the desktop on those: a software cursor there only costs smoothness (the
+  # desktop felt like 60 Hz on a 144 Hz screen)
+  if [ "$nv" = 1 ] && { [ "$other" = 0 ] || [ "$nvscreen" = 1 ]; }; then
     mkdir -p "$HOME/.config/hypr"
     cat >"$f" <<'LUA'
 -- written by DarkShadow's Shell for NVIDIA graphics (install.sh)
 -- the cursor is drawn in software: with a hardware cursor it can be invisible on NVIDIA
 hl.config({ cursor = { no_hardware_cursors = true } })
 LUA
-    echo "NVIDIA: software cursor"
+    echo "NVIDIA drives the screen: software cursor"
   elif [ "$nv" = 1 ]; then
     rm -f "$f"; echo "hybrid graphics (NVIDIA + Intel/AMD): nothing to change"
   else

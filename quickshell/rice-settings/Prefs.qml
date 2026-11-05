@@ -40,7 +40,7 @@ Singleton {
     function setWavy(v) { wavy = v; save("wavy", v) }
     function setProgressThick(v) { progressThick = Math.max(2, Math.min(8, Math.round(v))); save("progressThick", progressThick) }
     function setShape(v) { shape = v; save("shape", v) }
-    readonly property real wheel: 0.6 * scroll       // pixels per wheel unit on a page
+    readonly property real wheel: 1.0 * scroll       // pixels per wheel unit on a page (one notch: 120 px at 1x)
     // size of the Settings window: 1 = the default size, 0.75 smaller, 1.5 bigger
     property real size: 1.0
     // the Settings window in pixels on a screen of sw x sh at size k (the window and the preview use the same formula)

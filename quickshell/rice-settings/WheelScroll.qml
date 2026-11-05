@@ -13,6 +13,8 @@ WheelHandler {
     property real k: Prefs.wheel
     property real goal: 0
     property bool active: false                   // scrolled a moment ago (the page's Behavior stays out of the way)
+    property var outer: null                      // a box inside a page: the page's WheelScroll, which scrolls on
+                                                  // when the box is at its top or bottom
     acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
     readonly property string prop: horizontal ? "contentX" : "contentY"
     function limit(v) {
@@ -21,21 +23,26 @@ WheelHandler {
     }
     property NumberAnimation glide: NumberAnimation { target: ws.flick; property: ws.prop; duration: 140; easing.type: Easing.OutCubic }
     property Timer rest: Timer { interval: 220; onTriggered: ws.active = false }
-    onWheel: function(e) {
+    onWheel: function(e) { take(e) }
+    function take(e) {
         if (!flick) return
+        const cur = flick[prop]
+        const touch = e.pixelDelta.x !== 0 || e.pixelDelta.y !== 0
+        let to
+        if (touch) {
+            // a touchpad: follow the fingers
+            const d = horizontal ? (e.pixelDelta.x !== 0 ? e.pixelDelta.x : e.pixelDelta.y) : e.pixelDelta.y
+            to = limit(cur - d * 1.3 * Math.max(0.4, Prefs.scroll))
+        } else {
+            const a = horizontal ? (e.angleDelta.x !== 0 ? e.angleDelta.x : e.angleDelta.y) * 1.15 : e.angleDelta.y
+            to = limit((glide.running ? goal : cur) - a * k)
+        }
+        // a box inside a page at its end: the page scrolls instead
+        if (outer && Math.abs(to - cur) < 0.5 && !glide.running) { outer.take(e); return }
         active = true
         rest.restart()
-        const cur = flick[prop]
-        if (e.pixelDelta.x !== 0 || e.pixelDelta.y !== 0) {
-            // a touchpad: follow the fingers
-            glide.stop()
-            const d = horizontal ? (e.pixelDelta.x !== 0 ? e.pixelDelta.x : e.pixelDelta.y) : e.pixelDelta.y
-            goal = limit(cur - d * Math.max(0.6, Prefs.scroll))
-            flick[prop] = goal
-            return
-        }
-        const a = horizontal ? (e.angleDelta.x !== 0 ? e.angleDelta.x : e.angleDelta.y) * 1.15 : e.angleDelta.y
-        goal = limit((glide.running ? goal : cur) - a * k)
+        goal = to
+        if (touch) { glide.stop(); flick[prop] = goal; return }
         glide.stop(); glide.from = cur; glide.to = goal; glide.start()
     }
 }
