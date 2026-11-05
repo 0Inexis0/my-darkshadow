@@ -60,8 +60,11 @@ FloatingWindow {
         status = "Auto-hide widgets " + (on ? "on" : "off")
     }
     function closeNow() { Qt.quit() }
-    // a page was made (they are made one after another after the window opens): search looks at it too
-    function pageLoaded() { searchIndex = [] }
+    // pages are made when you go to them; the first search makes all of them (search looks inside every page)
+    property bool searchWanted: false
+    property string lastQuery: ""
+    function pageLoaded() { searchIndex = []; if (lastQuery.trim() !== "") pageAgain.restart() }
+    Timer { id: pageAgain; interval: 120; onTriggered: win.runSearch(win.lastQuery) }
 
     // ---------- search: every setting on every page, found by its name, its section, its page or its text ----------
     property var results: []
@@ -125,6 +128,8 @@ FloatingWindow {
         searchIndex = out.filter(e => { const k = e.page + "|" + e.label + "|" + e.section; if (seen[k]) return false; seen[k] = true; return true })
     }
     function runSearch(q) {
+        lastQuery = q
+        if (q.trim() !== "") searchWanted = true
         q = q.trim().toLowerCase()
         searchSel = 0
         if (!q.length) { results = []; return }

@@ -9,6 +9,12 @@ Rectangle {
     property var pal: null
     readonly property bool glass: Look.blur && !Look.flat
     radius: pal ? pal.radius : 26
+    // tell the widget's window about this card (niri blurs behind the cards only)
+    property var holderItem: null
+    Component.onCompleted: {
+        for (let p = parent; p; p = p.parent) if (p.widgetHolder === true) { holderItem = p; p.cards = p.cards.concat([this]); break }
+    }
+    Component.onDestruction: if (holderItem) { const me = this; holderItem.cards = holderItem.cards.filter(c => c !== me) }
     color: pal ? pal.cardColor : Qt.rgba(0.10, 0.10, 0.115, 0.46 * k)
     border.width: pal ? pal.edgeWidth : 1
     border.color: pal ? pal.edge : Qt.rgba(1, 1, 1, 0.10 * k)

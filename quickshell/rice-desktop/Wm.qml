@@ -20,6 +20,7 @@ Singleton {
     property var nFocusWin: null         // id of the focused window
     property bool overview: false
     property int tick: 0                 // changes whenever something changed (bindings follow it)
+    property int titleTick: 0            // the focused window's title changed
 
     Process {
         id: stream
@@ -61,6 +62,13 @@ Singleton {
             nFocusWin = f
         } else if (ev.WindowOpenedOrChanged) {
             const w = ev.WindowOpenedOrChanged.window
+            const old = nWin[w.id]
+            // only the title changed (terminals and browsers do that all the time): no need to wake the whole bar
+            if (old && old.workspace_id === w.workspace_id && old.is_focused === w.is_focused && old.is_floating === w.is_floating) {
+                old.title = w.title; old.app_id = w.app_id
+                if (w.is_focused) titleTick++
+                return
+            }
             const m = Object.assign({}, nWin)
             if (w.is_focused) for (const k in m) if (m[k].is_focused) m[k] = Object.assign({}, m[k], { is_focused: false })
             m[w.id] = w
@@ -76,8 +84,12 @@ Singleton {
         } else if (ev.OverviewOpenedOrClosed) {
             overview = ev.OverviewOpenedOrClosed.is_open
         } else return
-        tick++
+        // niri sends a few events for one switch (the workspace, its window, the focus): the bar and the island
+        // look at them once, after the last one, instead of three times in a row
+        if (!pending) { pending = true; Qt.callLater(wm.bump) }
     }
+    property bool pending: false
+    function bump() { pending = false; tick++ }
 
     // the monitor the user works on (niri: the one with the focused workspace)
     readonly property string focusedOutput: {
@@ -127,7 +139,7 @@ Singleton {
     }
     // the focused window: its title and app
     readonly property var focusedWindow: {
-        tick
+        tick; titleTick
         if (niri) {
             const w = nFocusWin !== null ? nWin[nFocusWin] : null
             return w ? { title: w.title || "", appId: w.app_id || "", floating: w.is_floating === true } : null

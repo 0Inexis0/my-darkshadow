@@ -1,5 +1,12 @@
 # Changelog
 
+## V3.57: niri fixes
+- niri: no more pale bands and boxes of blur around things: the blur sits exactly behind the menus (sound, Bluetooth, Wi-Fi, power ...), the bar's island (not its sides) and the widgets' cards (widgets drawn as a shape, like the clock and the gauges, get no square behind them), so menus have the same gap under the bar as the island's card
+- niri: the island follows workspace switches as quickly as on Hyprland (the bar now reads niri's few events for one switch once, and a window's title changing no longer wakes the whole bar)
+- niri: blurred wallpaper around the workspaces in the overview (Win + Tab)
+- niri: notifications come from the shell again (Settings > Notifications) instead of niri's plain blue boxes: other notification programs (mako, dunst) that started by themselves are stopped, and D-Bus starts ours from now on
+- Settings opens faster (most of all on laptops): only the page you are on is made at first, and a search makes the rest
+
 ## V3.56
 - Settings opens much faster: pages are made when you go to them (or one after another just after it opens) instead of all at once
 - Settings is frosted again: more see-through, so the blur behind it shows (Hyprland), and niri blurs it too

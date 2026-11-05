@@ -197,7 +197,7 @@ ShellRoot {
     }
     Timer {
         interval: 6000
-        running: Look.adapt || !!(root.placement !== "draggable" && root.cfg.clock && root.cfg.clock.enabled === true)
+        running: Look.adapt || Wm.niri || !!(root.placement !== "draggable" && root.cfg.clock && root.cfg.clock.enabled === true)
         repeat: true
         triggeredOnStart: true
         onTriggered: { if (!wpProc.running) wpProc.running = true }
@@ -428,6 +428,8 @@ ShellRoot {
 
     // reads how bright the wallpaper is in each part of the screen, so every widget can pick dark or light text
     WallLum { path: root.wallpaper; sw: root.sw; sh: root.sh }
+    // niri: the blurred wallpaper behind the workspaces in the overview (SUPER + Tab)
+    NiriBackdrop { path: root.wallpaper }
 
     EditorWindow { root: root }
 

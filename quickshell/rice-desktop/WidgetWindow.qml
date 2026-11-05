@@ -110,11 +110,16 @@ PanelWindow {
     // so whatever is under them (other widgets, the desktop) stays clickable
     mask: Region { item: (w.passive || w.editing) ? nothing : holder }
     // niri: the blurred wallpaper behind the card (Settings > Widgets > Blur; Hyprland blurs this layer with a rule)
-    NiriBlur { win: w; items: [holder]; radius: 26 * (w.free ? 1 : w.sc); on: Look.blur && !w.passive && w.bgv > 0.05 && w.fk > 0.5 }
+    // only behind the widget's cards (Card.qml): widgets drawn as a shape (the clock, the gauges ...) get no square
+    // of blur around them, and a widget made of a few cards gets it behind each card
+    NiriBlur { win: w; items: holder.cards.filter(c => c && c.visible && c.color.a > 0.02); radius: w.pal.radius
+        on: Look.blur && !w.passive && w.bgv > 0.05 && w.fk > 0.99 && !w.editing }
     Item { id: nothing; width: 0; height: 0 }
 
     Item {
         id: holder
+        readonly property bool widgetHolder: true
+        property var cards: []                    // the Card items inside (they add themselves)
         x: w.px - w.mx
         y: w.py - w.my
         width: w.dispW

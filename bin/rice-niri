@@ -79,7 +79,7 @@ class F:
         self.xwls = v >= (25, 8)
         self.overlay_hide = v >= (25, 8)
         self.include = v >= (25, 11)
-        self.backdrop = v >= (25, 11)
+        self.backdrop = v >= (25, 5)
         self.blur = v >= (26, 4)
         self.optional_include = v >= (26, 4)
         self.overview = v >= (25, 5)
@@ -552,9 +552,10 @@ def window_rules(f, s, flat):
 
 def layer_rules(f, flat):
     L = []
-    # the wallpaper stays still in the overview, behind the workspaces
+    # the overview (SUPER + Tab): the shell's blurred wallpaper (rice-backdrop) behind the zoomed-out workspaces;
+    # the workspaces keep the sharp wallpaper (awww)
     if f.backdrop:
-        L += block("layer-rule", ['match namespace="^(awww|swww)-daemon"', "place-within-backdrop true"])
+        L += block("layer-rule", ['match namespace="^rice-backdrop$"', "place-within-backdrop true"])
     # full-screen layers that animate themselves get no shadow
     L += block("layer-rule", ['match namespace="^rice-(welcome|tour-dim)$"', "shadow { off; }"])
     # blur: the shell asks niri for blur exactly where it draws (Quickshell, ext-background-effect), so no layer

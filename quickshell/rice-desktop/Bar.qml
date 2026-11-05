@@ -152,7 +152,7 @@ PanelWindow {
             const l = [], r = []
             const pill = bar.barH / 2
             if (bar.sty === "island" || bar.sty === "flat") { l.push(bodyBg); r.push(bar.sty === "island" ? pill : 0) }
-            else if (bar.notch) { l.push(notchBg); r.push(14) }
+            else if (bar.notch) { l.push(notchBody); r.push(notchBg.corner) }
             else if (body.soft) {
                 for (const z of [zl, zc, zr]) if (z.any && !z.onlyIsland) { l.push(z); r.push(pill) }
             }
@@ -720,6 +720,9 @@ PanelWindow {
             }
         }
 
+        // the notch's body without its ears and the room for its shadow (niri blurs exactly this)
+        Item { id: notchBody; visible: bar.notch; x: notchBg.x + notchBg.ear; y: notchBg.y
+            width: Math.max(0, notchBg.width - 2 * notchBg.ear); height: notchBg.height }
         // ---------- notch background (and its shadow) ----------
         NotchShape {
             id: notchBg

@@ -52,7 +52,27 @@ Scope {
     // the server starts a moment after the switch, so swaync has let go of the notification name
     property bool srvOn: false
     onShellModeChanged: { if (!shellMode) srvOn = false; else srvT.restart() }
-    Timer { id: srvT; interval: 1500; onTriggered: nfy.srvOn = nfy.shellMode }
+    Timer { id: srvT; interval: 1500; onTriggered: if (nfy.shellMode && !clearOthers.running) clearOthers.running = true }
+    // Another notification daemon may own the name first: mako, dunst or swaync start by themselves when a program
+    // sends a notification before the shell is up (D-Bus starts them), most of all on niri. Then notifications came
+    // as plain blue boxes. Those are closed before the shell takes the name, and taken back if one shows up later.
+    Process {
+        id: clearOthers
+        command: ["bash", "-c", "for n in mako .mako-wrapped dunst .dunst-wrapped swaync .swaync-wrapped; do pkill -x \"$n\"; done; sleep 0.3"]
+        onExited: { nfy.srvOn = false; Qt.callLater(function() { nfy.srvOn = nfy.shellMode }) }
+    }
+    Process {
+        id: ownerProc
+        // the program that owns the notification name now (no call is made to it, so nothing gets started)
+        command: ["bash", "-c", "busctl --user status org.freedesktop.Notifications 2>/dev/null | sed -n 's/^Comm=//p'"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const c = text.trim()
+                if (c !== "" && !/quickshell|^qs$|^\.qs/i.test(c) && nfy.shellMode && !clearOthers.running) clearOthers.running = true
+            }
+        }
+    }
+    Timer { interval: 15000; repeat: true; running: nfy.srvOn; onTriggered: if (!ownerProc.running) ownerProc.running = true }
     Loader {
         id: srvLoader
         active: nfy.srvOn

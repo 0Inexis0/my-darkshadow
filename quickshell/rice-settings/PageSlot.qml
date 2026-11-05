@@ -13,8 +13,10 @@ Item {
     // the page itself, made when you first go there or a moment after the window opened (one after another), so
     // Settings opens fast: making every page at once (and starting all their helpers) took seconds on a laptop
     property Component page: null
-    property bool warm: false
-    Timer { interval: 450 + slot.idx * 90; running: slot.page !== null && !slot.warm; onTriggered: slot.warm = true }
+    // made when you first go there, or when you search (search looks inside every page); never all at once at the
+    // start (that made Settings slow to open, most of all on laptops)
+    readonly property bool warm: !!(nav && nav.searchWanted)
+    property bool seen: false
 
     width: parent ? parent.width : 0
     height: parent ? parent.height : 0
@@ -30,6 +32,7 @@ Item {
     onOnChanged: {
         outAnim.stop(); inAnim.stop()
         if (on) {
+            seen = true
             inner.x = slot.dx; inner.y = slot.dy; inner.opacity = 0; inner.scale = 0.985
             inAnim.start()
         } else {
@@ -37,7 +40,7 @@ Item {
             outAnim.start()
         }
     }
-    Component.onCompleted: { inner.opacity = on ? 1 : 0 }
+    Component.onCompleted: { inner.opacity = on ? 1 : 0; if (on) seen = true }
 
     ParallelAnimation {
         id: inAnim
@@ -63,7 +66,7 @@ Item {
         transformOrigin: Item.Top
         Loader {
             anchors.fill: parent
-            active: slot.page !== null && (slot.on || slot.warm)
+            active: slot.page !== null && (slot.on || slot.seen || slot.warm)
             asynchronous: !slot.on
             sourceComponent: slot.page
             onLoaded: if (slot.nav && slot.nav.pageLoaded) slot.nav.pageLoaded()

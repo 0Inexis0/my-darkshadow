@@ -85,7 +85,7 @@ PanelWindow {
 
     visible: cfg.enabled === true
     // niri: blur behind it (Hyprland blurs this layer with its own rule)
-    NiriBlur { win: hc; items: [shape]; radius: shape.radius; on: hc.t > 0.05 }
+    NiriBlur { win: hc; items: [shape]; radius: shape.radius; on: hc.open && hc.t > 0.98 }
     color: "transparent"
     anchors { bottom: hc.atBottom; top: !hc.atBottom; right: hc.atRight; left: !hc.atRight }
     implicitWidth: pw + 2 * gap + 16

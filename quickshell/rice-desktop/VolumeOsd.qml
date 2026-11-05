@@ -32,7 +32,7 @@ PanelWindow {
 
     visible: shown || t > 0.01
     // niri: blur behind it (Hyprland blurs this layer with its own rule)
-    NiriBlur { win: osd; items: [osdBg]; radius: osdBg.radius; on: osd.t > 0.05 }
+    NiriBlur { win: osd; items: [osdBg]; radius: osdBg.radius; on: osd.t > 0.98 }
     color: "transparent"
     anchors { bottom: true }
     margins { bottom: 110 }
