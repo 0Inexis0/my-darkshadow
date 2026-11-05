@@ -227,15 +227,15 @@ Item {
         SegRow {
             label: "Logo"
             desc: page.ff.logo === "wallpaper" && page.termInfo && !page.termInfo.images
-                ? page.termNow + " cannot show pictures: the moon shows instead" : "Your distro's, a small one, DarkShadow's moon or your wallpaper"
-            options: [{ label: "Distro", value: "distro" }, { label: "Small", value: "small" }, { label: "Moon", value: "darkshadow" },
+                ? page.termNow + " cannot show pictures: the moon shows instead" : "Your distro's, small like pfetch, DarkShadow's moon or your wallpaper"
+            options: [{ label: "Distro", value: "distro" }, { label: "pfetch", value: "small" }, { label: "Moon", value: "darkshadow" },
                       { label: "Wallpaper", value: "wallpaper" }, { label: "None", value: "none" }]
             current: page.ff.logo || "distro"
             onChosen: function(v) { page.setFetch("logo", v) }
         }
         SegRow {
             label: "Info"
-            desc: "How much it tells"
+            desc: page.ff.logo === "small" ? "pfetch style: a small logo and a short list (os, host, kernel, uptime, pkgs, memory)" : "How much it tells"
             options: [{ label: "Everything", value: "full" }, { label: "The main", value: "compact" }, { label: "A little", value: "minimal" }]
             current: page.ff.info || "full"
             onChosen: function(v) { page.setFetch("info", v) }

@@ -236,18 +236,31 @@ INFO = {
     "minimal": ["title", "os", "wm", "shell", "terminal", "memory"],
 }
 # DarkShadow's own logo: a crescent moon and a few stars ($1 the wallpaper's main color, $2 the second one)
+# DarkShadow's own logo: a crescent moon with craters and a few stars, about as big as a distro logo
+# ($1 the wallpaper's main color, $2 the second one for the craters, $3 the stars)
 DS_LOGO = "\n".join([
-    "$2   .        *",
-    "$1      ▄▄▄████▄▄    $2.",
-    "$1   ▄█████████▀▀",
-    "$1  ████████▀       $2*",
-    "$1 ▐███████▌",
-    "$1 ▐███████▌     $2.",
-    "$1  ████████▄",
-    "$1   ▀█████████▄▄    $2*",
-    "$1      ▀▀▀████▀▀",
-    "$2  *        .",
+    '    $3·         $1▄▄▄▄▄▄',
+    '         $1▄▄██████▀             $3✦',
+    '      $1▄▄███████▀',
+    '     $1███████$2██$1▀                   $3·',
+    '   $1▄███████$2██▀',
+    '   $1█████████$2█',
+    '  $1████$2██$1█████                $3·',
+    '  $1███████████',
+    '  $1███████$2█$1███▄',
+    '  $1█████$2█████$1██▄                   $3✧',
+    '  $1▀████$2█████$1███▄',
+    '   $1██████$2█$1███████▄',
+    '    $1▀████████$2███$1████▄▄      $3·',
+    '     $1▀███████$2███$1████████████▀',
+    '        $1▀████████████████▀       $3*',
+    '           $1▀▀▀██████▀▀▀',
+    '  $3·',
 ])
+# Small: like pfetch, a small logo and a few lines in lowercase
+PFETCH = ["title", "os", "host", "kernel", "uptime", "packages", "memory", "shell", "wm"]
+PF_KEYS = {"os": "os", "host": "host", "kernel": "kernel", "uptime": "uptime", "packages": "pkgs",
+           "memory": "memory", "shell": "shell", "wm": "wm"}
 LOGO_PNG = CACHE + "/fetch-logo.png"
 
 
@@ -304,8 +317,15 @@ def fetch_config(c, term, for_preview=False):
         disp["color"] = {"keys": ansi(p["primary"]), "title": ansi(p["tertiary"])}
     j["display"] = disp
     mods = []
-    for m in INFO.get(c["info"], INFO["full"]):
-        key = "%s  %s" % (ICONS[m], NAMES[m]) if c["labels"] == "icons" and m in ICONS else None
+    small = lg == "small"
+    if small:
+        disp["separator"] = "  "
+    for m in (PFETCH if small else INFO.get(c["info"], INFO["full"])):
+        if small and m in PF_KEYS:
+            k = PF_KEYS[m].ljust(7)
+            key = ("%s %s" % (ICONS[m], k)) if c["labels"] == "icons" else k
+        else:
+            key = "%s  %s" % (ICONS[m], NAMES[m]) if c["labels"] == "icons" and m in ICONS else None
         if for_preview and m in ("shell", "terminal"):
             # Settings runs fastfetch, not your terminal: show what a terminal will say
             v = version_of(current_shell(c) if m == "shell" else term)

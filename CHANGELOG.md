@@ -1,5 +1,9 @@
 # Changelog
 
+## V3.61
+- Fastfetch (Settings > Desktop > Look & Feel): DarkShadow's moon logo is bigger (as big as the Arch or NixOS logo) with craters and stars in your wallpaper's colors
+- Fastfetch: the small logo looks like pfetch now: a short list in lowercase (os, host, kernel, uptime, pkgs, memory, shell, wm)
+
 ## V3.60: a new tour and Keybinds
 - New tour, in Material 3: a dialog card with a picture, a progress line and Back / Next. It now explains the Dynamic island (and lights it up on your desktop): what it shows, what a left or right click opens, the volume on the wheel. Then it walks through Settings (search, the groups, Bar & launcher, Wallpaper, Desktop with Look & Feel, Keybinds, Gaming) and opens each page as it goes
 - New: Settings > System > **Keybinds**: every key worth knowing, in groups (apps and menus, windows, workspaces, screenshots and recording, sound and music, desktop), drawn as keys, with a search; for Hyprland or niri. "Show me around" starts the tour again
