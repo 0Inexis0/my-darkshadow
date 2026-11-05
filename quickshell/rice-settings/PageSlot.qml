@@ -10,6 +10,11 @@ Item {
     property var nav: null            // the window: navX / navY tell the direction
     readonly property bool on: idx === cur
     default property alias content: inner.data
+    // the page itself, made when you first go there or a moment after the window opened (one after another), so
+    // Settings opens fast: making every page at once (and starting all their helpers) took seconds on a laptop
+    property Component page: null
+    property bool warm: false
+    Timer { interval: 450 + slot.idx * 90; running: slot.page !== null && !slot.warm; onTriggered: slot.warm = true }
 
     width: parent ? parent.width : 0
     height: parent ? parent.height : 0
@@ -56,5 +61,12 @@ Item {
         width: parent.width
         height: parent.height
         transformOrigin: Item.Top
+        Loader {
+            anchors.fill: parent
+            active: slot.page !== null && (slot.on || slot.warm)
+            asynchronous: !slot.on
+            sourceComponent: slot.page
+            onLoaded: if (slot.nav && slot.nav.pageLoaded) slot.nav.pageLoaded()
+        }
     }
 }

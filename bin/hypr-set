@@ -22,7 +22,7 @@ NIRI_DEFAULTS = {
     "general.gaps_in": 4, "general.gaps_out": 6, "general.border_size": 2, "decoration.rounding": 9,
     "decoration.active_opacity": 1.0, "decoration.inactive_opacity": 1.0, "decoration.shadow.enabled": False,
     "decoration.shadow.range": 12, "decoration.blur.enabled": True, "decoration.blur.size": 8,
-    "decoration.blur.passes": 3, "decoration.blur.noise": 0.02, "decoration.blur.vibrancy": 0.17,
+    "decoration.blur.passes": 3, "decoration.blur.noise": 0.0, "decoration.blur.vibrancy": 0.17,
     "input.sensitivity": 0.0, "input.natural_scroll": False, "input.touchpad.natural_scroll": True,
     "input.touchpad.tap-to-click": True, "input.scroll_factor": 1.0, "input.touchpad.scroll_factor": 1.0,
 }

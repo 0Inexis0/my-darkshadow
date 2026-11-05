@@ -1,5 +1,11 @@
 # Changelog
 
+## V3.56
+- Settings opens much faster: pages are made when you go to them (or one after another just after it opens) instead of all at once
+- Settings is frosted again: more see-through, so the blur behind it shows (Hyprland), and niri blurs it too
+- The tray hides the network and Bluetooth applets when the bar shows Wi-Fi and Bluetooth itself (niri and some distros start them: a second Wi-Fi icon next to the battery)
+- niri: no grain in the blur (it looked pixelated), and the bar's blur no longer changes shape on every frame of the island's animations
+
 ## V3.55
 - Smoother on laptops: the slowly turning shapes of the widgets and the island move in small steps instead of redrawing the screen on every frame, and the widgets' motion (and the visualizer) pauses while windows cover the desktop
 - Fix: on laptops with Intel or AMD graphics next to an NVIDIA card the cursor was drawn in software, which made the desktop feel like 60 Hz on a 144 Hz screen; it is only done when NVIDIA alone drives the screens now

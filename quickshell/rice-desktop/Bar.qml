@@ -156,8 +156,10 @@ PanelWindow {
             else if (body.soft) {
                 for (const z of [zl, zc, zr]) if (z.any && !z.onlyIsland) { l.push(z); r.push(pill) }
             }
-            if (!isl.ghost && isl.visible) { l.push(blurIsl); r.push(isl.height / 2) }
-            if (isl.cardShown) { l.push(blurCard); r.push(isl.cardItem.radius || 28) }
+            // fixed radii, and the card only once it is fully open: the list stays the same while things move,
+            // so niri is not sent a new blur shape on every frame of an animation
+            if (!isl.ghost && isl.visible) { l.push(blurIsl); r.push(pill) }
+            if (isl.cardItem.opacity > 0.98) { l.push(blurCard); r.push(28) }
             if (trayMenu.visible) { l.push(hitMenu); r.push(24) }
             return { items: l, radii: r }
         }
@@ -205,6 +207,19 @@ PanelWindow {
     }
 
     // ---------- the things the bar shows ----------
+    // the tray, without the network and Bluetooth applets when the bar shows Wi-Fi and Bluetooth itself (niri and
+    // some distros start nm-applet and blueman on their own: a second Wi-Fi icon next to the battery)
+    function hasMod(n) { const l = bar.lay || {}; return [].concat(l.left || [], l.center || [], l.right || []).indexOf(n) >= 0 }
+    readonly property var trayItems: {
+        const all = SystemTray.items.values || []
+        const net = hasMod("network"), bt = hasMod("bluetooth")
+        return all.filter(function(it) {
+            const k = ((it.id || "") + " " + (it.title || "")).toLowerCase()
+            if (net && /nm-applet|networkmanager|network manager|nm-tray|connman/.test(k)) return false
+            if (bt && /blueman|bluetooth/.test(k)) return false
+            return true
+        })
+    }
     // workspaces: Hyprland or niri (Wm.qml)
     readonly property int focusedId: Wm.focusedId
     function occupied(id) { return Wm.occupied(id) }
@@ -462,9 +477,9 @@ PanelWindow {
     }
 
     Component { id: mTray
-        Row { readonly property bool shown: SystemTray.items.values.length > 0; height: bar.barH; spacing: 10
+        Row { readonly property bool shown: bar.trayItems.length > 0; height: bar.barH; spacing: 10
             Repeater {
-                model: SystemTray.items
+                model: bar.trayItems
                 delegate: Item {
                     id: ti
                     width: bar.traySize; height: bar.barH

@@ -522,6 +522,8 @@ def window_rules(f, s, flat):
                    (block("background-effect", ["blur true"]) if f.blur else []))
         if f.blur:
             L += block("window-rule", ['match app-id="^kitty$"'] + block("background-effect", ["blur true"]))
+            # the Settings app: frosted like on Hyprland
+            L += block("window-rule", ['match title="^Rice Settings$"'] + block("background-effect", ["blur true", "xray true"]))
     # pop-up apps float in the middle, like on Hyprland
     floats = [
         ('title="^Rice Settings$"', None),
@@ -617,7 +619,8 @@ def misc(f, gaming, fx, flat):
         else:
             size_ = clampf(opt(s, "decoration.blur.size", 8), 1, 30, 8)
             passes = int(clampf(opt(s, "decoration.blur.passes", 3), 1, 6, 3))
-            noise = clampf(opt(s, "decoration.blur.noise", 0.02), 0, 0.5, 0.02)
+            # no grain unless you ask for it (niri adds 0.02 by default: on dark wallpapers it looked pixelated)
+            noise = clampf(opt(s, "decoration.blur.noise", 0.0), 0, 0.5, 0.0)
             vib = clampf(opt(s, "decoration.blur.vibrancy", 0.17), 0, 1, 0.17)
             L += block("blur", ["passes %d" % passes, "offset %s" % flt(round(max(1.0, min(6.0, size_ / 3.0)), 2)),
                                 "noise %s" % flt(round(noise, 3)), "saturation %s" % flt(round(1.0 + vib * 3, 2))])

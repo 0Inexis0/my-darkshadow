@@ -60,6 +60,8 @@ FloatingWindow {
         status = "Auto-hide widgets " + (on ? "on" : "off")
     }
     function closeNow() { Qt.quit() }
+    // a page was made (they are made one after another after the window opens): search looks at it too
+    function pageLoaded() { searchIndex = [] }
 
     // ---------- search: every setting on every page, found by its name, its section, its page or its text ----------
     property var results: []
@@ -552,7 +554,8 @@ FloatingWindow {
         id: card
         anchors.fill: parent
         // solid while blur and transparency are off (Settings > Services, or gaming mode); the stars stay
-        color: win.flat ? M3.surface : M3.alpha(M3.surface, 0.9)
+        // see-through enough that the blur behind it shows (Hyprland: its window blur; niri: a window rule)
+        color: win.flat ? M3.surface : M3.alpha(M3.surface, 0.8)
         Behavior on color { ColorAnimation { duration: 300 } }
         focus: true
         Keys.onEscapePressed: win.closeNow()
@@ -578,7 +581,7 @@ FloatingWindow {
             x: 0; y: 0
             width: win.railW
             height: parent.height
-            color: M3.surfaceLow
+            color: win.flat ? M3.surfaceLow : M3.alpha(M3.surfaceLow, 0.72)
         }
 
         // you: your picture (click: Home, right click: change it)
@@ -851,33 +854,33 @@ FloatingWindow {
 
 
             PageSlot { nav: win; idx: 0; cur: win.page; HomePage { id: homePage; anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 1; cur: win.page; SoundsPage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 2; cur: win.page; BarPage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 3; cur: win.page; BarLayoutPage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 4; cur: win.page; HyprlandPage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 5; cur: win.page; RecorderPage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 6; cur: win.page; IslandPage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 7; cur: win.page; RofiPage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 8; cur: win.page; ThemePage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 9; cur: win.page; CursorsPage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 10; cur: win.page; NotificationsPage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 11; cur: win.page; IdlePage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 12; cur: win.page; DesktopPage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 14; cur: win.page; InterfacePage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 15; cur: win.page; ServicesPage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 16; cur: win.page; GamingPage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 17; cur: win.page; AboutPage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 18; cur: win.page; WallpaperPage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 19; cur: win.page; FontsPage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 20; cur: win.page; MotionPage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 21; cur: win.page; ColorsPage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 22; cur: win.page; ComponentsPage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 23; cur: win.page; KeyboardPage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 24; cur: win.page; ShapesPage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 25; cur: win.page; WindowsPage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 26; cur: win.page; RegionPage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 27; cur: win.page; SystemPage { anchors.fill: parent; ctl: win } }
-            PageSlot { nav: win; idx: 28; cur: win.page; ScreenPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 1; cur: win.page; page: Component { SoundsPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 2; cur: win.page; page: Component { BarPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 3; cur: win.page; page: Component { BarLayoutPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 4; cur: win.page; page: Component { HyprlandPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 5; cur: win.page; page: Component { RecorderPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 6; cur: win.page; page: Component { IslandPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 7; cur: win.page; page: Component { RofiPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 8; cur: win.page; page: Component { ThemePage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 9; cur: win.page; page: Component { CursorsPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 10; cur: win.page; page: Component { NotificationsPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 11; cur: win.page; page: Component { IdlePage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 12; cur: win.page; page: Component { DesktopPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 14; cur: win.page; page: Component { InterfacePage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 15; cur: win.page; page: Component { ServicesPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 16; cur: win.page; page: Component { GamingPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 17; cur: win.page; page: Component { AboutPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 18; cur: win.page; page: Component { WallpaperPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 19; cur: win.page; page: Component { FontsPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 20; cur: win.page; page: Component { MotionPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 21; cur: win.page; page: Component { ColorsPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 22; cur: win.page; page: Component { ComponentsPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 23; cur: win.page; page: Component { KeyboardPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 24; cur: win.page; page: Component { ShapesPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 25; cur: win.page; page: Component { WindowsPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 26; cur: win.page; page: Component { RegionPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 27; cur: win.page; page: Component { SystemPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 28; cur: win.page; page: Component { ScreenPage { anchors.fill: parent; ctl: win } } }
         }
 
         // results: the setting, and where it is (page > section)
