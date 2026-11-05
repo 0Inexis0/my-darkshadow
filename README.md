@@ -74,7 +74,9 @@ The shell runs on **Hyprland** and on **niri** (the scrollable-tiling window man
 On niri everything works the same: the bar, the island, workspaces, widgets, dock, launcher, lock screen, Settings and its sliders (gaps, borders, corners, shadows, blur, animation styles, keyboard, monitors, your keybinds and autostart). The shell writes `~/.config/niri/config.kdl` for you (`rice-niri`) and checks it with `niri validate`, so it fits your niri version; your own niri settings go in `~/.config/niri/user.kdl` and always win. Blur needs niri 26.04 or newer. niri extras: `SUPER + Tab` (or the top-left corner) shows the overview, `SUPER + Shift + /` lists every key, and windows sit in columns (`SUPER + R` changes the width, `SUPER + F` maximizes, `SUPER + [` / `]` takes a window in or out of a column).
 
 ## Install in one minute
-**Arch Linux / CachyOS / EndeavourOS**
+Pick your system, paste the three lines, then log out, choose **Hyprland** or **niri** on the login screen and press `SUPER + U`.
+
+**Arch Linux / CachyOS / EndeavourOS / Garuda**
 ```bash
 sudo pacman -S --needed git base-devel
 git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
@@ -88,7 +90,28 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 ./install.sh
 ```
 
-**NixOS**: see [Installation](#installation) below. Then log out and pick Hyprland or niri, and press `SUPER + U`.
+**NixOS**
+```bash
+git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
+# add to /etc/nixos/configuration.nix:  imports = [ /path/to/shadows-shell/nix/module.nix ];
+sudo nixos-rebuild switch && ./install.sh
+```
+
+The installer asks which window manager you want (Hyprland, niri or both), installs the packages, copies the configs and sets everything up. Every file it replaces is saved in `~/.config/darkshadows-shell-backup-<time>/`.
+- **Arch:** no AUR helper needed. `paru` or `yay` are used when you have one; otherwise yay is set up only if your Arch lacks something the shell needs. The Bibata cursor comes from GitHub when there is no AUR helper.
+- **Fedora:** COPR repositories give the newest Hyprland, Quickshell and awww; Atomic Fedora (Bazzite, Silverblue) gets the `rpm-ostree` commands instead.
+- **NixOS:** the module turns on Hyprland and niri (`programs.niri.enable = false;` leaves niri out).
+
+| Option | What it does |
+| --- | --- |
+| `--wm=hyprland` / `--wm=niri` / `--wm=both` | the window manager, without the question |
+| `--yes` | everything, no questions |
+| `--aur` / `--no-aur` | Arch: always get yay and every AUR package / never build yay |
+| `--no-packages` | skip the package step |
+| `--dry-run` | show what would happen, change nothing |
+| `--restore` | put back the files from the last backup |
+
+**Updating:** `rice-update`, or **Update now** in the update notification or in Settings > About.
 
 ## Features
 **Settings app** (`SUPER+U`) in the spirit of Material 3: a navigation rail (Home, Wallpaper, Appearance, Motion, Desktop, Bar & island, Sound, System, Gaming, About) with tabs, Google icons, colors made from your theme and a search over every setting.
@@ -160,49 +183,6 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 | `SUPER + ALT + W` | edit desktop widgets (add, move, resize, style) |
 | `SUPER + ALT + D` | today & system card from the bar's island |
 | `SUPER + W` | wallpaper picker |
-
-## Installation
-
-### Arch Linux (and CachyOS, EndeavourOS, Garuda)
-```bash
-sudo pacman -S --needed git base-devel
-git clone https://github.com/shadowww-dev/shadows-shell
-cd shadows-shell
-./install.sh
-```
-The installer updates your system, installs every package (Hyprland, Quickshell, Waybar, swaync, kitty, fish, Nautilus, fonts, Papirus icons, Bibata cursor, btop, cava, fastfetch, cmatrix, peaclock and more), uses the AUR helper you have (`paru` comes with CachyOS, or it offers `yay`) for the few AUR packages, copies the configs and sets everything up. At the end it warns you when your Hyprland is older than 0.55. Then log out and pick Hyprland.
-
-### Fedora (and Nobara)
-```bash
-sudo dnf install -y git
-git clone https://github.com/shadowww-dev/shadows-shell
-cd shadows-shell
-./install.sh
-```
-The installer turns on two COPR repositories (`nett00n/hyprland` for the newest Hyprland, its tools and Quickshell, `scottames/awww` for the wallpaper daemon), installs the rest from Fedora, and downloads what Fedora does not package (Nerd Font icons, Bibata cursor). Packages your Fedora does not have are listed and skipped. Fedora Atomic (Bazzite, Silverblue) gets the `rpm-ostree` commands to run instead.
-
-### NixOS
-```bash
-git clone https://github.com/shadowww-dev/shadows-shell
-cd shadows-shell
-```
-Add `imports = [ ./path/to/shadows-shell/nix/module.nix ];` to `/etc/nixos/configuration.nix`, run `sudo nixos-rebuild switch`, then `./install.sh`.
-The module turns on Hyprland and niri (`programs.niri.enable = false;` leaves niri out).
-
-### Options
-| Flag | What it does |
-| --- | --- |
-| `--yes` | install everything without questions |
-| `--dry-run` | show what would happen, change nothing |
-| `--no-packages` | skip the package step |
-| `--update` | get the newest version and update apps and scripts (keeps your configs) |
-| `--restore` | put back the files from the last backup |
-| `--wm=hyprland`, `--wm=niri`, `--wm=both` | the window manager to set up (otherwise the installer asks) |
-
-Every file the installer replaces is saved in `~/.config/darkshadows-shell-backup-<time>/`.
-
-### Updating
-Run `rice-update` (or `./install.sh --update` in the repo), or press **Update now** in the About tab of the dashboard or in the update notification.
 
 ## Layout
 | Path | Contents |
