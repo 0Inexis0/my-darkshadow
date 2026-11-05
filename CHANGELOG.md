@@ -1,5 +1,12 @@
 # Changelog
 
+## V3.60: a new tour and Keybinds
+- New tour, in Material 3: a dialog card with a picture, a progress line and Back / Next. It now explains the Dynamic island (and lights it up on your desktop): what it shows, what a left or right click opens, the volume on the wheel. Then it walks through Settings (search, the groups, Bar & launcher, Wallpaper, Desktop with Look & Feel, Keybinds, Gaming) and opens each page as it goes
+- New: Settings > System > **Keybinds**: every key worth knowing, in groups (apps and menus, windows, workspaces, screenshots and recording, sound and music, desktop), drawn as keys, with a search; for Hyprland or niri. "Show me around" starts the tour again
+- A fresh install starts clean: only the clock, big, in the middle of the screen (no other widgets); add more in Settings > Desktop > Widgets
+- Hyprland: Super + R opens the launcher (it pointed at an app the shell does not install)
+- Power modes: the installer (also on updates) installs and turns on power-profiles-daemon when it is missing (not when TLP or auto-cpufreq manage power)
+
 ## V3.59
 - Settings scrolls faster by default, and the scroll speed on Home works again: the "Try it" box no longer stops the page (at its top or bottom the page scrolls on)
 - Home: the "Make yourself at home" tips card is gone

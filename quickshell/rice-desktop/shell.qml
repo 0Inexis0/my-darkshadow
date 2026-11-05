@@ -243,8 +243,9 @@ ShellRoot {
         bh: root.sh
         cw: clk.natW
         ch: clk.natH
-        defX: root.placement === "draggable" || clk.fx < 0 ? 40 : Math.round(Math.max(30, Math.min(root.sw - cw - 30, clk.fx * root.sw - cw / 2)))
-        defY: root.placement === "draggable" || clk.fy < 0 ? 40 : Math.round(Math.max(60, Math.min(root.sh - ch - 30, clk.fy * root.sh - ch / 2)))
+        // never moved: in the middle, a little above the center of the screen
+        defX: root.placement === "draggable" || clk.fx < 0 ? Math.round((root.sw - cw) / 2) : Math.round(Math.max(30, Math.min(root.sw - cw - 30, clk.fx * root.sw - cw / 2)))
+        defY: root.placement === "draggable" || clk.fy < 0 ? Math.round(root.sh * 0.23) : Math.round(Math.max(60, Math.min(root.sh - ch - 30, clk.fy * root.sh - ch / 2)))
         onMoved: function(id, x, y) { root.savePos(id, x, y) }
         Component.onCompleted: root.reg("clock", clockWin)
         ClockWidget {

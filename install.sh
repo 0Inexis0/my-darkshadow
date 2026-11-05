@@ -616,6 +616,29 @@ LUA
     rm -f "$f"; echo "no NVIDIA card"
   fi
 }
+# power modes (Performance / Balanced / Power saver in the island, the control center and Home): power-profiles-daemon.
+# Packages only come with a full install; this also runs on updates, so it is there for everyone. Not when TLP,
+# auto-cpufreq or tuned (Fedora's tuned-ppd gives the same thing) already manage power.
+ensure_power_modes() {
+  [ "$DRY_RUN" = 1 ] && return 0
+  local other=0
+  for p in tlp auto-cpufreq; do command -v "$p" >/dev/null 2>&1 && other=1; done
+  if [ "$other" = 1 ]; then echo "TLP or auto-cpufreq manage power: left alone"; return 0; fi
+  if ! command -v powerprofilesctl >/dev/null 2>&1; then
+    case "$FAMILY" in
+      arch)   sudo -n true 2>/dev/null || { echo "power-profiles-daemon: needs sudo, skipped"; return 0; }
+              sudo -n pacman -S --needed --noconfirm power-profiles-daemon || return 0 ;;
+      fedora) sudo -n true 2>/dev/null || { echo "power-profiles-daemon: needs sudo, skipped"; return 0; }
+              rpm -q tuned-ppd >/dev/null 2>&1 || sudo -n dnf install -y power-profiles-daemon || return 0 ;;
+      *) echo "power-profiles-daemon: install it with your package manager"; return 0 ;;
+    esac
+  fi
+  if systemctl list-unit-files power-profiles-daemon.service >/dev/null 2>&1 &&
+     ! systemctl is-enabled power-profiles-daemon.service >/dev/null 2>&1; then
+    sudo -n systemctl enable --now power-profiles-daemon.service || true
+  fi
+  echo "power modes: on"
+}
 wire_hypr() {
   local lua="$HOME/.config/hypr/hyprland.lua" m
   [ -f "$lua" ] || return 0
@@ -648,6 +671,7 @@ step_finish() {
   task "Remembering your backup folder" first_backup
   task "Remembering where this copy lives (for updates)" remember_repo
   task "Version V$RICE_VERSION" remember_version
+  { [ "$FAMILY" = arch ] || [ "$FAMILY" = fedora ]; } && task "Power modes (power-profiles-daemon)" ensure_power_modes
   task "Window manager: $(wm_name)" remember_wm
   task "Graphics card (NVIDIA cursor)" write_gpu
   task "Loading the shell's modules in Hyprland" wire_hypr

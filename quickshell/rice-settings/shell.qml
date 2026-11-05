@@ -79,6 +79,7 @@ FloatingWindow {
         fonts: ["font"], gap: ["gaps", "gap"], anim: ["animation"], animations: ["animation"], notification: ["notification", "popup"],
         popup: ["popup", "notification"], popups: ["popup", "notification"], keyboard: ["keybind", "bind", "key", "layout", "keyboard"],
         shortcut: ["keybind", "bind", "shortcut"], shortcuts: ["keybind", "bind"], screen: ["screen", "monitor", "display"],
+        keybind: ["keybinds", "keys"], keybinds: ["keybinds", "keys"], hotkey: ["keybinds", "keys"], hotkeys: ["keybinds", "keys"],
         terminal: ["terminal", "shell"], kitty: ["terminal"], foot: ["terminal"], alacritty: ["terminal"], ghostty: ["terminal"],
         neofetch: ["fastfetch"], fetch: ["fastfetch"], zsh: ["shell"], bash: ["shell"], fish: ["shell"], prompt: ["shell"],
         monitor: ["monitor", "screen", "display"], dark: ["dark", "black", "theme"], wallpaper: ["wallpaper", "background"],
@@ -332,7 +333,8 @@ FloatingWindow {
         { name: "Language & region", icon: "\uf1ab" },
         { name: "System", icon: "\uf108" },
         { name: "Screen", icon: "\uf108" },
-        { name: "Look & Feel", icon: "\uf120" }
+        { name: "Look & Feel", icon: "\uf120" },
+        { name: "Keybinds", icon: "\uf11c" }
     ]
 
 
@@ -346,13 +348,24 @@ FloatingWindow {
         { group: "desk", name: "Desktop", icon: "\uf108", sym: "desktop_windows", pages: [29, 12, 25, 4, 11], caption: "Look & feel, widgets, windows, " + wmLabel + " and the lock screen" },
         { group: "bar", name: "Bar & launcher", icon: "\uf0c9", sym: "toolbar", pages: [2, 3, 6, 7], caption: "The bar, the dynamic island and the launcher" },
         { group: "snd", name: "Sound & language", icon: "\uf028", sym: "graphic_eq", pages: [1, 10, 26], caption: "Sounds, notifications, language and region" },
-        { group: "sys", name: "System", icon: "\uf013", sym: "settings", pages: [27, 28, 5, 23, 15], caption: "This computer, the screen, recording, keyboard and services" },
+        { group: "sys", name: "System", icon: "\uf013", sym: "settings", pages: [27, 30, 28, 5, 23, 15], caption: "This computer, keybinds, the screen, recording, keyboard and services" },
         { group: "game", name: "Gaming", icon: "\uf11b", sym: "sports_esports", pages: [16], caption: "Play without distractions" },
         { group: "about", name: "About", icon: "\uf05a", sym: "info", pages: [17], caption: "Version, system and credits" }
     ]
     // the navigation rail: Home, then one stop per group (Gaming hub and About are groups with one page)
     readonly property var rail: [{ gid: "", name: "Home", icon: "\uf015", sym: "home", pages: [0], caption: "Your desktop at a glance" }]
         .concat(navTree.filter(function(n) { return n.group }).map(function(n) { return { gid: n.group, name: n.name, icon: n.icon, sym: n.sym, pages: n.pages, caption: n.caption } }))
+    // the tour: where a group's stop on the rail is, and where an item is (in the window's card)
+    function railRect(idx) {
+        const i = railOf(idx)
+        return { x: navFlick.x + 2, y: navFlick.y + i * 58 - navFlick.contentY, w: navFlick.width - 4, h: 58 }
+    }
+    function rectOf(item, pad) {
+        const p = item.mapToItem(card, 0, 0), d = pad || 0
+        return { x: p.x - d, y: p.y - d, w: item.width + 2 * d, h: item.height + 2 * d }
+    }
+    // the part of the screen the tour lights up outside this window (the Dynamic island)
+    readonly property string tourSpot: tour.spot
     function railOf(idx) { for (let i = 0; i < rail.length; i++) if (rail[i].pages.indexOf(idx) >= 0) return i; return 0 }
     readonly property int curRailIdx: railOf(page)
     readonly property var curRail: rail[curRailIdx]
@@ -890,6 +903,7 @@ FloatingWindow {
             PageSlot { nav: win; idx: 27; cur: win.page; page: Component { SystemPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 28; cur: win.page; page: Component { ScreenPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 29; cur: win.page; page: Component { LookFeelPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 30; cur: win.page; page: Component { KeybindsPage { anchors.fill: parent; ctl: win } } }
         }
 
         // results: the setting, and where it is (page > section)
@@ -951,30 +965,40 @@ FloatingWindow {
             objectName: "tour"
             onFinished: { card.forceActiveFocus(); win.tourOn = false }
             onActiveChanged: if (active) win.tourOn = true
+            nav: win
             steps: [
-                { title: "You can find anything here!", r: 15,
-                  body: "Type what you want to change, like \"bar position\" or \"blur\", and jump right to it.",
+                { title: "Welcome to DarkShadow's Shell", art: "welcome", icon: "waving_hand", page: 0,
+                  body: "A one-minute tour: where things are on your desktop and in Settings. Enter or the arrow keys move on, Esc ends it." },
+                { title: "The Dynamic island", art: "island", spot: "island", icon: "smart_display",
+                  body: "The pill in the middle of your bar. It shows the time and the weather, and grows for music, the volume, workspace changes, recordings and notifications." },
+                { title: "Click the island for more", art: "islandCard", spot: "island", icon: "touch_app",
+                  body: "A left click opens Today (calendar and weather), a right click System (CPU, GPU and memory, live). About and Music are tabs inside. Scroll over the island to change the volume." },
+                { title: "Find anything", r: 15, icon: "search",
+                  body: "Type what you want to change, like \"blur\", \"bar position\" or \"terminal\", and jump right to it.",
                   rect: function() { return { x: searchBox.x - 5, y: searchBox.y - 5, w: searchBox.width + 10, h: searchBox.height + 10 } } },
-                { title: "Every part has a page", r: 18,
-                  body: "The bar, the theme, notifications, the lock screen, the dashboard and more. Click one to open it.",
+                { title: "Every part has a place", r: 18, icon: "menu",
+                  body: "Wallpaper, Appearance, Motion, Desktop, Bar, Sound, System, Gaming and About. Each one has a few tabs at the top.",
                   rect: function() { return { x: navFlick.x - 6, y: navFlick.y - 6, w: navFlick.width + 12, h: Math.min(navFlick.height, railCol.height) + 12 } } },
-                { title: "Sounds you can change", r: 14,
-                  body: "The soft clicks and this quiet music live in Sfx & sounds. Pick another sound pack, make it quieter or turn it off.",
-                  rect: function() {
-                      const i = win.railOf(1)
-                      return { x: navFlick.x + 2, y: navFlick.y + i * 58 - navFlick.contentY, w: navFlick.width - 4, h: 58 }
-                  } },
-                { title: "Make it yours", r: 16,
-                  body: "Start with the things people change first. Most changes show up right away, and every page has a live preview.",
-                  rect: function() {
-                      const q = homePage.quickArea, p = q.mapToItem(card, 0, 0)
-                      return { x: p.x - 10, y: p.y - 44, w: q.width + 20, h: q.height + 54 }
-                  } },
-                { title: "This is you", r: 22,
-                  body: "Click your picture to change it, it shows on the lock screen too. Click the card to come back here, to Home.",
+                { title: "Bar & launcher", page: 2, r: 14, icon: "toolbar",
+                  body: "The bar's look and place, its modules, the Dynamic island's own settings (what it shows, what a click opens) and the app launcher (" + (win.niri ? "Super + D" : "Super + R") + ").",
+                  rect: function() { return win.railRect(2) } },
+                { title: "Wallpaper and colors", page: 18, r: 14, icon: "wallpaper",
+                  body: "Super + W picks a wallpaper, and the colors of everything follow it. Appearance has the theme, fonts, shapes and cursors.",
+                  rect: function() { return win.railRect(18) } },
+                { title: "Desktop: Look & Feel and widgets", page: 29, r: 14, icon: "desktop_windows",
+                  body: "Look & Feel: your terminal, shell and fastfetch. Widgets: a clock, weather, music and more on the desktop (Super + Alt + W moves them). Windows: gaps, borders, corners.",
+                  rect: function() { return win.railRect(29) } },
+                { title: "Every key in one place", page: 30, r: 20, icon: "keyboard", art: "keys",
+                  body: "System > Keybinds lists all the keys, in groups, with a search. Start with these three. Super is the key with the Windows logo.",
+                  rect: function() { return win.rectOf(pagesHolder, 4) } },
+                { title: "Gaming", page: 16, r: 14, icon: "sports_esports",
+                  body: "One switch for games: no animations, blur or gaps while you play, and the game bar (Super + G).",
+                  rect: function() { return win.railRect(16) } },
+                { title: "This is you", page: 0, r: 22, icon: "account_circle",
+                  body: "Click your picture to change it, it shows on the lock screen too. Click the card to come back to Home.",
                   rect: function() { return { x: profile.x - 5, y: profile.y - 5, w: profile.width + 10, h: profile.height + 10 } } },
-                { title: "That's it!", r: 20,
-                  body: "Close Settings here and open it again any time with SUPER + U. Have fun with your desktop.",
+                { title: "That's it!", r: 20, icon: "celebration",
+                  body: "Open Settings any time with Super + U. The tour is in System > Keybinds (Show me around). Have fun with your desktop.",
                   rect: function() { return { x: closeBtn.x - 6, y: closeBtn.y - 6, w: closeBtn.width + 12, h: closeBtn.height + 12 } } }
             ]
         }
@@ -1044,18 +1068,65 @@ PanelWindow {
     // follow the window if it is moved during the tour
     Timer { interval: 500; repeat: true; running: dimWin.want; onTriggered: if (!dimWhere.running) dimWhere.running = true }
 
-    Item {
+    // the tour can light the Dynamic island too (in the middle of the bar, at the top or the bottom)
+    property var bar: ({})
+    readonly property bool spotOn: win.tourSpot === "island"
+    property real sk: 0
+    Behavior on sk { NumberAnimation { duration: 450; easing.type: Easing.OutCubic } }
+    onSpotOnChanged: { sk = spotOn ? 1 : 0; if (spotOn) barProc.running = true }
+    Process {
+        id: barProc
+        command: ["bash", "-c", "\"$HOME/.local/bin/rice-bar\" state 2>/dev/null"]
+        stdout: StdioCollector { onStreamFinished: { try { dimWin.bar = JSON.parse(text) } catch (e) { } } }
+    }
+    readonly property real iw: 460 * sk
+    readonly property real ih: ((bar.height ? bar.height : 38) + 26) * sk
+    readonly property real ix: (width - iw) / 2
+    readonly property real iy: bar.position === "bottom" ? height - ih - 4 : 4
+    onIwChanged: shade.requestPaint()
+    onHxChanged: shade.requestPaint()
+    onHyChanged: shade.requestPaint()
+    onHwChanged: shade.requestPaint()
+    onHhChanged: shade.requestPaint()
+
+    Canvas {
+        id: shade
         anchors.fill: parent
-        clip: true
         opacity: dimWin.k
-        Rectangle {
-            readonly property real b: 4000
-            x: dimWin.hx - b; y: dimWin.hy - b
-            width: dimWin.hw + 2 * b; height: dimWin.hh + 2 * b
-            radius: 14 + b
-            color: "transparent"
-            border.width: b
-            border.color: Qt.rgba(0, 0, 0, 0.88)
+        function hole(c, x, y, w, h, r) {
+            if (w <= 0 || h <= 0) return
+            r = Math.min(r, w / 2, h / 2)
+            c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r)
+            c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath()
+        }
+        onPaint: {
+            const c = getContext("2d")
+            c.reset()
+            c.fillStyle = Qt.rgba(0, 0, 0, 0.88)
+            c.fillRule = Qt.OddEvenFill
+            c.beginPath()
+            c.rect(0, 0, width, height)
+            hole(c, dimWin.hx, dimWin.hy, dimWin.hw, dimWin.hh, 14)
+            hole(c, dimWin.ix, dimWin.iy, dimWin.iw, dimWin.ih, dimWin.ih / 2)
+            c.fill()
+        }
+        onWidthChanged: requestPaint()
+        onHeightChanged: requestPaint()
+    }
+    // the island's outline, in your key color
+    Rectangle {
+        visible: dimWin.sk > 0.02
+        property real pulse: 1
+        opacity: dimWin.k * dimWin.sk * pulse
+        x: dimWin.ix - 4; y: dimWin.iy - 4; width: dimWin.iw + 8; height: dimWin.ih + 8
+        radius: height / 2
+        color: "transparent"
+        border.width: 3
+        border.color: M3.primary
+        SequentialAnimation on pulse {
+            running: dimWin.spotOn; loops: Animation.Infinite
+            NumberAnimation { from: 1; to: 0.45; duration: 1200; easing.type: Easing.InOutSine }
+            NumberAnimation { from: 0.45; to: 1; duration: 1200; easing.type: Easing.InOutSine }
         }
     }
 }

@@ -13,7 +13,7 @@
       "scale": 1.0
     },
     "resources": {
-      "enabled": true,
+      "enabled": false,
       "x": 55,
       "y": 598,
       "scale": 1.0
@@ -24,12 +24,12 @@
       "y": 81
     },
     "calendar": {
-      "enabled": true,
+      "enabled": false,
       "x": 1488,
       "y": 607
     },
     "visualizer": {
-      "enabled": true,
+      "enabled": false,
       "x": 0,
       "y": 1040,
       "w": 1920,
@@ -50,7 +50,8 @@
     "enabled": true,
     "onlyLocked": false,
     "placement": "draggable",
-    "style": "digital"
+    "style": "digital",
+    "font": "bebas"
   },
   "dock": {
     "enabled": false,

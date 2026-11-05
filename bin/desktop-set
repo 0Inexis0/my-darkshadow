@@ -30,7 +30,7 @@ FONTS = {"default": "", "bebas": "Bebas Neue", "orbitron": "Orbitron", "outfit":
 THEMES = ["shadow", "google", "outline"]
 DEFAULTS = {
     "widgets": {w: {"enabled": False} for w in WIDGETS},
-    "clock": {"enabled": False, "onlyLocked": False, "placement": "draggable", "style": "digital", "font": "default"},
+    "clock": {"enabled": True, "onlyLocked": False, "placement": "draggable", "style": "digital", "font": "bebas"},   # the only widget at first: in the middle
     "dock": {"enabled": False, "position": "bottom", "background": True, "hover": True, "pinnedStartup": False,
              "media": True, "nowText": True, "pinButton": True, "appsButton": True, "tint": False, "appMenu": True,
              "opacity": 0.78, "blur": True,
