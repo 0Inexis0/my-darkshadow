@@ -2,7 +2,10 @@ import Quickshell
 import Quickshell.Wayland
 import QtQuick
 
-// Full-screen transparent surface; only the widget rectangle receives input (mask).
+// A surface just big enough for the widget (and its shadow), placed where the widget is; only the widget
+// rectangle receives input (mask). While you edit the widgets it covers the whole screen, so they can be moved.
+// (A full-screen surface for every widget made Hyprland redraw and blur each one over the whole screen: with many
+// widgets, laptops stuttered.)
 // Outside the editor the widget only takes clicks (calendar arrows, timer, notes...). The editor moves it.
 // The widget editor (EditorWindow.qml) changes px/py/sc/fw/fh/op/bgv/sty/flp live and saves on release.
 PanelWindow {
@@ -89,7 +92,14 @@ PanelWindow {
 
     visible: active && fk > 0.01
     color: "transparent"
-    anchors { top: true; left: true; right: true; bottom: true }
+    readonly property bool full: editing
+    readonly property int pad: 56                  // room around the widget for its shadow and the way in
+    readonly property int mx: full ? 0 : Math.max(0, Math.round(px) - pad)
+    readonly property int my: full ? 0 : Math.max(0, Math.round(py) - pad)
+    anchors { top: true; left: true; right: w.full; bottom: w.full }
+    margins { left: w.mx; top: w.my }
+    implicitWidth: w.full ? 0 : Math.ceil(px - mx + dispW) + pad
+    implicitHeight: w.full ? 0 : Math.ceil(py - my + dispH) + pad
     exclusionMode: ExclusionMode.Ignore
     // above windows while you edit, so you can see what you change
     WlrLayershell.layer: editing ? WlrLayer.Top : WlrLayer.Bottom
@@ -105,8 +115,8 @@ PanelWindow {
 
     Item {
         id: holder
-        x: w.px
-        y: w.py
+        x: w.px - w.mx
+        y: w.py - w.my
         width: w.dispW
         height: w.dispH
         opacity: w.op * w.fk

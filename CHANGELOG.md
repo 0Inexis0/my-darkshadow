@@ -1,5 +1,9 @@
 # Changelog
 
+## V3.53
+- Bug fixes: videos in Brave, Chrome and Discord played sound with a black picture and GIFs did not play (graphics settings an earlier update added for NVIDIA cards broke them; log out and back in once after this update)
+- Bug fixes: desktop widgets made the whole desktop stutter on laptops with many of them (each widget covered the whole screen; now each one is only as big as itself)
+
 ## V3.52: niri
 - **niri support**: the shell runs on niri as well as on Hyprland, on Arch, CachyOS, Fedora and NixOS. The installer asks which one you want (Hyprland, niri or both, picked on the login screen); `--wm=niri` skips the question
 - The shell writes niri's config from your settings (`rice-niri`): keys (the same as on Hyprland, plus niri's columns and overview), borders in your wallpaper colors, rounded corners, shadows, blur, gaps, animation styles (calm, lively, bouncy, snappy, minimal) and speed, keyboard layouts, monitors, your own keybinds and autostart, the cursor, gaming mode and Lite mode. It fits your niri version and is checked with `niri validate` before it is used; your own settings go in `~/.config/niri/user.kdl`

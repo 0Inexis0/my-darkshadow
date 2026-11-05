@@ -561,19 +561,24 @@ step_apps() {
 }
 copy_bins() { local f; for f in "$ROOT"/bin/*; do [ -f "$f" ] && put "$f" "$BIN/$(basename "$f")"; done; return 0; }
 
-# NVIDIA: Hyprland draws the cursor itself (a hardware cursor is often invisible there) and the video
-# libraries are told which driver to use
+# NVIDIA: Hyprland draws the cursor itself (a hardware cursor is often invisible there). Nothing else is set:
+# V3.43 also set LIBVA_DRIVER_NAME=nvidia, __GLX_VENDOR_LIBRARY_NAME=nvidia and NVD_BACKEND=direct, and those broke
+# video in Chromium, Brave and Discord (sound but a black picture, GIFs that never play), above all on laptops
+# with Intel or AMD graphics next to the NVIDIA card. This file is written again on every update without them.
 write_gpu() {
   local f="$HOME/.config/hypr/rice-gpu.lua"
+  # the old file set the video variables: take them out of the session's services now (apps started by
+  # Hyprland keep them until you log out once; the summary says so)
+  if grep -qs 'LIBVA_DRIVER_NAME' "$f"; then
+    systemctl --user unset-environment LIBVA_DRIVER_NAME __GLX_VENDOR_LIBRARY_NAME NVD_BACKEND 2>/dev/null || true
+    mkdir -p "$HOME/.cache/rice"; : >"$HOME/.cache/rice/gpu-env-fixed"
+  fi
   if [ -e /proc/driver/nvidia/version ] || { command -v lspci >/dev/null 2>&1 && lspci 2>/dev/null | grep -qiE 'vga.*nvidia|3d.*nvidia'; }; then
     mkdir -p "$HOME/.config/hypr"
     cat >"$f" <<'LUA'
 -- written by DarkShadow's Shell for NVIDIA graphics (install.sh)
 -- the cursor is drawn in software: with a hardware cursor it can be invisible on NVIDIA
 hl.config({ cursor = { no_hardware_cursors = true } })
-hl.env("LIBVA_DRIVER_NAME", "nvidia")
-hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
-hl.env("NVD_BACKEND", "direct")
 LUA
     echo "NVIDIA: software cursor"
   else
@@ -812,6 +817,12 @@ else
 fi
 hr
 if [ -n "$miss" ]; then warn "Still missing: $miss"; else ok "All needed programs are installed"; fi
+if [ -f "$HOME/.cache/rice/gpu-env-fixed" ] && [ "$DRY_RUN" != 1 ]; then
+  warn "Log out and back in once: videos in Brave, Chrome and Discord (and GIFs) play again after that."
+  note "An older version set NVIDIA video variables that broke them; they are gone now."
+  command -v notify-send >/dev/null 2>&1 && notify-send -a "DarkShadow's Shell" "Log out and back in once" "Videos and GIFs in Brave, Chrome and Discord play again after that."
+  rm -f "$HOME/.cache/rice/gpu-env-fixed"
+fi
 old_hypr="$(hypr_too_old)"
 if has_hypr && [ -n "$old_hypr" ] && [ "$DRY_RUN" != 1 ]; then
   warn "Hyprland $old_hypr is older than 0.55. The config is written in Lua and needs 0.55 or newer."
