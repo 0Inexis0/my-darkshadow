@@ -15,7 +15,7 @@ Item {
             ". /etc/os-release 2>/dev/null; echo \"os=${PRETTY_NAME:-Linux}\"; echo \"osid=${ID:-linux}\"",
             "echo \"kernel=$(uname -r)\"",
             "echo \"version=$(cat \"$HOME/.config/rice/version\" 2>/dev/null)\"",
-            "echo \"hypr=$(hyprctl version -j 2>/dev/null | python3 -c 'import sys,json; print(json.load(sys.stdin).get(\"tag\",\"\"))' 2>/dev/null)\"",
+            "v=$(\"$HOME/.local/bin/rice-wm\" version 2>/dev/null); echo \"wm=${v%% *}\"; echo \"hypr=${v#* }\"",
             "echo \"qs=$(qs --version 2>/dev/null | head -1 | sed 's/^quickshell *//I')\"",
             "echo \"cpu=$(sed -n 's/^model name[[:space:]]*: //p' /proc/cpuinfo | head -1)\"",
             "echo \"cores=$(nproc 2>/dev/null)\"",
@@ -161,7 +161,7 @@ Item {
             Fact { width: os.cw; icon: "person"; glyph: ""; label: "User"; value: page.info.user }
             Fact { width: os.cw; icon: "terminal"; glyph: ""; label: "Kernel"; value: page.info.kernel }
             Fact { width: os.cw; icon: "code"; glyph: ""; label: "Shell"; value: page.info.shell }
-            Fact { width: os.cw; icon: "window"; glyph: ""; label: "Hyprland"; value: page.info.hypr }
+            Fact { width: os.cw; icon: "window"; glyph: ""; label: page.info.wm || "Hyprland"; value: page.info.hypr }
             Fact { width: os.cw; icon: "widgets"; glyph: ""; label: "Quickshell"; value: page.info.qs }
         }
     }

@@ -78,7 +78,8 @@ PanelWindow {
         adopt()
         // Hyprland tells us when you click outside this widget. Made on the fly, so a Quickshell without Hyprland
         // support only loses this one nicety instead of failing to load the whole shell.
-        if (keys) {
+        // (niri has no focus grab: there a click outside ends the typing through the mask instead)
+        if (keys && !Wm.niri) {
             try {
                 grab = Qt.createQmlObject('import Quickshell.Hyprland\nHyprlandFocusGrab { property var win; windows: [win]; active: false; onCleared: win.releaseKeys() }', w, "focusgrab")
                 grab.win = w
@@ -98,6 +99,8 @@ PanelWindow {
     // only the widget itself takes clicks; the visualizer (passive) and widgets in the editor take none,
     // so whatever is under them (other widgets, the desktop) stays clickable
     mask: Region { item: (w.passive || w.editing) ? nothing : holder }
+    // niri: the blurred wallpaper behind the card (Settings > Widgets > Blur; Hyprland blurs this layer with a rule)
+    NiriBlur { win: w; items: [holder]; radius: 26 * (w.free ? 1 : w.sc); on: Look.blur && !w.passive && w.bgv > 0.05 && w.fk > 0.5 }
     Item { id: nothing; width: 0; height: 0 }
 
     Item {

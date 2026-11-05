@@ -13,6 +13,26 @@ OUT = HOME + "/.config/hypr/rice-settings.lua"
 MAIN = HOME + "/.config/hypr/hyprland.lua"
 PREV = DIR + "/monitor-prev.json"
 FLAG = DIR + "/border-custom"
+BIN = HOME + "/.local/bin"
+# niri runs the shell: the same settings are written into niri's config (rice-niri) instead of sent to Hyprland
+NIRI = bool(os.environ.get("NIRI_SOCKET")) or (
+    not os.environ.get("HYPRLAND_INSTANCE_SIGNATURE") and "niri" in os.environ.get("XDG_CURRENT_DESKTOP", "").lower())
+# what niri starts with when nothing was changed yet (the values of the shell's Hyprland config)
+NIRI_DEFAULTS = {
+    "general.gaps_in": 4, "general.gaps_out": 6, "general.border_size": 2, "decoration.rounding": 9,
+    "decoration.active_opacity": 1.0, "decoration.inactive_opacity": 1.0, "decoration.shadow.enabled": False,
+    "decoration.shadow.range": 12, "decoration.blur.enabled": True, "decoration.blur.size": 8,
+    "decoration.blur.passes": 3, "decoration.blur.noise": 0.02, "decoration.blur.vibrancy": 0.17,
+    "input.sensitivity": 0.0, "input.natural_scroll": False, "input.touchpad.natural_scroll": True,
+    "input.touchpad.tap-to-click": True, "input.scroll_factor": 1.0, "input.touchpad.scroll_factor": 1.0,
+}
+
+
+def niri_apply():
+    try:
+        subprocess.run([BIN + "/rice-niri", "apply"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=20)
+    except Exception:
+        pass
 
 SPEC = {
     "general.gaps_in": ("int", 0, 60),
@@ -93,6 +113,8 @@ def sh(cmd):
 
 
 def ev(code):
+    if NIRI:
+        return True          # niri: save() already wrote its config, niri loads it by itself
     out = sh(["hyprctl", "eval", code]).strip()
     if re.search(r"error|fail", out, re.I):
         print(out, file=sys.stderr)
@@ -235,10 +257,18 @@ def generate(s):
 def save(s):
     os.makedirs(DIR, exist_ok=True)
     json.dump(s, open(ST, "w"), indent=2)
+    os.makedirs(os.path.dirname(OUT), exist_ok=True)
     open(OUT, "w").write(generate(s))
+    if NIRI:
+        niri_apply()
 
 
 def getopt(key, typ):
+    if NIRI:
+        v = load()["opts"].get(key, NIRI_DEFAULTS.get(key))
+        if v is None:
+            return None
+        return bool(v) if typ == "bool" else (int(v) if typ == "int" else (float(v) if typ == "float" else str(v)))
     out = sh(["hyprctl", "-j", "getoption", key.replace(".", ":")])
     try:
         j = json.loads(out)
@@ -367,8 +397,32 @@ def cmd_anim_style(v):
         ev(ln)
 
 
+def niri_binds():
+    """the keys in niri's config (rice-niri wrote them): "Mod+Q  ->  close-window" """
+    act = []
+    try:
+        txt = open(HOME + "/.config/niri/config.kdl").read()
+        body = txt[txt.index("\nbinds {"):]
+        for ln in body.split("\n")[1:]:
+            ln = ln.strip()
+            if ln == "}":
+                break
+            m = re.match(r'(\S+)(.*?)\{\s*(.*?);?\s*\}$', ln)
+            if m:
+                t = re.search(r'hotkey-overlay-title="([^"]*)"', m.group(2))
+                what = t.group(1) if t else re.sub(r'^spawn(-sh)? ', '', m.group(3))
+                what = " ".join(json.loads(x) if x.startswith('"') else x for x in re.findall(r'"(?:[^"\\]|\\.)*"|\S+', what))
+                act.append("%s  ->  %s" % (m.group(1), what.replace(HOME + "/.local/bin/", "")))
+    except Exception:
+        pass
+    return act
+
+
 def cmd_binds():
     s = load()
+    if NIRI:
+        print(json.dumps({"custom": s["binds"], "active": niri_binds()[:160]}))
+        return
     act = []
     try:
         data = json.loads(sh(["hyprctl", "-j", "binds"]))
@@ -403,6 +457,9 @@ def cmd_bind_del(idx):
 def cmd_autostart():
     s = load()
     items = []
+    if NIRI:      # hyprland.lua's own programs start only in Hyprland; niri starts the shell (rice-niri)
+        print(json.dumps({"main": [], "custom": s["autostart"]}))
+        return
     try:
         lines = open(MAIN).read().split("\n")
     except Exception:
@@ -449,6 +506,24 @@ def cmd_autostart_toggle(line):
 
 
 def monitors_json():
+    """Hyprland's monitors, or niri's outputs in the same shape (width/height in pixels, availableModes)"""
+    if NIRI:
+        try:
+            outs = json.loads(sh(["niri", "msg", "-j", "outputs"]))
+        except Exception:
+            return []
+        res = []
+        for name, o in outs.items():
+            lg = o.get("logical")
+            if not lg:
+                continue
+            modes = o.get("modes") or []
+            cur = modes[o["current_mode"]] if o.get("current_mode") is not None and o["current_mode"] < len(modes) else {}
+            res.append({"name": name, "width": cur.get("width", lg["width"]), "height": cur.get("height", lg["height"]),
+                        "refreshRate": (cur.get("refresh_rate") or 60000) / 1000.0, "scale": lg.get("scale", 1),
+                        "x": lg["x"], "y": lg["y"],
+                        "availableModes": ["%dx%d@%.3fHz" % (m["width"], m["height"], m["refresh_rate"] / 1000.0) for m in modes]})
+        return res
     try:
         return json.loads(sh(["hyprctl", "-j", "monitors"]))
     except Exception:
@@ -487,6 +562,10 @@ def mode_str(m):
 
 
 def mon_eval(name, mode, pos, scale):
+    if NIRI:      # right away, until niri reads its config again (Keep writes it there)
+        a = sh(["niri", "msg", "output", name, "mode", mode])
+        b = sh(["niri", "msg", "output", name, "scale", str(scale)])
+        return "error" not in (a + b).lower()
     return ev("hl.monitor({ output = %s, mode = %s, position = %s, scale = %s })"
               % (json.dumps(name), json.dumps(mode), json.dumps(pos), lua(float(scale))))
 
@@ -525,6 +604,9 @@ def cmd_monitor_revert():
 
 
 def cmd_reload():
+    if NIRI:
+        niri_apply()
+        return
     subprocess.run(["hyprctl", "reload"])
     subprocess.run([HOME + "/.local/bin/border-sync"])
 
@@ -589,6 +671,12 @@ def kbd_current():
     """the layouts in use now and the active one, from Hyprland's main keyboard"""
     s = load()
     lay = s["kbd"].get("layouts") or ""
+    if NIRI:
+        try:
+            k = json.loads(sh([BIN + "/rice-wm", "kbd"]))
+        except Exception:
+            k = {}
+        return lay or "us", k.get("active", "")
     if not lay:
         out = sh(["hyprctl", "-j", "getoption", "input:kb_layout"])
         try:
@@ -710,7 +798,7 @@ def cmd_kbd_options(opts):
 
 
 def cmd_kbd_next():
-    sh(["hyprctl", "switchxkblayout", "all", "next"])
+    sh([BIN + "/rice-wm", "kbd-next"])
 
 
 def cmd_reset_all():

@@ -309,7 +309,13 @@ def apply(c):
         set_ini("%s/.config/%s/settings.ini" % (HOME, v), {"gtk-cursor-theme-name": theme, "gtk-cursor-theme-size": size})
     run(["gsettings", "set", "org.gnome.desktop.interface", "cursor-theme", theme])
     run(["gsettings", "set", "org.gnome.desktop.interface", "cursor-size", str(size)])
-    run(["hyprctl", "setcursor", hypr, str(size)])
+    # the Xcursor theme and size, for niri (it draws Xcursor themes only; rice-niri puts them in its config)
+    os.makedirs(HOME + "/.cache/rice", exist_ok=True)
+    open(HOME + "/.cache/rice/xcursor", "w").write("%s %s\n" % (theme, size))
+    if os.environ.get("NIRI_SOCKET"):
+        run([HOME + "/.local/bin/rice-niri", "apply"])
+    else:
+        run(["hyprctl", "setcursor", hypr, str(size)])
 
 
 def packs_db():

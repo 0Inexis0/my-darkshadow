@@ -250,7 +250,7 @@ def lock_text(c):
                                    ("position", "%d, %d" % (X, ys["input"] - 28)), ("halign", ha), ("valign", "center")]))
 
     if c["power"]:
-        logout = BIN + "/logout" if os.access(BIN + "/logout", os.X_OK) else "hyprctl dispatch 'hl.dsp.exit()'"
+        logout = BIN + "/logout" if os.access(BIN + "/logout", os.X_OK) else BIN + "/rice-wm exit"
         icons = [(chr(0xF0343), logout), (chr(0xF0425), "systemctl poweroff"),
                  (chr(0xF0904), "systemctl suspend"), (chr(0xF0709), "systemctl reboot")]
         for i, (g, cmd) in enumerate(icons):
@@ -487,17 +487,11 @@ def lock_now(preview=False, test=False):
 
 
 def screen(state):
-    # Hyprland 0.55 (Lua) and older releases use different dispatcher syntax; try both.
-    cmds = [["hyprctl", "dispatch", "dpms", state],
-            ["hyprctl", "dispatch", 'hl.dsp.dpms({ action = "%s" })' % state],
-            ["hyprctl", "dispatch", 'hl.dsp.dpms("%s")' % state]]
-    for cmd in cmds:
-        try:
-            r = subprocess.run(cmd, capture_output=True, text=True, timeout=3)
-        except Exception:
-            continue
-        if r.stdout.strip().lower() == "ok":
-            return
+    # Hyprland (its dispatchers, old and new) or niri (power-off-monitors): rice-wm knows which one runs
+    try:
+        subprocess.run([BIN + "/rice-wm", "dpms", state], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=6)
+    except Exception:
+        pass
 
 
 def main(argv):

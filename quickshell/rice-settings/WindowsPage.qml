@@ -84,7 +84,7 @@ Item {
         }
 
         // ---------- borders and corners ----------
-        Head { icon: "rounded_corner"; glyph: ""; title: "Borders and corners"; sub: "Applied live to Hyprland windows" }
+        Head { icon: "rounded_corner"; glyph: ""; title: "Borders and corners"; sub: "Applied live to " + (Quickshell.env("NIRI_SOCKET") ? "niri" : "Hyprland") + " windows" }
         SliderRow {
             label: "Border thickness"; desc: "0 hides the border"
             from: 0; to: 8; step: 1; unit: " px"
@@ -99,7 +99,7 @@ Item {
         }
 
         // ---------- window shadows ----------
-        Head { icon: "shadow"; glyph: ""; title: "Shadows"; sub: "Drawn by Hyprland behind each window" }
+        Head { icon: "shadow"; glyph: ""; title: "Shadows"; sub: "Drawn by " + (Quickshell.env("NIRI_SOCKET") ? "niri" : "Hyprland") + " behind each window" }
         ToggleRow {
             label: "Shadows"; desc: "A soft shadow behind windows"
             checked: page.hv("decoration.shadow.enabled", true) === true

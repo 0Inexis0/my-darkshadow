@@ -37,6 +37,15 @@ ARCH_PKGS=("${PKG_DESKTOP[@]}" "${PKG_SHELL[@]}" "${PKG_TOOLS[@]}" "${PKG_FONTS[
 # programs the desktop needs at runtime (shown at the end if something is missing)
 NEED_CMDS=(Hyprland hyprlock hypridle waybar qs swaync-client awww matugen cava jq python3 grim slurp wl-copy wf-recorder notify-send)
 
+# niri: the scrollable-tiling window manager. The shell runs on it as on Hyprland (install.sh asks which one:
+# Hyprland, niri or both). xwayland-satellite runs X11 apps there; the GNOME portal gives screen sharing.
+# hyprlock, hypridle and hyprpolkitagent stay: the lock screen, the idle timers and password prompts use them on niri too.
+# gammastep is the night light there (hyprsunset needs Hyprland).
+PKG_NIRI=(niri xwayland-satellite xdg-desktop-portal-gnome gammastep)
+FPKG_NIRI=(niri xwayland-satellite xdg-desktop-portal-gnome gammastep)
+# the newest niri for Fedora (blur needs niri 26.04): the COPR of niri's author, next to Fedora's own package
+FEDORA_NIRI_COPR=yalter/niri
+
 # Fedora packages (dnf). Hyprland, its tools and Quickshell come from the nett00n/hyprland COPR (the newest
 # Hyprland, needed for the Lua config); awww from scottames/awww. Nerd Font icons and the Bibata cursor are not
 # in Fedora: rice-fonts and the installer download them.

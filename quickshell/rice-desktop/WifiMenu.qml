@@ -135,6 +135,8 @@ PanelWindow {
 
     // ---------- window ----------
     visible: open || t > 0.01
+    // niri: blur behind the card (Hyprland blurs this layer with its own rule)
+    NiriBlur { win: wm; items: [card]; radius: card.radius; on: card.visible && card.opacity > 0.05 }
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore

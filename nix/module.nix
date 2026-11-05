@@ -1,7 +1,8 @@
 # NixOS module: installs everything DarkShadow's Shell needs.
 # Dotfiles and apps are still installed per user with ./install.sh (pick "Tools", "Apps", "Dotfiles").
 # NOTE: written without access to a NixOS machine; if an attribute name changed in your nixpkgs, adjust it.
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, options, ... }:
+lib.mkMerge [
 {
   programs.hyprland.enable = lib.mkDefault true;
 
@@ -61,3 +62,15 @@
   # the lock screen (the shell's own and hyprlock) checks your password with this PAM service
   security.pam.services.hyprlock = { };
 }
+
+# niri: the shell runs on it too (pick it on the login screen). programs.niri brings niri, its session, the GNOME
+# portal (screen sharing) and polkit; xwayland-satellite runs X11 apps. Turn it off with:
+#   programs.niri.enable = false;
+(lib.optionalAttrs (options ? programs && options.programs ? niri) {
+  programs.niri.enable = lib.mkDefault true;
+})
+{
+  environment.systemPackages = lib.optionals (config.programs.niri.enable or false) (
+    lib.optional (pkgs ? xwayland-satellite) pkgs.xwayland-satellite ++ lib.optional (pkgs ? gammastep) pkgs.gammastep);
+}
+]

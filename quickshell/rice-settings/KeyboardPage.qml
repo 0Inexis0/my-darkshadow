@@ -82,7 +82,7 @@ Item {
                 T { kind: "title"; width: parent.width; elide: Text.ElideRight; font.pixelSize: 24; font.weight: Font.Medium; color: M3.inkPrimaryC
                     text: page.st.layouts.length ? page.nameOf(page.st.layouts[0]) : "…" }
                 T { font.pixelSize: 12; color: M3.alpha(M3.inkPrimaryC, 0.85); text: page.varOf(0) ? "Variant: " + page.varOf(0) : "Default variant" }
-                T { font.pixelSize: 11; color: M3.alpha(M3.inkPrimaryC, 0.7); visible: page.st.active !== ""; text: "Hyprland reports: " + page.st.active }
+                T { font.pixelSize: 11; color: M3.alpha(M3.inkPrimaryC, 0.7); visible: page.st.active !== ""; text: (Quickshell.env("NIRI_SOCKET") ? "niri" : "Hyprland") + " reports: " + page.st.active }
                 Btn { visible: page.st.layouts.length > 1; text: "Next layout"; sym: "keyboard_tab"; icon: ""; primary: true; onClicked: page.run(["kbd-next"]) }
             }
         }

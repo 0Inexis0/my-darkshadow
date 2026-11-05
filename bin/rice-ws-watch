@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""rice-ws-watch: listens to Hyprland's events.
+"""rice-ws-watch: listens to Hyprland's events (or niri's event stream).
 
 - workspace switched: sends SIGRTMIN+8 to Waybar (the "signal": 8 of the custom/ws modules), so the
   buttons change at once. Works for both process names: waybar (Arch) and .waybar-wrapped (NixOS).
@@ -98,6 +98,23 @@ def sock_path():
     return "%s/hypr/%s/.socket2.sock" % (run, sig)
 
 
+def niri_loop():
+    """niri: the same for its event stream (borders come from its config, so nothing to do on reloads)"""
+    while True:
+        try:
+            p = subprocess.Popen(["niri", "msg", "-j", "event-stream"], stdout=subprocess.PIPE, text=True)
+            poke()
+            for line in p.stdout:
+                if line.startswith(('{"WorkspaceActivated', '{"WorkspacesChanged')):
+                    poke()
+                if line.startswith('{"WorkspaceActivated'):
+                    close_editor()
+            p.wait()
+        except Exception:
+            pass
+        time.sleep(1)       # niri restarted: listen again
+
+
 def main():
     lock = open(os.path.expanduser("~/.cache/rice/ws-watch.lock") if os.path.isdir(os.path.expanduser("~/.cache/rice"))
                 else "/tmp/rice-ws-watch-%d.lock" % os.getuid(), "w")
@@ -105,6 +122,9 @@ def main():
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except OSError:
         sys.exit(0)  # already running
+    if os.environ.get("NIRI_SOCKET"):
+        niri_loop()
+        return
     while True:
         path = sock_path()
         if not path or not os.path.exists(path):

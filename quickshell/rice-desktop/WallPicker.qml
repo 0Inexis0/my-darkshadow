@@ -20,6 +20,8 @@ PanelWindow {
     NPal { id: pal; theme: "shell"; alpha: 0.94 }
 
     visible: open || t > 0.01
+    // niri: blur behind the card (Hyprland blurs this layer with its own rule)
+    NiriBlur { win: wp; items: [sheet]; radius: sheet.radius; on: sheet.visible && sheet.opacity > 0.05 }
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore

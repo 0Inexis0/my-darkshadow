@@ -94,7 +94,7 @@ Scope {
 
     // ---------------- the dock ----------------
     PanelWindow {
-        id: win
+        id: dockWin
         visible: dock.on && (dock.reveal || dock.t > 0.01)
         color: "transparent"
         anchors { bottom: dock.edge === "bottom"; left: dock.edge === "left"; right: dock.edge === "right" }
@@ -103,6 +103,8 @@ Scope {
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Top
         WlrLayershell.namespace: "rice-dock"
+        // niri: blur behind the dock while it is out (Hyprland blurs this layer with its own rule)
+        NiriBlur { win: dockWin; items: [panel]; radius: panel.radius; on: dock.t > 0.95 && dock.dc.background !== false }
 
         MouseArea {
             anchors.fill: parent

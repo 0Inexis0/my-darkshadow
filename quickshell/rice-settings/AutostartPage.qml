@@ -29,7 +29,7 @@ Column {
     T { text: "Custom commands"; font.pixelSize: 15; font.bold: true }
     T {
         width: parent.width
-        text: "Programs started when Hyprland starts. They run at your next login."
+        text: "Programs started when " + (Quickshell.env("NIRI_SOCKET") ? "niri" : "Hyprland") + " starts. They run at your next login."
         color: M3.inkDim
         font.pixelSize: 12
         wrapMode: Text.WordWrap

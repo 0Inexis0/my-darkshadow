@@ -184,8 +184,8 @@ def apply(c, reload_hypr=False):
         open(LUA, "w").write(new)
     if wire_hypr():
         changed = True
-    if (changed or reload_hypr) and shutil.which("hyprctl"):
-        subprocess.run(["hyprctl", "reload"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=8)
+    if changed or reload_hypr:
+        subprocess.run([os.path.expanduser("~/.local/bin/rice-wm"), "reload"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=20)
 
 
 def state():
@@ -230,8 +230,7 @@ def restore():
     for p in (THEME, LUA):
         if os.path.exists(p):
             os.remove(p)
-    if shutil.which("hyprctl"):
-        subprocess.run(["hyprctl", "reload"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=8)
+    subprocess.run([os.path.expanduser("~/.local/bin/rice-wm"), "reload"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=20)
 
 
 def main(argv):

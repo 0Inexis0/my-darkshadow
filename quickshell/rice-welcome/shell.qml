@@ -223,7 +223,7 @@ ShellRoot {
                 T { kind: "icon"; text: root.glyph; font.pixelSize: 14; color: "#9a9db0"; anchors.verticalCenter: parent.verticalCenter }
                 T {
                     kind: "mono"
-                    text: (root.version ? "V" + root.version + "  ·  " : "") + root.distro + "  ·  Hyprland"
+                    text: (root.version ? "V" + root.version + "  ·  " : "") + root.distro + "  ·  " + (Quickshell.env("NIRI_SOCKET") ? "niri" : "Hyprland")
                     font.pixelSize: 12; font.letterSpacing: 2; color: "#7d8092"
                     anchors.verticalCenter: parent.verticalCenter
                 }

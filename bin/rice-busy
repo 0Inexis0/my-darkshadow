@@ -4,7 +4,7 @@ Floating windows (Settings, pop-ups, a floating-only layout) do not count: the w
 
   rice-busy [MONITOR]     MONITOR: name like DP-1 (default: the focused one)
 
-Listens to Hyprland's events and prints a line only when the answer changes. The desktop
+Listens to Hyprland's events (or niri's event stream) and prints a line only when the answer changes. The desktop
 widgets use it for "Auto-hide widgets" (Settings > Desktop): they hide while windows are open.
 """
 import json
@@ -53,6 +53,53 @@ def busy(mon_name):
     return False
 
 
+def niri_j(what):
+    try:
+        r = subprocess.run(["niri", "msg", "-j", what], capture_output=True, text=True, timeout=3)
+        return json.loads(r.stdout)
+    except Exception:
+        return None
+
+
+def niri_busy(mon_name):
+    """niri: tiled windows on the active workspace of that monitor (the focused one by default)"""
+    wss = niri_j("workspaces")
+    wins = niri_j("windows")
+    if not wss or wins is None:
+        return False
+    if not mon_name:
+        f = next((w for w in wss if w.get("is_focused")), None)
+        mon_name = f.get("output") if f else ""
+    act = next((w for w in wss if w.get("is_active") and (w.get("output") == mon_name or not mon_name)), None)
+    if not act:
+        return False
+    return any(w.get("workspace_id") == act["id"] and not w.get("is_floating") for w in wins)
+
+
+def niri_main(mon):
+    last = [None]
+
+    def say():
+        b = niri_busy(mon)
+        if b != last[0]:
+            last[0] = b
+            print("1" if b else "0", flush=True)
+
+    say()
+    while True:
+        try:
+            p = subprocess.Popen(["niri", "msg", "-j", "event-stream"], stdout=subprocess.PIPE, text=True)
+            for line in p.stdout:
+                if line.startswith(('{"Workspace', '{"Window')) and not line.startswith(('{"WindowFocusTimestamp', '{"WindowLayouts')):
+                    time.sleep(0.05)
+                    say()
+            p.wait()
+        except Exception:
+            pass
+        time.sleep(2)
+        say()
+
+
 def sock_path():
     run = os.environ.get("XDG_RUNTIME_DIR", "/run/user/%d" % os.getuid())
     sig = os.environ.get("HYPRLAND_INSTANCE_SIGNATURE", "")
@@ -66,6 +113,8 @@ def sock_path():
 
 def main():
     mon = sys.argv[1] if len(sys.argv) > 1 else ""
+    if os.environ.get("NIRI_SOCKET"):
+        return niri_main(mon)
     last = None
 
     def say():

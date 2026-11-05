@@ -148,7 +148,7 @@ def write_blur(c):
         return
     if old != text.strip() and os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"):
         try:
-            subprocess.run(["hyprctl", "reload"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
+            subprocess.run([os.path.expanduser("~/.local/bin/rice-wm"), "reload"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
         except Exception:
             pass
 
@@ -488,17 +488,13 @@ def about():
     board = " ".join(x for x in (vendor, read(dmi + "board_name")) if x and "To be filled" not in x)
     product = " ".join(x for x in (read(dmi + "sys_vendor"), read(dmi + "product_name")) if x and "To be filled" not in x)
     mons = []
+    wmb = os.path.expanduser("~/.local/bin/rice-wm")       # Hyprland or niri
     try:
-        for m in json.loads(sh(["hyprctl", "monitors", "-j"], 3) or "[]"):
-            mons.append("%dx%d @ %dHz" % (m["width"], m["height"], round(m.get("refreshRate", 60))))
+        for m in json.loads(sh([wmb, "monitors"], 4) or "[]"):
+            mons.append("%dx%d @ %dHz" % (m.get("pw") or m["width"], m.get("ph") or m["height"], round(m.get("rate", 60))))
     except Exception:
         pass
-    hv = ""
-    try:
-        j = json.loads(sh(["hyprctl", "version", "-j"], 3) or "{}")
-        hv = j.get("tag") or j.get("version") or ""
-    except Exception:
-        pass
+    wm = sh([wmb, "version"], 4).strip()
     shell = os.path.basename(os.environ.get("SHELL", "")) or "sh"
     m = mem()
     root = next((d for d in disks() if d["mount"] == "/"), None)
@@ -511,7 +507,7 @@ def about():
         "board": board, "product": product, "bios": read(dmi + "bios_version"),
         "cpu": cpu_name(), "cores": os.cpu_count(), "gpu": gpu_name(),
         "memory": m["total"], "kernel": platform.release(), "arch": platform.machine(),
-        "wm": ("Hyprland " + hv).strip(), "shell": shell, "terminal": os.environ.get("TERMINAL", "kitty"),
+        "wm": wm or "Hyprland", "shell": shell, "terminal": os.environ.get("TERMINAL", "kitty"),
         "display": ", ".join(mons), "packages": packages(o.get("ID", "")),
         "disk": root, "uptime": up, "rice": read(DIR + "/version", ""),
         "quickshell": sh(["qs", "--version"], 3).split("\n")[0],

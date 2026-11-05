@@ -203,7 +203,7 @@ def dock_blur(c):
     except FileNotFoundError:
         pass
     try:
-        subprocess.run(["hyprctl", "reload"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
+        subprocess.run([os.path.expanduser("~/.local/bin/rice-wm"), "reload"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
     except Exception:
         pass
 

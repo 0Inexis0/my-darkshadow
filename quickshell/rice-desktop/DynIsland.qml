@@ -206,6 +206,7 @@ Item {
     readonly property real cw: cardMode === "notif" ? 440 : (cardMode === "info" ? 520 : 470)
     readonly property real ch: cardMode === "notif" ? 96 : (cardMode === "info" ? 318 : 184)
     readonly property bool cardShown: card.opacity > 0.01
+    readonly property Item cardItem: card          // niri: the bar blurs behind it (NiriBlur)
     // the part of the screen it takes (the bar lets the pointer through everywhere else)
     readonly property real ux: cardShown ? Math.min(0, card.x) : 0
     readonly property real uy: cardShown ? Math.min(0, card.y) : 0

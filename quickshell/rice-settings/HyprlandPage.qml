@@ -8,8 +8,16 @@ Item {
     property bool confirmReset: false
 
     // animations moved to Settings > Motion
-    readonly property var tabs: ["Gaps", "Borders", "Layout", "Rounding & Opacity", "Blur", "Keybinds", "Monitors"]
-    readonly property var comps: [gapsC, bordersC, layoutC, roundC, blurC, bindsC, monC]
+    // niri runs the shell: the same page sets niri (rice-niri writes its config); Hyprland-only options are hidden
+    readonly property bool niri: !!Quickshell.env("NIRI_SOCKET")
+    readonly property string wmName: niri ? "niri" : "Hyprland"
+    readonly property var niriKeys: ["general.gaps_in", "general.gaps_out", "general.border_size", "decoration.rounding",
+        "decoration.active_opacity", "decoration.inactive_opacity", "decoration.shadow.enabled", "decoration.shadow.range",
+        "decoration.blur.enabled", "decoration.blur.size", "decoration.blur.passes", "decoration.blur.noise", "decoration.blur.vibrancy"]
+    function fit(specs) { return niri ? specs.filter(x => niriKeys.indexOf(x.key) >= 0) : specs }
+    readonly property var tabs: niri ? ["Gaps", "Borders", "Rounding & Opacity", "Blur", "Keybinds", "Monitors"]
+                                     : ["Gaps", "Borders", "Layout", "Rounding & Opacity", "Blur", "Keybinds", "Monitors"]
+    readonly property var comps: niri ? [gapsC, bordersC, roundC, blurC, bindsC, monC] : [gapsC, bordersC, layoutC, roundC, blurC, bindsC, monC]
 
     readonly property var gapsSpec: [
         { key: "general.gaps_in", type: "slider", label: "Inner gaps", desc: "Gaps between windows", min: 0, max: 40, step: 1, unit: " px", def: 5 },
@@ -134,7 +142,7 @@ Item {
         x: 24
         y: parent.height - 42
         spacing: 8
-        Pill { label: "Reload Hyprland"; onClicked: page.ctl.hrun(["reload"], "Hyprland reloaded") }
+        Pill { label: "Reload " + page.wmName; onClicked: page.ctl.hrun(["reload"], page.wmName + " reloaded") }
         Pill {
             label: page.confirmReset ? "Click again to reset" : "Reset everything"
             onClicked: {
@@ -150,13 +158,13 @@ Item {
     }
     Timer { id: resetTimer; interval: 4000; onTriggered: page.confirmReset = false }
 
-    Component { id: gapsC; OptionsList { ctl: page.ctl; specs: page.gapsSpec } }
+    Component { id: gapsC; OptionsList { ctl: page.ctl; specs: page.fit(page.gapsSpec) } }
 
     Component {
         id: bordersC
         Column {
             spacing: 10
-            OptionsList { width: parent.width; ctl: page.ctl; specs: page.bordersSpec }
+            OptionsList { width: parent.width; ctl: page.ctl; specs: page.fit(page.bordersSpec) }
             T { kind: "title"; text: "Border colors"; font.pixelSize: 16; font.bold: true; topPadding: 8 }
             SegRow {
                 width: parent.width
@@ -186,8 +194,16 @@ Item {
     }
 
     Component { id: layoutC; OptionsList { ctl: page.ctl; specs: page.layoutSpec } }
-    Component { id: roundC; OptionsList { ctl: page.ctl; specs: page.roundSpec } }
-    Component { id: blurC; OptionsList { ctl: page.ctl; specs: page.blurSpec } }
+    Component { id: roundC; OptionsList { ctl: page.ctl; specs: page.fit(page.roundSpec) } }
+    Component {
+        id: blurC
+        Column {
+            spacing: 10
+            T { visible: page.niri; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 12; opacity: 0.75
+                text: "niri blurs from version 26.04: the bar, panels, widgets and the terminal get it where they are see-through." }
+            OptionsList { width: parent.width; ctl: page.ctl; specs: page.fit(page.blurSpec) }
+        }
+    }
 
     Component {
         id: animC

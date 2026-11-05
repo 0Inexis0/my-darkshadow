@@ -1,7 +1,6 @@
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
-import Quickshell.Hyprland
 import Quickshell.Services.Pipewire
 import Quickshell.Widgets
 import QtQuick
@@ -53,7 +52,7 @@ PanelWindow {
     property var now: new Date()
     readonly property var sink: Pipewire.defaultAudioSink
     PwObjectTracker { objects: [gp.sink] }
-    readonly property var win: Hyprland.activeToplevel
+    readonly property var win: Wm.focusedWindow
     readonly property string game: win && win.title ? win.title : "Desktop"
     function two(n) { return n < 10 ? "0" + n : "" + n }
     readonly property string recTime: {
@@ -137,6 +136,8 @@ PanelWindow {
 
     // ---------- the window ----------
     visible: open || t > 0.01
+    // niri: blur behind it (Hyprland blurs this layer with its own rule)
+    NiriBlur { win: gp; items: [panel]; radius: panel.radius; on: gp.et > 0.05 }
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore

@@ -152,7 +152,7 @@ Item {
             width: flick.width
             spacing: 10
 
-            SectionTitle { topPadding: 0; text: "Switches"; sub: "Turn things on and off for this computer. Night light needs hyprsunset." }
+            SectionTitle { topPadding: 0; text: "Switches"; sub: "Turn things on and off for this computer. Night light needs " + (Quickshell.env("NIRI_SOCKET") ? "gammastep" : "hyprsunset") + "." }
             Grid {
                 id: swGrid
                 width: parent.width

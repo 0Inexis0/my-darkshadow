@@ -290,12 +290,15 @@ FloatingWindow {
         }
     }
 
+    // Hyprland or niri (the page of window settings is named after the one that runs)
+    readonly property bool niri: !!Quickshell.env("NIRI_SOCKET")
+    readonly property string wmLabel: niri ? "niri" : "Hyprland"
     readonly property var pages: [
         { name: "Home", icon: "\uf015" },
         { name: "Sfx & sounds", icon: "\uf028" },
         { name: "DarkShadow bar", icon: "\uf0c9" },
         { name: "Bar layout", icon: "\uf0db" },
-        { name: "Hyprland", icon: "\uf108" },
+        { name: wmLabel, icon: "\uf108" },
         { name: "Recorder", icon: "\uf03d" },
         { name: "Dynamic island", icon: "\uf017" },
         { name: "Launcher", icon: "\uf002" },
@@ -329,7 +332,7 @@ FloatingWindow {
         { group: "wall", name: "Wallpaper", icon: "\uf03e", sym: "wallpaper", pages: [18], caption: "Wallpaper and the colors it gives" },
         { group: "look", name: "Appearance", icon: "\udb80\udfd8", sym: "palette", pages: [8, 21, 19, 24, 22, 9, 14], caption: "Theme, colors, fonts, shapes, components, cursors and the dock" },
         { group: "motion", name: "Motion", icon: "\uf1e6", sym: "animation", pages: [20], caption: "How windows and Settings move" },
-        { group: "desk", name: "Desktop", icon: "\uf108", sym: "desktop_windows", pages: [12, 25, 4, 11], caption: "Widgets, windows, Hyprland and the lock screen" },
+        { group: "desk", name: "Desktop", icon: "\uf108", sym: "desktop_windows", pages: [12, 25, 4, 11], caption: "Widgets, windows, " + wmLabel + " and the lock screen" },
         { group: "bar", name: "Bar & launcher", icon: "\uf0c9", sym: "toolbar", pages: [2, 3, 6, 7], caption: "The bar, the dynamic island and the launcher" },
         { group: "snd", name: "Sound & language", icon: "\uf028", sym: "graphic_eq", pages: [1, 10, 26], caption: "Sounds, notifications, language and region" },
         { group: "sys", name: "System", icon: "\uf013", sym: "settings", pages: [27, 5, 23, 15], caption: "This computer, recording, keyboard and services" },
@@ -1011,20 +1014,16 @@ PanelWindow {
     NumberAnimation { id: dimK; target: dimWin; property: "k"; duration: 420; easing.type: Easing.OutCubic }
     Process {
         id: dimWhere
-        command: ["bash", "-c", "hyprctl -j clients 2>/dev/null | python3 -c 'import sys,json\nfor c in json.load(sys.stdin):\n    if c.get(\"title\")==\"Rice Settings\": print(c[\"monitor\"], c[\"at\"][0], c[\"at\"][1], c[\"size\"][0], c[\"size\"][1]); break'; hyprctl -j monitors 2>/dev/null | python3 -c 'import sys,json\nfor m in json.load(sys.stdin): print(\"M\", m[\"id\"], m[\"name\"], m[\"x\"], m[\"y\"])'"]
+        // "MONITOR x y w h" of the Settings window (Hyprland or niri), relative to its monitor
+        command: ["bash", "-c", "\"$HOME/.local/bin/rice-wm\" window 'Rice Settings'"]
         stdout: StdioCollector {
             onStreamFinished: {
-                const lines = text.trim().split("\n")
-                if (lines.length === 0 || lines[0].startsWith("M")) return
-                const w = lines[0].split(" ").map(Number)
-                for (let i = 1; i < lines.length; i++) {
-                    const m = lines[i].split(" ")
-                    if (Number(m[1]) !== w[0]) continue
-                    for (let j = 0; j < Quickshell.screens.length; j++)
-                        if (Quickshell.screens[j].name === m[2]) dimWin.screen = Quickshell.screens[j]
-                    dimWin.hx = w[1] - Number(m[3]) - 3; dimWin.hy = w[2] - Number(m[4]) - 3
-                    dimWin.hw = w[3] + 6; dimWin.hh = w[4] + 6
-                }
+                const w = text.trim().split(" ")
+                if (w.length < 5) return
+                for (let j = 0; j < Quickshell.screens.length; j++)
+                    if (Quickshell.screens[j].name === w[0]) dimWin.screen = Quickshell.screens[j]
+                dimWin.hx = Number(w[1]) - 3; dimWin.hy = Number(w[2]) - 3
+                dimWin.hw = Number(w[3]) + 6; dimWin.hh = Number(w[4]) + 6
             }
         }
     }

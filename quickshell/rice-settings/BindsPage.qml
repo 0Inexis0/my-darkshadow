@@ -29,7 +29,7 @@ Column {
     T { text: "Custom keybinds"; font.pixelSize: 15; font.bold: true }
     T {
         width: parent.width
-        text: "Run any command with a key combination. Removing one takes effect after Reload Hyprland."
+        text: Quickshell.env("NIRI_SOCKET") ? "Run any command with a key combination. niri takes changes at once." : "Run any command with a key combination. Removing one takes effect after Reload Hyprland."
         color: M3.inkDim
         font.pixelSize: 12
         wrapMode: Text.WordWrap

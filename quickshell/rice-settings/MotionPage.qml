@@ -91,7 +91,7 @@ Item {
         }
 
         // ---------- windows ----------
-        SectionTitle { text: "Windows"; sub: "Hyprland: opening and closing windows, switching workspaces, pop-ups." }
+        SectionTitle { text: "Windows"; sub: (Quickshell.env("NIRI_SOCKET") ? "niri" : "Hyprland") + ": opening and closing windows, switching workspaces, pop-ups." }
         ToggleRow {
             label: "Animations"
             desc: "Off: everything appears at once"

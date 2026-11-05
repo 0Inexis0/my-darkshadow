@@ -307,7 +307,7 @@ def apply_blur(c):
     except FileNotFoundError:
         pass
     if changed:
-        q(["hyprctl", "reload"])
+        q([os.path.expanduser("~/.local/bin/rice-wm"), "reload"])
 
 
 def toggle_awake():
@@ -362,10 +362,10 @@ def source_height(mode, geo=None):
     try:
         if geo:
             return int(re.search(r"x(\d+)\s*$", geo.strip()).group(1))
-        code, out = q(["hyprctl", "-j", "monitors"])
+        code, out = q([os.path.expanduser("~/.local/bin/rice-wm"), "monitors"], timeout=5)   # Hyprland or niri
         mons = json.loads(out)
         m = next((m for m in mons if m.get("focused")), mons[0])
-        return int(m["height"])
+        return int(m.get("ph") or m["height"])
     except Exception:
         return 0
 

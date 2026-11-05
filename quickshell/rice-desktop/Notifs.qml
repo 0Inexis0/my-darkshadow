@@ -133,6 +133,9 @@ Scope {
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "rice-notify-popup"
+        // niri: blur behind each pop-up (Hyprland blurs this layer with its own rule)
+        NiriBlur { win: popWin; radius: nfy.radius; on: popWin.visible
+            items: Array.prototype.filter.call(popCol.children, function(c) { return c.popup === true && !c.out }) }
         Column {
             id: popCol
             x: 20; y: nfy.posY === "top" ? 16 : parent.height - height - 16

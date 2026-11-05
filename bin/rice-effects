@@ -203,7 +203,7 @@ def apply(c, reload_hypr=True, quiet=False):
     except Exception:
         pass
     if reload_hypr:
-        q(["hyprctl", "reload"])
+        q([BIN + "/rice-wm", "reload"], timeout=20)
 
 
 def set_dnd(on):

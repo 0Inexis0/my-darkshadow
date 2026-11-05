@@ -15,7 +15,7 @@ Item {
             ". /etc/os-release 2>/dev/null; echo \"os=${PRETTY_NAME:-Linux}\"",
             "echo \"kernel=$(uname -r)\"",
             "echo \"version=$(cat \"$HOME/.config/rice/version\" 2>/dev/null)\"",
-            "echo \"hypr=$(hyprctl version -j 2>/dev/null | python3 -c 'import sys,json; print(json.load(sys.stdin).get(\"tag\",\"\"))' 2>/dev/null)\"",
+            "v=$(\"$HOME/.local/bin/rice-wm\" version 2>/dev/null); echo \"wm=${v%% *}\"; echo \"hypr=${v#* }\"",
             "echo \"qs=$(qs --version 2>/dev/null | head -1 | sed 's/^quickshell *//I')\"",
             "echo \"cpu=$(sed -n 's/^model name[[:space:]]*: //p' /proc/cpuinfo | head -1)\"",
             "echo \"gpu=$(lspci 2>/dev/null | grep -iE 'vga|3d|display' | head -1 | sed 's/.*: //; s/ (rev.*//')\"",
@@ -65,7 +65,7 @@ Item {
                         T { id: lt; anchors.centerIn: parent; text: "MIT license"; font.pixelSize: 12; color: M3.inkPrimaryC } }
                 }
                 T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.inkPrimaryC
-                    text: "A Hyprland desktop with its own bar with a dynamic island, launcher, dock, widgets and this Settings app. Made by shadow." }
+                    text: "A Hyprland and niri desktop with its own bar with a dynamic island, launcher, dock, widgets and this Settings app. Made by shadow." }
                 Row {
                     spacing: 8
                     topPadding: 4
@@ -87,7 +87,7 @@ Item {
             Repeater {
                 model: [
                     { k: "os", n: "System", g: "" }, { k: "kernel", n: "Kernel", g: "" },
-                    { k: "hypr", n: "Hyprland", g: "" }, { k: "qs", n: "Quickshell", g: "" },
+                    { k: "hypr", n: page.info.wm || "Hyprland", g: "" }, { k: "qs", n: "Quickshell", g: "" },
                     { k: "cpu", n: "Processor", g: "" }, { k: "gpu", n: "Graphics", g: "" },
                     { k: "mem", n: "Memory", g: "" }, { k: "up", n: "Up for", g: "" }
                 ]
@@ -119,7 +119,7 @@ Item {
             spacing: 8
             Repeater {
                 model: [
-                    { n: "Hyprland", u: "https://hypr.land" }, { n: "Quickshell", u: "https://quickshell.org" },
+                    { n: "Hyprland", u: "https://hypr.land" }, { n: "niri", u: "https://github.com/niri-wm/niri" }, { n: "Quickshell", u: "https://quickshell.org" },
                     { n: "Qt", u: "https://www.qt.io" }, { n: "swaync", u: "https://github.com/ErikReider/SwayNotificationCenter" },
                     { n: "matugen", u: "https://github.com/InioX/matugen" }, { n: "cava", u: "https://github.com/karlstav/cava" },
                     { n: "awww", u: "https://codeberg.org/LGFae/awww" }

@@ -1,5 +1,14 @@
 # Changelog
 
+## V3.52: niri
+- **niri support**: the shell runs on niri as well as on Hyprland, on Arch, CachyOS, Fedora and NixOS. The installer asks which one you want (Hyprland, niri or both, picked on the login screen); `--wm=niri` skips the question
+- The shell writes niri's config from your settings (`rice-niri`): keys (the same as on Hyprland, plus niri's columns and overview), borders in your wallpaper colors, rounded corners, shadows, blur, gaps, animation styles (calm, lively, bouncy, snappy, minimal) and speed, keyboard layouts, monitors, your own keybinds and autostart, the cursor, gaming mode and Lite mode. It fits your niri version and is checked with `niri validate` before it is used; your own settings go in `~/.config/niri/user.kdl`
+- Blur on niri (26.04+): the bar, the island and its cards, the launcher, menus, the control center, the dock, widgets, pop-ups and the terminal get blur exactly where they are see-through
+- The bar's workspaces, the island, the game bar and the widgets read niri's workspaces and windows; Settings shows niri where it said Hyprland (window settings, System, About) and hides what only Hyprland has
+- Lock screen, idle timers (screens off), log out, the Settings window size and the tour, recording and screenshots work on niri
+- `rice-wm`: one command the scripts ask about the window manager (which one runs, workspaces, monitors, screens on / off, log out)
+- NixOS: the module turns on niri too (`programs.niri.enable = false;` leaves it out); Fedora gets the newest niri from its author's COPR
+
 ## V3.51
 - Lock screen: the password shapes are bigger, full and in your accent; they grow in slowly and turn a little as they settle (Material 3 motion), ripple like Google's loader while the password is checked and turn red on a wrong one
 

@@ -47,6 +47,8 @@ PanelWindow {
     function launch(e) { e.execute(); open = false }
 
     visible: open || t > 0.01
+    // niri: blur behind the card (Hyprland blurs this layer with its own rule)
+    NiriBlur { win: am; items: [panel]; radius: panel.radius; on: panel.visible && panel.opacity > 0.05 }
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore

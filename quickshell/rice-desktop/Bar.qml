@@ -1,7 +1,6 @@
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
-import Quickshell.Hyprland
 import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
 import Quickshell.Services.UPower
@@ -141,6 +140,30 @@ PanelWindow {
     Item { id: hitRec; x: recIsland.x + bar.gap; width: recIsland.width; height: bar.recOn && bar.shownBar ? 54 : 0; y: bar.atBottom ? 0 : bar.barH + bar.gap * 2 }
     Item { id: hitAll; anchors.fill: parent }
     Item { id: hitStrip; width: parent.width; height: 3; y: bar.atBottom ? parent.height - 3 : 0 }
+    // niri: blur behind the bar's backgrounds, the island, its card and the tray menu (Hyprland: a layer rule).
+    // These follow the island and its card in window coordinates, so the blur moves with them.
+    Item { id: blurIsl; x: bar.gap + isl.x; y: body.y + isl.y; width: isl.ghost || !isl.visible ? 0 : isl.width; height: isl.height }
+    Item { id: blurCard; x: bar.gap + isl.x + isl.cardItem.x; y: body.y + isl.y + isl.cardItem.y
+        width: isl.cardShown ? isl.cardItem.width : 0; height: isl.cardItem.height }
+    NiriBlur {
+        win: bar
+        on: bar.on && bar.shownBar && bar.swap < 0.05
+        readonly property var parts: {
+            const l = [], r = []
+            const pill = bar.barH / 2
+            if (bar.sty === "island" || bar.sty === "flat") { l.push(bodyBg); r.push(bar.sty === "island" ? pill : 0) }
+            else if (bar.notch) { l.push(notchBg); r.push(14) }
+            else if (body.soft) {
+                for (const z of [zl, zc, zr]) if (z.any && !z.onlyIsland) { l.push(z); r.push(pill) }
+            }
+            if (!isl.ghost && isl.visible) { l.push(blurIsl); r.push(isl.height / 2) }
+            if (isl.cardShown) { l.push(blurCard); r.push(isl.cardItem.radius || 28) }
+            if (trayMenu.visible) { l.push(hitMenu); r.push(24) }
+            return { items: l, radii: r }
+        }
+        items: parts.items
+        radii: parts.radii
+    }
     HoverHandler {
         enabled: bar.hideOn
         onHoveredChanged: { if (hovered) { leaveT.stop(); bar.peek = true } else leaveT.restart() }
@@ -182,20 +205,12 @@ PanelWindow {
     }
 
     // ---------- the things the bar shows ----------
-    readonly property int focusedId: Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : 1
-    function occupied(id) {
-        const l = Hyprland.workspaces.values
-        for (let i = 0; i < l.length; i++) if (l[i].id === id && l[i].toplevels && l[i].toplevels.values.length > 0) return true
-        return false
-    }
-    function maxWs() {
-        const l = Hyprland.workspaces.values
-        let m = bar.nws
-        for (let i = 0; i < l.length; i++) if (l[i].id > m && l[i].id <= 20) m = l[i].id
-        return m
-    }
-    // through ws-go: Hyprland with a Lua config wants hl.dsp.focus(...), the old "workspace N" does nothing there
-    function goWs(id) { run("\"$HOME/.local/bin/ws-go\" " + id) }
+    // workspaces: Hyprland or niri (Wm.qml)
+    readonly property int focusedId: Wm.focusedId
+    function occupied(id) { return Wm.occupied(id) }
+    function maxWs() { return Wm.maxWs(bar.nws) }
+    // ws-go: Hyprland (its Lua dispatchers) or niri (focus-workspace)
+    function goWs(id) { Wm.goWs(id) }
     function run(cmd) { Quickshell.execDetached(["bash", "-c", cmd]) }
 
     function pickPlayer() {
@@ -649,6 +664,7 @@ PanelWindow {
 
         // island / flat: one background behind everything
         Rectangle {
+            id: bodyBg
             anchors.fill: parent
             visible: bar.sty === "island" || bar.sty === "flat"
             radius: bar.sty === "island" ? height / 2 : 0

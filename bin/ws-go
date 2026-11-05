@@ -1,3 +1,5 @@
 #!/usr/bin/env bash
-hyprctl dispatch "hl.dsp.focus({ workspace = \"$1\" })" >/dev/null
-pkill -RTMIN+8 waybar
+# ws-go N|e+1|e-1: go to a workspace (Hyprland or niri)
+"$HOME/.local/bin/rice-wm" workspace "$1" >/dev/null 2>&1
+pkill -RTMIN+8 waybar 2>/dev/null
+exit 0

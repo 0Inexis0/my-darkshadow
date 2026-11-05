@@ -118,6 +118,8 @@ PanelWindow {
 
     // ---------- the window ----------
     visible: open || t > 0.01
+    // niri: blur behind it (Hyprland blurs this layer with its own rule)
+    NiriBlur { win: cc; items: [panel]; radius: panel.radius; on: cc.et > 0.05 }
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore

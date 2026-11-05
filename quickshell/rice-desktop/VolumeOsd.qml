@@ -31,6 +31,8 @@ PanelWindow {
     Timer { id: settle; interval: 600; onTriggered: osd.ready = true }
 
     visible: shown || t > 0.01
+    // niri: blur behind it (Hyprland blurs this layer with its own rule)
+    NiriBlur { win: osd; items: [osdBg]; radius: osdBg.radius; on: osd.t > 0.05 }
     color: "transparent"
     anchors { bottom: true }
     margins { bottom: 110 }
@@ -43,6 +45,7 @@ PanelWindow {
     mask: Region { }
 
     Rectangle {
+        id: osdBg
         anchors.fill: parent
         radius: height / 2
         color: Qt.rgba(0.05, 0.05, 0.05, Look.flat ? 1 : 0.62)

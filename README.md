@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <b>A Hyprland rice with its own Quickshell settings app, bar, launcher, desktop widgets, a dashboard and a dock.</b><br>
+  <b>A Hyprland and niri rice with its own Quickshell settings app, bar, launcher, desktop widgets, a dashboard and a dock.</b><br>
   Everything is set with sliders and switches in one app. No config editing.<br>
   Made by <a href="https://www.tiktok.com/@shadoww.dev">shadoww.dev</a>
 </p>
@@ -16,6 +16,7 @@
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/Hyprland-0.55+-58E1FF?style=flat-square" alt="Hyprland">
+  <img src="https://img.shields.io/badge/niri-25.05+-F4A261?style=flat-square" alt="niri">
   <img src="https://img.shields.io/badge/Quickshell-QML-8B7BFF?style=flat-square" alt="Quickshell">
   <img src="https://img.shields.io/github/stars/shadowww-dev/shadows-shell?style=flat-square&color=f5c542" alt="Stars">
   <img src="https://img.shields.io/github/last-commit/shadowww-dev/shadows-shell?style=flat-square" alt="Last commit">
@@ -62,6 +63,11 @@ The bar, the dashboard, the welcome window and Settings show **your distro's log
 
 CachyOS and Fedora support is new: if something does not install, open an issue with the installer log and it gets fixed fast.
 
+### Hyprland or niri
+The shell runs on **Hyprland** and on **niri** (the scrollable-tiling window manager), on every system above. The installer asks which one you want (or both, then you pick one on the login screen); `./install.sh --wm=niri` skips the question.
+
+On niri everything works the same: the bar, the island, workspaces, widgets, dock, launcher, lock screen, Settings and its sliders (gaps, borders, corners, shadows, blur, animation styles, keyboard, monitors, your keybinds and autostart). The shell writes `~/.config/niri/config.kdl` for you (`rice-niri`) and checks it with `niri validate`, so it fits your niri version; your own niri settings go in `~/.config/niri/user.kdl` and always win. Blur needs niri 26.04 or newer. niri extras: `SUPER + Tab` (or the top-left corner) shows the overview, `SUPER + Shift + /` lists every key, and windows sit in columns (`SUPER + R` changes the width, `SUPER + F` maximizes, `SUPER + [` / `]` takes a window in or out of a column).
+
 ## Install in one minute
 **Arch Linux / CachyOS / EndeavourOS**
 ```bash
@@ -77,7 +83,7 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 ./install.sh
 ```
 
-**NixOS**: see [Installation](#installation) below. Then log out and pick Hyprland, and press `SUPER + U`.
+**NixOS**: see [Installation](#installation) below. Then log out and pick Hyprland or niri, and press `SUPER + U`.
 
 ## Features
 **Settings app** (`SUPER+U`) in the spirit of Material 3: a navigation rail (Home, Wallpaper, Appearance, Motion, Desktop, Bar & island, Sound, System, Gaming, About) with tabs, Google icons, colors made from your theme and a search over every setting.
@@ -95,7 +101,7 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 | **Wallpaper picker** | SUPER + W: your wallpapers in a sheet with search, shuffle and keys; colors follow |
 | **Bar layout** | five ready-made Material 3 layouts, and drag and drop the modules between left, center and right: launcher, workspaces, window title, music, the island (your clock), tray (right-click an app: its menu and Close app), volume, Bluetooth, Wi-Fi, battery, notifications, power |
 | **Dock** | bottom, left or right edge, its own app menu with search, pinned favourite apps (also in Settings > Dock), open apps, hover to reveal, media player, tinted icons |
-| **Hyprland** | gaps, borders, rounding, blur, shadows and animations from sliders, no config editing |
+| **Hyprland & niri** | gaps, borders, rounding, blur, shadows and animations from sliders, no config editing, on either window manager |
 | **Theme** | 21 color schemes: Auto and Grey from your wallpaper, six monochrome (Mono, Slate, Stone, Steel, Ash, Ink) and thirteen colors (Navy, Ocean, Sky, Teal, Mint, Forest, Lime, Gold, Sunset, Ember, Rose, Orchid, Violet). They recolor Waybar, borders, notifications and the lock screen |
 | **Control center** | `SUPER + N` or the bell: switches, sliders, music with a wavy, seekable progress line and your notifications, with smooth Material 3 motion |
 | **Notifications** | shown by the shell in the Google style (or swaync, one click away): pop-ups with the app icon in your shape, pictures, action buttons and a line that shows how long they stay; position, width, time on screen, six themes, text size, corners, transparency and blur, live preview and a test button |
@@ -115,7 +121,7 @@ git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
 | **Installer** | interactive (Install, Update, Choose, Restore), backs up everything, supports Arch, CachyOS, Fedora and NixOS, warns when Hyprland is too old |
 
 ## Keybinds
-`SUPER` is the main modifier.
+`SUPER` is the main modifier. On niri the same keys work (the shell's own ones are identical), with niri's column keys in place of the Hyprland layout keys; `SUPER + Shift + /` shows them all there.
 
 | Keys | Action |
 | --- | --- |
@@ -176,6 +182,7 @@ git clone https://github.com/shadowww-dev/shadows-shell
 cd shadows-shell
 ```
 Add `imports = [ ./path/to/shadows-shell/nix/module.nix ];` to `/etc/nixos/configuration.nix`, run `sudo nixos-rebuild switch`, then `./install.sh`.
+The module turns on Hyprland and niri (`programs.niri.enable = false;` leaves niri out).
 
 ### Options
 | Flag | What it does |
@@ -185,6 +192,7 @@ Add `imports = [ ./path/to/shadows-shell/nix/module.nix ];` to `/etc/nixos/confi
 | `--no-packages` | skip the package step |
 | `--update` | get the newest version and update apps and scripts (keeps your configs) |
 | `--restore` | put back the files from the last backup |
+| `--wm=hyprland`, `--wm=niri`, `--wm=both` | the window manager to set up (otherwise the installer asks) |
 
 Every file the installer replaces is saved in `~/.config/darkshadows-shell-backup-<time>/`.
 
@@ -196,7 +204,7 @@ Run `rice-update` (or `./install.sh --update` in the repo), or press **Update no
 | --- | --- |
 | `bin/` | helper scripts installed to `~/.local/bin` |
 | `quickshell/` | Settings app (`rice-settings`) and widgets/dock (`rice-desktop`) |
-| `config/` | dotfiles installed to `~/.config` (Hyprland, Waybar, ...) |
+| `config/` | dotfiles installed to `~/.config` (Hyprland, Waybar, ...); the niri config is written by `bin/rice-niri` |
 | `install/` | installer UI and distro detection |
 | `lua/` | Hyprland add-ons: keybinds, widgets autostart |
 | `wallpapers/` | original wallpapers, copied to `~/Pictures/Wallpapers` |

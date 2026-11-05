@@ -287,7 +287,7 @@ def deck_widgets(c, light):
                 "command": "%s toggle %s" % (SVC, key), "update-command": "%s is %s" % (SVC, key)}
 
     quick = [tog(chr(0xF05A9), "wifi"), tog(chr(0xF00AF), "bluetooth"), tog(chr(0xF009B), "dnd")]
-    if shutil.which("hyprsunset"):
+    if shutil.which("hyprsunset") or (os.environ.get("NIRI_SOCKET") and shutil.which("gammastep")):
         quick.append(tog(chr(0xF0594), "nightlight"))
     quick.append(tog(chr(0xF0176), "awake"))
     if len(quick) < 5:
@@ -996,7 +996,7 @@ def apply(c, reload_hypr=False):
         quiet(["swaync-client", "-R"])
         quiet(["swaync-client", "-rs"])
     if changed or reload_hypr:
-        quiet(["hyprctl", "reload"])
+        quiet([os.path.expanduser("~/.local/bin/rice-wm"), "reload"])
 
 
 def test():
@@ -1073,7 +1073,7 @@ def main(argv):
             os.remove(LUA)
         quiet(["swaync-client", "-R"])
         quiet(["swaync-client", "-rs"])
-        quiet(["hyprctl", "reload"])
+        quiet([os.path.expanduser("~/.local/bin/rice-wm"), "reload"])
     else:
         die(__doc__)
 

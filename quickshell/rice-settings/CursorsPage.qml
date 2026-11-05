@@ -118,7 +118,7 @@ Item {
             }
         }
 
-        SectionTitle { text: "Themes"; sub: "Hover to preview, click to use. Applies to Hyprland and all apps." }
+        SectionTitle { text: "Themes"; sub: "Hover to preview, click to use. Applies to " + (Quickshell.env("NIRI_SOCKET") ? "niri" : "Hyprland") + " and all apps." }
         Flow {
             id: grid
             width: parent.width

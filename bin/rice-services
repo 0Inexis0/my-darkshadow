@@ -91,9 +91,16 @@ def awake_on():
         return False
 
 
+NIRI = bool(os.environ.get("NIRI_SOCKET"))
+
+
 def night_on():
-    r = run(["pgrep", "-x", "hyprsunset"])
-    return bool(r and r.returncode == 0)
+    # Hyprland: hyprsunset; niri: gammastep (niri has the gamma protocol it uses, not Hyprland's)
+    for n in ("hyprsunset", "gammastep"):
+        r = run(["pgrep", "-x", n])
+        if r and r.returncode == 0:
+            return True
+    return False
 
 
 def unit_state(name, scope):
@@ -108,6 +115,8 @@ def unit_state(name, scope):
 
 def state():
     have = {t: shutil.which(t) is not None for t in ("nmcli", "bluetoothctl", "wpctl", "swaync-client", "hyprsunset", "systemctl")}
+    if NIRI:
+        have["hyprsunset"] = shutil.which("gammastep") is not None     # the night light (Settings shows it by this name)
     s = {
         "have": have,
         "wifi": wifi_on() if have["nmcli"] else False,
@@ -166,11 +175,14 @@ def setv(key, on):
             run([BIN + "/rice-hotcorner", "awake"], 6)
     elif key == "nightlight":
         run(["pkill", "-x", "hyprsunset"])
-        if on and shutil.which("hyprsunset"):
-            try:
-                t = int(open(NIGHT).read().strip() or 4500)
-            except Exception:
-                t = 4500
+        run(["pkill", "-x", "gammastep"])
+        try:
+            t = int(open(NIGHT).read().strip() or 4500)
+        except Exception:
+            t = 4500
+        if on and NIRI and shutil.which("gammastep"):
+            bg(["gammastep", "-m", "wayland", "-O", str(t)])
+        elif on and shutil.which("hyprsunset"):
             bg(["hyprsunset", "-t", str(t)])
     else:
         sys.exit("unknown switch: " + key)
@@ -234,7 +246,7 @@ def session(what):
         run(["systemctl", "suspend"], 10)
     elif what == "logout":
         if confirm("Log out?"):
-            run(["hyprctl", "dispatch", "exit"])
+            run([os.path.expanduser("~/.local/bin/rice-wm"), "exit"])      # Hyprland or niri
     elif what == "reboot":
         if confirm("Restart?"):
             run(["systemctl", "reboot"], 10)
