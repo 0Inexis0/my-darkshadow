@@ -44,6 +44,12 @@ Singleton {
     property int lumW: 64
     property int lumH: 36
     // average brightness of a rectangle of the screen (x, y, w, h in screen pixels); 0.3 until the wallpaper is read
+    // how far a wheel event moves a slider (the volume ...), in mouse-wheel notches: one notch of a mouse is 1,
+    // a touchpad gives its distance (about 50 px of finger = 1), so a swipe no longer jumps a whole step per event
+    function notches(e) {
+        if (e.pixelDelta && e.pixelDelta.y !== 0) return e.pixelDelta.y / 50
+        return e.angleDelta.y / 120
+    }
     function lumAt(x, y, w, h, sw, sh) {
         const g = lumGrid
         if (!g || g.length < lumW * lumH || sw <= 0 || sh <= 0) return 0.3

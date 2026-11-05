@@ -108,6 +108,10 @@ def apply_kitty(fam):
         open(conf, "w").write(s.rstrip() + "\n\ninclude rice-font.conf\n")
     for n in ("kitty", ".kitty-wrapped"):
         run(["pkill", "-USR1", "-x", n], 3)
+    # the other terminals (Settings > Desktop > Look & Feel) get the font too
+    if os.access(BIN + "/rice-look", os.X_OK):
+        subprocess.Popen([BIN + "/rice-look", "colors"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                         start_new_session=True)
 
 
 def cmd_set(key, val):

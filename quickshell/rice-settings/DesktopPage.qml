@@ -89,16 +89,10 @@ Item {
         boundsBehavior: Flickable.StopAtBounds
 
         Behavior on contentY {
-            enabled: !flick.dragging && !flick.flicking
+            enabled: !flick.dragging && !flick.flicking && !flickWheel.active
             NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
         }
-        WheelHandler {
-            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-            onWheel: function(e) {
-                const max = Math.max(0, flick.contentHeight - flick.height)
-                flick.contentY = Math.max(0, Math.min(max, flick.contentY - e.angleDelta.y * Prefs.wheel))
-            }
-        }
+        WheelScroll { id: flickWheel; flick: flick }
 
         Column {
             id: col
@@ -158,16 +152,10 @@ Item {
                 flickableDirection: Flickable.HorizontalFlick
 
                 Behavior on contentX {
-                    enabled: !rowFlick.dragging && !rowFlick.flicking
+                    enabled: !rowFlick.dragging && !rowFlick.flicking && !rowFlickWheel.active
                     NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
                 }
-                WheelHandler {
-                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                    onWheel: function(e) {
-                        const max = Math.max(0, rowFlick.contentWidth - rowFlick.width)
-                        rowFlick.contentX = Math.max(0, Math.min(max, rowFlick.contentX - (e.angleDelta.y + e.angleDelta.x) * Prefs.wheel * 1.15))
-                    }
-                }
+                WheelScroll { id: rowFlickWheel; flick: rowFlick; horizontal: true }
 
                 Row {
                     id: wrow

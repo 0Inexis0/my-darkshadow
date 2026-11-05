@@ -416,7 +416,9 @@ PanelWindow {
         anim.stop(); anim.from = view.contentY; anim.to = to; anim.start()
     }
     function wheel(view, anim, e, h) {
-        const d = e.pixelDelta.y !== 0 ? e.pixelDelta.y * 2.2 : e.angleDelta.y * 1.9
+        // a touchpad: the list follows the fingers (a glide per event lagged behind them)
+        if (e.pixelDelta.y !== 0) { anim.stop(); view.contentY = clampY(view.contentY - e.pixelDelta.y * 1.4, view); return }
+        const d = e.angleDelta.y * 1.9
         const base = anim.running ? anim.to : view.contentY
         glide(view, anim, base - d)
     }

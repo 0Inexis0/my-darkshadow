@@ -22,7 +22,7 @@ hl.config({
 
 -- Keybinds
 hl.unbind("SUPER + Return")
-hl.bind("SUPER + Return", hl.dsp.exec_cmd("kitty"))
+hl.bind("SUPER + Return", hl.dsp.exec_cmd("$HOME/.local/bin/rice-term"))
 hl.unbind("SUPER + Q")
 hl.bind("SUPER + Q", hl.dsp.window.close())
 hl.unbind("SUPER + L")

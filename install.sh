@@ -648,6 +648,7 @@ step_finish() {
   [ -x "$BIN/rice-effects" ] && task "Blur, transparency and gaming mode" t "$BIN/rice-effects" apply --no-reload
   [ -x "$BIN/rice-fonts" ] && T=400 task "Fonts: Google Sans Flex & Code, Material Symbols, Nerd Font icons (skips what you have)" t "$BIN/rice-fonts"
   [ -x "$BIN/font-set" ] && task "Google Sans Flex as the interface font" t "$BIN/font-set" migrate
+  [ -x "$BIN/rice-look" ] && task "Look & Feel: your shell, terminal and fastfetch" t "$BIN/rice-look" apply
   if [ -x "$BIN/rice-cursor" ]; then
     local cf; cf="$(mktemp)"
     T=240 task "Cursor packs: Rose Pine (Hyprcursor), Catppuccin, Phinger" cursor_packs "$cf"

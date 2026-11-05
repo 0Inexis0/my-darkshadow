@@ -108,7 +108,7 @@ PanelWindow {
                 id: sm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                 onPressed: function(m) { vm.setVol(vr.node, m.x / width) }
                 onPositionChanged: function(m) { if (pressed) vm.setVol(vr.node, m.x / width) }
-                onWheel: function(e) { vm.setVol(vr.node, vr.v + (e.angleDelta.y > 0 ? 0.04 : -0.04)) }
+                onWheel: function(e) { vm.setVol(vr.node, vr.v + Look.notches(e) * 0.04) }
             }
         }
         Text { anchors.right: parent.right; anchors.rightMargin: 8; y: ib.y + (32 - height) / 2; text: Math.round(vr.v * 100) + "%"

@@ -1,5 +1,13 @@
 # Changelog
 
+## V3.58: Look & Feel
+- New: Settings > Desktop > **Look & Feel**
+  - **Fastfetch**: a live preview of your terminal with fastfetch in it; show it whenever a terminal opens; the logo (your distro's, a small one, DarkShadow's moon or your wallpaper as a picture in kitty, Ghostty and WezTerm), how much it tells, words or icons as labels, and your wallpaper's colors
+  - **Shell**: fish, zsh or bash for your terminals (zsh and bash get the same prompt as fish, history and completion); a button makes it your login shell too; Install for the ones you do not have
+  - **Terminal**: kitty, foot, Alacritty, Ghostty, WezTerm or Konsole for Super + Return, the Wi-Fi menu and updates (Hyprland and niri). foot, Alacritty and Ghostty get the wallpaper's colors, your monospace font and kitty's see-through background, and change with the wallpaper; your own config files are kept
+- Fix: scrolling with a touchpad: pages in Settings jumped back a little while scrolling; now they follow your fingers (the mouse wheel still glides). The launcher, the Wi-Fi and Bluetooth menus follow the fingers too
+- Fix: a touchpad swipe over the bar's workspaces went through all of them; now one swipe is one workspace. The volume (bar, island, menus) and the sliders move as far as your fingers do, not 4 % per tiny touchpad step
+
 ## V3.57: niri fixes
 - niri: no more pale bands and boxes of blur around things: the blur sits exactly behind the menus (sound, Bluetooth, Wi-Fi, power ...), the bar's island (not its sides) and the widgets' cards (widgets drawn as a shape, like the clock and the gauges, get no square behind them), so menus have the same gap under the bar as the island's card
 - niri: the island follows workspace switches as quickly as on Hyprland (the bar now reads niri's few events for one switch once, and a window's title changing no longer wakes the whole bar)

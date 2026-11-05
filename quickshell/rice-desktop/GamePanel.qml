@@ -256,7 +256,7 @@ PanelWindow {
             function at(x) { return Math.max(0, Math.min(1, x / width)) }
             onPressed: function(m) { ln.moved(at(m.x)) }
             onPositionChanged: function(m) { if (pressed) ln.moved(at(m.x)) }
-            onWheel: function(e) { ln.moved(Math.max(0, Math.min(1, ln.v + (e.angleDelta.y > 0 ? 0.05 : -0.05)))) }
+            onWheel: function(e) { ln.moved(Math.max(0, Math.min(1, ln.v + Look.notches(e) * 0.05))) }
         }
     }
 

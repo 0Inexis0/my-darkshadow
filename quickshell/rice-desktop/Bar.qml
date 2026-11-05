@@ -430,8 +430,19 @@ PanelWindow {
                     }
                 }
             }
-            WheelHandler { acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                onWheel: function(e) { bar.goWs(e.angleDelta.y > 0 ? "e-1" : "e+1") } }
+            // the wheel over the workspaces: one workspace per notch; a touchpad swipe: one workspace per swipe
+            // (it sends dozens of small events: each of them went one workspace further)
+            WheelHandler { id: wsWheel; acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                property real sum: 0
+                property bool done: false
+                property Timer rest: Timer { interval: 260; onTriggered: { wsWheel.sum = 0; wsWheel.done = false } }
+                onWheel: function(e) {
+                    if (e.pixelDelta.y === 0) { bar.goWs(e.angleDelta.y > 0 ? "e-1" : "e+1"); return }
+                    rest.restart()
+                    if (done) return
+                    sum += e.pixelDelta.y
+                    if (Math.abs(sum) >= 40) { bar.goWs(sum > 0 ? "e-1" : "e+1"); done = true }
+                } }
         }
     }
 
@@ -514,7 +525,7 @@ PanelWindow {
                     if (m.button === Qt.LeftButton) { const p = mapToItem(null, width / 2, 0); bar.run("\"$HOME/.local/bin/rice-volume\" menu " + Math.round(p.x)); return }
                     if (bar.sink && bar.sink.audio) bar.sink.audio.muted = !bar.sink.audio.muted
                 }
-                onWheel: function(e) { if (bar.sink && bar.sink.audio) bar.sink.audio.volume = Math.max(0, Math.min(1, bar.sink.audio.volume + (e.angleDelta.y > 0 ? 0.04 : -0.04))) } }
+                onWheel: function(e) { if (bar.sink && bar.sink.audio) bar.sink.audio.volume = Math.max(0, Math.min(1, bar.sink.audio.volume + Look.notches(e) * 0.04)) } }
             HoverLine { on: vm.containsMouse; full: 16 * Math.min(1, bar.vol); color: bar.fg }   // how loud, as a line under the icon
         }
     }

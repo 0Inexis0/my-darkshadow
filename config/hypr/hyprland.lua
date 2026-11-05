@@ -42,7 +42,7 @@ hl.monitor({
 ---------------------
 
 -- Set programs that you use
-local terminal    = "kitty"
+local terminal    = "$HOME/.local/bin/rice-term"   -- your terminal (Settings > Desktop > Look & Feel)
 local fileManager = "dolphin"
 local menu        = "hyprlauncher"
 

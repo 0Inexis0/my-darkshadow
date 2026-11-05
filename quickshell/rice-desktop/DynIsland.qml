@@ -254,7 +254,7 @@ Item {
         MouseArea {
             anchors.fill: parent; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
             onClicked: function(m) { isl.openInfo(m.button === Qt.RightButton ? "system" : (isl.cfg.island_tab || "today"), true) }
-            onWheel: function(e) { if (isl.bar.sink && isl.bar.sink.audio) isl.bar.sink.audio.volume = Math.max(0, Math.min(1, isl.bar.sink.audio.volume + (e.angleDelta.y > 0 ? 0.04 : -0.04))) }
+            onWheel: function(e) { if (isl.bar.sink && isl.bar.sink.audio) isl.bar.sink.audio.volume = Math.max(0, Math.min(1, isl.bar.sink.audio.volume + Look.notches(e) * 0.04)) }
         }
 
         // ---------- idle: the time ----------

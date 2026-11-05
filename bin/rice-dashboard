@@ -507,7 +507,7 @@ def about():
         "board": board, "product": product, "bios": read(dmi + "bios_version"),
         "cpu": cpu_name(), "cores": os.cpu_count(), "gpu": gpu_name(),
         "memory": m["total"], "kernel": platform.release(), "arch": platform.machine(),
-        "wm": wm or "Hyprland", "shell": shell, "terminal": os.environ.get("TERMINAL", "kitty"),
+        "wm": wm or "Hyprland", "shell": shell, "terminal": (read(os.path.expanduser("~/.config/rice/terminal"), "") or "").strip() or os.environ.get("TERMINAL", "kitty"),
         "display": ", ".join(mons), "packages": packages(o.get("ID", "")),
         "disk": root, "uptime": up, "rice": read(DIR + "/version", ""),
         "quickshell": sh(["qs", "--version"], 3).split("\n")[0],

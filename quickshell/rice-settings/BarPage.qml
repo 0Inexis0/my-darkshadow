@@ -59,16 +59,10 @@ Item {
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         Behavior on contentY {
-            enabled: !flick.dragging && !flick.flicking
+            enabled: !flick.dragging && !flick.flicking && !flickWheel.active
             NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
         }
-        WheelHandler {
-            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-            onWheel: function(e) {
-                const max = Math.max(0, flick.contentHeight - flick.height)
-                flick.contentY = Math.max(0, Math.min(max, flick.contentY - e.angleDelta.y * Prefs.wheel))
-            }
-        }
+        WheelScroll { id: flickWheel; flick: flick }
 
         Column {
             id: col

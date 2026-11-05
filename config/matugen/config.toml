@@ -8,16 +8,12 @@ post_hook = 'setsid -f $HOME/.local/bin/waybar-reload'
 [templates.kitty]
 input_path = '~/.config/matugen/templates/kitty.conf'
 output_path = '~/.config/kitty/current-theme.conf'
-post_hook = 'pkill -SIGUSR1 kitty || true'
+post_hook = 'pkill -SIGUSR1 kitty; setsid -f $HOME/.local/bin/rice-look colors >/dev/null 2>&1; true'
 
 [templates.cava]
 input_path = '~/.config/matugen/templates/cava'
 output_path = '~/.config/cava/config'
 post_hook = 'pkill -SIGUSR2 cava || true'
-
-[templates.fastfetch]
-input_path = '~/.config/matugen/templates/fastfetch.fish'
-output_path = '~/.config/fish/conf.d/matugen-fastfetch.fish'
 
 [templates.btop]
 input_path = '~/.config/matugen/templates/btop.theme'

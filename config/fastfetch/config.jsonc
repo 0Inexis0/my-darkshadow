@@ -1,5 +1,16 @@
+// DarkShadow's Shell: Settings > Desktop > Look & Feel writes this file. Your own: remove this line.
 {
   "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/master/doc/json_schema.json",
+  "logo": {
+    "padding": {
+      "top": 1,
+      "right": 3,
+      "left": 1
+    }
+  },
+  "display": {
+    "separator": ": "
+  },
   "modules": [
     "title",
     "separator",

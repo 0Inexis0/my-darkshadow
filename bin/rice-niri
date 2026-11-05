@@ -521,7 +521,8 @@ def window_rules(f, s, flat):
         L += block("window-rule", ['match app-id="^org\\\\.gnome\\\\.Nautilus$"', "opacity 0.92"] +
                    (block("background-effect", ["blur true"]) if f.blur else []))
         if f.blur:
-            L += block("window-rule", ['match app-id="^kitty$"'] + block("background-effect", ["blur true"]))
+            L += block("window-rule", ['match app-id="^(kitty|foot|footclient|Alacritty|com\\\\.mitchellh\\\\.ghostty|org\\\\.wezfurlong\\\\.wezterm)$"'] +
+                       block("background-effect", ["blur true"]))
             # the Settings app: frosted like on Hyprland
             L += block("window-rule", ['match title="^Rice Settings$"'] + block("background-effect", ["blur true", "xray true"]))
     # pop-up apps float in the middle, like on Hyprland
@@ -644,6 +645,9 @@ def colors(s):
 
 
 def terminal():
+    # your terminal (Settings > Desktop > Look & Feel): rice-term opens the one you picked
+    if os.access(BIN + "/rice-term", os.X_OK):
+        return BIN + "/rice-term"
     for t in ("kitty", "foot", "alacritty", "ghostty", "wezterm"):
         if shutil.which(t):
             return t

@@ -208,6 +208,7 @@ PanelWindow {
             NumberAnimation { id: flAnim; target: fl; property: "contentY"; duration: 150; easing.type: Easing.OutCubic }
             WheelHandler { acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                 onWheel: function(e) {
+                    if (e.pixelDelta.y !== 0) { flAnim.stop(); fl.contentY = Math.max(0, Math.min(fl.contentHeight - fl.height, fl.contentY - e.pixelDelta.y)); return }
                     const base = flAnim.running ? flAnim.to : fl.contentY
                     const to = Math.max(0, Math.min(fl.contentHeight - fl.height, base - e.angleDelta.y * 1.4))
                     flAnim.stop(); flAnim.from = fl.contentY; flAnim.to = to; flAnim.start()
