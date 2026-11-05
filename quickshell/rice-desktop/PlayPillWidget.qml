@@ -17,7 +17,7 @@ Item {
             color: pp.pal ? pp.pal.tertiary : "#e8a28c"
             scale: bm.pressed ? 0.92 : 1
             Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack; easing.overshoot: 2 } }
-            RotationAnimator on rotation { from: 0; to: 360; duration: 20000; loops: Animation.Infinite; running: pp.running && pl.playing && !Look.lite }
+            SlowSpin { turn: 360; period: 20000; running: (pp.running && pl.playing && !Look.lite) && !Look.covered }
         }
         MIcon { anchors.centerIn: parent; size: parent.width * 0.3; filled: true
             name: pl.playing ? "pause" : "play_arrow"; glyph: pl.playing ? "" : ""
@@ -41,7 +41,7 @@ Item {
             x: 22; width: parent.width - 44; height: 16
             anchors.bottom: parent.bottom; anchors.bottomMargin: parent.height * 0.1
             value: pl.frac
-            moving: pl.playing && pp.running
+            moving: pl.playing && pp.running && !Look.covered
             seekable: true
             color: pp.pal ? pp.pal.inkOn : "#10201c"
             track: Qt.rgba(0, 0, 0, 0.16)

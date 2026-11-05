@@ -112,7 +112,7 @@ Item {
         anchors.bottom: parent.bottom; anchors.bottomMargin: 12
         x: 16; width: parent.width - 32; height: 16
         value: pl.frac
-        moving: pl.playing && ly.running
+        moving: pl.playing && ly.running && !Look.covered
         seekable: true
         color: ly.pal ? ly.pal.primary : "#9ec9bd"
         track: ly.pal ? ly.pal.track : Qt.rgba(1, 1, 1, 0.14)

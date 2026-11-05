@@ -220,10 +220,12 @@ ShellRoot {
     readonly property bool autoHide: cfg.autoHide === true || Look.lite
     property bool busy: false
     readonly property bool hideWidgets: autoHide && busy && !editing && !locked
+    Binding { target: Look; property: "covered"; value: root.busy && !root.editing && !root.locked }
     Process {
         id: busyProc
         command: ["bash", "-c", "exec \"$HOME/.local/bin/rice-busy\" \"$1\"", "_", root.scr ? root.scr.name : ""]
-        running: root.autoHide
+        // always on (it only listens to the window manager's events): auto-hide and the widgets' motion use it
+        running: true
         stdout: SplitParser { onRead: function(line) { root.busy = line.trim() === "1" } }
         onRunningChanged: if (!running) root.busy = false
     }
@@ -419,7 +421,7 @@ ShellRoot {
         bw: root.sw; bh: root.sh
         defW: root.sw; defH: 180; defX: 0; defY: root.sh - 180
         Component.onCompleted: root.reg(wid, vizWin)
-        VizWidget { anchors.fill: parent; running: root.on("visualizer") && !root.hideWidgets && !Look.lite; style: vizWin.sty !== "" ? vizWin.sty : "bars"; flip: vizWin.flp; pal: vizWin.pal; colorMode: vizWin.vcolor !== "" ? vizWin.vcolor : "accent"
+        VizWidget { anchors.fill: parent; running: root.on("visualizer") && !root.hideWidgets && !Look.lite && !Look.covered; style: vizWin.sty !== "" ? vizWin.sty : "bars"; flip: vizWin.flp; pal: vizWin.pal; colorMode: vizWin.vcolor !== "" ? vizWin.vcolor : "accent"
             nBars: Number(root.optOf("visualizer", "bars", 64)); shape: root.optOf("visualizer", "shape", "square"); spacing: root.optOf("visualizer", "gap", "normal")
             gain: Number(root.optOf("visualizer", "gain", "1.4")) }
     }

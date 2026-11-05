@@ -117,7 +117,9 @@ PanelWindow {
     }
 
     // ---------- the window ----------
-    visible: open || t > 0.01
+    visible: open || (t > 0.01 && !closeT.done)
+    // if the closing animation ever stalls (the compositor sent no frames for a moment), it still goes away
+    Timer { id: closeT; property bool done: false; interval: 600; running: !open; onRunningChanged: if (running) done = false; onTriggered: done = true }
     // niri: blur behind it (Hyprland blurs this layer with its own rule)
     NiriBlur { win: cc; items: [panel]; radius: panel.radius; on: cc.et > 0.05 }
     color: "transparent"
@@ -386,7 +388,7 @@ PanelWindow {
                             track: pal.track
                         }
                         ShapeImage { anchors.centerIn: parent; width: 118; height: 118; kind: "cookie"; source: mp.art; empty: cc.cardHi
-                            RotationAnimator on rotation { from: 0; to: 360; duration: 24000; loops: Animation.Infinite; running: cc.open && mp.playing && !Look.lite } }
+                            SlowSpin { turn: 360; period: 24000; running: cc.open && mp.playing && !Look.lite } }
                     }
                     Column {
                         x: art.x + art.width + 12; anchors.verticalCenter: parent.verticalCenter
@@ -500,7 +502,7 @@ PanelWindow {
                     opacity: cc.stg(1); transform: Translate { y: (1 - cc.stg(1)) * 22 }
                     clip: true
                     Blob { width: 150; height: 150; x: parent.width - 120; y: -30; kind: Look.shape; color: Qt.rgba(1, 1, 1, 0.06)
-                        RotationAnimator on rotation { from: 0; to: 360; duration: 40000; loops: Animation.Infinite; running: cc.open && cc.tab === "overview" } }
+                        SlowSpin { turn: 360; period: 40000; running: cc.open && cc.tab === "overview" } }
                     Column {
                         x: 22; anchors.verticalCenter: parent.verticalCenter
                         Text { text: cc.now.toLocaleTimeString(Qt.locale(), Locale.ShortFormat); color: cc.inkContainer; font.family: Fonts.numbers; font.pixelSize: 48; font.weight: Font.Medium }

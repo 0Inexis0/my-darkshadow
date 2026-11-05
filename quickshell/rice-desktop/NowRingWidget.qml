@@ -23,7 +23,7 @@ Item {
         color: "transparent"
         line: nr.pal ? nr.pal.track : Qt.rgba(1, 1, 1, 0.14)
         lineWidth: 2
-        RotationAnimator on rotation { from: 0; to: 360; duration: 30000; loops: Animation.Infinite; running: nr.running && pl.playing && !Look.lite }
+        SlowSpin { turn: 360; period: 30000; running: (nr.running && pl.playing && !Look.lite) && !Look.covered }
     }
     // the time: a dot on the outer edge
     Item {

@@ -48,7 +48,7 @@ Item {
                     anchors.right: parent.right; anchors.rightMargin: 16
                     anchors.top: parent.top; anchors.topMargin: 14
                     // how busy, as a wavy ring around a small shape of yours
-                    WavyArc { anchors.fill: parent; thick: 4; waves: 9; moving: rs.running && !Look.lite
+                    WavyArc { anchors.fill: parent; thick: 4; waves: 9; moving: rs.running && !Look.lite && !Look.covered
                         property real v: cell.val
                         Behavior on v { NumberAnimation { duration: 600; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
                         value: Math.max(0.01, v / 100)

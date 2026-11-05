@@ -77,7 +77,7 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         y: 52
         // the time left, as a wavy ring that moves while it runs
-        WavyArc { anchors.fill: parent; thick: 9; waves: 16; moving: fo.going && fo.running
+        WavyArc { anchors.fill: parent; thick: 9; waves: 16; moving: fo.going && fo.running && !Look.covered
             property real v: fo.frac
             Behavior on v { NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
             value: Math.max(0.004, v)

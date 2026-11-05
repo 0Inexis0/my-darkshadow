@@ -267,7 +267,7 @@ Item {
                 spacing: 9
                 ShapeImage { visible: pl.playing; width: 22; height: 22; anchors.verticalCenter: parent.verticalCenter
                     kind: Look.shape; source: pl.art; empty: isl.pal ? isl.pal.container : "#333"; fallbackColor: isl.pal ? isl.pal.inkContainer : "#ccc"
-                    RotationAnimator on rotation { from: 0; to: 360; duration: 9000; loops: Animation.Infinite; running: pl.playing && !Look.lite } }
+                    SlowSpin { turn: 360; period: 9000; running: pl.playing && !Look.lite } }
                 Text { anchors.verticalCenter: parent.verticalCenter; text: isl.bar ? isl.bar.timeText : ""
                     color: isl.pal ? isl.pal.fg : "white"; font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.DemiBold }
                 // Settings > Dynamic island: the date and the weather beside the time
@@ -524,7 +524,7 @@ Item {
                     x: 22; y: 74; width: 228; height: 72
                     Item { id: wIc; width: 66; height: 66; anchors.verticalCenter: parent.verticalCenter
                         Blob { anchors.fill: parent; kind: Look.shape; color: fInfo.pp ? fInfo.pp.container : "#333"
-                            RotationAnimator on rotation { from: 0; to: 360; duration: 40000; loops: Animation.Infinite; running: fInfo.act && !Look.lite } }
+                            SlowSpin { turn: 360; period: 40000; running: fInfo.act && !Look.lite } }
                         Text { anchors.centerIn: parent; text: isl.wGlyph(isl.wCond); font.family: Fonts.icons; font.pixelSize: 30; color: fInfo.pp ? fInfo.pp.inkContainer : "white" } }
                     Column {
                         anchors.left: wIc.right; anchors.leftMargin: 14; anchors.verticalCenter: parent.verticalCenter; spacing: 1
@@ -599,7 +599,7 @@ Item {
                     id: osIc
                     x: 28; y: 8; width: 96; height: 96
                     Blob { anchors.fill: parent; kind: Look.shape; color: fInfo.pp ? fInfo.pp.primary : "white"
-                        RotationAnimator on rotation { from: 0; to: 360; duration: 36000; loops: Animation.Infinite; running: ab.visible && !Look.lite } }
+                        SlowSpin { turn: 360; period: 36000; running: ab.visible && !Look.lite } }
                     Text { anchors.centerIn: parent; anchors.horizontalCenterOffset: 2
                         text: isl.bar && isl.bar.logos[isl.bar.logoKey] !== undefined ? String.fromCodePoint(isl.bar.logos[isl.bar.logoKey]) : String.fromCodePoint(0xF17C)
                         font.family: Fonts.icons; font.pixelSize: 44; color: fInfo.pp ? fInfo.pp.inkPrimary : "black" }
@@ -690,7 +690,7 @@ Item {
                 id: nIc
                 x: 16; y: 16; width: 46; height: 46
                 Blob { anchors.fill: parent; kind: Look.shape; color: isl.pal ? isl.pal.container : "#333"
-                    RotationAnimator on rotation { from: 0; to: 360; duration: 24000; loops: Animation.Infinite; running: isl.big && isl.cardMode === "notif" && !Look.lite } }
+                    SlowSpin { turn: 360; period: 24000; running: isl.big && isl.cardMode === "notif" && !Look.lite } }
                 Image { id: nImg; anchors.centerIn: parent; width: 24; height: 24; sourceSize.width: 48; sourceSize.height: 48
                     source: { const n = isl.note; if (!n) return ""
                         if (n.appIcon && n.appIcon !== "") return n.appIcon.indexOf("/") === 0 ? "file://" + n.appIcon : Quickshell.iconPath(n.appIcon, true)
@@ -759,7 +759,7 @@ Item {
                     Blob { anchors.fill: parent; kind: pl.playing ? Look.shape : "circle"; color: isl.pal ? isl.pal.primary : "white"
                         scale: pm.pressed ? 0.86 : (pm.containsMouse ? 1.06 : 1)
                         Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
-                        RotationAnimator on rotation { from: 0; to: 360; duration: 12000; loops: Animation.Infinite; running: pl.playing && !Look.lite } }
+                        SlowSpin { turn: 360; period: 12000; running: pl.playing && !Look.lite } }
                     MIcon { anchors.centerIn: parent; size: 20; filled: true; name: pl.playing ? "pause" : "play_arrow"; glyph: ""
                         color: isl.pal ? isl.pal.inkPrimary : "black" }
                     MouseArea { id: pm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: pl.toggle() }

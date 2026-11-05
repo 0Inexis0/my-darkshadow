@@ -51,13 +51,13 @@ Item {
             anchors.left: parent.left
             anchors.leftMargin: 18
             anchors.verticalCenter: parent.verticalCenter
-            WavyArc { anchors.fill: parent; thick: 6; waves: 11; moving: bt.charging
+            WavyArc { anchors.fill: parent; thick: 6; waves: 11; moving: bt.charging && !Look.covered
                 property real v: Math.max(0, bt.pct)
                 Behavior on v { NumberAnimation { duration: 700; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
                 value: Math.max(0.01, v / 100)
                 color: bt.low ? bt.cWarn : bt.cMain; track: bt.cTrack }
             Blob { anchors.centerIn: parent; width: 40; height: 40; kind: Look.shape; color: bt.pal ? bt.pal.chip : Qt.rgba(1, 1, 1, 0.08)
-                RotationAnimator on rotation { from: 0; to: 360; duration: 20000; loops: Animation.Infinite; running: bt.charging && !Look.lite } }
+                SlowSpin { turn: 360; period: 20000; running: (bt.charging && !Look.lite) && !Look.covered } }
             T { kind: "icon"; anchors.centerIn: parent; text: bt.charging ? "" : ""; font.pixelSize: 18; color: bt.low ? bt.cWarn : bt.cFg2 }
                 }
         Column {

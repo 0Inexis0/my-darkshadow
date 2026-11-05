@@ -33,7 +33,7 @@ Item {
                     anchors.fill: parent
                     kind: modelData.s
                     color: parent.mid ? (tw.pal ? tw.pal.tertiary : "#e8a28c") : (tw.pal ? (tw.bg > 0.02 ? tw.pal.shapeFill : "transparent") : "#22262a")
-                    RotationAnimator on rotation { from: 0; to: 360; duration: 60000; loops: Animation.Infinite; running: tw.running && !Look.lite && !parent.mid }
+                    SlowSpin { turn: 360; period: 60000; running: (tw.running && !Look.lite && !parent.mid) && !Look.covered }
                 }
                 Column {
                     anchors.centerIn: parent

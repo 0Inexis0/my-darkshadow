@@ -11,6 +11,9 @@ Singleton {
     property bool flat: false
     // Light mode (Settings > Home): the visualizer stops and widgets pause while a window covers them
     property bool lite: false
+    // windows cover the desktop (rice-busy): the widgets' decorative motion pauses (nobody sees it, and the
+    // compositor does not have to redraw the desktop under the windows)
+    property bool covered: false
     // widget style (Settings > Widgets > Theme): shadow (DarkShadow's Shell), google, outline
     property string theme: "shadow"
     // text and cards turn light or dark with the wallpaper behind each widget (Settings > Widgets)

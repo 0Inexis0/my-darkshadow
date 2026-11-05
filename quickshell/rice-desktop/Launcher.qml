@@ -121,11 +121,15 @@ PanelWindow {
     }
     function activate(r) {
         if (!r) return
-        Sfx.play("select")
-        if (r.kind === "app") { r.entry.execute(); bump(r.id) }
-        else if (r.kind === "calc") Quickshell.execDetached(["bash", "-c", "printf %s \"$1\" | wl-copy", "_", r.val])
-        else if (r.kind === "web") Quickshell.execDetached(["xdg-open", "https://duckduckgo.com/?q=" + encodeURIComponent(r.q)])
+        // close first (and give the keyboard back), then start the app: the new window gets the focus and the
+        // launcher never stays on top of it, even if something below fails
         hide()
+        try { Sfx.play("select") } catch (e) { }
+        try {
+            if (r.kind === "app") { r.entry.execute(); bump(r.id) }
+            else if (r.kind === "calc") Quickshell.execDetached(["bash", "-c", "printf %s \"$1\" | wl-copy", "_", r.val])
+            else if (r.kind === "web") Quickshell.execDetached(["xdg-open", "https://duckduckgo.com/?q=" + encodeURIComponent(r.q)])
+        } catch (e) { console.warn("launcher: could not start " + r.name + ": " + e) }
     }
     function move(d) { if (results.length > 0) cur = Math.max(0, Math.min(results.length - 1, cur + d)) }
 
@@ -147,7 +151,9 @@ PanelWindow {
     Trigger { name: "launcher-open"; onFired: function(o) { if (ln.open) ln.hide(); else ln.show() } }
 
     // ---------- window ----------
-    visible: open || t > 0.01
+    visible: open || (t > 0.01 && !closeT.done)
+    // if the closing animation ever stalls (the compositor sent no frames for a moment), it still goes away
+    Timer { id: closeT; property bool done: false; interval: 600; running: !open; onRunningChanged: if (running) done = false; onTriggered: done = true }
     // niri: blur behind the card (Hyprland blurs this layer with its own rule)
     NiriBlur { win: ln; items: [card]; radius: card.radius; on: card.visible && card.opacity > 0.05 }
     color: "transparent"

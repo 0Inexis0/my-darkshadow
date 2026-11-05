@@ -59,7 +59,7 @@ Item {
         anchors.right: ctrls.left; anchors.rightMargin: 10
         anchors.verticalCenter: ctrls.verticalCenter; height: 18
         visible: pl.has && pl.length > 0
-        value: pl.frac; moving: pl.playing; seekable: true
+        value: pl.frac; moving: pl.playing && !Look.covered; seekable: true
         color: me.pal ? me.pal.primary : "#9ec9bd"; track: me.pal ? me.pal.track : Qt.rgba(1, 1, 1, 0.14)
         onMoved: function(v) { pl.seekTo(v) }
     }
@@ -93,7 +93,7 @@ Item {
             Blob { anchors.fill: parent; kind: me.player && me.player.isPlaying ? Look.shape : "circle"; color: me.pal ? me.pal.primary : "#F6F5F4"
                 scale: pm.pressed ? 0.86 : 1
                 Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
-                RotationAnimator on rotation { from: 0; to: 360; duration: 12000; loops: Animation.Infinite; running: me.player && me.player.isPlaying && !Look.lite } }
+                SlowSpin { turn: 360; period: 12000; running: (me.player && me.player.isPlaying && !Look.lite) && !Look.covered } }
             T {
                 anchors.centerIn: parent
                 text: me.player && me.player.isPlaying ? "" : ""

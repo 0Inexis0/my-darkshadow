@@ -135,7 +135,9 @@ PanelWindow {
     }
 
     // ---------- the window ----------
-    visible: open || t > 0.01
+    visible: open || (t > 0.01 && !closeT.done)
+    // if the closing animation ever stalls (the compositor sent no frames for a moment), it still goes away
+    Timer { id: closeT; property bool done: false; interval: 600; running: !open; onRunningChanged: if (running) done = false; onTriggered: done = true }
     // niri: blur behind it (Hyprland blurs this layer with its own rule)
     NiriBlur { win: gp; items: [panel]; radius: panel.radius; on: gp.et > 0.05 }
     color: "transparent"

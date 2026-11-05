@@ -19,7 +19,7 @@ Item {
         WavyArc {
             anchors.fill: parent
             value: pl.frac
-            moving: pl.playing && pw.running
+            moving: pl.playing && pw.running && !Look.covered
             color: pw.pal ? pw.pal.primary : "#9ec9bd"
             track: pw.pal ? pw.pal.track : Qt.rgba(1, 1, 1, 0.14)
         }
@@ -30,7 +30,7 @@ Item {
             source: pl.art
             empty: pw.pal ? pw.pal.chip : "#2a2c30"
             fallbackColor: pw.pal ? pw.pal.fg3 : "#8a8a8f"
-            RotationAnimator on rotation { from: 0; to: 360; duration: 24000; loops: Animation.Infinite; running: pw.running && pl.playing && !Look.lite }
+            SlowSpin { turn: 360; period: 24000; running: (pw.running && pl.playing && !Look.lite) && !Look.covered }
         }
     }
     T {
@@ -47,7 +47,7 @@ Item {
         anchors.top: tt.bottom; anchors.topMargin: 10
         x: 20; width: parent.width - 40; height: 20
         value: pl.frac
-        moving: pl.playing && pw.running
+        moving: pl.playing && pw.running && !Look.covered
         seekable: true
         color: pw.pal ? pw.pal.primary : "#9ec9bd"
         track: pw.pal ? pw.pal.track : Qt.rgba(1, 1, 1, 0.14)

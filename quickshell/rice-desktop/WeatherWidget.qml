@@ -57,7 +57,7 @@ Item {
         width: 76; height: 76
         anchors.verticalCenter: parent.verticalCenter
         Blob { anchors.fill: parent; kind: Look.shape; color: we.pal ? we.pal.chip : Qt.rgba(1, 1, 1, 0.08)
-            RotationAnimator on rotation { from: 0; to: 360; duration: 40000; loops: Animation.Infinite; running: we.running && !Look.lite } }
+            SlowSpin { turn: 360; period: 40000; running: (we.running && !Look.lite) && !Look.covered } }
         T { kind: "icon"; anchors.centerIn: parent; text: we.glyph(we.cond); font.pixelSize: 38; color: we.pal ? we.pal.primary : "#F6F5F4" }
     }
     Column {

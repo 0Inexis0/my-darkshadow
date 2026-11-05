@@ -561,19 +561,25 @@ step_apps() {
 }
 copy_bins() { local f; for f in "$ROOT"/bin/*; do [ -f "$f" ] && put "$f" "$BIN/$(basename "$f")"; done; return 0; }
 
-# NVIDIA: Hyprland draws the cursor itself (a hardware cursor is often invisible there). Nothing else is set:
+# NVIDIA alone: Hyprland draws the cursor itself (a hardware cursor is often invisible there). Nothing else is set:
 # V3.43 also set LIBVA_DRIVER_NAME=nvidia, __GLX_VENDOR_LIBRARY_NAME=nvidia and NVD_BACKEND=direct, and those broke
 # video in Chromium, Brave and Discord (sound but a black picture, GIFs that never play), above all on laptops
 # with Intel or AMD graphics next to the NVIDIA card. This file is written again on every update without them.
 write_gpu() {
-  local f="$HOME/.config/hypr/rice-gpu.lua"
+  local f="$HOME/.config/hypr/rice-gpu.lua" gpus nv=0 other=0
   # the old file set the video variables: take them out of the session's services now (apps started by
   # Hyprland keep them until you log out once; the summary says so)
   if grep -qs 'LIBVA_DRIVER_NAME' "$f"; then
     systemctl --user unset-environment LIBVA_DRIVER_NAME __GLX_VENDOR_LIBRARY_NAME NVD_BACKEND 2>/dev/null || true
     mkdir -p "$HOME/.cache/rice"; : >"$HOME/.cache/rice/gpu-env-fixed"
   fi
-  if [ -e /proc/driver/nvidia/version ] || { command -v lspci >/dev/null 2>&1 && lspci 2>/dev/null | grep -qiE 'vga.*nvidia|3d.*nvidia'; }; then
+  gpus="$(lspci 2>/dev/null | grep -iE 'vga|3d|display' || true)"
+  if [ -e /proc/driver/nvidia/version ] || printf '%s\n' "$gpus" | grep -qi nvidia; then nv=1; fi
+  if printf '%s\n' "$gpus" | grep -vi nvidia | grep -qiE 'intel|amd|ati |advanced micro|radeon'; then other=1; fi
+  # only when NVIDIA alone drives the screens. A laptop with Intel or AMD graphics next to the NVIDIA card (a
+  # hybrid laptop) draws the desktop on those: a software cursor there only costs smoothness (the desktop felt
+  # like 60 Hz on a 144 Hz screen)
+  if [ "$nv" = 1 ] && [ "$other" = 0 ]; then
     mkdir -p "$HOME/.config/hypr"
     cat >"$f" <<'LUA'
 -- written by DarkShadow's Shell for NVIDIA graphics (install.sh)
@@ -581,6 +587,8 @@ write_gpu() {
 hl.config({ cursor = { no_hardware_cursors = true } })
 LUA
     echo "NVIDIA: software cursor"
+  elif [ "$nv" = 1 ]; then
+    rm -f "$f"; echo "hybrid graphics (NVIDIA + Intel/AMD): nothing to change"
   else
     rm -f "$f"; echo "no NVIDIA card"
   fi

@@ -79,7 +79,7 @@ Item {
             Item {
                 x: 12; anchors.verticalCenter: parent.verticalCenter; width: 36; height: 36
                 Blob { anchors.fill: parent; kind: sec.open ? Look.shape : "circle"; color: sec.open ? pal.primary : pal.container
-                    RotationAnimator on rotation { from: 0; to: 360; duration: 30000; loops: Animation.Infinite; running: sec.open && ep.shown && !Look.lite } }
+                    SlowSpin { turn: 360; period: 30000; running: sec.open && ep.shown && !Look.lite } }
                 MIcon { anchors.centerIn: parent; size: 17; name: sec.icon; glyph: sec.glyph; filled: sec.open; color: sec.open ? pal.inkPrimary : pal.inkContainer }
             }
             Column {
@@ -174,7 +174,7 @@ Item {
                 Item {
                     width: 44; height: 44; anchors.verticalCenter: parent.verticalCenter
                     Blob { anchors.fill: parent; kind: Look.shape; color: pal.primary
-                        RotationAnimator on rotation { from: 0; to: 360; duration: 24000; loops: Animation.Infinite; running: ep.shown && !Look.lite } }
+                        SlowSpin { turn: 360; period: 24000; running: ep.shown && !Look.lite } }
                     MIcon { anchors.centerIn: parent; size: 20; name: "edit"; glyph: ""; filled: true; color: pal.inkPrimary }
                 }
                 Column {

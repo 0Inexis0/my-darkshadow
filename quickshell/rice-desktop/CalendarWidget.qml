@@ -93,7 +93,7 @@ Item {
                     visible: modelData.today
                     kind: Look.shape
                     color: cal.pal ? cal.pal.primary : "#F6F5F4"
-                    RotationAnimator on rotation { from: 0; to: 360; duration: 30000; loops: Animation.Infinite; running: modelData.today && !Look.lite }
+                    SlowSpin { turn: 360; period: 30000; running: (modelData.today && !Look.lite) && !Look.covered }
                 }
                 T {
                     kind: "number"

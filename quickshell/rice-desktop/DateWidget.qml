@@ -13,7 +13,7 @@ Item {
         anchors.fill: parent
         kind: dw.shape
         color: dw.pal ? (dw.bg > 0.02 ? dw.pal.primary : "transparent") : "#c8d8ff"
-        RotationAnimator on rotation { from: 0; to: -360; duration: 160000; loops: Animation.Infinite; running: dw.running && !Look.lite && dw.shape !== "circle" && dw.shape !== "square" }
+        SlowSpin { turn: -360; period: 160000; running: (dw.running && !Look.lite && dw.shape !== "circle" && dw.shape !== "square") && !Look.covered }
     }
     Column {
         anchors.centerIn: parent

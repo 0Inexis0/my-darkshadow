@@ -1,5 +1,10 @@
 # Changelog
 
+## V3.55
+- Smoother on laptops: the slowly turning shapes of the widgets and the island move in small steps instead of redrawing the screen on every frame, and the widgets' motion (and the visualizer) pauses while windows cover the desktop
+- Fix: on laptops with Intel or AMD graphics next to an NVIDIA card the cursor was drawn in software, which made the desktop feel like 60 Hz on a 144 Hz screen; it is only done when NVIDIA alone drives the screens now
+- Fix: the launcher could stay on screen after starting an app (and Esc did not close it); menus and panels always go away when closed, even if their animation stalls
+
 ## V3.54
 - Fix (niri): the wallpaper was grey (it only showed for a moment while switching workspaces): workspaces are see-through now, so the wallpaper shows and stays still, also in the overview
 - Fix (niri): screens start at size 100 % like on Hyprland (niri chose 150 % on sharp laptop screens)

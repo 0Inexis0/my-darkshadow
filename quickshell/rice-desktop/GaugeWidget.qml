@@ -62,7 +62,7 @@ Item {
             property real lv: gw.val
             property real ph: 0
             Behavior on lv { NumberAnimation { duration: 900; easing.type: Easing.OutCubic } }
-            NumberAnimation on ph { from: 0; to: Math.PI * 2; duration: 3000; loops: Animation.Infinite; running: gw.running && gw.water && !Look.lite }
+            NumberAnimation on ph { from: 0; to: Math.PI * 2; duration: 3000; loops: Animation.Infinite; running: gw.running && gw.water && !Look.lite && !Look.covered }
             onLvChanged: requestPaint(); onPhChanged: requestPaint()
             renderStrategy: Canvas.Cooperative
             onPaint: {
@@ -90,7 +90,7 @@ Item {
         color: gw.pal ? (gw.bg > 0.02 ? gw.pal.cardColor : "transparent") : "#2b2d31"
         line: gw.pal ? gw.pal.edge : "transparent"
         lineWidth: gw.pal && gw.pal.edgeWidth > 0 ? gw.pal.edgeWidth : 0
-        RotationAnimator on rotation { from: 0; to: 360; duration: 120000; loops: Animation.Infinite; running: gw.running && !Look.lite && gw.shape !== "circle" }
+        SlowSpin { turn: 360; period: 120000; running: (gw.running && !Look.lite && gw.shape !== "circle") && !Look.covered }
     }
     // the ring
     Canvas {
@@ -101,7 +101,7 @@ Item {
         property real v: gw.val
         property real ph: 0
         Behavior on v { NumberAnimation { duration: 700; easing.type: Easing.OutCubic } }
-        NumberAnimation on ph { from: 0; to: Math.PI * 2; duration: 2400; loops: Animation.Infinite; running: gw.running && !Look.lite }
+        NumberAnimation on ph { from: 0; to: Math.PI * 2; duration: 2400; loops: Animation.Infinite; running: gw.running && !Look.lite && !Look.covered }
         onVChanged: requestPaint()
         onPhChanged: requestPaint()
         renderStrategy: Canvas.Cooperative

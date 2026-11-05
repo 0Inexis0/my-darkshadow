@@ -79,7 +79,7 @@ Item {
         x: 16; y: 16; width: 46; height: 46
         Blob { anchors.fill: parent; kind: Look.shape; visible: !nc.picture || icImg.status !== Image.Ready
             color: nc.urgent ? Qt.rgba(1, 0.42, 0.42, 0.35) : nc.pal.container
-            RotationAnimator on rotation { from: 0; to: 360; duration: 30000; loops: Animation.Infinite; running: nc.popup && !Look.lite } }
+            SlowSpin { turn: 360; period: 30000; running: nc.popup && !Look.lite } }
         Image {
             id: icImg
             anchors.centerIn: parent

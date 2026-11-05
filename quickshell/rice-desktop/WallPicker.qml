@@ -19,7 +19,9 @@ PanelWindow {
     }
     NPal { id: pal; theme: "shell"; alpha: 0.94 }
 
-    visible: open || t > 0.01
+    visible: open || (t > 0.01 && !closeT.done)
+    // if the closing animation ever stalls (the compositor sent no frames for a moment), it still goes away
+    Timer { id: closeT; property bool done: false; interval: 600; running: !open; onRunningChanged: if (running) done = false; onTriggered: done = true }
     // niri: blur behind the card (Hyprland blurs this layer with its own rule)
     NiriBlur { win: wp; items: [sheet]; radius: sheet.radius; on: sheet.visible && sheet.opacity > 0.05 }
     color: "transparent"
@@ -86,7 +88,7 @@ PanelWindow {
             x: 24; y: 20; width: parent.width - 48; height: 48
             Item { id: hIc; width: 46; height: 46; anchors.verticalCenter: parent.verticalCenter
                 Blob { anchors.fill: parent; kind: Look.shape; color: pal.container
-                    RotationAnimator on rotation { from: 0; to: 360; duration: 30000; loops: Animation.Infinite; running: wp.open && !Look.lite } }
+                    SlowSpin { turn: 360; period: 30000; running: wp.open && !Look.lite } }
                 MIcon { anchors.centerIn: parent; size: 22; filled: true; name: "wallpaper"; glyph: ""; color: pal.inkContainer } }
             Column {
                 anchors.left: hIc.right; anchors.leftMargin: 14; anchors.verticalCenter: parent.verticalCenter
