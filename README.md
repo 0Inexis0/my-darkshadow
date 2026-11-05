@@ -9,17 +9,22 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/NixOS-supported-5277C3?style=for-the-badge&logo=nixos&logoColor=white" alt="NixOS">
-  <img src="https://img.shields.io/badge/Arch_Linux-supported-1793D1?style=for-the-badge&logo=archlinux&logoColor=white" alt="Arch Linux">
-  <img src="https://img.shields.io/badge/CachyOS-new-08A283?style=for-the-badge&logo=cachyos&logoColor=white" alt="CachyOS">
-  <img src="https://img.shields.io/badge/Fedora-new-51A2DA?style=for-the-badge&logo=fedora&logoColor=white" alt="Fedora">
+  <a href="#supported-systems"><img src="https://img.shields.io/badge/Arch_Linux-1793D1?style=for-the-badge&labelColor=11111b&logo=archlinux&logoColor=1793D1&color=1a1b26" alt="Arch Linux"></a>
+  <a href="#supported-systems"><img src="https://img.shields.io/badge/CachyOS-08A283?style=for-the-badge&labelColor=11111b&logo=cachyos&logoColor=08A283&color=1a1b26" alt="CachyOS"></a>
+  <a href="#supported-systems"><img src="https://img.shields.io/badge/Fedora-51A2DA?style=for-the-badge&labelColor=11111b&logo=fedora&logoColor=51A2DA&color=1a1b26" alt="Fedora"></a>
+  <a href="#supported-systems"><img src="https://img.shields.io/badge/NixOS-5277C3?style=for-the-badge&labelColor=11111b&logo=nixos&logoColor=7EBAE4&color=1a1b26" alt="NixOS"></a>
 </p>
 <p align="center">
-  <img src="https://img.shields.io/badge/Hyprland-0.55+-58E1FF?style=flat-square" alt="Hyprland">
-  <img src="https://img.shields.io/badge/niri-25.05+-F4A261?style=flat-square" alt="niri">
-  <img src="https://img.shields.io/badge/Quickshell-QML-8B7BFF?style=flat-square" alt="Quickshell">
-  <img src="https://img.shields.io/github/stars/shadowww-dev/shadows-shell?style=flat-square&color=f5c542" alt="Stars">
-  <img src="https://img.shields.io/github/last-commit/shadowww-dev/shadows-shell?style=flat-square" alt="Last commit">
+  <img src="https://img.shields.io/badge/Hyprland-0.55%2B-58E1FF?style=for-the-badge&labelColor=11111b&logo=hyprland&logoColor=58E1FF&color=1a1b26" alt="Hyprland 0.55+">
+  <img src="https://img.shields.io/badge/niri-25.05%2B-F4A261?style=for-the-badge&labelColor=11111b&logo=wayland&logoColor=F4A261&color=1a1b26" alt="niri 25.05+">
+  <img src="https://img.shields.io/badge/Quickshell-QML-8B7BFF?style=for-the-badge&labelColor=11111b&logo=qt&logoColor=8B7BFF&color=1a1b26" alt="Quickshell">
+</p>
+<p align="center">
+  <a href="https://github.com/shadowww-dev/shadows-shell/releases/latest"><img src="https://img.shields.io/github/v/release/shadowww-dev/shadows-shell?style=for-the-badge&labelColor=11111b&logo=github&logoColor=white&color=8B7BFF&label=release" alt="Latest release"></a>
+  <a href="https://github.com/shadowww-dev/shadows-shell/stargazers"><img src="https://img.shields.io/github/stars/shadowww-dev/shadows-shell?style=for-the-badge&labelColor=11111b&logo=starship&logoColor=f5c542&color=f5c542" alt="Stars"></a>
+  <a href="https://github.com/shadowww-dev/shadows-shell/commits"><img src="https://img.shields.io/github/last-commit/shadowww-dev/shadows-shell?style=for-the-badge&labelColor=11111b&logo=git&logoColor=white&color=4c566a&label=updated" alt="Last commit"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2ea043?style=for-the-badge&labelColor=11111b&logo=opensourceinitiative&logoColor=white" alt="MIT license"></a>
+  <a href="https://www.tiktok.com/@shadoww.dev"><img src="https://img.shields.io/badge/TikTok-shadoww.dev-ff0050?style=for-the-badge&labelColor=11111b&logo=tiktok&logoColor=white" alt="TikTok"></a>
 </p>
 
 <p align="center">
