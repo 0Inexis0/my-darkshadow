@@ -396,7 +396,10 @@ def layout(f, s, gaming, fx, flat, colors):
     strut = max(0, go - gaps)
     bw = int(clampf(opt(s, "general.border_size", 2), 0, 12, 2))
     c1, c2, inactive = colors
-    L = ["gaps %d" % gaps, 'center-focused-column "never"', "always-center-single-column"]
+    L = ["gaps %d" % gaps, 'center-focused-column "never"', "always-center-single-column",
+         # transparent workspaces: the wallpaper (in the backdrop, see the layer rules) shows behind the windows,
+         # stays still while you switch workspaces and is seen in the overview too
+         'background-color "transparent"']
     L += block("preset-column-widths", ["proportion 0.33333", "proportion 0.5", "proportion 0.66667", "proportion 1.0"])
     L += block("default-column-width", ["proportion 0.5"])
     L += block("focus-ring", ["off"])
@@ -453,9 +456,37 @@ def input_section(s):
     return block("input", L)
 
 
+def known_outputs():
+    """the screens niri has (asked now when niri runs, else the ones seen before): ~/.config/rice/niri-outputs.json"""
+    p = RICE + "/niri-outputs.json"
+    seen = jload(p, [])
+    if not isinstance(seen, list):
+        seen = []
+    sock = os.environ.get("NIRI_SOCKET", "")
+    if (sock and os.path.exists(sock)) and niri_bin():
+        try:
+            r = subprocess.run([niri_bin(), "msg", "-j", "outputs"], capture_output=True, text=True, timeout=4)
+            names = sorted(json.loads(r.stdout).keys())
+            new = sorted(set(seen) | set(names))
+            if new != sorted(seen):
+                os.makedirs(RICE, exist_ok=True)
+                with open(p, "w") as fh:
+                    json.dump(new, fh)
+            seen = new
+        except Exception:
+            pass
+    return [n for n in seen if re.fullmatch(r"[A-Za-z0-9_.:-]+", str(n))]
+
+
 def outputs(s):
     L = []
-    for name, m in (s.get("monitors") or {}).items():
+    mons = s.get("monitors") or {}
+    # a screen you did not set up in Settings > System > Screen gets size 100 %, like on Hyprland (niri would pick
+    # a bigger size by itself on sharp laptop screens, often 150 %)
+    for name in known_outputs():
+        if name not in mons:
+            L += block("output %s" % q(name), ["scale 1.0"])
+    for name, m in mons.items():
         if not re.fullmatch(r"[A-Za-z0-9_.:-]+", name):
             continue
         body = []

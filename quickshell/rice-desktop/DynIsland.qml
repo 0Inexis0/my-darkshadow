@@ -59,7 +59,18 @@ Item {
     // the cards you opened (not the ones that come and go by themselves): Esc, the desktop or another window close them
     readonly property bool sticky: big && (infoOpen || pinned)
     function closeCards() { infoOpen = false; pinned = false; hoverOpen = false }
-    Connections { target: ToplevelManager; function onActiveToplevelChanged() { if (isl.sticky) isl.closeCards() } }
+    // Another window taking the focus closes the opened card. Opening the card takes the keyboard, so the window
+    // that had it (Settings, a browser) lets it go: that is not "another window" and must not close the card again
+    // (it did: with any window open the card closed as soon as it opened).
+    property real openedAt: 0
+    onStickyChanged: if (sticky) openedAt = Date.now()
+    Connections {
+        target: ToplevelManager
+        function onActiveToplevelChanged() {
+            if (!isl.sticky || ToplevelManager.activeToplevel === null || Date.now() - isl.openedAt < 600) return
+            isl.closeCards()
+        }
+    }
     function openInfo(tab, toggle) {
         if (toggle && infoOpen && infoTab === tab) { infoOpen = false; return }
         infoTab = tab; pinned = false; hoverOpen = false; infoOpen = true; bump.restart()

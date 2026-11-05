@@ -321,7 +321,8 @@ FloatingWindow {
         { name: "Shapes", icon: "\uf5fd" },
         { name: "Windows", icon: "\uf2d0" },
         { name: "Language & region", icon: "\uf1ab" },
-        { name: "System", icon: "\uf108" }
+        { name: "System", icon: "\uf108" },
+        { name: "Screen", icon: "\uf108" }
     ]
 
 
@@ -335,7 +336,7 @@ FloatingWindow {
         { group: "desk", name: "Desktop", icon: "\uf108", sym: "desktop_windows", pages: [12, 25, 4, 11], caption: "Widgets, windows, " + wmLabel + " and the lock screen" },
         { group: "bar", name: "Bar & launcher", icon: "\uf0c9", sym: "toolbar", pages: [2, 3, 6, 7], caption: "The bar, the dynamic island and the launcher" },
         { group: "snd", name: "Sound & language", icon: "\uf028", sym: "graphic_eq", pages: [1, 10, 26], caption: "Sounds, notifications, language and region" },
-        { group: "sys", name: "System", icon: "\uf013", sym: "settings", pages: [27, 5, 23, 15], caption: "This computer, recording, keyboard and services" },
+        { group: "sys", name: "System", icon: "\uf013", sym: "settings", pages: [27, 28, 5, 23, 15], caption: "This computer, the screen, recording, keyboard and services" },
         { group: "game", name: "Gaming", icon: "\uf11b", sym: "sports_esports", pages: [16], caption: "Play without distractions" },
         { group: "about", name: "About", icon: "\uf05a", sym: "info", pages: [17], caption: "Version, system and credits" }
     ]
@@ -876,6 +877,7 @@ FloatingWindow {
             PageSlot { nav: win; idx: 25; cur: win.page; WindowsPage { anchors.fill: parent; ctl: win } }
             PageSlot { nav: win; idx: 26; cur: win.page; RegionPage { anchors.fill: parent; ctl: win } }
             PageSlot { nav: win; idx: 27; cur: win.page; SystemPage { anchors.fill: parent; ctl: win } }
+            PageSlot { nav: win; idx: 28; cur: win.page; ScreenPage { anchors.fill: parent; ctl: win } }
         }
 
         // results: the setting, and where it is (page > section)

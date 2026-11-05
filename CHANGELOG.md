@@ -1,5 +1,11 @@
 # Changelog
 
+## V3.54
+- Fix (niri): the wallpaper was grey (it only showed for a moment while switching workspaces): workspaces are see-through now, so the wallpaper shows and stays still, also in the overview
+- Fix (niri): screens start at size 100 % like on Hyprland (niri chose 150 % on sharp laptop screens)
+- New: Settings > System > Screen: the size of everything, the resolution and the refresh rate of each screen (Hyprland and niri); a change goes back by itself after 15 seconds unless you press Keep
+- Fix: the island's card (a click on the clock) closed at once while a window was open, like Settings
+
 ## V3.53
 - Bug fixes: videos in Brave, Chrome and Discord played sound with a black picture and GIFs did not play (graphics settings an earlier update added for NVIDIA cards broke them; log out and back in once after this update)
 - Bug fixes: desktop widgets made the whole desktop stutter on laptops with many of them (each widget covered the whole screen; now each one is only as big as itself)
