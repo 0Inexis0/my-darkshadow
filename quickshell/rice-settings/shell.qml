@@ -336,7 +336,8 @@ FloatingWindow {
         { name: "Screen", icon: "\uf108" },
         { name: "Look & Feel", icon: "\uf120" },
         { name: "Keybinds", icon: "\uf11c" },
-        { name: "Languages", icon: "\uf1ab" }
+        { name: "Languages", icon: "\uf1ab" },
+        { name: "Security", icon: "\uf132" }
     ]
 
 
@@ -352,6 +353,7 @@ FloatingWindow {
         { group: "snd", name: "Sound & language", icon: "\uf028", sym: "graphic_eq", pages: [1, 10, 26], caption: I18n.t("Sounds, notifications, language and region") },
         { group: "sys", name: "System", icon: "\uf013", sym: "settings", pages: [27, 30, 31, 28, 5, 23, 15], caption: I18n.t("This computer, keybinds, the screen, recording, keyboard and services") },
         { group: "game", name: "Gaming", icon: "\uf11b", sym: "sports_esports", pages: [16], caption: I18n.t("Play without distractions") },
+        { group: "sec", name: "Security", icon: "\uf132", sym: "shield", pages: [32], caption: I18n.t("Virus scan, system check and shell files") },
         { group: "about", name: "About", icon: "\uf05a", sym: "info", pages: [17], caption: I18n.t("Version, system and credits") }
     ]
     // the navigation rail: Home, then one stop per group (Gaming hub and About are groups with one page)
@@ -907,6 +909,7 @@ FloatingWindow {
             PageSlot { nav: win; idx: 29; cur: win.page; page: Component { LookFeelPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 30; cur: win.page; page: Component { KeybindsPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 31; cur: win.page; page: Component { LanguagesPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 32; cur: win.page; page: Component { SecurityPage { anchors.fill: parent; ctl: win } } }
         }
 
         // results: the setting, and where it is (page > section)

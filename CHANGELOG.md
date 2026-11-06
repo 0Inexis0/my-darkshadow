@@ -1,5 +1,10 @@
 # Changelog
 
+## V3.64: Security
+- New: Settings > **Security** (next to About): a virus scan with ClamAV (quick scan or the home folder, a quarantine you can restore from, an optional quick scan every week with a notification only when something is found), a check of your system (firewall, SSH, open ports, disk encryption, screen lock when idle, restart after a kernel update, scheduled jobs, things that start by themselves), and a watch on the shell's own files that shows when something other than an update changed them
+- Installing ClamAV and updating its database open a terminal with the command, so you see it and type your password there; nothing runs as root by itself
+- Experimental (hidden, press Show): a hardening switch (programs can no longer read each other's memory, kernel details are hidden from them)
+- The installer remembers the shell files after every install and update (Security > Shell files)
 ## V3.63: languages
 - New: Settings > System > **Languages**: choose the language of Settings from 20: English, Polski, Português (Brasil), Español, Français, Deutsch, Italiano, Nederlands, Русский, Українська, Türkçe, Čeština, Svenska, Română, Magyar, 日本語, 한국어, 简体中文, Bahasa Indonesia, Tiếng Việt. It changes at once and is remembered
 - Translated so far: the menu, the page names and captions, the search box and the first things on Home; the rest stays in English until it is translated (the words are in rice-settings/I18nData.qml: add a line to add or fix a translation)

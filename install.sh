@@ -710,6 +710,8 @@ step_finish() {
       task "niri config (written again for your niri when it first starts)" t "$BIN/rice-niri" apply
     fi
   fi
+  # Settings > Security > Shell files: the files are watched from here on (after every install and update)
+  [ -x "$BIN/rice-security" ] && task "Security: remember the shell files as they are now" t "$BIN/rice-security" baseline
   if [ "$IN_HYPR" = 1 ] && [ "$DRY_RUN" != 1 ]; then
     task "Reloading Hyprland" t hyprctl reload
     task "Restarting the bar and the desktop widgets" restart_shell

@@ -84,7 +84,14 @@ Singleton {
             "Choose the language of Settings. It changes right away.": "Wybierz język Ustawień. Zmienia się od razu.",
             "Some pages are still in English; they will be translated step by step.": "Niektóre strony są jeszcze po angielsku; będą tłumaczone po kolei.",
             "YOUR LANGUAGE": "TWÓJ JĘZYK",
-            "All languages": "Wszystkie języki"
+            "All languages": "Wszystkie języki",
+            "Security": "Bezpieczeństwo",
+            "SECURITY": "BEZPIECZEŃSTWO",
+            "Virus scan, system check and shell files": "Skan wirusów, kontrola systemu i pliki shella",
+            "Virus scan": "Skan wirusów",
+            "Check your system": "Sprawdź swój system",
+            "Shell files": "Pliki shella",
+            "Scan every week": "Skanuj co tydzień"
         }),
         "pt-BR": ({
             "Home": "Início",
@@ -164,7 +171,14 @@ Singleton {
             "Choose the language of Settings. It changes right away.": "Escolha o idioma das Configurações. Muda na hora.",
             "Some pages are still in English; they will be translated step by step.": "Algumas páginas ainda estão em inglês; serão traduzidas aos poucos.",
             "YOUR LANGUAGE": "SEU IDIOMA",
-            "All languages": "Todos os idiomas"
+            "All languages": "Todos os idiomas",
+            "Security": "Segurança",
+            "SECURITY": "SEGURANÇA",
+            "Virus scan, system check and shell files": "Verificação de vírus, checagem do sistema e arquivos do shell",
+            "Virus scan": "Verificação de vírus",
+            "Check your system": "Verifique seu sistema",
+            "Shell files": "Arquivos do shell",
+            "Scan every week": "Verificar toda semana"
         }),
         "es": ({
             "Home": "Inicio",
@@ -244,7 +258,14 @@ Singleton {
             "Choose the language of Settings. It changes right away.": "Elige el idioma de los Ajustes. Cambia al instante.",
             "Some pages are still in English; they will be translated step by step.": "Algunas páginas siguen en inglés; se traducirán poco a poco.",
             "YOUR LANGUAGE": "TU IDIOMA",
-            "All languages": "Todos los idiomas"
+            "All languages": "Todos los idiomas",
+            "Security": "Seguridad",
+            "SECURITY": "SEGURIDAD",
+            "Virus scan, system check and shell files": "Análisis de virus, revisión del sistema y archivos del shell",
+            "Virus scan": "Análisis de virus",
+            "Check your system": "Revisa tu sistema",
+            "Shell files": "Archivos del shell",
+            "Scan every week": "Analizar cada semana"
         }),
         "fr": ({
             "Home": "Accueil",
@@ -324,7 +345,14 @@ Singleton {
             "Choose the language of Settings. It changes right away.": "Choisissez la langue des Réglages. Le changement est immédiat.",
             "Some pages are still in English; they will be translated step by step.": "Certaines pages sont encore en anglais ; elles seront traduites petit à petit.",
             "YOUR LANGUAGE": "VOTRE LANGUE",
-            "All languages": "Toutes les langues"
+            "All languages": "Toutes les langues",
+            "Security": "Sécurité",
+            "SECURITY": "SÉCURITÉ",
+            "Virus scan, system check and shell files": "Analyse antivirus, vérification du système et fichiers du shell",
+            "Virus scan": "Analyse antivirus",
+            "Check your system": "Vérifiez votre système",
+            "Shell files": "Fichiers du shell",
+            "Scan every week": "Analyser chaque semaine"
         }),
         "de": ({
             "Home": "Start",
@@ -404,7 +432,14 @@ Singleton {
             "Choose the language of Settings. It changes right away.": "Wähle die Sprache der Einstellungen. Sie ändert sich sofort.",
             "Some pages are still in English; they will be translated step by step.": "Einige Seiten sind noch auf Englisch; sie werden nach und nach übersetzt.",
             "YOUR LANGUAGE": "DEINE SPRACHE",
-            "All languages": "Alle Sprachen"
+            "All languages": "Alle Sprachen",
+            "Security": "Sicherheit",
+            "SECURITY": "SICHERHEIT",
+            "Virus scan, system check and shell files": "Virenscan, Systemprüfung und Shell-Dateien",
+            "Virus scan": "Virenscan",
+            "Check your system": "System prüfen",
+            "Shell files": "Shell-Dateien",
+            "Scan every week": "Jede Woche scannen"
         }),
         "it": ({
             "Home": "Home",
@@ -484,7 +519,14 @@ Singleton {
             "Choose the language of Settings. It changes right away.": "Scegli la lingua delle Impostazioni. Cambia subito.",
             "Some pages are still in English; they will be translated step by step.": "Alcune pagine sono ancora in inglese; saranno tradotte a poco a poco.",
             "YOUR LANGUAGE": "LA TUA LINGUA",
-            "All languages": "Tutte le lingue"
+            "All languages": "Tutte le lingue",
+            "Security": "Sicurezza",
+            "SECURITY": "SICUREZZA",
+            "Virus scan, system check and shell files": "Scansione virus, controllo del sistema e file della shell",
+            "Virus scan": "Scansione virus",
+            "Check your system": "Controlla il tuo sistema",
+            "Shell files": "File della shell",
+            "Scan every week": "Scansiona ogni settimana"
         }),
         "nl": ({
             "Home": "Start",
@@ -564,7 +606,14 @@ Singleton {
             "Choose the language of Settings. It changes right away.": "Kies de taal van Instellingen. Het verandert direct.",
             "Some pages are still in English; they will be translated step by step.": "Sommige pagina's zijn nog in het Engels; ze worden stap voor stap vertaald.",
             "YOUR LANGUAGE": "JOUW TAAL",
-            "All languages": "Alle talen"
+            "All languages": "Alle talen",
+            "Security": "Beveiliging",
+            "SECURITY": "BEVEILIGING",
+            "Virus scan, system check and shell files": "Virusscan, systeemcontrole en shellbestanden",
+            "Virus scan": "Virusscan",
+            "Check your system": "Controleer je systeem",
+            "Shell files": "Shellbestanden",
+            "Scan every week": "Elke week scannen"
         }),
         "ru": ({
             "Home": "Главная",
@@ -644,7 +693,14 @@ Singleton {
             "Choose the language of Settings. It changes right away.": "Выберите язык Настроек. Меняется сразу.",
             "Some pages are still in English; they will be translated step by step.": "Некоторые страницы пока на английском; их переведут постепенно.",
             "YOUR LANGUAGE": "ВАШ ЯЗЫК",
-            "All languages": "Все языки"
+            "All languages": "Все языки",
+            "Security": "Безопасность",
+            "SECURITY": "БЕЗОПАСНОСТЬ",
+            "Virus scan, system check and shell files": "Проверка на вирусы, проверка системы и файлы оболочки",
+            "Virus scan": "Проверка на вирусы",
+            "Check your system": "Проверьте свою систему",
+            "Shell files": "Файлы оболочки",
+            "Scan every week": "Сканировать каждую неделю"
         }),
         "uk": ({
             "Home": "Головна",
@@ -724,7 +780,14 @@ Singleton {
             "Choose the language of Settings. It changes right away.": "Виберіть мову Налаштувань. Змінюється одразу.",
             "Some pages are still in English; they will be translated step by step.": "Деякі сторінки поки англійською; їх перекладуть поступово.",
             "YOUR LANGUAGE": "ВАША МОВА",
-            "All languages": "Усі мови"
+            "All languages": "Усі мови",
+            "Security": "Безпека",
+            "SECURITY": "БЕЗПЕКА",
+            "Virus scan, system check and shell files": "Перевірка на віруси, перевірка системи та файли оболонки",
+            "Virus scan": "Перевірка на віруси",
+            "Check your system": "Перевірте свою систему",
+            "Shell files": "Файли оболонки",
+            "Scan every week": "Сканувати щотижня"
         }),
         "tr": ({
             "Home": "Ana sayfa",
@@ -804,7 +867,14 @@ Singleton {
             "Choose the language of Settings. It changes right away.": "Ayarlar'ın dilini seçin. Hemen değişir.",
             "Some pages are still in English; they will be translated step by step.": "Bazı sayfalar hâlâ İngilizce; adım adım çevrilecek.",
             "YOUR LANGUAGE": "DİLİNİZ",
-            "All languages": "Tüm diller"
+            "All languages": "Tüm diller",
+            "Security": "Güvenlik",
+            "SECURITY": "GÜVENLİK",
+            "Virus scan, system check and shell files": "Virüs taraması, sistem kontrolü ve kabuk dosyaları",
+            "Virus scan": "Virüs taraması",
+            "Check your system": "Sisteminizi kontrol edin",
+            "Shell files": "Kabuk dosyaları",
+            "Scan every week": "Her hafta tara"
         }),
         "cs": ({
             "Home": "Domů",
@@ -884,7 +954,14 @@ Singleton {
             "Choose the language of Settings. It changes right away.": "Vyberte jazyk Nastavení. Změní se okamžitě.",
             "Some pages are still in English; they will be translated step by step.": "Některé stránky jsou zatím v angličtině; budou se překládat postupně.",
             "YOUR LANGUAGE": "VÁŠ JAZYK",
-            "All languages": "Všechny jazyky"
+            "All languages": "Všechny jazyky",
+            "Security": "Zabezpečení",
+            "SECURITY": "ZABEZPEČENÍ",
+            "Virus scan, system check and shell files": "Antivirová kontrola, kontrola systému a soubory shellu",
+            "Virus scan": "Antivirová kontrola",
+            "Check your system": "Zkontrolujte svůj systém",
+            "Shell files": "Soubory shellu",
+            "Scan every week": "Skenovat každý týden"
         }),
         "sv": ({
             "Home": "Hem",
@@ -964,7 +1041,14 @@ Singleton {
             "Choose the language of Settings. It changes right away.": "Välj språk för Inställningar. Det ändras direkt.",
             "Some pages are still in English; they will be translated step by step.": "Vissa sidor är fortfarande på engelska; de översätts steg för steg.",
             "YOUR LANGUAGE": "DITT SPRÅK",
-            "All languages": "Alla språk"
+            "All languages": "Alla språk",
+            "Security": "Säkerhet",
+            "SECURITY": "SÄKERHET",
+            "Virus scan, system check and shell files": "Virusskanning, systemkontroll och shell-filer",
+            "Virus scan": "Virusskanning",
+            "Check your system": "Kontrollera ditt system",
+            "Shell files": "Shell-filer",
+            "Scan every week": "Skanna varje vecka"
         }),
         "ro": ({
             "Home": "Acasă",
@@ -1044,7 +1128,14 @@ Singleton {
             "Choose the language of Settings. It changes right away.": "Alege limba Setărilor. Se schimbă imediat.",
             "Some pages are still in English; they will be translated step by step.": "Unele pagini sunt încă în engleză; vor fi traduse pe rând.",
             "YOUR LANGUAGE": "LIMBA TA",
-            "All languages": "Toate limbile"
+            "All languages": "Toate limbile",
+            "Security": "Securitate",
+            "SECURITY": "SECURITATE",
+            "Virus scan, system check and shell files": "Scanare antivirus, verificarea sistemului și fișierele shell-ului",
+            "Virus scan": "Scanare antivirus",
+            "Check your system": "Verifică-ți sistemul",
+            "Shell files": "Fișierele shell-ului",
+            "Scan every week": "Scanează în fiecare săptămână"
         }),
         "hu": ({
             "Home": "Kezdőlap",
@@ -1124,7 +1215,14 @@ Singleton {
             "Choose the language of Settings. It changes right away.": "Válaszd ki a Beállítások nyelvét. Azonnal érvénybe lép.",
             "Some pages are still in English; they will be translated step by step.": "Néhány oldal még angol; fokozatosan lefordítjuk őket.",
             "YOUR LANGUAGE": "A TE NYELVED",
-            "All languages": "Minden nyelv"
+            "All languages": "Minden nyelv",
+            "Security": "Biztonság",
+            "SECURITY": "BIZTONSÁG",
+            "Virus scan, system check and shell files": "Vírusellenőrzés, rendszerellenőrzés és a shell fájljai",
+            "Virus scan": "Vírusellenőrzés",
+            "Check your system": "Rendszered ellenőrzése",
+            "Shell files": "A shell fájljai",
+            "Scan every week": "Ellenőrzés hetente"
         }),
         "ja": ({
             "Home": "ホーム",
@@ -1204,7 +1302,14 @@ Singleton {
             "Choose the language of Settings. It changes right away.": "設定の言語を選びます。すぐに切り替わります。",
             "Some pages are still in English; they will be translated step by step.": "一部のページはまだ英語です。順次翻訳していきます。",
             "YOUR LANGUAGE": "あなたの言語",
-            "All languages": "すべての言語"
+            "All languages": "すべての言語",
+            "Security": "セキュリティ",
+            "SECURITY": "セキュリティ",
+            "Virus scan, system check and shell files": "ウイルススキャン、システムチェック、シェルのファイル",
+            "Virus scan": "ウイルススキャン",
+            "Check your system": "システムをチェック",
+            "Shell files": "シェルのファイル",
+            "Scan every week": "毎週スキャン"
         }),
         "ko": ({
             "Home": "홈",
@@ -1284,7 +1389,14 @@ Singleton {
             "Choose the language of Settings. It changes right away.": "설정의 언어를 선택하세요. 바로 바뀝니다.",
             "Some pages are still in English; they will be translated step by step.": "일부 페이지는 아직 영어입니다. 차근차근 번역할 예정입니다.",
             "YOUR LANGUAGE": "내 언어",
-            "All languages": "모든 언어"
+            "All languages": "모든 언어",
+            "Security": "보안",
+            "SECURITY": "보안",
+            "Virus scan, system check and shell files": "바이러스 검사, 시스템 점검, 셸 파일",
+            "Virus scan": "바이러스 검사",
+            "Check your system": "시스템 점검",
+            "Shell files": "셸 파일",
+            "Scan every week": "매주 검사"
         }),
         "zh-CN": ({
             "Home": "主页",
@@ -1364,7 +1476,14 @@ Singleton {
             "Choose the language of Settings. It changes right away.": "选择设置的语言，立即生效。",
             "Some pages are still in English; they will be translated step by step.": "有些页面仍是英文，会逐步翻译。",
             "YOUR LANGUAGE": "你的语言",
-            "All languages": "所有语言"
+            "All languages": "所有语言",
+            "Security": "安全",
+            "SECURITY": "安全",
+            "Virus scan, system check and shell files": "病毒扫描、系统检查和 Shell 文件",
+            "Virus scan": "病毒扫描",
+            "Check your system": "检查你的系统",
+            "Shell files": "Shell 文件",
+            "Scan every week": "每周扫描"
         }),
         "id": ({
             "Home": "Beranda",
@@ -1444,7 +1563,14 @@ Singleton {
             "Choose the language of Settings. It changes right away.": "Pilih bahasa Pengaturan. Langsung berubah.",
             "Some pages are still in English; they will be translated step by step.": "Beberapa halaman masih berbahasa Inggris; akan diterjemahkan bertahap.",
             "YOUR LANGUAGE": "BAHASA ANDA",
-            "All languages": "Semua bahasa"
+            "All languages": "Semua bahasa",
+            "Security": "Keamanan",
+            "SECURITY": "KEAMANAN",
+            "Virus scan, system check and shell files": "Pemindaian virus, pemeriksaan sistem, dan file shell",
+            "Virus scan": "Pemindaian virus",
+            "Check your system": "Periksa sistem Anda",
+            "Shell files": "File shell",
+            "Scan every week": "Pindai setiap minggu"
         }),
         "vi": ({
             "Home": "Trang chủ",
@@ -1524,7 +1650,14 @@ Singleton {
             "Choose the language of Settings. It changes right away.": "Chọn ngôn ngữ của Cài đặt. Thay đổi ngay lập tức.",
             "Some pages are still in English; they will be translated step by step.": "Một số trang vẫn là tiếng Anh; sẽ được dịch dần.",
             "YOUR LANGUAGE": "NGÔN NGỮ CỦA BẠN",
-            "All languages": "Tất cả ngôn ngữ"
+            "All languages": "Tất cả ngôn ngữ",
+            "Security": "Bảo mật",
+            "SECURITY": "BẢO MẬT",
+            "Virus scan, system check and shell files": "Quét virus, kiểm tra hệ thống và tệp của shell",
+            "Virus scan": "Quét virus",
+            "Check your system": "Kiểm tra hệ thống của bạn",
+            "Shell files": "Tệp của shell",
+            "Scan every week": "Quét mỗi tuần"
         })
     })
 }
