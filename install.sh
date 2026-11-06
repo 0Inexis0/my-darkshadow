@@ -26,6 +26,7 @@ Usage: ./install.sh [options]
       --wm=hyprland|niri|both   the window manager to set up (asked otherwise; both: pick one at login)
       --aur          Arch: get yay and every AUR package (without it: only when the shell needs one)
       --no-aur       Arch: never build yay; AUR packages are skipped (the cursor and fonts come from GitHub)
+      --no-input-group  do not join the input group (Infinite Desktop: SUPER + ALT + mouse then stays off)
       --restore      put back the files from the newest backup
   -h, --help         this help
 U
@@ -42,6 +43,7 @@ for a in "$@"; do
     --wm=hyprland|--wm=niri|--wm=both) WM_ARG="${a#--wm=}" ;;
     --aur) AUR_ARG=yes ;;
     --no-aur) AUR_ARG=no ;;
+    --no-input-group) NO_INPUT=1 ;;
     -h|--help) usage; exit 0 ;;
     *) fail "Unknown option: $a"; usage; exit 2 ;;
   esac
@@ -395,6 +397,7 @@ step_packages() {
       printf '\n        %simports = [ %s/nix/module.nix ];%s\n\n' "$CW" "$ROOT" "$C0"
       note "or with flakes:  inputs.darkshadows-shell.url = \"github:shadowww-dev/shadows-shell\";"
       note "then run:  sudo nixos-rebuild switch"
+      note "Infinite Desktop (SUPER + ALT + mouse) also needs:  users.users.$USER.extraGroups = [ \"input\" ];"
       ;;
     *)
       warn "$DISTRO_NAME is not supported for automatic packages."
@@ -619,6 +622,21 @@ LUA
 # power modes (Performance / Balanced / Power saver in the island, the control center and Home): power-profiles-daemon.
 # Packages only come with a full install; this also runs on updates, so it is there for everyone. Not when TLP,
 # auto-cpufreq or tuned (Fedora's tuned-ppd gives the same thing) already manage power.
+# Infinite Desktop: SUPER + ALT + mouse reads the mouse and the keyboard directly (rice-canvasd), which needs the
+# input group. NixOS keeps groups in its configuration: it gets the line to add instead.
+ensure_input_group() {
+  [ "$DRY_RUN" = 1 ] && return 0
+  if id -nG "$USER" 2>/dev/null | tr ' ' '\n' | grep -qx input; then echo "input group: yes"; return 0; fi
+  if [ "${NO_INPUT:-0}" = 1 ]; then echo "input group: skipped (--no-input-group)"; return 0; fi
+  if [ "$FAMILY" = nixos ]; then
+    echo "NixOS: add \"input\" to users.users.$USER.extraGroups in /etc/nixos/configuration.nix, then sudo nixos-rebuild switch"
+    return 0
+  fi
+  getent group input >/dev/null 2>&1 || { echo "no input group on this system"; return 0; }
+  sudo -n true 2>/dev/null || { echo "input group: needs sudo (Settings > Desktop > Infinite Desktop > Allow)"; return 0; }
+  sudo -n usermod -aG input "$USER" && echo "input group: joined (counts after the next login)"
+}
+
 ensure_power_modes() {
   [ "$DRY_RUN" = 1 ] && return 0
   local other=0
@@ -647,6 +665,10 @@ wire_hypr() {
     printf '%s\n%s\n\n' "-- DarkShadow's Shell: settings this Hyprland does not know are skipped instead of stopping the config" 'pcall(require, "rice-guard")' | cat - "$lua" >"$lua.rice-new" && mv -f "$lua.rice-new" "$lua"
   fi
   if [ -f "$HOME/.config/hypr/rice-gpu.lua" ] && ! grep -q 'rice-gpu' "$lua"; then printf '\npcall(require, "rice-gpu")\n' >>"$lua"; fi
+  # Settings > Desktop > Infinite Desktop (SUPER + F)
+  if [ -f "$HOME/.config/hypr/rice-infinite.lua" ] && ! grep -q 'rice-infinite' "$lua"; then printf '\npcall(require, "rice-infinite")\n' >>"$lua"; fi
+  # your own keys for the shell's actions (Settings > System > Keybinds): loaded after everything else
+  if [ -f "$HOME/.config/hypr/rice-keymap.lua" ] && ! grep -q 'rice-keymap' "$lua"; then printf '\npcall(require, "rice-keymap")\n' >>"$lua"; fi
   for m in rice-settings rice-desktop rice-keys; do
     if [ -f "$HOME/.config/hypr/$m.lua" ] && ! grep -q "^[[:space:]]*require(\"$m\")" "$lua"; then
       printf '\nrequire("%s")\n' "$m" >>"$lua"
@@ -675,6 +697,7 @@ step_finish() {
   task "Window manager: $(wm_name)" remember_wm
   task "Graphics card (NVIDIA cursor)" write_gpu
   task "Loading the shell's modules in Hyprland" wire_hypr
+  task "Infinite Desktop: SUPER + ALT + mouse (input group)" ensure_input_group
   local fx; fx="$(mktemp)"
   task "Fitting the config to this computer" fixup "$fx"
   grep -v '^nothing to fix$' "$fx" 2>/dev/null | while IFS= read -r line; do note "$line"; done

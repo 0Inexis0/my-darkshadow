@@ -1,5 +1,22 @@
 # Changelog
 
+## V3.70
+- Infinite Desktop: SUPER + ALT + mouse no longer jumps ahead all of a sudden while you move slowly (the pointer was counted on top of the mouse)
+## V3.69: SUPER + ALT moves the canvas, your own keys
+- Infinite Desktop: **hold SUPER + ALT and move the mouse**: the canvas moves with it, every time, also at the edge of the screen. It starts with Hyprland and also works with Infinite Desktop off, on the floating windows of the workspace you are on
+- By default the windows move exactly with the mouse: the window under the pointer stays under it, like holding the canvas (faster in Settings, or Reversed)
+- **SUPER + drag a window to the edge of the screen**: the other windows make room, so you can take it as far as you want
+- It reads the mouse and the keyboard directly, which needs the input group: the installer joins it for you (NixOS: it tells you the line for configuration.nix; --no-input-group to skip). Settings > Desktop > Infinite Desktop shows if it is ready, with the one step when it is not; `rice-infinite check` tells what it finds
+- ALT + mouse button is gone, SUPER + drag (move a window) works as before
+- Settings > System > **Keybinds**: the pencil next to a key gives that action other keys (Hyprland): pick Super / Ctrl / Alt / Shift, press the key, see if the keys are already used, save. It works right away; a dot shows the keys you changed, Default and Reset all bring them back
+## V3.65: Infinite Desktop
+- New (Hyprland): **Infinite Desktop**. Press SUPER + F (or Settings > Desktop > Infinite Desktop) and the windows of the workspace float on an endless canvas
+  - CTRL + mouse wheel zooms out and in around the pointer: the windows get smaller and come together, so you see them all
+  - A new window gets its own room next to the window you were in (it never lands on top of the others) and the canvas glides to it, the pointer too
+  - SUPER + CTRL + arrows: go to the next window that way, the canvas glides until it is in the middle
+  - SUPER + mouse wheel moves the canvas up and down, SUPER + SHIFT + wheel left and right, SUPER + ALT + arrows too, SUPER + ALT + 0 goes back to 100 %
+  - Turning it off puts every window back where it was and tiles again the ones that were tiled; CTRL + wheel goes back to your apps
+  - Zoom speed, how far it zooms out and the move step are in Settings; it runs inside Hyprland (no extra programs, no input group)
 ## V3.64: Security
 - New: Settings > **Security** (next to About): a virus scan with ClamAV (quick scan or the home folder, a quarantine you can restore from, an optional quick scan every week with a notification only when something is found), a check of your system (firewall, SSH, open ports, disk encryption, screen lock when idle, restart after a kernel update, scheduled jobs, things that start by themselves), and a watch on the shell's own files that shows when something other than an update changed them
 - Installing ClamAV and updating its database open a terminal with the command, so you see it and type your password there; nothing runs as root by itself

@@ -487,7 +487,13 @@ pcall(hl.config, { decoration = { blur = { popups = true, popups_ignorealpha = 0
 
 require("rice-keys")
 
+-- Infinite Desktop (SUPER + F)
+pcall(require, "rice-infinite")
+
 require("rice-dashboard")
 
 -- must stay last: gaming mode and "no blur & transparency" override
 require("rice-gaming")
+
+-- your own keys for the shell's actions (Settings > System > Keybinds)
+pcall(require, "rice-keymap")

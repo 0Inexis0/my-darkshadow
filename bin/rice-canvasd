@@ -1,0 +1,270 @@
+#!/usr/bin/env python3
+"""rice-canvasd: moves the Infinite Desktop canvas while you hold SUPER + ALT and move the mouse.
+
+It reads the keyboards and mice directly (/dev/input), so it knows for sure when the keys are held and how far the
+mouse moved, even at the edge of the screen. That needs your user in the "input" group (Settings > Desktop >
+Infinite Desktop > Allow); without it nothing happens and Settings says so.
+Hyprland starts it (rice-infinite.lua); it waits quietly until you hold the keys, and stops with Hyprland.
+It works on the floating windows of the workspace you are on; with Infinite Desktop (SUPER + F) on, all windows float.
+
+  SUPER + ALT + move the mouse      the canvas moves with the mouse (Settings can reverse it)
+  SUPER + left drag a window        at the edge of the screen it pushes the other windows away, so it goes on
+  rice-canvasd --check              what it finds: keyboards, mice, and whether it may read them
+"""
+import json
+import os
+import re
+import select
+import signal
+import struct
+import subprocess
+import sys
+import time
+
+RUN = os.environ.get("XDG_RUNTIME_DIR") or "/tmp"
+PID = os.path.join(RUN, "rice-canvasd.pid")
+STATUS = os.path.join(RUN, "rice-canvasd.json")
+CONF = os.path.expanduser("~/.config/rice/infinite.conf")
+
+EV = struct.Struct("llHHi")
+EV_KEY, EV_REL = 1, 2
+REL_X, REL_Y = 0, 1
+META = (125, 126)
+ALT = (56, 100)
+CTRL = (29, 97)
+BTN_LEFT = 272
+
+
+def conf():
+    c = {"speed": 1.0, "dir": 1}
+    try:
+        for line in open(CONF):
+            m = re.match(r"^\s*(\w+)\s*=\s*([\d.]+)\s*$", line)
+            if m and m.group(1) in c:
+                c[m.group(1)] = float(m.group(2))
+    except OSError:
+        pass
+    return c
+
+
+def bits(words):
+    """the 'B: KEY=...' words of /proc/bus/input/devices -> set of bit numbers"""
+    out = set()
+    for i, w in enumerate(reversed(words.split())):
+        v = int(w, 16)
+        b = 0
+        while v:
+            if v & 1:
+                out.add(i * 64 + b)
+            v >>= 1
+            b += 1
+    return out
+
+
+def devices():
+    """keyboards (they have the letters and the Windows key) and mice (they move and have a left button)"""
+    kbd, mice = [], []
+    try:
+        blocks = open(os.environ.get("RICE_INPUT_DEVICES", "/proc/bus/input/devices")).read().split("\n\n")
+    except OSError:
+        return kbd, mice
+    for b in blocks:
+        h = re.search(r"^H: Handlers=(.*)$", b, re.M)
+        if not h:
+            continue
+        ev = re.search(r"\bevent\d+\b", h.group(1))
+        if not ev:
+            continue
+        path = os.environ.get("RICE_INPUT_DIR", "/dev/input") + "/" + ev.group(0)
+        k = re.search(r"^B: KEY=(.*)$", b, re.M)
+        r = re.search(r"^B: REL=(.*)$", b, re.M)
+        keys = bits(k.group(1)) if k else set()
+        rels = bits(r.group(1)) if r else set()
+        if REL_X in rels and REL_Y in rels and BTN_LEFT in keys:
+            mice.append(path)
+        elif 30 in keys and 44 in keys and (125 in keys or 126 in keys):   # A, Z and the Windows key
+            kbd.append(path)
+    return kbd, mice
+
+
+def status(**kw):
+    try:
+        tmp = STATUS + ".tmp"
+        json.dump(dict(kw, pid=os.getpid(), t=int(time.time())), open(tmp, "w"))
+        os.replace(tmp, STATUS)
+    except OSError:
+        pass
+
+
+def hypr_alive():
+    sig = os.environ.get("HYPRLAND_INSTANCE_SIGNATURE", "")
+    return bool(sig) and os.path.isdir(os.path.join(RUN, "hypr", sig))
+
+
+def check():
+    kbd, mice = devices()
+    print("keyboards:", ", ".join(kbd) or "none found")
+    print("mice:     ", ", ".join(mice) or "none found")
+    bad = [p for p in kbd + mice if not os.access(p, os.R_OK)]
+    if bad:
+        print("cannot read:", ", ".join(bad))
+        print("-> your user needs the 'input' group (Settings > Desktop > Infinite Desktop > Allow), then log in again")
+    elif kbd and mice:
+        print("ok: it can read them")
+    print("Hyprland:  ", "yes" if hypr_alive() else "no (run it inside Hyprland)")
+
+
+def hypr_eval(code):
+    return subprocess.Popen(["hyprctl", "eval", code], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def cursor():
+    try:
+        a, b = subprocess.run(["hyprctl", "cursorpos"], capture_output=True, text=True, timeout=0.5).stdout.split(",")
+        return float(a), float(b)
+    except Exception:
+        return None
+
+
+def main():
+    if "--check" in sys.argv:
+        check()
+        return
+    if not os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"):
+        return      # too early, or not in Hyprland: Hyprland starts it again when it is up
+    # one at a time
+    try:
+        old = int(open(PID).read().strip())
+        if old != os.getpid() and os.path.exists("/proc/%d" % old) and "rice-canvasd" in open("/proc/%d/cmdline" % old).read():
+            return
+    except (OSError, ValueError):
+        pass
+    open(PID, "w").write(str(os.getpid()))
+    signal.signal(signal.SIGTERM, lambda *a: sys.exit(0))
+
+    fds = {}             # fd -> (path, kind)
+    held = set()         # keys and buttons held now
+    acc = [0.0, 0.0]     # mouse movement not sent yet
+    moved_rel = False
+    rel_hold = False     # this hold came with mouse movement: never mix in the pointer
+    hold_t = 0
+    proc = None
+    last_scan = 0
+    last_send = 0
+    was_on = False
+    last_cur = None
+    c = conf()
+    denied = []
+    kbd, mice = [], []
+
+    while True:
+        now = time.time()
+        if now - last_scan > 3:
+            last_scan = now
+            if os.environ.get("HYPRLAND_INSTANCE_SIGNATURE") and not hypr_alive():
+                return      # Hyprland is gone
+            c = conf()
+            kbd, mice = devices()
+            want = {p: "k" for p in kbd}
+            want.update({p: "m" for p in mice})
+            have = {v[0] for v in fds.values()}
+            for p, kind in want.items():
+                if p in have:
+                    continue
+                try:
+                    fd = os.open(p, os.O_RDONLY | os.O_NONBLOCK)
+                    fds[fd] = (p, kind)
+                    if p in denied:
+                        denied.remove(p)
+                except PermissionError:
+                    if p not in denied:
+                        denied.append(p)
+                except OSError:
+                    pass
+            kinds = [v[1] for v in fds.values()]
+            status(keyboards=kinds.count("k"), mice=kinds.count("m"), found_keyboards=len(kbd), found_mice=len(mice),
+                   denied=len(denied))
+        r = []
+        if fds:
+            try:
+                r, _, _ = select.select(list(fds), [], [], 0.016)
+            except (OSError, ValueError):
+                r = []
+        else:
+            time.sleep(0.5)
+        for fd in r:
+            try:
+                data = os.read(fd, EV.size * 64)
+            except BlockingIOError:
+                continue
+            except OSError:
+                os.close(fd)
+                fds.pop(fd, None)
+                continue
+            if not data:        # the device went away
+                os.close(fd)
+                fds.pop(fd, None)
+                continue
+            for i in range(0, len(data) - EV.size + 1, EV.size):
+                _, _, t, code, val = EV.unpack_from(data, i)
+                if t == EV_KEY:
+                    if val == 1:
+                        held.add(code)
+                    elif val == 0:
+                        held.discard(code)
+                elif t == EV_REL and code in (REL_X, REL_Y):
+                    acc[code] += val
+                    moved_rel = True
+                    rel_hold = True
+
+        sup = any(k in held for k in META)
+        alt = any(k in held for k in ALT)
+        ctrl = any(k in held for k in CTRL)
+        canvas = sup and alt and not ctrl
+        push = sup and BTN_LEFT in held and not alt and not ctrl
+
+        if canvas and not was_on:
+            acc = [0.0, 0.0]
+            rel_hold = False
+            hold_t = time.time()
+            last_cur = cursor()
+        if not canvas and was_on:
+            hypr_eval("if RiceInfinite then RiceInfinite.save() end")
+        was_on = canvas
+
+        if not (canvas or push):
+            acc = [0.0, 0.0]
+            moved_rel = False
+            continue
+        if time.time() - last_send < 0.016 or (proc and proc.poll() is None):
+            continue
+        dx, dy = acc
+        # a touchpad gives no mouse movement: follow the pointer instead (only when this hold had no mouse movement
+        # at all; mixing both counted the same move twice: the sudden boost)
+        if canvas and not rel_hold and time.time() - hold_t > 0.25:
+            p = cursor()
+            if p and last_cur:
+                dx, dy = p[0] - last_cur[0], p[1] - last_cur[1]
+            last_cur = p
+        idx, idy = int(round(dx * c["speed"])), int(round(dy * c["speed"]))
+        if not idx and not idy:
+            continue
+        acc = [0.0, 0.0]
+        moved_rel = False
+        sign = -1 if int(c["dir"]) == 2 else 1
+        if canvas:
+            proc = hypr_eval("if RiceInfinite then RiceInfinite.slide(%d, %d) end" % (idx * sign, idy * sign))
+        else:
+            proc = hypr_eval("if RiceInfinite then RiceInfinite.edge_push(%d, %d) end" % (idx, idy))
+        last_send = time.time()
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    finally:
+        try:
+            if open(PID).read().strip() == str(os.getpid()):
+                os.remove(PID)
+        except OSError:
+            pass
