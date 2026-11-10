@@ -19,6 +19,8 @@ case "$1" in
     if [ "$1" = start ] && [ -n "$HYPRLAND_INSTANCE_SIGNATURE" ] && ! grep -q rice-deskmenu "$HOME/.config/hypr/rice-dock.lua" 2>/dev/null; then
       "$HOME/.local/bin/desktop-set" dock-blur >/dev/null 2>&1 &
     fi
+    # two screens: their places and the main screen are saved once, so the next boot keeps them (not swapped)
+    if [ "$1" = start ]; then ( sleep 6; "$HOME/.local/bin/rice-screens" keep >/dev/null 2>&1 ) & fi
     # the live wallpaper again, and the wallpaper slideshow when it is on
     [ "$1" = start ] && [ -x "$HOME/.local/bin/rice-walls" ] && "$HOME/.local/bin/rice-walls" start >/dev/null 2>&1 &
     running && exit 0

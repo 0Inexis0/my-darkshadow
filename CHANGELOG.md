@@ -1,5 +1,11 @@
 # Changelog
 
+## V3.99: two screens
+- **Widgets on another screen**: Settings > System > Monitors > pick a screen > Put the widgets here (Edit mode opens there too)
+- **The main screen stays the main screen**: with nothing chosen the shell picked "whichever screen came first", which changed from boot to boot. Now it is always the same one, and at the first login with two screens the one in the top left is saved as the main screen
+- **Screens keep their places**: two screens that were never arranged in Settings could come up swapped after a reboot. At login their places are saved once (when nothing was saved yet), so the next boot keeps them; arrange them in Settings > Monitors if they are the wrong way round
+- Updates never ask for a GitHub login: no login prompt or sign-in window from git, and the old address (shadows-shell) goes to the new one (DarkShadowShell)
+
 ## V3.98: Infinite Desktop on niri, your keys, new motion
 - **Infinite Desktop on niri**: the windows of the workspace float on a canvas you move: hold your keys and move the mouse, or your keys + arrows; go from window to window with the canvas gliding to it; new windows float too while it is on. (niri cannot make windows smaller, so there is no zoom there.) On / off: SUPER + ALT + F on niri
 - **Your keys for Infinite Desktop** (Settings > Desktop > Infinite Desktop > Keys): on / off, what you hold to move the canvas, what goes to the next window, and the zoom key (Hyprland), on Hyprland and niri

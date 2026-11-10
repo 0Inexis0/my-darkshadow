@@ -62,8 +62,25 @@ def installed():
 
 
 def git(r, *a, timeout=25):
-    env = dict(os.environ, GIT_TERMINAL_PROMPT="0", GIT_ASKPASS="true", SSH_ASKPASS="true")
-    return subprocess.run(["git", "-C", r] + list(a), capture_output=True, text=True, timeout=timeout, env=env)
+    # never a login window: no prompt, and no credential helper (a helper like Git Credential Manager opened a GitHub
+    # sign-in window during updates; the shell is public, reading it needs no login)
+    env = dict(os.environ, GIT_TERMINAL_PROMPT="0", GIT_ASKPASS="true", SSH_ASKPASS="true", GCM_INTERACTIVE="never")
+    return subprocess.run(["git", "-c", "credential.helper=", "-C", r] + list(a), capture_output=True, text=True,
+                          timeout=timeout, env=env)
+
+
+NEW_URL = "https://github.com/shadowww-dev/DarkShadowShell.git"
+
+
+def fix_remote(r):
+    """the project moved (shadows-shell -> DarkShadowShell): an old address goes to the new one, before GitHub's
+    redirect is the thing that asks for a login"""
+    try:
+        u = git(r, "remote", "get-url", "origin", timeout=5).stdout.strip()
+        if "shadowww-dev/shadows-shell" in u:
+            git(r, "remote", "set-url", "origin", NEW_URL, timeout=5)
+    except Exception:
+        pass
 
 
 def news(text, version):
@@ -90,6 +107,7 @@ def latest(offline=False):
     if r and os.path.isdir(r + "/.git") and shutil.which("git"):
         try:
             if not offline:
+                fix_remote(r)
                 f = git(r, "fetch", "--quiet")
                 if f.returncode != 0:
                     err = (f.stderr.strip().splitlines() or ["git fetch failed"])[-1]

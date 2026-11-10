@@ -11,7 +11,8 @@ ShellRoot {
     property bool locked: false
     readonly property string home: Quickshell.env("HOME")
     // the screen the shell lives on (Settings > System > Screen > Main screen)
-    readonly property var scr: Mon.screen
+    // the widgets' screen (Settings > Monitors > Widgets on: the main one unless you chose another)
+    readonly property var scr: Mon.widgetScreen
     readonly property int sw: scr ? scr.width : 1920
     readonly property int sh: scr ? scr.height : 1080
     readonly property string placement: cfg.clock && cfg.clock.placement ? cfg.clock.placement : "draggable"

@@ -14,6 +14,7 @@ Item {
     property string sel: ""                 // the screen being changed
     property int countdown: 0
     property string mainName: ""            // the shell lives here (rice-screens main)
+    property string widgetsName: ""         // the desktop widgets live here ("" = with the shell; rice-screens widgets)
     property var names: ({})                // your names for the screens
     property var moved: ({})                // Arrange: name -> {x, y} not applied yet
     function label(n) { return names[n] ? names[n] : n }
@@ -104,6 +105,7 @@ Item {
                 try { j = JSON.parse(text) } catch (e) { return }
                 page.mons = j.screens || []
                 page.mainName = j.main || ""
+                page.widgetsName = j.widgets || ""
                 page.names = j.names || ({})
                 if (page.sel === "" && page.mons.length) page.sel = page.mons[0].name
             }
@@ -277,7 +279,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         width: parent.width - mainBtn.width - 16
                         T { text: I18n.t("Main screen"); font.pixelSize: 14 }
-                        T { text: I18n.t("The bar, the island, the widgets and the dock live here"); font.pixelSize: 12; color: M3.inkDim; width: parent.width; elide: Text.ElideRight }
+                        T { text: I18n.t("The bar, the island, the dock and the menus live here"); font.pixelSize: 12; color: M3.inkDim; width: parent.width; elide: Text.ElideRight }
                     }
                     Btn {
                         id: mainBtn
@@ -286,6 +288,29 @@ Item {
                         text: page.m && page.m.name === page.mainNow ? I18n.t("This is the main screen") : I18n.t("Make it the main screen")
                         variant: enabled ? "tonal" : "text"
                         onClicked: if (page.m) { page.mainName = page.m.name; page.rs(["main", page.m.name], "The shell moves to " + page.label(page.m.name)) }
+                    }
+                }
+                Item {
+                    x: 18; width: parent.width - 36; height: 52
+                    visible: page.mons.length > 1
+                    readonly property string wNow: page.widgetsName !== "" ? page.widgetsName : page.mainNow
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width - wBtn.width - 16
+                        T { text: I18n.t("Desktop widgets"); font.pixelSize: 14 }
+                        T { text: I18n.t("The screen your widgets are on (Edit mode opens there)"); font.pixelSize: 12; color: M3.inkDim; width: parent.width; elide: Text.ElideRight }
+                    }
+                    Btn {
+                        id: wBtn
+                        anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
+                        enabled: page.m && page.m.name !== parent.wNow && !page.m.disabled
+                        text: page.m && page.m.name === parent.wNow ? I18n.t("The widgets are here") : I18n.t("Put the widgets here")
+                        variant: enabled ? "tonal" : "text"
+                        onClicked: if (page.m) {
+                            const w = page.m.name === page.mainNow ? "main" : page.m.name
+                            page.widgetsName = w === "main" ? "" : w
+                            page.rs(["widgets", w], I18n.t("The widgets move to ") + page.label(page.m.name))
+                        }
                     }
                 }
                 SegRow {

@@ -805,7 +805,8 @@ if [ "$MODE" = update ]; then
   elif [ -d "$ROOT/.git" ] && command -v git >/dev/null 2>&1; then
     old="$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo ?)"
     if [ "$DRY_RUN" = 1 ]; then info "would run: git pull"
-    elif git -C "$ROOT" pull --ff-only >>"$LOG" 2>&1; then
+    elif { u="$(git -C "$ROOT" remote get-url origin 2>/dev/null)"; case "$u" in *shadowww-dev/shadows-shell*) git -C "$ROOT" remote set-url origin https://github.com/shadowww-dev/DarkShadowShell.git ;; esac
+           GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never git -c credential.helper= -C "$ROOT" pull --ff-only >>"$LOG" 2>&1; }; then
       new="$(git -C "$ROOT" rev-parse --short HEAD)"
       if [ "$old" != "$new" ]; then
         # new files from GitHub, maybe a new installer too: start the new one
