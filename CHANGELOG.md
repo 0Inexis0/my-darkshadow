@@ -1,5 +1,8 @@
 # Changelog
 
+## V4.02: a new black hole in fastfetch
+- **The black hole in fastfetch, drawn again from scratch**: now in full color with soft light instead of blocky characters. A deep black shadow, a tilted glowing disk crossing in front of it, its far side bent over and under the shadow like Gargantua, a thin photon ring and a soft glow fading into the dark. White-hot inside, then your wallpaper's colors (or Gargantua's warm light when fastfetch uses its own colors)
+
 ## V4.01: live wallpaper fix
 - A picture now always replaces a live (video) wallpaper: the video could keep playing over it (mpvpaper missed the stop signal while paused). It is now stopped for sure, also on NixOS
 

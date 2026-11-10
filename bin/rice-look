@@ -20,6 +20,7 @@ kept: the DarkShadow look goes in its own file that yours includes.
 """
 import html
 import json
+import math
 import os
 import re
 import shutil
@@ -257,25 +258,126 @@ DS_LOGO = "\n".join([
     '           $1▀▀▀██████▀▀▀',
     '  $3·',
 ])
-# DarkShadow's own logo: a black hole, its glowing disk in front of the shadow and a bright ring around it
-# ($1 the wallpaper's main color: the disk, $2 the second one: the ring, $3 the stars)
-BH_LOGO = "\n".join([
-    '                                       $3·',
-    '  $3·         ·',
-    '                       $2░░░░░░░░                     $3✦',
-    '                     $2░▒▒▓████▓▒▒░',
-    '                    $2░▒████▓▓▓▓██▓▒',
-    '    $3·               $2▒██▀░      ░▀█▒         $1░░░░░░░░',
-    '                    $2██░          ░█░$1░▄▄▒▒▒▒▒▒▒▒░░░',
-    '                    $2█▒   $1░░░▄▄▒▓███$2█$1██▓▒▀▀░░      $3*',
-    '               $1░░▄▄▄█▓▓████████▓▒▀▓$2█$1░',
-    ' $3·     $1░░▄▄▒▓████████$2█$1▓▀▀▀▀░░    $2░█▒',
-    '   $1░░▒▒▒▒▒▀▀▀▀▀░░░   $2░█▄░      ░▄█▓░',
-    '                      $2░▒██▓▓▓▓███▒░                   $3·',
-    '                        $2░░▒▒▒▒▒▒░',
-    '      $3✧',
-    '                                                 $3·',
-])
+# DarkShadow's own logo: a black hole, drawn here in 24-bit color with half blocks (two pixels per cell), after
+# Gargantua: a tilted thin disk crossing in front of the shadow, its far side bent over and under the shadow, a hair
+# of a photon ring and a soft glow. The colors come from your wallpaper (white-hot inside, its main color, its
+# second color outside); fastfetch prints it as it is (data-raw).
+def _hex(h):
+    h = h.lstrip("#")
+    return [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+
+
+def bh_field(x, y, W, H2, tilt=-13.0):
+    """one point of the black hole, in pixels (square ones: one terminal cell is 1 x 2 of them).
+    Returns (shadow 0..1, light, heat 0..1). After Gargantua: a tilted thin disk crossing in front of the shadow,
+    its far side bent over the top and under the bottom of the shadow, a thin photon ring, and a soft glow."""
+    cx, cy = W / 2, H2 / 2
+    Rs = H2 * 0.2
+    a = math.radians(tilt)
+    dx, dy = x - cx, y - cy
+    u = dx * math.cos(a) + dy * math.sin(a)          # along the disk
+    v = -dx * math.sin(a) + dy * math.cos(a)         # across it (down = the near side)
+    d = math.hypot(u, v)
+    light = heat = 0.0
+    # the disk: seen almost edge on
+    k = 0.16                                          # how open the disk is (cos of the view angle)
+    rr = math.hypot(u, v / k)                         # radius in the disk's plane
+    rin, rout = Rs * 1.12, W * 0.47
+    if rr > rin * 0.85 and rr < rout:
+        t = (rr - rin) / (rout - rin)
+        e = (rin / max(rr, rin)) ** 1.6                # hotter and brighter inside
+        e *= min(1.0, (rr - rin * 0.85) / (rin * 0.3)) * min(1.0, (rout - rr) / (rout * 0.35)) ** 1.3
+        dop = 1 + 0.55 * (-u / max(rr, 1e-6)) * min(1, rr / rin)   # the side coming at us is brighter
+        e *= max(0.25, dop)
+        near = v >= 0
+        if d < Rs and not near:
+            e = 0.0                                   # the far side is behind the shadow
+        light += 2.0 * e
+        heat = max(heat, max(0.0, 1 - t * 1.6) * (0.75 + 0.25 * dop))
+    # the far side of the disk, bent by gravity: a thick arc over the shadow, a thinner one under it
+    if d >= Rs * 0.98:
+        s = v / max(d, 1e-6)                          # -1 top, +1 bottom
+        top = max(0.0, -s) ** 1.2
+        bot = max(0.0, s) ** 1.5
+        w = Rs * (0.12 + 0.62 * top + 0.22 * bot)
+        f = (d - Rs) / max(w, 0.3)
+        if f < 1.6:
+            ring = math.exp(-((f - 0.3) ** 2) / 0.2) * (0.55 + 0.6 * top + 0.25 * bot)
+            ring *= 1 + 0.35 * (-u / max(d, 1e-6))   # Doppler here too
+            light += ring
+            heat = max(heat, 0.55 + 0.35 * top)
+    # the photon ring: a hair of light just outside the shadow
+    pr = math.exp(-((d - Rs * 1.03) ** 2) / 0.35)
+    light += 0.9 * pr
+    if pr > 0.3:
+        heat = max(heat, 0.95)
+    # glow around it all
+    if d > Rs:
+        light += 0.16 * math.exp(-(d - Rs) / (Rs * 0.5))
+    shadow = 1.0 if d < Rs * 0.97 else (max(0.0, (Rs * 1.03 - d) / (Rs * 0.06)) if d < Rs * 1.03 else 0.0)
+    return shadow, light, min(1.0, max(0.0, heat))
+
+
+STARS = [(0.06, 0.12, .55), (0.93, 0.08, .8), (0.12, 0.86, .5), (0.86, 0.9, .45), (0.72, 0.03, .4),
+         (0.03, 0.55, .35), (0.97, 0.6, .4), (0.3, 0.97, .35), (0.62, 0.95, .3), (0.24, 0.05, .3)]
+
+
+def bh_logo(primary, secondary, tertiary, bg, W=46, H=19, tilt=-13.0):
+    """the black hole in color: half blocks (▀ ▄), two pixels per cell, 24-bit color. Lines with escape codes"""
+    P, S, T, B = _hex(primary), _hex(secondary), _hex(tertiary), _hex(bg)
+    hot = [P[i] * 0.7 + 0.3 for i in range(3)]        # white-hot, a little of the main color
+    def ramp(h):
+        # cool outside (the second color, dimmed) -> the main color -> white-hot inside
+        if h < 0.5:
+            t = h / 0.5
+            return [S[i] * (0.55 + 0.45 * t) * (1 - t) + P[i] * t for i in range(3)]
+        t = (h - 0.5) / 0.5
+        return [P[i] * (1 - t) + hot[i] * t for i in range(3)]
+    H2 = H * 2
+    SS = 3
+    px = [[None] * W for _ in range(H2)]
+    stars = {(int(sx * (W - 1)), int(sy * (H2 - 1))): sb for sx, sy, sb in STARS}
+    for y in range(H2):
+        for x in range(W):
+            sh = li = he = 0.0
+            for i in range(SS):
+                for j in range(SS):
+                    a, b, c = bh_field(x + (i + .5) / SS, y + (j + .5) / SS, W, H2, tilt)
+                    sh += a; li += b; he += c * b
+            he = he / li if li > 1e-6 else 0.0
+            sh /= SS * SS; li /= SS * SS
+            g = 1 - math.exp(-li * 1.35)             # soft tone curve: never clips hard
+            col = ramp(he * min(1.0, 0.25 + g / 0.8))   # only bright light is white-hot; dim light keeps its color
+            rgb = [B[i] * (1 - sh) + col[i] * g * 1.08 + (1 - col[i]) * max(0.0, g - 0.78) * 1.6 for i in range(3)]
+            rgb = [min(1.0, max(0.0, c)) for c in rgb]
+            if sh < 0.05 and g < 0.035:
+                sb = stars.get((x, y))
+                px[y][x] = ([B[i] + (0.8 - B[i]) * sb * 0.42 for i in range(3)] if sb else None)
+            else:
+                px[y][x] = rgb
+    def c24(rgb):
+        return "%d;%d;%d" % tuple(int(round(v * 255)) for v in rgb)
+    lines = []
+    for r in range(H):
+        out, state = [], None                          # an escape only when the colors change
+        for x in range(W):
+            t, b = px[2 * r][x], px[2 * r + 1][x]
+            if t is None and b is None:
+                want, ch = ("0",), " "
+            elif b is None:
+                want, ch = ("0", "38;2;" + c24(t)), "▀"
+            elif t is None:
+                want, ch = ("0", "38;2;" + c24(b)), "▄"
+            else:
+                want, ch = ("0", "38;2;" + c24(t), "48;2;" + c24(b)), "▀"
+            if want != state:
+                out.append("\x1b[" + ";".join(want) + "m")
+                state = want
+            out.append(ch)
+        lines.append("".join(out) + "\x1b[0m")
+    return lines
+
+
 # Small: like pfetch, a small logo and a few lines in lowercase
 PFETCH = ["title", "os", "host", "kernel", "uptime", "packages", "memory", "shell", "wm"]
 PF_KEYS = {"os": "os", "host": "host", "kernel": "kernel", "uptime": "uptime", "packages": "pkgs",
@@ -327,10 +429,16 @@ def fetch_config(c, term, for_preview=False):
     elif lg == "darkshadow":
         logo.update({"type": "data", "source": DS_LOGO})
     elif lg == "blackhole":
-        logo.update({"type": "data", "source": BH_LOGO})
+        if c["colors"] == "wallpaper":
+            pal = (p["primary"], p["secondary"], p["tertiary"])
+        else:
+            pal = ("#f2c48d", "#c77d4a", "#9fb4e0")      # Gargantua's own warm light
+        bw, bh = 46, 19
+        logo.update({"type": "data-raw", "source": "\n".join(bh_logo(*pal, p["background"], bw, bh)),
+                     "width": bw, "height": bh})
     elif lg == "wallpaper":
         logo.update({"type": "kitty-direct", "source": LOGO_PNG, "width": 28, "height": 14})
-    if c["colors"] == "wallpaper" and lg != "none":
+    if c["colors"] == "wallpaper" and lg not in ("none", "blackhole"):
         logo["color"] = {"1": ansi(p["primary"]), "2": ansi(p["secondary"]), "3": ansi(p["tertiary"])}
     j["logo"] = logo
     disp = {"separator": "  " if c["labels"] == "icons" else ": "}
