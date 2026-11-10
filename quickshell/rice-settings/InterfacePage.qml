@@ -218,7 +218,7 @@ Item {
                             spacing: 6
                             Item { width: 34; height: 34; anchors.verticalCenter: parent.verticalCenter
                                 Blob { anchors.fill: parent; kind: Prefs.accentShape; color: M3.alpha(M3.primary, 0.25) }
-                                Image { anchors.centerIn: parent; width: 24; height: 24; sourceSize.width: 48; sourceSize.height: 48; source: Quickshell.iconPath(chip.e ? (chip.e.icon || "application-x-executable") : chip.pid, "application-x-executable") } }
+                                Image { anchors.centerIn: parent; width: 24; height: 24; sourceSize.width: 48; sourceSize.height: 48; source: Icons.get(chip.e ? (chip.e.icon || "application-x-executable") : chip.pid, "application-x-executable") } }
                             T { text: chip.e ? chip.e.name : chip.pid; font.pixelSize: 13; color: M3.inkSecondaryC; anchors.verticalCenter: parent.verticalCenter }
                             Repeater {
                                 model: [{ s: "chevron_left", g: "‹", d: -1 }, { s: "chevron_right", g: "›", d: 1 }, { s: "close", g: "×", d: 0 }]
@@ -253,7 +253,7 @@ Item {
                         Behavior on color { ColorAnimation { duration: 160 } }
                         Row {
                             id: ar; anchors.centerIn: parent; spacing: 8
-                            Image { width: 22; height: 22; sourceSize.width: 44; sourceSize.height: 44; anchors.verticalCenter: parent.verticalCenter; source: Quickshell.iconPath(modelData.icon || "application-x-executable", "application-x-executable") }
+                            Image { width: 22; height: 22; sourceSize.width: 44; sourceSize.height: 44; anchors.verticalCenter: parent.verticalCenter; source: Icons.get(modelData.icon || "application-x-executable", "application-x-executable") }
                             T { text: modelData.name; font.pixelSize: 13; color: parent.parent.on ? M3.inkPrimary : M3.ink; anchors.verticalCenter: parent.verticalCenter }
                             Icon { name: "keep"; glyph: ""; size: 15; filled: parent.parent.on; visible: parent.parent.on || am.containsMouse; color: parent.parent.on ? M3.inkPrimary : M3.inkDim; anchors.verticalCenter: parent.verticalCenter }
                         }

@@ -84,7 +84,7 @@ Item {
                 id: im
                 anchors.fill: parent
                 visible: tl.icon !== "" && status === Image.Ready
-                source: tl.icon !== "" ? Quickshell.iconPath(tl.icon, tl.fallbackIcon) : ""
+                source: tl.icon !== "" ? Icons.get(tl.icon, tl.fallbackIcon) : ""
                 sourceSize.width: 80; sourceSize.height: 80
                 asynchronous: true
                 opacity: tl.installed ? 1 : 0.45

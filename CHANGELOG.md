@@ -1,5 +1,8 @@
 # Changelog
 
+## V4.05: no more icon crashes
+- **Quickshell no longer crashes on app icons** (NixOS with Qt 6.12: the bar, the dock and the widgets went down, also during an update). Every app icon (bar, tray, dock, launcher, notifications, island, hot corner, volume mixer and Settings) used Qt's icon theme engine, which crashed on some icons. Now the icons are found as plain files in the background (Icons.qml) and drawn as pictures, never through that engine
+
 ## V4.04: the old black hole is back
 - fastfetch shows the black hole of V3.99 again (the straight one, in your wallpaper's colors): the tilted and the full-color ones of V4.00 and V4.02 are gone
 

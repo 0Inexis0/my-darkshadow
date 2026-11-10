@@ -181,7 +181,7 @@ Item {
                     Image {
                         anchors.horizontalCenter: parent.horizontalCenter; y: 18
                         width: 44; height: 44; sourceSize.width: 88; sourceSize.height: 88
-                        source: Quickshell.iconPath(modelData.e.icon || "applications-games", true)
+                        source: Icons.get(modelData.e.icon || "applications-games", true)
                         scale: lm.containsMouse ? 1.1 : 1
                         Behavior on scale { NumberAnimation { duration: M3.d(420); easing.type: Easing.OutBack; easing.overshoot: 1.4 * Prefs.bounce } }
                     }

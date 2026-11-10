@@ -693,8 +693,8 @@ Item {
                     SlowSpin { turn: 360; period: 24000; running: isl.big && isl.cardMode === "notif" && !Look.lite } }
                 Image { id: nImg; anchors.centerIn: parent; width: 24; height: 24; sourceSize.width: 48; sourceSize.height: 48
                     source: { const n = isl.note; if (!n) return ""
-                        if (n.appIcon && n.appIcon !== "") return n.appIcon.indexOf("/") === 0 ? "file://" + n.appIcon : Quickshell.iconPath(n.appIcon, true)
-                        return Quickshell.iconPath((n.appName || "dialog-information").toLowerCase(), true) }
+                        if (n.appIcon && n.appIcon !== "") return n.appIcon.indexOf("/") === 0 ? "file://" + n.appIcon : Icons.get(n.appIcon, true)
+                        return Icons.get((n.appName || "dialog-information").toLowerCase(), true) }
                     visible: status === Image.Ready }
                 MIcon { anchors.centerIn: parent; size: 20; filled: true; name: "notifications"; glyph: ""; visible: nImg.status !== Image.Ready
                     color: isl.pal ? isl.pal.inkContainer : "white" }

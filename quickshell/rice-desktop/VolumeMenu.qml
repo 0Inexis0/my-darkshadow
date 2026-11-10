@@ -197,7 +197,7 @@ PanelWindow {
                     delegate: VolRow {
                         node: modelData
                         text: vm.label(modelData)
-                        iconSrc: { const p = modelData.properties || {}; const n = p["application.icon-name"] || ""; return n !== "" ? Quickshell.iconPath(n, true) : "" }
+                        iconSrc: { const p = modelData.properties || {}; const n = p["application.icon-name"] || ""; return n !== "" ? Icons.get(n, true) : "" }
                         iconName: "music_note"; glyph: 0xF075A
                     }
                 }

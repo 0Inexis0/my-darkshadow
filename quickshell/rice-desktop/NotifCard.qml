@@ -67,8 +67,8 @@ Item {
     readonly property string iconSrc: {
         const n = nc.n
         if (!n) return ""
-        if (n.appIcon && n.appIcon !== "") return n.appIcon.indexOf("/") === 0 ? "file://" + n.appIcon : Quickshell.iconPath(n.appIcon, true)
-        return Quickshell.iconPath((n.appName || "dialog-information").toLowerCase(), true)
+        if (n.appIcon && n.appIcon !== "") return n.appIcon.indexOf("/") === 0 ? "file://" + n.appIcon : Icons.get(n.appIcon, true)
+        return Icons.get((n.appName || "dialog-information").toLowerCase(), true)
     }
     readonly property bool picture: {
         const a = nc.n && nc.n.appIcon ? String(nc.n.appIcon) : ""

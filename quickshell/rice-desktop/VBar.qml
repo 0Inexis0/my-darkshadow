@@ -209,7 +209,7 @@ PanelWindow {
                 delegate: Item {
                     id: ti
                     width: vb.barW - 10; height: 24
-                    IconImage { anchors.centerIn: parent; implicitSize: Math.min(20, vb.bc.tray_size ? vb.bc.tray_size : 18); source: modelData.icon
+                    IconImage { anchors.centerIn: parent; implicitSize: Math.min(20, vb.bc.tray_size ? vb.bc.tray_size : 18); source: Icons.src(modelData.icon)
                         scale: tm.containsMouse ? 1.15 : 1; Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutBack } } }
                     MouseArea {
                         id: tm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor

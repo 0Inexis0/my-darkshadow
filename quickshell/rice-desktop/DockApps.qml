@@ -120,7 +120,7 @@ PanelWindow {
                     anchors.horizontalCenter: parent.horizontalCenter; y: 14
                     width: 56; height: 56
                     Blob { anchors.fill: parent; kind: Look.shape; color: cellIt.pin ? pal.container : "transparent"; visible: cellIt.pin }
-                    IconImage { anchors.centerIn: parent; implicitSize: 40; source: Quickshell.iconPath(modelData.icon || "application-x-executable", "application-x-executable")
+                    IconImage { anchors.centerIn: parent; implicitSize: 40; source: Icons.get(modelData.icon || "application-x-executable", "application-x-executable")
                         scale: cm.pressed ? 0.9 : (cm.containsMouse ? 1.08 : 1)
                         Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 1.6 } } }
                 }

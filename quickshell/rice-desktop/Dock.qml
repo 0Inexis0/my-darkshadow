@@ -73,8 +73,8 @@ Scope {
     readonly property var items: build()
     function iconFor(it) {
         const n = it.entry ? it.entry.icon : (it.tl ? (it.tl.appId || "").toLowerCase() : "")
-        const p = n !== "" ? Quickshell.iconPath(n, true) : ""
-        return p !== "" ? p : Quickshell.iconPath("application-x-executable", true)
+        const p = n !== "" ? Icons.get(n, true) : ""
+        return p !== "" ? p : Icons.get("application-x-executable", true)
     }
 
     // ---------------- the strip that brings the dock back ----------------

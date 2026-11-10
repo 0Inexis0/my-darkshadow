@@ -608,8 +608,8 @@ Item {
                 return out.slice(0, 8)
             }
             function iconFor(e) {
-                const p = e && e.icon ? Quickshell.iconPath(e.icon, true) : ""
-                return p !== "" ? p : Quickshell.iconPath("application-x-executable", true)
+                const p = e && e.icon ? Icons.get(e.icon, true) : ""
+                return p !== "" ? p : Icons.get("application-x-executable", true)
             }
             Connections { target: pnl; function onOpenChanged() { if (!pnl.open) { ac.query = ""; search.text = "" } } }
             height: aCol.implicitHeight + 28

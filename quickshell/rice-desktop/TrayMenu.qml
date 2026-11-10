@@ -52,7 +52,7 @@ Item {
             width: parent.width; height: 52
             Item { id: hIc; x: 6; anchors.verticalCenter: parent.verticalCenter; width: 38; height: 38
                 Blob { anchors.fill: parent; kind: Look.shape; color: tmu.pal ? tmu.pal.container : "#333" }
-                IconImage { anchors.centerIn: parent; implicitSize: 20; source: tmu.item ? tmu.item.icon : ""; visible: tmu.stack.length === 0 }
+                IconImage { anchors.centerIn: parent; implicitSize: 20; source: tmu.item ? Icons.src(tmu.item.icon) : ""; visible: tmu.stack.length === 0 }
                 MIcon { anchors.centerIn: parent; size: 18; name: "arrow_back"; glyph: ""; visible: tmu.stack.length > 0; color: tmu.pal ? tmu.pal.inkContainer : "white" }
                 MouseArea { anchors.fill: parent; enabled: tmu.stack.length > 0; cursorShape: Qt.PointingHandCursor
                     onClicked: tmu.stack = tmu.stack.slice(0, tmu.stack.length - 1) } }
@@ -106,7 +106,7 @@ Item {
                         name: en.e.buttonType === 2 ? (en.e.checkState === Qt.Checked ? "radio_button_checked" : "radio_button_unchecked")
                                                      : (en.e.checkState === Qt.Checked ? "check_box" : "check_box_outline_blank")
                         color: tmu.pal ? tmu.pal.primary : "white" }
-                    IconImage { visible: en.e.buttonType === 0 && en.e.icon !== ""; anchors.verticalCenter: parent.verticalCenter; implicitSize: 16; source: en.e.icon }
+                    IconImage { visible: en.e.buttonType === 0 && en.e.icon !== ""; anchors.verticalCenter: parent.verticalCenter; implicitSize: 16; source: Icons.src(en.e.icon) }
                     Text { anchors.verticalCenter: parent.verticalCenter; width: parent.width - 60; elide: Text.ElideRight
                         text: String(en.e.text || "").replace(/_(?=\S)/, ""); color: tmu.pal ? tmu.pal.fg : "white"; opacity: en.e.enabled ? 1 : 0.4
                         font.family: Fonts.main; font.pixelSize: 13 }

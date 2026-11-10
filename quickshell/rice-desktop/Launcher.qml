@@ -98,10 +98,10 @@ PanelWindow {
     onUsageChanged: if (open) recompute()
     function iconOf(r) {
         if (r.kind === "calc") return ""
-        if (r.kind === "web") return Quickshell.iconPath("web-browser", true)
+        if (r.kind === "web") return Icons.get("web-browser", true)
         const n = r.entry && r.entry.icon ? r.entry.icon : ""
-        const p = n !== "" ? Quickshell.iconPath(n, true) : ""
-        return p !== "" ? p : Quickshell.iconPath("application-x-executable", true)
+        const p = n !== "" ? Icons.get(n, true) : ""
+        return p !== "" ? p : Icons.get("application-x-executable", true)
     }
     function glyphOf(r) { return r.kind === "calc" ? "=" : "" }
 
