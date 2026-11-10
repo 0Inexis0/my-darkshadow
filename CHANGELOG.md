@@ -1,5 +1,8 @@
 # Changelog
 
+## V4.04: the old black hole is back
+- fastfetch shows the black hole of V3.99 again (the straight one, in your wallpaper's colors): the tilted and the full-color ones of V4.00 and V4.02 are gone
+
 ## V4.03: crash fix
 - **The bar and the widgets no longer crash when you switch windows** (seen on NixOS with Qt 6.12): the app icon next to the window title went through Qt's icon theme engine right as the window changed, and its SVG loader could crash, taking the bar, the dock and the widgets with it. The icon is now found as a file and drawn in the background, a moment after the window changes
 
