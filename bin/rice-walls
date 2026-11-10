@@ -310,8 +310,19 @@ def notify(title, body):
         pass
 
 
+MPV_PAT = r"^([^ ]*/)?\.?mpvpaper(-wrapped)?( |$)"     # mpvpaper, /usr/bin/mpvpaper, NixOS's .mpvpaper-wrapped
+
+
 def stop_live():
-    subprocess.run(["pkill", "-x", "mpvpaper"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    """mpvpaper away for good: it can miss SIGTERM (paused while hidden, -p), so it gets SIGKILL when it stays"""
+    q = dict(stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.run(["pkill", "-f", MPV_PAT], **q)
+    for _ in range(15):
+        if subprocess.run(["pgrep", "-f", MPV_PAT], **q).returncode != 0:
+            return
+        time.sleep(0.1)
+    subprocess.run(["pkill", "-9", "-f", MPV_PAT], **q)
+    time.sleep(0.2)
 
 
 def start_live(v, c=None):
@@ -482,7 +493,7 @@ def cmd_start():
     c = load()
     ensure_wallpaper()
     v = live_now()
-    if v and not subprocess.run(["pgrep", "-x", "mpvpaper"], stdout=subprocess.DEVNULL).returncode == 0:
+    if v and not subprocess.run(["pgrep", "-f", MPV_PAT], stdout=subprocess.DEVNULL).returncode == 0:
         start_live(v, c)
     if c["slideshow"].get("on"):
         spawn_daemon()

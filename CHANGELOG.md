@@ -1,5 +1,8 @@
 # Changelog
 
+## V4.01: live wallpaper fix
+- A picture now always replaces a live (video) wallpaper: the video could keep playing over it (mpvpaper missed the stop signal while paused). It is now stopped for sure, also on NixOS
+
 ## V4.00: Update Center
 - **Update Center** (Settings, next to About): your version, the newest one and what is new in it, and **Update now** right there: no terminal window. Every step shows live as it happens (a spinner while it runs, then a tick), with a progress ring, the time it takes and the full log. You can close Settings, the update keeps going, and Settings comes back to it after it reloads
 - The "Update is Available!" notification and the island open the Update Center instead of a terminal. Updates with new system packages (they need your password) still have a button for the terminal

@@ -16,9 +16,15 @@ log="$HOME/.cache/rice/colors.log"
 say() { echo "$(date '+%H:%M:%S') $*" >>"$log"; }
 
 # a picture: a live wallpaper that still plays stops (unless this is its own frame)
+# (mpvpaper can miss SIGTERM while it is paused, so it gets SIGKILL when it stays; NixOS names it .mpvpaper-wrapped)
 if [ -z "$RICE_LIVE" ]; then
-  pkill -x mpvpaper 2>/dev/null
   rm -f "$HOME/.cache/rice/live-wallpaper"
+  mp='^([^ ]*/)?\.?mpvpaper(-wrapped)?( |$)'
+  if pgrep -f "$mp" >/dev/null 2>&1; then
+    pkill -f "$mp" 2>/dev/null
+    for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do pgrep -f "$mp" >/dev/null 2>&1 || break; sleep 0.1; done
+    pgrep -f "$mp" >/dev/null 2>&1 && { pkill -9 -f "$mp" 2>/dev/null; sleep 0.2; }
+  fi
 fi
 
 if [ -z "$RICE_COLORS_ONLY" ]; then
