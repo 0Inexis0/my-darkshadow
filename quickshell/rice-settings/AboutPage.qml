@@ -69,12 +69,11 @@ Item {
                 Row {
                     spacing: 8
                     topPadding: 4
-                    Btn { text: updProc.running ? I18n.t("Checking...") : I18n.t("Check for updates"); sym: "update"; icon: ""; primary: true; onClicked: if (!updProc.running) updProc.running = true }
+                    Btn { text: I18n.t("Update Center"); sym: "system_update_alt"; icon: "\uf021"; primary: true; onClicked: page.ctl.page = 35 }
                     Btn { text: I18n.t("GitHub"); sym: "code"; icon: ""; onClicked: page.open("https://github.com/shadowww-dev/DarkShadowShell") }
                 }
             }
         }
-        T { visible: page.upd !== ""; text: page.upd; font.pixelSize: 12; color: M3.inkDim; leftPadding: 6 }
 
         // ---------- this computer ----------
         SectionTitle { text: I18n.t("This computer"); sub: I18n.t("What DarkShadow's Shell runs on.") }

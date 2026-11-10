@@ -1,5 +1,11 @@
 # Changelog
 
+## V4.00: Update Center
+- **Update Center** (Settings, next to About): your version, the newest one and what is new in it, and **Update now** right there: no terminal window. Every step shows live as it happens (a spinner while it runs, then a tick), with a progress ring, the time it takes and the full log. You can close Settings, the update keeps going, and Settings comes back to it after it reloads
+- The "Update is Available!" notification and the island open the Update Center instead of a terminal. Updates with new system packages (they need your password) still have a button for the terminal
+- **A tilted black hole** in fastfetch: the glowing disk crosses the shadow at an angle, with the bright lensed ring arching over and under it, like Gargantua
+- Settings > System no longer has a second "System" page: that is in About
+
 ## V3.99: two screens
 - **Widgets on another screen**: Settings > System > Monitors > pick a screen > Put the widgets here (Edit mode opens there too)
 - **The main screen stays the main screen**: with nothing chosen the shell picked "whichever screen came first", which changed from boot to boot. Now it is always the same one, and at the first login with two screens the one in the top left is saved as the main screen

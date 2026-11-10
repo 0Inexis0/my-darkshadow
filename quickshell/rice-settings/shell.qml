@@ -196,7 +196,8 @@ FloatingWindow {
     property int page: 0
     // rice-settings PAGE: open on that page (the Settings card of the dashboard uses it)
     Process {
-        command: ["bash", "-c", "f=\"$HOME/.cache/rice/settings-page\"; [ -f \"$f\" ] && cat \"$f\" && rm -f \"$f\""]
+        command: ["bash", "-c", "f=\"$HOME/.cache/rice/settings-page\"; if [ -f \"$f\" ]; then cat \"$f\"; rm -f \"$f\"; " +
+                  "elif grep -q '\"state\": \"running\"' \"$HOME/.cache/rice/update-live.json\" 2>/dev/null; then echo 35; fi"]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
@@ -340,7 +341,8 @@ FloatingWindow {
         { name: "Languages", icon: "\uf1ab" },
         { name: "Security", icon: "\uf132" },
         { name: "Infinite Desktop", icon: "\uf065" },
-        { name: "Themes", icon: "\uf53f" }
+        { name: "Themes", icon: "\uf53f" },
+        { name: "Update Center", icon: "\uf021" }
     ]
 
 
@@ -354,9 +356,10 @@ FloatingWindow {
         { group: "desk", name: "Desktop", icon: "\uf108", sym: "desktop_windows", pages: [29, 33, 12, 25, 4, 11], caption: I18n.t("Look & feel, widgets, windows, %1 and the lock screen", wmLabel) },
         { group: "bar", name: "Bar & launcher", icon: "\uf0c9", sym: "toolbar", pages: [2, 3, 6, 7], caption: I18n.t("The bar, the dynamic island and the launcher") },
         { group: "snd", name: "Sound & language", icon: "\uf028", sym: "graphic_eq", pages: [1, 10, 26], caption: I18n.t("Sounds, notifications, language and region") },
-        { group: "sys", name: "System", icon: "\uf013", sym: "settings", pages: [27, 30, 31, 28, 5, 23, 15], caption: I18n.t("This computer, keybinds, the screen, recording, keyboard and services") },
+        { group: "sys", name: "System", icon: "\uf013", sym: "settings", pages: [30, 31, 28, 5, 23, 15], caption: I18n.t("Keybinds, languages, monitors, recording, keyboard and services") },
         { group: "game", name: "Gaming", icon: "\uf11b", sym: "sports_esports", pages: [16], caption: I18n.t("Play without distractions") },
-        { group: "about", name: "About", icon: "\uf05a", sym: "info", pages: [17], caption: I18n.t("Version, system and credits") }
+        { group: "about", name: "About", icon: "\uf05a", sym: "info", pages: [17], caption: I18n.t("Version, system and credits") },
+        { group: "upd", name: "Update Center", icon: "\uf021", sym: "system_update_alt", pages: [35], caption: I18n.t("Get the newest version, right here") }
     ]
     // the navigation rail: Home, then one stop per group (Gaming hub and About are groups with one page)
     readonly property var rail: [{ gid: "", name: "Home", icon: "\uf015", sym: "home", pages: [0], caption: I18n.t("Your desktop at a glance") }]
@@ -901,6 +904,7 @@ FloatingWindow {
             PageSlot { nav: win; idx: 31; cur: win.page; page: Component { LanguagesPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 33; cur: win.page; page: Component { InfinitePage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 34; cur: win.page; page: Component { ThemesPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 35; cur: win.page; page: Component { UpdatePage { anchors.fill: parent; ctl: win } } }
         }
 
         // results: the setting, and where it is (page > section)

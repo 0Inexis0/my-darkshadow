@@ -52,6 +52,8 @@ task() {
   local msg="$1"; shift
   if [ "${DRY_RUN:-0}" = 1 ]; then printf '    %s○%s %s %s(dry run)%s\n' "$CG3" "$C0" "$msg" "$CG3" "$C0"; return 0; fi
   if [ "$IS_TTY" != 1 ]; then
+    # Settings > Update Center reads this output live: there the step shows as running until ✔ or ✘ comes
+    [ "${RICE_GUI:-0}" = 1 ] && printf '    ▶ %s\n' "$msg"
     if "$@" >>"$LOG" 2>&1 </dev/null; then ok "$msg"; return 0; else fail "$msg  (details: $LOG)"; return 1; fi
   fi
   local frames=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏') i=0 pid rc t0

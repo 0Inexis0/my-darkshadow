@@ -649,7 +649,7 @@ ensure_input_group() {
   fi
   getent group input >/dev/null 2>&1 || { echo "no input group on this system"; return 0; }
   # the installer asked for your password already; when that ran out, sudo asks once more
-  if sudo usermod -aG input "$USER"; then
+  if sudo ${RICE_GUI:+-n} usermod -aG input "$USER"; then
     echo "input group: joined (log out and back in once, then SUPER + ALT + mouse works)"
   else
     echo "input group: not joined (Settings > Desktop > Infinite Desktop > Allow)"

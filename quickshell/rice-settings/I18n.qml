@@ -28,9 +28,11 @@ Singleton {
         return "English"
     }
     // text in the chosen language; "%1" in the text is replaced by a
-    function t(s, a) {
+    function t(s, a, b) {
         const v = table[s]
-        const r = v !== undefined ? v : s
-        return a !== undefined ? r.replace("%1", a) : r
+        let r = v !== undefined ? v : s
+        if (a !== undefined) r = r.replace("%1", a)
+        if (b !== undefined) r = r.replace("%2", b)
+        return r
     }
 }

@@ -647,7 +647,7 @@ Item {
                             font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.DemiBold }
                         MouseArea { id: ubm; anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                if (isl.up.update) { isl.infoOpen = false; Quickshell.execDetached(["bash", "-c", "t=\"${TERMINAL:-kitty}\"; command -v \"$t\" >/dev/null || t=kitty; exec \"$t\" -e \"$HOME/.local/bin/rice-update\""]) }
+                                if (isl.up.update) { isl.infoOpen = false; Quickshell.execDetached([Quickshell.env("HOME") + "/.local/bin/rice-update", "center"]) }
                                 else isl.checkUpdates()
                             } }
                     }

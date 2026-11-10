@@ -6,6 +6,8 @@
                             compare your version with the newest one on GitHub
   rice-update watch         background: checks after login and every 15 minutes, shows a notification
   rice-update notify        show the "Update is Available!" notification now (to try it)
+  rice-update gui           update in the background for Settings > Update Center (no terminal): the steps go to
+                            ~/.cache/rice/update-live.log, the state to ~/.cache/rice/update-live.json
 """
 import fcntl
 import json
@@ -21,6 +23,8 @@ INSTALLED = DIR + "/version"
 CACHE = HOME + "/.cache/rice"
 STATE = CACHE + "/update.json"
 NOTIFIED = CACHE + "/update-notified"
+LIVE_LOG = CACHE + "/update-live.log"
+LIVE = CACHE + "/update-live.json"
 RAW = "https://raw.githubusercontent.com/shadowww-dev/DarkShadowShell/main/VERSION"
 FIRST_WAIT = 45            # seconds after login
 EVERY = 15 * 60            # GitHub is asked every 15 minutes
@@ -179,6 +183,78 @@ def terminal_update():
                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
+def open_center():
+    """Settings > Update Center (the update runs there, with its steps shown live); a terminal without Settings"""
+    rs = HOME + "/.local/bin/rice-settings"
+    if os.access(rs, os.X_OK):
+        subprocess.Popen([rs, "35"], start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    else:
+        terminal_update()
+
+
+def live():
+    try:
+        return json.load(open(LIVE))
+    except (OSError, ValueError):
+        return {}
+
+
+def alive(pid):
+    try:
+        os.kill(int(pid), 0)
+        return True
+    except (OSError, ValueError, TypeError):
+        return False
+
+
+def put_live(**kw):
+    os.makedirs(CACHE, exist_ok=True)
+    tmp = LIVE + ".new"
+    with open(tmp, "w") as f:
+        json.dump(kw, f)
+    os.replace(tmp, LIVE)
+
+
+def gui(args):
+    """the update without a terminal: install.sh --update --yes --no-packages, detached from Settings (the update
+    puts new Settings files in place, so Settings reloads in the middle; this keeps running and Settings reads on)"""
+    st = live()
+    if st.get("state") == "running" and alive(st.get("pid")):
+        print("already updating")
+        return 0
+    r = repo()
+    os.makedirs(CACHE, exist_ok=True)
+    if not r:
+        open(LIVE_LOG, "w").write("    \u2718 Could not find your copy of the repo (~/shadows-shell). Clone it again:\n"
+                                  "      git clone https://github.com/shadowww-dev/DarkShadowShell ~/shadows-shell\n")
+        put_live(state="failed", code=1, started=int(time.time()), ended=int(time.time()), pid=0)
+        return 1
+    if os.fork() != 0:
+        return 0
+    os.setsid()
+    if os.fork() != 0:
+        os._exit(0)
+    log = open(LIVE_LOG, "w", buffering=1)
+    t0 = int(time.time())
+    put_live(state="running", code=-1, started=t0, ended=0, pid=os.getpid(), was=installed())
+    env = dict(os.environ, RICE_GUI="1", NO_COLOR="1", GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="never")
+    env.pop("SUDO_ASKPASS", None)
+    want = ["--update", "--yes"] + (args if args else ["--no-packages"])
+    try:
+        code = subprocess.call(["./install.sh"] + want, cwd=r, env=env, stdin=subprocess.DEVNULL,
+                               stdout=log, stderr=subprocess.STDOUT)
+    except Exception as e:
+        log.write("    \u2718 %s\n" % e)
+        code = 1
+    try:
+        check(offline=True)
+    except Exception:
+        pass
+    put_live(state="done" if code == 0 else "failed", code=code, started=t0, ended=int(time.time()), pid=0,
+             was=live().get("was", ""), now=installed())
+    os._exit(0)
+
+
 def body(st):
     v = st["latest"]
     head = "<b>Update V%s</b>" % v
@@ -204,7 +280,7 @@ def notify(st):
                             "--wait", "Update is Available!", body(st)],
                            capture_output=True, text=True, timeout=6 * 3600)
         if r.stdout.strip() in ("default", "update"):
-            terminal_update()
+            open_center()
     except Exception:
         pass
 
@@ -301,6 +377,10 @@ def main(a):
         if not st["news"]:
             st["news"] = ["This is how the update notification looks"]
         notify_bg(st)
+    elif cmd == "gui":
+        sys.exit(gui(a[2:]))
+    elif cmd == "center":
+        open_center()
     elif cmd in ("", "run"):
         run(a[2:])
     elif cmd in ("-h", "--help", "help"):
