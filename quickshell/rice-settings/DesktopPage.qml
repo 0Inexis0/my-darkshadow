@@ -227,78 +227,20 @@ Item {
                     page.ctl.status = I18n.t("Widget blur ") + (v ? "on" : "off")
                 }
             }
+            SliderRow {
+                label: I18n.t("Transparency of the widgets")
+                desc: I18n.t("How much of the wallpaper shows through the cards (with blur: frosted glass), on Hyprland and niri")
+                from: 0; to: 80; step: 5; decimals: 0; unit: "%"
+                value: Math.round((1 - (page.ctl.dst.widgetOpacity !== undefined ? Number(page.ctl.dst.widgetOpacity) : 1)) * 100)
+                onCommitted: function(x) {
+                    const o = (1 - x / 100).toFixed(2)
+                    const d = JSON.parse(JSON.stringify(page.ctl.dst)); d.widgetOpacity = Number(o); page.ctl.dst = d
+                    Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" widgets-opacity \"$1\"", "_", o])
+                }
+            }
             Row {
                 spacing: 8
                 Pill { label: I18n.t("Reset widget positions"); onClicked: page.ctl.dreset() }
-            }
-
-            // ---------- theme ----------
-            T { kind: "title"; text: I18n.t("Theme"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
-            T { width: parent.width; text: I18n.t("How the widget cards look. Google takes the color of your Theme."); color: M3.inkDim; font.pixelSize: 12; wrapMode: Text.WordWrap }
-            Row {
-                id: themeRow
-                width: parent.width
-                spacing: 10
-                Repeater {
-                    model: page.themes
-                    delegate: Rectangle {
-                        id: tt
-                        readonly property bool on: (page.ctl.dst.widgetTheme || "shadow") === modelData.k
-                        width: (themeRow.width - 20) / 3
-                        height: 150
-                        radius: 14
-                        color: tm.containsMouse ? M3.surfaceHigh : M3.surfaceC
-                        border.width: on ? 2 : 1
-                        border.color: on ? M3.primary : M3.outlineVariant
-                        Behavior on color { ColorAnimation { duration: 120 } }
-                        Behavior on border.color { ColorAnimation { duration: 160 } }
-                        scale: tm.pressed ? 0.98 : 1
-                        Behavior on scale { NumberAnimation { duration: 90 } }
-                        // a tiny desktop with one widget in this style
-                        Rectangle {
-                            id: mini
-                            x: 10; y: 10
-                            width: parent.width - 20; height: 92
-                            radius: 9
-                            clip: true
-                            gradient: Gradient {
-                                GradientStop { position: 0; color: "#2d2350" }
-                                GradientStop { position: 1; color: "#6a3a7e" }
-                            }
-                            Rectangle {
-                                id: mw
-                                anchors.centerIn: parent
-                                width: parent.width - 36; height: 60
-                                radius: modelData.k === "google" ? 18 : (modelData.k === "outline" ? 12 : 15)
-                                color: modelData.k === "google" ? Qt.hsla(page.accent.hslHue < 0 ? 0 : page.accent.hslHue, page.accent.hslSaturation * 0.34, 0.15, 0.85)
-                                     : modelData.k === "outline" ? "transparent" : Qt.rgba(0.10, 0.10, 0.115, 0.62)
-                                border.width: modelData.k === "outline" ? 1.5 : (modelData.k === "shadow" ? 1 : 0)
-                                border.color: modelData.k === "outline" ? Qt.rgba(1, 1, 1, 0.5) : Qt.rgba(1, 1, 1, 0.12)
-                                Rectangle {
-                                    x: 12; anchors.verticalCenter: parent.verticalCenter
-                                    width: 32; height: 32; radius: 16
-                                    color: modelData.k === "google" ? Qt.hsla(page.accent.hslHue < 0 ? 0 : page.accent.hslHue, Math.max(0.45, page.accent.hslSaturation), 0.78, 1) : "#F6F5F4"
-                                    T { anchors.centerIn: parent; kind: "icon"; text: "\uf017"; font.pixelSize: 13; color: modelData.k === "google" ? "#1c1b2a" : "#0d0d0d" }
-                                }
-                                Column {
-                                    x: 54; anchors.verticalCenter: parent.verticalCenter
-                                    spacing: 5
-                                    Rectangle { width: 54; height: 7; radius: 3.5; color: "#F6F5F4"; opacity: 0.9 }
-                                    Rectangle { width: 38; height: 6; radius: 3; color: "#F6F5F4"; opacity: 0.4 }
-                                }
-                            }
-                        }
-                        T { x: 12; y: 110; text: modelData.n; font.pixelSize: 13; font.bold: true }
-                        T { x: 12; y: 130 - 4; width: parent.width - 24; text: modelData.d; font.pixelSize: 10; color: M3.inkDim; elide: Text.ElideRight }
-                        MouseArea { id: tm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.ctl.setWidgetTheme(modelData.k) }
-                    }
-                }
-            }
-            ToggleRow {
-                label: I18n.t("Adapt to the wallpaper")
-                desc: I18n.t("Dark text and light cards on a light wallpaper, light text on a dark one; every widget decides by what is behind it")
-                checked: page.ctl.dst.widgetAdapt !== false
-                onToggled: function(v) { page.ctl.setWidgetAdapt(v) }
             }
 
             // ---------- visualizer ----------

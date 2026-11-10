@@ -395,7 +395,7 @@ step_packages() {
       info "NixOS installs packages from your system configuration, not from this script."
       note "Add this line to /etc/nixos/configuration.nix:"
       printf '\n        %simports = [ %s/nix/module.nix ];%s\n\n' "$CW" "$ROOT" "$C0"
-      note "or with flakes:  inputs.darkshadows-shell.url = \"github:shadowww-dev/shadows-shell\";"
+      note "or with flakes:  inputs.darkshadows-shell.url = \"github:shadowww-dev/DarkShadowShell\";"
       note "then run:  sudo nixos-rebuild switch"
       note "Infinite Desktop (SUPER + ALT + mouse) also needs, next to the module import:  programs.shadows-shell.user = \"$USER\";"
       ;;

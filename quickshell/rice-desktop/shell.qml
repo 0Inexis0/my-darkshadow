@@ -145,6 +145,7 @@ ShellRoot {
                     root.cfgText = t
                     root.cfg = j
                     Look.blur = j.widgetBlur !== false
+                    Look.widgetAlpha = j.widgetOpacity !== undefined ? Math.max(0.2, Math.min(1, Number(j.widgetOpacity))) : 1
                     Look.theme = j.widgetTheme === "google" || j.widgetTheme === "outline" ? j.widgetTheme : "shadow"
                     Look.adapt = j.widgetAdapt !== false
                 } catch (e) { }

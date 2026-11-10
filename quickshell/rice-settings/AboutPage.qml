@@ -70,7 +70,7 @@ Item {
                     spacing: 8
                     topPadding: 4
                     Btn { text: updProc.running ? I18n.t("Checking...") : I18n.t("Check for updates"); sym: "update"; icon: ""; primary: true; onClicked: if (!updProc.running) updProc.running = true }
-                    Btn { text: I18n.t("GitHub"); sym: "code"; icon: ""; onClicked: page.open("https://github.com/shadowww-dev/shadows-shell") }
+                    Btn { text: I18n.t("GitHub"); sym: "code"; icon: ""; onClicked: page.open("https://github.com/shadowww-dev/DarkShadowShell") }
                 }
             }
         }

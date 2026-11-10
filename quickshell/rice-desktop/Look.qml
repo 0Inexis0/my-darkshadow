@@ -7,6 +7,8 @@ Singleton {
     id: look
     // blurred wallpaper behind the cards (Settings > Widgets > Blur)
     property bool blur: true
+    // how strong the widget cards are, for all widgets (Settings > Widgets > Transparency): 1 solid .. 0.2 see-through
+    property real widgetAlpha: 1
     // no blur and no transparency at all (Settings > Services: Lite, or gaming mode)
     property bool flat: false
     // Light mode (Settings > Home): the visualizer stops and widgets pause while a window covers them

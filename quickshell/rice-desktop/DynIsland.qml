@@ -25,7 +25,9 @@ Item {
     readonly property int bh: bar ? bar.barH : 38
     readonly property bool down: !bar || !bar.atBottom     // grows downwards (bar at the top)
     readonly property var cfg: bar ? bar.bc : ({})
-    function on(k) { return cfg[k] !== false }
+    // Settings > Dynamic island > Dynamic island off: only the clock (it grows into nothing; a click still opens Today)
+    readonly property bool dynamic: cfg.island_dynamic !== false
+    function on(k) { return dynamic && cfg[k] !== false }
 
     Player { id: pl; running: isl.visible }
     readonly property var source: Pipewire.defaultAudioSource

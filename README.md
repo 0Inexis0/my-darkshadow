@@ -20,9 +20,9 @@
   <img src="https://img.shields.io/badge/Quickshell-QML-8B7BFF?style=for-the-badge&labelColor=11111b&logo=qt&logoColor=8B7BFF&color=1a1b26" alt="Quickshell">
 </p>
 <p align="center">
-  <a href="https://github.com/shadowww-dev/shadows-shell/releases/latest"><img src="https://img.shields.io/github/v/release/shadowww-dev/shadows-shell?style=for-the-badge&labelColor=11111b&logo=github&logoColor=white&color=8B7BFF&label=release" alt="Latest release"></a>
-  <a href="https://github.com/shadowww-dev/shadows-shell/stargazers"><img src="https://img.shields.io/github/stars/shadowww-dev/shadows-shell?style=for-the-badge&labelColor=11111b&logo=starship&logoColor=f5c542&color=f5c542" alt="Stars"></a>
-  <a href="https://github.com/shadowww-dev/shadows-shell/commits"><img src="https://img.shields.io/github/last-commit/shadowww-dev/shadows-shell?style=for-the-badge&labelColor=11111b&logo=git&logoColor=white&color=4c566a&label=updated" alt="Last commit"></a>
+  <a href="https://github.com/shadowww-dev/DarkShadowShell/releases/latest"><img src="https://img.shields.io/github/v/release/shadowww-dev/DarkShadowShell?style=for-the-badge&labelColor=11111b&logo=github&logoColor=white&color=8B7BFF&label=release" alt="Latest release"></a>
+  <a href="https://github.com/shadowww-dev/DarkShadowShell/stargazers"><img src="https://img.shields.io/github/stars/shadowww-dev/DarkShadowShell?style=for-the-badge&labelColor=11111b&logo=starship&logoColor=f5c542&color=f5c542" alt="Stars"></a>
+  <a href="https://github.com/shadowww-dev/DarkShadowShell/commits"><img src="https://img.shields.io/github/last-commit/shadowww-dev/DarkShadowShell?style=for-the-badge&labelColor=11111b&logo=git&logoColor=white&color=4c566a&label=updated" alt="Last commit"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2ea043?style=for-the-badge&labelColor=11111b&logo=opensourceinitiative&logoColor=white" alt="MIT license"></a>
   <a href="https://www.tiktok.com/@shadoww.dev"><img src="https://img.shields.io/badge/TikTok-shadoww.dev-ff0050?style=for-the-badge&labelColor=11111b&logo=tiktok&logoColor=white" alt="TikTok"></a>
 </p>
@@ -79,20 +79,20 @@ Pick your system, paste the three lines, then log out, choose **Hyprland** or **
 **Arch Linux / CachyOS / EndeavourOS / Garuda**
 ```bash
 sudo pacman -S --needed git base-devel
-git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
+git clone https://github.com/shadowww-dev/DarkShadowShell shadows-shell && cd shadows-shell
 ./install.sh
 ```
 
 **Fedora / Nobara**
 ```bash
 sudo dnf install -y git
-git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
+git clone https://github.com/shadowww-dev/DarkShadowShell shadows-shell && cd shadows-shell
 ./install.sh
 ```
 
 **NixOS**
 ```bash
-git clone https://github.com/shadowww-dev/shadows-shell && cd shadows-shell
+git clone https://github.com/shadowww-dev/DarkShadowShell shadows-shell && cd shadows-shell
 # add to /etc/nixos/configuration.nix:
 #   imports = [ /path/to/shadows-shell/nix/module.nix ];
 #   programs.shadows-shell.user = "yourname";    # Infinite Desktop: SUPER + ALT + mouse (input group)

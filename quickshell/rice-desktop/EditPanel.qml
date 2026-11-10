@@ -4,7 +4,7 @@ import QtQuick
 
 // Edit mode (SUPER + ALT + W): the panel on the left. Sections that open and close:
 //   Widgets         every widget as a chip: click to put it on the desktop (and select it), × takes it away
-//   Quick settings  glass, widget style, colors from the wallpaper, hiding, grid, the interface font
+//   Quick settings  blur, transparency, colors from the wallpaper, hiding, grid, the interface font
 //   Bar             style, edge, auto-hide and which modules it shows
 //   Visualizer      on or off, edge, style, colors and height (cava)
 // It slides in from the left, its parts one after another (Material 3 emphasized-decelerate).
@@ -17,8 +17,8 @@ Item {
     height: Math.min(parent ? parent.height - 40 : 800, col.implicitHeight + 28)
 
     property real t: 0
-    Behavior on t { NumberAnimation { duration: ep.shown ? 680 : 220; easing.type: Easing.Linear } }
-    onShownChanged: t = shown ? 1 : 0
+    NumberAnimation { id: tA; target: ep; property: "t"; easing.type: Easing.Linear }
+    onShownChanged: { tA.stop(); tA.from = t; tA.to = shown ? 1 : 0; tA.duration = Math.max(1, Math.round((shown ? 680 : 240) * Math.abs(tA.to - t))); tA.start() }
     function ease(p) { return 1 - Math.pow(1 - p, 4) }
     readonly property real et: ease(t)
     function stg(i) { return ease(Math.max(0, Math.min(1, (t - i * 0.06) / 0.7))) }
@@ -244,14 +244,15 @@ Item {
             Section {
                 order: 2
                 icon: "tune"; glyph: ""; title: Tr.t("Quick settings")
-                sub: (Look.blur ? Tr.t("Glass") : Tr.t("Solid")) + "  ·  " + (Look.theme === "google" ? Tr.t("Google") : (Look.theme === "outline" ? Tr.t("Outline") : Tr.t("DarkShadow"))) + "  ·  " + Fonts.main
-                Switchy { label: Tr.t("Glass (blur behind widgets)"); on: Look.blur; onFlipped: function(v) { Look.blur = v; ep.ds(["widgets-blur", v ? "on" : "off"]) } }
+                sub: (Look.blur ? Tr.t("Blur") : Tr.t("No blur")) + "  ·  " + Math.round(Look.widgetAlpha * 100) + "%  ·  " + Fonts.main
+                Switchy { label: Tr.t("Blur behind widgets"); on: Look.blur; onFlipped: function(v) { Look.blur = v; ep.ds(["widgets-blur", v ? "on" : "off"]) } }
+                Label { text: Tr.t("Transparency") + "  ·  " + Math.round((1 - Look.widgetAlpha) * 100) + "%" }
+                Pills { options: [["1", "Solid"], ["0.8", "Light"], ["0.6", "Medium"], ["0.4", "Strong"]]
+                    current: String(Look.widgetAlpha >= 0.95 ? "1" : (Look.widgetAlpha >= 0.7 ? "0.8" : (Look.widgetAlpha >= 0.5 ? "0.6" : "0.4")))
+                    onChosen: function(v) { Look.widgetAlpha = Number(v); ep.ds(["widgets-opacity", v]) } }
                 Switchy { label: Tr.t("Colors follow the wallpaper"); on: Look.adapt; onFlipped: function(v) { Look.adapt = v; ep.ds(["widgets-adapt", v ? "on" : "off"]) } }
                 Switchy { label: Tr.t("Hide while windows are open"); on: ep.root ? ep.root.cfg.autoHide === true : false; onFlipped: function(v) { ep.ds(["auto-hide", v ? "on" : "off"]) } }
                 Switchy { label: Tr.t("Snap to a grid"); on: ep.ed ? ep.ed.grid : false; onFlipped: function(v) { ep.ed.grid = v } }
-                Label { text: Tr.t("Widget style") }
-                Pills { options: [["shadow", "DarkShadow"], ["google", "Google"], ["outline", "Outline"]]; current: Look.theme
-                    onChosen: function(v) { Look.theme = v; ep.ds(["widgets-theme", v]) } }
                 Label { text: Tr.t("Font") }
                 Pills { options: [["Google Sans Flex", "Google Sans"], ["Rubik", "Rubik"], ["Inter", "Inter"], ["Outfit", "Outfit"]]; current: Fonts.main
                     onChosen: function(v) { ep.fontSet(v) } }

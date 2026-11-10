@@ -15,6 +15,8 @@ PanelWindow {
     readonly property var cat: root ? root.catalog : []
     readonly property var selInfo: { for (let i = 0; i < cat.length; i++) if (cat[i].id === sel) return cat[i]; return null }
     readonly property var selWin: sel !== "" && root && root.wins[sel] ? root.wins[sel] : null
+    // a widget you are dragging (or resizing) that comes over the panel on the left: the panel slides away
+    readonly property bool panelAway: !!selWin && selWin.dragging && selWin.px < 20 + 300 + 30
 
     visible: root ? root.editing : false
     color: "transparent"
@@ -344,7 +346,8 @@ PanelWindow {
         id: panel
         ed: ed
         x: 20; anchors.verticalCenter: parent.verticalCenter
-        shown: ed.visible
+        // it steps aside while you move or resize a widget over it, and comes back when you let go
+        shown: ed.visible && !ed.panelAway
         z: 30
     }
     Rectangle {

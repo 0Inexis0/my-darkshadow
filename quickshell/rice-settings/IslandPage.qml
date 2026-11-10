@@ -155,15 +155,22 @@ Item {
 
         // ---------- moments ----------
         SectionTitle { text: I18n.t("It grows into"); sub: I18n.t("For a moment, then it is the clock again.") }
+        ToggleRow { label: I18n.t("Dynamic island"); desc: I18n.t("Off: only the clock. It grows into nothing; volume and notifications pop up as usual, a click still opens Today")
+            checked: page.v("island_dynamic", true) !== false; onToggled: function(x) { page.setv("island_dynamic", x ? "on" : "off") } }
         ToggleRow { label: I18n.t("Music on hover"); desc: I18n.t("Point at the island while something plays to open the player")
+            enabled: page.v("island_dynamic", true) !== false; opacity: enabled ? 1 : 0.45
             checked: page.v("island_hover", true) !== false; onToggled: function(x) { page.setv("island_hover", x ? "on" : "off") } }
         ToggleRow { label: I18n.t("Volume and microphone"); desc: I18n.t("A wavy level you can drag, instead of the pop-up at the bottom")
+            enabled: page.v("island_dynamic", true) !== false; opacity: enabled ? 1 : 0.45
             checked: page.v("island_volume", true) !== false; onToggled: function(x) { page.setv("island_volume", x ? "on" : "off") } }
         ToggleRow { label: I18n.t("Workspaces"); desc: I18n.t("Which workspace you switched to, in your workspace style and its own color")
+            enabled: page.v("island_dynamic", true) !== false; opacity: enabled ? 1 : 0.45
             checked: page.v("island_ws", true) !== false; onToggled: function(x) { page.setv("island_ws", x ? "on" : "off") } }
         ToggleRow { label: I18n.t("Notifications"); desc: I18n.t("They grow out of the island instead of popping up (urgent ones still pop up). Needs Shown by: DarkShadow")
+            enabled: page.v("island_dynamic", true) !== false; opacity: enabled ? 1 : 0.45
             checked: page.v("island_notifs", true) !== false; onToggled: function(x) { page.setv("island_notifs", x ? "on" : "off") } }
         ToggleRow { label: I18n.t("Charger"); desc: I18n.t("Plugging the charger in or out shows the battery as a wave (laptops)")
+            enabled: page.v("island_dynamic", true) !== false; opacity: enabled ? 1 : 0.45
             checked: page.v("island_charge", true) !== false; onToggled: function(x) { page.setv("island_charge", x ? "on" : "off") } }
 
         // ---------- the card ----------

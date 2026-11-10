@@ -53,7 +53,8 @@ PanelWindow {
     onTypingChanged: if (grab) grab.active = typing && !editing
     // brightness of the wallpaper behind this widget, and the colors that follow from it
     readonly property real lum: Look.lumAt(px, py, dispW, dispH, bw, bh)
-    readonly property var pal: WPal { wall: w.lum; k: w.bgv }
+    // the card: its own strength (the editor) times the transparency of all widgets (Settings > Widgets)
+    readonly property var pal: WPal { wall: w.lum; k: w.bgv * Look.widgetAlpha }
     readonly property real dispW: free ? fw : cw * sc
     readonly property real dispH: free ? fh : ch * sc
 
@@ -99,8 +100,10 @@ PanelWindow {
     readonly property int my: full ? 0 : Math.max(0, Math.round(py) - pad)
     anchors { top: true; left: true; right: w.full; bottom: w.full }
     margins { left: w.mx; top: w.my }
-    implicitWidth: w.full ? 0 : Math.ceil(px - mx + dispW) + pad
-    implicitHeight: w.full ? 0 : Math.ceil(py - my + dispH) + pad
+    // never wider or taller than the screen: niri does not show a layer bigger than its output (the visualizer, a
+    // full-width strip at the bottom, was missing there), and a widget at the edge needs no room past it
+    implicitWidth: w.full ? 0 : Math.max(1, Math.min(bw > 0 ? bw - mx : 1e6, Math.ceil(px - mx + dispW) + pad))
+    implicitHeight: w.full ? 0 : Math.max(1, Math.min(bh > 0 ? bh - my : 1e6, Math.ceil(py - my + dispH) + pad))
     exclusionMode: ExclusionMode.Ignore
     // above windows while you edit, so you can see what you change
     WlrLayershell.layer: editing ? WlrLayer.Top : WlrLayer.Bottom
@@ -114,7 +117,7 @@ PanelWindow {
     // only behind the widget's cards (Card.qml): widgets drawn as a shape (the clock, the gauges ...) get no square
     // of blur around them, and a widget made of a few cards gets it behind each card
     NiriBlur { win: w; items: holder.cards.filter(c => c && c.visible && c.color.a > 0.02); radius: w.pal.radius
-        on: Look.blur && !w.passive && w.bgv > 0.05 && w.fk > 0.99 && !w.editing }
+        on: Look.blur && !w.passive && w.bgv * Look.widgetAlpha > 0.05 && w.fk > 0.99 && !w.editing }
     Item { id: nothing; width: 0; height: 0 }
 
     Item {

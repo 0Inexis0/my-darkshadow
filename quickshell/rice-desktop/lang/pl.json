@@ -201,5 +201,11 @@
  "Resolution, size, arrangement": "Rozdzielczość, rozmiar, ułożenie",
  "Settings": "Ustawienia",
  "Left": "Lewo",
- "Right": "Prawo"
+ "Right": "Prawo",
+ "Blur": "Rozmycie",
+ "No blur": "Bez rozmycia",
+ "Blur behind widgets": "Rozmycie pod widżetami",
+ "Transparency": "Przezroczystość",
+ "Light": "Lekka",
+ "Strong": "Mocna"
 }

@@ -12,7 +12,7 @@ import urllib.parse
 import urllib.request
 
 CACHE = os.path.expanduser("~/.cache/rice/lyrics")
-UA = "DarkShadow's Shell lyrics widget (https://github.com/shadowww-dev/shadows-shell)"
+UA = "DarkShadow's Shell lyrics widget (https://github.com/shadowww-dev/DarkShadowShell)"
 
 
 def get(url):

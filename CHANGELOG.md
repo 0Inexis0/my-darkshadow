@@ -1,5 +1,15 @@
 # Changelog
 
+## V3.97: widgets: blur and transparency, the visualizer on niri
+- niri: the visualizer at the screen edge shows now (its window was bigger than the screen, niri left it out); every widget's window now stays inside the screen
+- Widgets: **Transparency** for all of them (Settings > Widgets, and Quick settings in Edit mode), next to **Blur behind widgets**, on Hyprland and niri
+- The widget themes (DarkShadow, Google, Outline) are gone from Settings and Edit mode
+- Edit mode: the panel on the left slides away while you drag or resize a widget over it, and comes back when you let go
+
+## V3.96: only the clock
+- Settings > Dynamic island > **Dynamic island**: off, the island is only your clock. It grows into nothing (no player on hover, no volume, workspaces, notifications or charger); the volume and notifications pop up as usual, and a click still opens Today
+- The project moved to github.com/shadowww-dev/DarkShadowShell: the updater, README, About and the installer use the new address (the old one still leads there)
+
 ## V3.95: the title's app icon, left or right
 - Settings > DarkShadow bar > App icon by the title: left of the title, right of it, or off
 

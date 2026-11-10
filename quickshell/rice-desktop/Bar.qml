@@ -46,8 +46,8 @@ PanelWindow {
     readonly property bool dyn: sty === "dynamic"
     readonly property bool goo: dyn                              // the Material 3 look of the Dynamic style
     property var nf: null                                         // Notifs.qml, for the island
-    readonly property bool islandNotifs: hasIsland && bc.island_notifs !== false
-    readonly property bool islandVolume: hasIsland && bc.island_volume !== false
+    readonly property bool islandNotifs: hasIsland && bc.island_dynamic !== false && bc.island_notifs !== false
+    readonly property bool islandVolume: hasIsland && bc.island_dynamic !== false && bc.island_volume !== false
     // the Google style's colors: tonal, made from your theme color (the same as the control center)
     NPal { id: gp; theme: "shell"; alpha: Math.min(1, bar.alpha + 0.14) }
     readonly property bool hideOn: bc.autohide === true
