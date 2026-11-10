@@ -1,5 +1,8 @@
 # Changelog
 
+## V4.03: crash fix
+- **The bar and the widgets no longer crash when you switch windows** (seen on NixOS with Qt 6.12): the app icon next to the window title went through Qt's icon theme engine right as the window changed, and its SVG loader could crash, taking the bar, the dock and the widgets with it. The icon is now found as a file and drawn in the background, a moment after the window changes
+
 ## V4.02: a new black hole in fastfetch
 - **The black hole in fastfetch, drawn again from scratch**: now in full color with soft light instead of blocky characters. A deep black shadow, a tilted glowing disk crossing in front of it, its far side bent over and under the shadow like Gargantua, a thin photon ring and a soft glow fading into the dark. White-hot inside, then your wallpaper's colors (or Gargantua's warm light when fastfetch uses its own colors)
 

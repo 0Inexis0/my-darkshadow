@@ -474,18 +474,58 @@ PanelWindow {
         }
     }
 
-    // the window's title, then its app's icon at the end
+    // the window's title, then its app's icon at the end.
+    // The icon is found as a file (rice-desktop/iconfile.sh) and drawn by a plain Image that loads in the background.
+    // V4.02 and before drew it through the icon theme (Quickshell.iconPath + IconImage) right when the window
+    // changed: Qt 6.12's SVG icon engine can crash there, and it took the bar and the widgets down with it.
+    property var iconFiles: ({})                     // icon name -> file ("" = none), found once
+    property var iconAsked: ({})
+    signal iconFound()
+    function iconFile(n) {
+        if (!n) return ""
+        if (iconFiles[n] !== undefined) return iconFiles[n]
+        if (!iconAsked[n]) {
+            const a = Object.assign({}, iconAsked); a[n] = true; iconAsked = a
+            iconQ.push(n)
+            if (!iconP.running) iconNext.restart()
+        }
+        return ""
+    }
+    property var iconQ: []
+    Timer { id: iconNext; interval: 60; onTriggered: { if (iconP.running || bar.iconQ.length === 0) return
+        iconP.name = bar.iconQ.shift(); iconP.running = true } }
+    Process {
+        id: iconP
+        property string name: ""
+        command: ["bash", Quickshell.shellPath("iconfile.sh"), name]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const f = Object.assign({}, bar.iconFiles); f[iconP.name] = text.trim(); bar.iconFiles = f
+                bar.iconFound()
+                if (bar.iconQ.length > 0) iconNext.restart()
+            }
+        }
+    }
     Component { id: mTitle
         Item {
             id: tt
             readonly property var tl: ToplevelManager.activeToplevel
             readonly property string title: tl ? (tl.title || "") : ""
-            readonly property string appIcon: {
-                if (!tl || !tl.appId) return ""
-                const e = DesktopEntries.heuristicLookup(tl.appId)
-                const n = e && e.icon ? e.icon : tl.appId.toLowerCase()
-                return Quickshell.iconPath(n, true)
+            // the app's icon name, worked out a moment after the window changes (never inside that change)
+            property string appId: ""
+            Timer { id: idT; interval: 120; onTriggered: tt.appId = tt.tl && tt.tl.appId ? tt.tl.appId : "" }
+            onTlChanged: idT.restart()
+            Connections { target: tt.tl; ignoreUnknownSignals: true; function onAppIdChanged() { idT.restart() } }
+            Component.onCompleted: idT.restart()
+            readonly property string iconName: {
+                if (appId === "") return ""
+                const e = DesktopEntries.heuristicLookup(appId)
+                return e && e.icon ? e.icon : appId.toLowerCase()
             }
+            property string appIcon: ""
+            function findIcon() { appIcon = bar.iconFile(iconName) }
+            onIconNameChanged: findIcon()
+            Connections { target: bar; function onIconFound() { tt.findIcon() } }
             readonly property bool shown: title !== ""
             // Settings > DarkShadow bar > App icon by the title: left, right (default) or off
             readonly property string side: bar.bc.title_icon === "left" || bar.bc.title_icon === "off" ? bar.bc.title_icon : "right"
@@ -495,8 +535,12 @@ PanelWindow {
                 x: ic.visible && tt.side === "left" ? 24 : 0
                 width: Math.min(implicitWidth, Math.max(120, bar.width * 0.2)); elide: Text.ElideRight
                 text: tt.title; color: bar.dim; font.family: Fonts.main; font.pixelSize: 12 }
-            IconImage { id: ic; visible: tt.appIcon !== "" && tt.side !== "off"; anchors.verticalCenter: parent.verticalCenter
-                x: tt.side === "left" ? 0 : tTxt.width + 8; implicitSize: 16; source: tt.appIcon
+            Image { id: ic; visible: tt.appIcon !== "" && tt.side !== "off" && status === Image.Ready
+                anchors.verticalCenter: parent.verticalCenter
+                x: tt.side === "left" ? 0 : tTxt.width + 8; width: 16; height: 16
+                sourceSize.width: 32; sourceSize.height: 32
+                asynchronous: true; cache: true; smooth: true; mipmap: true; fillMode: Image.PreserveAspectFit
+                source: tt.appIcon !== "" ? "file://" + tt.appIcon : ""
                 opacity: visible ? 1 : 0; Behavior on opacity { NumberAnimation { duration: 200 } } }
         }
     }
