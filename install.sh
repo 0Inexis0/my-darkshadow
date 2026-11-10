@@ -397,7 +397,7 @@ step_packages() {
       printf '\n        %simports = [ %s/nix/module.nix ];%s\n\n' "$CW" "$ROOT" "$C0"
       note "or with flakes:  inputs.darkshadows-shell.url = \"github:shadowww-dev/shadows-shell\";"
       note "then run:  sudo nixos-rebuild switch"
-      note "Infinite Desktop (SUPER + ALT + mouse) also needs:  users.users.$USER.extraGroups = [ \"input\" ];"
+      note "Infinite Desktop (SUPER + ALT + mouse) also needs, next to the module import:  programs.shadows-shell.user = \"$USER\";"
       ;;
     *)
       warn "$DISTRO_NAME is not supported for automatic packages."
@@ -442,15 +442,30 @@ put_wallpapers() {
   dir="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")/Wallpapers"
   [ "$dir" = "/Wallpapers" ] && dir="$HOME/Pictures/Wallpapers"
   mkdir -p "$dir"
+  # wallpapers we replaced: remove the old ones (only a file that is exactly the old picture, never yours)
+  if [ -f "$ROOT/install/retired-wallpapers.txt" ]; then
+    local sum name
+    while read -r sum name; do
+      case "$sum" in ''|'#'*) continue ;; esac
+      [ -f "$dir/$name" ] && [ "$(md5sum "$dir/$name" | cut -d' ' -f1)" = "$sum" ] && rm -f "$dir/$name" && echo "removed the old wallpaper $name"
+    done <"$ROOT/install/retired-wallpapers.txt"
+  fi
   for f in "$ROOT"/wallpapers/*; do
     [ -f "$f" ] || continue
     [ -e "$dir/$(basename "$f")" ] || { cp "$f" "$dir/"; n=$((n + 1)); }
   done
-  # first start: use a wallpaper from the folder
-  if [ ! -s "$HOME/.cache/hyprquickpaper-current" ]; then
+  # first start (or the wallpaper you had is gone): one of ours, the black hole when it is there
+  f="$(cat "$HOME/.cache/hyprquickpaper-current" 2>/dev/null)"
+  if [ -z "$f" ] || [ ! -f "$f" ]; then
     mkdir -p "$HOME/.cache"
-    f="$(find "$dir" -maxdepth 1 -type f \( -name '*.jpg' -o -name '*.png' \) | sort | head -n1)"
+    f="$dir/space-black-hole.jpg"
+    [ -f "$f" ] || f="$(find "$dir" -maxdepth 1 -type f \( -name '*.jpg' -o -name '*.png' \) | sort | head -n1)"
     [ -n "$f" ] && echo "$f" >"$HOME/.cache/hyprquickpaper-current"
+  fi
+  # in a running desktop with no wallpaper yet: put it on now, with its colors (at the next login rice-walls
+  # start does the same)
+  if [ -n "${WAYLAND_DISPLAY:-}" ] && [ -x "$HOME/.local/bin/rice-walls" ]; then
+    setsid -f "$HOME/.local/bin/rice-walls" start >/dev/null 2>&1 </dev/null
   fi
   echo "$n new wallpapers in $dir"
 }
@@ -633,8 +648,12 @@ ensure_input_group() {
     return 0
   fi
   getent group input >/dev/null 2>&1 || { echo "no input group on this system"; return 0; }
-  sudo -n true 2>/dev/null || { echo "input group: needs sudo (Settings > Desktop > Infinite Desktop > Allow)"; return 0; }
-  sudo -n usermod -aG input "$USER" && echo "input group: joined (counts after the next login)"
+  # the installer asked for your password already; when that ran out, sudo asks once more
+  if sudo usermod -aG input "$USER"; then
+    echo "input group: joined (log out and back in once, then SUPER + ALT + mouse works)"
+  else
+    echo "input group: not joined (Settings > Desktop > Infinite Desktop > Allow)"
+  fi
 }
 
 ensure_power_modes() {
@@ -734,7 +753,6 @@ step_finish() {
     fi
   fi
   # Settings > Security > Shell files: the files are watched from here on (after every install and update)
-  [ -x "$BIN/rice-security" ] && task "Security: remember the shell files as they are now" t "$BIN/rice-security" baseline
   if [ "$IN_HYPR" = 1 ] && [ "$DRY_RUN" != 1 ]; then
     task "Reloading Hyprland" t hyprctl reload
     task "Restarting the bar and the desktop widgets" restart_shell

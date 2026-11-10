@@ -244,8 +244,12 @@ def generate(s):
     if s["kbd"].get("layouts"):
         L.append("pcall(hl.config, %s)" % kbd_lua(s["kbd"]))
     for name, m in s["monitors"].items():
-        L.append("pcall(hl.monitor, { output = %s, mode = %s, position = %s, scale = %s })"
-                 % (json.dumps(name), json.dumps(m["mode"]), json.dumps(m["position"]), lua(float(m["scale"]))))
+        if m.get("disabled"):
+            L.append("pcall(hl.monitor, { output = %s, disabled = true })" % json.dumps(name))
+            continue
+        extra = ", transform = %d" % int(m["transform"]) if int(m.get("transform", 0) or 0) else ""
+        L.append("pcall(hl.monitor, { output = %s, mode = %s, position = %s, scale = %s%s })"
+                 % (json.dumps(name), json.dumps(m["mode"]), json.dumps(m["position"]), lua(float(m["scale"])), extra))
     for bd in s["binds"]:
         L.append("pcall(function() hl.bind(%s, hl.dsp.exec_cmd(%s)) end)"
                  % (json.dumps(bd["keys"]), json.dumps(bd["cmd"])))
@@ -516,18 +520,26 @@ def monitors_json():
         for name, o in outs.items():
             lg = o.get("logical")
             if not lg:
+                res.append({"name": name, "width": 0, "height": 0, "refreshRate": 60, "scale": 1, "x": 0, "y": 0,
+                            "availableModes": [], "disabled": True, "transform": 0,
+                            "description": " ".join(x for x in (o.get("make"), o.get("model")) if x)})
                 continue
             modes = o.get("modes") or []
             cur = modes[o["current_mode"]] if o.get("current_mode") is not None and o["current_mode"] < len(modes) else {}
             res.append({"name": name, "width": cur.get("width", lg["width"]), "height": cur.get("height", lg["height"]),
                         "refreshRate": (cur.get("refresh_rate") or 60000) / 1000.0, "scale": lg.get("scale", 1),
-                        "x": lg["x"], "y": lg["y"],
+                        "x": lg["x"], "y": lg["y"], "disabled": False,
+                        "transform": {"Normal": 0, "90": 1, "180": 2, "270": 3}.get(str(lg.get("transform", "Normal")), 0),
+                        "description": " ".join(x for x in (o.get("make"), o.get("model")) if x),
                         "availableModes": ["%dx%d@%.3fHz" % (m["width"], m["height"], m["refresh_rate"] / 1000.0) for m in modes]})
         return res
     try:
-        return json.loads(sh(["hyprctl", "-j", "monitors"]))
+        return json.loads(sh(["hyprctl", "-j", "monitors", "all"]))
     except Exception:
-        return []
+        try:
+            return json.loads(sh(["hyprctl", "-j", "monitors"]))
+        except Exception:
+            return []
 
 
 def cmd_monitors():
@@ -546,7 +558,9 @@ def cmd_monitors():
         lst.sort(key=lambda e: -int(e["res"].split("x")[0]) * int(e["res"].split("x")[1]))
         out.append({"name": m["name"], "width": m["width"], "height": m["height"],
                     "rate": mon_rate(m.get("refreshRate", 60)), "scale": m.get("scale", 1),
-                    "x": m.get("x", 0), "y": m.get("y", 0), "modes": lst})
+                    "x": m.get("x", 0), "y": m.get("y", 0), "modes": lst,
+                    "transform": int(m.get("transform", 0) or 0), "disabled": bool(m.get("disabled", False)),
+                    "description": m.get("description") or " ".join(x for x in (m.get("make"), m.get("model")) if x)})
     print(json.dumps(out))
 
 
@@ -582,16 +596,93 @@ def cmd_monitor_apply(name, res, rate, scale):
         sys.exit(1)
 
 
+def mon_state(m):
+    return {"name": m["name"], "mode": mode_str(m), "position": "%dx%d" % (m.get("x", 0), m.get("y", 0)),
+            "scale": m.get("scale", 1), "transform": int(m.get("transform", 0) or 0), "disabled": bool(m.get("disabled"))}
+
+
+def remember_all():
+    """before a change of several screens: how all of them are now (Revert brings this back)"""
+    os.makedirs(DIR, exist_ok=True)
+    if not os.path.exists(PREV):
+        json.dump({"all": [mon_state(m) for m in monitors_json()]}, open(PREV, "w"))
+
+
+def mon_set_full(st):
+    """one screen exactly like st (mode, position, scale, rotation, on/off), right away"""
+    name = st["name"]
+    if NIRI:
+        if st.get("disabled"):
+            return "error" not in sh(["niri", "msg", "output", name, "off"]).lower()
+        out = sh(["niri", "msg", "output", name, "on"])
+        mm = re.match(r"(-?\d+)x(-?\d+)$", st.get("position", ""))
+        if mm:
+            out += sh(["niri", "msg", "output", name, "position", "set", mm.group(1), mm.group(2)])
+        out += sh(["niri", "msg", "output", name, "transform", ["normal", "90", "180", "270"][int(st.get("transform", 0)) % 4]])
+        if st.get("mode") and not st["mode"].startswith("0x0"):
+            out += sh(["niri", "msg", "output", name, "mode", st["mode"]])
+        out += sh(["niri", "msg", "output", name, "scale", str(st.get("scale", 1))])
+        return "error" not in out.lower()
+    if st.get("disabled"):
+        return ev("hl.monitor({ output = %s, disabled = true })" % json.dumps(name))
+    mode = st.get("mode") or "preferred"
+    if mode.startswith("0x0"):
+        mode = "preferred"
+    return ev("hl.monitor({ output = %s, mode = %s, position = %s, scale = %s, transform = %d })"
+              % (json.dumps(name), json.dumps(mode), json.dumps(st.get("position") or "auto"),
+                 lua(float(st.get("scale", 1))), int(st.get("transform", 0) or 0)))
+
+
+def cmd_monitor_layout(js):
+    """Settings > Screen > Arrange: [{"name": "DP-1", "x": 0, "y": 0}, ...] - every screen to its place at once"""
+    try:
+        want = json.loads(js)
+    except Exception:
+        die("not JSON")
+    remember_all()
+    now = {m["name"]: m for m in monitors_json()}
+    ok = True
+    for w in want:
+        m = now.get(w.get("name"))
+        if not m or m.get("disabled"):
+            continue
+        st = mon_state(m)
+        st["position"] = "%dx%d" % (int(w["x"]), int(w["y"]))
+        ok = mon_set_full(st) and ok
+    if not ok:
+        sys.exit(1)
+
+
+def cmd_monitor_set(name, key, value):
+    """Settings > Screen: one thing of one screen: rotate 0-3, enabled on|off"""
+    m = cur_monitor(name)
+    if not m:
+        die("no such monitor")
+    remember_all()
+    st = mon_state(m)
+    if key == "rotate":
+        st["transform"] = int(value) % 4
+    elif key == "enabled":
+        if value == "off" and sum(1 for x in monitors_json() if not x.get("disabled")) <= 1:
+            die("this is your only screen that is on")
+        st["disabled"] = value == "off"
+    else:
+        die("rotate|enabled")
+    if not mon_set_full(st):
+        sys.exit(1)
+
+
 def cmd_monitor_keep():
     if not os.path.exists(PREV):
         return
     prev = json.load(open(PREV))
-    m = cur_monitor(prev["name"])
-    if m:
-        s = load()
-        s["monitors"][prev["name"]] = {"mode": mode_str(m), "position": "%dx%d" % (m["x"], m["y"]),
-                                       "scale": m.get("scale", 1)}
-        save(s)
+    s = load()
+    names = [p["name"] for p in prev["all"]] if "all" in prev else [prev["name"]]
+    for m in monitors_json():
+        if m["name"] in names:
+            st = mon_state(m)
+            s["monitors"][m["name"]] = {k: st[k] for k in ("mode", "position", "scale", "transform", "disabled")}
+    save(s)
     os.remove(PREV)
 
 
@@ -599,7 +690,11 @@ def cmd_monitor_revert():
     if not os.path.exists(PREV):
         return
     p = json.load(open(PREV))
-    mon_eval(p["name"], p["mode"], p["position"], p["scale"])
+    if "all" in p:
+        for st in p["all"]:
+            mon_set_full(st)
+    else:
+        mon_eval(p["name"], p["mode"], p["position"], p["scale"])
     os.remove(PREV)
 
 
@@ -813,7 +908,7 @@ def main(a):
     if len(a) < 2:
         die("usage: hypr-set state|set|border-mode|border-color|anim-enabled|anim-speed|anim-style|binds|bind-add|bind-del|"
             "autostart|autostart-add|autostart-del|autostart-toggle|monitors|monitor-apply|monitor-keep|"
-            "monitor-revert|reload|reset-all|kbd-state|kbd-set|kbd-options|kbd-next")
+            "monitor-revert|monitor-layout|monitor-set|reload|reset-all|kbd-state|kbd-set|kbd-options|kbd-next")
     c, r = a[1], a[2:]
     table = {
         "state": (0, cmd_state), "set": (2, cmd_set), "border-mode": (1, cmd_border_mode),
@@ -823,6 +918,7 @@ def main(a):
         "autostart-del": (1, cmd_autostart_del), "autostart-toggle": (1, cmd_autostart_toggle),
         "monitors": (0, cmd_monitors), "monitor-apply": (4, cmd_monitor_apply),
         "monitor-keep": (0, cmd_monitor_keep), "monitor-revert": (0, cmd_monitor_revert),
+        "monitor-layout": (1, cmd_monitor_layout), "monitor-set": (3, cmd_monitor_set),
         "reload": (0, cmd_reload), "reset-all": (0, cmd_reset_all),
         "kbd-state": (0, cmd_kbd_state), "kbd-set": (1, cmd_kbd_set), "kbd-options": (1, cmd_kbd_options),
         "kbd-next": (0, cmd_kbd_next), "shadow-intensity": (1, cmd_shadow_intensity),

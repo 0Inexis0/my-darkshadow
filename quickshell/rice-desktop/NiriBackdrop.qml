@@ -7,6 +7,7 @@ import QtQuick.Effects
 // zoomed-out workspaces (the workspaces themselves keep the sharp wallpaper). A layer rule from rice-niri puts this
 // surface into the backdrop. It is drawn once per wallpaper: nothing in it moves.
 PanelWindow {
+    screen: Mon.screen
     id: bd
     property string path: ""
     visible: Wm.niri && path !== ""

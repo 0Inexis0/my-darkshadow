@@ -10,7 +10,8 @@ ShellRoot {
     property string wallpaper: ""
     property bool locked: false
     readonly property string home: Quickshell.env("HOME")
-    readonly property var scr: Quickshell.screens.length > 0 ? Quickshell.screens[0] : null
+    // the screen the shell lives on (Settings > System > Screen > Main screen)
+    readonly property var scr: Mon.screen
     readonly property int sw: scr ? scr.width : 1920
     readonly property int sh: scr ? scr.height : 1080
     readonly property string placement: cfg.clock && cfg.clock.placement ? cfg.clock.placement : "draggable"
@@ -169,6 +170,8 @@ ShellRoot {
             let j = {}
             try { j = t.trim() !== "" ? JSON.parse(t) : {} } catch (e) { j = {} }
             Look.wavy = j.wavy !== false
+            // the language from Settings > System > Languages
+            Tr.lang = (typeof j.lang === "string" && /^[a-zA-Z-]{2,6}$/.test(j.lang)) ? j.lang : "en"
             if (typeof j.accentShape === "string" && j.accentShape !== "") Look.shape = j.accentShape
             Look.waveThick = j.progressThick !== undefined ? Math.max(2, Math.min(8, Number(j.progressThick))) : 4
         }
@@ -229,6 +232,9 @@ ShellRoot {
         stdout: SplitParser { onRead: function(line) { root.busy = line.trim() === "1" } }
         onRunningChanged: if (!running) root.busy = false
     }
+
+    // ---- the desktop menu (right-click the desktop). Made before the widgets, so they stay on top of its catcher
+    DeskMenu { editing: root.editing }
 
     // ---- clock
     WidgetWindow {
@@ -438,8 +444,11 @@ ShellRoot {
     Launcher { }
     WallPicker { }
     Bar { id: mainBar; nf: notifs }
+    // the bar on the left or right edge (Settings > DarkShadow bar > Position)
+    VBar { }
     // a click on the desktop closes the bar's open card or tray menu (it lies under the windows, over the wallpaper)
     PanelWindow {
+        screen: Mon.screen
         visible: mainBar.sticky
         color: "transparent"
         anchors { top: true; bottom: true; left: true; right: true }
@@ -453,7 +462,7 @@ ShellRoot {
     PowerMenu { }
     VolumeMenu { }
     VolumeOsd { islandTakes: mainBar.islandVolume }
-    GamePanel { }
+    GamePanel { gb: root.cfg.gamebar ? root.cfg.gamebar : ({}) }
     Notifs { id: notifs; islandTakes: mainBar.islandNotifs && notifs.shellMode }
     ControlCenter { nf: notifs }
 

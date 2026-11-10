@@ -21,7 +21,16 @@ WheelHandler {
         const max = horizontal ? Math.max(0, flick.contentWidth - flick.width) : Math.max(0, flick.contentHeight - flick.height)
         return Math.max(0, Math.min(max, v))
     }
-    property NumberAnimation glide: NumberAnimation { target: ws.flick; property: ws.prop; duration: 140; easing.type: Easing.OutCubic }
+    // smooth: every frame the page covers a part of the way to where the wheel pointed, so several notches in a row
+    // blend into one steady, soft run (an animation that restarts on every notch jerks at each one)
+    property FrameAnimation glide: FrameAnimation {
+        onTriggered: {
+            const cur = ws.flick[ws.prop]
+            const next = cur + (ws.goal - cur) * (1 - Math.exp(-Math.min(0.05, frameTime) / 0.09))
+            if (Math.abs(ws.goal - next) < 0.4) { ws.flick[ws.prop] = ws.goal; stop() }
+            else ws.flick[ws.prop] = next
+        }
+    }
     property Timer rest: Timer { interval: 220; onTriggered: ws.active = false }
     onWheel: function(e) { take(e) }
     function take(e) {
@@ -43,6 +52,6 @@ WheelHandler {
         rest.restart()
         goal = to
         if (touch) { glide.stop(); flick[prop] = goal; return }
-        glide.stop(); glide.from = cur; glide.to = goal; glide.start()
+        if (!glide.running) glide.start()
     }
 }

@@ -32,10 +32,10 @@ Item {
         anchors.rightMargin: 16
         anchors.verticalCenter: parent.verticalCenter
         spacing: 3
-        T { kind: "title"; text: "Hi, " + uc.user + "!"; font.pixelSize: 18; font.bold: true; width: parent.width; elide: Text.ElideRight; color: uc.pal ? uc.pal.fg : "#F6F5F4" }
+        T { kind: "title"; text: Tr.t("Hi, ") + uc.user + "!"; font.pixelSize: 18; font.bold: true; width: parent.width; elide: Text.ElideRight; color: uc.pal ? uc.pal.fg : "#F6F5F4" }
         T { text: uc.greeting(); font.pixelSize: 14; color: uc.pal ? uc.pal.fg2 : "#c8c8cc" }
         T {
-            text: "Today · " + uc.now.toLocaleDateString(Qt.locale("en_US"), "dddd d MMM")
+            text: Tr.t("Today · ") + uc.now.toLocaleDateString(Tr.loc, "dddd d MMM")
             font.pixelSize: 11
             color: uc.pal ? uc.pal.fg3 : "#8a8a8f"
         }

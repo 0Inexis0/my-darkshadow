@@ -28,7 +28,7 @@ if [ "$FAMILY" = fedora ] && [ -e "${OSTREE_BOOTED:-/run/ostree-booted}" ]; then
 PKG_DESKTOP=(hyprland hyprlock hypridle xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent qt5-wayland qt6-wayland)
 PKG_SHELL=(quickshell qt6-multimedia waybar swaync awww cava kitty fish fastfetch nautilus matugen)
 PKG_TOOLS=(wf-recorder grim slurp wl-clipboard libnotify xdg-user-dirs jq curl python playerctl brightnessctl pamixer
-           imagemagick zenity networkmanager bluez bluez-utils pipewire pipewire-pulse wireplumber
+           imagemagick ffmpeg mpvpaper zenity networkmanager bluez bluez-utils pipewire pipewire-pulse wireplumber
            btop cmatrix peaclock pavucontrol gnome-calendar hyprsunset upower power-profiles-daemon)
 PKG_FONTS=(ttf-jetbrains-mono-nerd ttf-nerd-fonts-symbols noto-fonts noto-fonts-emoji inter-font)
 # adwaita-cursors: a cursor from the repositories, so there is always one (Bibata is in the AUR; without an
@@ -36,9 +36,9 @@ PKG_FONTS=(ttf-jetbrains-mono-nerd ttf-nerd-fonts-symbols noto-fonts noto-fonts-
 PKG_LOOK=(papirus-icon-theme gnome-themes-extra adw-gtk-theme adwaita-cursors bibata-cursor-theme-bin)
 ARCH_PKGS=("${PKG_DESKTOP[@]}" "${PKG_SHELL[@]}" "${PKG_TOOLS[@]}" "${PKG_FONTS[@]}" "${PKG_LOOK[@]}")
 # AUR packages the shell cannot work without (on Arch versions that do not have them in the repositories):
-# yay is built for these by itself. The others (the Bibata cursor, peaclock ...) are skipped without an AUR helper:
+# yay is built for these by itself (mpvpaper: live wallpapers). The others (the Bibata cursor, peaclock ...) are skipped without an AUR helper:
 # the installer downloads the cursor from GitHub instead.
-AUR_NEEDED=(quickshell awww matugen niri xwayland-satellite)
+AUR_NEEDED=(quickshell awww matugen niri xwayland-satellite mpvpaper)
 
 # programs the desktop needs at runtime (shown at the end if something is missing)
 NEED_CMDS=(Hyprland hyprlock hypridle waybar qs swaync-client awww matugen cava jq python3 grim slurp wl-copy wf-recorder notify-send)
@@ -63,7 +63,7 @@ FPKG_DESKTOP=(hyprland hyprlock hypridle hyprsunset hyprpolkitagent xdg-desktop-
               qt5-qtwayland qt6-qtwayland)
 FPKG_SHELL=(quickshell qt6-qtmultimedia waybar SwayNotificationCenter awww cava kitty fish fastfetch nautilus matugen)
 FPKG_TOOLS=(wf-recorder grim slurp wl-clipboard libnotify xdg-user-dirs jq curl python3 playerctl brightnessctl pamixer
-            ImageMagick zenity NetworkManager bluez pipewire pipewire-pulseaudio wireplumber
+            ImageMagick "ffmpeg-free|ffmpeg" mpvpaper zenity NetworkManager bluez pipewire pipewire-pulseaudio wireplumber
             btop cmatrix pavucontrol gnome-calendar upower power-profiles-daemon tar xz unzip)
 FPKG_FONTS=(rsms-inter-fonts google-noto-sans-fonts google-noto-emoji-fonts)
 FPKG_LOOK=(papirus-icon-theme adw-gtk3-theme adwaita-cursor-theme)

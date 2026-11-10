@@ -7,24 +7,24 @@ Item {
     property var ctl
 
     readonly property var widgets: [
-        { key: "weather", label: "Weather", icon: "", desc: I18n.t("Temperature and sky") },
+        { key: "weather", label: I18n.t("Weather"), icon: "", desc: I18n.t("Temperature and sky") },
         { key: "media", label: I18n.t("Media player"), icon: "", desc: I18n.t("Now playing + controls") },
-        { key: "resources", label: "Resources", icon: "", desc: I18n.t("CPU, RAM and GPU") },
+        { key: "resources", label: I18n.t("Resources"), icon: "", desc: I18n.t("CPU, RAM and GPU") },
         { key: "usercard", label: I18n.t("User card"), icon: "", desc: I18n.t("Greeting and date") },
-        { key: "calendar", label: "Calendar", icon: "", desc: I18n.t("Month view") },
-        { key: "visualizer", label: "Visualizer", icon: "\uf001", desc: I18n.t("See-through, at the bottom") },
-        { key: "battery", label: "Battery", icon: "\uf240", desc: I18n.t("Charge and time left") },
-        { key: "todo", label: "To-do", icon: "\uf14a", desc: I18n.t("Tasks to tick off") },
+        { key: "calendar", label: I18n.t("Calendar"), icon: "", desc: I18n.t("Month view") },
+        { key: "visualizer", label: I18n.t("Visualizer"), icon: "\uf001", desc: I18n.t("See-through, at the bottom") },
+        { key: "battery", label: I18n.t("Battery"), icon: "\uf240", desc: I18n.t("Charge and time left") },
+        { key: "todo", label: I18n.t("To-do"), icon: "\uf14a", desc: I18n.t("Tasks to tick off") },
         { key: "focus", label: I18n.t("Focus timer"), icon: "\uf017", desc: I18n.t("Work and break timer") },
-        { key: "notes", label: "Note", icon: "\uf249", desc: I18n.t("A note on the desktop") },
-        { key: "gauge", label: "Gauge", icon: "\uf4bc", desc: I18n.t("CPU, RAM, GPU or heat in a soft shape") },
-        { key: "date", label: "Date", icon: "\uf073", desc: I18n.t("Today in a flower or cookie shape") },
-        { key: "sky", label: "Sky", icon: "\uf0c2", desc: I18n.t("The weather as a tilted pill") },
+        { key: "notes", label: I18n.t("Note"), icon: "\uf249", desc: I18n.t("A note on the desktop") },
+        { key: "gauge", label: I18n.t("Gauge"), icon: "\uf4bc", desc: I18n.t("CPU, RAM, GPU or heat in a soft shape") },
+        { key: "date", label: I18n.t("Date"), icon: "\uf073", desc: I18n.t("Today in a flower or cookie shape") },
+        { key: "sky", label: I18n.t("Sky"), icon: "\uf0c2", desc: I18n.t("The weather as a tilted pill") },
         { key: "nowring", label: I18n.t("Now playing"), icon: "\uf001", desc: I18n.t("The song in a round label") },
-        { key: "player", label: "Player", icon: "\uf144", desc: I18n.t("Cover, seek line and buttons") },
+        { key: "player", label: I18n.t("Player"), icon: "\uf144", desc: I18n.t("Cover, seek line and buttons") },
         { key: "playpill", label: I18n.t("Play button"), icon: "\uf04b", desc: I18n.t("A big cookie to play and pause") },
-        { key: "lyrics", label: "Lyrics", icon: "\uf075", desc: I18n.t("The words in time with the song") },
-        { key: "storage", label: "Storage", icon: "\uf0a0", desc: I18n.t("Used and free disk space") },
+        { key: "lyrics", label: I18n.t("Lyrics"), icon: "\uf075", desc: I18n.t("The words in time with the song") },
+        { key: "storage", label: I18n.t("Storage"), icon: "\uf0a0", desc: I18n.t("Used and free disk space") },
         { key: "trio", label: I18n.t("CPU · GPU · RAM"), icon: "\uf2db", desc: I18n.t("Three small shapes") }
     ]
 
@@ -99,7 +99,7 @@ Item {
             width: flick.width
             spacing: 10
 
-            T { kind: "title"; text: "Widgets"; font.pixelSize: 16; font.bold: true }
+            T { kind: "title"; text: I18n.t("Widgets"); font.pixelSize: 16; font.bold: true }
             // the widget editor on the desktop (Settings closes so you can see it)
             Rectangle {
                 width: parent.width
@@ -224,7 +224,7 @@ Item {
                 onToggled: function(v) {
                     const d = JSON.parse(JSON.stringify(page.ctl.dst)); d.widgetBlur = v; page.ctl.dst = d
                     Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" widgets-blur \"$1\"", "_", v ? "on" : "off"])
-                    page.ctl.status = "Widget blur " + (v ? "on" : "off")
+                    page.ctl.status = I18n.t("Widget blur ") + (v ? "on" : "off")
                 }
             }
             Row {
@@ -233,7 +233,7 @@ Item {
             }
 
             // ---------- theme ----------
-            T { kind: "title"; text: "Theme"; font.pixelSize: 16; font.bold: true; topPadding: 14 }
+            T { kind: "title"; text: I18n.t("Theme"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
             T { width: parent.width; text: I18n.t("How the widget cards look. Google takes the color of your Theme."); color: M3.inkDim; font.pixelSize: 12; wrapMode: Text.WordWrap }
             Row {
                 id: themeRow
@@ -302,32 +302,32 @@ Item {
             }
 
             // ---------- visualizer ----------
-            T { kind: "title"; text: "Visualizer"; font.pixelSize: 16; font.bold: true; topPadding: 14 }
+            T { kind: "title"; text: I18n.t("Visualizer"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
             SegRow {
-                label: "Style"
+                label: I18n.t("Style")
                 desc: I18n.t("Round bars, a mirror, a wave or dots")
-                options: [{ label: "Bars", value: "bars" }, { label: "Mirror", value: "mirror" }, { label: "Wave", value: "wave" }, { label: "Dots", value: "dots" }]
+                options: [{ label: I18n.t("Bars"), value: "bars" }, { label: I18n.t("Mirror"), value: "mirror" }, { label: I18n.t("Wave"), value: "wave" }, { label: I18n.t("Dots"), value: "dots" }]
                 current: page.wv("visualizer", "style", "bars")
                 onChosen: function(v) { page.ctl.dwset("visualizer", "style", v) }
             }
             SegRow {
-                label: "Color"
+                label: I18n.t("Color")
                 desc: I18n.t("Your Theme color, a gradient from it, rainbow, or white (black on a light wallpaper)")
-                options: [{ label: "Theme", value: "accent" }, { label: "Gradient", value: "gradient" }, { label: "Rainbow", value: "rainbow" }, { label: I18n.t("White / black"), value: "mono" }]
+                options: [{ label: I18n.t("Theme"), value: "accent" }, { label: I18n.t("Gradient"), value: "gradient" }, { label: I18n.t("Rainbow"), value: "rainbow" }, { label: I18n.t("White / black"), value: "mono" }]
                 current: page.wv("visualizer", "color", "accent")
                 onChosen: function(v) { page.ctl.dwset("visualizer", "color", v) }
             }
             SegRow {
-                label: "Direction"
+                label: I18n.t("Direction")
                 desc: I18n.t("Grow up from the bottom, or hang down from the top")
-                options: [{ label: "Up", value: "off" }, { label: "Down", value: "on" }]
+                options: [{ label: I18n.t("Up"), value: "off" }, { label: I18n.t("Down"), value: "on" }]
                 current: (page.wv("visualizer", "flip", false) === true || page.wv("visualizer", "flip", false) === "on") ? "on" : "off"
                 onChosen: function(v) { page.ctl.dwset("visualizer", "flip", v) }
             }
 
             // ---------- to-do ----------
             T { kind: "title"; text: I18n.t("To-do list"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
-            T { width: parent.width; text: "The tasks of the To-do widget. On the desktop, click the widget once to type in it. In a terminal: rice-todo add \"buy milk\"."; color: M3.inkDim; font.pixelSize: 12; wrapMode: Text.WordWrap }
+            T { width: parent.width; text: I18n.t("The tasks of the To-do widget. On the desktop, click the widget once to type in it. In a terminal: rice-todo add \"buy milk\"."); color: M3.inkDim; font.pixelSize: 12; wrapMode: Text.WordWrap }
             Field {
                 id: todoField
                 width: parent.width
@@ -377,10 +377,10 @@ Item {
                 Pill { label: I18n.t("Clear ticked tasks"); onClicked: page.todoDo(["clear"]) }
             }
 
-            T { kind: "title"; text: "Clock"; font.pixelSize: 16; font.bold: true; topPadding: 14 }
+            T { kind: "title"; text: I18n.t("Clock"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
 
             ToggleRow {
-                label: "Enable"
+                label: I18n.t("Enable")
                 desc: I18n.t("Show a clock on the desktop")
                 checked: page.cv("enabled", false) === true
                 onToggled: function(v) { page.ctl.dset("clock", "enabled", v ? "on" : "off") }
@@ -395,7 +395,7 @@ Item {
                 label: I18n.t("Placement strategy")
                 desc: I18n.t("Move it in the widget editor, or auto-pick a spot")
                 options: [
-                    { label: "Draggable", value: "draggable" },
+                    { label: I18n.t("Draggable"), value: "draggable" },
                     { label: I18n.t("Least busy"), value: "leastBusy" },
                     { label: I18n.t("Most busy"), value: "mostBusy" }
                 ]
@@ -406,10 +406,10 @@ Item {
                 label: I18n.t("Clock style")
                 desc: I18n.t("Look of the desktop clock")
                 options: [
-                    { label: "Digital", value: "digital" },
-                    { label: "Line", value: "line" },
-                    { label: "Cookie", value: "cookie" },
-                    { label: "Pixel", value: "pixel" }
+                    { label: I18n.t("Digital"), value: "digital" },
+                    { label: I18n.t("Line"), value: "line" },
+                    { label: I18n.t("Cookie"), value: "cookie" },
+                    { label: I18n.t("Pixel"), value: "pixel" }
                 ]
                 current: page.cv("style", "digital")
                 onChosen: function(v) { page.ctl.dset("clock", "style", v) }
@@ -460,7 +460,7 @@ Item {
                                 color: ft.on ? M3.primary : M3.inkDim
                             }
                             MouseArea { id: fm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                                onClicked: { page.ctl.dwset("clock", "font", modelData.k); if (!ft.here) page.ctl.status = "Downloading " + modelData.n + "..." } }
+                                onClicked: { page.ctl.dwset("clock", "font", modelData.k); if (!ft.here) page.ctl.status = I18n.t("Downloading ") + modelData.n + "..." } }
                         }
                     }
                 }

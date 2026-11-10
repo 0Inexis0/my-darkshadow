@@ -17,7 +17,7 @@ Item {
     function setPins(l) {
         const d = JSON.parse(JSON.stringify(page.ctl.dst)); d.dock = d.dock || {}; d.dock.apps = l; page.ctl.dst = d
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" dock-apps \"$1\"", "_", JSON.stringify(l)])
-        page.ctl.status = "Dock: " + l.length + " pinned apps"
+        page.ctl.status = I18n.t("Dock: ") + l.length + I18n.t(" pinned apps")
     }
     function pin(id) { if (pins.indexOf(id) < 0) setPins(pins.concat([id])) }
     function unpin(id) { setPins(pins.filter(function(x) { return x !== id })) }
@@ -54,7 +54,7 @@ Item {
             width: flick.width
             spacing: 10
 
-            T { kind: "title"; text: "Dock"; font.pixelSize: 16; font.bold: true }
+            T { kind: "title"; text: I18n.t("Dock"); font.pixelSize: 16; font.bold: true }
 
             // live preview of the dock
             Rectangle {
@@ -115,33 +115,33 @@ Item {
             }
 
             ToggleRow {
-                label: "Enable"
+                label: I18n.t("Enable")
                 desc: I18n.t("A minimal dock with your apps on a screen edge (bottom, left or right)")
                 checked: page.dv("enabled", false) === true
                 onToggled: function(v) { page.ctl.dset("dock", "enabled", v ? "on" : "off") }
             }
             SegRow {
-                label: "Position"
+                label: I18n.t("Position")
                 desc: I18n.t("Which screen edge the dock sits on")
-                options: [{ label: "Bottom", value: "bottom" }, { label: "Left", value: "left" }, { label: "Right", value: "right" }]
+                options: [{ label: I18n.t("Bottom"), value: "bottom" }, { label: I18n.t("Left"), value: "left" }, { label: I18n.t("Right"), value: "right" }]
                 current: page.dv("position", "bottom") === "top" ? "bottom" : page.dv("position", "bottom")
                 onChosen: function(x) { page.ctl.dset("dock", "position", x) }
             }
             ToggleRow {
-                label: "Background"
+                label: I18n.t("Background")
                 desc: I18n.t("Draw a panel behind the icons")
                 checked: page.dv("background", true) === true
                 onToggled: function(v) { page.ctl.dset("dock", "background", v ? "on" : "off") }
             }
             SliderRow {
-                label: "Opacity"
+                label: I18n.t("Opacity")
                 desc: I18n.t("Lower is more see-through")
                 from: 0.2; to: 1.0; step: 0.02; decimals: 2
                 value: Number(page.dv("opacity", 0.78))
                 onCommitted: function(x) { page.ctl.dset("dock", "opacity", x.toFixed(2)) }
             }
             ToggleRow {
-                label: "Blur"
+                label: I18n.t("Blur")
                 desc: I18n.t("Blur the desktop behind the dock")
                 checked: page.dv("blur", true) === true
                 onToggled: function(v) { page.ctl.dset("dock", "blur", v ? "on" : "off") }
@@ -153,13 +153,19 @@ Item {
                 onToggled: function(v) { page.ctl.dset("dock", "hover", v ? "on" : "off") }
             }
             ToggleRow {
+                label: I18n.t("Keep room for it")
+                desc: I18n.t("While the dock stays out, windows end next to it instead of under it (like the bar)")
+                checked: page.dv("reserve", true) === true
+                onToggled: function(v) { page.ctl.dset("dock", "reserve", v ? "on" : "off") }
+            }
+            ToggleRow {
                 label: I18n.t("Pinned on startup")
                 desc: I18n.t("Start with the dock held open")
                 checked: page.dv("pinnedStartup", false) === true
                 onToggled: function(v) { page.ctl.dset("dock", "pinnedStartup", v ? "on" : "off") }
             }
 
-            T { kind: "title"; text: "Buttons"; font.pixelSize: 16; font.bold: true; topPadding: 8 }
+            T { kind: "title"; text: I18n.t("Buttons"); font.pixelSize: 16; font.bold: true; topPadding: 8 }
 
             ToggleRow {
                 label: I18n.t("Media player")
@@ -193,7 +199,7 @@ Item {
             }
 
             // ---------- pinned apps ----------
-            SectionTitle { text: I18n.t("Pinned apps"); sub: page.pins.length + " on the dock, in this order. Pin more below, or right-click an app in the dock's app menu." }
+            SectionTitle { text: I18n.t("Pinned apps"); sub: page.pins.length + I18n.t(" on the dock, in this order. Pin more below, or right-click an app in the dock's app menu.") }
             Flow {
                 width: parent.width
                 spacing: 8

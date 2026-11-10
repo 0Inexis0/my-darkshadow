@@ -2,7 +2,7 @@
 """rice-look: Settings > Desktop > Look & Feel: fastfetch, your shell and your terminal.
 
   rice-look state                  JSON for Settings
-  rice-look fetch KEY VALUE        on_open on|off, logo distro|small|darkshadow|wallpaper|none,
+  rice-look fetch KEY VALUE        on_open on|off, logo distro|small|darkshadow|blackhole|wallpaper|none,
                                    info full|compact|minimal, labels text|icons, colors wallpaper|plain
   rice-look fetch-own              use DarkShadow's fastfetch config again (instead of your own)
   rice-look preview                fastfetch as HTML (the preview in Settings)
@@ -257,6 +257,24 @@ DS_LOGO = "\n".join([
     '           $1▀▀▀██████▀▀▀',
     '  $3·',
 ])
+# DarkShadow's own logo: a black hole, its glowing disk in front of the shadow and a bright ring around it
+# ($1 the wallpaper's main color: the disk, $2 the second one: the ring, $3 the stars)
+BH_LOGO = "\n".join([
+    '                           $3·',
+    '  $3·                    $2▄▄▄▒▒▒▒▄▄▄',
+    '                    $2▄▒▒██████████▒▒▄                 $3✦',
+    '                  $2▄▒████▀▀    ▀▀████▒▄',
+    '     $3·           $2▄▒███▀          ▀███▒▄         $3*',
+    '      $1▄▄▄▄▄▄▄░░░░▒▒▒$2█              █$1▒▒▒░░░░▄▄▄▄▄▄▄',
+    ' $1▄░░░░▒▒▒▒▓▓▓█████$2██                ██$1█████▓▓▓▒▒▒▒░░░░▄',
+    ' $1▀░░░░▒▒▒▒▓▓▓████$2▒██$1▄▄            ▄▄$2██▒$1████▓▓▓▒▒▒▒░░░░▀',
+    '      $1▀▀▀▀▀▀▀░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░░░▀▀▀▀▀▀▀    $3·',
+    '  $3·              $2▀▒███▄          ▄███▒▀',
+    '                  $2▀▒████▄▄    ▄▄████▒▀',
+    '                    $2▀▒▒██████████▒▒▀',
+    '       $3✧               $2▀▀▀▒▒▒▒▀▀▀                 $3·',
+    '            $3·          ·                  ·',
+])
 # Small: like pfetch, a small logo and a few lines in lowercase
 PFETCH = ["title", "os", "host", "kernel", "uptime", "packages", "memory", "shell", "wm"]
 PF_KEYS = {"os": "os", "host": "host", "kernel": "kernel", "uptime": "uptime", "packages": "pkgs",
@@ -307,6 +325,8 @@ def fetch_config(c, term, for_preview=False):
         logo = {"type": "none"}
     elif lg == "darkshadow":
         logo.update({"type": "data", "source": DS_LOGO})
+    elif lg == "blackhole":
+        logo.update({"type": "data", "source": BH_LOGO})
     elif lg == "wallpaper":
         logo.update({"type": "kitty-direct", "source": LOGO_PNG, "width": 28, "height": 14})
     if c["colors"] == "wallpaper" and lg != "none":
@@ -679,7 +699,7 @@ def main(a):
         print(json.dumps(state()))
     elif cmd == "fetch" and len(a) == 4:
         k, v = a[2], a[3]
-        allowed = {"on_open": ("on", "off"), "logo": ("distro", "small", "darkshadow", "wallpaper", "none"),
+        allowed = {"on_open": ("on", "off"), "logo": ("distro", "small", "darkshadow", "blackhole", "wallpaper", "none"),
                    "info": ("full", "compact", "minimal"), "labels": ("text", "icons"), "colors": ("wallpaper", "plain")}
         if k not in allowed or v not in allowed[k]:
             sys.exit("usage: rice-look fetch KEY VALUE")

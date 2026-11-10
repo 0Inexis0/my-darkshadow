@@ -5,8 +5,10 @@ import QtQuick
 
 // SUPER + W: your wallpapers in a Material 3 sheet (it took the place of the dashboard's Wallpaper tab).
 // Type to search, arrows and Enter to pick, Esc or a click outside to close; the shuffle button picks one at
-// random. The one you have now wears a check in your shape. Thumbnails come from rice-dashboard walls.
+// random. The one you have now wears a check in your shape. Thumbnails come from rice-dashboard walls (rice-walls:
+// all your folders, Waypaper's too; videos are live wallpapers).
 PanelWindow {
+    screen: Mon.screen
     id: wp
     property bool open: false
     property real t: 0
@@ -36,23 +38,24 @@ PanelWindow {
     // ---------- the wallpapers ----------
     property var all: []
     property string current: ""
+    property int dirs: 1
     property string query: ""
     readonly property var shown: query === "" ? all : all.filter(function(w) { return w.name.toLowerCase().indexOf(wp.query.toLowerCase()) >= 0 })
     property int sel: 0
     // the list changed (you typed): the cards come in again, one after another
     property real ft: 1
     NumberAnimation { id: ftA; target: wp; property: "ft"; from: 0; to: 1; duration: 520; easing.type: Easing.Linear }
-    onQueryChanged: if (open) { ftA.restart(); grid.contentY = grid.originY }
+    onQueryChanged: if (open) { ftA.restart(); glide.stop(); grid.contentY = grid.originY }
     Process {
         id: list
         command: ["bash", "-c", "\"$HOME/.local/bin/rice-dashboard\" walls"]
         stdout: StdioCollector { onStreamFinished: {
-            try { const j = JSON.parse(text); wp.all = j.walls; wp.current = j.current } catch (e) { }
+            try { const j = JSON.parse(text); wp.all = j.walls; wp.current = j.current; wp.dirs = (j.dirs || []).length } catch (e) { }
             for (let i = 0; i < wp.shown.length; i++) if (wp.shown[i].path === wp.current) { wp.sel = i; grid.positionViewAtIndex(i, GridView.Center); break }
         } }
     }
     // thumbnails are made in the background the first time: look again a bit later
-    Timer { interval: 4000; running: wp.open; repeat: true; onTriggered: if (!list.running && wp.all.some(function(w) { return w.thumb === w.path })) list.running = true }
+    Timer { interval: 4000; running: wp.open; repeat: true; onTriggered: if (!list.running && wp.all.some(function(w) { return w.thumb === w.path || w.thumb === "" })) list.running = true }
     function apply(path) {
         current = path
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-dashboard\" wall \"$1\"", "_", path])
@@ -92,8 +95,8 @@ PanelWindow {
                 MIcon { anchors.centerIn: parent; size: 22; filled: true; name: "wallpaper"; glyph: ""; color: pal.inkContainer } }
             Column {
                 anchors.left: hIc.right; anchors.leftMargin: 14; anchors.verticalCenter: parent.verticalCenter
-                Text { text: "Wallpapers"; color: pal.fg; font.family: Fonts.main; font.pixelSize: 20; font.weight: Font.DemiBold }
-                Text { text: wp.shown.length + (wp.shown.length === 1 ? " wallpaper" : " wallpapers") + "  ·  colors follow"; color: pal.dim; font.family: Fonts.main; font.pixelSize: 12 }
+                Text { text: Tr.t("Wallpapers"); color: pal.fg; font.family: Fonts.main; font.pixelSize: 20; font.weight: Font.DemiBold }
+                Text { text: wp.shown.length + (wp.shown.length === 1 ? Tr.t(" wallpaper") : Tr.t(" wallpapers")) + (wp.dirs > 1 ? "  ·  " + wp.dirs + Tr.t(" folders") : "") + Tr.t("  ·  colors follow"); color: pal.dim; font.family: Fonts.main; font.pixelSize: 12 }
             }
             Row {
                 anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
@@ -109,7 +112,7 @@ PanelWindow {
                         color: pal.fg; font.family: Fonts.main; font.pixelSize: 14; clip: true
                         selectionColor: pal.primary; selectedTextColor: pal.inkPrimary
                         onTextChanged: { wp.query = text; wp.sel = 0 }
-                        Text { visible: search.text === ""; text: "Search"; color: pal.dim; font: search.font }
+                        Text { visible: search.text === ""; text: Tr.t("Search"); color: pal.dim; font: search.font }
                         Keys.onPressed: function(e) {
                             const cols = Math.max(1, Math.floor(grid.width / grid.cellWidth))
                             if (e.key === Qt.Key_Escape) { wp.open = false; e.accepted = true }
@@ -139,11 +142,19 @@ PanelWindow {
             boundsBehavior: Flickable.StopAtBounds
             // the wheel: farther per notch, and it glides there (touchpads scroll as they are)
             property real goal: 0
-            NumberAnimation { id: glide; target: grid; property: "contentY"; duration: 300; easing.type: Easing.OutCubic }
+            // smooth: each frame it covers a part of the way to the goal, so a run of notches is one soft scroll
+            FrameAnimation {
+                id: glide
+                onTriggered: {
+                    const next = grid.contentY + (grid.goal - grid.contentY) * (1 - Math.exp(-Math.min(0.05, frameTime) / 0.11))
+                    if (Math.abs(grid.goal - next) < 0.4) { grid.contentY = grid.goal; stop() }
+                    else grid.contentY = next
+                }
+            }
             function scrollBy(dy) {
                 const top = grid.originY, bottom = Math.max(grid.originY, grid.contentHeight + grid.originY - grid.height)
                 goal = Math.max(top, Math.min(bottom, (glide.running ? goal : contentY) + dy))
-                glide.stop(); glide.from = contentY; glide.to = goal; glide.start()
+                if (!glide.running) glide.start()
             }
             WheelHandler {
                 acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
@@ -178,7 +189,15 @@ PanelWindow {
                     property real popS: 1
                     scale: popS * (cm.containsMouse || cell.picked ? 1.02 : 1)
                     Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutBack } }
-                    RoundImage { anchors.fill: parent; anchors.margins: cell.cur ? 4 : 0; cornerRadius: frame.radius - (cell.cur ? 4 : 0); source: "file://" + modelData.thumb }
+                    RoundImage { anchors.fill: parent; anchors.margins: cell.cur ? 4 : 0; cornerRadius: frame.radius - (cell.cur ? 4 : 0); source: modelData.thumb ? "file://" + modelData.thumb : "" }
+                    // a video without its preview yet
+                    MIcon { anchors.centerIn: parent; visible: !modelData.thumb; size: 30; filled: true; name: "movie"; glyph: ""; color: pal.dim }
+                    // a live (video) wallpaper
+                    Rectangle { visible: modelData.live === true; anchors.left: parent.left; anchors.top: parent.top; anchors.margins: 10
+                        width: lv.implicitWidth + 30; height: 24; radius: 12; color: Qt.rgba(0, 0, 0, 0.6)
+                        Rectangle { x: 10; anchors.verticalCenter: parent.verticalCenter; width: 7; height: 7; radius: 3.5; color: "#ff5a5a" }
+                        Text { id: lv; x: 22; anchors.verticalCenter: parent.verticalCenter; text: "LIVE"; color: "white"
+                            font.family: Fonts.main; font.pixelSize: 10; font.weight: Font.Bold; font.letterSpacing: 1 } }
                     Rectangle { anchors.fill: parent; radius: frame.radius; color: "transparent"
                         border.width: cell.cur ? 3 : (cell.picked ? 2 : 0); border.color: cell.cur ? pal.primary : Qt.rgba(pal.fg.r, pal.fg.g, pal.fg.b, 0.6) }
                     // the one you have: a check in your shape
@@ -226,7 +245,7 @@ PanelWindow {
             }
             // nothing found / no wallpapers
             Text { anchors.centerIn: parent; visible: wp.shown.length === 0 && !list.running
-                text: wp.all.length === 0 ? "No wallpapers yet" : "Nothing matches"; color: pal.dim; font.family: Fonts.main; font.pixelSize: 14 }
+                text: wp.all.length === 0 ? Tr.t("No wallpapers yet") : Tr.t("Nothing matches"); color: pal.dim; font.family: Fonts.main; font.pixelSize: 14 }
         }
     }
 

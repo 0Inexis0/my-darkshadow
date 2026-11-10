@@ -16,7 +16,7 @@ Item {
         n[key] = page.norm(value)
         ns = n
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-notify\" set \"$1\" \"$2\"", "_", key, String(value)])
-        page.ctl.status = "Applied"
+        page.ctl.status = I18n.t("Applied")
         refresh.restart()
     }
     function tool(arg) { Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-notify\" \"$1\"", "_", arg]) }
@@ -40,7 +40,7 @@ Item {
     function setEngine(v) {
         engine = v
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-cc\" engine \"$1\"", "_", v])
-        page.ctl.status = v === "shell" ? "Notifications: the shell shows them" : "Notifications: swaync shows them"
+        page.ctl.status = v === "shell" ? I18n.t("Notifications: the shell shows them") : I18n.t("Notifications: swaync shows them")
     }
 
     // the themes, the same colors the shell uses (rice-desktop/NPal.qml)
@@ -53,7 +53,7 @@ Item {
         { k: "white", n: "Light", d: "Light cards, dark text" }
     ]
     readonly property real hue: { const h = Qt.color(M3.seed).hslHue; return h < 0 ? 0.55 : h }
-    readonly property real sat: Math.max(0.35, Math.min(0.85, Qt.color(M3.seed).hslSaturation))
+    readonly property real sat: (Qt.color(M3.seed).hslHue < 0 || Qt.color(M3.seed).hslSaturation < 0.1) ? 0 : Math.max(0.35, Math.min(0.85, Qt.color(M3.seed).hslSaturation))
     function pal(k, a) {
         const light = k === "white"
         let s
@@ -98,7 +98,7 @@ Item {
             Row {
                 visible: !sp.small; spacing: 6; topPadding: 6
                 Rectangle { width: r1.implicitWidth + 22; height: 28; radius: 14; color: sp.p.container
-                    T { id: r1; scaled: false; anchors.centerIn: parent; text: "Reply"; font.pixelSize: 11; color: sp.p.inkContainer } }
+                    T { id: r1; scaled: false; anchors.centerIn: parent; text: I18n.t("Reply"); font.pixelSize: 11; color: sp.p.inkContainer } }
                 Rectangle { width: r2.implicitWidth + 22; height: 28; radius: 14; color: sp.p.container
                     T { id: r2; scaled: false; anchors.centerIn: parent; text: I18n.t("Mark as read"); font.pixelSize: 11; color: sp.p.inkContainer } }
             }
@@ -112,8 +112,8 @@ Item {
 
         SegRow {
             label: I18n.t("Shown by")
-            desc: page.engine === "shell" ? "DarkShadow: its own pop-ups and the control center (SUPER + N)" : "swaync: its pop-ups and its panel"
-            options: [{ label: "DarkShadow", value: "shell" }, { label: "swaync", value: "swaync" }]
+            desc: page.engine === "shell" ? I18n.t("DarkShadow: its own pop-ups and the control center (SUPER + N)") : I18n.t("swaync: its pop-ups and its panel")
+            options: [{ label: I18n.t("DarkShadow"), value: "shell" }, { label: "swaync", value: "swaync" }]
             current: page.engine
             onChosen: function(x) { page.setEngine(x) }
         }
@@ -140,25 +140,25 @@ Item {
         Row {
             spacing: 10
             Btn { primary: true; sym: "send"; icon: ""; text: I18n.t("Send a test"); onClicked: page.tool("test") }
-            Btn { sym: "right_panel_open"; icon: ""; text: page.engine === "shell" ? "Open control center" : "Open panel"; onClicked: page.tool("panel") }
+            Btn { sym: "right_panel_open"; icon: ""; text: page.engine === "shell" ? I18n.t("Open control center") : I18n.t("Open panel"); onClicked: page.tool("panel") }
         }
 
         // ---------- pop-ups ----------
-        SectionTitle { text: "Pop-ups"; sub: I18n.t("Where they appear and how long they stay. Pointing at one keeps it.") }
+        SectionTitle { text: I18n.t("Pop-ups"); sub: I18n.t("Where they appear and how long they stay. Pointing at one keeps it.") }
         SegRow {
-            label: "Side"; desc: I18n.t("Of the screen")
-            options: [{ label: "Left", value: "left" }, { label: "Middle", value: "center" }, { label: "Right", value: "right" }]
+            label: I18n.t("Side"); desc: I18n.t("Of the screen")
+            options: [{ label: I18n.t("Left"), value: "left" }, { label: I18n.t("Middle"), value: "center" }, { label: I18n.t("Right"), value: "right" }]
             current: page.v("pos_x", "right")
             onChosen: function(x) { page.setv("pos_x", x) }
         }
         SegRow {
-            label: "Edge"; desc: I18n.t("Top or bottom")
-            options: [{ label: "Top", value: "top" }, { label: "Bottom", value: "bottom" }]
+            label: I18n.t("Edge"); desc: I18n.t("Top or bottom")
+            options: [{ label: I18n.t("Top"), value: "top" }, { label: I18n.t("Bottom"), value: "bottom" }]
             current: page.v("pos_y", "top")
             onChosen: function(x) { page.setv("pos_y", x) }
         }
         SliderRow {
-            label: "Width"; desc: I18n.t("How wide a pop-up is")
+            label: I18n.t("Width"); desc: I18n.t("How wide a pop-up is")
             from: 300; to: 520; step: 10; unit: " px"
             value: page.v("popup_width", 380)
             onCommitted: function(x) { page.setv("popup_width", Math.round(x)) }
@@ -175,13 +175,13 @@ Item {
             onToggled: function(x) { page.setv("critical_sticky", x ? "on" : "off") }
         }
         ToggleRow {
-            label: "Pictures"; desc: I18n.t("Show the picture a notification brings (screenshots, covers)")
+            label: I18n.t("Pictures"); desc: I18n.t("Show the picture a notification brings (screenshots, covers)")
             checked: page.v("images", true) === true
             onToggled: function(x) { page.setv("images", x ? "on" : "off") }
         }
 
         // ---------- the look ----------
-        SectionTitle { text: "Theme"; sub: I18n.t("For the pop-ups and the control center.") }
+        SectionTitle { text: I18n.t("Theme"); sub: I18n.t("For the pop-ups and the control center.") }
         Grid {
             id: tgrid
             width: parent.width
@@ -219,7 +219,7 @@ Item {
             onCommitted: function(x) { page.setv("font_size", Math.round(x)) }
         }
         SliderRow {
-            label: "Corners"; desc: I18n.t("How round the pop-ups are")
+            label: I18n.t("Corners"); desc: I18n.t("How round the pop-ups are")
             from: 4; to: 32; step: 1; unit: " px"
             value: page.v("radius", 22)
             onCommitted: function(x) { page.setv("radius", Math.round(x)) }
@@ -228,7 +228,7 @@ Item {
         // ---------- transparency and blur ----------
         SectionTitle { text: I18n.t("Transparency & blur"); sub: I18n.t("Blur shows where the surface is see-through. Light mode and gaming mode make everything solid.") }
         SliderRow {
-            label: "Pop-ups"; desc: I18n.t("Lower is more see-through")
+            label: I18n.t("Pop-ups"); desc: I18n.t("Lower is more see-through")
             from: 0.3; to: 1; step: 0.02; decimals: 2
             value: page.v("popup_opacity", 0.85)
             onCommitted: function(x) { page.setv("popup_opacity", x.toFixed(2)) }

@@ -8,7 +8,7 @@ Item {
     id: page
     property var ctl
     readonly property bool niri: !!Quickshell.env("NIRI_SOCKET")
-    property var st: ({ on: false, zoom: 1, step: 0.12, min: 0.2, pan: 180, speed: 1.0, dir: 1, input: true, daemon: true, devices: null, loaded: true })
+    property var st: ({ on: false, zoom: 1, step: 0.12, min: 0.2, pan: 180, speed: 1.0, dir: 1, push: 1, input: true, daemon: true, devices: null, loaded: true })
 
     function sh(args) { runner.command = ["bash", "-c", "\"$HOME/.local/bin/rice-infinite\" \"$@\" 2>&1", "_"].concat(args); runner.running = true }
     function fmt(n) { return String(Math.round(n * 100) / 100) }
@@ -171,7 +171,7 @@ Item {
                 Key { keys: "Super + Shift + Mouse wheel"; what: I18n.t("Move the canvas left and right") }
                 Key { keys: "Super + Alt + Arrows"; what: I18n.t("Move the canvas") }
                 Key { keys: "Super + Alt"; what: I18n.t("Hold and move the mouse: the whole canvas moves with it") }
-                Key { keys: "Super + Left mouse"; what: I18n.t("Drag a window to the edge of the screen: the others make room") }
+                Key { visible: page.st.push === 1; keys: "Super + Left mouse"; what: I18n.t("Drag a window to the edge of the screen and keep going: the others come to it") }
                 Key { keys: "Super + Alt + 0"; what: I18n.t("Back to 100 %") }
                 Key { keys: "Super + Ctrl + Arrows"; what: I18n.t("Go to the next window that way (the canvas glides to it)") }
             }
@@ -190,16 +190,18 @@ Item {
                 onChosen: v => { page.sh(["set", "dir", v]); const n = Object.assign({}, page.st); n.dir = Number(v); page.st = n }
             }
         }
-        SettingRow {
-            label: I18n.t("SUPER + ALT speed")
-            desc: I18n.t("With the mouse: the window under the pointer stays under it, like holding the canvas")
-            reserved: 300
-            Seg {
-                anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
-                options: [{ value: "1.0", label: I18n.t("With the mouse") }, { value: "1.6", label: I18n.t("Faster") }, { value: "2.4", label: I18n.t("Fastest") }]
-                current: page.st.speed <= 1.2 ? "1.0" : (page.st.speed >= 2.0 ? "2.4" : "1.6")
-                onChosen: v => { page.sh(["set", "speed", v]); const n = Object.assign({}, page.st); n.speed = Number(v); page.st = n }
-            }
+        SliderRow {
+            label: I18n.t("SUPER + ALT sensitivity")
+            desc: I18n.t("1.00x: the window under the pointer stays under it. Lower is calmer, higher goes farther")
+            from: 0.3; to: 3; step: 0.05; decimals: 2; unit: "x"
+            value: page.st.speed || 1.0
+            onCommitted: function(v) { page.sh(["set", "speed", String(Math.round(v * 100) / 100)]); const n = Object.assign({}, page.st); n.speed = v; page.st = n }
+        }
+        ToggleRow {
+            label: I18n.t("SUPER + drag a window to the edge pushes the others")
+            desc: I18n.t("Take a window to the edge of the screen and keep going: the other windows come towards it")
+            checked: page.st.push === 1
+            onToggled: function(v) { page.sh(["set", "push", v ? "1" : "0"]); const n = Object.assign({}, page.st); n.push = v ? 1 : 0; page.st = n }
         }
         SettingRow {
             label: I18n.t("Zoom speed")
@@ -237,7 +239,9 @@ Item {
         Rectangle {
             width: parent.width; height: note.implicitHeight + 24; radius: M3.rM; color: M3.alpha(M3.primary, 0.08)
             T { id: note; x: 16; anchors.verticalCenter: parent.verticalCenter; width: parent.width - 32; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.inkDim
-                text: I18n.t("A new window gets its own room next to the one you were in, and the canvas glides to it, so there is always space. Zooming really makes the windows smaller (apps may keep a smallest size). Turning it off puts every window back where it was and tiles again the ones that were tiled.") }
+                text: I18n.t("A new window gets its own room next to the one you were in, and the canvas glides to it, so there is always space. Zooming really makes the windows smaller (apps may keep a smallest size). Turning it off tiles the windows again, and the canvas is remembered: turn it on again (also after a restart) and every window is where you left it.") }
         }
+        T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 11; color: M3.inkDim; topPadding: 6
+            text: I18n.t("Based on hyprland-infinite-desktop-v2 by Sarods2D (github.com/sarodscommits).") }
     }
 }

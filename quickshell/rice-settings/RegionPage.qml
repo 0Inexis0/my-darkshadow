@@ -17,7 +17,7 @@ Item {
     function set(k, v) {
         const n = Object.assign({}, rg); n[k] = v; rg = n
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-region\" set \"$1\" \"$2\"", "_", k, v])
-        page.ctl.status = "Saved"
+        page.ctl.status = I18n.t("Saved")
     }
     property var now: new Date()
     Timer { interval: 1000; running: page.visible; repeat: true; onTriggered: page.now = new Date() }
@@ -52,12 +52,12 @@ Item {
                 spacing: 4
                 T { text: I18n.t("LANGUAGE & REGION"); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2; color: M3.alpha(M3.inkPrimaryC, 0.75) }
                 T { kind: "number"; text: page.clockText; font.pixelSize: 34; font.weight: Font.Medium; color: M3.inkPrimaryC }
-                T { text: page.now.toLocaleDateString(Qt.locale("en_US"), "dddd, d MMMM") + "  ·  " + (page.rg.units === "f" ? "41°F" : "5°C") + " outside (example)"
+                T { text: page.now.toLocaleDateString(I18n.loc, "dddd, d MMMM") + "  ·  " + (page.rg.units === "f" ? "41°F" : "5°C") + I18n.t(" outside (example)")
                     font.pixelSize: 12; color: M3.alpha(M3.inkPrimaryC, 0.85) }
             }
         }
 
-        SectionTitle { text: "Region"; sub: I18n.t("How times, temperatures and calendars look in the shell.") }
+        SectionTitle { text: I18n.t("Region"); sub: I18n.t("How times, temperatures and calendars look in the shell.") }
         SegRow {
             label: I18n.t("Clock format"); desc: I18n.t("The bar, the game bar and the desktop")
             options: [{ label: "24 h", value: "24" }, { label: "12 h", value: "12" }]
@@ -65,19 +65,19 @@ Item {
             onChosen: function(x) { page.set("clock", x) }
         }
         SegRow {
-            label: "Temperature"; desc: I18n.t("Weather widgets and the lock screen")
+            label: I18n.t("Temperature"); desc: I18n.t("Weather widgets and the lock screen")
             options: [{ label: I18n.t("Celsius °C"), value: "c" }, { label: I18n.t("Fahrenheit °F"), value: "f" }]
             current: page.rg.units
             onChosen: function(x) { page.set("units", x) }
         }
         SegRow {
-            label: I18n.t("First day of the week"); desc: "Calendars"
-            options: [{ label: "Monday", value: "mon" }, { label: "Sunday", value: "sun" }]
+            label: I18n.t("First day of the week"); desc: I18n.t("Calendars")
+            options: [{ label: I18n.t("Monday"), value: "mon" }, { label: I18n.t("Sunday"), value: "sun" }]
             current: page.rg.week
             onChosen: function(x) { page.set("week", x) }
         }
 
-        SectionTitle { text: "Language"; sub: I18n.t("The shell speaks English for now. Your choice is kept, so the shell can switch when a translation arrives.") }
+        SectionTitle { text: I18n.t("Language"); sub: I18n.t("The shell speaks English for now. Your choice is kept, so the shell can switch when a translation arrives.") }
         Rectangle {
             width: parent.width; height: lflow.implicitHeight + 28; radius: M3.rL; color: M3.surfaceC
             Grid {

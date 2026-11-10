@@ -6,6 +6,7 @@ import QtQuick
 // The dock's app menu (the apps button on the dock): every app, a search, and a pin on each one to keep your
 // favourites on the dock (Settings > Dock > Pinned apps does the same). It grows out of the dock.
 PanelWindow {
+    screen: Mon.screen
     id: am
     property var dock: null
     property bool open: false
@@ -91,10 +92,10 @@ PanelWindow {
                 clip: true
                 Keys.onEscapePressed: am.open = false
                 Keys.onReturnPressed: if (am.apps.length > 0) am.launch(am.apps[0])
-                Text { visible: search.text === ""; text: "Search apps"; color: pal.dim; font: search.font }
+                Text { visible: search.text === ""; text: Tr.t("Search apps"); color: pal.dim; font: search.font }
             }
         }
-        Text { x: 22; y: sbox.y + sbox.height + 12; text: am.pinnedIds.length + " pinned  ·  " + am.apps.length + " apps  ·  the pin keeps one on the dock"
+        Text { x: 22; y: sbox.y + sbox.height + 12; text: am.pinnedIds.length + Tr.t(" pinned  ·  ") + am.apps.length + Tr.t(" apps  ·  the pin keeps one on the dock")
             color: pal.dim; font.family: Fonts.main; font.pixelSize: 11 }
 
         GridView {

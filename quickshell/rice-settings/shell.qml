@@ -6,7 +6,7 @@ import QtQuick
 ShellRoot {
 FloatingWindow {
     id: win
-    title: "Rice Settings"
+    title: I18n.t("Rice Settings")
     // about half of a 1080p screen, a little bigger on bigger screens, never more than fits
     readonly property var scr0: Quickshell.screens && Quickshell.screens.length > 0 ? Quickshell.screens[0] : null
     readonly property int sw0: scr0 ? scr0.width : 1920
@@ -98,7 +98,7 @@ FloatingWindow {
             if (sl.idx === undefined) continue
             const pg = win.pages[sl.idx]
             if (!pg) continue
-            out.push({ page: sl.idx, label: I18n.t(pg.name), section: "", desc: "Page", pageName: I18n.t(pg.name), item: null, kind: "page" })
+            out.push({ page: sl.idx, label: I18n.t(pg.name), section: "", desc: I18n.t("Page"), pageName: I18n.t(pg.name), item: null, kind: "page" })
             const ctx = { section: "" }
             const walk = function(it) {
                 const kids = it.children || []
@@ -314,7 +314,7 @@ FloatingWindow {
         { name: "Recorder", icon: "\uf03d" },
         { name: "Dynamic island", icon: "\uf017" },
         { name: "Launcher", icon: "\uf002" },
-        { name: "Theme", icon: "\udb80\udfd8" },
+        { name: "Color theme", icon: "\udb80\udfd8" },
         { name: "Cursors", icon: "\uf245" },
         { name: "Notifications", icon: "\uf0f3" },
         { name: "Idle & Lockscreen", icon: "\uf023" },
@@ -334,12 +334,13 @@ FloatingWindow {
         { name: "Windows", icon: "\uf2d0" },
         { name: "Language & region", icon: "\uf1ab" },
         { name: "System", icon: "\uf108" },
-        { name: "Screen", icon: "\uf108" },
+        { name: "Monitors", icon: "\uf108" },
         { name: "Look & Feel", icon: "\uf120" },
         { name: "Keybinds", icon: "\uf11c" },
         { name: "Languages", icon: "\uf1ab" },
         { name: "Security", icon: "\uf132" },
-        { name: "Infinite Desktop", icon: "\uf065" }
+        { name: "Infinite Desktop", icon: "\uf065" },
+        { name: "Themes", icon: "\uf53f" }
     ]
 
 
@@ -348,14 +349,13 @@ FloatingWindow {
         { page: 0 },
         { sep: true },
         { group: "wall", name: "Wallpaper", icon: "\uf03e", sym: "wallpaper", pages: [18], caption: I18n.t("Wallpaper and the colors it gives") },
-        { group: "look", name: "Appearance", icon: "\udb80\udfd8", sym: "palette", pages: [8, 21, 19, 24, 22, 9, 14], caption: I18n.t("Theme, colors, fonts, shapes, components, cursors and the dock") },
+        { group: "look", name: "Appearance", icon: "\udb80\udfd8", sym: "palette", pages: [34, 8, 21, 19, 24, 22, 9, 14], caption: I18n.t("Themes, colors, fonts, shapes, components, cursors and the dock") },
         { group: "motion", name: "Motion", icon: "\uf1e6", sym: "animation", pages: [20], caption: I18n.t("How windows and Settings move") },
         { group: "desk", name: "Desktop", icon: "\uf108", sym: "desktop_windows", pages: [29, 33, 12, 25, 4, 11], caption: I18n.t("Look & feel, widgets, windows, %1 and the lock screen", wmLabel) },
         { group: "bar", name: "Bar & launcher", icon: "\uf0c9", sym: "toolbar", pages: [2, 3, 6, 7], caption: I18n.t("The bar, the dynamic island and the launcher") },
         { group: "snd", name: "Sound & language", icon: "\uf028", sym: "graphic_eq", pages: [1, 10, 26], caption: I18n.t("Sounds, notifications, language and region") },
         { group: "sys", name: "System", icon: "\uf013", sym: "settings", pages: [27, 30, 31, 28, 5, 23, 15], caption: I18n.t("This computer, keybinds, the screen, recording, keyboard and services") },
         { group: "game", name: "Gaming", icon: "\uf11b", sym: "sports_esports", pages: [16], caption: I18n.t("Play without distractions") },
-        { group: "sec", name: "Security", icon: "\uf132", sym: "shield", pages: [32], caption: I18n.t("Virus scan, system check and shell files") },
         { group: "about", name: "About", icon: "\uf05a", sym: "info", pages: [17], caption: I18n.t("Version, system and credits") }
     ]
     // the navigation rail: Home, then one stop per group (Gaming hub and About are groups with one page)
@@ -647,19 +647,7 @@ FloatingWindow {
                 hoverEnabled: true
                 acceptedButtons: Qt.LeftButton | Qt.RightButton
                 cursorShape: Qt.PointingHandCursor
-                onClicked: function(m) { if (m.button === Qt.RightButton) facePicker.running = true; else win.page = 0 }
-            }
-        }
-        Process {
-            id: facePicker
-            command: ["zenity", "--file-selection", "--title=Choose a profile picture", "--file-filter=Images | *.png *.jpg *.jpeg *.webp"]
-            stdout: StdioCollector {
-                onStreamFinished: {
-                    const p = text.trim()
-                    if (p.length === 0) return
-                    Quickshell.execDetached(["bash", "-c", "cp -f \"$1\" \"$HOME/.face\"", "_", p])
-                    faceReload.restart()
-                }
+                onClicked: faceBox.show()
             }
         }
         Timer { id: faceReload; interval: 400; onTriggered: { avImg.source = ""; avImg.source = "file://" + win.home + "/.face" } }
@@ -714,7 +702,7 @@ FloatingWindow {
                             width: parent.width - 8
                             horizontalAlignment: Text.AlignHCenter
                             elide: Text.ElideRight
-                            text: I18n.lang === "en" && modelData.name === "Bar & launcher" ? "Bar" : I18n.t(modelData.name)
+                            text: I18n.lang === "en" && modelData.name === "Bar & launcher" ? I18n.t("Bar") : I18n.t(modelData.name)
                             font.pixelSize: 11
                             font.weight: ri.on ? Font.DemiBold : Font.Medium
                             color: ri.on ? M3.ink : M3.inkDim
@@ -730,7 +718,7 @@ FloatingWindow {
             id: overline
             x: win.railW + 28
             y: 20
-            text: ("DarkShadow's Shell  ·  " + win.curRail.caption).toUpperCase()
+            text: (I18n.t("DarkShadow's Shell  ·  ") + win.curRail.caption).toUpperCase()
             font.pixelSize: 11
             font.weight: Font.DemiBold
             font.letterSpacing: 1.1
@@ -911,8 +899,8 @@ FloatingWindow {
             PageSlot { nav: win; idx: 29; cur: win.page; page: Component { LookFeelPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 30; cur: win.page; page: Component { KeybindsPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 31; cur: win.page; page: Component { LanguagesPage { anchors.fill: parent; ctl: win } } }
-            PageSlot { nav: win; idx: 32; cur: win.page; page: Component { SecurityPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 33; cur: win.page; page: Component { InfinitePage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 34; cur: win.page; page: Component { ThemesPage { anchors.fill: parent; ctl: win } } }
         }
 
         // results: the setting, and where it is (page > section)
@@ -950,7 +938,7 @@ FloatingWindow {
                     spacing: 2
                     T { text: modelData.label; font.pixelSize: 13; font.bold: index === win.searchSel; width: parent.width; elide: Text.ElideRight }
                     T {
-                        text: modelData.kind === "page" ? "Page" : (modelData.pageName + (modelData.section && modelData.section !== modelData.label ? "  \u203a  " + modelData.section : ""))
+                        text: modelData.kind === "page" ? I18n.t("Page") : (modelData.pageName + (modelData.section && modelData.section !== modelData.label ? I18n.t("  \u203a  ") + modelData.section : ""))
                         font.pixelSize: 11; color: M3.inkDim; width: parent.width; elide: Text.ElideRight
                     }
                 }
@@ -960,13 +948,16 @@ FloatingWindow {
             T {
                 visible: win.results.length === 0
                 y: 14; x: 8; width: parent.width - 16
-                text: "Nothing found. Try other words, like \"blur\" or \"bar position\"."
+                text: I18n.t("Nothing found. Try other words, like \"blur\" or \"bar position\".")
                 wrapMode: Text.WordWrap
                 font.pixelSize: 12; color: M3.inkDim
             }
         }
         }
 
+
+        // ---------- your profile picture (click it in the sidebar) ----------
+        FacePicker { id: faceBox; onChanged: faceReload.restart() }
 
         // ---------- the tour (after the welcome intro, or rice-welcome tour) ----------
         Tour {
@@ -1000,11 +991,11 @@ FloatingWindow {
                 { title: I18n.t("Every key in one place"), page: 30, r: 20, icon: "keyboard", art: "keys",
                   body: "System > Keybinds lists all the keys, in groups, with a search. Start with these three. Super is the key with the Windows logo.",
                   rect: function() { return win.rectOf(pagesHolder, 4) } },
-                { title: "Gaming", page: 16, r: 14, icon: "sports_esports",
+                { title: I18n.t("Gaming"), page: 16, r: 14, icon: "sports_esports",
                   body: "One switch for games: no animations, blur or gaps while you play, and the game bar (Super + G).",
                   rect: function() { return win.railRect(16) } },
                 { title: I18n.t("This is you"), page: 0, r: 22, icon: "account_circle",
-                  body: "Click your picture to change it, it shows on the lock screen too. Click the card to come back to Home.",
+                  body: "Click your picture to change it, it shows on the lock screen too.",
                   rect: function() { return { x: profile.x - 5, y: profile.y - 5, w: profile.width + 10, h: profile.height + 10 } } },
                 { title: I18n.t("That's it!"), r: 20, icon: "celebration",
                   body: "Open Settings any time with Super + U. The tour is in System > Keybinds (Show me around). Have fun with your desktop.",

@@ -51,10 +51,10 @@ Item {
             clip: true
             Rectangle { width: 220; height: 220; radius: 110; x: parent.width - 280; y: -80; color: M3.alpha(M3.primary, 0.16) }
             Rectangle { width: 110; height: 110; radius: 36; rotation: 18; x: parent.width - 170; y: 120; color: M3.alpha(M3.primary, 0.12) }
-            MoonLogo { x: 18; anchors.verticalCenter: parent.verticalCenter; size: 150; running: page.visible }
+            MoonLogo { x: 18; anchors.verticalCenter: parent.verticalCenter; size: 190; running: page.visible }
             Column {
-                x: 178; anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - 178 - 24
+                x: 212; anchors.verticalCenter: parent.verticalCenter
+                width: parent.width - 212 - 24
                 spacing: 6
                 T { kind: "title"; text: I18n.t("DarkShadow's Shell"); font.pixelSize: 28; font.weight: Font.Medium; color: M3.inkPrimaryC }
                 Row {
@@ -69,8 +69,8 @@ Item {
                 Row {
                     spacing: 8
                     topPadding: 4
-                    Btn { text: updProc.running ? "Checking..." : "Check for updates"; sym: "update"; icon: ""; primary: true; onClicked: if (!updProc.running) updProc.running = true }
-                    Btn { text: "GitHub"; sym: "code"; icon: ""; onClicked: page.open("https://github.com/shadowww-dev/shadows-shell") }
+                    Btn { text: updProc.running ? I18n.t("Checking...") : I18n.t("Check for updates"); sym: "update"; icon: ""; primary: true; onClicked: if (!updProc.running) updProc.running = true }
+                    Btn { text: I18n.t("GitHub"); sym: "code"; icon: ""; onClicked: page.open("https://github.com/shadowww-dev/shadows-shell") }
                 }
             }
         }
@@ -105,7 +105,7 @@ Item {
                         x: 64; anchors.verticalCenter: parent.verticalCenter
                         width: parent.width - 64 - 14
                         spacing: 2
-                        T { text: modelData.n; font.pixelSize: 11; color: M3.inkDim }
+                        T { text: I18n.t(modelData.n); font.pixelSize: 11; color: M3.inkDim }
                         T { text: page.info[modelData.k] || "—"; font.pixelSize: 14; font.weight: Font.Medium; width: parent.width; elide: Text.ElideRight }
                     }
                 }
@@ -122,7 +122,9 @@ Item {
                     { n: "Hyprland", u: "https://hypr.land" }, { n: "niri", u: "https://github.com/niri-wm/niri" }, { n: "Quickshell", u: "https://quickshell.org" },
                     { n: "Qt", u: "https://www.qt.io" }, { n: "swaync", u: "https://github.com/ErikReider/SwayNotificationCenter" },
                     { n: "matugen", u: "https://github.com/InioX/matugen" }, { n: "cava", u: "https://github.com/karlstav/cava" },
-                    { n: "awww", u: "https://codeberg.org/LGFae/awww" }
+                    { n: "awww", u: "https://codeberg.org/LGFae/awww" },
+                    { n: "Sarods2D: hyprland-infinite-desktop-v2", u: "https://github.com/sarodscommits/hyprland-infinitie-desktop-v2" },
+                    { n: "fedyaqq34356: hyprdots", u: "https://github.com/fedyaqq34356/hyprdots" }
                 ]
                 delegate: Rectangle {
                     width: mt.implicitWidth + 34; height: 38; radius: 19
@@ -136,5 +138,7 @@ Item {
         }
         T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 11; color: M3.inkDim; topPadding: 8
             text: I18n.t("Settings follow the ideas of Material 3 (tonal colors from your theme, round shapes, calm motion), drawn our own way.") }
+        T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 11; color: M3.inkDim; topPadding: 4
+            text: I18n.t("Infinite Desktop comes from Sarods2D's hyprland-infinite-desktop-v2, and the redesign was inspired by his Iridium shell. The island idea comes from hyprdots by fedyaqq34356. Thank you!") }
     }
 }

@@ -31,8 +31,8 @@ Item {
         { key: "general.hover_icon_on_border", type: "toggle", label: I18n.t("Cursor icon on border"), desc: I18n.t("Show a resize cursor over borders") }
     ]
     readonly property var layoutSpec: [
-        { key: "general.layout", type: "seg", label: "Layout", desc: I18n.t("How windows are arranged"),
-          options: [{ label: "Dwindle", value: "dwindle" }, { label: "Master", value: "master" }, { label: "Scrolling", value: "scrolling" }, { label: "Monocle", value: "monocle" }] },
+        { key: "general.layout", type: "seg", label: I18n.t("Layout"), desc: I18n.t("How windows are arranged"),
+          options: [{ label: I18n.t("Dwindle"), value: "dwindle" }, { label: I18n.t("Master"), value: "master" }, { label: I18n.t("Scrolling"), value: "scrolling" }, { label: I18n.t("Monocle"), value: "monocle" }] },
         { key: "dwindle.preserve_split", type: "toggle", label: I18n.t("Preserve split"), desc: I18n.t("Keep the split direction when windows close (Dwindle)") },
         { key: "general.snap.enabled", type: "toggle", label: I18n.t("Window magnet"), desc: I18n.t("Floating windows snap to each other and to the screen edges") },
         { key: "general.snap.window_gap", type: "slider", label: I18n.t("Magnet reach: windows"), desc: I18n.t("How close a window must come to snap to another"), min: 0, max: 60, step: 1, unit: " px", def: 10 },
@@ -54,14 +54,14 @@ Item {
         { key: "decoration.blur.enabled", type: "toggle", label: I18n.t("Enable blur"), desc: I18n.t("Blur what is behind translucent windows and bars") },
         { key: "decoration.blur.size", type: "slider", label: I18n.t("Blur size"), desc: I18n.t("Radius of the blur"), min: 1, max: 30, step: 1, def: 8 },
         { key: "decoration.blur.passes", type: "slider", label: I18n.t("Blur passes"), desc: I18n.t("More passes look smoother but cost more"), min: 1, max: 8, step: 1, def: 2 },
-        { key: "decoration.blur.noise", type: "slider", label: "Noise", desc: I18n.t("Film grain on the blurred area"), min: 0, max: 0.5, step: 0.01, dec: 2, def: 0.01 },
-        { key: "decoration.blur.contrast", type: "slider", label: "Contrast", desc: I18n.t("Contrast of the blurred area"), min: 0, max: 2, step: 0.05, dec: 2, def: 0.89 },
-        { key: "decoration.blur.brightness", type: "slider", label: "Brightness", desc: I18n.t("Brightness of the blurred area"), min: 0, max: 2, step: 0.05, dec: 2, def: 0.81 },
-        { key: "decoration.blur.vibrancy", type: "slider", label: "Vibrancy", desc: I18n.t("Color saturation of the blur"), min: 0, max: 1, step: 0.05, dec: 2, def: 0.17 },
+        { key: "decoration.blur.noise", type: "slider", label: I18n.t("Noise"), desc: I18n.t("Film grain on the blurred area"), min: 0, max: 0.5, step: 0.01, dec: 2, def: 0.01 },
+        { key: "decoration.blur.contrast", type: "slider", label: I18n.t("Contrast"), desc: I18n.t("Contrast of the blurred area"), min: 0, max: 2, step: 0.05, dec: 2, def: 0.89 },
+        { key: "decoration.blur.brightness", type: "slider", label: I18n.t("Brightness"), desc: I18n.t("Brightness of the blurred area"), min: 0, max: 2, step: 0.05, dec: 2, def: 0.81 },
+        { key: "decoration.blur.vibrancy", type: "slider", label: I18n.t("Vibrancy"), desc: I18n.t("Color saturation of the blur"), min: 0, max: 1, step: 0.05, dec: 2, def: 0.17 },
         { key: "decoration.blur.vibrancy_darkness", type: "slider", label: I18n.t("Vibrancy darkness"), desc: I18n.t("How much vibrancy darkens dark areas"), min: 0, max: 1, step: 0.05, dec: 2, def: 0 },
         { key: "decoration.blur.xray", type: "toggle", label: I18n.t("X-ray blur"), desc: I18n.t("Blur only the wallpaper, not other windows") },
         { key: "decoration.blur.ignore_opacity", type: "toggle", label: I18n.t("Ignore opacity"), desc: I18n.t("Blur fully even for very transparent windows") },
-        { key: "decoration.blur.new_optimizations", type: "toggle", label: "Optimizations", desc: I18n.t("Faster blur rendering") },
+        { key: "decoration.blur.new_optimizations", type: "toggle", label: I18n.t("Optimizations"), desc: I18n.t("Faster blur rendering") },
         { key: "decoration.blur.popups", type: "toggle", label: I18n.t("Blur popups"), desc: I18n.t("Also blur menus and popups") }
     ]
 
@@ -136,9 +136,9 @@ Item {
         x: 24
         y: parent.height - 42
         spacing: 8
-        Pill { label: "Reload " + page.wmName; onClicked: page.ctl.hrun(["reload"], page.wmName + " reloaded") }
+        Pill { label: I18n.t("Reload ") + page.wmName; onClicked: page.ctl.hrun(["reload"], page.wmName + " reloaded") }
         Pill {
-            label: page.confirmReset ? "Click again to reset" : "Reset everything"
+            label: page.confirmReset ? I18n.t("Click again to reset") : I18n.t("Reset everything")
             onClicked: {
                 if (page.confirmReset) {
                     page.confirmReset = false
@@ -164,7 +164,7 @@ Item {
                 width: parent.width
                 label: I18n.t("Color source")
                 desc: I18n.t("Follow the wallpaper or use your own colors")
-                options: [{ label: "Wallpaper", value: "wallpaper" }, { label: "Custom", value: "custom" }]
+                options: [{ label: I18n.t("Wallpaper"), value: "wallpaper" }, { label: I18n.t("Custom"), value: "custom" }]
                 current: page.ctl.hb.mode
                 onChosen: function(v) { page.ctl.setBorderMode(v) }
             }
@@ -205,7 +205,7 @@ Item {
             spacing: 10
             ToggleRow {
                 width: parent.width
-                label: "Animations"
+                label: I18n.t("Animations")
                 desc: I18n.t("Window, workspace and layer animations")
                 checked: page.ctl.ha.enabled !== false
                 onToggled: function(v) { page.ctl.setAnim("enabled", v) }

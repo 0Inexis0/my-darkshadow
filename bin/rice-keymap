@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""rice-keymap: your own keys for the shell's actions on Hyprland (Settings > System > Keybinds, the pencil).
-The keys are kept in ~/.config/rice/keys.conf and given by ~/.config/hypr/rice-keymap.lua.
+"""rice-keymap: your own keys for the shell's actions (Settings > System > Keybinds, the pencil).
+The keys are kept in ~/.config/rice/keys.conf; Hyprland gets them from ~/.config/hypr/rice-keymap.lua, niri from
+the config rice-niri writes (it moves the action to your key).
 
   rice-keymap list                 JSON: every action, its default and its keys now, and every key Hyprland has
   rice-keymap set ID "SUPER + T"   give the action other keys (right away)
@@ -22,7 +23,18 @@ DEFAULTS = {
     "shot": "Print", "shotfull": "SHIFT + Print", "record": "SUPER + SHIFT + R", "widgets": "SUPER + ALT + W",
     "infinite": "SUPER + F",
 }
+# niri: the same actions, its keys (the launcher is SUPER + D there; Infinite Desktop is Hyprland only)
+NIRI_DEFAULTS = dict(DEFAULTS, launcher="SUPER + D")
+NIRI_DEFAULTS.pop("infinite")
 MODS = [(64, "SUPER"), (4, "CTRL"), (8, "ALT"), (1, "SHIFT")]
+
+
+def niri():
+    return bool(os.environ.get("NIRI_SOCKET"))
+
+
+def defaults():
+    return NIRI_DEFAULTS if niri() else DEFAULTS
 KEY_RX = re.compile(r"^((SUPER|CTRL|ALT|SHIFT) \+ ){0,4}[A-Za-z0-9_]{1,24}$")
 
 
@@ -62,6 +74,28 @@ def hypr():
 def apply():
     if hypr():
         subprocess.run(["hyprctl", "eval", "if RiceKeys then RiceKeys.apply() end"], capture_output=True, timeout=5)
+    elif niri():
+        # niri reads its config again by itself when the file changes
+        subprocess.run([os.path.expanduser("~/.local/bin/rice-niri"), "apply"], capture_output=True, timeout=20)
+
+
+def niri_binds():
+    """the keys niri has now (from the config), for "this key is taken" """
+    out = []
+    try:
+        txt = open(os.path.expanduser("~/.config/niri/config.kdl")).read()
+    except OSError:
+        return out
+    m = re.search(r"^binds\s*\{(.*?)^\}", txt, re.S | re.M)
+    for line in (m.group(1) if m else "").splitlines():
+        b = re.match(r"^\s*([A-Za-z0-9_+]+)\b[^{]*\{\s*(.*?)\s*\}\s*$", line)
+        if not b or "Wheel" in b.group(1):
+            continue
+        names = {"mod": "SUPER", "super": "SUPER", "ctrl": "CTRL", "alt": "ALT", "shift": "SHIFT"}
+        parts = b.group(1).split("+")
+        keys = [names.get(p.lower(), p) for p in parts[:-1]] + [parts[-1]]
+        out.append({"keys": norm(" + ".join(keys)), "what": b.group(2)[:80]})
+    return out
 
 
 def binds():
@@ -90,15 +124,15 @@ def main():
         return
     d = read()
     if a[0] == "list":
-        print(json.dumps({"hypr": bool(hypr()),
-                          "loaded": os.path.exists(os.path.expanduser("~/.config/hypr/rice-keymap.lua")),
-                          "keys": {k: {"default": v, "now": d.get(k, v)} for k, v in DEFAULTS.items()},
-                          "binds": binds()}))
-    elif a[0] == "set" and len(a) == 3 and a[1] in DEFAULTS:
+        print(json.dumps({"hypr": bool(hypr()), "niri": niri(),
+                          "loaded": niri() or os.path.exists(os.path.expanduser("~/.config/hypr/rice-keymap.lua")),
+                          "keys": {k: {"default": v, "now": d.get(k, v)} for k, v in defaults().items()},
+                          "binds": niri_binds() if niri() else binds()}))
+    elif a[0] == "set" and len(a) == 3 and a[1] in defaults():
         keys = " + ".join(p.strip() for p in a[2].split("+") if p.strip())
         if not KEY_RX.match(keys):
             sys.exit("not keys: " + a[2])
-        if norm(keys) == norm(DEFAULTS[a[1]]):
+        if norm(keys) == norm(defaults()[a[1]]):
             d.pop(a[1], None)
         else:
             d[a[1]] = keys

@@ -157,7 +157,7 @@ Rectangle {
 
     T { scaled: false;
         anchors.left: parent.left; anchors.bottom: parent.bottom; anchors.margins: 10
-        text: m.floating ? "Floating" : "Against the edge"
+        text: m.floating ? I18n.t("Floating") : I18n.t("Against the edge")
         font.pixelSize: 11; color: "#F6F5F4"; opacity: 0.5
         visible: false
     }

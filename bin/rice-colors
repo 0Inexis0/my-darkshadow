@@ -72,6 +72,10 @@ def refresh():
         p = HOME + "/.local/bin/" + tool
         if os.access(p, os.X_OK):
             subprocess.run([p, "apply"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    # your apps (VSCodium / VS Code, Discord) take the new colors too
+    p = HOME + "/.local/bin/rice-theme"
+    if os.access(p, os.X_OK):
+        subprocess.Popen([p, "sync"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
 
 
 def main(argv):

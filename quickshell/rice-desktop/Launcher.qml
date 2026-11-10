@@ -9,6 +9,7 @@ import QtQuick.Effects
 // Type to search, arrows or Tab to move, Enter to open, Esc to close. "2+2" calculates (Enter copies the result),
 // anything else can be searched on the web. The apps you open most come first.
 PanelWindow {
+    screen: Mon.screen
     id: ln
     property bool open: false
     property real t: 0
@@ -84,10 +85,10 @@ PanelWindow {
         }
         list.sort(function(a, b) { return b.s !== a.s ? b.s - a.s : (a.e.name || "").localeCompare(b.e.name || "") })
         const c = q !== "" ? calc(query) : null
-        if (c !== null) out.push({ kind: "calc", name: "= " + c, sub: "Press Enter to copy the result", val: c })
+        if (c !== null) out.push({ kind: "calc", name: "= " + c, sub: Tr.t("Press Enter to copy the result"), val: c })
         for (let i = 0; i < list.length && i < 80; i++)
             out.push({ kind: "app", name: list[i].e.name, sub: list[i].e.genericName || list[i].e.comment || "", entry: list[i].e, id: list[i].e.id })
-        if (q !== "") out.push({ kind: "web", name: "Search the web for \"" + query.trim() + "\"", sub: "DuckDuckGo", q: query.trim() })
+        if (q !== "") out.push({ kind: "web", name: "Search the web for \"" + query.trim() + "\"", sub: Tr.t("DuckDuckGo"), q: query.trim() })
         results = out
         resetScroll()
         cur = 0
@@ -258,7 +259,7 @@ PanelWindow {
                     else if (e.key === Qt.Key_PageDown) { ln.move(ln.nlines); e.accepted = true }
                     else if (e.key === Qt.Key_PageUp) { ln.move(-ln.nlines); e.accepted = true }
                 }
-                DText { visible: input.text.length === 0; text: "Search"; font.family: ln.ff; font.pixelSize: ln.px; color: ln.col(ln.th.dim) }
+                DText { visible: input.text.length === 0; text: Tr.t("Search"); font.family: ln.ff; font.pixelSize: ln.px; color: ln.col(ln.th.dim) }
             }
         }
 
@@ -406,7 +407,7 @@ PanelWindow {
             }
         }
 
-        DText { visible: ln.query !== "" && ln.results.length === 0 && ln.lay !== "bar"; x: ln.leftW + ln.pad + 16; y: ln.pad + ln.inputH + 20; text: "Nothing found"; font.family: ln.ff; font.pixelSize: ln.px; color: ln.col(ln.th.dim) }
+        DText { visible: ln.query !== "" && ln.results.length === 0 && ln.lay !== "bar"; x: ln.leftW + ln.pad + 16; y: ln.pad + ln.inputH + 20; text: Tr.t("Nothing found"); font.family: ln.ff; font.pixelSize: ln.px; color: ln.col(ln.th.dim) }
     }
     // smooth scrolling: the wheel and the keys move the view with an easing animation
     property bool noScroll: false

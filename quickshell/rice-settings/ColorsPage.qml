@@ -13,7 +13,7 @@ Item {
     }
     function copy(name, c) {
         Quickshell.execDetached(["bash", "-c", "printf %s \"$1\" | wl-copy", "_", hex(c)])
-        page.ctl.status = name + " " + hex(c) + " copied"
+        page.ctl.status = name + " " + hex(c) + I18n.t(" copied")
     }
 
     readonly property var roles: [
@@ -63,11 +63,11 @@ Item {
                     text: I18n.t("Comes from your theme or wallpaper. Every color below is made from it, so the whole shell matches.") }
             }
             Btn { anchors.right: parent.right; anchors.rightMargin: 20; anchors.verticalCenter: parent.verticalCenter
-                text: "Theme"; sym: "palette"; icon: ""; onClicked: page.ctl.page = 8 }
+                text: I18n.t("Theme"); sym: "palette"; icon: ""; onClicked: page.ctl.page = 8 }
         }
 
         // ---------- roles ----------
-        SectionTitle { text: I18n.t("Color roles"); sub: "Each role has an \"on\" color for text and icons on top of it. Containers are the soft versions used for groups." }
+        SectionTitle { text: I18n.t("Color roles"); sub: I18n.t("Each role has an \"on\" color for text and icons on top of it. Containers are the soft versions used for groups.") }
         Grid {
             id: grid
             width: parent.width

@@ -88,7 +88,7 @@ Rectangle {
         visible: rep.count === 0 && !zr.hot
         anchors.centerIn: parent
         anchors.verticalCenterOffset: zr.title.length > 0 ? 5 : 0
-        text: zr.wrap ? "Drop here" : "empty"
+        text: zr.wrap ? I18n.t("Drop here") : "empty"
         font.pixelSize: 11
         color: "#4a4a52"
     }

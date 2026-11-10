@@ -19,11 +19,11 @@ Item {
         anchors.centerIn: parent
         spacing: -4
         readonly property color ink: dw.pal ? (dw.bg > 0.02 ? dw.pal.inkOn : dw.pal.fg) : "#111"
-        T { anchors.horizontalCenter: parent.horizontalCenter; text: dw.now.toLocaleDateString(Qt.locale("en_US"), "ddd").toUpperCase()
+        T { anchors.horizontalCenter: parent.horizontalCenter; text: dw.now.toLocaleDateString(Tr.loc, "ddd").toUpperCase()
             font.pixelSize: Math.round(dw.width * 0.085); font.weight: Font.Bold; font.letterSpacing: 2; color: parent.ink; opacity: 0.8 }
         T { kind: "number"; anchors.horizontalCenter: parent.horizontalCenter; text: dw.now.getDate()
             font.pixelSize: Math.round(dw.width * 0.36); font.weight: Font.DemiBold; color: parent.ink }
-        T { anchors.horizontalCenter: parent.horizontalCenter; text: dw.now.toLocaleDateString(Qt.locale("en_US"), "MMMM")
+        T { anchors.horizontalCenter: parent.horizontalCenter; text: dw.now.toLocaleDateString(Tr.loc, "MMMM")
             font.pixelSize: Math.round(dw.width * 0.08); font.weight: Font.Medium; color: parent.ink; opacity: 0.8 }
     }
 }

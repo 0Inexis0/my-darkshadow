@@ -42,14 +42,14 @@ Item {
             font.pixelSize: 16
             font.bold: true
             color: me.pal ? me.pal.fg : "#F6F5F4"
-            text: me.player ? (me.player.trackTitle || "Unknown") : "Nothing playing"
+            text: me.player ? (me.player.trackTitle || "Unknown") : Tr.t("Nothing playing")
         }
         T {
             width: parent.width
             elide: Text.ElideRight
             font.pixelSize: 12
             color: me.pal ? me.pal.fg2 : "#a8a8ad"
-            text: me.player ? (me.player.trackArtist || "") : "Start some music"
+            text: me.player ? (me.player.trackArtist || "") : Tr.t("Start some music")
         }
     }
 

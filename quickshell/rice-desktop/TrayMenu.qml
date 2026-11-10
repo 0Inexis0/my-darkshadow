@@ -14,6 +14,7 @@ Item {
     property bool down: true                   // opens below the bar
     property real areaW: 1920
     property bool open: false
+    property real maxH: 420                    // the most it can be tall: a longer menu scrolls
     function show(it, x) { item = it; ax = x; stack = []; open = true }
     function close() { open = false }
 
@@ -27,7 +28,7 @@ Item {
     Behavior on t { NumberAnimation { duration: tmu.open ? 420 : 180; easing.type: Easing.BezierSpline; easing.bezierCurve: tmu.open ? Look.decel : Look.accel } }
     visible: t > 0.01
     width: 264
-    height: col.implicitHeight + 16
+    height: Math.min(col.implicitHeight + 16, maxH)
     x: Math.max(8, Math.min(areaW - width - 8, ax - width / 2))
     opacity: Math.min(1, t * 1.6)
     transform: [
@@ -60,9 +61,24 @@ Item {
                 Text { width: parent.width; elide: Text.ElideRight; color: tmu.pal ? tmu.pal.fg : "white"; font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.DemiBold
                     text: tmu.item ? (tmu.item.tooltipTitle || tmu.item.title || tmu.item.id) : "" }
                 Text { width: parent.width; elide: Text.ElideRight; color: tmu.pal ? tmu.pal.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 11
-                    text: tmu.stack.length > 0 ? "Back" : "Running in the background" }
+                    text: tmu.stack.length > 0 ? Tr.t("Back") : Tr.t("Running in the background") }
             }
         }
+        // the entries scroll when the menu is taller than the room it has (header 52, line, Close app 44)
+        Flickable {
+            id: fl
+            width: parent.width
+            height: Math.min(ecol.implicitHeight, Math.max(120, tmu.maxH - 16 - 52 - 44 - 9 - 3 * col.spacing))
+            contentWidth: width
+            contentHeight: ecol.implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            flickableDirection: Flickable.VerticalFlick
+            interactive: contentHeight > height
+            Column {
+            id: ecol
+            width: fl.width
+            spacing: 2
         Repeater {
             model: tmu.entries
             delegate: Item {
@@ -108,6 +124,8 @@ Item {
                 }
             }
         }
+            }
+        }
         Rectangle { width: parent.width - 24; x: 12; height: 1; color: tmu.pal ? tmu.pal.line : "#333"; visible: tmu.entries.length > 0 }
         // end the app
         Item {
@@ -116,7 +134,7 @@ Item {
                 Behavior on opacity { NumberAnimation { duration: 140 } } }
             Row { x: 14; anchors.verticalCenter: parent.verticalCenter; spacing: 10
                 MIcon { anchors.verticalCenter: parent.verticalCenter; size: 18; name: "close"; glyph: ""; color: "#ffb4ab" }
-                Text { anchors.verticalCenter: parent.verticalCenter; text: "Close app"; color: "#ffb4ab"; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium } }
+                Text { anchors.verticalCenter: parent.verticalCenter; text: Tr.t("Close app"); color: "#ffb4ab"; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium } }
             MouseArea {
                 id: qm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                 onClicked: {

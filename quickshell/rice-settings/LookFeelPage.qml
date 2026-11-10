@@ -107,7 +107,7 @@ Item {
             visible: tl.on || !tl.installed
             color: tl.on ? M3.primary : (im2.containsMouse ? M3.surfaceBright : M3.surfaceHighest)
             T { id: chip; anchors.centerIn: parent; font.pixelSize: 11; font.weight: Font.DemiBold
-                text: tl.working ? "…" : (tl.on ? "In use" : "Install"); color: tl.on ? M3.inkPrimary : M3.ink }
+                text: tl.working ? "…" : (tl.on ? I18n.t("In use") : I18n.t("Install")); color: tl.on ? M3.inkPrimary : M3.ink }
             MouseArea { id: im2; anchors.fill: parent; hoverEnabled: true; enabled: !tl.on && !tl.installed
                 cursorShape: Qt.PointingHandCursor; onClicked: tl.install() }
         }
@@ -199,14 +199,14 @@ Item {
         }
 
         // ---------- fastfetch ----------
-        SectionTitle { text: "Fastfetch"; sub: I18n.t("The logo and the facts about your computer that a terminal shows.") }
+        SectionTitle { text: I18n.t("Fastfetch"); sub: I18n.t("The logo and the facts about your computer that a terminal shows.") }
         Rectangle {
             visible: page.ff.installed === false
             width: parent.width; height: 60; radius: M3.rL
             color: M3.surfaceC
             T { x: 18; anchors.verticalCenter: parent.verticalCenter; text: I18n.t("fastfetch is not installed"); font.pixelSize: 14 }
             Btn { anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
-                text: "Install"; sym: "download"; icon: ""; onClicked: { page.waiting = true; page.look(["install", "fastfetch"]) } }
+                text: I18n.t("Install"); sym: "download"; icon: ""; onClicked: { page.waiting = true; page.look(["install", "fastfetch"]) } }
         }
         Rectangle {
             visible: page.ff.own === true
@@ -225,25 +225,25 @@ Item {
             onToggled: function(v) { page.setFetch("on_open", v ? "on" : "off") }
         }
         SegRow {
-            label: "Logo"
+            label: I18n.t("Logo")
             desc: page.ff.logo === "wallpaper" && page.termInfo && !page.termInfo.images
-                ? page.termNow + " cannot show pictures: the moon shows instead" : "Your distro's, small like pfetch, DarkShadow's moon or your wallpaper"
-            options: [{ label: "Distro", value: "distro" }, { label: "pfetch", value: "small" }, { label: "Moon", value: "darkshadow" },
-                      { label: "Wallpaper", value: "wallpaper" }, { label: "None", value: "none" }]
+                ? page.termNow + I18n.t(" cannot show pictures: the moon shows instead") : I18n.t("Your distro's, small like pfetch, DarkShadow's moon or black hole, or your wallpaper")
+            options: [{ label: I18n.t("Distro"), value: "distro" }, { label: "pfetch", value: "small" }, { label: I18n.t("Moon"), value: "darkshadow" }, { label: I18n.t("Black hole"), value: "blackhole" },
+                      { label: I18n.t("Wallpaper"), value: "wallpaper" }, { label: I18n.t("None"), value: "none" }]
             current: page.ff.logo || "distro"
             onChosen: function(v) { page.setFetch("logo", v) }
         }
         SegRow {
-            label: "Info"
-            desc: page.ff.logo === "small" ? "pfetch style: a small logo and a short list (os, host, kernel, uptime, pkgs, memory)" : "How much it tells"
-            options: [{ label: "Everything", value: "full" }, { label: I18n.t("The main"), value: "compact" }, { label: I18n.t("A little"), value: "minimal" }]
+            label: I18n.t("Info")
+            desc: page.ff.logo === "small" ? I18n.t("pfetch style: a small logo and a short list (os, host, kernel, uptime, pkgs, memory)") : I18n.t("How much it tells")
+            options: [{ label: I18n.t("Everything"), value: "full" }, { label: I18n.t("The main"), value: "compact" }, { label: I18n.t("A little"), value: "minimal" }]
             current: page.ff.info || "full"
             onChosen: function(v) { page.setFetch("info", v) }
         }
         SegRow {
-            label: "Labels"
+            label: I18n.t("Labels")
             desc: I18n.t("Words, or icons with the words")
-            options: [{ label: "Words", value: "text" }, { label: "Icons", value: "icons" }]
+            options: [{ label: I18n.t("Words"), value: "text" }, { label: I18n.t("Icons"), value: "icons" }]
             current: page.ff.labels || "text"
             onChosen: function(v) { page.setFetch("labels", v) }
         }
@@ -255,7 +255,7 @@ Item {
         }
 
         // ---------- shell ----------
-        SectionTitle { text: "Shell"; sub: I18n.t("What you type commands into. New terminals start it, with the same prompt and colors.") }
+        SectionTitle { text: I18n.t("Shell"); sub: I18n.t("What you type commands into. New terminals start it, with the same prompt and colors.") }
         Flow {
             width: parent.width
             spacing: 10
@@ -274,16 +274,16 @@ Item {
         }
         SettingRow {
             visible: page.st.shell && page.st.shell.login !== "" && page.st.shell.login !== page.shellNow
-            label: "Your login shell is " + (page.st.shell ? page.st.shell.login : "")
-            desc: "Terminals start " + page.shellNow + "; make it your login shell too (it asks your password)"
+            label: I18n.t("Your login shell is ") + (page.st.shell ? page.st.shell.login : "")
+            desc: I18n.t("Terminals start ") + page.shellNow + I18n.t("; make it your login shell too (it asks your password)")
             reserved: 210
             Btn { anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
-                text: "Use " + page.shellNow + " everywhere"; sym: "key"; icon: ""; variant: "tonal"
+                text: I18n.t("Use ") + page.shellNow + I18n.t(" everywhere"); sym: "key"; icon: ""; variant: "tonal"
                 onClicked: { page.waiting = true; page.look(["login-shell"]) } }
         }
 
         // ---------- terminal ----------
-        SectionTitle { text: "Terminal"; sub: I18n.t("The app Super + Return opens, also for the Wi-Fi menu and updates. It gets your wallpaper colors, font and see-through background.") }
+        SectionTitle { text: I18n.t("Terminal"); sub: I18n.t("The app Super + Return opens, also for the Wi-Fi menu and updates. It gets your wallpaper colors, font and see-through background.") }
         Flow {
             width: parent.width
             spacing: 10
@@ -304,7 +304,7 @@ Item {
         T {
             visible: page.termNow === "wezterm" || page.termNow === "konsole"
             width: parent.width; wrapMode: Text.WordWrap; topPadding: 4
-            text: (page.termInfo ? page.termInfo.name : page.termNow) + " keeps its own look and starts your login shell."
+            text: (page.termInfo ? page.termInfo.name : page.termNow) + I18n.t(" keeps its own look and starts your login shell.")
             color: M3.inkDim; font.pixelSize: 12
         }
     }

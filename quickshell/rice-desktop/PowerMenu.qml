@@ -6,6 +6,7 @@ import QtQuick
 // The power menu: click the power icon on the bar and it drops down under it.
 // Lock, Sleep, Log out, Restart, Shut down. The last three need a second click, so nothing happens by accident.
 PanelWindow {
+    screen: Mon.screen
     id: pw
     property bool open: false
     property real t: 0
@@ -27,11 +28,11 @@ PanelWindow {
     property int hover: -1
 
     readonly property var items: [
-        { key: "lock", label: "Lock", icon: "lock", glyph: 0xF033E, cmd: "\"$HOME/.local/bin/rice-power\" lock", ask: false },
-        { key: "suspend", label: "Sleep", icon: "bedtime", glyph: 0xF0904, cmd: "\"$HOME/.local/bin/rice-power\" lock; sleep 0.6; systemctl suspend", ask: false },
-        { key: "logout", label: "Log out", icon: "logout", glyph: 0xF0343, cmd: "\"$HOME/.local/bin/logout\"", ask: true },
-        { key: "reboot", label: "Restart", icon: "restart_alt", glyph: 0xF0709, cmd: "systemctl reboot", ask: true },
-        { key: "poweroff", label: "Shut down", icon: "power_settings_new", glyph: 0xF0425, cmd: "systemctl poweroff", ask: true }
+        { key: "lock", label: Tr.t("Lock"), icon: "lock", glyph: 0xF033E, cmd: "\"$HOME/.local/bin/rice-power\" lock", ask: false },
+        { key: "suspend", label: Tr.t("Sleep"), icon: "bedtime", glyph: 0xF0904, cmd: "\"$HOME/.local/bin/rice-power\" lock; sleep 0.6; systemctl suspend", ask: false },
+        { key: "logout", label: Tr.t("Log out"), icon: "logout", glyph: 0xF0343, cmd: "\"$HOME/.local/bin/logout\"", ask: true },
+        { key: "reboot", label: Tr.t("Restart"), icon: "restart_alt", glyph: 0xF0709, cmd: "systemctl reboot", ask: true },
+        { key: "poweroff", label: Tr.t("Shut down"), icon: "power_settings_new", glyph: 0xF0425, cmd: "systemctl poweroff", ask: true }
     ]
     function run(it) {
         if (it.ask && armed !== it.key) { armed = it.key; Sfx.play("click"); disarm.restart(); return }
@@ -116,7 +117,7 @@ PanelWindow {
                     MIcon { x: 14; anchors.verticalCenter: parent.verticalCenter; size: 19; name: modelData.icon; glyph: String.fromCodePoint(modelData.glyph)
                         color: (row.hot && row.danger) || row.red ? "#ff8a8a" : pw.fg }
                     Text { x: 46; anchors.verticalCenter: parent.verticalCenter; font.family: Fonts.main; font.pixelSize: 14
-                        text: row.hot ? "Click again: " + modelData.label.toLowerCase() : modelData.label
+                        text: row.hot ? Tr.t("Click again: ") + modelData.label.toLowerCase() : modelData.label
                         color: (row.hot && row.danger) || row.red ? "#ff8a8a" : pw.fg }
                     MouseArea { id: rm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: pw.run(modelData) }
                 }

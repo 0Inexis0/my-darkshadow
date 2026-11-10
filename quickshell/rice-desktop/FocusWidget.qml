@@ -86,7 +86,7 @@ Item {
             anchors.centerIn: parent
             spacing: 0
             T { anchors.horizontalCenter: parent.horizontalCenter; kind: "number"; text: fo.clock(fo.secs); font.pixelSize: 34; font.bold: true; color: fo.cFg }
-            T { anchors.horizontalCenter: parent.horizontalCenter; text: fo.mode === "focus" ? "stay with it" : "rest a little"; font.pixelSize: 11; color: fo.cFg3 }
+            T { anchors.horizontalCenter: parent.horizontalCenter; text: fo.mode === "focus" ? Tr.t("stay with it") : Tr.t("rest a little"); font.pixelSize: 11; color: fo.cFg3 }
         }
         }
 
@@ -137,7 +137,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             opacity: fo.going ? 0.4 : 1
             T { text: "−"; font.pixelSize: 16; color: fo.cFg2; MouseArea { anchors.fill: parent; anchors.margins: -6; cursorShape: Qt.PointingHandCursor; enabled: !fo.going; onClicked: fo.setFocus(Math.max(5, fo.focusMin - 5)) } }
-            T { text: fo.focusMin + " min"; font.pixelSize: 12; color: fo.cFg3; anchors.verticalCenter: parent.verticalCenter }
+            T { text: fo.focusMin + Tr.t(" min"); font.pixelSize: 12; color: fo.cFg3; anchors.verticalCenter: parent.verticalCenter }
             T { text: "+"; font.pixelSize: 16; color: fo.cFg2; MouseArea { anchors.fill: parent; anchors.margins: -6; cursorShape: Qt.PointingHandCursor; enabled: !fo.going; onClicked: fo.setFocus(Math.min(120, fo.focusMin + 5)) } }
         }
     }

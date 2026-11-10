@@ -45,7 +45,7 @@ SettingRow {
             }
         }
         Pill {
-            label: "Set"
+            label: I18n.t("Set")
             anchors.verticalCenter: parent.verticalCenter
             onClicked: { if (row.valid(hexIn.text)) row.committed(hexIn.text) }
         }

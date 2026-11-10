@@ -171,7 +171,7 @@ Item {
                     color: M3.secondaryContainer
                     Icon { anchors.centerIn: parent; name: tour.step && tour.step.icon ? tour.step.icon : "lightbulb"; glyph: ""; size: 20; color: M3.inkSecondaryC }
                 }
-                T { anchors.verticalCenter: parent.verticalCenter; text: "Step " + (tour.index + 1) + " of " + tour.steps.length
+                T { anchors.verticalCenter: parent.verticalCenter; text: I18n.t("Step ") + (tour.index + 1) + I18n.t(" of ") + tour.steps.length
                     font.pixelSize: 12; font.weight: Font.Medium; color: M3.inkDim }
             }
 
@@ -229,7 +229,7 @@ Item {
                         width: backT.implicitWidth + 36; height: 40; radius: 20
                         color: backM.containsMouse ? M3.alpha(M3.primary, 0.08) : "transparent"
                         border.width: 1; border.color: M3.outline
-                        T { id: backT; anchors.centerIn: parent; text: "Back"; font.pixelSize: 14; font.weight: Font.Medium; color: M3.primary }
+                        T { id: backT; anchors.centerIn: parent; text: I18n.t("Back"); font.pixelSize: 14; font.weight: Font.Medium; color: M3.primary }
                         MouseArea { id: backM; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: tour.back() }
                     }
                     Rectangle {
@@ -239,7 +239,7 @@ Item {
                         T {
                             id: nextT
                             anchors.centerIn: parent
-                            text: tour.index === 0 ? "Let's go" : (tour.index < tour.steps.length - 1 ? "Next" : "Done")
+                            text: tour.index === 0 ? I18n.t("Let's go") : (tour.index < tour.steps.length - 1 ? I18n.t("Next") : I18n.t("Done"))
                             font.pixelSize: 14; font.weight: Font.DemiBold; color: M3.inkPrimary
                         }
                         MouseArea { id: nextM; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: tour.next() }
@@ -259,7 +259,7 @@ Item {
                 Rectangle { x: parent.width * modelData[0]; y: parent.height * modelData[1]; width: modelData[2]; height: width; radius: width / 2
                     color: M3.inkDim; opacity: 0.7 }
             }
-            MoonLogo { anchors.centerIn: parent; size: 108; running: tour.active }
+            MoonLogo { anchors.centerIn: parent; size: 132; running: tour.active }
         }
     }
     // the bar with the island in the middle, growing for a song
@@ -299,7 +299,7 @@ Item {
                         Icon { anchors.centerIn: parent; name: "music_note"; glyph: ""; size: 16; color: M3.inkPrimary } }
                     Column {
                         anchors.verticalCenter: parent.verticalCenter
-                        T { text: ai.grow > 0.5 ? "Your song" : "18:22  ·  5°"; font.pixelSize: 12; font.weight: Font.DemiBold; color: "#F6F5F4" }
+                        T { text: ai.grow > 0.5 ? I18n.t("Your song") : "18:22  ·  5°"; font.pixelSize: 12; font.weight: Font.DemiBold; color: "#F6F5F4" }
                         T { visible: ai.grow > 0.5; opacity: ai.grow; text: I18n.t("The artist"); font.pixelSize: 10; color: "#9a9aa2" }
                     }
                 }

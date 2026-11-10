@@ -15,7 +15,7 @@ Item {
         n[key] = value === "on" ? true : value === "off" ? false : value
         qb = n
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-bar\" set \"$1\" \"$2\"", "_", key, String(value)])
-        page.ctl.status = "Applied"
+        page.ctl.status = I18n.t("Applied")
         refresh.restart()
     }
     function open(tab) { Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-dashboard\" island \"$1\"", "_", tab]) }
@@ -105,7 +105,7 @@ Item {
                         Blob { anchors.fill: parent; kind: Prefs.accentShape; color: M3.primaryContainer }
                         Icon { anchors.centerIn: parent; name: "chat"; size: 18; filled: true; color: M3.inkPrimaryC } }
                     Column { x: 66; y: 14; spacing: 2
-                        T { text: "Messages"; font.pixelSize: 10; color: M3.inkDim }
+                        T { text: I18n.t("Messages"); font.pixelSize: 10; color: M3.inkDim }
                         T { text: I18n.t("Example text"); font.pixelSize: 13; font.bold: true }
                         WavyBar { width: 210; height: 12; value: 0.6 } } }
                 // player
@@ -114,7 +114,7 @@ Item {
                     Item { x: 14; y: 14; width: 60; height: 60
                         Blob { anchors.fill: parent; kind: Prefs.accentShape; color: M3.tertiary } }
                     Column { x: 88; y: 20; spacing: 2
-                        T { text: "SPOTIFY"; font.pixelSize: 9; font.bold: true; color: M3.primary }
+                        T { text: I18n.t("SPOTIFY"); font.pixelSize: 9; font.bold: true; color: M3.primary }
                         T { text: I18n.t("A song"); font.pixelSize: 15; font.bold: true }
                         T { text: I18n.t("An artist"); font.pixelSize: 11; color: M3.inkDim } }
                     WavyBar { x: 14; y: 90; width: parent.width - 28; height: 16; value: 0.4 } }
@@ -122,7 +122,7 @@ Item {
                 Item { anchors.fill: parent; opacity: stage.mode === "today" && card.t > 0.8 ? 1 : 0
                     Behavior on opacity { NumberAnimation { duration: 260 } }
                     Column { x: 18; y: 16; spacing: 2
-                        T { text: "Wednesday"; font.pixelSize: 11; color: M3.primary; font.bold: true }
+                        T { text: I18n.t("Wednesday"); font.pixelSize: 11; color: M3.primary; font.bold: true }
                         T { text: I18n.t("4 November"); font.pixelSize: 18; font.bold: true } }
                     Item { x: 18; y: 70; width: 50; height: 50
                         Blob { anchors.fill: parent; kind: Prefs.accentShape; color: M3.primaryContainer }
@@ -134,23 +134,23 @@ Item {
                             T { anchors.centerIn: parent; text: index + 1; font.pixelSize: 8; color: index === 9 ? M3.inkPrimary : M3.ink } } } } }
             }
             T { anchors.left: parent.left; anchors.leftMargin: 18; anchors.bottom: parent.bottom; anchors.bottomMargin: 12
-                text: page.onBar ? "On your bar" : "Not on your bar yet: add Island in Bar layout"; font.pixelSize: 11; color: M3.inkDim }
+                text: page.onBar ? I18n.t("On your bar") : I18n.t("Not on your bar yet: add Island in Bar layout"); font.pixelSize: 11; color: M3.inkDim }
         }
         Row {
             spacing: 8
             Btn { primary: true; sym: "calendar_today"; text: I18n.t("Open Today"); onClicked: page.open("today") }
-            Btn { sym: "memory"; text: "System"; onClicked: page.open("system") }
-            Btn { sym: "info"; text: "About"; onClicked: page.open("about") }
+            Btn { sym: "memory"; text: I18n.t("System"); onClicked: page.open("system") }
+            Btn { sym: "info"; text: I18n.t("About"); onClicked: page.open("about") }
             Btn { visible: !page.onBar; sym: "view_column"; text: I18n.t("Bar layout"); onClicked: page.ctl.page = 3 }
         }
 
         // ---------- at rest ----------
         SectionTitle { text: I18n.t("At rest"); sub: I18n.t("The island is your clock. Click it for Today, right-click for System, scroll on it for the volume.") }
-        ToggleRow { label: "Weather"; desc: I18n.t("The weather icon and temperature beside the time")
+        ToggleRow { label: I18n.t("Weather"); desc: I18n.t("The weather icon and temperature beside the time")
             checked: page.v("island_weather", true) !== false; onToggled: function(x) { page.setv("island_weather", x ? "on" : "off") } }
-        ToggleRow { label: "Date"; desc: I18n.t("The day and date beside the time")
+        ToggleRow { label: I18n.t("Date"); desc: I18n.t("The day and date beside the time")
             checked: page.v("island_date", false) === true; onToggled: function(x) { page.setv("island_date", x ? "on" : "off") } }
-        ToggleRow { label: "Seconds"; desc: I18n.t("Show seconds in the time")
+        ToggleRow { label: I18n.t("Seconds"); desc: I18n.t("Show seconds in the time")
             checked: page.v("seconds", false) === true; onToggled: function(x) { page.setv("seconds", x ? "on" : "off") } }
 
         // ---------- moments ----------
@@ -159,17 +159,17 @@ Item {
             checked: page.v("island_hover", true) !== false; onToggled: function(x) { page.setv("island_hover", x ? "on" : "off") } }
         ToggleRow { label: I18n.t("Volume and microphone"); desc: I18n.t("A wavy level you can drag, instead of the pop-up at the bottom")
             checked: page.v("island_volume", true) !== false; onToggled: function(x) { page.setv("island_volume", x ? "on" : "off") } }
-        ToggleRow { label: "Workspaces"; desc: I18n.t("Which workspace you switched to, in your workspace style and its own color")
+        ToggleRow { label: I18n.t("Workspaces"); desc: I18n.t("Which workspace you switched to, in your workspace style and its own color")
             checked: page.v("island_ws", true) !== false; onToggled: function(x) { page.setv("island_ws", x ? "on" : "off") } }
-        ToggleRow { label: "Notifications"; desc: I18n.t("They grow out of the island instead of popping up (urgent ones still pop up). Needs Shown by: DarkShadow")
+        ToggleRow { label: I18n.t("Notifications"); desc: I18n.t("They grow out of the island instead of popping up (urgent ones still pop up). Needs Shown by: DarkShadow")
             checked: page.v("island_notifs", true) !== false; onToggled: function(x) { page.setv("island_notifs", x ? "on" : "off") } }
-        ToggleRow { label: "Charger"; desc: I18n.t("Plugging the charger in or out shows the battery as a wave (laptops)")
+        ToggleRow { label: I18n.t("Charger"); desc: I18n.t("Plugging the charger in or out shows the battery as a wave (laptops)")
             checked: page.v("island_charge", true) !== false; onToggled: function(x) { page.setv("island_charge", x ? "on" : "off") } }
 
         // ---------- the card ----------
         SectionTitle { text: I18n.t("The card"); sub: I18n.t("What a click opens. Esc, a click on the desktop or another window closes it.") }
         SegRow { label: I18n.t("Opens on"); desc: I18n.t("The tab a click on the island opens")
-            options: [ { label: "Today", value: "today" }, { label: "System", value: "system" }, { label: "About", value: "about" } ]
+            options: [ { label: I18n.t("Today"), value: "today" }, { label: I18n.t("System"), value: "system" }, { label: I18n.t("About"), value: "about" } ]
             current: page.v("island_tab", "today"); onChosen: function(x) { page.setv("island_tab", x) } }
         SliderRow { label: I18n.t("Closes after"); desc: I18n.t("Seconds after the pointer leaves it")
             from: 2; to: 10; step: 1; unit: " s"; value: page.v("island_close", 4)

@@ -15,7 +15,7 @@ Item {
         n[key] = value === "on" ? true : value === "off" ? false : value
         qb = n
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-bar\" set \"$1\" \"$2\"", "_", key, String(value)])
-        page.ctl.status = "Applied"
+        page.ctl.status = I18n.t("Applied")
         refresh.restart()
     }
     Process {
@@ -34,7 +34,7 @@ Item {
     })
     readonly property string wsText: page.v("ws_style", "dots") === "pacman" ? "\u25d6 \u2022 \u2022 \u2022" : (page.v("ws_style", "dots") === "letters" ? "A  B  C  D" : page.v("ws_style", "dots") === "numbers" ? "1  2  3  4" : "\u25cf  \u2022  \u2022  \u2022")
     readonly property var logos: [
-        ["auto", "Auto", 0], ["apps", "Apps", 0xF003B], ["tux", "Linux", 0xF17C], ["arch", "Arch", 0xF303],
+        ["auto", "Auto", 0], ["apps", "Apps", 0xF003B], ["blackhole", "Black hole", -1], ["moon", "Moon", -2], ["tux", "Linux", 0xF17C], ["arch", "Arch", 0xF303],
         ["gentoo", "Gentoo", 0xF30D], ["fedora", "Fedora", 0xF30A], ["debian", "Debian", 0xF306], ["ubuntu", "Ubuntu", 0xF31B],
         ["nixos", "NixOS", 0xF313], ["cachyos", "CachyOS", 0xF385], ["endeavouros", "Endeavour", 0xF322], ["manjaro", "Manjaro", 0xF312],
         ["linuxmint", "Mint", 0xF30E], ["opensuse", "openSUSE", 0xF314], ["void", "Void", 0xF32E], ["alpine", "Alpine", 0xF300],
@@ -44,7 +44,7 @@ Item {
     ]
     readonly property string logoGlyph: {
         const k = page.v("logo", "auto")
-        for (let i = 0; i < logos.length; i++) if (logos[i][0] === k && logos[i][2] !== 0) return String.fromCodePoint(logos[i][2])
+        for (let i = 0; i < logos.length; i++) if (logos[i][0] === k && logos[i][2] > 0) return String.fromCodePoint(logos[i][2])
         return page.ctl && page.ctl.osGlyph ? page.ctl.osGlyph() : "\uf17c"
     }
     readonly property var lay: qb.layout ? qb.layout : ({ left: [], center: [], right: [] })
@@ -148,7 +148,7 @@ Item {
                         radius: notch ? 14 : height / 2 }
                     PZone { x: pbar.width - width - pbar.edge; mods: page.lay.right || []; soft: prev.sty === "islands" || prev.sty === "notch" || prev.sty === "dynamic" }
                 }
-                T { text: "Preview"; font.pixelSize: 10; color: M3.inkDim; anchors.right: parent.right; anchors.rightMargin: 12; anchors.bottom: parent.bottom; anchors.bottomMargin: 8 }
+                T { text: I18n.t("Preview"); font.pixelSize: 10; color: M3.inkDim; anchors.right: parent.right; anchors.rightMargin: 12; anchors.bottom: parent.bottom; anchors.bottomMargin: 8 }
             }
 
             // ---------- bar layout shortcut ----------
@@ -166,11 +166,11 @@ Item {
                 MouseArea { id: blMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.ctl.page = 3 }
             }
 
-            T { kind: "title"; text: "Style"; font.pixelSize: 16; font.bold: true; topPadding: 10 }
+            T { kind: "title"; text: I18n.t("Style"); font.pixelSize: 16; font.bold: true; topPadding: 10 }
             SegRow {
                 label: I18n.t("Bar style")
                 desc: I18n.t("Dynamic: tonal pills in your theme color and an island in the middle that grows")
-                options: [ { label: "Flat", value: "flat" }, { label: "Island", value: "island" }, { label: "Islands", value: "islands" }, { label: "Pills", value: "pills" }, { label: "Notch", value: "notch" }, { label: "Dynamic", value: "dynamic" } ]
+                options: [ { label: I18n.t("Flat"), value: "flat" }, { label: I18n.t("Island"), value: "island" }, { label: I18n.t("Islands"), value: "islands" }, { label: I18n.t("Pills"), value: "pills" }, { label: I18n.t("Notch"), value: "notch" }, { label: I18n.t("Dynamic"), value: "dynamic" } ]
                 current: page.v("style", "islands") === "google" ? "dynamic" : page.v("style", "islands")
                 onChosen: function(x) { page.setv("style", x) }
             }
@@ -188,28 +188,35 @@ Item {
                 MouseArea { id: ilm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.ctl.page = 6 }
             }
             ToggleRow {
-                label: "Auto-hide"
+                label: I18n.t("Auto-hide")
                 desc: I18n.t("The bar slides away and windows get the space; point at the screen edge to bring it back")
                 checked: page.v("autohide", false) === true
                 onToggled: function(x) { page.setv("autohide", x ? "on" : "off") }
             }
             ToggleRow {
-                label: "Shadow"
+                label: I18n.t("Shadow")
                 desc: I18n.t("A soft shadow under the bar so it floats above the wallpaper")
                 checked: page.v("shadow", true) !== false
                 onToggled: function(x) { page.setv("shadow", x ? "on" : "off") }
             }
             SegRow {
-                label: "Position"
-                desc: I18n.t("Top or bottom edge of the screen")
-                options: [ { label: "Top", value: "top" }, { label: "Bottom", value: "bottom" } ]
+                label: I18n.t("App icon by the title")
+                desc: I18n.t("The icon of the window's app, next to its title (the Window title module)")
+                options: [ { label: I18n.t("Left"), value: "left" }, { label: I18n.t("Right"), value: "right" }, { label: I18n.t("Off"), value: "off" } ]
+                current: page.v("title_icon", "right")
+                onChosen: function(x) { page.setv("title_icon", x) }
+            }
+            SegRow {
+                label: I18n.t("Position")
+                desc: I18n.t("Which edge of the screen. Left and right: a standing bar (the window title and the island's cards stay with the top bar)")
+                options: [ { label: I18n.t("Top"), value: "top" }, { label: I18n.t("Bottom"), value: "bottom" }, { label: I18n.t("Left"), value: "left" }, { label: I18n.t("Right"), value: "right" } ]
                 current: page.v("position", "top")
                 onChosen: function(x) { page.setv("position", x) }
             }
             SegRow {
-                label: "Size"
+                label: I18n.t("Size")
                 desc: I18n.t("How tall the bar is")
-                options: [ { label: "Compact", value: "32" }, { label: "Normal", value: "38" }, { label: "Large", value: "46" } ]
+                options: [ { label: I18n.t("Compact"), value: "32" }, { label: I18n.t("Normal"), value: "38" }, { label: I18n.t("Large"), value: "46" } ]
                 current: String(page.v("height", 38))
                 onChosen: function(x) { page.setv("height", x) }
             }
@@ -221,7 +228,7 @@ Item {
                 onCommitted: function(x) { page.setv("tray_size", Math.round(x)) }
             }
             SliderRow {
-                label: "Transparency"
+                label: I18n.t("Transparency")
                 desc: I18n.t("Lower is more see-through. Blur sits behind it when blur is on")
                 from: 0.3; to: 1; step: 0.02; decimals: 2
                 value: page.v("opacity", 0.72)
@@ -244,20 +251,53 @@ Item {
                         scale: lgm.pressed ? 0.94 : 1
                         Behavior on color { ColorAnimation { duration: 120 } }
                         Behavior on scale { NumberAnimation { duration: 100 } }
-                        T { scaled: false; kind: modelData[2] === 0 ? "" : "icon"; anchors.horizontalCenter: parent.horizontalCenter; y: 12
-                            text: modelData[2] === 0 ? "AUTO" : String.fromCodePoint(modelData[2])
+                        MoonLogo { visible: modelData[2] === -1; anchors.horizontalCenter: parent.horizontalCenter; y: 6; size: 40; running: lgm.containsMouse }
+                        Item { visible: modelData[2] === -2; anchors.horizontalCenter: parent.horizontalCenter; y: 10; width: 34; height: 34
+                            Canvas { anchors.fill: parent; onPaint: { const c = getContext("2d"); c.reset(); c.fillStyle = "#eef0fa"; c.beginPath(); c.arc(17, 17, 11, 0, Math.PI * 2); c.fill()
+                                c.globalCompositeOperation = "destination-out"; c.beginPath(); c.arc(21.5, 14.5, 9.5, 0, Math.PI * 2); c.fill() } } }
+                        T { visible: modelData[2] >= 0; scaled: false; kind: modelData[2] === 0 ? "" : "icon"; anchors.horizontalCenter: parent.horizontalCenter; y: 12
+                            text: modelData[2] === 0 ? "AUTO" : (modelData[2] > 0 ? String.fromCodePoint(modelData[2]) : "")
                             font.pixelSize: modelData[2] === 0 ? 13 : 24; font.bold: modelData[2] === 0
                             color: parent.sel ? M3.inkPrimary : "#F6F5F4" }
-                        T { anchors.horizontalCenter: parent.horizontalCenter; y: 48; text: modelData[1]; font.pixelSize: 10
+                        T { anchors.horizontalCenter: parent.horizontalCenter; y: 48; text: I18n.t(modelData[1]); font.pixelSize: 10
                             color: parent.sel ? M3.inkPrimary : M3.inkDim; width: parent.width - 8; horizontalAlignment: Text.AlignHCenter; elide: Text.ElideRight }
                         MouseArea { id: lgm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.setv("logo", modelData[0]) }
                     }
                 }
             }
+            // the colors of the black hole / moon
+            Column {
+                visible: page.v("logo", "auto") === "blackhole" || page.v("logo", "auto") === "moon"
+                width: parent.width
+                spacing: 8
+                topPadding: 6
+                T { text: I18n.t("Logo color"); font.pixelSize: 14; font.weight: Font.Medium }
+                Flow {
+                    width: parent.width
+                    spacing: 8
+                    Repeater {
+                        model: [["default", "Default", "#ffb35c", "#a46bff"], ["white", "White", "#ffffff", "#9c9caa"],
+                                ["gold", "Gold", "#ffb35c", "#ff8a3d"], ["ice", "Ice", "#7fd0ff", "#3d6bff"],
+                                ["rose", "Rose", "#ff7aa8", "#8a3dff"], ["violet", "Violet", "#b58cff", "#5b3dff"],
+                                ["theme", "Theme", M3.primary, M3.primaryContainer]]
+                        delegate: Rectangle {
+                            readonly property bool sel: page.v("logo_color", "default") === modelData[0]
+                            width: lc.implicitWidth + 48; height: 36; radius: 18
+                            color: sel ? M3.primary : (lcm.containsMouse ? M3.surfaceHigh : M3.surfaceC)
+                            border.width: 1; border.color: sel ? M3.primary : M3.outlineVariant
+                            Rectangle { x: 10; anchors.verticalCenter: parent.verticalCenter; width: 18; height: 18; radius: 9
+                                gradient: Gradient { GradientStop { position: 0; color: modelData[2] } GradientStop { position: 1; color: modelData[3] } } }
+                            T { id: lc; x: 36; anchors.verticalCenter: parent.verticalCenter; text: I18n.t(modelData[1]); font.pixelSize: 12
+                                color: parent.sel ? M3.inkPrimary : M3.ink }
+                            MouseArea { id: lcm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.setv("logo_color", modelData[0]) }
+                        }
+                    }
+                }
+            }
 
-            T { kind: "title"; text: "Content"; font.pixelSize: 16; font.bold: true; topPadding: 10 }
+            T { kind: "title"; text: I18n.t("Content"); font.pixelSize: 16; font.bold: true; topPadding: 10 }
             SegRow {
-                label: "Workspaces"
+                label: I18n.t("Workspaces")
                 desc: I18n.t("How many dots are always shown (more appear when you use them)")
                 options: [ { label: "4", value: "4" }, { label: "5", value: "5" }, { label: "6", value: "6" }, { label: "8", value: "8" } ]
                 current: String(page.v("workspaces", 5))
@@ -266,12 +306,12 @@ Item {
             SegRow {
                 label: I18n.t("Workspace style")
                 desc: I18n.t("Dots, Pac-Man running to the workspace you open, letters or numbers")
-                options: [ { label: "Dots", value: "dots" }, { label: "Pac-Man", value: "pacman" }, { label: "Letters", value: "letters" }, { label: "Numbers", value: "numbers" } ]
+                options: [ { label: I18n.t("Dots"), value: "dots" }, { label: I18n.t("Pac-Man"), value: "pacman" }, { label: I18n.t("Letters"), value: "letters" }, { label: I18n.t("Numbers"), value: "numbers" } ]
                 current: page.v("ws_style", "dots")
                 onChosen: function(x) { page.setv("ws_style", x) }
             }
             ToggleRow {
-                label: "Seconds"
+                label: I18n.t("Seconds")
                 desc: I18n.t("Show seconds in the clock")
                 checked: page.v("seconds", false) === true
                 onToggled: function(x) { page.setv("seconds", x ? "on" : "off") }
@@ -282,7 +322,7 @@ Item {
                 label: I18n.t("Use Waybar instead")
                 desc: I18n.t("Go back to the old Waybar if the DarkShadow bar gives you trouble. Waybar needs to be installed")
                 checked: page.v("enabled", true) !== true
-                onToggled: function(x) { Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-bar\" " + (x ? "off" : "on")]); page.ctl.status = x ? "Waybar" : "DarkShadow bar"; refresh.restart() }
+                onToggled: function(x) { Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-bar\" " + (x ? "off" : "on")]); page.ctl.status = x ? I18n.t("Waybar") : I18n.t("DarkShadow bar"); refresh.restart() }
             }
         }
     }

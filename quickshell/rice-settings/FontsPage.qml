@@ -12,11 +12,11 @@ Item {
     function have(f) { return fams.indexOf(f) >= 0 }
 
     readonly property var roles: [
-        { key: "title", label: "Titles", desc: I18n.t("Headings and big numbers"), sample: "Make it yours", px: 30, sym: "title", g: "" },
-        { key: "main", label: "Text", desc: I18n.t("Everything you read in the interface"), sample: "The quick brown fox jumps over the lazy dog", px: 17, sym: "text_fields", g: "" },
-        { key: "reading", label: "Descriptions", desc: I18n.t("The small lines under settings"), sample: "Lower is more see-through. Blur sits behind it.", px: 14, sym: "notes", g: "" },
-        { key: "numbers", label: "Numbers", desc: I18n.t("Clocks and stats"), sample: "12:45  ·  98%  ·  3.14", px: 26, sym: "pin", g: "" },
-        { key: "mono", label: "Monospace", desc: I18n.t("Terminal (kitty) and code"), sample: "~/shadows-shell $ rice-update", px: 15, sym: "terminal", g: "" },
+        { key: "title", label: I18n.t("Titles"), desc: I18n.t("Headings and big numbers"), sample: "Make it yours", px: 30, sym: "title", g: "" },
+        { key: "main", label: I18n.t("Text"), desc: I18n.t("Everything you read in the interface"), sample: "The quick brown fox jumps over the lazy dog", px: 17, sym: "text_fields", g: "" },
+        { key: "reading", label: I18n.t("Descriptions"), desc: I18n.t("The small lines under settings"), sample: "Lower is more see-through. Blur sits behind it.", px: 14, sym: "notes", g: "" },
+        { key: "numbers", label: I18n.t("Numbers"), desc: I18n.t("Clocks and stats"), sample: "12:45  ·  98%  ·  3.14", px: 26, sym: "pin", g: "" },
+        { key: "mono", label: I18n.t("Monospace"), desc: I18n.t("Terminal (kitty) and code"), sample: "~/shadows-shell $ rice-update", px: 15, sym: "terminal", g: "" },
         { key: "icons", label: I18n.t("Icon font"), desc: I18n.t("Nerd Font symbols in the bar and widgets"), sample: "        ", px: 20, sym: "emoji_symbols", g: "" }
     ]
     readonly property var suggestions: ["Google Sans Flex", "Google Sans Code", "Rubik", "Inter", "Google Sans", "Outfit", "Space Grotesk", "Gabarito", "Readex Pro", "Manrope", "JetBrainsMono Nerd Font", "Iosevka Nerd Font"]
@@ -73,7 +73,7 @@ Item {
                 id: aa
                 x: 26; anchors.verticalCenter: parent.verticalCenter
                 scaled: false
-                text: "Aa"
+                text: I18n.t("Aa")
                 font.family: Fonts.main
                 font.pixelSize: 92
                 font.weight: hov.hovered ? Font.Black : Font.Normal
@@ -87,7 +87,7 @@ Item {
                 T { text: I18n.t("INTERFACE FONT"); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2; color: M3.alpha(M3.inkPrimaryC, 0.75) }
                 T { kind: "title"; text: Fonts.main; font.pixelSize: 26; font.weight: Font.Medium; color: M3.inkPrimaryC }
                 T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.alpha(M3.inkPrimaryC, 0.85)
-                    text: page.have("Google Sans Flex") ? "Settings, the bar, the launcher, notifications, the island and widgets all use it. Point at Aa to see it bold."
+                    text: page.have("Google Sans Flex") ? I18n.t("Settings, the bar, the launcher, notifications, the island and widgets all use it. Point at Aa to see it bold.")
                                                          : "Google Sans Flex is not installed yet: run rice-fonts (the installer does it for you)." }
                 Btn { visible: page.have("Google Sans Flex") && Fonts.main !== "Google Sans Flex"; text: I18n.t("Use Google Sans Flex"); sym: "font_download"; icon: ""; primary: true; onClicked: page.useGoogle() }
             }
@@ -142,12 +142,12 @@ Item {
                     }
                     Row {
                         spacing: 8
-                        T { text: card.fam !== "" && !page.have(card.fam) ? "Not installed: " + card.fam : ""; visible: text !== ""; font.pixelSize: 11; color: M3.error; anchors.verticalCenter: parent.verticalCenter }
+                        T { text: card.fam !== "" && !page.have(card.fam) ? I18n.t("Not installed: ") + card.fam : ""; visible: text !== ""; font.pixelSize: 11; color: M3.error; anchors.verticalCenter: parent.verticalCenter }
                         Rectangle {
                             visible: modelData.key !== "icons"
                             width: st.implicitWidth + 24; height: 30; radius: 15
                             color: sm.containsMouse ? M3.surfaceHighest : M3.surfaceHigh
-                            T { id: st; anchors.centerIn: parent; text: card.open ? "Hide suggestions" : "Suggestions"; font.pixelSize: 12 }
+                            T { id: st; anchors.centerIn: parent; text: card.open ? I18n.t("Hide suggestions") : I18n.t("Suggestions"); font.pixelSize: 12 }
                             MouseArea { id: sm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.openKey = card.open ? "" : modelData.key }
                         }
                     }
@@ -177,7 +177,7 @@ Item {
         }
 
         // ---------- text ----------
-        SectionTitle { text: "Text"; sub: I18n.t("Size and weight of every label in Settings.") }
+        SectionTitle { text: I18n.t("Text"); sub: I18n.t("Size and weight of every label in Settings.") }
         SliderRow {
             label: I18n.t("Text size")
             desc: I18n.t("100 % is the normal size")

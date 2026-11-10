@@ -35,7 +35,7 @@ Item {
         if (k === "airplane") { n.wifi = !on; n.bluetooth = !on }
         sv = n
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-services\" set \"$1\" \"$2\"", "_", k, on ? "on" : "off"])
-        page.ctl.status = (on ? "On: " : "Off: ") + k
+        page.ctl.status = (on ? I18n.t("On: ") : I18n.t("Off: ")) + k
         svRefresh.restart()
     }
     function unit(name, action) {
@@ -55,7 +55,7 @@ Item {
         id: unitProc
         stdout: StdioCollector {
             onStreamFinished: {
-                page.ctl.status = text.trim().length > 0 ? text.trim().split("\n").pop() : "Done"
+                page.ctl.status = text.trim().length > 0 ? text.trim().split("\n").pop() : I18n.t("Done")
                 page.busy = ""
                 svProc.running = true
             }
@@ -146,7 +146,7 @@ Item {
             width: flick.width
             spacing: 10
 
-            SectionTitle { topPadding: 0; text: "Switches"; sub: "Turn things on and off for this computer. Night light needs " + (Quickshell.env("NIRI_SOCKET") ? "gammastep" : "hyprsunset") + "." }
+            SectionTitle { topPadding: 0; text: I18n.t("Switches"); sub: I18n.t("Turn things on and off for this computer. Night light needs ") + (Quickshell.env("NIRI_SOCKET") ? "gammastep" : "hyprsunset") + "." }
             Grid {
                 id: swGrid
                 width: parent.width
@@ -181,7 +181,7 @@ Item {
                             T { text: modelData.n; font.pixelSize: 13; font.bold: true; width: parent.width; elide: Text.ElideRight }
                             T {
                                 kind: "reading"
-                                text: !tile.avail ? "Not installed" : (tile.on ? "On" : (modelData.offText || "Off"))
+                                text: !tile.avail ? I18n.t("Not installed") : (tile.on ? I18n.t("On") : (modelData.offText || "Off"))
                                 font.pixelSize: 11
                                 color: M3.inkDim
                             }
@@ -210,7 +210,7 @@ Item {
                 value: page.sv.night_temp || 4500
                 onCommitted: function(x) {
                     Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-services\" night-temp \"$1\"", "_", String(Math.round(x))])
-                    page.ctl.status = "Night light: " + Math.round(x) + " K"
+                    page.ctl.status = I18n.t("Night light: ") + Math.round(x) + " K"
                 }
             }
 
@@ -219,7 +219,7 @@ Item {
                 label: I18n.t("Gaming mode")
                 desc: I18n.t("Moved to Gaming hub, with performance and your game launchers")
                 reserved: 120
-                Btn { anchors.right: parent.right; anchors.rightMargin: 14; anchors.verticalCenter: parent.verticalCenter; text: "Open"; onClicked: page.ctl.page = 16 }
+                Btn { anchors.right: parent.right; anchors.rightMargin: 14; anchors.verticalCenter: parent.verticalCenter; text: I18n.t("Open"); onClicked: page.ctl.page = 16 }
             }
 
             SectionTitle { text: I18n.t("System services"); sub: I18n.t("Background services. Start and stop ask for your password for system services.") }
@@ -245,19 +245,19 @@ Item {
                             T { text: modelData.label; font.pixelSize: 14; font.bold: true }
                             T { kind: "mono"; text: modelData.name; font.pixelSize: 10; color: M3.inkDim; anchors.verticalCenter: parent.verticalCenter }
                         }
-                        T { kind: "reading"; text: (modelData.active ? "Running" : "Stopped") + "  ·  " + modelData.desc; font.pixelSize: 11; color: M3.inkDim }
+                        T { kind: "reading"; text: (modelData.active ? I18n.t("Running") : I18n.t("Stopped")) + "  ·  " + modelData.desc; font.pixelSize: 11; color: M3.inkDim }
                     }
                     Row {
                         anchors.right: parent.right; anchors.rightMargin: 14
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 8
                         Btn {
-                            text: page.busy === modelData.name ? "..." : (modelData.active ? "Stop" : "Start")
+                            text: page.busy === modelData.name ? "..." : (modelData.active ? I18n.t("Stop") : I18n.t("Start"))
                             onClicked: page.unit(modelData.name, modelData.active ? "stop" : "start")
                         }
                         Btn {
                             visible: modelData.active
-                            text: "Restart"
+                            text: I18n.t("Restart")
                             onClicked: page.unit(modelData.name, "restart")
                         }
                     }
@@ -271,13 +271,13 @@ Item {
             }
 
             SettingRow {
-                label: "Fonts"
+                label: I18n.t("Fonts")
                 desc: I18n.t("Moved to Appearance > Fonts, with samples")
                 reserved: 120
-                Btn { anchors.right: parent.right; anchors.rightMargin: 14; anchors.verticalCenter: parent.verticalCenter; text: "Open"; onClicked: page.ctl.page = 19 }
+                Btn { anchors.right: parent.right; anchors.rightMargin: 14; anchors.verticalCenter: parent.verticalCenter; text: I18n.t("Open"); onClicked: page.ctl.page = 19 }
             }
 
-            T { kind: "title"; text: "Autostart"; font.pixelSize: 16; font.bold: true; topPadding: 18 }
+            T { kind: "title"; text: I18n.t("Autostart"); font.pixelSize: 16; font.bold: true; topPadding: 18 }
 
             AutostartPage { width: parent.width; ctl: page.ctl }
         }

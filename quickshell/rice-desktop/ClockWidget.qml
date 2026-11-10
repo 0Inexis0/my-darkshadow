@@ -52,7 +52,7 @@ Item {
         }
         T {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: ck.now.toLocaleDateString(Qt.locale("en_US"), "dddd, d MMMM")
+            text: ck.now.toLocaleDateString(Tr.loc, "dddd, d MMMM")
             font.pixelSize: 19
             color: ck.pal ? ck.pal.fg2 : "#c8c8cc"
         }

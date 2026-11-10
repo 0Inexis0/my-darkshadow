@@ -74,7 +74,7 @@ Item {
                     Rectangle {
                         width: 92; height: 26; radius: 13
                         color: tprev.acc
-                        T { anchors.centerIn: parent; text: "Button"; font.pixelSize: 11; font.bold: true
+                        T { anchors.centerIn: parent; text: I18n.t("Button"); font.pixelSize: 11; font.bold: true
                             color: (0.299 * tprev.acc.r + 0.587 * tprev.acc.g + 0.114 * tprev.acc.b) > 0.55 ? M3.surfaceLow : "#F6F5F4" }
                     }
                 }
@@ -90,20 +90,20 @@ Item {
                 Rectangle { x: 10; anchors.verticalCenter: parent.verticalCenter; width: 32; height: 32; radius: 10; color: tprev.acc }
                 Column {
                     x: 52; anchors.verticalCenter: parent.verticalCenter; spacing: 3
-                    T { text: "Theme"; font.pixelSize: 12; font.bold: true; color: tprev.txt }
-                    T { text: page.peekKey.length > 0 ? "Click to use it" : "In use"; font.pixelSize: 10; color: tprev.txt; opacity: 0.6 }
+                    T { text: I18n.t("Theme"); font.pixelSize: 12; font.bold: true; color: tprev.txt }
+                    T { text: page.peekKey.length > 0 ? I18n.t("Click to use it") : I18n.t("In use"); font.pixelSize: 10; color: tprev.txt; opacity: 0.6 }
                 }
             }
             T {
                 anchors.right: parent.right; anchors.rightMargin: 12; anchors.bottom: parent.bottom; anchors.bottomMargin: 8
-                text: page.peekKey.length > 0 ? "Preview" : "Current theme"
+                text: page.peekKey.length > 0 ? I18n.t("Preview") : I18n.t("Current theme")
                 font.pixelSize: 10
                 color: tprev.txt
                 opacity: 0.5
             }
         }
 
-        SectionTitle { text: "Dynamic"; sub: I18n.t("Taken from your wallpaper, they change with it.") }
+        SectionTitle { text: I18n.t("Dynamic"); sub: I18n.t("Taken from your wallpaper, they change with it.") }
         Flow {
             width: parent.width
             spacing: 10
@@ -114,7 +114,7 @@ Item {
             }
         }
 
-        SectionTitle { text: "Monochrome"; sub: I18n.t("Black, white and quiet greys.") }
+        SectionTitle { text: I18n.t("Monochrome"); sub: I18n.t("Black, white and quiet greys.") }
         Flow {
             width: parent.width
             spacing: 10
@@ -125,7 +125,7 @@ Item {
             }
         }
 
-        SectionTitle { text: "Colors"; sub: I18n.t("Fixed palettes, the same on every wallpaper.") }
+        SectionTitle { text: I18n.t("Colors"); sub: I18n.t("Fixed palettes, the same on every wallpaper.") }
         Flow {
             width: parent.width
             spacing: 10

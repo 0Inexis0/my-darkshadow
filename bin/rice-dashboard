@@ -523,39 +523,8 @@ def wall_dir():
 
 
 def walls():
-    d = wall_dir()
-    files = []
-    if d:
-        for ext in ("jpg", "jpeg", "png", "webp", "gif"):
-            files += glob.glob(d + "/*." + ext) + glob.glob(d + "/*." + ext.upper()) + glob.glob(d + "/*/*." + ext)
-    files = sorted(set(files), key=lambda f: os.path.basename(f).lower())
-    cur = read(WALL_CURRENT)
-    os.makedirs(MY_THUMBS, exist_ok=True)
-    need = []
-    out = []
-    for f in files:
-        t = THUMBS + "/" + os.path.basename(f)
-        if not os.path.isfile(t):
-            t = MY_THUMBS + "/" + re.sub(r"[^A-Za-z0-9._-]", "_", os.path.relpath(f, d)) + ".jpg"
-            if not os.path.isfile(t):
-                need.append((f, t))
-                t = f
-        out.append({"path": f, "thumb": t, "name": os.path.splitext(os.path.basename(f))[0]})
-    # small previews for the grid, made in the background (ImageMagick)
-    magick = shutil.which("magick") or shutil.which("convert")
-    if need and magick:
-        lk = open(CACHE + "/thumbs.lock", "w")
-        try:
-            fcntl.flock(lk, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            if os.fork() == 0:
-                os.setsid()
-                for f, t in need:
-                    subprocess.run([magick, f + "[0]", "-thumbnail", "480x300^", "-gravity", "center", "-extent", "480x300",
-                                    "-quality", "82", t], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30)
-                os._exit(0)
-        except OSError:
-            pass
-    print(json.dumps({"dir": d, "current": cur, "walls": out}))
+    # all your folders (yours, Waypaper's), live wallpapers and the thumbnails: rice-walls
+    os.execv(BIN + "/rice-walls", [BIN + "/rice-walls", "list"])
 
 
 def main(a):

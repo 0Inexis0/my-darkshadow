@@ -10,6 +10,8 @@ Singleton {
     readonly property string lang: Prefs.lang
     readonly property var table: I18nData.d[lang] || ({})
     readonly property int count: Object.keys(table).length
+    // dates in the chosen language
+    readonly property var loc: Qt.locale(lang === "en" ? "en_US" : lang.replace("-", "_"))
 
     // [code, name in its own language, name in English]
     readonly property var langs: [

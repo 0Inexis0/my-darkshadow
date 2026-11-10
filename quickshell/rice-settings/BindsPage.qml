@@ -29,7 +29,7 @@ Column {
     T { text: I18n.t("Custom keybinds"); font.pixelSize: 15; font.bold: true }
     T {
         width: parent.width
-        text: Quickshell.env("NIRI_SOCKET") ? "Run any command with a key combination. niri takes changes at once." : "Run any command with a key combination. Removing one takes effect after Reload Hyprland."
+        text: Quickshell.env("NIRI_SOCKET") ? I18n.t("Run any command with a key combination. niri takes changes at once.") : I18n.t("Run any command with a key combination. Removing one takes effect after Reload Hyprland.")
         color: M3.inkDim
         font.pixelSize: 12
         wrapMode: Text.WordWrap
@@ -91,11 +91,11 @@ Column {
         }
         Pill {
             id: addPill
-            label: "Add"
+            label: I18n.t("Add")
             onClicked: {
                 const k = keysField.text.trim()
                 const c = cmdField.text.trim()
-                if (k.length === 0 || c.length === 0) { page.ctl.status = "Type keys and a command"; return }
+                if (k.length === 0 || c.length === 0) { page.ctl.status = I18n.t("Type keys and a command"); return }
                 page.ctl.hrun(["bind-add", k, c], "Added: " + k)
                 keysField.text = ""
                 cmdField.text = ""

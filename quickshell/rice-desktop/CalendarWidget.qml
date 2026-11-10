@@ -7,13 +7,13 @@ Item {
     readonly property color cFg: pal ? pal.fg : "#F6F5F4"
     property date now: new Date()
     property int off: 0
-    readonly property var days: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+    readonly property var days: Tr.week(false)
 
     function sameDay(a, b) {
         return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
     }
     function monthStart() { return new Date(now.getFullYear(), now.getMonth() + off, 1) }
-    function title() { return monthStart().toLocaleDateString(Qt.locale("en_US"), "MMMM yyyy") }
+    function title() { return monthStart().toLocaleDateString(Tr.loc, "MMMM yyyy") }
     function cells() {
         const m = monthStart()
         const lead = (m.getDay() + 6) % 7

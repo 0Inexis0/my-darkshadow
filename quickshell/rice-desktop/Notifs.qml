@@ -143,6 +143,7 @@ Scope {
 
     // ---------- the pop-ups ----------
     PanelWindow {
+        screen: Mon.screen
         id: popWin
         visible: nfy.shellMode && nfy.pops.length > 0
         color: "transparent"

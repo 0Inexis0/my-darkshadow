@@ -3,7 +3,7 @@ import Quickshell.Io
 import QtQuick
 
 // Settings > System > Keybinds: every key worth knowing, in groups, for the window manager that runs (Hyprland
-// or niri). Type to find one. On Hyprland the pencil next to a key gives the action other keys (rice-keymap);
+// or niri). Type to find one. The pencil next to a key gives the action other keys (rice-keymap; niri too);
 // keys for any other app or command are made on the Hyprland / niri page (Custom keybinds).
 Item {
     id: page
@@ -26,24 +26,24 @@ Item {
     Process {
         id: kmProc
         command: ["bash", "-c", "\"$HOME/.local/bin/rice-keymap\" list 2>/dev/null"]
-        running: !page.niri
+        running: true
         stdout: StdioCollector { onStreamFinished: { try { page.km = JSON.parse(text) } catch (e) { } } }
     }
     Process { id: kmSet; stdout: StdioCollector { onStreamFinished: kmLater.restart() } }
     Timer { id: kmLater; interval: 300; onTriggered: kmProc.running = true }
-    onVisibleChanged: if (visible && !niri) kmProc.running = true
+    onVisibleChanged: if (visible) kmProc.running = true
     function kmRun(args) { kmSet.command = ["bash", "-c", "\"$HOME/.local/bin/rice-keymap\" \"$@\"", "_"].concat(args); kmSet.running = true }
 
     // [keys, what it does]; "Super" is the key with the Windows logo
     readonly property var groups: niri ? [
         { name: "Apps and menus", sym: "apps", keys: [
-            ["Super + Return", "Terminal (Settings > Desktop > Look & Feel picks which)"],
-            ["Super + D", "Launcher: find and open apps"], ["Alt + Space", "Launcher"],
-            ["Super + E", "Files"], ["Super + U", "Settings (this window)"], ["Super + W", "Wallpapers"],
-            ["Super + A", "Quick switches: Wi-Fi, Bluetooth, Do not disturb ..."], ["Super + N", "Control center and notifications"],
-            ["Super + G", "Game bar"], ["Super + Alt + D", "Dashboard"], ["Super + L", "Lock the screen"] ] },
+            ["Super + Return", "Terminal (Settings > Desktop > Look & Feel picks which)", "terminal"],
+            ["Super + D", "Launcher: find and open apps", "launcher"], ["Alt + Space", "Launcher", "launcher2"],
+            ["Super + E", "Files"], ["Super + U", "Settings (this window)", "settings"], ["Super + W", "Wallpapers", "wallpaper"],
+            ["Super + A", "Quick switches: Wi-Fi, Bluetooth, Do not disturb ...", "quick"], ["Super + N", "Control center and notifications", "cc"],
+            ["Super + G", "Game bar", "gamebar"], ["Super + Alt + D", "Dashboard", "dashboard"], ["Super + L", "Lock the screen", "lock"] ] },
         { name: "Windows", sym: "select_window", keys: [
-            ["Super + Q", "Close the window"], ["Super + V", "Float / tile the window"],
+            ["Super + Q", "Close the window", "close"], ["Super + V", "Float / tile the window", "float"],
             ["Super + F", "Make the column as wide as the screen"], ["Super + Shift + F", "Fullscreen"],
             ["Super + T", "Windows of a column as tabs"], ["Super + R", "Next column width"],
             ["Super + Minus / Equal", "Column narrower / wider"], ["Super + [  /  ]", "Put the window in the column next to it / take it out"],
@@ -54,14 +54,14 @@ Item {
             ["Super + Page Up / Down", "Workspace above / below"], ["Super + Mouse wheel", "Workspace above / below"],
             ["Super + Tab", "Overview: all workspaces and windows"], ["Super + Shift + Arrows", "Focus another screen"] ] },
         { name: "Screenshots and recording", sym: "screenshot_monitor", keys: [
-            ["Print", "Screenshot of an area"], ["Shift + Print", "Screenshot of the whole screen"],
-            ["Alt + Print", "Screenshot of the window"], ["Super + Shift + R", "Record the screen (again: stop)"] ] },
+            ["Print", "Screenshot of an area", "shot"], ["Shift + Print", "Screenshot of the whole screen", "shotfull"],
+            ["Alt + Print", "Screenshot of the window"], ["Super + Shift + R", "Record the screen (again: stop)", "record"] ] },
         { name: "Sound, brightness, music", sym: "volume_up", keys: [
             ["Volume keys", "Louder, quieter, mute"], ["Super + F12 / F11 / F10", "Louder / quieter / mute"],
             ["Alt + ]  /  [", "Louder / quieter"], ["Brightness keys", "Screen brighter / darker"],
             ["Play / Next / Previous", "Music"] ] },
         { name: "Desktop", sym: "desktop_windows", keys: [
-            ["Super + Alt + W", "Edit the desktop widgets"], ["Super + Shift + /", "niri's own list of keys"],
+            ["Super + Alt + W", "Edit the desktop widgets", "widgets"], ["Super + Shift + /", "niri's own list of keys"],
             ["Super + Shift + P", "Screens off"], ["Super + Shift + E", "Log out"] ] }
     ] : [
         { name: "Apps and menus", sym: "apps", keys: [
@@ -140,10 +140,10 @@ Item {
                 x: 24; y: 92
                 spacing: 12
                 Repeater {
-                    model: [[page.keysOf(["Super + Return", "", page.niri ? "" : "terminal"]), "Terminal", "terminal"],
-                            [page.niri ? "Super + D" : page.keysOf(["Super + R", "", "launcher"]), "Apps", "apps"],
-                            [page.keysOf(["Super + U", "", page.niri ? "" : "settings"]), "Settings", "settings"],
-                            [page.keysOf(["Super + W", "", page.niri ? "" : "wallpaper"]), "Wallpaper", "wallpaper"]]
+                    model: [[page.keysOf(["Super + Return", "", "terminal"]), "Terminal", "terminal"],
+                            [page.keysOf([page.niri ? "Super + D" : "Super + R", "", "launcher"]), "Apps", "apps"],
+                            [page.keysOf(["Super + U", "", "settings"]), "Settings", "settings"],
+                            [page.keysOf(["Super + W", "", "wallpaper"]), "Wallpaper", "wallpaper"]]
                     delegate: Rectangle {
                         width: (page.width - 48 - 2 * 24 - 36) / 4
                         height: 82
@@ -217,7 +217,7 @@ Item {
                                 height: 52
                                 color: rh.hovered ? M3.surfaceHigh : "transparent"
                                 HoverHandler { id: rh }
-                                readonly property bool editable: !page.niri && !!modelData[2] && !!page.km.loaded
+                                readonly property bool editable: !!modelData[2] && !!page.km.loaded
                                 T { x: 18; anchors.verticalCenter: parent.verticalCenter; width: parent.width - caps.width - 52 - (pen.visible ? 44 : 0)
                                     text: modelData[1]; font.pixelSize: 14; elide: Text.ElideRight }
                                 Caps { id: caps; keys: page.keysOf(modelData); anchors.right: pen.visible ? pen.left : parent.right; anchors.rightMargin: pen.visible ? 8 : 14
@@ -248,13 +248,13 @@ Item {
         T {
             visible: page.q !== "" && page.groups.every(g => g.keys.filter(k => page.match(k)).length === 0)
             width: parent.width; wrapMode: Text.WordWrap; topPadding: 12
-            text: "No key for \"" + page.q + "\". Make your own on the " + (page.niri ? "niri" : "Hyprland") + " page (Desktop)."
+            text: I18n.t("No key for \"") + page.q + I18n.t("\". Make your own on the ") + (page.niri ? "niri" : I18n.t("Hyprland")) + I18n.t(" page (Desktop).")
             color: M3.inkDim
         }
 
         // ---------- your own ----------
         SettingRow {
-            visible: !page.niri && Object.keys(page.km.keys || {}).some(k => page.km.keys[k].now !== page.km.keys[k].default)
+            visible: Object.keys(page.km.keys || {}).some(k => page.km.keys[k].now !== page.km.keys[k].default)
             label: I18n.t("Back to the default keys")
             desc: I18n.t("Every key you changed here goes back to how it came")
             reserved: 150

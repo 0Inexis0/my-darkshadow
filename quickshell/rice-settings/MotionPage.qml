@@ -61,9 +61,9 @@ Item {
                 x: 26; anchors.verticalCenter: parent.verticalCenter
                 width: parent.width * 0.45
                 spacing: 6
-                T { text: "MOTION"; font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2; color: M3.alpha(M3.inkPrimaryC, 0.75) }
+                T { text: I18n.t("MOTION"); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2; color: M3.alpha(M3.inkPrimaryC, 0.75) }
                 T { kind: "title"; text: stage.st.n; font.pixelSize: 30; font.weight: Font.Medium; color: M3.inkPrimaryC }
-                T { kind: "reading"; text: stage.st.d + ". Windows, workspaces and pop-ups move like this."; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.alpha(M3.inkPrimaryC, 0.85) }
+                T { kind: "reading"; text: stage.st.d + I18n.t(". Windows, workspaces and pop-ups move like this."); width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.alpha(M3.inkPrimaryC, 0.85) }
             }
             // the track the shape runs on
             Item {
@@ -91,9 +91,9 @@ Item {
         }
 
         // ---------- windows ----------
-        SectionTitle { text: "Windows"; sub: (Quickshell.env("NIRI_SOCKET") ? "niri" : "Hyprland") + ": opening and closing windows, switching workspaces, pop-ups." }
+        SectionTitle { text: I18n.t("Windows"); sub: (Quickshell.env("NIRI_SOCKET") ? "niri" : I18n.t("Hyprland")) + I18n.t(": opening and closing windows, switching workspaces, pop-ups.") }
         ToggleRow {
-            label: "Animations"
+            label: I18n.t("Animations")
             desc: I18n.t("Off: everything appears at once")
             checked: page.ha.enabled !== false
             onToggled: function(v) { page.ctl.setAnim("enabled", v) }
@@ -139,7 +139,7 @@ Item {
             }
         }
         SliderRow {
-            label: "Speed"
+            label: I18n.t("Speed")
             desc: I18n.t("100% is the normal speed of the style; higher is faster")
             from: 50; to: 200; step: 10; unit: " %"
             value: page.ha.speed !== undefined ? page.ha.speed : 100
@@ -149,21 +149,21 @@ Item {
         // ---------- spring physics ----------
         SectionTitle { text: I18n.t("Spring physics"); sub: I18n.t("Motion in Settings is made of springs: stiffness and damping instead of a duration and a curve. Spatial springs may bounce, effects never do.") }
         SegRow {
-            label: "Feel"
+            label: I18n.t("Feel")
             desc: I18n.t("Expressive springs a little, Standard glides")
-            options: [{ label: "Expressive", value: "expressive" }, { label: "Standard", value: "standard" }]
+            options: [{ label: I18n.t("Expressive"), value: "expressive" }, { label: I18n.t("Standard"), value: "standard" }]
             current: Prefs.motion
-            onChosen: function(x) { Prefs.setMotion(x); page.ctl.status = "Motion: " + x }
+            onChosen: function(x) { Prefs.setMotion(x); page.ctl.status = I18n.t("Motion: ") + x }
         }
         SliderRow {
-            label: "Speed"
+            label: I18n.t("Speed")
             desc: I18n.t("Scales every spring and duration in Settings")
             from: 0.5; to: 2; step: 0.05; decimals: 2; unit: "x"
             value: Prefs.motionSpeed
             onCommitted: function(v) { Prefs.setMotionSpeed(v) }
         }
         SliderRow {
-            label: "Bounce"
+            label: I18n.t("Bounce")
             desc: I18n.t("0 takes the overshoot out of every spring; 2 makes it twice as playful")
             from: 0; to: 2; step: 0.1; decimals: 1; unit: "×"
             value: Prefs.bounce
@@ -217,7 +217,7 @@ Item {
         }
 
         // ---------- tokens: springs ----------
-        SectionTitle { text: "Springs"; sub: I18n.t("The motion tokens behind the feel above: spatial ones move things, effect ones fade and recolor. Click one to play it.") }
+        SectionTitle { text: I18n.t("Springs"); sub: I18n.t("The motion tokens behind the feel above: spatial ones move things, effect ones fade and recolor. Click one to play it.") }
         Grid {
             id: sGrid
             width: parent.width
@@ -257,7 +257,7 @@ Item {
         }
 
         // ---------- tokens: durations ----------
-        SectionTitle { text: "Durations"; sub: I18n.t("From a quick tap answer to a whole screen moving. Click a chip to see how long it is.") }
+        SectionTitle { text: I18n.t("Durations"); sub: I18n.t("From a quick tap answer to a whole screen moving. Click a chip to see how long it is.") }
         Rectangle {
             width: parent.width
             height: dFlow.implicitHeight + 74
@@ -278,7 +278,7 @@ Item {
                         Column {
                             anchors.centerIn: parent
                             T { anchors.horizontalCenter: parent.horizontalCenter; text: modelData[0]; font.pixelSize: 11; font.weight: Font.Medium; color: parent.parent.on ? M3.inkPrimary : M3.ink }
-                            T { kind: "code"; anchors.horizontalCenter: parent.horizontalCenter; text: modelData[1] + " ms"; font.pixelSize: 10; color: parent.parent.on ? M3.inkPrimary : M3.inkDim }
+                            T { kind: "code"; anchors.horizontalCenter: parent.horizontalCenter; text: modelData[1] + I18n.t(" ms"); font.pixelSize: 10; color: parent.parent.on ? M3.inkPrimary : M3.inkDim }
                         }
                         MouseArea { id: dm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                             onClicked: { page.durSel = index; durRun.duration = modelData[1]; durBar.p = 0; durRun.restart() } }

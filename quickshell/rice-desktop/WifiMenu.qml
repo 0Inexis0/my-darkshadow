@@ -6,6 +6,7 @@ import QtQuick
 // The Wi-Fi menu: click the Wi-Fi icon on the bar and it drops down under it. Networks, signal, connect (asks for the
 // password when it needs one), disconnect, forget, Wi-Fi on / off. It talks to NetworkManager through nmcli.
 PanelWindow {
+    screen: Mon.screen
     id: wm
     property bool open: false
     property real t: 0
@@ -172,7 +173,7 @@ PanelWindow {
             id: head
             x: 18; y: 14; width: parent.width - 36; height: 36
             MIcon { id: hi; name: wm.radio ? "wifi" : "wifi_off"; glyph: String.fromCodePoint(wm.radio ? 0xF05A9 : 0xF05AA); size: 22; color: wm.fg; anchors.verticalCenter: parent.verticalCenter }
-            Text { x: 34; anchors.verticalCenter: parent.verticalCenter; text: "Wi-Fi"; color: wm.fg; font.family: Fonts.main; font.pixelSize: 15; font.weight: Font.DemiBold }
+            Text { x: 34; anchors.verticalCenter: parent.verticalCenter; text: Tr.t("Wi-Fi"); color: wm.fg; font.family: Fonts.main; font.pixelSize: 15; font.weight: Font.DemiBold }
             Item {   // rescan
                 id: rs
                 anchors.right: sw.left; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
@@ -198,7 +199,7 @@ PanelWindow {
         Text {
             visible: wm.nets.length === 0
             x: 18; y: head.height + 24; width: parent.width - 36; horizontalAlignment: Text.AlignHCenter
-            text: wm.radio ? "No networks found" : "Wi-Fi is off"
+            text: wm.radio ? Tr.t("No networks found") : Tr.t("Wi-Fi is off")
             color: wm.dim; font.family: Fonts.main; font.pixelSize: 13
         }
         Flickable {
@@ -254,7 +255,7 @@ PanelWindow {
                             width: parent.width - 50 - 90
                             Text { width: parent.width; elide: Text.ElideRight; text: modelData.ssid; color: wm.fg; font.family: Fonts.main; font.pixelSize: 14; font.weight: modelData.active ? Font.DemiBold : Font.Normal }
                             Text { visible: text !== ""; width: parent.width; elide: Text.ElideRight; color: modelData.active ? Look.accent : wm.dim; font.family: Fonts.main; font.pixelSize: 11
-                                text: row.busy ? "Connecting…" : (modelData.active ? "Connected" : (modelData.known ? "Saved" : "")) }
+                                text: row.busy ? Tr.t("Connecting…") : (modelData.active ? Tr.t("Connected") : (modelData.known ? Tr.t("Saved") : "")) }
                         }
                         Row {
                             anchors.right: parent.right; anchors.rightMargin: 14; y: (wm.rowH - height) / 2; spacing: 10
@@ -283,7 +284,7 @@ PanelWindow {
                                 Keys.onReturnPressed: if (text.length >= 8) wm.connect(modelData, text)
                                 Keys.onEnterPressed: if (text.length >= 8) wm.connect(modelData, text)
                                 Keys.onEscapePressed: wm.askFor = ""
-                                Text { visible: pwField.text.length === 0; text: "Password"; color: wm.dim; font: pwField.font }
+                                Text { visible: pwField.text.length === 0; text: Tr.t("Password"); color: wm.dim; font: pwField.font }
                             }
                             Item { id: showPw; property bool checked: false; anchors.right: parent.right; anchors.rightMargin: 44; anchors.verticalCenter: parent.verticalCenter; width: 24; height: 24
                                 MIcon { anchors.centerIn: parent; name: showPw.checked ? "visibility_off" : "visibility"; glyph: String.fromCodePoint(showPw.checked ? 0xF0209 : 0xF0208); size: 16; color: wm.dim }

@@ -26,12 +26,12 @@ Item {
     }
     Column {
         x: 28; anchors.verticalCenter: parent.verticalCenter
-        T { text: "Used"; font.pixelSize: 11; color: sw.pal ? sw.pal.fg3 : "#8a8a8f" }
+        T { text: Tr.t("Used"); font.pixelSize: 11; color: sw.pal ? sw.pal.fg3 : "#8a8a8f" }
         T { kind: "number"; text: sw.gb(sw.used); font.pixelSize: 18; font.weight: Font.DemiBold; color: sw.pal ? sw.pal.fg : "#F6F5F4" }
     }
     Column {
         anchors.right: parent.right; anchors.rightMargin: 28; anchors.verticalCenter: parent.verticalCenter
-        T { anchors.right: parent.right; text: "Free"; font.pixelSize: 11; color: sw.pal ? sw.pal.fg3 : "#8a8a8f" }
+        T { anchors.right: parent.right; text: Tr.t("Free"); font.pixelSize: 11; color: sw.pal ? sw.pal.fg3 : "#8a8a8f" }
         T { kind: "number"; anchors.right: parent.right; text: sw.gb(sw.free); font.pixelSize: 18; font.weight: Font.DemiBold; color: sw.pal ? sw.pal.fg : "#F6F5F4" }
     }
     Item {

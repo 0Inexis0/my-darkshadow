@@ -55,15 +55,15 @@ Column {
         T {
             x: 16
             anchors.verticalCenter: parent.verticalCenter
-            text: "Keep these display settings? Reverting in " + page.countdown + " s"
+            text: I18n.t("Keep these display settings? Reverting in ") + page.countdown + " s"
         }
         Row {
             anchors.right: parent.right
             anchors.rightMargin: 12
             anchors.verticalCenter: parent.verticalCenter
             spacing: 8
-            Pill { label: "Keep"; onClicked: page.keep() }
-            Pill { label: "Revert"; onClicked: page.revert() }
+            Pill { label: I18n.t("Keep"); onClicked: page.keep() }
+            Pill { label: I18n.t("Revert"); onClicked: page.revert() }
         }
     }
 
@@ -87,9 +87,9 @@ Column {
                 width: parent.width - 32
                 spacing: 8
 
-                T { text: card.m.name + "   " + card.curRes + " @ " + card.m.rate + " Hz   scale " + card.m.scale; font.bold: true }
+                T { text: card.m.name + "   " + card.curRes + " @ " + card.m.rate + I18n.t(" Hz   scale ") + card.m.scale; font.bold: true }
 
-                T { text: "Resolution"; color: M3.inkDim; font.pixelSize: 12 }
+                T { text: I18n.t("Resolution"); color: M3.inkDim; font.pixelSize: 12 }
                 Seg {
                     options: card.m.modes.slice(0, 5).map(x => ({ label: x.res, value: x.res }))
                     current: card.curRes
@@ -101,12 +101,12 @@ Column {
 
                 T { text: I18n.t("Refresh rate"); color: M3.inkDim; font.pixelSize: 12 }
                 Seg {
-                    options: page.ratesFor(card.m, card.curRes).slice(0, 6).map(x => ({ label: x + " Hz", value: x }))
+                    options: page.ratesFor(card.m, card.curRes).slice(0, 6).map(x => ({ label: x + I18n.t(" Hz"), value: x }))
                     current: card.m.rate
                     onChosen: function(v) { page.apply(card.m.name, card.curRes, v, card.m.scale) }
                 }
 
-                T { text: "Scale"; color: M3.inkDim; font.pixelSize: 12 }
+                T { text: I18n.t("Scale"); color: M3.inkDim; font.pixelSize: 12 }
                 Seg {
                     options: [
                         { label: "1x", value: "1" },

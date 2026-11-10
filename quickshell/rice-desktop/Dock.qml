@@ -16,6 +16,9 @@ Scope {
     readonly property bool on: dc.enabled === true
     readonly property bool autoHide: dc.hover !== false
     readonly property bool reveal: on && (!autoHide || pinned || hovering || apps.open)
+    // Settings > Dock > Keep room for it: while the dock stays out (no hover-to-reveal, or held open with its pin),
+    // windows keep away from it, like they do from the bar (an open browser ends above it, not under it)
+    readonly property bool reserve: on && dc.reserve !== false && (!autoHide || pinned)
     readonly property string edge: dc.position === "left" || dc.position === "right" ? dc.position : "bottom"
     readonly property bool vert: edge === "left" || edge === "right"
     readonly property real alpha: Look.flat ? 1 : (dc.opacity !== undefined ? Number(dc.opacity) : 0.78)
@@ -76,6 +79,7 @@ Scope {
 
     // ---------------- the strip that brings the dock back ----------------
     PanelWindow {
+        screen: Mon.screen
         id: strip
         visible: dock.on && dock.autoHide && !dock.reveal && dock.t < 0.05
         color: "transparent"
@@ -94,13 +98,16 @@ Scope {
 
     // ---------------- the dock ----------------
     PanelWindow {
+        screen: Mon.screen
         id: dockWin
         visible: dock.on && (dock.reveal || dock.t > 0.01)
         color: "transparent"
         anchors { bottom: dock.edge === "bottom"; left: dock.edge === "left"; right: dock.edge === "right" }
         implicitWidth: panel.width + (dock.vert ? 18 : 24)
         implicitHeight: panel.height + (dock.vert ? 24 : 18)
-        exclusionMode: ExclusionMode.Ignore
+        exclusionMode: dock.reserve ? ExclusionMode.Normal : ExclusionMode.Ignore
+        // the panel's width across and its 10 px from the edge
+        exclusiveZone: dock.reserve ? dock.thick + 10 : 0
         WlrLayershell.layer: WlrLayer.Top
         WlrLayershell.namespace: "rice-dock"
         // niri: blur behind the dock while it is out (Hyprland blurs this layer with its own rule)

@@ -7,8 +7,10 @@ QtObject {
     id: np
     property string theme: "shell"
     property real alpha: 0.9
+    // a grey key color (a black, white or grey wallpaper): grey everywhere, no made-up blue
+    readonly property bool mono: Look.accent.hslHue < 0 || Look.accent.hslSaturation < 0.1
     readonly property real hue: Look.accent.hslHue < 0 ? 0.55 : Look.accent.hslHue
-    readonly property real sat: Math.max(0.35, Math.min(0.85, Look.accent.hslSaturation))
+    readonly property real sat: mono ? 0 : Math.max(0.35, Math.min(0.85, Look.accent.hslSaturation))
     readonly property bool light: theme === "white"
     readonly property real a: Look.flat ? 1 : alpha
     // the key color (buttons that are on, sliders, the wave)

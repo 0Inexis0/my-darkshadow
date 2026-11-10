@@ -40,7 +40,7 @@ Item {
     function setProfile(p) {
         const o = Object.assign({}, info); o.pp = p; info = o
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-services\" profile \"$1\"", "_", p])
-        page.ctl.status = "Power profile: " + p
+        page.ctl.status = I18n.t("Power profile: ") + p
     }
 
     // one fact; with a bar when it has a "how full"
@@ -85,7 +85,7 @@ Item {
                 width: 112; height: 112
                 Blob { anchors.fill: parent; kind: Prefs.accentShape; color: M3.primaryContainer
                     RotationAnimator on rotation { from: 0; to: 360; duration: 40000; loops: Animation.Infinite; running: page.visible } }
-                MoonLogo { anchors.centerIn: parent; size: 78; running: page.visible }
+                MoonLogo { anchors.centerIn: parent; size: 100; running: page.visible }
             }
             Column {
                 x: 160; anchors.verticalCenter: parent.verticalCenter
@@ -99,14 +99,14 @@ Item {
                 T { text: (page.info.os || "Linux") + "  ·  " + (page.info.host || ""); font.pixelSize: 13; color: M3.inkDim }
                 Row {
                     spacing: 8; topPadding: 6
-                    Btn { text: "Displays"; sym: "monitor"; icon: ""; onClicked: page.ctl.page = 4 }
-                    Btn { text: "About"; sym: "info"; icon: ""; onClicked: page.ctl.page = 17 }
+                    Btn { text: I18n.t("Displays"); sym: "monitor"; icon: ""; onClicked: page.ctl.page = 4 }
+                    Btn { text: I18n.t("About"); sym: "info"; icon: ""; onClicked: page.ctl.page = 17 }
                 }
             }
         }
 
         // ---------- power ----------
-        SectionTitle { text: "Power"; sub: page.info.pp ? "power-profiles-daemon: battery life or speed." : "power-profiles-daemon is not running, so the profile cannot change." }
+        SectionTitle { text: I18n.t("Power"); sub: page.info.pp ? I18n.t("power-profiles-daemon: battery life or speed.") : I18n.t("power-profiles-daemon is not running, so the profile cannot change.") }
         Row {
             visible: !!page.info.pp
             width: parent.width
@@ -131,18 +131,18 @@ Item {
         }
 
         // ---------- hardware ----------
-        SectionTitle { text: "Hardware"; sub: I18n.t("What this computer is made of, and how full it is.") }
+        SectionTitle { text: I18n.t("Hardware"); sub: I18n.t("What this computer is made of, and how full it is.") }
         Grid {
             id: hw
             width: parent.width
             columns: width > 640 ? 2 : 1
             columnSpacing: 10; rowSpacing: 10
             readonly property real cw: (width - (columns - 1) * 10) / columns
-            Fact { width: hw.cw; icon: "memory"; glyph: ""; label: "Processor" + (page.info.cores ? "  ·  " + page.info.cores + " threads" : ""); value: page.info.cpu }
-            Fact { width: hw.cw; icon: "videogame_asset"; glyph: ""; label: "Graphics"; value: page.info.gpu }
-            Fact { width: hw.cw; icon: "memory_alt"; glyph: ""; label: "Memory"; value: page.gb(page.n("memu")) + " / " + page.gb(page.n("memt"))
+            Fact { width: hw.cw; icon: "memory"; glyph: ""; label: I18n.t("Processor") + (page.info.cores ? "  ·  " + page.info.cores + I18n.t(" threads") : ""); value: page.info.cpu }
+            Fact { width: hw.cw; icon: "videogame_asset"; glyph: ""; label: I18n.t("Graphics"); value: page.info.gpu }
+            Fact { width: hw.cw; icon: "memory_alt"; glyph: ""; label: I18n.t("Memory"); value: page.gb(page.n("memu")) + " / " + page.gb(page.n("memt"))
                 frac: page.n("memt") > 0 ? page.n("memu") / page.n("memt") : 0 }
-            Fact { width: hw.cw; icon: "swap_horiz"; glyph: ""; label: "Swap"; value: page.n("swapt") > 0 ? page.gb(page.n("swapu")) + " / " + page.gb(page.n("swapt")) : "No swap"
+            Fact { width: hw.cw; icon: "swap_horiz"; glyph: ""; label: I18n.t("Swap"); value: page.n("swapt") > 0 ? page.gb(page.n("swapu")) + " / " + page.gb(page.n("swapt")) : "No swap"
                 frac: page.n("swapt") > 0 ? page.n("swapu") / page.n("swapt") : 0 }
             Fact { width: hw.cw; icon: "hard_drive"; glyph: ""; label: I18n.t("Storage (home)"); value: page.gb(page.n("disku")) + " / " + page.gb(page.n("diskt"))
                 frac: page.n("diskt") > 0 ? page.n("disku") / page.n("diskt") : 0 }
@@ -157,12 +157,12 @@ Item {
             columns: width > 640 ? 2 : 1
             columnSpacing: 10; rowSpacing: 10
             readonly property real cw: (width - (columns - 1) * 10) / columns
-            Fact { width: os.cw; icon: "deployed_code"; glyph: ""; label: "Distribution"; value: page.info.os }
-            Fact { width: os.cw; icon: "person"; glyph: ""; label: "User"; value: page.info.user }
-            Fact { width: os.cw; icon: "terminal"; glyph: ""; label: "Kernel"; value: page.info.kernel }
-            Fact { width: os.cw; icon: "code"; glyph: ""; label: "Shell"; value: page.info.shell }
+            Fact { width: os.cw; icon: "deployed_code"; glyph: ""; label: I18n.t("Distribution"); value: page.info.os }
+            Fact { width: os.cw; icon: "person"; glyph: ""; label: I18n.t("User"); value: page.info.user }
+            Fact { width: os.cw; icon: "terminal"; glyph: ""; label: I18n.t("Kernel"); value: page.info.kernel }
+            Fact { width: os.cw; icon: "code"; glyph: ""; label: I18n.t("Shell"); value: page.info.shell }
             Fact { width: os.cw; icon: "window"; glyph: ""; label: page.info.wm || "Hyprland"; value: page.info.hypr }
-            Fact { width: os.cw; icon: "widgets"; glyph: ""; label: "Quickshell"; value: page.info.qs }
+            Fact { width: os.cw; icon: "widgets"; glyph: ""; label: I18n.t("Quickshell"); value: page.info.qs }
         }
     }
 }

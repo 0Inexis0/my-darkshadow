@@ -1,3 +1,4 @@
+-- Infinite Desktop is based on the idea of Sarods2D: https://github.com/sarodscommits/hyprland-infinitie-desktop-v2 (MIT)
 -- DarkShadow's Shell: Infinite Desktop (Settings > Desktop > Infinite Desktop, or SUPER + F)
 -- The windows of a workspace float on an endless canvas. While it is on:
 --   CTRL + mouse wheel          zoom out / in around the pointer (the windows get smaller and come together)
@@ -19,6 +20,7 @@ RiceInfinite = RI
 local HOME = os.getenv("HOME") or ""
 local STATE = HOME .. "/.config/rice/infinite.state"
 local CONF = HOME .. "/.config/rice/infinite.conf"
+local LAYOUT = HOME .. "/.config/rice/infinite-layout"
 
 RI.on = false
 RI.ws = nil
@@ -26,7 +28,6 @@ RI.z, RI.ox, RI.oy = 1.0, 0, 0
 RI.world = {}      -- address -> { x, y, w, h } on the canvas (screen = offset + canvas * zoom)
 RI.tiled = {}      -- address -> true: it was tiled before, tile it again when turned off
 RI.cfg = { step = 0.12, min = 0.2, max = 1.0, pan = 180 }
-RI.recent = 0
 
 local function run(d)
     if d then pcall(hl.dispatch, d) end
@@ -79,21 +80,23 @@ local function wins()
     return out
 end
 
--- where a window is on the canvas; its place follows the screen (you may have dragged it), its size is kept
+-- where a window is on the canvas. Its place always comes from where it is on the screen now (Hyprland gives the
+-- place a window is going to), so a window you moved yourself never jumps back; its size is kept
 local function canvas(w)
     local s = RI.world[w.address]
     local x, y = (w.at.x - RI.ox) / RI.z, (w.at.y - RI.oy) / RI.z
     if not s then
         s = { x = x, y = y, w = w.size.x / RI.z, h = w.size.y / RI.z }
         RI.world[w.address] = s
-    elseif os.time() > RI.recent then
+    elseif not (s.tx and math.abs(w.at.x - s.tx) <= 2 and math.abs(w.at.y - s.ty) <= 2) then
+        -- (where we put it ourselves: keep the exact value, no rounding creeping in)
         s.x, s.y = x, y
     end
     return s
 end
 
 local function place(w, s, resize)
-    RI.recent = os.time() + 1
+    s.tx, s.ty = math.floor(RI.ox + s.x * RI.z + 0.5), math.floor(RI.oy + s.y * RI.z + 0.5)
     if resize then
         run(hl.dsp.window.resize({ x = math.max(60, math.floor(s.w * RI.z + 0.5)), y = math.max(40, math.floor(s.h * RI.z + 0.5)), window = sel(w) }))
     end
@@ -230,22 +233,18 @@ end
 function RI.go(dir)
     if not here() then return end
     local list = wins()
-    for _, w in ipairs(list) do canvas(w) end
     local a = hl.get_active_window()
-    local cur = a and RI.world[a.address]
     local cx, cy
-    if cur then
-        cx, cy = cur.x + cur.w / 2, cur.y + cur.h / 2
+    if a and a.at and a.size and a.workspace and a.workspace.id == RI.ws then
+        cx, cy = a.at.x + a.size.x / 2, a.at.y + a.size.y / 2
     else
-        local mx, my = middle()
-        cx, cy = (mx - RI.ox) / RI.z, (my - RI.oy) / RI.z
+        cx, cy = middle()
     end
     local best, bestd
     for _, w in ipairs(list) do
-        local s = RI.world[w.address]
-        if s and not (a and w.address == a.address) then
-            local dx, dy = s.x + s.w / 2 - cx, s.y + s.h / 2 - cy
-            local along, across = 0, 0
+        if not (a and w.address == a.address) then
+            local dx, dy = w.at.x + w.size.x / 2 - cx, w.at.y + w.size.y / 2 - cy
+            local along, across
             if dir == "right" then along, across = dx, dy
             elseif dir == "left" then along, across = -dx, dy
             elseif dir == "down" then along, across = dy, dx
@@ -257,10 +256,10 @@ function RI.go(dir)
         end
     end
     if not best then return end
-    local s = RI.world[best.address]
-    center_on(s.x + s.w / 2, s.y + s.h / 2, list)
+    -- the middle of that window goes to the middle of the screen: the whole canvas glides by that much
+    local mx, my = middle()
+    RI.pan(math.floor(mx - (best.at.x + best.size.x / 2) + 0.5), math.floor(my - (best.at.y + best.size.y / 2) + 0.5))
     focus(best)
-    save()
 end
 
 -- a window that opened on the canvas: float it, give it its own room next to the last one, glide there
@@ -297,18 +296,23 @@ end
 
 -- SUPER + dragging a window against the edge of the screen: the other windows move away, so it can go on
 function RI.edge_push(dx, dy)
-    if not RI.on and not hl.get_active_window() then return end
     local a = hl.get_active_window()
-    if not (a and a.at and a.size) then return end
-    local mx, my, W, H = middle()
-    local l, t, r, b = mx - W / 2, my - H / 2, mx + W / 2, my + H / 2
-    local M = 12
+    if not (a and a.at and a.floating) then return end
+    -- only when the pointer is at the edge of the screen and the mouse goes on that way: the window you hold
+    -- cannot go further, so the others come towards it
+    local m = hl.get_active_monitor()
+    local c = hl.get_cursor_pos()
+    if not (m and c) then return end
+    local sc = tonumber(m.scale) or 1
+    if sc <= 0 then sc = 1 end
+    local l, t = m.x or 0, m.y or 0
+    local r, b = l + (m.width or 1920) / sc, t + (m.height or 1080) / sc
     local px, py = 0, 0
-    if dx > 0 and a.at.x + a.size.x >= r - M then px = -dx elseif dx < 0 and a.at.x <= l + M then px = -dx end
-    if dy > 0 and a.at.y + a.size.y >= b - M then py = -dy elseif dy < 0 and a.at.y <= t + M then py = -dy end
+    if (dx < 0 and c.x <= l + 2) or (dx > 0 and c.x >= r - 3) then px = -dx end
+    if (dy < 0 and c.y <= t + 2) or (dy > 0 and c.y >= b - 3) then py = -dy end
     if px == 0 and py == 0 then return end
     if not here() then
-        if a.floating then nudge(floats_here(), px, py, a.address) end
+        nudge(floats_here(), px, py, a.address)
         return
     end
     local list = wins()
@@ -319,7 +323,7 @@ function RI.edge_push(dx, dy)
     end
     -- the window you hold stays under the pointer: its place on the canvas moved
     local s = RI.world[a.address]
-    if s then s.x, s.y = (a.at.x - RI.ox) / RI.z, (a.at.y - RI.oy) / RI.z end
+    if s then s.x, s.y = (a.at.x - RI.ox) / RI.z, (a.at.y - RI.oy) / RI.z; s.tx = nil end
 end
 
 -- rice-canvasd: SUPER + ALT + mouse and the push at the edge (it reads the mouse, Hyprland cannot tell it)
@@ -375,6 +379,104 @@ function RI.reload()
     end
 end
 
+-- ---------- the canvas of each workspace is remembered (turn it off and on: everything is where you left it) ----------
+RI.layouts = {}     -- workspace id -> { z, ox, oy, wins = { { a = address, c = class, x, y, w, h }, ... } }
+
+local function clean(t)
+    return (tostring(t or ""):gsub("[|\n]", " "))
+end
+
+local function write_layouts()
+    local f = io.open(LAYOUT, "w")
+    if not f then return end
+    for ws, l in pairs(RI.layouts) do
+        f:write(string.format("ws|%s|%.5f|%.2f|%.2f\n", tostring(ws), l.z, l.ox, l.oy))
+        for _, e in ipairs(l.wins) do
+            f:write(string.format("win|%s|%s|%s|%.2f|%.2f|%.2f|%.2f\n", tostring(ws), clean(e.a), clean(e.c), e.x, e.y, e.w, e.h))
+        end
+    end
+    f:close()
+end
+
+local function read_layouts()
+    local f = io.open(LAYOUT, "r")
+    if not f then return end
+    for line in f:lines() do
+        local p = {}
+        for v in (line .. "|"):gmatch("([^|]*)|") do p[#p + 1] = v end
+        if p[1] == "ws" and #p >= 5 then
+            local ws = tonumber(p[2]) or p[2]
+            RI.layouts[ws] = { z = tonumber(p[3]) or 1, ox = tonumber(p[4]) or 0, oy = tonumber(p[5]) or 0, wins = {} }
+        elseif p[1] == "win" and #p >= 8 then
+            local l = RI.layouts[tonumber(p[2]) or p[2]]
+            if l then
+                l.wins[#l.wins + 1] = { a = p[3], c = p[4], x = tonumber(p[5]) or 0, y = tonumber(p[6]) or 0,
+                    w = tonumber(p[7]) or 400, h = tonumber(p[8]) or 300 }
+            end
+        end
+    end
+    f:close()
+end
+
+local function class_of(w)
+    return clean(w.class or w.initialClass or w.initial_class or "")
+end
+
+-- before turning off: where every window of this workspace is on the canvas
+local function remember()
+    if RI.ws == nil then return end
+    local l = { z = RI.z, ox = RI.ox, oy = RI.oy, wins = {} }
+    for _, w in ipairs(wins()) do
+        local s = canvas(w)
+        l.wins[#l.wins + 1] = { a = w.address, c = class_of(w), x = s.x, y = s.y, w = s.w, h = s.h }
+    end
+    if #l.wins > 0 then
+        RI.layouts[RI.ws] = l
+        write_layouts()
+    end
+end
+
+-- after turning on: the windows go back to their places (the same window, or else one of the same app)
+local function bring_back()
+    local l = RI.layouts[RI.ws]
+    if not l then return false end
+    RI.z, RI.ox, RI.oy = l.z, l.ox, l.oy
+    local used = {}
+    local function find(w)
+        for i, e in ipairs(l.wins) do
+            if not used[i] and e.a == w.address then used[i] = true; return e end
+        end
+        local c = class_of(w)
+        if c == "" then return nil end
+        for i, e in ipairs(l.wins) do
+            if not used[i] and e.c == c then used[i] = true; return e end
+        end
+        return nil
+    end
+    local list = wins()
+    local fresh = {}
+    for _, w in ipairs(list) do
+        local e = find(w)
+        if e then
+            RI.world[w.address] = { x = e.x, y = e.y, w = e.w, h = e.h }
+        else
+            fresh[#fresh + 1] = w
+        end
+    end
+    -- a window that was not there before keeps its place on the screen
+    for _, w in ipairs(fresh) do
+        local o = RI.world[w.address]
+        if o then RI.world[w.address] = { x = (o.x - RI.ox) / RI.z, y = (o.y - RI.oy) / RI.z, w = o.w / RI.z, h = o.h / RI.z } end
+    end
+    for _, w in ipairs(list) do
+        local s = RI.world[w.address]
+        if s then place(w, s, true) end
+    end
+    return true
+end
+
+pcall(read_layouts)
+
 function RI.set(on)
     on = on and true or false
     if on == RI.on then return end
@@ -391,18 +493,24 @@ function RI.set(on)
             end
         end
         RI.on = true
-        -- floating gives a window another size: put each one back where it was
-        for _, w in ipairs(wins()) do
-            local s = RI.world[w.address]
-            if s and RI.tiled[w.address] then place(w, s, true) end
+        -- this workspace had a canvas before: everything back where you left it
+        if not bring_back() then
+            -- floating gives a window another size: put each one back where it was
+            for _, w in ipairs(wins()) do
+                local s = RI.world[w.address]
+                if s and RI.tiled[w.address] then place(w, s, true) end
+            end
         end
         local a = hl.get_active_window()
         RI.last = a and a.address or nil
         bind_keys()
         daemon(true)
         notify("On: hold SUPER + ALT and move the mouse, CTRL + wheel to zoom")
+        -- SUPER + ALT + mouse cannot read the mouse yet: say what the one step is (nothing happening is the worst)
+        run(hl.dsp.exec_cmd(HOME .. "/.local/bin/rice-canvasd --tell"))
     else
         if RI.ws ~= nil then
+            pcall(remember)
             -- back to 100 % where everything started
             RI.z, RI.ox, RI.oy = 1.0, 0, 0
             for _, w in ipairs(wins()) do

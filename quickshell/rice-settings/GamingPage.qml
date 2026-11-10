@@ -40,7 +40,7 @@ Item {
     function setProfile(p) {
         profile = p
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-services\" profile \"$1\"", "_", p])
-        page.ctl.status = "Power mode: " + p
+        page.ctl.status = I18n.t("Power mode: ") + p
     }
 
     // ---------- your launchers and tools ----------
@@ -108,11 +108,11 @@ Item {
                 x: 116; anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - 116 - 100
                 spacing: 4
-                T { kind: "title"; text: page.fx.gaming ? "Game on" : "Gaming mode"; font.pixelSize: 24; font.weight: Font.Medium
+                T { kind: "title"; text: page.fx.gaming ? I18n.t("Game on") : I18n.t("Gaming mode"); font.pixelSize: 24; font.weight: Font.Medium
                     color: page.fx.gaming ? M3.inkPrimaryC : M3.ink }
                 T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 12
                     color: page.fx.gaming ? M3.inkPrimaryC : M3.inkDim
-                    text: page.fx.gaming ? "Effects you did not keep below are off, so games get the speed." : "One switch turns off animations, blur, transparency, shadows and gaps. Pick below what stays." }
+                    text: page.fx.gaming ? I18n.t("Effects you did not keep below are off, so games get the speed.") : I18n.t("One switch turns off animations, blur, transparency, shadows and gaps. Pick below what stays.") }
             }
             Tog { anchors.right: parent.right; anchors.rightMargin: 26; anchors.verticalCenter: parent.verticalCenter
                 checked: page.fx.gaming === true; onToggled: function(v) { page.setGaming(v) } }
@@ -130,7 +130,7 @@ Item {
                     text: I18n.t("CPU, GPU, RAM, ping, screenshot, record, mic, power mode, volume and brightness over your game") }
             }
             Btn { anchors.right: parent.right; anchors.rightMargin: 18; anchors.verticalCenter: parent.verticalCenter
-                text: "Open"; sym: "open_in_new"; icon: ""; primary: true
+                text: I18n.t("Open"); sym: "open_in_new"; icon: ""; primary: true
                 onClicked: Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-gamebar\" open"]) }
         }
 
@@ -141,18 +141,32 @@ Item {
         ToggleRow { label: I18n.t("Keep gaps"); desc: I18n.t("Space between windows and around the screen"); checked: page.fxOpt("keep_gaps"); onToggled: function(v) { page.setOpt("keep_gaps", v) } }
         ToggleRow { label: I18n.t("Do Not Disturb"); desc: I18n.t("No notification popups while gaming mode is on"); checked: page.fxOpt("dnd"); onToggled: function(v) { page.setOpt("dnd", v) } }
 
-        SectionTitle { text: "Performance"; sub: I18n.t("For laptops and older computers, also when you are not playing.") }
+        // ---------- the game bar (SUPER + G): transparency & blur ----------
+        SectionTitle { text: I18n.t("Game bar: transparency & blur"); sub: I18n.t("The panel over your game (Super + G). Light mode and gaming mode make it solid.") }
+        SliderRow {
+            label: I18n.t("Opacity"); desc: I18n.t("Lower is more see-through")
+            from: 0.2; to: 1; step: 0.02; decimals: 2
+            value: page.ctl && page.ctl.dst.gamebar && page.ctl.dst.gamebar.opacity !== undefined ? Number(page.ctl.dst.gamebar.opacity) : 0.9
+            onCommitted: function(x) { page.ctl.dset("gamebar", "opacity", x.toFixed(2)) }
+        }
+        ToggleRow {
+            label: I18n.t("Blur behind the game bar"); desc: I18n.t("Frosted glass; off: only the see-through color")
+            checked: !(page.ctl && page.ctl.dst.gamebar && page.ctl.dst.gamebar.blur === false)
+            onToggled: function(v) { page.ctl.dset("gamebar", "blur", v ? "on" : "off") }
+        }
+
+        SectionTitle { text: I18n.t("Performance"); sub: I18n.t("For laptops and older computers, also when you are not playing.") }
         ToggleRow { label: I18n.t("Light mode"); desc: I18n.t("The visualizer stops and widgets rest while a window covers them"); checked: page.fx.lite === true; onToggled: function(v) { page.setLite(v) } }
         SegRow {
             visible: page.havePP
             label: I18n.t("Power mode")
             desc: I18n.t("power-profiles-daemon: battery life or speed")
-            options: [{ label: "Saver", value: "power-saver" }, { label: "Balanced", value: "balanced" }, { label: "Performance", value: "performance" }]
+            options: [{ label: I18n.t("Saver"), value: "power-saver" }, { label: I18n.t("Balanced"), value: "balanced" }, { label: I18n.t("Performance"), value: "performance" }]
             current: page.profile
             onChosen: function(x) { page.setProfile(x) }
         }
 
-        SectionTitle { text: I18n.t("Your launchers"); sub: page.found.length ? "Open them from here." : "No game launcher found (Steam, Heroic, Lutris, Prism, Bottles ...)." }
+        SectionTitle { text: I18n.t("Your launchers"); sub: page.found.length ? I18n.t("Open them from here.") : I18n.t("No game launcher found (Steam, Heroic, Lutris, Prism, Bottles ...).") }
         Flow {
             width: parent.width
             spacing: 10
@@ -174,12 +188,12 @@ Item {
                     T { anchors.horizontalCenter: parent.horizontalCenter; y: 74; width: parent.width - 16; horizontalAlignment: Text.AlignHCenter
                         elide: Text.ElideRight; text: modelData.n; font.pixelSize: 13; font.weight: Font.Medium }
                     MouseArea { id: lm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                        onClicked: { modelData.e.execute(); page.ctl.status = "Opening " + modelData.n } }
+                        onClicked: { modelData.e.execute(); page.ctl.status = I18n.t("Opening ") + modelData.n } }
                 }
             }
         }
 
-        SectionTitle { text: "Tools"; sub: I18n.t("Gaming helpers on this computer.") }
+        SectionTitle { text: I18n.t("Tools"); sub: I18n.t("Gaming helpers on this computer.") }
         Flow {
             width: parent.width
             spacing: 8

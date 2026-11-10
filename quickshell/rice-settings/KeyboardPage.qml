@@ -30,7 +30,7 @@ Item {
         const lays = st.layouts.slice(), vs = lays.map(function(l, i) { return page.varOf(i) })
         const at = lays.indexOf(id)
         if (at >= 0) { vs[at] = variant; apply(lays, vs); return }
-        if (lays.length >= 4) { page.ctl.status = "Up to four layouts"; return }
+        if (lays.length >= 4) { page.ctl.status = I18n.t("Up to four layouts"); return }
         lays.push(id); vs.push(variant); apply(lays, vs)
     }
     function remove(i) { if (st.layouts.length <= 1) return; const l = st.layouts.slice(), v = l.map(function(x, k) { return page.varOf(k) }); l.splice(i, 1); v.splice(i, 1); apply(l, v) }
@@ -81,8 +81,8 @@ Item {
                 T { text: I18n.t("CURRENT LAYOUT"); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2; color: M3.alpha(M3.inkPrimaryC, 0.75) }
                 T { kind: "title"; width: parent.width; elide: Text.ElideRight; font.pixelSize: 24; font.weight: Font.Medium; color: M3.inkPrimaryC
                     text: page.st.layouts.length ? page.nameOf(page.st.layouts[0]) : "…" }
-                T { font.pixelSize: 12; color: M3.alpha(M3.inkPrimaryC, 0.85); text: page.varOf(0) ? "Variant: " + page.varOf(0) : "Default variant" }
-                T { font.pixelSize: 11; color: M3.alpha(M3.inkPrimaryC, 0.7); visible: page.st.active !== ""; text: (Quickshell.env("NIRI_SOCKET") ? "niri" : "Hyprland") + " reports: " + page.st.active }
+                T { font.pixelSize: 12; color: M3.alpha(M3.inkPrimaryC, 0.85); text: page.varOf(0) ? I18n.t("Variant: ") + page.varOf(0) : I18n.t("Default variant") }
+                T { font.pixelSize: 11; color: M3.alpha(M3.inkPrimaryC, 0.7); visible: page.st.active !== ""; text: (Quickshell.env("NIRI_SOCKET") ? "niri" : I18n.t("Hyprland")) + I18n.t(" reports: ") + page.st.active }
                 Btn { visible: page.st.layouts.length > 1; text: I18n.t("Next layout"); sym: "keyboard_tab"; icon: ""; primary: true; onClicked: page.run(["kbd-next"]) }
             }
         }
@@ -93,7 +93,7 @@ Item {
             model: page.st.layouts
             delegate: SettingRow {
                 label: page.nameOf(modelData)
-                desc: (index === 0 ? "Default" : "Layout " + (index + 1)) + (page.varOf(index) ? "  ·  " + page.varOf(index) : "")
+                desc: (index === 0 ? I18n.t("Default") : I18n.t("Layout ") + (index + 1)) + (page.varOf(index) ? "  ·  " + page.varOf(index) : "")
                 reserved: 200
                 Row {
                     anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
@@ -128,7 +128,7 @@ Item {
         }
 
         // ---------- every layout ----------
-        SectionTitle { text: I18n.t("All layouts"); sub: (page.st.all || []).length + " layouts on this computer. Click one for its variants, + adds it." }
+        SectionTitle { text: I18n.t("All layouts"); sub: (page.st.all || []).length + I18n.t(" layouts on this computer. Click one for its variants, + adds it.") }
         Field {
             width: parent.width
             placeholder: I18n.t("Search language or layout ...")
@@ -160,7 +160,7 @@ Item {
                         Column {
                             x: 62; anchors.verticalCenter: parent.verticalCenter
                             T { text: modelData.name; font.pixelSize: 13; font.weight: Font.Medium }
-                            T { text: (modelData.n || 0) + " variants  ·  " + modelData.id; font.pixelSize: 11; color: M3.inkDim }
+                            T { text: (modelData.n || 0) + I18n.t(" variants  ·  ") + modelData.id; font.pixelSize: 11; color: M3.inkDim }
                         }
                         MouseArea { id: rm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.showVariants(modelData.id) }
                         Row {
@@ -189,7 +189,7 @@ Item {
                                 T { id: vt; anchors.centerIn: parent; width: Math.min(implicitWidth, parent.width - 20); elide: Text.ElideRight
                                     text: modelData.name.replace(page.nameOf(lrow.ListView.view ? "" : ""), ""); font.pixelSize: 12; color: vm.containsMouse ? M3.inkPrimary : M3.ink }
                                 MouseArea { id: vm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                                    onClicked: { page.add(page.openId, modelData.id); page.ctl.status = "Added " + modelData.name } }
+                                    onClicked: { page.add(page.openId, modelData.id); page.ctl.status = I18n.t("Added ") + modelData.name } }
                             }
                         }
                     }

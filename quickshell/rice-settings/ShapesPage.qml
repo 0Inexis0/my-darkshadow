@@ -45,7 +45,7 @@ Item {
                 T { text: I18n.t("YOUR SHAPE"); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2; color: M3.alpha(M3.inkPrimaryC, 0.75) }
                 T { kind: "title"; text: page.nm(Prefs.accentShape); font.pixelSize: 28; font.weight: Font.Medium; color: M3.inkPrimaryC }
                 T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.alpha(M3.inkPrimaryC, 0.85)
-                    text: "Your avatar in the rail, the Home hero and the highlights of Settings take this shape. " + lib.kinds.length + " shapes, all drawn by the shell." }
+                    text: I18n.t("Your avatar in the rail, the Home hero and the highlights of Settings take this shape. ") + lib.kinds.length + I18n.t(" shapes, all drawn by the shell.") }
             }
         }
 
@@ -90,16 +90,16 @@ Item {
                             width: parent.width - 6; horizontalAlignment: Text.AlignHCenter; elide: Text.ElideRight
                             text: page.nm(modelData); font.pixelSize: 11; color: cell.on ? M3.inkSecondaryC : M3.inkDim }
                         MouseArea { id: cm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                            onClicked: { Prefs.setAccentShape(modelData); pop.restart(); page.ctl.status = "Your shape: " + page.nm(modelData) } }
+                            onClicked: { Prefs.setAccentShape(modelData); pop.restart(); page.ctl.status = I18n.t("Your shape: ") + page.nm(modelData) } }
                     }
                 }
             }
         }
 
         // ---------- corners ----------
-        SectionTitle { text: "Corners"; sub: I18n.t("How round cards, lists, menus, buttons and fields are in Settings.") }
+        SectionTitle { text: I18n.t("Corners"); sub: I18n.t("How round cards, lists, menus, buttons and fields are in Settings.") }
         SliderRow {
-            label: "Corners"
+            label: I18n.t("Corners")
             desc: I18n.t("1.0 is the Material 3 look; lower is squarer")
             from: 0.3; to: 1.5; step: 0.05; decimals: 2; unit: "×"
             value: Prefs.cornerScale
@@ -110,7 +110,7 @@ Item {
             spacing: 10
             Rectangle {
                 width: (parent.width - 10) * 0.4; height: 110; radius: M3.rL; color: M3.surfaceC
-                T { x: 16; y: 14; text: "Card"; font.pixelSize: 14; font.weight: Font.Medium }
+                T { x: 16; y: 14; text: I18n.t("Card"); font.pixelSize: 14; font.weight: Font.Medium }
                 T { kind: "reading"; x: 16; y: 36; width: parent.width - 32; wrapMode: Text.WordWrap; font.pixelSize: 11; color: M3.inkDim
                     text: I18n.t("Corners grow and shrink with the slider.") }
             }
@@ -124,8 +124,8 @@ Item {
                         T { x: 42; anchors.verticalCenter: parent.verticalCenter; text: I18n.t("Wi-Fi  ·  connected"); font.pixelSize: 13; color: M3.inkSecondaryC }
                     }
                     Row { spacing: 8
-                        Btn { text: "Button"; primary: true }
-                        Btn { text: "Tonal" } }
+                        Btn { text: I18n.t("Button"); primary: true }
+                        Btn { text: I18n.t("Tonal") } }
                 }
             }
         }

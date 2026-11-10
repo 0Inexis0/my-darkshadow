@@ -17,7 +17,7 @@ Item {
         n[key] = page.norm(value)
         rs = n
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-rofi\" set \"$1\" \"$2\"", "_", key, String(value)])
-        page.ctl.status = "Applied"
+        page.ctl.status = I18n.t("Applied")
         refresh.restart()
     }
 
@@ -108,7 +108,7 @@ Item {
                         Rectangle {
                             width: parent.width * 0.22; height: parent.height; radius: 7
                             color: rprev.withAlpha(rprev.th.alt, Math.min(1, rprev.alpha + 0.08))
-                            T { x: 8; anchors.verticalCenter: parent.verticalCenter; text: "Search"; font.pixelSize: 10; color: rprev.th.fg; opacity: 0.5 }
+                            T { x: 8; anchors.verticalCenter: parent.verticalCenter; text: I18n.t("Search"); font.pixelSize: 10; color: rprev.th.fg; opacity: 0.5 }
                         }
                         Repeater {
                             model: ["Firefox", "Kitty", "Files", "Spotify", "Discord"]
@@ -130,7 +130,7 @@ Item {
                             width: parent.width; height: 26; radius: Math.max(4, win.radius - 4)
                             color: rprev.withAlpha(rprev.th.alt, Math.min(1, rprev.alpha + 0.08))
                             T { kind: "icon"; x: 9; anchors.verticalCenter: parent.verticalCenter; text: "󰍉"; font.pixelSize: 11; color: rprev.th.fg; opacity: 0.6 }
-                            T { x: 26; anchors.verticalCenter: parent.verticalCenter; text: "Search"; font.pixelSize: 10; color: rprev.th.fg; opacity: 0.5 }
+                            T { x: 26; anchors.verticalCenter: parent.verticalCenter; text: I18n.t("Search"); font.pixelSize: 10; color: rprev.th.fg; opacity: 0.5 }
                         }
                         // list
                         Repeater {
@@ -164,13 +164,13 @@ Item {
                 }
                 T {
                     anchors.right: parent.right; anchors.rightMargin: 12; anchors.top: parent.top; anchors.topMargin: 8
-                    text: "Preview"
+                    text: I18n.t("Preview")
                     font.pixelSize: 10
                     color: M3.inkDim
                 }
             }
 
-            T { kind: "title"; text: "Theme"; font.pixelSize: 16; font.bold: true }
+            T { kind: "title"; text: I18n.t("Theme"); font.pixelSize: 16; font.bold: true }
 
             Flow {
                 width: parent.width
@@ -216,33 +216,33 @@ Item {
                 }
             }
 
-            T { kind: "title"; text: "Layout"; font.pixelSize: 16; font.bold: true; topPadding: 14 }
+            T { kind: "title"; text: I18n.t("Layout"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
 
             SegRow {
-                label: "Style"
+                label: I18n.t("Style")
                 desc: I18n.t("List, icon grid, full-width bar, or split (wallpaper on the left)")
                 options: [
-                    { label: "List", value: "list" },
-                    { label: "Grid", value: "grid" },
-                    { label: "Bar", value: "bar" },
-                    { label: "Split", value: "split" }
+                    { label: I18n.t("List"), value: "list" },
+                    { label: I18n.t("Grid"), value: "grid" },
+                    { label: I18n.t("Bar"), value: "bar" },
+                    { label: I18n.t("Split"), value: "split" }
                 ]
                 current: page.v("layout", "list")
                 onChosen: function(x) { page.setv("layout", x) }
             }
             SegRow {
-                label: "Position"
+                label: I18n.t("Position")
                 desc: I18n.t("Where the launcher opens on the screen")
                 options: [
-                    { label: "Top", value: "top" },
-                    { label: "Center", value: "center" },
-                    { label: "Bottom", value: "bottom" }
+                    { label: I18n.t("Top"), value: "top" },
+                    { label: I18n.t("Center"), value: "center" },
+                    { label: I18n.t("Bottom"), value: "bottom" }
                 ]
                 current: page.v("position", "center")
                 onChosen: function(x) { page.setv("position", x) }
             }
             SliderRow {
-                label: "Width"
+                label: I18n.t("Width")
                 desc: I18n.t("Not used by the bar style")
                 from: 360; to: 1200; step: 20
                 value: page.v("width", 620)
@@ -250,23 +250,23 @@ Item {
                 onCommitted: function(x) { page.setv("width", Math.round(x)) }
             }
             SliderRow {
-                label: "Rows"
+                label: I18n.t("Rows")
                 desc: I18n.t("How many results are visible")
                 from: 3; to: 14; step: 1
                 value: page.v("lines", 8)
                 onCommitted: function(x) { page.setv("lines", Math.round(x)) }
             }
 
-            T { kind: "title"; text: "Appearance"; font.pixelSize: 16; font.bold: true; topPadding: 14 }
+            T { kind: "title"; text: I18n.t("Appearance"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
 
             ToggleRow {
-                label: "Transparency"
+                label: I18n.t("Transparency")
                 desc: I18n.t("Translucent background; off makes it solid")
                 checked: page.v("transparency", true) === true
                 onToggled: function(x) { page.setv("transparency", x ? "on" : "off") }
             }
             SliderRow {
-                label: "Opacity"
+                label: I18n.t("Opacity")
                 desc: I18n.t("Lower is more transparent")
                 from: 0.3; to: 1.0; step: 0.02
                 decimals: 2
@@ -274,7 +274,7 @@ Item {
                 onCommitted: function(x) { page.setv("opacity", x.toFixed(2)) }
             }
             ToggleRow {
-                label: "Blur"
+                label: I18n.t("Blur")
                 desc: I18n.t("Blur whatever is behind the launcher (needs transparency)")
                 checked: page.v("blur", true) === true
                 onToggled: function(x) { page.setv("blur", x ? "on" : "off") }
@@ -288,7 +288,7 @@ Item {
                 onCommitted: function(x) { page.setv("radius", Math.round(x)) }
             }
 
-            T { kind: "title"; text: "Text"; font.pixelSize: 16; font.bold: true; topPadding: 14 }
+            T { kind: "title"; text: I18n.t("Text"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
 
             SliderRow {
                 label: I18n.t("Font size")
@@ -325,7 +325,7 @@ Item {
                     width: 150; height: 38; radius: 12
                     color: rMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.06)
                     Behavior on color { ColorAnimation { duration: 120 } }
-                    T { anchors.centerIn: parent; text: "Reset"; font.pixelSize: 13 }
+                    T { anchors.centerIn: parent; text: I18n.t("Reset"); font.pixelSize: 13 }
                     MouseArea {
                         id: rMouse
                         anchors.fill: parent
@@ -333,7 +333,7 @@ Item {
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
                             Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-rofi\" reset"])
-                            page.ctl.status = "Launcher reset"
+                            page.ctl.status = I18n.t("Launcher reset")
                             refresh.restart()
                         }
                     }

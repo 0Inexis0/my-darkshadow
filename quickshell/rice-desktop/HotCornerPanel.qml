@@ -89,13 +89,13 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 1
                 T { text: pnl.greeting() + ", " + Quickshell.env("USER"); font.pixelSize: 14; font.bold: true }
-                T { text: pnl.clock.toLocaleDateString(Qt.locale("en_US"), "dddd, d MMMM"); font.pixelSize: 11; color: "#9a9aa4" }
+                T { text: pnl.clock.toLocaleDateString(Tr.loc, "dddd, d MMMM"); font.pixelSize: 11; color: "#9a9aa4" }
             }
             T {
                 anchors.right: parent.right; anchors.rightMargin: 6
                 anchors.verticalCenter: parent.verticalCenter
                 kind: "number"
-                text: pnl.clock.toLocaleTimeString(Qt.locale("en_US"), "HH:mm")
+                text: pnl.clock.toLocaleTimeString(Tr.loc, "HH:mm")
                 font.pixelSize: 26
                 font.bold: true
                 color: pnl.acc
@@ -206,7 +206,7 @@ Item {
                 Item {
                     width: parent.width
                     height: 20
-                    T { text: "Color scheme"; font.pixelSize: 14; font.bold: true; anchors.verticalCenter: parent.verticalCenter }
+                    T { text: Tr.t("Color scheme"); font.pixelSize: 14; font.bold: true; anchors.verticalCenter: parent.verticalCenter }
                     T {
                         anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
                         text: {
@@ -264,7 +264,7 @@ Item {
                     visible: !(pnl.st.schemes && pnl.st.schemes.length > 0)
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
-                    text: "Loading color schemes..."
+                    text: Tr.t("Loading color schemes...")
                     font.pixelSize: 12
                     color: "#7a7a84"
                 }
@@ -281,8 +281,8 @@ Item {
                 anchors.left: ab.right; anchors.leftMargin: 12
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 2
-                T { text: "Keep Awake"; font.pixelSize: 15; font.bold: true }
-                T { text: pnl.st.awake ? "The screen will not lock or sleep" : "Normal power management"; font.pixelSize: 12; color: "#9a9aa4" }
+                T { text: Tr.t("Keep Awake"); font.pixelSize: 15; font.bold: true }
+                T { text: pnl.st.awake ? Tr.t("The screen will not lock or sleep") : Tr.t("Normal power management"); font.pixelSize: 12; color: "#9a9aa4" }
             }
             HcSwitch { anchors.right: parent.right; anchors.rightMargin: 14; anchors.verticalCenter: parent.verticalCenter; checked: pnl.st.awake === true; onToggled: pnl.act("awake", "", false) }
         }
@@ -305,22 +305,22 @@ Item {
                         anchors.left: rb.right; anchors.leftMargin: 12
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 2
-                        T { text: "Screen Recorder"; font.pixelSize: 15; font.bold: true }
-                        T { text: pnl.st.recording ? "Recording  " + pnl.elapsed() : "Ready"; font.pixelSize: 12; color: pnl.st.recording ? "#ff8080" : "#9a9aa4" }
+                        T { text: Tr.t("Screen Recorder"); font.pixelSize: 15; font.bold: true }
+                        T { text: pnl.st.recording ? Tr.t("Recording  ") + pnl.elapsed() : Tr.t("Ready"); font.pixelSize: 12; color: pnl.st.recording ? "#ff8080" : "#9a9aa4" }
                     }
                 }
                 Row {
                     spacing: 8
                     visible: pnl.st.recording !== true
-                    HcPill { primary: true; glyph: "󰊓"; label: "Fullscreen"; onClicked: pnl.act("record", "full", true) }
-                    HcPill { glyph: "󰆞"; label: "Region"; onClicked: pnl.act("record", "region", true) }
+                    HcPill { primary: true; glyph: "󰊓"; label: Tr.t("Fullscreen"); onClicked: pnl.act("record", "full", true) }
+                    HcPill { glyph: "󰆞"; label: Tr.t("Region"); onClicked: pnl.act("record", "region", true) }
                 }
-                HcPill { visible: pnl.st.recording === true; danger: true; glyph: "󰓛"; label: "Stop recording"; onClicked: pnl.act("record", "stop", false) }
+                HcPill { visible: pnl.st.recording === true; danger: true; glyph: "󰓛"; label: Tr.t("Stop recording"); onClicked: pnl.act("record", "stop", false) }
                 Item {
                     width: parent.width
                     height: 22
                     T { kind: "icon"; text: "󰉹"; font.pixelSize: 15; color: "#c8c8cc"; anchors.verticalCenter: parent.verticalCenter }
-                    T { x: 24; text: "Recordings"; font.pixelSize: 13; color: "#c8c8cc"; anchors.verticalCenter: parent.verticalCenter }
+                    T { x: 24; text: Tr.t("Recordings"); font.pixelSize: 13; color: "#c8c8cc"; anchors.verticalCenter: parent.verticalCenter }
                     T {
                         anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
                         kind: "icon"; text: "󰉋"; font.pixelSize: 15
@@ -332,7 +332,7 @@ Item {
                     visible: !(pnl.st.recordings && pnl.st.recordings.length > 0)
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
-                    text: "No recordings yet"
+                    text: Tr.t("No recordings yet")
                     font.pixelSize: 12
                     color: "#7a7a84"
                     bottomPadding: 4
@@ -371,8 +371,8 @@ Item {
                         anchors.left: sb.right; anchors.leftMargin: 12
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 2
-                        T { text: "Screenshot"; font.pixelSize: 15; font.bold: true }
-                        T { text: pnl.cfg.clipboard === false ? "Saved to Screenshots" : "Saved and copied to clipboard"; font.pixelSize: 12; color: "#9a9aa4" }
+                        T { text: Tr.t("Screenshot"); font.pixelSize: 15; font.bold: true }
+                        T { text: pnl.cfg.clipboard === false ? Tr.t("Saved to Screenshots") : Tr.t("Saved and copied to clipboard"); font.pixelSize: 12; color: "#9a9aa4" }
                     }
                     T {
                         anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
@@ -383,8 +383,8 @@ Item {
                 }
                 Row {
                     spacing: 8
-                    HcPill { primary: true; glyph: "󰊓"; label: "Screen"; onClicked: pnl.act("shot", "full", true) }
-                    HcPill { glyph: "󰆞"; label: "Region"; onClicked: pnl.act("shot", "region", true) }
+                    HcPill { primary: true; glyph: "󰊓"; label: Tr.t("Screen"); onClicked: pnl.act("shot", "full", true) }
+                    HcPill { glyph: "󰆞"; label: Tr.t("Region"); onClicked: pnl.act("shot", "region", true) }
                 }
             }
         }
@@ -413,7 +413,7 @@ Item {
                 Item {
                     width: parent.width
                     height: 20
-                    T { text: "Quick Toggles"; font.pixelSize: 14; font.bold: true; anchors.verticalCenter: parent.verticalCenter }
+                    T { text: Tr.t("Quick Toggles"); font.pixelSize: 14; font.bold: true; anchors.verticalCenter: parent.verticalCenter }
                     T { anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; text: pnl.hoverName; font.pixelSize: 12; color: "#9a9aa4" }
                 }
                 Flow {
@@ -467,8 +467,8 @@ Item {
                 anchors.right: ctl.left; anchors.rightMargin: 8
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 2
-                T { width: parent.width; text: mc.player ? (mc.player.trackTitle || "Unknown") : "Nothing playing"; font.pixelSize: 14; font.bold: true; elide: Text.ElideRight }
-                T { width: parent.width; text: mc.player ? (mc.player.trackArtist || "") : "Start some music"; font.pixelSize: 12; color: "#9a9aa4"; elide: Text.ElideRight }
+                T { width: parent.width; text: mc.player ? (mc.player.trackTitle || "Unknown") : Tr.t("Nothing playing"); font.pixelSize: 14; font.bold: true; elide: Text.ElideRight }
+                T { width: parent.width; text: mc.player ? (mc.player.trackArtist || "") : Tr.t("Start some music"); font.pixelSize: 12; color: "#9a9aa4"; elide: Text.ElideRight }
             }
             Row {
                 id: ctl
@@ -514,7 +514,7 @@ Item {
                 Item {
                     width: parent.width
                     height: 20
-                    T { text: "Wallpaper"; font.pixelSize: 14; font.bold: true; anchors.verticalCenter: parent.verticalCenter }
+                    T { text: Tr.t("Wallpaper"); font.pixelSize: 14; font.bold: true; anchors.verticalCenter: parent.verticalCenter }
                     Item {
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
@@ -523,7 +523,7 @@ Item {
                         Row {
                             id: allW
                             spacing: 4
-                            T { text: "All wallpapers"; font.pixelSize: 12; color: wm2.containsMouse ? "#F6F5F4" : "#9a9aa4" }
+                            T { text: Tr.t("All wallpapers"); font.pixelSize: 12; color: wm2.containsMouse ? "#F6F5F4" : "#9a9aa4" }
                             T { kind: "icon"; text: "󰇘"; font.pixelSize: 14; color: wm2.containsMouse ? "#F6F5F4" : "#9a9aa4" }
                         }
                         MouseArea { id: wm2; anchors.fill: parent; anchors.margins: -6; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: pnl.act("wallpaper", "", true) }
@@ -570,7 +570,7 @@ Item {
                     visible: !(pnl.st.walls && pnl.st.walls.length > 0)
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
-                    text: "No wallpapers found in ~/Pictures/Wallpapers"
+                    text: Tr.t("No wallpapers found in ~/Pictures/Wallpapers")
                     font.pixelSize: 12
                     color: "#7a7a84"
                 }
@@ -644,7 +644,7 @@ Item {
                         x: 40
                         anchors.verticalCenter: parent.verticalCenter
                         visible: search.text.length === 0
-                        text: "Search apps"
+                        text: Tr.t("Search apps")
                         font.pixelSize: 13
                         color: "#7a7a84"
                     }
@@ -659,7 +659,7 @@ Item {
                             anchors.centerIn: parent
                             spacing: 5
                             T { kind: "icon"; text: "󰀻"; font.pixelSize: 13; anchors.verticalCenter: parent.verticalCenter }
-                            T { text: "All"; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+                            T { text: Tr.t("All"); font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
                         }
                         MouseArea { id: am2; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: pnl.act("allapps", "", true) }
                     }
@@ -702,7 +702,7 @@ Item {
                     visible: ac.results.length === 0
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
-                    text: ac.query.length > 0 ? "No apps match “" + ac.query + "”" : "Pin apps in Settings > Hot corners"
+                    text: ac.query.length > 0 ? Tr.t("No apps match “") + ac.query + "”" : Tr.t("Pin apps in Settings > Hot corners")
                     font.pixelSize: 12
                     color: "#7a7a84"
                 }

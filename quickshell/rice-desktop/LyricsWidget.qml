@@ -103,7 +103,7 @@ Item {
             spacing: 8
             Blob { width: 16; height: 16; kind: "cookie"; color: ly.pal ? ly.pal.fg3 : "#8a8a8f"; anchors.verticalCenter: parent.verticalCenter
                 RotationAnimator on rotation { from: 0; to: 360; duration: 1600; loops: Animation.Infinite; running: ly.loading } }
-            T { text: !pl.has ? "Nothing playing" : (ly.loading ? "Looking for the lyrics..." : "No lyrics for this song"); font.pixelSize: 12; color: ly.pal ? ly.pal.fg3 : "#8a8a8f"; anchors.verticalCenter: parent.verticalCenter }
+            T { text: !pl.has ? Tr.t("Nothing playing") : (ly.loading ? Tr.t("Looking for the lyrics...") : Tr.t("No lyrics for this song")); font.pixelSize: 12; color: ly.pal ? ly.pal.fg3 : "#8a8a8f"; anchors.verticalCenter: parent.verticalCenter }
         }
     }
     // how far the song is

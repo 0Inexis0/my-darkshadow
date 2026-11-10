@@ -1,107 +1,214 @@
 import QtQuick
 
-// The DarkShadow's Shell logo, alive: a crescent moon that floats and sways, twinkling stars around it,
-// a soft glow and now and then a shooting star. No background, so it sits on anything.
+// The DarkShadow's Shell logo, alive: a black hole. A glowing disk of matter turns around a perfectly black
+// shadow, the light from behind it bends over the top (the halo), a thin photon ring shines at its edge, bits of
+// matter spiral in, and a few stars twinkle around. No background, so it sits on anything.
+// (The file keeps its old name, MoonLogo, so every place that shows the logo got the new one at once.)
 //   size     width and height
 //   running  play the animations (pause them when the logo is not on screen)
-//   intro    draw itself in when it appears (the moon turns in, then the stars pop up one by one)
+//   intro    draw itself in when it appears (the disk spins up, the shadow opens, then the stars pop up)
 Item {
     id: logo
     property real size: 140
     property bool running: true
     property bool intro: false
-    property color moonTop: "#ffffff"
-    property color moonBottom: "#b9bfd8"
-    property color glowColor: "#cfd6ff"
+    // the colors of the disk: white-hot inside, amber, then a violet edge
+    property color hot: "#fff6e4"
+    property color warm: "#ffb35c"
+    property color cool: "#a46bff"
+    property color glowColor: "#ff9d4d"
     // 0 → 1 while it draws in (stays 1 without intro)
     property real reveal: intro ? 0 : 1
 
     width: size
     height: size
 
+    // the disk's tilt: 1 is seen from above, small is seen edge-on
+    readonly property real tilt: 0.22
+    readonly property real shadowR: size * 0.16
+    readonly property real diskR: size * 0.47
+
     function replay() { reveal = 0; revealAnim.restart() }
     NumberAnimation {
         id: revealAnim
         target: logo; property: "reveal"; from: 0; to: 1
-        duration: 1500; easing.type: Easing.OutCubic
+        duration: 1700; easing.type: Easing.OutCubic
     }
-    // the intro plays when the logo first shows up
     Component.onCompleted: if (intro && visible) revealAnim.start()
     onVisibleChanged: if (intro && visible && reveal === 0 && !revealAnim.running) revealAnim.start()
 
-    // ---- soft glow behind the moon
+    // the disk turns: one turn every 9 s (it spins up during the intro)
+    property real spin: 0
+    NumberAnimation on spin {
+        running: logo.running; loops: Animation.Infinite
+        from: 0; to: 360; duration: 9000
+    }
+    readonly property real angle: spin + (1 - reveal) * -240
+
+    // ---- warm glow around everything
     Canvas {
-        id: glow
         anchors.centerIn: parent
-        width: logo.size * 1.25
+        width: logo.size * 1.3
         height: width
-        opacity: 0.85 * logo.reveal
+        opacity: 0.75 * logo.reveal
         onPaint: {
             const ctx = getContext("2d")
             ctx.reset()
             const g = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, width / 2)
             const c = logo.glowColor
-            g.addColorStop(0, Qt.rgba(c.r, c.g, c.b, 0.30))
-            g.addColorStop(0.45, Qt.rgba(c.r, c.g, c.b, 0.10))
+            g.addColorStop(0, Qt.rgba(c.r, c.g, c.b, 0.34))
+            g.addColorStop(0.35, Qt.rgba(c.r, c.g, c.b, 0.12))
             g.addColorStop(1, Qt.rgba(c.r, c.g, c.b, 0))
             ctx.fillStyle = g
             ctx.fillRect(0, 0, width, height)
         }
         SequentialAnimation on scale {
             running: logo.running; loops: Animation.Infinite
-            NumberAnimation { from: 0.92; to: 1.06; duration: 3800; easing.type: Easing.InOutSine }
-            NumberAnimation { from: 1.06; to: 0.92; duration: 3800; easing.type: Easing.InOutSine }
+            NumberAnimation { from: 0.94; to: 1.05; duration: 4200; easing.type: Easing.InOutSine }
+            NumberAnimation { from: 1.05; to: 0.94; duration: 4200; easing.type: Easing.InOutSine }
         }
     }
 
-    // ---- the moon (drawn once, then only moved)
-    Item {
-        id: moonBox
-        anchors.fill: parent
-        property real bob: 0
-        property real sway: 0
-        transform: [
-            Translate { y: moonBox.bob * logo.size },
-            Rotation {
-                origin.x: logo.size / 2; origin.y: logo.size / 2
-                angle: moonBox.sway - 50 * (1 - logo.reveal)
+    // ---- the disk, drawn once flat (seen from above) as a ring with streaks; the GPU turns and squashes it
+    component Disk: Canvas {
+        width: logo.diskR * 2
+        height: width
+        antialiasing: true
+        onPaint: {
+            const ctx = getContext("2d")
+            ctx.reset()
+            const c = width / 2, ri = logo.shadowR * 1.5, ro = c
+            const h = logo.hot, w = logo.warm, k = logo.cool
+            const g = ctx.createRadialGradient(c, c, ri, c, c, ro)
+            g.addColorStop(0, Qt.rgba(h.r, h.g, h.b, 0.95))
+            g.addColorStop(0.18, Qt.rgba(w.r, w.g, w.b, 0.85))
+            g.addColorStop(0.55, Qt.rgba(k.r, k.g, k.b, 0.45))
+            g.addColorStop(1, Qt.rgba(k.r, k.g, k.b, 0))
+            ctx.fillStyle = g
+            ctx.beginPath()
+            ctx.arc(c, c, ro, 0, Math.PI * 2)
+            ctx.arc(c, c, ri, 0, Math.PI * 2, true)
+            ctx.fill()
+            // streaks: brighter and darker bits of matter (always the same pattern, so the turning shows)
+            let seed = 7
+            function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647 }
+            ctx.lineCap = "round"
+            for (let i = 0; i < 46; i++) {
+                const r = ri + (ro - ri) * Math.pow(rnd(), 1.4) * 0.9
+                const a0 = rnd() * Math.PI * 2, len = 0.4 + rnd() * 1.3
+                const bright = rnd() > 0.35
+                const t = (r - ri) / (ro - ri)
+                ctx.strokeStyle = bright ? Qt.rgba(h.r, h.g, h.b, 0.55 * (1 - t)) : Qt.rgba(0, 0, 0, 0.35 * (1 - t))
+                ctx.lineWidth = Math.max(0.8, width * (0.006 + rnd() * 0.012))
+                ctx.beginPath()
+                ctx.arc(c, c, r, a0, a0 + len)
+                ctx.stroke()
             }
-        ]
-        scale: 0.55 + 0.45 * logo.reveal
-        opacity: Math.min(1, logo.reveal * 1.6)
+        }
+    }
+
+    // the disk seen tilted: it turns in its own plane, then it is squashed
+    component TiltedDisk: Item {
+        width: logo.size
+        height: logo.size
+        Disk {
+            anchors.centerIn: parent
+            rotation: logo.angle
+            scale: 0.35 + 0.65 * logo.reveal
+        }
+        transform: Scale { origin.x: logo.size / 2; origin.y: logo.size / 2; yScale: logo.tilt }
+    }
+
+    Item {
+        id: hole
+        anchors.fill: parent
+        opacity: Math.min(1, logo.reveal * 1.5)
+        // a slow, small float
+        property real bob: 0
         SequentialAnimation on bob {
             running: logo.running; loops: Animation.Infinite
-            NumberAnimation { from: -0.018; to: 0.018; duration: 3400; easing.type: Easing.InOutSine }
-            NumberAnimation { from: 0.018; to: -0.018; duration: 3400; easing.type: Easing.InOutSine }
+            NumberAnimation { from: -0.012; to: 0.012; duration: 3600; easing.type: Easing.InOutSine }
+            NumberAnimation { from: 0.012; to: -0.012; duration: 3600; easing.type: Easing.InOutSine }
         }
-        SequentialAnimation on sway {
-            running: logo.running; loops: Animation.Infinite
-            NumberAnimation { from: -5; to: 5; duration: 6200; easing.type: Easing.InOutSine }
-            NumberAnimation { from: 5; to: -5; duration: 6200; easing.type: Easing.InOutSine }
-        }
+        transform: [
+            Translate { y: hole.bob * logo.size },
+            Rotation { origin.x: logo.size / 2; origin.y: logo.size / 2; angle: -9 }
+        ]
+
+        // 1. the halo: light from the far side of the disk, bent over (and under) the shadow
         Canvas {
-            id: moon
             anchors.fill: parent
             antialiasing: true
             onPaint: {
                 const ctx = getContext("2d")
-                const s = width
                 ctx.reset()
-                const cx = s * 0.5, cy = s * 0.5, R = s * 0.30
-                const g = ctx.createLinearGradient(cx - R, cy - R, cx + R, cy + R)
-                g.addColorStop(0, logo.moonTop)
-                g.addColorStop(1, logo.moonBottom)
-                ctx.fillStyle = g
-                ctx.beginPath()
-                ctx.arc(cx, cy, R, 0, Math.PI * 2)
-                ctx.fill()
-                // cut the inside away: what stays is the crescent (transparent, no background)
-                ctx.globalCompositeOperation = "destination-out"
-                ctx.fillStyle = "#000000"
-                ctx.beginPath()
-                ctx.arc(cx + s * 0.124, cy - s * 0.074, s * 0.258, 0, Math.PI * 2)
-                ctx.fill()
-                ctx.globalCompositeOperation = "source-over"
+                const c = width / 2, r = logo.shadowR * 1.12
+                const h = logo.hot, w = logo.warm, k = logo.cool
+                for (let i = 0; i < 3; i++) {
+                    const rr = r + i * width * 0.022
+                    ctx.lineWidth = width * (0.034 - i * 0.008)
+                    const g = ctx.createLinearGradient(0, c - rr, 0, c + rr)
+                    g.addColorStop(0, Qt.rgba(h.r, h.g, h.b, 0.85 - i * 0.25))
+                    g.addColorStop(0.45, Qt.rgba(w.r, w.g, w.b, 0.45 - i * 0.12))
+                    g.addColorStop(1, Qt.rgba(k.r, k.g, k.b, 0.35 - i * 0.1))
+                    ctx.strokeStyle = g
+                    ctx.beginPath()
+                    ctx.arc(c, c, rr, 0, Math.PI * 2)
+                    ctx.stroke()
+                }
+            }
+            SequentialAnimation on opacity {
+                running: logo.running; loops: Animation.Infinite
+                NumberAnimation { from: 0.8; to: 1; duration: 2600; easing.type: Easing.InOutSine }
+                NumberAnimation { from: 1; to: 0.8; duration: 2600; easing.type: Easing.InOutSine }
+            }
+        }
+
+        // 2. the whole disk (its far half shows behind the shadow)
+        TiltedDisk { }
+
+        // 3. the shadow: nothing comes back from here; 4. the photon ring: its thin, bright edge
+        Rectangle {
+            anchors.centerIn: parent
+            width: logo.shadowR * 2 * (0.2 + 0.8 * logo.reveal)
+            height: width
+            radius: width / 2
+            color: "#000000"
+            border.width: Math.max(1, logo.size * 0.012)
+            border.color: Qt.rgba(logo.hot.r, logo.hot.g, logo.hot.b, 0.9)
+        }
+
+        // 5. the near half of the disk passes in front of the shadow
+        Item {
+            x: 0; y: logo.size / 2
+            width: logo.size; height: logo.size / 2
+            clip: true
+            TiltedDisk { y: -logo.size / 2 }
+        }
+
+        // 6. bits of matter spiralling in
+        Repeater {
+            model: 5
+            delegate: Item {
+                id: bit
+                width: logo.size; height: logo.size
+                property real t: index / 5
+                NumberAnimation on t {
+                    running: logo.running; loops: Animation.Infinite
+                    from: index / 5; to: index / 5 + 1; duration: 5200
+                }
+                readonly property real f: t % 1                      // 0 far out, 1 swallowed
+                readonly property real a: (f * 2.4 + index * 1.3) * Math.PI * 2
+                readonly property real r: logo.diskR * (0.95 - 0.72 * f)
+                Rectangle {
+                    width: Math.max(1.5, logo.size * 0.022 * (1 - bit.f * 0.6)); height: width; radius: width / 2
+                    color: logo.hot
+                    x: logo.size / 2 + Math.cos(bit.a) * bit.r - width / 2
+                    y: logo.size / 2 + Math.sin(bit.a) * bit.r * logo.tilt - height / 2
+                    // hidden behind the shadow while on the far side, close in
+                    visible: !(Math.sin(bit.a) < 0 && Math.hypot(Math.cos(bit.a) * bit.r, Math.sin(bit.a) * bit.r * logo.tilt) < logo.shadowR * 1.1)
+                    opacity: logo.reveal * Math.min(1, (1 - bit.f) * 3) * Math.min(1, bit.f * 6)
+                }
             }
         }
     }
@@ -111,11 +218,11 @@ Item {
         id: sp
         property real px: 0.5
         property real py: 0.5
-        property real r: 0.05            // radius, part of the logo size
+        property real r: 0.05
         property real peak: 1
         property int period: 2400
         property int delay: 0
-        property int order: 0            // when it pops up during the intro
+        property int order: 0
         property real tw: 1
         readonly property real popIn: Math.max(0, Math.min(1, (logo.reveal - 0.45 - order * 0.08) / 0.25))
         width: logo.size * r * 2
@@ -147,44 +254,9 @@ Item {
             NumberAnimation { from: 0.25; to: 1; duration: sp.period; easing.type: Easing.InOutSine }
         }
     }
-    Sparkle { px: 0.755; py: 0.455; r: 0.062; period: 1900; delay: 0; order: 0 }
-    Sparkle { px: 0.86; py: 0.64; r: 0.034; period: 2600; delay: 500; order: 1; peak: 0.8 }
-    Sparkle { px: 0.80; py: 0.16; r: 0.045; period: 2200; delay: 900; order: 2; peak: 0.85 }
-    Sparkle { px: 0.14; py: 0.22; r: 0.04; period: 2900; delay: 300; order: 3; peak: 0.7 }
-    Sparkle { px: 0.12; py: 0.74; r: 0.03; period: 2400; delay: 1200; order: 4; peak: 0.6 }
-    Sparkle { px: 0.46; py: 0.07; r: 0.026; period: 3100; delay: 700; order: 5; peak: 0.55 }
-    Sparkle { px: 0.56; py: 0.92; r: 0.028; period: 2700; delay: 1500; order: 6; peak: 0.55 }
-
-    // ---- a shooting star now and then
-    Item {
-        id: shoot
-        width: logo.size * 0.34
-        height: 2
-        rotation: 32
-        opacity: 0
-        visible: logo.running
-        Rectangle {
-            anchors.fill: parent
-            radius: 1
-            gradient: Gradient {
-                orientation: Gradient.Horizontal
-                GradientStop { position: 0; color: Qt.rgba(1, 1, 1, 0) }
-                GradientStop { position: 1; color: Qt.rgba(1, 1, 1, 0.9) }
-            }
-        }
-        SequentialAnimation {
-            running: logo.running && logo.reveal > 0.99; loops: Animation.Infinite
-            PauseAnimation { duration: 5200 }
-            ScriptAction { script: { shoot.x = -logo.size * 0.08; shoot.y = -logo.size * 0.04 } }
-            ParallelAnimation {
-                NumberAnimation { target: shoot; property: "x"; to: logo.size * 0.42; duration: 900; easing.type: Easing.InQuad }
-                NumberAnimation { target: shoot; property: "y"; to: logo.size * 0.27; duration: 900; easing.type: Easing.InQuad }
-                SequentialAnimation {
-                    NumberAnimation { target: shoot; property: "opacity"; to: 0.9; duration: 250 }
-                    NumberAnimation { target: shoot; property: "opacity"; to: 0; duration: 650 }
-                }
-            }
-            PauseAnimation { duration: 3600 }
-        }
-    }
+    Sparkle { px: 0.86; py: 0.16; r: 0.05; period: 1900; delay: 0; order: 0 }
+    Sparkle { px: 0.12; py: 0.20; r: 0.036; period: 2600; delay: 500; order: 1; peak: 0.8 }
+    Sparkle { px: 0.90; py: 0.82; r: 0.03; period: 2200; delay: 900; order: 2; peak: 0.7 }
+    Sparkle { px: 0.10; py: 0.84; r: 0.034; period: 2900; delay: 300; order: 3; peak: 0.7 }
+    Sparkle { px: 0.52; py: 0.05; r: 0.024; period: 3100; delay: 700; order: 4; peak: 0.55 }
 }

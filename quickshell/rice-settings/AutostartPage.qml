@@ -29,7 +29,7 @@ Column {
     T { text: I18n.t("Custom commands"); font.pixelSize: 15; font.bold: true }
     T {
         width: parent.width
-        text: "Programs started when " + (Quickshell.env("NIRI_SOCKET") ? "niri" : "Hyprland") + " starts. They run at your next login."
+        text: I18n.t("Programs started when ") + (Quickshell.env("NIRI_SOCKET") ? "niri" : I18n.t("Hyprland")) + I18n.t(" starts. They run at your next login.")
         color: M3.inkDim
         font.pixelSize: 12
         wrapMode: Text.WordWrap
@@ -81,10 +81,10 @@ Column {
         }
         Pill {
             id: addPill
-            label: "Add"
+            label: I18n.t("Add")
             onClicked: {
                 const c = cmdField.text.trim()
-                if (c.length === 0) { page.ctl.status = "Type a command first"; return }
+                if (c.length === 0) { page.ctl.status = I18n.t("Type a command first"); return }
                 page.ctl.hrun(["autostart-add", c], "Added: " + c)
                 cmdField.text = ""
                 refresh.restart()

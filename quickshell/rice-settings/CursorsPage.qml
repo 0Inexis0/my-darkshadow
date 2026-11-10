@@ -18,7 +18,7 @@ Item {
     function apply(id) {
         const n = Object.assign({}, cs); n.theme = id; cs = n
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-cursor\" set \"$1\"", "_", id])
-        page.ctl.status = "Cursor: " + id.replace(/-/g, " ")
+        page.ctl.status = I18n.t("Cursor: ") + id.replace(/-/g, " ")
     }
 
     // cursor packs from GitHub (rice-cursor get)
@@ -27,14 +27,14 @@ Item {
         getting = id
         getProc.command = ["bash", "-c", "\"$HOME/.local/bin/rice-cursor\" get \"$1\" 2>&1", "_", id]
         getProc.running = true
-        page.ctl.status = "Downloading cursors..."
+        page.ctl.status = I18n.t("Downloading cursors...")
     }
     Process {
         id: getProc
         stdout: StdioCollector {
             onStreamFinished: {
                 const l = text.trim().split("\n").pop()
-                page.ctl.status = l.indexOf("could not") >= 0 ? l : "Installed: " + l.replace(/^[^:]*: /, "")
+                page.ctl.status = l.indexOf("could not") >= 0 ? l : I18n.t("Installed: ") + l.replace(/^[^:]*: /, "")
                 page.getting = ""
                 stateProc.running = true
             }
@@ -66,13 +66,13 @@ Item {
             }
             T {
                 x: 22; y: 18
-                text: "Preview"
+                text: I18n.t("Preview")
                 font.pixelSize: 12
                 color: M3.inkDim
             }
             T {
                 x: 22; y: 36
-                text: page.current ? page.current.name : "No cursor themes found"
+                text: page.current ? page.current.name : I18n.t("No cursor themes found")
                 font.pixelSize: 20
                 font.bold: true
             }
@@ -105,7 +105,7 @@ Item {
             }
         }
 
-        SectionTitle { text: "Size" }
+        SectionTitle { text: I18n.t("Size") }
         SliderRow {
             label: I18n.t("Cursor size")
             desc: I18n.t("24 is normal, bigger is easier to see")
@@ -114,11 +114,11 @@ Item {
             onCommitted: function(x) {
                 const n = Object.assign({}, page.cs); n.size = Math.round(x); page.cs = n
                 Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-cursor\" size \"$1\"", "_", String(Math.round(x))])
-                page.ctl.status = "Cursor size " + Math.round(x)
+                page.ctl.status = I18n.t("Cursor size ") + Math.round(x)
             }
         }
 
-        SectionTitle { text: "Themes"; sub: "Hover to preview, click to use. Applies to " + (Quickshell.env("NIRI_SOCKET") ? "niri" : "Hyprland") + " and all apps." }
+        SectionTitle { text: I18n.t("Themes"); sub: I18n.t("Hover to preview, click to use. Applies to ") + (Quickshell.env("NIRI_SOCKET") ? "niri" : I18n.t("Hyprland")) + I18n.t(" and all apps.") }
         Flow {
             id: grid
             width: parent.width
@@ -147,7 +147,7 @@ Item {
                         y: 10
                         width: hb.implicitWidth + 12; height: 18; radius: 9
                         color: Qt.rgba(1, 1, 1, 0.08)
-                        T { id: hb; anchors.centerIn: parent; text: "Hyprcursor"; font.pixelSize: 9; color: "#cfcfcf" }
+                        T { id: hb; anchors.centerIn: parent; text: I18n.t("Hyprcursor"); font.pixelSize: 9; color: "#cfcfcf" }
                     }
                     T {
                         x: 14
@@ -192,13 +192,13 @@ Item {
                     x: 18; anchors.verticalCenter: parent.verticalCenter
                     spacing: 3
                     T { text: modelData.name; font.pixelSize: 14; font.bold: true }
-                    T { kind: "reading"; text: modelData.installed ? "Installed  ·  " + modelData.themes.join(", ") : modelData.desc; font.pixelSize: 11; color: M3.inkDim }
+                    T { kind: "reading"; text: modelData.installed ? I18n.t("Installed  ·  ") + modelData.themes.join(", ") : modelData.desc; font.pixelSize: 11; color: M3.inkDim }
                 }
                 Btn {
                     anchors.right: parent.right; anchors.rightMargin: 14
                     anchors.verticalCenter: parent.verticalCenter
                     primary: !modelData.installed && page.getting === ""
-                    text: page.getting === modelData.id ? "Downloading..." : (modelData.installed ? "Update" : "Install")
+                    text: page.getting === modelData.id ? I18n.t("Downloading...") : (modelData.installed ? I18n.t("Update") : I18n.t("Install"))
                     onClicked: if (page.getting === "") page.getPack(modelData.id)
                 }
             }

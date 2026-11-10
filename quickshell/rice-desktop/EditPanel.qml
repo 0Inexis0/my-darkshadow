@@ -179,8 +179,8 @@ Item {
                 }
                 Column {
                     x: 56; anchors.verticalCenter: parent.verticalCenter
-                    Text { text: "Edit mode"; color: pal.fg; font.family: Fonts.title; font.pixelSize: 17; font.weight: Font.DemiBold }
-                    Text { text: "Customize your desktop"; color: pal.dim; font.family: Fonts.main; font.pixelSize: 11 }
+                    Text { text: Tr.t("Edit mode"); color: pal.fg; font.family: Fonts.title; font.pixelSize: 17; font.weight: Font.DemiBold }
+                    Text { text: Tr.t("Customize your desktop"); color: pal.dim; font.family: Fonts.main; font.pixelSize: 11 }
                 }
                 Rectangle {
                     anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
@@ -196,7 +196,7 @@ Item {
             Section {
                 order: 1
                 open: true
-                icon: "widgets"; glyph: ""; title: "Widgets"
+                icon: "widgets"; glyph: ""; title: Tr.t("Widgets")
                 sub: {
                     if (!ep.root) return ""
                     let n = 0; const c = ep.root.catalog
@@ -243,16 +243,16 @@ Item {
             // ---- quick settings
             Section {
                 order: 2
-                icon: "tune"; glyph: ""; title: "Quick settings"
-                sub: (Look.blur ? "Glass" : "Solid") + "  ·  " + (Look.theme === "google" ? "Google" : (Look.theme === "outline" ? "Outline" : "DarkShadow")) + "  ·  " + Fonts.main
-                Switchy { label: "Glass (blur behind widgets)"; on: Look.blur; onFlipped: function(v) { Look.blur = v; ep.ds(["widgets-blur", v ? "on" : "off"]) } }
-                Switchy { label: "Colors follow the wallpaper"; on: Look.adapt; onFlipped: function(v) { Look.adapt = v; ep.ds(["widgets-adapt", v ? "on" : "off"]) } }
-                Switchy { label: "Hide while windows are open"; on: ep.root ? ep.root.cfg.autoHide === true : false; onFlipped: function(v) { ep.ds(["auto-hide", v ? "on" : "off"]) } }
-                Switchy { label: "Snap to a grid"; on: ep.ed ? ep.ed.grid : false; onFlipped: function(v) { ep.ed.grid = v } }
-                Label { text: "Widget style" }
+                icon: "tune"; glyph: ""; title: Tr.t("Quick settings")
+                sub: (Look.blur ? Tr.t("Glass") : Tr.t("Solid")) + "  ·  " + (Look.theme === "google" ? Tr.t("Google") : (Look.theme === "outline" ? Tr.t("Outline") : Tr.t("DarkShadow"))) + "  ·  " + Fonts.main
+                Switchy { label: Tr.t("Glass (blur behind widgets)"); on: Look.blur; onFlipped: function(v) { Look.blur = v; ep.ds(["widgets-blur", v ? "on" : "off"]) } }
+                Switchy { label: Tr.t("Colors follow the wallpaper"); on: Look.adapt; onFlipped: function(v) { Look.adapt = v; ep.ds(["widgets-adapt", v ? "on" : "off"]) } }
+                Switchy { label: Tr.t("Hide while windows are open"); on: ep.root ? ep.root.cfg.autoHide === true : false; onFlipped: function(v) { ep.ds(["auto-hide", v ? "on" : "off"]) } }
+                Switchy { label: Tr.t("Snap to a grid"); on: ep.ed ? ep.ed.grid : false; onFlipped: function(v) { ep.ed.grid = v } }
+                Label { text: Tr.t("Widget style") }
                 Pills { options: [["shadow", "DarkShadow"], ["google", "Google"], ["outline", "Outline"]]; current: Look.theme
                     onChosen: function(v) { Look.theme = v; ep.ds(["widgets-theme", v]) } }
-                Label { text: "Font" }
+                Label { text: Tr.t("Font") }
                 Pills { options: [["Google Sans Flex", "Google Sans"], ["Rubik", "Rubik"], ["Inter", "Inter"], ["Outfit", "Outfit"]]; current: Fonts.main
                     onChosen: function(v) { ep.fontSet(v) } }
                 Item { width: 1; height: 2 }
@@ -260,7 +260,7 @@ Item {
                     width: rt.implicitWidth + 30; height: 34; radius: 17; color: rm.containsMouse ? pal.cardHi : Qt.rgba(1, 1, 1, 0.05)
                     Row { id: rt; anchors.centerIn: parent; spacing: 6
                         MIcon { size: 15; name: "restart_alt"; glyph: ""; color: pal.fg; anchors.verticalCenter: parent.verticalCenter }
-                        Text { text: "Reset all positions"; color: pal.fg; font.family: Fonts.main; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter } }
+                        Text { text: Tr.t("Reset all positions"); color: pal.fg; font.family: Fonts.main; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter } }
                     MouseArea { id: rm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { ep.root.resetAll(); ep.ed.sel = "" } }
                 }
             }
@@ -268,15 +268,15 @@ Item {
             // ---- the bar
             Section {
                 order: 3
-                icon: "toolbar"; glyph: ""; title: "Bar"
-                sub: (ep.bc.style || "islands") + "  ·  " + (ep.bc.position || "top") + (ep.bc.autohide === true ? "  ·  auto-hide" : "")
-                Label { text: "Style" }
+                icon: "toolbar"; glyph: ""; title: Tr.t("Bar")
+                sub: (ep.bc.style || "islands") + "  ·  " + (ep.bc.position || "top") + (ep.bc.autohide === true ? Tr.t("  ·  auto-hide") : "")
+                Label { text: Tr.t("Style") }
                 Pills { options: [["flat", "Flat"], ["island", "Island"], ["islands", "Islands"], ["pills", "Pills"], ["notch", "Notch"], ["dynamic", "Dynamic"]]; current: ep.bc.style === "google" ? "dynamic" : (ep.bc.style || "islands")
                     onChosen: function(v) { ep.setBar("style", v) } }
-                Label { text: "Edge" }
-                Pills { options: [["top", "Top"], ["bottom", "Bottom"]]; current: ep.bc.position || "top"; onChosen: function(v) { ep.setBar("position", v) } }
-                Switchy { label: "Auto-hide"; on: ep.bc.autohide === true; onFlipped: function(v) { ep.setBar("autohide", v) } }
-                Label { text: "Modules (click to show or hide)" }
+                Label { text: Tr.t("Edge") }
+                Pills { options: [["top", "Top"], ["bottom", "Bottom"], ["left", "Left"], ["right", "Right"]]; current: ep.bc.position || "top"; onChosen: function(v) { ep.setBar("position", v) } }
+                Switchy { label: Tr.t("Auto-hide"); on: ep.bc.autohide === true; onFlipped: function(v) { ep.setBar("autohide", v) } }
+                Label { text: Tr.t("Modules (click to show or hide)") }
                 Grid {
                     width: parent.width
                     columns: 2
@@ -305,40 +305,40 @@ Item {
                 order: 4
                 readonly property var w: ep.root && ep.root.wins["visualizer"] ? ep.root.wins["visualizer"] : null
                 readonly property bool vOn: ep.root ? ep.root.enabledOf("visualizer") : false
-                icon: "graphic_eq"; glyph: ""; title: "Visualizer"
-                sub: vOn ? ((viz.w && viz.w.flp ? "Top" : "Bottom") + "  ·  " + (ep.root ? ep.root.styleOf("visualizer") : "")) : "Off"
-                Switchy { label: "On"; on: viz.vOn; onFlipped: function(v) { if (v) ep.root.addWidget("visualizer"); else ep.root.removeWidget("visualizer") } }
-                Label { text: "Screen edge" }
+                icon: "graphic_eq"; glyph: ""; title: Tr.t("Visualizer")
+                sub: vOn ? ((viz.w && viz.w.flp ? Tr.t("Top") : Tr.t("Bottom")) + "  ·  " + (ep.root ? ep.root.styleOf("visualizer") : "")) : Tr.t("Off")
+                Switchy { label: Tr.t("On"); on: viz.vOn; onFlipped: function(v) { if (v) ep.root.addWidget("visualizer"); else ep.root.removeWidget("visualizer") } }
+                Label { text: Tr.t("Screen edge") }
                 Pills { options: [["bottom", "Bottom"], ["top", "Top"]]; current: viz.w && viz.w.flp ? "top" : "bottom"
                     onChosen: function(v) {
                         const w = viz.w; if (!w) return
                         w.flp = v === "top"; w.py = v === "top" ? 0 : ep.root.sh - w.fh
                         ep.root.wset("visualizer", "flip", w.flp ? "on" : "off"); ep.root.saveGeom("visualizer")
                     } }
-                Label { text: "Style" }
+                Label { text: Tr.t("Style") }
                 Pills { options: [["bars", "Bars"], ["mirror", "Mirror"], ["wave", "Wave"], ["dots", "Dots"]]; current: ep.root ? ep.root.styleOf("visualizer") : "bars"
                     onChosen: function(v) { ep.root.setStyle("visualizer", v) } }
-                Label { text: "Colors" }
+                Label { text: Tr.t("Colors") }
                 Pills { options: [["accent", "Theme"], ["gradient", "Gradient"], ["rainbow", "Rainbow"], ["mono", "Mono"]]
                     current: ep.root ? ep.root.optOf("visualizer", "color", "accent") : "accent"
                     onChosen: function(v) { ep.root.setOpt("visualizer", "color", v) } }
-                Label { text: "Bars" }
+                Label { text: Tr.t("Bars") }
                 Pills { options: [["16", "16"], ["32", "32"], ["48", "48"], ["64", "64"]]
                     current: ep.root ? String(ep.root.optOf("visualizer", "bars", 64)) : "64"
                     onChosen: function(v) { ep.root.setOpt("visualizer", "bars", v) } }
-                Label { text: "How high they go" }
+                Label { text: Tr.t("How high they go") }
                 Pills { options: [["1", "Calm"], ["1.4", "Normal"], ["2", "High"], ["2.8", "Max"]]
                     current: ep.root ? String(ep.root.optOf("visualizer", "gain", "1.4")) : "1.4"
                     onChosen: function(v) { ep.root.setOpt("visualizer", "gain", v) } }
-                Label { text: "Bar ends" }
+                Label { text: Tr.t("Bar ends") }
                 Pills { options: [["square", "Square"], ["rounded", "Rounded"], ["pill", "Pill"]]
                     current: ep.root ? ep.root.optOf("visualizer", "shape", "square") : "square"
                     onChosen: function(v) { ep.root.setOpt("visualizer", "shape", v) } }
-                Label { text: "Space between" }
+                Label { text: Tr.t("Space between") }
                 Pills { options: [["thin", "Thin"], ["normal", "Normal"], ["wide", "Wide"]]
                     current: ep.root ? ep.root.optOf("visualizer", "gap", "normal") : "normal"
                     onChosen: function(v) { ep.root.setOpt("visualizer", "gap", v) } }
-                Label { text: "Height  ·  " + Math.round(viz.w ? viz.w.fh : 180) + " px" }
+                Label { text: Tr.t("Height  ·  ") + Math.round(viz.w ? viz.w.fh : 180) + Tr.t(" px") }
                 Item {
                     width: parent.width; height: 30
                     readonly property real f: viz.w ? Math.max(0, Math.min(1, (viz.w.fh - 60) / 640)) : 0.2

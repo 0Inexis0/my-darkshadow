@@ -17,7 +17,7 @@ Item {
     Timer { interval: 10000; running: pnl.open; repeat: true; triggeredOnStart: true; onTriggered: pnl.clock = new Date() }
     function greeting() {
         const h = clock.getHours()
-        return h < 5 ? "Good night" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"
+        return h < 5 ? I18n.t("Good night") : h < 12 ? I18n.t("Good morning") : h < 18 ? I18n.t("Good afternoon") : I18n.t("Good evening")
     }
 
     readonly property real rad: cfg.radius !== undefined ? cfg.radius : 26
@@ -88,13 +88,13 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 1
                 T { text: pnl.greeting() + ", " + Quickshell.env("USER"); font.pixelSize: 14; font.bold: true }
-                T { text: pnl.clock.toLocaleDateString(Qt.locale("en_US"), "dddd, d MMMM"); font.pixelSize: 11; color: "#9a9aa4" }
+                T { text: pnl.clock.toLocaleDateString(I18n.loc, "dddd, d MMMM"); font.pixelSize: 11; color: "#9a9aa4" }
             }
             T {
                 anchors.right: parent.right; anchors.rightMargin: 6
                 anchors.verticalCenter: parent.verticalCenter
                 kind: "number"
-                text: pnl.clock.toLocaleTimeString(Qt.locale("en_US"), "HH:mm")
+                text: pnl.clock.toLocaleTimeString(I18n.loc, "HH:mm")
                 font.pixelSize: 26
                 font.bold: true
                 color: pnl.acc
@@ -281,7 +281,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 2
                 T { text: I18n.t("Keep Awake"); font.pixelSize: 15; font.bold: true }
-                T { text: pnl.st.awake ? "The screen will not lock or sleep" : "Normal power management"; font.pixelSize: 12; color: "#9a9aa4" }
+                T { text: pnl.st.awake ? I18n.t("The screen will not lock or sleep") : I18n.t("Normal power management"); font.pixelSize: 12; color: "#9a9aa4" }
             }
             HcSwitch { anchors.right: parent.right; anchors.rightMargin: 14; anchors.verticalCenter: parent.verticalCenter; checked: pnl.st.awake === true; onToggled: pnl.act("awake", "", false) }
         }
@@ -305,21 +305,21 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 2
                         T { text: I18n.t("Screen Recorder"); font.pixelSize: 15; font.bold: true }
-                        T { text: pnl.st.recording ? "Recording  " + pnl.elapsed() : "Ready"; font.pixelSize: 12; color: pnl.st.recording ? "#ff8080" : "#9a9aa4" }
+                        T { text: pnl.st.recording ? I18n.t("Recording  ") + pnl.elapsed() : I18n.t("Ready"); font.pixelSize: 12; color: pnl.st.recording ? "#ff8080" : "#9a9aa4" }
                     }
                 }
                 Row {
                     spacing: 8
                     visible: pnl.st.recording !== true
-                    HcPill { primary: true; glyph: "󰊓"; label: "Fullscreen"; onClicked: pnl.act("record", "full", true) }
-                    HcPill { glyph: "󰆞"; label: "Region"; onClicked: pnl.act("record", "region", true) }
+                    HcPill { primary: true; glyph: "󰊓"; label: I18n.t("Fullscreen"); onClicked: pnl.act("record", "full", true) }
+                    HcPill { glyph: "󰆞"; label: I18n.t("Region"); onClicked: pnl.act("record", "region", true) }
                 }
                 HcPill { visible: pnl.st.recording === true; danger: true; glyph: "󰓛"; label: I18n.t("Stop recording"); onClicked: pnl.act("record", "stop", false) }
                 Item {
                     width: parent.width
                     height: 22
                     T { kind: "icon"; text: "󰉹"; font.pixelSize: 15; color: "#c8c8cc"; anchors.verticalCenter: parent.verticalCenter }
-                    T { x: 24; text: "Recordings"; font.pixelSize: 13; color: "#c8c8cc"; anchors.verticalCenter: parent.verticalCenter }
+                    T { x: 24; text: I18n.t("Recordings"); font.pixelSize: 13; color: "#c8c8cc"; anchors.verticalCenter: parent.verticalCenter }
                     T {
                         anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
                         kind: "icon"; text: "󰉋"; font.pixelSize: 15
@@ -370,8 +370,8 @@ Item {
                         anchors.left: sb.right; anchors.leftMargin: 12
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 2
-                        T { text: "Screenshot"; font.pixelSize: 15; font.bold: true }
-                        T { text: pnl.cfg.clipboard === false ? "Saved to Screenshots" : "Saved and copied to clipboard"; font.pixelSize: 12; color: "#9a9aa4" }
+                        T { text: I18n.t("Screenshot"); font.pixelSize: 15; font.bold: true }
+                        T { text: pnl.cfg.clipboard === false ? I18n.t("Saved to Screenshots") : I18n.t("Saved and copied to clipboard"); font.pixelSize: 12; color: "#9a9aa4" }
                     }
                     T {
                         anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
@@ -382,8 +382,8 @@ Item {
                 }
                 Row {
                     spacing: 8
-                    HcPill { primary: true; glyph: "󰊓"; label: "Screen"; onClicked: pnl.act("shot", "full", true) }
-                    HcPill { glyph: "󰆞"; label: "Region"; onClicked: pnl.act("shot", "region", true) }
+                    HcPill { primary: true; glyph: "󰊓"; label: I18n.t("Screen"); onClicked: pnl.act("shot", "full", true) }
+                    HcPill { glyph: "󰆞"; label: I18n.t("Region"); onClicked: pnl.act("shot", "region", true) }
                 }
             }
         }
@@ -466,8 +466,8 @@ Item {
                 anchors.right: ctl.left; anchors.rightMargin: 8
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 2
-                T { width: parent.width; text: mc.player ? (mc.player.trackTitle || "Unknown") : "Nothing playing"; font.pixelSize: 14; font.bold: true; elide: Text.ElideRight }
-                T { width: parent.width; text: mc.player ? (mc.player.trackArtist || "") : "Start some music"; font.pixelSize: 12; color: "#9a9aa4"; elide: Text.ElideRight }
+                T { width: parent.width; text: mc.player ? (mc.player.trackTitle || "Unknown") : I18n.t("Nothing playing"); font.pixelSize: 14; font.bold: true; elide: Text.ElideRight }
+                T { width: parent.width; text: mc.player ? (mc.player.trackArtist || "") : I18n.t("Start some music"); font.pixelSize: 12; color: "#9a9aa4"; elide: Text.ElideRight }
             }
             Row {
                 id: ctl
@@ -513,7 +513,7 @@ Item {
                 Item {
                     width: parent.width
                     height: 20
-                    T { text: "Wallpaper"; font.pixelSize: 14; font.bold: true; anchors.verticalCenter: parent.verticalCenter }
+                    T { text: I18n.t("Wallpaper"); font.pixelSize: 14; font.bold: true; anchors.verticalCenter: parent.verticalCenter }
                     Item {
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
@@ -658,7 +658,7 @@ Item {
                             anchors.centerIn: parent
                             spacing: 5
                             T { kind: "icon"; text: "󰀻"; font.pixelSize: 13; anchors.verticalCenter: parent.verticalCenter }
-                            T { text: "All"; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+                            T { text: I18n.t("All"); font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
                         }
                         MouseArea { id: am2; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: pnl.act("allapps", "", true) }
                     }
@@ -701,7 +701,7 @@ Item {
                     visible: ac.results.length === 0
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
-                    text: ac.query.length > 0 ? "No apps match “" + ac.query + "”" : "Pin apps in Settings > Hot corners"
+                    text: ac.query.length > 0 ? I18n.t("No apps match “") + ac.query + "”" : I18n.t("Pin apps in Settings > Hot corners")
                     font.pixelSize: 12
                     color: "#7a7a84"
                 }

@@ -21,7 +21,7 @@ Item {
         anchors.fill: parent
 
         // ---------- switches ----------
-        SectionTitle { text: "Selection"; sub: I18n.t("Switches, check boxes, radio buttons and filter chips.") }
+        SectionTitle { text: I18n.t("Selection"); sub: I18n.t("Switches, check boxes, radio buttons and filter chips.") }
         ToggleRow { label: I18n.t("Icons in switches"); desc: I18n.t("A check when on, a cross when off"); checked: Prefs.switchIcons; onToggled: function(v) { Prefs.setSwitchIcons(v) } }
         Rectangle {
             width: parent.width; height: 76; radius: M3.rL; color: M3.stageTop
@@ -104,11 +104,11 @@ Item {
             desc: I18n.t("How round things are, and your shape: Appearance > Shapes")
             reserved: 140
             Btn { anchors.right: parent.right; anchors.rightMargin: 14; anchors.verticalCenter: parent.verticalCenter
-                text: "Shapes"; sym: "interests"; icon: ""; onClicked: page.ctl.page = 24 }
+                text: I18n.t("Shapes"); sym: "interests"; icon: ""; onClicked: page.ctl.page = 24 }
         }
 
         // ---------- sliders ----------
-        SectionTitle { text: "Sliders"; sub: I18n.t("Thicker tracks are easier to grab on a touchpad.") }
+        SectionTitle { text: I18n.t("Sliders"); sub: I18n.t("Thicker tracks are easier to grab on a touchpad.") }
         SliderRow {
             label: I18n.t("Slider thickness")
             desc: "×" + Number(Prefs.sliderThick).toFixed(1)
@@ -137,7 +137,7 @@ Item {
         }
         ToggleRow { label: I18n.t("Wavy progress"); desc: I18n.t("Off: flat lines everywhere"); checked: Prefs.wavy; onToggled: function(v) { Prefs.setWavy(v) } }
         SliderRow {
-            label: "Thickness"
+            label: I18n.t("Thickness")
             desc: I18n.t("Of progress lines and rings")
             from: 2; to: 8; step: 1; unit: " px"
             value: Prefs.progressThick
@@ -162,18 +162,18 @@ Item {
         }
 
         // ---------- buttons ----------
-        SectionTitle { text: "Buttons"; sub: I18n.t("Filled for the main action, tonal for the rest, outlined and text for quiet ones.") }
+        SectionTitle { text: I18n.t("Buttons"); sub: I18n.t("Filled for the main action, tonal for the rest, outlined and text for quiet ones.") }
         Rectangle {
             width: parent.width; height: bflow.implicitHeight + 36; radius: M3.rL; color: M3.surfaceC
             Flow {
                 id: bflow
                 x: 18; y: 18; width: parent.width - 36
                 spacing: 10
-                Btn { text: "Filled"; variant: "filled"; sym: "add"; icon: "+" }
-                Btn { text: "Tonal"; sym: "tune"; icon: "" }
-                Btn { text: "Outlined"; variant: "outlined" }
-                Btn { text: "Text"; variant: "text" }
-                Btn { text: "Delete"; variant: "danger"; sym: "delete"; icon: "" }
+                Btn { text: I18n.t("Filled"); variant: "filled"; sym: "add"; icon: "+" }
+                Btn { text: I18n.t("Tonal"); sym: "tune"; icon: "" }
+                Btn { text: I18n.t("Outlined"); variant: "outlined" }
+                Btn { text: I18n.t("Text"); variant: "text" }
+                Btn { text: I18n.t("Delete"); variant: "danger"; sym: "delete"; icon: "" }
                 // icon buttons and a floating action button
                 Repeater {
                     model: [{ s: "favorite", g: "" }, { s: "share", g: "" }]

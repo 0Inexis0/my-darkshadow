@@ -9,6 +9,7 @@ import QtQuick
 // Overview: the time, a calendar, the weather and how busy the computer is.
 // It reads anything only while it is open.
 PanelWindow {
+    screen: Mon.screen
     id: cc
     property var nf: null                      // Notifs.qml
     property bool open: false
@@ -337,10 +338,10 @@ PanelWindow {
                     spacing: 8
                     opacity: cc.stg(3); transform: Translate { y: (1 - cc.stg(3)) * 22 }
                     Wide { width: (parent.width - 8) / 2; icon: "wifi"; glyph: ""; on: cc.sv.wifi === true
-                        label: cc.sv.wifi === true ? (cc.ssid !== "" ? cc.ssid : "Wi-Fi") : "Wi-Fi"; sub: cc.sv.wifi === true ? (cc.ssid !== "" ? "Connected" : "On") : "Off"
+                        label: cc.sv.wifi === true ? (cc.ssid !== "" ? cc.ssid : Tr.t("Wi-Fi")) : Tr.t("Wi-Fi"); sub: cc.sv.wifi === true ? (cc.ssid !== "" ? Tr.t("Connected") : Tr.t("On")) : Tr.t("Off")
                         onClicked: cc.flip("wifi"); onMore: { cc.open = false; cc.bin(["rice-wifi", String(Math.round(cc.width - 300))]) } }
                     Wide { width: (parent.width - 8) / 2; icon: "bluetooth"; glyph: ""; on: cc.sv.bluetooth === true
-                        label: cc.btDev !== "" ? cc.btDev : "Bluetooth"; sub: cc.sv.bluetooth === true ? (cc.btDev !== "" ? "Connected" : "On") : "Off"
+                        label: cc.btDev !== "" ? cc.btDev : Tr.t("Bluetooth"); sub: cc.sv.bluetooth === true ? (cc.btDev !== "" ? Tr.t("Connected") : Tr.t("On")) : Tr.t("Off")
                         onClicked: cc.flip("bluetooth"); onMore: { cc.open = false; cc.bin(["rice-bluetooth", String(Math.round(cc.width - 300))]) } }
                 }
                 Grid {
@@ -349,24 +350,24 @@ PanelWindow {
                     spacing: 8
                     opacity: cc.stg(4); transform: Translate { y: (1 - cc.stg(4)) * 22 }
                     readonly property real tw: (width - 3 * 8) / 4
-                    Tile { width: parent.tw; icon: "do_not_disturb_on"; glyph: ""; label: "Do Not Disturb"; on: cc.nf && cc.nf.shellMode ? cc.nf.dnd : cc.sv.dnd === true; onClicked: cc.flip("dnd") }
-                    Tile { width: parent.tw; icon: "nightlight"; glyph: ""; label: "Night light"; on: cc.sv.nightlight === true; onClicked: cc.flip("nightlight") }
-                    Tile { width: parent.tw; icon: "coffee"; glyph: ""; label: "Keep awake"; on: cc.sv.awake === true; onClicked: cc.flip("awake") }
-                    Tile { width: parent.tw; icon: "airplanemode_active"; glyph: ""; label: "Airplane"; on: cc.sv.airplane === true; onClicked: cc.flip("airplane") }
-                    Tile { width: parent.tw; icon: "screenshot_region"; glyph: ""; label: "Screenshot"; onClicked: { cc.open = false; shotT.restart() } }
-                    Tile { width: parent.tw; icon: cc.recording ? "stop_circle" : "radio_button_checked"; glyph: ""; label: cc.recording ? cc.recTime : "Record"; on: cc.recording
+                    Tile { width: parent.tw; icon: "do_not_disturb_on"; glyph: ""; label: Tr.t("Do Not Disturb"); on: cc.nf && cc.nf.shellMode ? cc.nf.dnd : cc.sv.dnd === true; onClicked: cc.flip("dnd") }
+                    Tile { width: parent.tw; icon: "nightlight"; glyph: ""; label: Tr.t("Night light"); on: cc.sv.nightlight === true; onClicked: cc.flip("nightlight") }
+                    Tile { width: parent.tw; icon: "coffee"; glyph: ""; label: Tr.t("Keep awake"); on: cc.sv.awake === true; onClicked: cc.flip("awake") }
+                    Tile { width: parent.tw; icon: "airplanemode_active"; glyph: ""; label: Tr.t("Airplane"); on: cc.sv.airplane === true; onClicked: cc.flip("airplane") }
+                    Tile { width: parent.tw; icon: "screenshot_region"; glyph: ""; label: Tr.t("Screenshot"); onClicked: { cc.open = false; shotT.restart() } }
+                    Tile { width: parent.tw; icon: cc.recording ? "stop_circle" : "radio_button_checked"; glyph: ""; label: cc.recording ? cc.recTime : Tr.t("Record"); on: cc.recording
                         onClicked: { cc.bin(["rice-hotcorner", "record", cc.recording ? "stop" : "full"]); if (cc.recording) cc.recording = false; else cc.open = false } }
                     Tile { width: parent.tw
                         readonly property string p: cc.sv.profile || ""
                         visible: cc.sv.have && cc.sv.have.powerprofilesctl === true
                         icon: p === "performance" ? "bolt" : (p === "power-saver" ? "eco" : "balance"); glyph: ""
-                        label: p === "performance" ? "High" : (p === "power-saver" ? "Low" : "Medium"); on: p === "performance"
+                        label: p === "performance" ? Tr.t("High") : (p === "power-saver" ? Tr.t("Low") : Tr.t("Medium")); on: p === "performance"
                         onClicked: {
                             const next = p === "power-saver" ? "balanced" : (p === "balanced" ? "performance" : "power-saver")
                             const n = Object.assign({}, cc.sv); n.profile = next; cc.sv = n
                             cc.bin(["rice-services", "profile", next]); again.restart()
                         } }
-                    Tile { width: parent.tw; icon: "terminal"; glyph: ""; label: "Terminal"; onClicked: { cc.open = false; cc.sh("kitty >/dev/null 2>&1 &") } }
+                    Tile { width: parent.tw; icon: "terminal"; glyph: ""; label: Tr.t("Terminal"); onClicked: { cc.open = false; cc.sh("kitty >/dev/null 2>&1 &") } }
                 }
                 Timer { id: shotT; interval: 450; onTriggered: cc.bin(["rice-hotcorner", "shot", "region"]) }
 
@@ -442,8 +443,8 @@ PanelWindow {
                     Row {
                         anchors.verticalCenter: parent.verticalCenter; spacing: 8
                         MIcon { size: 17; name: "notifications"; glyph: ""; color: cc.fg; anchors.verticalCenter: parent.verticalCenter }
-                        Text { text: "Notifications"; color: cc.fg; font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.DemiBold; anchors.verticalCenter: parent.verticalCenter }
-                        Text { visible: cc.nf && cc.nf.shellMode; text: cc.nf ? cc.nf.count + (cc.nf.count === 1 ? " notification" : " notifications") : ""; color: cc.dim; font.family: Fonts.main; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+                        Text { text: Tr.t("Notifications"); color: cc.fg; font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.DemiBold; anchors.verticalCenter: parent.verticalCenter }
+                        Text { visible: cc.nf && cc.nf.shellMode; text: cc.nf ? cc.nf.count + (cc.nf.count === 1 ? Tr.t(" notification") : Tr.t(" notifications")) : ""; color: cc.dim; font.family: Fonts.main; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
                     }
                     Rectangle {
                         visible: cc.nf && cc.nf.shellMode && cc.nf.count > 0
@@ -451,7 +452,7 @@ PanelWindow {
                         width: ca.implicitWidth + 26; height: 32; radius: 16; color: cam.containsMouse ? cc.cardHi : cc.card
                         Row { id: ca; anchors.centerIn: parent; spacing: 5
                             MIcon { size: 15; name: "clear_all"; glyph: ""; color: cc.fg; anchors.verticalCenter: parent.verticalCenter }
-                            Text { text: "Clear all"; color: cc.fg; font.family: Fonts.main; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter } }
+                            Text { text: Tr.t("Clear all"); color: cc.fg; font.family: Fonts.main; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter } }
                         MouseArea { id: cam; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: cc.nf.clearAll() }
                     }
                 }
@@ -468,7 +469,7 @@ PanelWindow {
                     spacing: 8
                     Blob { anchors.horizontalCenter: parent.horizontalCenter; width: 64; height: 64; kind: Look.shape; color: cc.card
                         MIcon { anchors.centerIn: parent; size: 24; name: "notifications_paused"; glyph: ""; color: cc.dim } }
-                    Text { anchors.horizontalCenter: parent.horizontalCenter; text: "All caught up"; color: cc.dim; font.family: Fonts.main; font.pixelSize: 13 }
+                    Text { anchors.horizontalCenter: parent.horizontalCenter; text: Tr.t("All caught up"); color: cc.dim; font.family: Fonts.main; font.pixelSize: 13 }
                 }
                 // swaync shows them
                 Rectangle {
@@ -476,13 +477,13 @@ PanelWindow {
                     width: parent.width; height: 120; radius: 22; color: cc.card
                     Column {
                         x: 16; anchors.verticalCenter: parent.verticalCenter; width: parent.width - 32; spacing: 8
-                        Text { width: parent.width; wrapMode: Text.WordWrap; text: "swaync shows your notifications now. Let the shell show them here, with its own pop-ups?"; color: cc.dim; font.family: Fonts.main; font.pixelSize: 12 }
+                        Text { width: parent.width; wrapMode: Text.WordWrap; text: Tr.t("swaync shows your notifications now. Let the shell show them here, with its own pop-ups?"); color: cc.dim; font.family: Fonts.main; font.pixelSize: 12 }
                         Row { spacing: 8
                             Rectangle { width: u1.implicitWidth + 28; height: 36; radius: 18; color: cc.primary
-                                Text { id: u1; anchors.centerIn: parent; text: "Use the shell"; color: cc.inkPrimary; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium }
+                                Text { id: u1; anchors.centerIn: parent; text: Tr.t("Use the shell"); color: cc.inkPrimary; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium }
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: cc.bin(["rice-cc", "engine", "shell"]) } }
                             Rectangle { width: u2.implicitWidth + 28; height: 36; radius: 18; color: cc.cardHi
-                                Text { id: u2; anchors.centerIn: parent; text: "Open swaync"; color: cc.fg; font.family: Fonts.main; font.pixelSize: 13 }
+                                Text { id: u2; anchors.centerIn: parent; text: Tr.t("Open swaync"); color: cc.fg; font.family: Fonts.main; font.pixelSize: 13 }
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { cc.open = false; cc.sh("swaync-client -t -sw") } } } }
                     }
                 }
@@ -506,7 +507,7 @@ PanelWindow {
                     Column {
                         x: 22; anchors.verticalCenter: parent.verticalCenter
                         Text { text: cc.now.toLocaleTimeString(Qt.locale(), Locale.ShortFormat); color: cc.inkContainer; font.family: Fonts.numbers; font.pixelSize: 48; font.weight: Font.Medium }
-                        Text { text: cc.now.toLocaleDateString(Qt.locale("en_US"), "dddd, d MMMM"); color: cc.inkContainer; opacity: 0.85; font.family: Fonts.main; font.pixelSize: 14 }
+                        Text { text: cc.now.toLocaleDateString(Tr.loc, "dddd, d MMMM"); color: cc.inkContainer; opacity: 0.85; font.family: Fonts.main; font.pixelSize: 14 }
                     }
                 }
                 // a calendar of this month
@@ -518,13 +519,13 @@ PanelWindow {
                         readonly property var first: new Date(cc.now.getFullYear(), cc.now.getMonth(), 1)
                         readonly property int lead: (first.getDay() + 6) % 7
                         readonly property int days: new Date(cc.now.getFullYear(), cc.now.getMonth() + 1, 0).getDate()
-                        Text { text: cc.now.toLocaleDateString(Qt.locale("en_US"), "MMMM yyyy"); color: cc.fg; font.family: Fonts.title; font.pixelSize: 15; font.weight: Font.DemiBold }
+                        Text { text: cc.now.toLocaleDateString(Tr.loc, "MMMM yyyy"); color: cc.fg; font.family: Fonts.title; font.pixelSize: 15; font.weight: Font.DemiBold }
                         Grid {
                             columns: 7
                             width: parent.width
                             readonly property real cw: width / 7
                             Repeater {
-                                model: ["M", "T", "W", "T", "F", "S", "S"]
+                                model: Tr.week(true)
                                 delegate: Text { width: parent.cw; horizontalAlignment: Text.AlignHCenter; text: modelData; color: cc.dim; font.family: Fonts.main; font.pixelSize: 11 }
                             }
                             Repeater {

@@ -71,7 +71,7 @@ Item {
             T {
                 width: parent.width
                 elide: Text.ElideRight
-                text: bt.status === "Full" ? "Fully charged"
+                text: bt.status === "Full" ? Tr.t("Fully charged")
                     : (bt.charging ? "Charging" : "On battery") + (bt.main && bt.main.left ? "  ·  " + bt.main.left + (bt.charging ? " to full" : " left") : "")
                 font.pixelSize: 12; color: bt.cFg3
             }
@@ -107,9 +107,9 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: bt.width - 36 - 60
                 spacing: 2
-                T { text: "Plugged in"; font.pixelSize: 17; font.bold: true; color: bt.cFg }
-                T { width: parent.width; elide: Text.ElideRight; text: "No battery in this computer"; font.pixelSize: 11; color: bt.cFg3 }
-                T { width: parent.width; elide: Text.ElideRight; text: "Wireless mice and headsets show here"; font.pixelSize: 10; color: bt.cFg4 }
+                T { text: Tr.t("Plugged in"); font.pixelSize: 17; font.bold: true; color: bt.cFg }
+                T { width: parent.width; elide: Text.ElideRight; text: Tr.t("No battery in this computer"); font.pixelSize: 11; color: bt.cFg3 }
+                T { width: parent.width; elide: Text.ElideRight; text: Tr.t("Wireless mice and headsets show here"); font.pixelSize: 10; color: bt.cFg4 }
             }
         }
         Repeater {

@@ -6,6 +6,7 @@ import QtQuick
 // The Bluetooth menu: click the Bluetooth icon on the bar and it drops down under it. Your devices (battery too), connect,
 // disconnect, pair a new one, forget one, Bluetooth on / off. It talks to BlueZ through bluetoothctl.
 PanelWindow {
+    screen: Mon.screen
     id: wm
     property bool open: false
     property real t: 0
@@ -156,7 +157,7 @@ PanelWindow {
             id: head
             x: 18; y: 14; width: parent.width - 36; height: 36
             MIcon { id: hi; name: wm.radio ? "bluetooth" : "bluetooth_disabled"; glyph: String.fromCodePoint(wm.radio ? 0xF00AF : 0xF00B2); size: 22; color: wm.fg; anchors.verticalCenter: parent.verticalCenter }
-            Text { x: 34; anchors.verticalCenter: parent.verticalCenter; text: "Bluetooth"; color: wm.fg; font.family: Fonts.main; font.pixelSize: 15; font.weight: Font.DemiBold }
+            Text { x: 34; anchors.verticalCenter: parent.verticalCenter; text: Tr.t("Bluetooth"); color: wm.fg; font.family: Fonts.main; font.pixelSize: 15; font.weight: Font.DemiBold }
             Item {   // rescan
                 id: rs
                 anchors.right: sw.left; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
@@ -182,7 +183,7 @@ PanelWindow {
         Text {
             visible: wm.nets.length === 0
             x: 18; y: head.height + 24; width: parent.width - 36; horizontalAlignment: Text.AlignHCenter
-            text: wm.radio ? (wm.scanning ? "Looking for devices…" : "No devices. Press refresh to search") : "Bluetooth is off"
+            text: wm.radio ? (wm.scanning ? Tr.t("Looking for devices…") : Tr.t("No devices. Press refresh to search")) : Tr.t("Bluetooth is off")
             color: wm.dim; font.family: Fonts.main; font.pixelSize: 13
         }
         // while it looks: your shape (Settings > Appearance > Shapes) turns and breathes
@@ -248,7 +249,7 @@ PanelWindow {
                             width: parent.width - 50 - 60
                             Text { width: parent.width; elide: Text.ElideRight; text: modelData.name; color: wm.fg; font.family: Fonts.main; font.pixelSize: 14; font.weight: modelData.active ? Font.DemiBold : Font.Normal }
                             Text { visible: text !== ""; width: parent.width; elide: Text.ElideRight; color: modelData.active ? Look.accent : wm.dim; font.family: Fonts.main; font.pixelSize: 11
-                                text: row.busy ? "Connecting…" : (modelData.active ? "Connected" + (isNaN(modelData.batt) ? "" : "  \u00b7  " + modelData.batt + "%") : (modelData.paired ? "Paired" : "Tap to pair")) }
+                                text: row.busy ? Tr.t("Connecting…") : (modelData.active ? Tr.t("Connected") + (isNaN(modelData.batt) ? "" : Tr.t("  \u00b7  ") + modelData.batt + "%") : (modelData.paired ? Tr.t("Paired") : Tr.t("Tap to pair"))) }
                         }
                         Row {
                             anchors.right: parent.right; anchors.rightMargin: 14; y: (wm.rowH - height) / 2; spacing: 10

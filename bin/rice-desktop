@@ -15,6 +15,12 @@ case "$1" in
     [ -x "$HOME/.local/bin/rice-ws-watch" ] && setsid -f "$HOME/.local/bin/rice-ws-watch" >/dev/null 2>&1
     [ -x "$HOME/.local/bin/rice-update" ] && setsid -f "$HOME/.local/bin/rice-update" watch >/dev/null 2>&1
     [ -x "$HOME/.local/bin/rice-welcome" ] && "$HOME/.local/bin/rice-welcome" start >/dev/null 2>&1 &
+    # Hyprland: the blur rules of the dock, widgets, game bar and desktop menu (written again when one is missing)
+    if [ "$1" = start ] && [ -n "$HYPRLAND_INSTANCE_SIGNATURE" ] && ! grep -q rice-deskmenu "$HOME/.config/hypr/rice-dock.lua" 2>/dev/null; then
+      "$HOME/.local/bin/desktop-set" dock-blur >/dev/null 2>&1 &
+    fi
+    # the live wallpaper again, and the wallpaper slideshow when it is on
+    [ "$1" = start ] && [ -x "$HOME/.local/bin/rice-walls" ] && "$HOME/.local/bin/rice-walls" start >/dev/null 2>&1 &
     running && exit 0
     [ -f "$dir/shell.qml" ] || { echo "missing $dir/shell.qml" >&2; exit 1; }
     "$HOME/.local/bin/desktop-set" state >/dev/null 2>&1

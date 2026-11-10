@@ -16,11 +16,14 @@ import QtQuick
 // style is dynamic now. Auto-hide: it slides away and a thin strip at the edge brings it back.
 // What sits where comes from ~/.config/rice/bar.json (layout: left, center, right).
 PanelWindow {
+    screen: Mon.screen
     id: bar
 
     // ---------- settings (~/.config/rice/bar.json) ----------
     property var bc: ({})
-    readonly property bool on: bc.enabled !== false     // no bar.json yet (a fresh install or an update) = on
+    // no bar.json yet (a fresh install or an update) = on. On the left or right edge VBar.qml is the bar instead
+    readonly property bool vertical: bc.position === "left" || bc.position === "right"
+    readonly property bool on: bc.enabled !== false && !vertical
     // the style asked for; the bar fades and settles into it (sty follows want once the old look has gone)
     readonly property string want: bc.style === "google" || bc.style === undefined ? "dynamic"
         : (bc.style === "flat" || bc.style === "islands" || bc.style === "pills" || bc.style === "notch" || bc.style === "island" ? bc.style : "dynamic")
@@ -80,6 +83,21 @@ PanelWindow {
         alpine: 0xF300, pop: 0xF32A, kali: 0xF327, centos: 0xF304, raspbian: 0xF315, elementary: 0xF309, zorin: 0xF32F,
         nobara: 0xF380, artix: 0xF31F, slackware: 0xF318, garuda: 0xF303, mageia: 0xF310, rocky: 0xF32B
     })
+    // the colors of the black hole / moon on the launcher button (Settings > DarkShadow bar > Launcher icon)
+    readonly property string logoColor: bc.logo_color || "default"
+    function logoPal(kind) {
+        const k = logoColor, a = gp.primary
+        const P = {
+            white: ["#ffffff", "#e6e6ec", "#9c9caa", "#d8d8e0"],
+            gold: ["#fff6e4", "#ffb35c", "#ff8a3d", "#ff9d4d"],
+            ice: ["#f2fbff", "#7fd0ff", "#3d6bff", "#6fbfff"],
+            rose: ["#fff0f5", "#ff7aa8", "#8a3dff", "#ff6f9f"],
+            violet: ["#f6f0ff", "#b58cff", "#5b3dff", "#9d7bff"]
+        }
+        if (k === "theme") return [Qt.lighter(a, 1.5), a, Qt.darker(a, 1.7), a]
+        if (P[k]) return P[k]
+        return kind === "moon" ? ["#ffffff", "#b9bfd8", "#8a93d8", "#cfd6ff"] : ["#fff6e4", "#ffb35c", "#a46bff", "#ff9d4d"]
+    }
     property var osIds: []
     Process {
         id: osProc
@@ -89,7 +107,7 @@ PanelWindow {
     }
     readonly property string logoKey: {
         const k = bc.logo || "auto"
-        if (k === "apps") return "apps"
+        if (k === "apps" || k === "blackhole" || k === "moon") return k
         if (k !== "auto") return logos[k] !== undefined ? k : "apps"
         for (let i = 0; i < osIds.length; i++) {
             const id = osIds[i] === "opensuse-tumbleweed" || osIds[i] === "opensuse-leap" ? "opensuse" : osIds[i]
@@ -122,7 +140,7 @@ PanelWindow {
     color: "transparent"
     anchors { top: !atBottom; bottom: atBottom; left: true; right: true }
     // room below for the recording island; windows only keep away from the bar itself
-    implicitHeight: barH + gap * 2 + 340      // room for the island's cards (the bar lets the pointer through there)
+    implicitHeight: barH + gap * 2 + 460      // room for the island's cards (the bar lets the pointer through there)
     exclusionMode: hideOn ? ExclusionMode.Ignore : ExclusionMode.Normal
     exclusiveZone: hideOn ? 0 : barH + gap * 2
     // only the bar (and the recording island) take the pointer; auto-hide: only a thin strip at the edge
@@ -287,22 +305,31 @@ PanelWindow {
         case "notifications": return mNotify
         case "power": return mPower
         case "island": return mIsland
+        case "visualizer": return mViz
         }
         return null
     }
 
     Component { id: mLauncher
-        Item { property bool shown: true; width: bar.goo ? bar.barH - 8 : 22; height: bar.barH
+        Item { property bool shown: true; width: bar.goo ? bar.barH - 8 : (bar.logoKey === "blackhole" ? 34 : bar.logoKey === "moon" ? 28 : 22); height: bar.barH
             // Google: the launcher sits in a circle of your key color
             Rectangle { visible: bar.goo; anchors.centerIn: parent; width: parent.width; height: width; radius: lm.pressed ? width * 0.3 : width / 2
-                color: gp.primary; scale: lm.containsMouse ? 1.06 : 1
+                // grey colors (a black or white wallpaper): a dark circle with a light icon, it fits the bar
+                color: gp.mono ? gp.container : gp.primary; scale: lm.containsMouse ? 1.06 : 1
                 Behavior on radius { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
                 Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutBack } } }
-            MIcon { visible: bar.logoKey === "apps"; anchors.centerIn: parent; name: "apps"; glyph: String.fromCodePoint(0xF003B); size: 18; color: bar.goo ? gp.inkPrimary : (lm.containsMouse ? bar.fg : bar.dim)
+            MIcon { visible: bar.logoKey === "apps"; anchors.centerIn: parent; name: "apps"; glyph: String.fromCodePoint(0xF003B); size: 18; color: bar.goo ? (gp.mono ? gp.inkContainer : gp.inkPrimary) : (lm.containsMouse ? bar.fg : bar.dim)
                 scale: lm.containsMouse ? 1.12 : 1; Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutBack } } }
-            Text { visible: bar.logoKey !== "apps"; anchors.centerIn: parent; anchors.horizontalCenterOffset: 1
+            // DarkShadow's own logos: the black hole (its disk turns) or the moon
+            BlackHoleMark { visible: bar.logoKey === "blackhole"; anchors.centerIn: parent; size: bar.goo ? bar.barH - 2 : 36; extras: false
+                readonly property var pl: bar.logoPal("blackhole"); hot: pl[0]; warm: pl[1]; cool: pl[2]; glowColor: pl[3]
+                running: visible && !Look.lite; scale: lm.containsMouse ? 1.15 : 1; Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } } }
+            MoonMark { visible: bar.logoKey === "moon"; anchors.centerIn: parent; size: bar.goo ? bar.barH - 8 : 28; extras: false
+                readonly property var pl: bar.logoPal("moon"); moonTop: pl[0]; moonBottom: pl[1]; glowColor: pl[3]
+                running: visible && !Look.lite; scale: lm.containsMouse ? 1.15 : 1; Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } } }
+            Text { visible: bar.logoKey !== "apps" && bar.logoKey !== "blackhole" && bar.logoKey !== "moon"; anchors.centerIn: parent; anchors.horizontalCenterOffset: 1
                 text: bar.logos[bar.logoKey] !== undefined ? String.fromCodePoint(bar.logos[bar.logoKey]) : ""
-                font.family: Fonts.icons; font.pixelSize: bar.goo ? 17 : 18; color: bar.goo ? gp.inkPrimary : bar.fg
+                font.family: Fonts.icons; font.pixelSize: bar.goo ? 17 : 18; color: bar.goo ? (gp.mono ? gp.inkContainer : gp.inkPrimary) : bar.fg
                 scale: lm.containsMouse ? 1.15 : 1; Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } } }
             MouseArea { id: lm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("click"); bar.run("\"$HOME/.local/bin/rice-launch\"") } }
         }
@@ -437,7 +464,8 @@ PanelWindow {
                 property bool done: false
                 property Timer rest: Timer { interval: 260; onTriggered: { wsWheel.sum = 0; wsWheel.done = false } }
                 onWheel: function(e) {
-                    if (e.pixelDelta.y === 0) { bar.goWs(e.angleDelta.y > 0 ? "e-1" : "e+1"); return }
+                    // a mouse wheel: one step per full notch (high-resolution wheels send small parts of one)
+                    if (e.pixelDelta.y === 0) { rest.restart(); sum += e.angleDelta.y; if (Math.abs(sum) >= 120) { bar.goWs(sum > 0 ? "e-1" : "e+1"); sum = 0 } return }
                     rest.restart()
                     if (done) return
                     sum += e.pixelDelta.y
@@ -446,11 +474,31 @@ PanelWindow {
         }
     }
 
+    // the window's title, then its app's icon at the end
     Component { id: mTitle
-        Text { readonly property bool shown: text !== ""; height: bar.barH; verticalAlignment: Text.AlignVCenter
-            width: Math.min(implicitWidth, Math.max(120, bar.width * 0.2)); elide: Text.ElideRight
-            text: ToplevelManager.activeToplevel ? ToplevelManager.activeToplevel.title : ""
-            color: bar.dim; font.family: Fonts.main; font.pixelSize: 12 }
+        Item {
+            id: tt
+            readonly property var tl: ToplevelManager.activeToplevel
+            readonly property string title: tl ? (tl.title || "") : ""
+            readonly property string appIcon: {
+                if (!tl || !tl.appId) return ""
+                const e = DesktopEntries.heuristicLookup(tl.appId)
+                const n = e && e.icon ? e.icon : tl.appId.toLowerCase()
+                return Quickshell.iconPath(n, true)
+            }
+            readonly property bool shown: title !== ""
+            // Settings > DarkShadow bar > App icon by the title: left, right (default) or off
+            readonly property string side: bar.bc.title_icon === "left" || bar.bc.title_icon === "off" ? bar.bc.title_icon : "right"
+            height: bar.barH
+            width: Math.min(tTxt.implicitWidth, Math.max(120, bar.width * 0.2)) + (ic.visible ? 24 : 0)
+            Text { id: tTxt; anchors.verticalCenter: parent.verticalCenter
+                x: ic.visible && tt.side === "left" ? 24 : 0
+                width: Math.min(implicitWidth, Math.max(120, bar.width * 0.2)); elide: Text.ElideRight
+                text: tt.title; color: bar.dim; font.family: Fonts.main; font.pixelSize: 12 }
+            IconImage { id: ic; visible: tt.appIcon !== "" && tt.side !== "off"; anchors.verticalCenter: parent.verticalCenter
+                x: tt.side === "left" ? 0 : tTxt.width + 8; implicitSize: 16; source: tt.appIcon
+                opacity: visible ? 1 : 0; Behavior on opacity { NumberAnimation { duration: 200 } } }
+        }
     }
 
     Component { id: mMedia
@@ -600,6 +648,14 @@ PanelWindow {
         }
     }
 
+    // the music, as a few moving bars (Bar layout > Visualizer)
+    Component { id: mViz
+        Item { property bool shown: true; width: vz.implicitWidth + 8; height: bar.barH
+            BarViz { id: vz; anchors.centerIn: parent; active: bar.on; thick: Math.round(bar.barH * 0.5); color: bar.goo ? gp.primary : bar.fg }
+            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: if (bar.player) bar.player.togglePlaying() }
+        }
+    }
+
     Component { id: mPower
         Item { property bool shown: true; width: 22; height: bar.barH
             MIcon { anchors.centerIn: parent; name: "power_settings_new"; glyph: String.fromCodePoint(0xF0425); size: 18; color: pm.containsMouse ? "#ff6b6b" : bar.dim
@@ -617,7 +673,7 @@ PanelWindow {
     function wsTint(id) {
         const c = gp.primary
         const h = (c.hslHue < 0 ? 0.55 : c.hslHue) + (id - 1) * 0.12
-        return Qt.hsla(h - Math.floor(h), Math.max(0.35, c.hslSaturation), c.hslLightness, 1)
+        return Qt.hsla(h - Math.floor(h), gp.mono ? 0 : Math.max(0.35, c.hslSaturation), c.hslLightness, 1)
     }
 
     // ---------- one side of the bar: a row of modules ----------
@@ -779,6 +835,7 @@ PanelWindow {
             pal: gp
             down: !bar.atBottom
             areaW: body.width
+            maxH: Math.max(200, bar.implicitHeight - bar.barH - bar.gap * 2 - 16)
             y: down ? bar.barH + 8 : -height - 8
             z: 40
         }

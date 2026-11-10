@@ -13,7 +13,7 @@ Item {
         "media": ["\udb81\udf5a", "Music"], "tray": ["\udb81\udd70", "Tray"],
         "volume": ["\udb81\udd7e", "Volume"], "network": ["\udb81\udda9", "Wi-Fi"], "bluetooth": ["\udb80\udcaf", "Bluetooth"],
         "battery": ["\udb80\udc79", "Battery"], "notifications": ["\udb80\udc9a", "Notifications"], "power": ["\udb81\udc25", "Power"],
-        "island": ["\udb80\udd50", "Island (clock)"]
+        "island": ["\udb80\udd50", "Island (clock)"], "visualizer": ["\udb81\udc7d", "Visualizer"]
     })
     readonly property var subsAll: []
     readonly property var defaults: ({
@@ -68,7 +68,7 @@ Item {
         n.available = Object.keys(info).filter(function(k) { return used.indexOf(k) < 0 })
         lay = n
         page.qrun(["layout-set", JSON.stringify({ left: n.left, center: n.center, right: n.right })])
-        page.ctl.status = "Bar layout: " + pr.n
+        page.ctl.status = I18n.t("Bar layout: ") + pr.n
     }
 
     function chip(n) {
@@ -130,7 +130,7 @@ Item {
             n[to].splice(Math.max(0, Math.min(idx, n[to].length)), 0, name)
             lay = n
             page.qrun(["layout-set", JSON.stringify({ left: n.left, center: n.center, right: n.right })])
-            page.ctl.status = to === "available" ? chip(name).label + " hidden" : chip(name).label + " moved"
+            page.ctl.status = to === "available" ? chip(name).label + I18n.t(" hidden") : chip(name).label + I18n.t(" moved")
         }
     }
 
@@ -141,7 +141,7 @@ Item {
         spacing: 10
 
         SectionTitle {
-            text: "Layouts"
+            text: I18n.t("Layouts")
             sub: I18n.t("Pick one to start from, then change it below. The island in the middle is your clock, and it grows into music, volume, notifications and today.")
         }
         Flow {
@@ -192,7 +192,7 @@ Item {
 
         SectionTitle {
             text: I18n.t("Bar layout")
-            sub: "Drag a module to move it. Drop it between others to change the order, or into \"Not on the bar\" to hide it. "
+            sub: I18n.t("Drag a module to move it. Drop it between others to change the order, or into \"Not on the bar\" to hide it. ")
         }
 
         // ---------- the bar ----------
@@ -230,7 +230,7 @@ Item {
                     LayoutZone {
                         id: zCenter
                         compact: true
-                        zone: "center"; title: "CENTER"; page: page
+                        zone: "center"; title: I18n.t("CENTER"); page: page
                         width: Math.max(70, parent.width - 8 - zLeft.width - zRight.width); height: parent.height
                         items: page.chips(page.lay.center)
                         align: Qt.AlignHCenter
@@ -238,7 +238,7 @@ Item {
                     LayoutZone {
                         id: zRight
                         compact: true
-                        zone: "right"; title: "RIGHT"; page: page
+                        zone: "right"; title: I18n.t("RIGHT"); page: page
                         width: Math.max(130, page.need(page.lay.right)); height: parent.height
                         items: page.chips(page.lay.right)
                         align: Qt.AlignRight
@@ -282,7 +282,7 @@ Item {
                     const n = { left: page.defaults.left.slice(), center: page.defaults.center.slice(), right: page.defaults.right.slice(), available: [] }
                     page.lay = n
                     page.qrun(["layout-reset"])
-                    page.ctl.status = "Default layout"
+                    page.ctl.status = I18n.t("Default layout")
                 }
             }
         }

@@ -23,14 +23,14 @@ Item {
         else { const o = Object.assign({}, Sfx.opt); o[key] = value; Sfx.opt = o }
         const arg = typeof value === "boolean" ? (value ? "on" : "off") : String(value)
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-sfx\" set \"$1\" \"$2\"", "_", key, arg])
-        page.ctl.status = "Applied"
+        page.ctl.status = I18n.t("Applied")
     }
     function setn(key, value) {
         const n = Object.assign({}, ns)
         n[key] = value
         ns = n
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-notify\" set \"$1\" \"$2\"", "_", key, String(value)])
-        page.ctl.status = "Applied"
+        page.ctl.status = I18n.t("Applied")
     }
     function previewNote(name, vol) {
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-sound\" play \"$1\" \"$2\"", "_", name, String(vol)])
@@ -132,7 +132,7 @@ Item {
             }
         }
         SliderRow {
-            label: "Volume"
+            label: I18n.t("Volume")
             desc: I18n.t("How loud the interface sounds are, on top of your system volume")
             from: 0; to: 100; step: 5; unit: " %"
             value: page.v("volume", 45)
@@ -140,17 +140,17 @@ Item {
         }
 
         SectionTitle { text: I18n.t("When to play"); sub: I18n.t("Turn single sounds on or off.") }
-        ToggleRow { label: "Clicks"; desc: I18n.t("Buttons, cards, the sidebar and the dashboard"); checked: page.v("click", true); onToggled: function(x) { page.setv("click", x) } }
-        ToggleRow { label: "Switches"; desc: I18n.t("A soft up when something turns on, down when it turns off"); checked: page.v("switch", true); onToggled: function(x) { page.setv("switch", x) } }
-        ToggleRow { label: "Sliders"; desc: I18n.t("A tiny tick for every step while you drag"); checked: page.v("slider", true); onToggled: function(x) { page.setv("slider", x) } }
-        ToggleRow { label: "Typing"; desc: I18n.t("Search fields and text boxes"); checked: page.v("typing", true); onToggled: function(x) { page.setv("typing", x) } }
+        ToggleRow { label: I18n.t("Clicks"); desc: I18n.t("Buttons, cards, the sidebar and the dashboard"); checked: page.v("click", true); onToggled: function(x) { page.setv("click", x) } }
+        ToggleRow { label: I18n.t("Switches"); desc: I18n.t("A soft up when something turns on, down when it turns off"); checked: page.v("switch", true); onToggled: function(x) { page.setv("switch", x) } }
+        ToggleRow { label: I18n.t("Sliders"); desc: I18n.t("A tiny tick for every step while you drag"); checked: page.v("slider", true); onToggled: function(x) { page.setv("slider", x) } }
+        ToggleRow { label: I18n.t("Typing"); desc: I18n.t("Search fields and text boxes"); checked: page.v("typing", true); onToggled: function(x) { page.setv("typing", x) } }
         ToggleRow { label: I18n.t("Welcome music"); desc: I18n.t("Quiet music during the welcome intro and the Settings tour"); checked: page.v("music", true); onToggled: function(x) { page.setv("music", x) } }
 
         Row {
             spacing: 10
             topPadding: 6
             Btn { icon: ""; text: I18n.t("Play the music"); onClicked: Sfx.music(true) }
-            Btn { icon: ""; text: "Stop"; onClicked: Sfx.music(false) }
+            Btn { icon: ""; text: I18n.t("Stop"); onClicked: Sfx.music(false) }
             Btn { icon: ""; text: I18n.t("Replay the welcome"); onClicked: Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-welcome\" show"]) }
             Btn { icon: ""; text: I18n.t("Start the tour"); onClicked: page.ctl.startTour() }
         }

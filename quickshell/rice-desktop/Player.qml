@@ -14,7 +14,7 @@ QtObject {
     readonly property var p: pick()
     readonly property bool has: p !== null
     readonly property bool playing: p ? p.isPlaying : false
-    readonly property string title: p ? (p.trackTitle || "Unknown") : "Nothing playing"
+    readonly property string title: p ? (p.trackTitle || "Unknown") : Tr.t("Nothing playing")
     readonly property string artist: p ? (p.trackArtist || "") : ""
     readonly property string album: p ? (p.trackAlbum || "") : ""
     readonly property string art: p && p.trackArtUrl ? p.trackArtUrl : ""

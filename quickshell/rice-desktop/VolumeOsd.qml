@@ -6,6 +6,7 @@ import QtQuick
 // How loud it is: a small pill near the bottom of the screen for a moment whenever the volume or mute changes
 // (volume keys, headphone buttons, the bar, the sound menu). The microphone shows when you mute or unmute it.
 PanelWindow {
+    screen: Mon.screen
     id: osd
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property var source: Pipewire.defaultAudioSource
@@ -69,13 +70,13 @@ PanelWindow {
         Text {
             visible: !osd.mic
             anchors.right: parent.right; anchors.rightMargin: 20; anchors.verticalCenter: parent.verticalCenter
-            text: osd.muted ? "Muted" : Math.round(osd.vol * 100) + "%"
+            text: osd.muted ? Tr.t("Muted") : Math.round(osd.vol * 100) + "%"
             color: "#F6F5F4"; font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.DemiBold
         }
         Text {
             visible: osd.mic
             x: 56; anchors.verticalCenter: parent.verticalCenter
-            text: osd.micMuted ? "Microphone off" : "Microphone on"
+            text: osd.micMuted ? Tr.t("Microphone off") : Tr.t("Microphone on")
             color: "#F6F5F4"; font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.DemiBold
         }
     }

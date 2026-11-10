@@ -8,9 +8,11 @@ Hyprland starts it (rice-infinite.lua); it waits quietly until you hold the keys
 It works on the floating windows of the workspace you are on; with Infinite Desktop (SUPER + F) on, all windows float.
 
   SUPER + ALT + move the mouse      the canvas moves with the mouse (Settings can reverse it)
-  SUPER + left drag a window        at the edge of the screen it pushes the other windows away, so it goes on
+  SUPER + left drag a window        at the edge of the screen it pushes the other windows away (when turned on)
   rice-canvasd --check              what it finds: keyboards, mice, and whether it may read them
+  rice-canvasd --tell               a notification with the one step, when it cannot read them (Infinite Desktop on)
 """
+# Infinite Desktop is based on the idea of Sarods2D: https://github.com/sarodscommits/hyprland-infinitie-desktop-v2 (MIT)
 import json
 import os
 import re
@@ -36,7 +38,7 @@ BTN_LEFT = 272
 
 
 def conf():
-    c = {"speed": 1.0, "dir": 1}
+    c = {"speed": 1.0, "dir": 1, "push": 1}
     try:
         for line in open(CONF):
             m = re.match(r"^\s*(\w+)\s*=\s*([\d.]+)\s*$", line)
@@ -114,6 +116,25 @@ def check():
     print("Hyprland:  ", "yes" if hypr_alive() else "no (run it inside Hyprland)")
 
 
+def tell():
+    """SUPER + ALT cannot work yet: one notification with the one step that fixes it"""
+    try:
+        groups = subprocess.run(["id", "-nG"], capture_output=True, text=True, timeout=2).stdout.split()
+    except Exception:
+        groups = []
+    if "input" in groups:
+        body = "You joined the input group: log out and back in once, then it works."
+    elif os.path.exists("/etc/NIXOS"):
+        body = 'Add programs.shadows-shell.user = "%s"; to configuration.nix (or "input" to your extraGroups), rebuild, then log in again.' % os.environ.get("USER", "you")
+    else:
+        body = "One step: Settings > Desktop > Infinite Desktop > Allow (then log in again)."
+    try:
+        subprocess.Popen(["notify-send", "-a", "Infinite Desktop", "-i", "input-mouse", "SUPER + ALT + mouse needs one step", body],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except OSError:
+        pass
+
+
 def hypr_eval(code):
     return subprocess.Popen(["hyprctl", "eval", code], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -129,6 +150,11 @@ def cursor():
 def main():
     if "--check" in sys.argv:
         check()
+        return
+    if "--tell" in sys.argv:
+        kbd, mice = devices()
+        if any(not os.access(p, os.R_OK) for p in kbd + mice):
+            tell()
         return
     if not os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"):
         return      # too early, or not in Hyprland: Hyprland starts it again when it is up
@@ -151,7 +177,7 @@ def main():
     proc = None
     last_scan = 0
     last_send = 0
-    was_on = False
+    was_on = None
     last_cur = None
     c = conf()
     denied = []
@@ -179,6 +205,7 @@ def main():
                 except PermissionError:
                     if p not in denied:
                         denied.append(p)
+
                 except OSError:
                     pass
             kinds = [v[1] for v in fds.values()]
@@ -220,39 +247,55 @@ def main():
         sup = any(k in held for k in META)
         alt = any(k in held for k in ALT)
         ctrl = any(k in held for k in CTRL)
-        canvas = sup and alt and not ctrl
-        push = sup and BTN_LEFT in held and not alt and not ctrl
+        mode = None
+        if sup and alt and not ctrl:
+            mode = "canvas"
+        elif sup and BTN_LEFT in held and not alt and not ctrl and int(c.get("push", 0)) == 1:
+            mode = "push"
 
-        if canvas and not was_on:
-            acc = [0.0, 0.0]
-            rel_hold = False
-            hold_t = time.time()
-            last_cur = cursor()
-        if not canvas and was_on:
-            hypr_eval("if RiceInfinite then RiceInfinite.save() end")
-        was_on = canvas
-
-        if not (canvas or push):
+        # a new hold (or another kind): it starts from nothing. Moves from before never carry over, so letting go
+        # of ALT while SUPER is still down (to move a window) cannot throw the canvas forward
+        if mode != was_on:
+            if was_on == "canvas":
+                hypr_eval("if RiceInfinite then RiceInfinite.save() end")
             acc = [0.0, 0.0]
             moved_rel = False
+            rel_hold = False
+            hold_t = time.time()
+            last_cur = cursor() if mode == "canvas" else None
+            was_on = mode
+        if not mode:
+            acc = [0.0, 0.0]
             continue
         if time.time() - last_send < 0.016 or (proc and proc.poll() is None):
             continue
         dx, dy = acc
         # a touchpad gives no mouse movement: follow the pointer instead (only when this hold had no mouse movement
-        # at all; mixing both counted the same move twice: the sudden boost)
-        if canvas and not rel_hold and time.time() - hold_t > 0.25:
+        # at all: mixing both counted the same move twice)
+        if mode == "canvas" and not rel_hold and time.time() - hold_t > 0.25:
             p = cursor()
             if p and last_cur:
                 dx, dy = p[0] - last_cur[0], p[1] - last_cur[1]
             last_cur = p
-        idx, idy = int(round(dx * c["speed"])), int(round(dy * c["speed"]))
+        else:
+            acc = [0.0, 0.0]
+        sp = max(0.1, min(5.0, c["speed"]))
+        idx, idy = int(dx * sp), int(dy * sp)
+        # what is left after the whole pixels stays for the next step (slow moves are not lost)
+        if rel_hold:
+            acc = [dx - idx / sp, dy - idy / sp]
+        # never more than a big step at once: a hiccup is caught up smoothly, not in one jump
+        lim = 160
+        cx, cy = max(-lim, min(lim, idx)), max(-lim, min(lim, idy))
+        if rel_hold and (cx != idx or cy != idy):
+            acc[0] += (idx - cx) / sp
+            acc[1] += (idy - cy) / sp
+        idx, idy = cx, cy
         if not idx and not idy:
             continue
-        acc = [0.0, 0.0]
         moved_rel = False
         sign = -1 if int(c["dir"]) == 2 else 1
-        if canvas:
+        if mode == "canvas":
             proc = hypr_eval("if RiceInfinite then RiceInfinite.slide(%d, %d) end" % (idx * sign, idy * sign))
         else:
             proc = hypr_eval("if RiceInfinite then RiceInfinite.edge_push(%d, %d) end" % (idx, idy))

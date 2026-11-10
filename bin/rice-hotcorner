@@ -66,22 +66,25 @@ def wall_dir():
 
 
 def walls(limit=9):
-    d = wall_dir()
-    if not d:
-        return [], ""
-    files = []
-    for ext in ("jpg", "jpeg", "png", "webp", "gif"):
-        files += glob.glob(d + "/*." + ext) + glob.glob(d + "/*." + ext.upper())
+    """the newest of your wallpapers (all your folders: rice-walls), the one you have first"""
     try:
-        cur = open(WALL_CURRENT).read().strip()
+        j = json.loads(subprocess.run([HOME + "/.local/bin/rice-walls", "list"], capture_output=True, text=True,
+                                      timeout=5).stdout)
     except Exception:
-        cur = ""
-    files = sorted(set(files), key=lambda f: (f != cur, -os.path.getmtime(f)))[:limit]
-    out = []
-    for f in files:
-        t = THUMBS + "/" + os.path.basename(f)
-        out.append({"path": f, "thumb": t if os.path.isfile(t) else f, "name": os.path.basename(f)})
-    return out, cur
+        return [], ""
+    cur = j.get("current", "")
+    ws = j.get("walls") or []
+
+    def mt(f):
+        try:
+            return os.path.getmtime(f)
+        except OSError:
+            return 0
+    ws = sorted(ws, key=lambda w: (w["path"] != cur, -mt(w["path"])))[:limit]
+    return [{"path": w["path"], "thumb": w.get("thumb") or ("" if w.get("live") else w["path"]), "name": os.path.basename(w["path"]),
+             "live": w.get("live", False)} for w in ws], cur
+
+
 SHOT_DIR = xdg_dir("PICTURES", "Pictures") + "/Screenshots"
 
 SECTIONS = ["awake", "wallpaper", "colors", "apps", "record", "shot", "toggles", "media"]
@@ -648,15 +651,10 @@ def main(argv):
             bg([HOME + "/.local/bin/rice-colors", "mode", arg])
     elif cmd == "wall":
         if arg and os.path.isfile(arg):
-            if os.path.isfile(WALL_APPLY):
-                # wallpaper + colors (hyprquickpaper); some versions of its script restart Quickshell,
-                # so the desktop widgets are started again afterwards if they went away
-                bg(["bash", "-c", 'bash "$1" "$2"; sleep 1; pgrep -f "quickshell/rice-desktop" >/dev/null || setsid -f qs -n -p "$3" >/dev/null 2>&1',
-                    "_", WALL_APPLY, arg, HOME + "/.config/quickshell/rice-desktop"])
-            else:
-                bg(["awww", "img", arg, "-t", "grow", "--transition-duration", "1"])
-                os.makedirs(os.path.dirname(WALL_CURRENT), exist_ok=True)
-                open(WALL_CURRENT, "w").write(arg)
+            # wallpaper + colors (rice-walls: pictures and live wallpapers); some versions of hyprquickpaper's script
+            # restart Quickshell, so the desktop widgets are started again afterwards if they went away
+            bg(["bash", "-c", '"$1" set "$2"; sleep 1; pgrep -f "quickshell/rice-desktop" >/dev/null || setsid -f qs -n -p "$3" >/dev/null 2>&1',
+                "_", HOME + "/.local/bin/rice-walls", arg, HOME + "/.config/quickshell/rice-desktop"])
     elif cmd == "walls":
         print(json.dumps(walls(60)[0]))
     elif cmd == "show":

@@ -33,7 +33,7 @@ Item {
     ]
     function greeting() {
         const h = now.getHours()
-        return h < 5 ? "Good night" : (h < 12 ? "Good morning" : (h < 18 ? "Good afternoon" : "Good evening"))
+        return h < 5 ? I18n.t("Good night") : (h < 12 ? I18n.t("Good morning") : (h < 18 ? I18n.t("Good afternoon") : I18n.t("Good evening")))
     }
     function themeName() {
         const l = page.ctl.schemes || []
@@ -46,7 +46,7 @@ Item {
     function setLite(on) {
         lite = on
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-effects\" lite \"$1\"", "_", on ? "on" : "off"])
-        page.ctl.status = "Light mode " + (on ? "on" : "off")
+        page.ctl.status = I18n.t("Light mode ") + (on ? "on" : "off")
     }
     Process {
         command: ["bash", "-c", "\"$HOME/.local/bin/rice-effects\" state"]
@@ -58,21 +58,43 @@ Item {
     property string profile: ""
     property var profiles: []
     function readProfile() { if (!profProc.running) profProc.running = true }
+    property string wanted: ""
     function setProfile(k) {
         profile = k
-        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-services\" profile \"$1\"", "_", k])
-        profSoon.restart()
-        page.ctl.status = "Profile: " + k.replace("power-saver", "Power saver").replace("balanced", "Balanced").replace("performance", "Performance")
+        wanted = k
+        setProc.command = ["bash", "-c", "\"$HOME/.local/bin/rice-services\" profile \"$1\" 2>&1; powerprofilesctl get 2>/dev/null", "_", k]
+        setProc.running = true
     }
-    Timer { id: profSoon; interval: 900; onTriggered: page.readProfile() }
+    function pname(k) { return k === "power-saver" ? I18n.t("Power saver") : (k === "balanced" ? I18n.t("Balanced") : I18n.t("Performance")) }
+    // switches, then reads back what the computer really runs now (and says so when it did not switch)
+    Process {
+        id: setProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const now = text.trim().split("\n").pop().trim()
+                if (now === page.wanted) page.ctl.status = I18n.t("Profile: ") + page.pname(now)
+                else page.ctl.status = I18n.t("The power mode did not change (power-profiles-daemon said no)")
+                page.readProfile()
+            }
+        }
+    }
+    // power-profiles-daemon is installed but not running: start it (asks for your password)
+    Process {
+        id: startPP
+        command: ["bash", "-c", "systemctl start power-profiles-daemon.service 2>&1 || pkexec systemctl enable --now power-profiles-daemon.service 2>&1"]
+        onExited: function(code) { page.ctl.status = code === 0 ? I18n.t("Power modes are on") : I18n.t("Could not start power-profiles-daemon"); page.readProfile() }
+    }
+    property bool ppInstalled: false
     Process {
         id: profProc
-        command: ["bash", "-c", "command -v powerprofilesctl >/dev/null || exit 0; powerprofilesctl list 2>/dev/null | grep -oE '^[* ] *(power-saver|balanced|performance):' | tr -d '*: '; echo CUR; powerprofilesctl get 2>/dev/null"]
+        // every mode this computer has (a "* " marks the one on), then the one on now
+        command: ["bash", "-c", "command -v powerprofilesctl >/dev/null || { echo NONE; exit 0; }; powerprofilesctl list 2>/dev/null | sed -nE 's/^[*[:space:]]*(power-saver|balanced|performance):[[:space:]]*$/\\1/p'; echo CUR; powerprofilesctl get 2>/dev/null"]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
+                page.ppInstalled = text.indexOf("NONE") < 0
                 const parts = text.split("CUR")
-                page.profiles = parts[0].split("\n").map(function(x) { return x.trim() }).filter(function(x) { return x.length > 0 })
+                page.profiles = page.ppInstalled ? parts[0].split("\n").map(function(x) { return x.trim() }).filter(function(x) { return x.length > 0 && x !== "NONE" }) : []
                 page.profile = parts.length > 1 ? parts[1].trim() : ""
             }
         }
@@ -164,17 +186,17 @@ Item {
                     objectName: "homeLogo"
                     anchors.right: parent.right; anchors.rightMargin: 26
                     anchors.verticalCenter: parent.verticalCenter
-                    size: 160
+                    size: 200
                     running: page.visible
                 }
                 Column {
                     x: 28; y: 24
-                    width: parent.width - 28 - 200
+                    width: parent.width - 28 - 230
                     spacing: 6
                     T { text: I18n.t("WELCOME BACK"); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2; color: M3.alpha(M3.inkPrimaryC, 0.75) }
                     T { kind: "title"; text: page.greeting() + ", " + page.user; font.pixelSize: 30; font.weight: Font.Medium; color: M3.inkPrimaryC
                         width: parent.width; elide: Text.ElideRight }
-                    T { text: page.now.toLocaleDateString(Qt.locale("en_US"), "dddd, d MMMM") + "  \u00b7  " + page.now.toLocaleTimeString(Qt.locale("en_US"), "HH:mm")
+                    T { text: page.now.toLocaleDateString(I18n.loc, "dddd, d MMMM") + I18n.t("  \u00b7  ") + page.now.toLocaleTimeString(I18n.loc, "HH:mm")
                         color: M3.alpha(M3.inkPrimaryC, 0.8); font.pixelSize: 13 }
                     Flow {
                         width: parent.width
@@ -205,7 +227,7 @@ Item {
                     Row {
                         spacing: 8
                         topPadding: 6
-                        Btn { text: "Wallpaper"; sym: "wallpaper"; icon: "\uf03e"; primary: true; onClicked: page.ctl.page = 18 }
+                        Btn { text: I18n.t("Wallpaper"); sym: "wallpaper"; icon: "\uf03e"; primary: true; onClicked: page.ctl.page = 18 }
                         Btn { text: I18n.t("Gaming hub"); sym: "sports_esports"; icon: "\uf11b"; onClicked: page.ctl.page = 16 }
                     }
                 }
@@ -280,7 +302,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 2
                     T { text: I18n.t("Auto-hide widgets"); font.pixelSize: 13; font.bold: true }
-                    T { kind: "reading"; text: page.lite ? "On while Light mode is on" : "Widgets hide while a window covers the screen, and come back on an empty desktop"; color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
+                    T { kind: "reading"; text: page.lite ? I18n.t("On while Light mode is on") : I18n.t("Widgets hide while a window covers the screen, and come back on an empty desktop"); color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
                 }
                 Tog {
                     id: ahtog
@@ -384,18 +406,18 @@ Item {
                 }
             }
 
-            SectionTitle { text: "Settings"; sub: I18n.t("The things you change most. They apply right away.") }
+            SectionTitle { text: I18n.t("Settings"); sub: I18n.t("The things you change most. They apply right away.") }
 
             // Profiles: Performance, Balanced, Power saver
             Item {
                 id: profBox
                 width: parent.width
-                height: page.profiles.length > 0 ? 120 : 64
+                height: page.profiles.length > 0 ? 120 : 84
                 Row {
                     id: profHead
                     spacing: 8
-                    T { text: "Profiles"; font.pixelSize: 14; font.bold: true; anchors.verticalCenter: parent.verticalCenter }
-                    T { kind: "reading"; text: page.profiles.length > 0 ? "How fast this computer runs, and how much power it uses" : ""; color: M3.inkDim; font.pixelSize: 11; anchors.verticalCenter: parent.verticalCenter }
+                    T { text: I18n.t("Profiles"); font.pixelSize: 14; font.bold: true; anchors.verticalCenter: parent.verticalCenter }
+                    T { kind: "reading"; text: page.profiles.length > 0 ? I18n.t("How fast this computer runs, and how much power it uses") : ""; color: M3.inkDim; font.pixelSize: 11; anchors.verticalCenter: parent.verticalCenter }
                 }
                 Row {
                     visible: page.profiles.length > 0
@@ -449,12 +471,21 @@ Item {
                 T {
                     visible: page.profiles.length === 0
                     y: 26
-                    width: parent.width
+                    width: parent.width - (startBtn.visible ? startBtn.width + 16 : 0)
                     wrapMode: Text.WordWrap
                     kind: "reading"
                     font.pixelSize: 12
                     color: M3.inkDim
-                    text: I18n.t("Power modes need power-profiles-daemon, and it is not running on this computer. Install it and turn it on: sudo systemctl enable --now power-profiles-daemon (on NixOS: services.power-profiles-daemon.enable = true).")
+                    text: page.ppInstalled
+                        ? I18n.t("power-profiles-daemon is installed but not running. Turn it on (it asks for your password); on NixOS: services.power-profiles-daemon.enable = true.")
+                        : I18n.t("Power modes need power-profiles-daemon, and it is not running on this computer. Install it and turn it on: sudo systemctl enable --now power-profiles-daemon (on NixOS: services.power-profiles-daemon.enable = true).")
+                }
+                Btn {
+                    id: startBtn
+                    visible: page.profiles.length === 0 && page.ppInstalled
+                    anchors.right: parent.right; y: 26
+                    text: I18n.t("Turn on"); sym: "bolt"; icon: ""; primary: true
+                    onClicked: startPP.running = true
                 }
             }
 
@@ -542,8 +573,8 @@ Item {
                     anchors.rightMargin: 16
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 4
-                    T { text: Math.round(szPrev.ww) + " \u00d7 " + Math.round(szPrev.wh) + " px"; font.pixelSize: 20; font.bold: true }
-                    T { kind: "reading"; text: Math.round(szPrev.ww * 100 / szPrev.sw) + " % of the screen width, " + Math.round(szPrev.wh * 100 / szPrev.sh) + " % of its height"; color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
+                    T { text: Math.round(szPrev.ww) + I18n.t(" \u00d7 ") + Math.round(szPrev.wh) + I18n.t(" px"); font.pixelSize: 20; font.bold: true }
+                    T { kind: "reading"; text: Math.round(szPrev.ww * 100 / szPrev.sw) + I18n.t(" % of the screen width, ") + Math.round(szPrev.wh * 100 / szPrev.sh) + I18n.t(" % of its height"); color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
                     T { kind: "reading"; text: I18n.t("Preview: the small window follows the slider. It is applied when you let go."); color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
                 }
             }
@@ -564,13 +595,13 @@ Item {
                 onToggled: function(v) { page.ctl.hset("decoration.blur.enabled", v) }
             }
             ToggleRow {
-                label: "Animations"
+                label: I18n.t("Animations")
                 desc: I18n.t("Windows and workspaces move smoothly. Off is the lightest")
                 checked: page.ctl.ha.enabled !== false
                 onToggled: function(v) { page.ctl.setAnim("enabled", v) }
             }
 
-            SectionTitle { text: "Previews"; sub: I18n.t("The live pictures at the top of some pages.") }
+            SectionTitle { text: I18n.t("Previews"); sub: I18n.t("The live pictures at the top of some pages.") }
             ToggleRow {
                 label: I18n.t("Show previews")
                 desc: I18n.t("Bar, Launcher, Notifications and Cursors show a small live picture of your choices")
@@ -578,7 +609,7 @@ Item {
                 onToggled: function(v) { Prefs.setPreviews(v) }
             }
 
-            SectionTitle { text: "Scrolling"; sub: I18n.t("How fast pages move. Try it in the box.") }
+            SectionTitle { text: I18n.t("Scrolling"); sub: I18n.t("How fast pages move. Try it in the box.") }
 
             SliderRow {
                 label: I18n.t("Settings scroll speed")
@@ -629,7 +660,7 @@ Item {
                                 delegate: Rectangle {
                                     width: tryCol.width; height: 26; radius: 6
                                     color: index % 2 === 0 ? Qt.rgba(1, 1, 1, 0.035) : "transparent"
-                                    T { x: 8; anchors.verticalCenter: parent.verticalCenter; text: "Line " + (index + 1); font.pixelSize: 12; color: "#9a9aa2" }
+                                    T { x: 8; anchors.verticalCenter: parent.verticalCenter; text: I18n.t("Line ") + (index + 1); font.pixelSize: 12; color: "#9a9aa2" }
                                 }
                             }
                         }

@@ -15,7 +15,7 @@ Item {
     function setv(key, value) {
         const n = Object.assign({}, hc); n[key] = page.norm(value); hc = n
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-hotcorner\" set \"$1\" \"$2\"", "_", key, String(value)])
-        page.ctl.status = "Applied"
+        page.ctl.status = I18n.t("Applied")
     }
     function rec(mode) {
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-hotcorner\" record \"$1\"", "_", mode])
@@ -110,7 +110,7 @@ Item {
                     height: 22; radius: 11
                     width: badge.implicitWidth + 18
                     color: Qt.rgba(0, 0, 0, 0.55)
-                    T { id: badge; anchors.centerIn: parent; text: page.outH + "p · " + page.fps + " fps"; font.pixelSize: 11; font.bold: true }
+                    T { id: badge; anchors.centerIn: parent; text: page.outH + "p · " + page.fps + I18n.t(" fps"); font.pixelSize: 11; font.bold: true }
                 }
                 Row {
                     anchors.left: parent.left; anchors.leftMargin: 10
@@ -139,15 +139,15 @@ Item {
                 anchors.rightMargin: 20
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 6
-                T { text: page.recording ? "Recording… " + page.fmtTime(page.elapsed) : "Screen recorder"; font.pixelSize: 20; font.bold: true }
+                T { text: page.recording ? I18n.t("Recording… ") + page.fmtTime(page.elapsed) : I18n.t("Screen recorder"); font.pixelSize: 20; font.bold: true }
                 T {
                     width: parent.width
-                    text: page.outH + "p at " + page.fps + " fps · " + ({ best: "Best", high: "High", balanced: "Balanced", small: "Small" })[page.quality] + " quality"
+                    text: page.outH + I18n.t("p at ") + page.fps + I18n.t(" fps · ") + ({ best: I18n.t("Best"), high: I18n.t("High"), balanced: I18n.t("Balanced"), small: I18n.t("Small") })[page.quality] + I18n.t(" quality")
                     font.pixelSize: 13; color: "#d8d8e0"; elide: Text.ElideRight
                 }
                 T {
                     width: parent.width
-                    text: page.soundText + " · about " + page.fmtSize(page.perMin) + " per minute"
+                    text: page.soundText + I18n.t(" · about ") + page.fmtSize(page.perMin) + I18n.t(" per minute")
                     font.pixelSize: 12; color: "#b0b0bc"; elide: Text.ElideRight
                 }
                 Row {
@@ -167,11 +167,11 @@ Item {
         }
 
         // ---------- video ----------
-        SectionTitle { text: "Video"; sub: I18n.t("Bigger and sharper videos are heavier for the computer and take more space.") }
+        SectionTitle { text: I18n.t("Video"); sub: I18n.t("Bigger and sharper videos are heavier for the computer and take more space.") }
         SegRow {
-            label: "Resolution"
+            label: I18n.t("Resolution")
             desc: I18n.t("Native keeps your screen's size; smaller is lighter")
-            options: [{ label: "Native", value: "native" }, { label: "1440p", value: "1440" }, { label: "1080p", value: "1080" }, { label: "720p", value: "720" }]
+            options: [{ label: I18n.t("Native"), value: "native" }, { label: "1440p", value: "1440" }, { label: "1080p", value: "1080" }, { label: "720p", value: "720" }]
             current: page.v("rec_res", "native")
             onChosen: function(x) { page.setv("rec_res", x) }
         }
@@ -183,22 +183,22 @@ Item {
             onChosen: function(x) { page.setv("rec_fps", x) }
         }
         SegRow {
-            label: "Quality"
+            label: I18n.t("Quality")
             desc: I18n.t("How sharp the picture stays; the file size follows")
-            options: [{ label: "Best", value: "best" }, { label: "High", value: "high" }, { label: "Balanced", value: "balanced" }, { label: "Small", value: "small" }]
+            options: [{ label: I18n.t("Best"), value: "best" }, { label: I18n.t("High"), value: "high" }, { label: I18n.t("Balanced"), value: "balanced" }, { label: I18n.t("Small"), value: "small" }]
             current: page.v("rec_quality", "high")
             onChosen: function(x) { page.setv("rec_quality", x) }
         }
         SegRow {
-            label: "Encoder"
-            desc: page.info.gpu === true ? "CPU: sharpest picture. GPU (VAAPI): much lighter while you play" : "CPU only here: no graphics card encoder was found"
+            label: I18n.t("Encoder")
+            desc: page.info.gpu === true ? I18n.t("CPU: sharpest picture. GPU (VAAPI): much lighter while you play") : I18n.t("CPU only here: no graphics card encoder was found")
             options: page.info.gpu === true ? [{ label: "CPU", value: "cpu" }, { label: "GPU", value: "gpu" }] : [{ label: "CPU", value: "cpu" }]
             current: page.info.gpu === true ? page.v("rec_encoder", "cpu") : "cpu"
             onChosen: function(x) { page.setv("rec_encoder", x) }
         }
 
         // ---------- sound ----------
-        SectionTitle { text: "Sound" }
+        SectionTitle { text: I18n.t("Sound") }
         ToggleRow { label: I18n.t("Record sound"); desc: I18n.t("The sound of your computer: games, videos, calls"); checked: page.v("rec_sound", true) === true; onToggled: function(x) { page.setv("rec_sound", x ? "on" : "off") } }
         ToggleRow { label: I18n.t("Record microphone"); desc: I18n.t("Your voice instead (with wf-recorder only one of the two; gpu-screen-recorder can take both)"); checked: page.v("rec_mic", false) === true; onToggled: function(x) { page.setv("rec_mic", x ? "on" : "off") } }
 
@@ -210,7 +210,7 @@ Item {
         }
 
         // ---------- recent ----------
-        SectionTitle { text: I18n.t("Recent recordings"); sub: "Click one to play it. They are saved in " + (page.info.dir || "Videos/Recordings") + "." }
+        SectionTitle { text: I18n.t("Recent recordings"); sub: I18n.t("Click one to play it. They are saved in ") + (page.info.dir || "Videos/Recordings") + "." }
         Flow {
             id: flow
             width: parent.width

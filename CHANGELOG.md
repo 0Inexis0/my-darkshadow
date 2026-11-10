@@ -1,5 +1,90 @@
 # Changelog
 
+## V3.95: the title's app icon, left or right
+- Settings > DarkShadow bar > App icon by the title: left of the title, right of it, or off
+
+## V3.94: the desktop menu always opens slowly, the app icon next to the title
+- Desktop menu: after a few tries the opening ran in 0.17 s (the length of the animation sometimes switched only after it had started). The length is now set right when the animation starts: about 0.9 s every time, 0.17 s to close
+- Bar: the window title shows its app's icon at the end
+
+## V3.93: the desktop menu's timing
+- Opening: the menu's window is put on the screen first and the animation starts a moment later, so you see all of it every time (before, its first part often ran while the window was not shown yet, so it looked rushed)
+- Closing is quick now (about 0.17 s)
+- Hyprland: the menu's blur and "no layer animation" rules are added by themselves when they are missing (no new login needed)
+
+## V3.92: the desktop menu in Material 3
+- The desktop menu looks and moves like the control center: tonal tiles for the quick switches, tonal rows with a round icon and an arrow for the places in Settings, a filled Settings button in your key color
+- Slower, softer motion: it unfolds in about a second on Material 3's emphasized curve, the rows follow one by one; hovering and pressing ease in (shapes morph, colors blend, the arrow and the Settings gear move a little)
+- Switches flip smoothly: gaming mode, night light and Do Not Disturb change at once on the click (the shape closes in, the color fills, the icon pops), then the real state is read back
+
+## V3.91: the desktop menu opens nicer, with blur
+- The desktop menu unfolds out of the pointer: a small soft pill that grows into the menu with a little spring, its corners settle, then the rows come in one after another from below and the wallpapers slide in from the side. Closing is a quick fade
+- Blur behind the desktop menu (Hyprland and niri). Gaming mode and Light mode turn it off, the menu is solid then
+
+## V3.90: the desktop menu, a bar on the side, wallpaper animations
+- **Desktop menu**: right-click the desktop. Your wallpapers in a row on top (click one; All opens the rest), quick switches (next wallpaper, night light, Do Not Disturb, gaming mode, lock), then Themes, Wallpaper & colors, Edit widgets, Bar, Dock, Monitors and Settings. It opens where you clicked
+- **The bar on the left or right** (Settings > DarkShadow bar > Position): a standing bar with the same modules; the clock as hours over minutes, the workspaces as a column, the tray, volume, Wi-Fi, battery ...
+- **Visualizer on the bar** (Bar layout > Visualizer): a few bars that move with your music (they rest while nothing plays)
+- **Wallpaper animations** (Settings > Wallpaper > Animation): Ripple (a circle grows out of your pointer), Wave, Wipe, Portal, Fade, Slide, Dissolve, Surprise me or None, and the speed; 120 fps with soft curves
+- **Power modes**: Settings reads back the mode the computer really runs and says so when it did not switch; with power-profiles-daemon installed but off there is a Turn on button
+- **niri**: your own keys for the shell's actions (Settings > System > Keybinds, the pencil) work on niri too; a key you pick moves the action there, and niri's default on that key gives way (one key twice would stop niri's config). The menus' blur shows the windows behind (xray off) for the desktop menu too. Configs checked with niri 25.05, 25.08, 25.11 and 26.04
+
+## V3.89: colors for black and white wallpapers, the dock keeps its room, profile picture
+- **Black, white and grey wallpapers get grey colors**, on everything (the bar, the lock screen, notifications, the game bar). Before, a black wallpaper turned the lock screen blue and a white one could turn pink: the colorfulness is now measured as chroma (HCL), which a few stars or a slight tint no longer fool
+- Dynamic bar style: with grey colors the launcher is a dark circle with a light icon, and the workspaces stay grey
+- **Dock: Keep room for it** (Settings > Dock, on by default): while the dock stays out, windows end next to it instead of under it, on any edge (bottom, left, right), on Hyprland and niri
+- **Game bar: transparency & blur** (Settings > Gaming): how see-through it is, and the blur behind it on or off
+- **Profile picture**: click your picture in Settings and pick one of your pictures right there (Pictures, Downloads, Desktop) or Browse; it is cut to a square and saved for the lock screen and login screens too
+- **Never an empty desktop**: after installing, and at every login, a wallpaper is put on (the last one, or the black hole) with its colors, if none is shown yet
+- Live wallpapers: mpvpaper is installed by the installer now (Arch: from the AUR like Quickshell; Fedora: from the Hyprland COPR; NixOS: with `extras`)
+
+## V3.88: smoother scrolling, no Security page
+- **Smooth scrolling** in Settings and in the wallpaper picker (SUPER + W): the page now eases toward where the wheel points, frame by frame, so a run of notches is one soft scroll instead of a jerk at each notch
+- The **Security** page is gone from Settings (and its step from the installer)
+
+## V3.87: Monitors, tray menu scrolls, black hole in fastfetch
+- Settings > System: the page is now called **Monitors**; a long monitor name (the Name field, the line under the resolution) is cut with "..." instead of running out of the window
+- The tray menu (right-click an app's icon in the bar) can be taller now and **scrolls** when the app has many entries; the app's name and Close app stay in place
+- fastfetch (Look & Feel > Logo > Black hole): a new, cleaner black hole: round shadow, the bent light around it and the disk across it, with fading edges
+
+## V3.86: wallpapers fix
+- The new space wallpapers now really arrive: the installer never overwrote wallpapers you already had, so the old versions stayed. They have new names now (space-*.jpg), and the old space wallpapers (orbit.jpg and the first generated ones) are removed from your Wallpapers folder, only when the file is exactly the old picture
+
+## V3.85: space wallpapers, Material style
+- The 7 space wallpapers are redrawn in the same flat, layered look as the mountains: soft gradient skies, ridges, simple shapes with a glow (two black holes, galaxy, nebula, ringed planet, eclipse, aurora)
+
+## V3.84: space wallpapers
+- **7 new wallpapers, space style** (2560x1440): two black holes (warm and blue), a galaxy, a nebula, a ringed planet, an eclipse and deep space. Pick them in Settings > Wallpaper
+
+## V3.83: the black hole
+- **New logo: a black hole.** Its glowing disk turns around a black shadow, the light bends over it, bits of matter fall in. In Settings (bigger now), the welcome intro, the tour and on GitHub (animated)
+- fastfetch (Settings > Desktop > Look & Feel > Logo): **Black hole** next to Moon
+- The bar's launcher button can be the **black hole** (its disk turns) or the **moon** too, in the color you like: default, white, gold, ice, rose, violet or your theme's (Settings > DarkShadow bar > Launcher icon)
+- Workspaces: scrolling over the workspaces (and fast or high-resolution mouse wheels) goes one workspace per notch, at most one step every 0.22 s; on slower computers the steps no longer pile up and flicker through the workspaces after you stop
+- NixOS: the module has options now: `programs.shadows-shell.user = "you";` joins the input group for Infinite Desktop (SUPER + ALT + mouse); `niri`, `extras` and `enable` switch parts off. A package your nixpkgs does not have is skipped instead of stopping the rebuild (awww falls back to swww)
+- Credits: Infinite Desktop is based on hyprland-infinite-desktop-v2 by Sarods2D, and the V3.23 redesign was inspired by his Iridium shell (README, Settings > About, Infinite Desktop)
+
+## V3.80: themes, wallpapers, screens, Polish
+- **Themes** (Settings > Appearance > Themes): a whole look in one click: DarkShadow, Terminal (sharp, one monospace font, no bounce), Glass (see-through islands, big corners), Neon (violet outlines), Ember and Frost. Each one sets the colors, corners, shapes, the bar, widgets, notifications, window corners and gaps, motion and the font; every part can still be changed on its own page
+- **Your apps take your colors**: VSCodium / VS Code and Discord (Vesktop, Vencord, Equicord, BetterDiscord) follow the desktop's colors and change with every wallpaper or theme. Your own VS Code colors are kept and come back when you turn it off
+- **Wallpaper slideshow**: a new wallpaper every 5 minutes to 3 hours, shuffled or by name, from all folders or one (Settings > Wallpaper, and Next now)
+- **Live wallpapers**: put videos (.mp4, .webm, .mkv) in a wallpaper folder and pick one; it plays behind everything (mpvpaper), pauses under full-screen apps, and the colors come from a frame of it. Sound on or off
+- **More wallpaper folders**: add your own folders, and Waypaper's folder shows up by itself in the wallpaper picker (SUPER + W) and Settings. One switch makes Waypaper change the shell's colors too
+- **Colors from the wallpaper work on more systems**: ImageMagick 7 (magick) and older matugen versions are handled, nothing waits for an answer any more, and what went wrong is written to ~/.cache/rice/colors.log. NixOS: matugen, ImageMagick, ffmpeg and mpvpaper are now in the module
+- **Screens** (Settings > System > Screen): drag your screens to how they stand on your desk (they snap together), give them names, pick the main screen for the bar, island, widgets and dock, turn a screen 90 / 180 / 270 degrees or switch it off. Every change asks to keep it and goes back by itself after 15 seconds (Hyprland and niri)
+- **Polish**: Settings and the desktop (bar, island, control center, menus, widgets, wallpaper picker) are fully in Polish, with Polish days and months. Settings > System > Languages
+- Infinite Desktop: SUPER + ALT + mouse tells you the one step it needs when it cannot read the mouse yet, and the installer joins the input group for you (it asks for your password)
+
+## V3.76
+- Infinite Desktop remembers your canvas: turn it off (SUPER + F) and on again and every window is back where you put it, at the same zoom and place, for each workspace. After a restart the apps find their places again too (Spotify where Spotify was, Steam where Steam was)
+## V3.75
+- Infinite Desktop: a window you moved yourself no longer jumps back when you then hold SUPER + ALT (the canvas always starts from where the windows really are)
+- SUPER + CTRL + arrows puts the next window exactly in the middle of the screen
+- SUPER + drag a window to the edge of the screen and keep going: the other windows come towards it (on again by default; it only reacts when the pointer is at the very edge, so no more sprints)
+## V3.71
+- Infinite Desktop: letting go of ALT while SUPER is still down (to drag a window) no longer throws the canvas forward: every hold starts from nothing, nothing carries over, and a hiccup is caught up smoothly instead of in one jump
+- SUPER + drag a window to the edge pushing the other windows is now a switch, off by default (SUPER + drag just moves the window)
+- Settings > Desktop > Infinite Desktop: **SUPER + ALT sensitivity** slider (0.3x to 3x; 1.00x keeps the window under the pointer)
 ## V3.70
 - Infinite Desktop: SUPER + ALT + mouse no longer jumps ahead all of a sudden while you move slowly (the pointer was counted on top of the mouse)
 ## V3.69: SUPER + ALT moves the canvas, your own keys

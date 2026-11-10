@@ -151,5 +151,16 @@ Singleton {
     readonly property string activeApp: focusedWindow ? focusedWindow.appId : ""
 
     // go to a workspace: a number, or "e+1" / "e-1" for the next / previous one
-    function goWs(n) { Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/ws-go\" \"$1\"", "_", String(n)]) }
+    // Next / previous: at most one step every 0.22 s. A fast wheel (or a high-resolution one) sent a step for every
+    // event, and on a slow computer the steps queued up and played out after you stopped: the workspaces flickered.
+    property real lastGo: 0
+    function goWs(n) {
+        const s = String(n)
+        if (s.indexOf("e") === 0) {
+            const now = Date.now()
+            if (now - lastGo < 220) return
+            lastGo = now
+        }
+        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/ws-go\" \"$1\"", "_", s])
+    }
 }

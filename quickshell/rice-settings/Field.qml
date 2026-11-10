@@ -29,6 +29,8 @@ Rectangle {
         anchors.left: parent.left
         anchors.leftMargin: 14
         anchors.verticalCenter: parent.verticalCenter
+        width: parent.width - 28
+        elide: Text.ElideRight
         text: f.placeholder
         color: M3.inkDim
         font.pixelSize: 13

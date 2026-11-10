@@ -67,12 +67,12 @@ Item {
             color: td.pal ? td.pal.chip : Qt.rgba(1, 1, 1, 0.08)
             T { kind: "icon"; anchors.centerIn: parent; text: "\uf14a"; font.pixelSize: 14; color: td.cMain }
         }
-        T { text: "To-do"; font.pixelSize: 17; font.bold: true; color: td.cFg; anchors.verticalCenter: parent.verticalCenter }
+        T { text: Tr.t("To-do"); font.pixelSize: 17; font.bold: true; color: td.cFg; anchors.verticalCenter: parent.verticalCenter }
     }
     T {
         anchors.right: parent.right; anchors.rightMargin: 22
         y: 18 + (30 - height) / 2
-        text: td.remaining === 0 ? (td.items.length ? "All done" : "") : td.remaining + " left"
+        text: td.remaining === 0 ? (td.items.length ? Tr.t("All done") : "") : td.remaining + Tr.t(" left")
         font.pixelSize: 12; color: td.cFg3
     }
 
@@ -150,7 +150,7 @@ Item {
             visible: td.items.length === 0
             x: 10; y: 6
             width: parent.width - 20
-            text: "Nothing to do. Add a task below."
+            text: Tr.t("Nothing to do. Add a task below.")
             font.pixelSize: 12; color: td.cFg3; wrapMode: Text.WordWrap
         }
     }
@@ -185,7 +185,7 @@ Item {
         T {
             visible: input.text.length === 0
             x: 34; anchors.verticalCenter: parent.verticalCenter
-            text: input.activeFocus ? "Type a task, press Enter" : "Click to add a task"
+            text: input.activeFocus ? Tr.t("Type a task, press Enter") : Tr.t("Click to add a task")
             font.pixelSize: 13; color: td.cFg4
         }
     }

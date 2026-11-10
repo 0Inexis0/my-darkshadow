@@ -5,6 +5,7 @@ import QtQuick
 // Widget editor: pick widgets from the bar at the bottom, drag them, pull a corner to resize,
 // change style and opacity under the selected one. Esc or Done to finish.
 PanelWindow {
+    screen: Mon.screen
     id: ed
     property var root
     property string sel: ""
@@ -272,7 +273,7 @@ PanelWindow {
             EdChip { visible: ed.selInfo && !ed.selInfo.free; text: Math.round((ed.selWin ? ed.selWin.sc : 1) * 100) + "%" }
             EdIcon {
                 icon: ""
-                tip: ed.selInfo && ed.selInfo.free ? "Full width" : "Actual size"
+                tip: ed.selInfo && ed.selInfo.free ? Tr.t("Full width") : Tr.t("Actual size")
                 onClicked: {
                     const w = ed.selWin
                     if (ed.selInfo.free) { w.px = 0; w.fw = ed.root.sw }
@@ -283,7 +284,7 @@ PanelWindow {
             }
             EdIcon {
                 icon: ed.selInfo && ed.selInfo.free ? "" : ""
-                tip: ed.selInfo && ed.selInfo.free ? "Flip" : "Center on screen"
+                tip: ed.selInfo && ed.selInfo.free ? Tr.t("Flip") : Tr.t("Center on screen")
                 active: ed.selInfo && ed.selInfo.free ? (ed.selWin ? ed.selWin.flp : false) : false
                 onClicked: {
                     const w = ed.selWin
@@ -291,8 +292,8 @@ PanelWindow {
                     else { w.px = Math.round((ed.root.sw - w.dispW) / 2); w.py = Math.round((ed.root.sh - w.dispH) / 2); ed.root.saveGeom(ed.sel) }
                 }
             }
-            EdIcon { icon: ""; tip: "Reset"; onClicked: ed.root.resetWidget(ed.sel) }
-            EdIcon { icon: ""; tip: "Remove"; danger: true; onClicked: { ed.root.removeWidget(ed.sel); ed.sel = "" } }
+            EdIcon { icon: ""; tip: Tr.t("Reset"); onClicked: ed.root.resetWidget(ed.sel) }
+            EdIcon { icon: ""; tip: Tr.t("Remove"); danger: true; onClicked: { ed.root.removeWidget(ed.sel); ed.sel = "" } }
         }
         Row {
             anchors.horizontalCenter: parent.horizontalCenter
@@ -313,7 +314,7 @@ PanelWindow {
             }
             EdSlider {
                 icon: ""
-                tip: "Opacity"
+                tip: Tr.t("Opacity")
                 value: ed.selWin ? ed.selWin.op : 1
                 from: 0.1
                 onMoved: function(v) { if (ed.selWin) ed.selWin.op = v }
@@ -322,7 +323,7 @@ PanelWindow {
             EdSlider {
                 visible: ed.selInfo && ed.selInfo.card === true
                 icon: ""
-                tip: "Background"
+                tip: Tr.t("Background")
                 value: ed.selWin ? ed.selWin.bgv : 1
                 from: 0
                 onMoved: function(v) { if (ed.selWin) ed.selWin.bgv = v }
@@ -358,14 +359,14 @@ PanelWindow {
         Row {
             id: exitRow; anchors.centerIn: parent; spacing: 8
             MIcon { size: 17; name: "logout"; glyph: "\uf08b"; color: em.containsMouse ? "#0d0d0d" : "#F6F5F4"; anchors.verticalCenter: parent.verticalCenter }
-            T { text: "Exit edit mode"; font.pixelSize: 13; font.weight: Font.Medium; color: em.containsMouse ? "#0d0d0d" : "#F6F5F4"; anchors.verticalCenter: parent.verticalCenter }
+            T { text: Tr.t("Exit edit mode"); font.pixelSize: 13; font.weight: Font.Medium; color: em.containsMouse ? "#0d0d0d" : "#F6F5F4"; anchors.verticalCenter: parent.verticalCenter }
         }
         MouseArea { id: em; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ed.root.finishEditing() }
     }
     // the keys, once, quietly
     T {
         anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.bottom; anchors.bottomMargin: 20
-        text: "Drag to move  ·  pull a corner to resize  ·  arrows nudge  ·  Delete removes  ·  Esc to finish"
+        text: Tr.t("Drag to move  ·  pull a corner to resize  ·  arrows nudge  ·  Delete removes  ·  Esc to finish")
         font.pixelSize: 12; color: Qt.rgba(1, 1, 1, 0.55)
         opacity: panel.et
     }

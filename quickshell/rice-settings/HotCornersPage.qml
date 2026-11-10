@@ -32,13 +32,13 @@ Item {
     function setv(key, value) {
         const n = Object.assign({}, hc); n[key] = page.norm(value); hc = n
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-hotcorner\" set \"$1\" \"$2\"", "_", key, String(value)])
-        page.ctl.status = "Applied"
+        page.ctl.status = I18n.t("Applied")
         reload.restart()
     }
     function setList(key, arr) {
         const n = Object.assign({}, hc); n[key] = arr; hc = n
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-hotcorner\" list \"$1\" \"$2\"", "_", key, arr.join(",")])
-        page.ctl.status = "Applied"
+        page.ctl.status = I18n.t("Applied")
         reload.restart()
     }
     function moved(arr, i, j) { const a = arr.slice(); const t = a[i]; a[i] = a[j]; a[j] = t; return a }
@@ -120,7 +120,7 @@ Item {
                 spacing: 6
                 width: 210
                 T { text: I18n.t("Touch the corner"); font.pixelSize: 18; font.bold: true }
-                T { width: parent.width; text: "Move the pointer into the " + scr.corner.replace("-", " ") + " corner to open the panel."; font.pixelSize: 12; color: "#b0b0bc"; wrapMode: Text.WordWrap }
+                T { width: parent.width; text: I18n.t("Move the pointer into the ") + scr.corner.replace("-", " ") + I18n.t(" corner to open the panel."); font.pixelSize: 12; color: "#b0b0bc"; wrapMode: Text.WordWrap }
                 Btn {
                     primary: true
                     text: I18n.t("Open it now")
@@ -131,9 +131,9 @@ Item {
 
         // ---------- general ----------
         SectionTitle { text: I18n.t("Hot corner") }
-        ToggleRow { label: "Enable"; desc: I18n.t("Show the panel when the pointer touches the corner"); checked: page.v("enabled", true) === true; onToggled: function(x) { page.setv("enabled", x ? "on" : "off") } }
+        ToggleRow { label: I18n.t("Enable"); desc: I18n.t("Show the panel when the pointer touches the corner"); checked: page.v("enabled", true) === true; onToggled: function(x) { page.setv("enabled", x ? "on" : "off") } }
         SegRow {
-            label: "Corner"
+            label: I18n.t("Corner")
             options: [{ label: I18n.t("Bottom right"), value: "bottom-right" }, { label: I18n.t("Bottom left"), value: "bottom-left" },
                       { label: I18n.t("Top right"), value: "top-right" }, { label: I18n.t("Top left"), value: "top-left" }]
             current: page.v("corner", "bottom-right")
@@ -157,7 +157,7 @@ Item {
         ToggleRow { label: I18n.t("Close when the pointer leaves"); desc: I18n.t("Off keeps it open until you touch the corner again"); checked: page.v("close_on_leave", true) === true; onToggled: function(x) { page.setv("close_on_leave", x ? "on" : "off") } }
 
         // ---------- sections ----------
-        SectionTitle { text: "Sections"; sub: I18n.t("Turn sections on or off and change their order with the arrows.") }
+        SectionTitle { text: I18n.t("Sections"); sub: I18n.t("Turn sections on or off and change their order with the arrows.") }
         Repeater {
             model: page.sectionRows()
             delegate: Rectangle {
@@ -322,7 +322,7 @@ Item {
                     }
                     Btn {
                         id: addApp
-                        text: "Add"
+                        text: I18n.t("Add")
                         onClicked: {
                             const n = appField.text.trim()
                             if (n.length === 0) return
@@ -337,9 +337,9 @@ Item {
         // ---------- look ----------
         SectionTitle { text: I18n.t("Look & animation") }
         SegRow {
-            label: "Animation"
+            label: I18n.t("Animation")
             desc: I18n.t("Grow unfolds the panel out of the corner")
-            options: [{ label: "Grow", value: "grow" }, { label: "Slide", value: "slide" }, { label: "Pop", value: "scale" }, { label: "Fade", value: "fade" }]
+            options: [{ label: I18n.t("Grow"), value: "grow" }, { label: I18n.t("Slide"), value: "slide" }, { label: I18n.t("Pop"), value: "scale" }, { label: I18n.t("Fade"), value: "fade" }]
             current: page.v("animation", "grow")
             onChosen: function(x) { page.setv("animation", x) }
         }
@@ -350,9 +350,9 @@ Item {
             onCommitted: function(x) { page.setv("speed", x.toFixed(1)) }
         }
         SegRow {
-            label: "Size"
+            label: I18n.t("Size")
             desc: I18n.t("Makes the whole panel bigger or smaller: text, icons and buttons")
-            options: [{ label: "Small", value: "0.85" }, { label: "Normal", value: "1" }, { label: "Large", value: "1.15" }, { label: "Huge", value: "1.3" }]
+            options: [{ label: I18n.t("Small"), value: "0.85" }, { label: I18n.t("Normal"), value: "1" }, { label: I18n.t("Large"), value: "1.15" }, { label: I18n.t("Huge"), value: "1.3" }]
             current: {
                 const v = Number(page.v("scale", 1))
                 return v <= 0.9 ? "0.85" : v < 1.07 ? "1" : v < 1.22 ? "1.15" : "1.3"
@@ -360,14 +360,14 @@ Item {
             onChosen: function(x) { page.setv("scale", Number(x)) }
         }
         SliderRow {
-            label: "Scale"
+            label: I18n.t("Scale")
             desc: I18n.t("Fine tuning of the size")
             from: 0.75; to: 1.5; step: 0.05; decimals: 2; unit: "x"
             value: page.v("scale", 1)
             onCommitted: function(x) { page.setv("scale", Number(x.toFixed(2))) }
         }
         SliderRow {
-            label: "Width"
+            label: I18n.t("Width")
             desc: I18n.t("How wide the panel is (before scaling)")
             from: 300; to: 680; step: 10; unit: " px"
             value: page.v("width", 400)
@@ -382,11 +382,11 @@ Item {
 
         // ---------- blur & transparency ----------
         SectionTitle { text: I18n.t("Blur & transparency"); sub: I18n.t("Blur shows the desktop softly through the panel. It needs transparency.") }
-        ToggleRow { label: "Blur"; desc: I18n.t("Blur whatever is behind the panel"); checked: page.v("blur", true) === true; onToggled: function(x) { page.setv("blur", x ? "on" : "off") } }
-        ToggleRow { label: "Transparency"; desc: I18n.t("Off makes the panel fully solid"); checked: page.v("transparency", true) === true; onToggled: function(x) { page.setv("transparency", x ? "on" : "off") } }
+        ToggleRow { label: I18n.t("Blur"); desc: I18n.t("Blur whatever is behind the panel"); checked: page.v("blur", true) === true; onToggled: function(x) { page.setv("blur", x ? "on" : "off") } }
+        ToggleRow { label: I18n.t("Transparency"); desc: I18n.t("Off makes the panel fully solid"); checked: page.v("transparency", true) === true; onToggled: function(x) { page.setv("transparency", x ? "on" : "off") } }
         SliderRow {
             label: I18n.t("Panel opacity")
-            desc: page.v("transparency", true) === true ? "Lower is more see-through" : "Turn on Transparency to use this"
+            desc: page.v("transparency", true) === true ? I18n.t("Lower is more see-through") : I18n.t("Turn on Transparency to use this")
             from: 0.3; to: 1.0; step: 0.02; decimals: 2
             value: page.v("opacity", 0.9)
             opacity: page.v("transparency", true) === true ? 1 : 0.45
@@ -415,7 +415,7 @@ Item {
             }
             visible: miss.length > 0
             width: parent.width
-            text: "Missing programs: " + miss.join(", ") + ". Install them so recording and screenshots work."
+            text: I18n.t("Missing programs: ") + miss.join(", ") + I18n.t(". Install them so recording and screenshots work.")
             color: "#e0a050"
             font.pixelSize: 12
             wrapMode: Text.WordWrap
@@ -427,7 +427,7 @@ Item {
                 text: I18n.t("Reset hot corner")
                 onClicked: {
                     Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-hotcorner\" reset"])
-                    page.ctl.status = "Hot corner reset"
+                    page.ctl.status = I18n.t("Hot corner reset")
                     reload.restart()
                 }
             }

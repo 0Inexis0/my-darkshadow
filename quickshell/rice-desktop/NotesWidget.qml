@@ -37,7 +37,7 @@ Item {
             color: nt.pal ? nt.pal.chip : Qt.rgba(1, 1, 1, 0.08)
             T { kind: "icon"; anchors.centerIn: parent; text: ""; font.pixelSize: 14; color: nt.cMain }
         }
-        T { text: "Note"; font.pixelSize: 17; font.bold: true; color: nt.cFg; anchors.verticalCenter: parent.verticalCenter }
+        T { text: Tr.t("Note"); font.pixelSize: 17; font.bold: true; color: nt.cFg; anchors.verticalCenter: parent.verticalCenter }
     }
 
     Flickable {
@@ -69,7 +69,7 @@ Item {
         }
         T {
             visible: edit.text.length === 0
-            text: edit.activeFocus ? "Type here" : "Click to write a note"
+            text: edit.activeFocus ? Tr.t("Type here") : Tr.t("Click to write a note")
             font.pixelSize: 14; color: nt.cFg4
         }
     }

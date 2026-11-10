@@ -9,6 +9,7 @@ import QtQuick
 // wavy ring, RAM, ping and heat, screenshot / record / microphone, power mode, gaming mode, Do Not Disturb,
 // volume and brightness. It reads anything only while it is open.
 PanelWindow {
+    screen: Mon.screen
     id: gp
     property bool open: false
     property real t: 0
@@ -22,14 +23,19 @@ PanelWindow {
 
     // ---------- colors: dark tonal surfaces with the theme color ----------
     readonly property real hue: Look.accent.hslHue < 0 ? 0.55 : Look.accent.hslHue
-    readonly property real sat: Math.max(0.35, Math.min(0.85, Look.accent.hslSaturation))
+    readonly property bool mono: Look.accent.hslHue < 0 || Look.accent.hslSaturation < 0.1
+    readonly property real sat: mono ? 0 : Math.max(0.35, Math.min(0.85, Look.accent.hslSaturation))
     readonly property color primary: Qt.hsla(hue, sat, 0.78, 1)
     readonly property color inkPrimary: Qt.hsla(hue, Math.min(sat, 0.5), 0.13, 1)
     readonly property color container: Qt.hsla(hue, sat * 0.35, 0.24, 1)
     readonly property color inkContainer: Qt.hsla(hue, sat * 0.6, 0.88, 1)
-    readonly property color surface: Qt.hsla(hue, 0.08, 0.085, Look.flat ? 1 : 0.9)
-    readonly property color card: Qt.hsla(hue, 0.1, 0.14, 1)
-    readonly property color cardHi: Qt.hsla(hue, 0.12, 0.19, 1)
+    // Settings > Gaming > Game bar: how see-through it is and the blur behind it (desktop.json "gamebar")
+    property var gb: ({})
+    readonly property real alpha: Look.flat ? 1 : Math.max(0.2, Math.min(1, gb.opacity !== undefined ? Number(gb.opacity) : 0.9))
+    readonly property bool blurOn: !Look.flat && gb.blur !== false
+    readonly property color surface: Qt.hsla(hue, 0.08, 0.085, alpha)
+    readonly property color card: Qt.hsla(hue, 0.1, 0.14, Math.min(1, alpha + 0.1))
+    readonly property color cardHi: Qt.hsla(hue, 0.12, 0.19, Math.min(1, alpha + 0.16))
     readonly property color fg: "#ECEDEE"
     readonly property color dim: "#A9ADB2"
     readonly property color track: Qt.rgba(1, 1, 1, 0.1)
@@ -53,7 +59,7 @@ PanelWindow {
     readonly property var sink: Pipewire.defaultAudioSink
     PwObjectTracker { objects: [gp.sink] }
     readonly property var win: Wm.focusedWindow
-    readonly property string game: win && win.title ? win.title : "Desktop"
+    readonly property string game: win && win.title ? win.title : Tr.t("Desktop")
     function two(n) { return n < 10 ? "0" + n : "" + n }
     readonly property string recTime: {
         const t = Math.max(0, Math.floor(now.getTime() / 1000 - recStart))
@@ -139,7 +145,7 @@ PanelWindow {
     // if the closing animation ever stalls (the compositor sent no frames for a moment), it still goes away
     Timer { id: closeT; property bool done: false; interval: 600; running: !open; onRunningChanged: if (running) done = false; onTriggered: done = true }
     // niri: blur behind it (Hyprland blurs this layer with its own rule)
-    NiriBlur { win: gp; items: [panel]; radius: panel.radius; on: gp.open && gp.t > 0.98 }
+    NiriBlur { win: gp; items: [panel]; radius: panel.radius; on: gp.open && gp.t > 0.98 && gp.blurOn }
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore
@@ -196,7 +202,7 @@ PanelWindow {
             anchors.centerIn: parent
             anchors.verticalCenterOffset: 6
             Text { anchors.horizontalCenter: parent.horizontalCenter; text: g.name; color: gp.dim; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium }
-            Text { anchors.horizontalCenter: parent.horizontalCenter; text: g.na ? "N/A" : Math.round(g.v) + "%"; color: gp.fg; font.family: Fonts.numbers; font.pixelSize: 28; font.weight: Font.DemiBold }
+            Text { anchors.horizontalCenter: parent.horizontalCenter; text: g.na ? Tr.t("N/A") : Math.round(g.v) + "%"; color: gp.fg; font.family: Fonts.numbers; font.pixelSize: 28; font.weight: Font.DemiBold }
         }
     }
     // a small round button
@@ -330,7 +336,7 @@ PanelWindow {
                     Column {
                         x: 66; anchors.verticalCenter: parent.verticalCenter
                         Text { text: "FPS"; color: gp.dim; font.family: Fonts.main; font.pixelSize: 11 }
-                        Text { text: gp.fps >= 0 ? gp.fps : "No data"; color: gp.fg; font.family: Fonts.numbers; font.pixelSize: gp.fps >= 0 ? 26 : 17; font.weight: Font.DemiBold }
+                        Text { text: gp.fps >= 0 ? gp.fps : Tr.t("No data"); color: gp.fg; font.family: Fonts.numbers; font.pixelSize: gp.fps >= 0 ? 26 : 17; font.weight: Font.DemiBold }
                     }
                     // turn MangoHud's FPS log on (games started with mangohud)
                     Rectangle {
@@ -338,7 +344,7 @@ PanelWindow {
                         width: ft.implicitWidth + 20; height: 30; radius: 15
                         color: gp.fpsOn ? gp.container : (fm.containsMouse ? gp.cardHi : "transparent")
                         border.width: gp.fpsOn ? 0 : 1; border.color: Qt.rgba(1, 1, 1, 0.14)
-                        Text { id: ft; anchors.centerIn: parent; text: gp.fpsOn ? "MangoHud on" : "Use MangoHud"; color: gp.fpsOn ? gp.inkContainer : gp.dim; font.family: Fonts.main; font.pixelSize: 11 }
+                        Text { id: ft; anchors.centerIn: parent; text: gp.fpsOn ? Tr.t("MangoHud on") : Tr.t("Use MangoHud"); color: gp.fpsOn ? gp.inkContainer : gp.dim; font.family: Fonts.main; font.pixelSize: 11 }
                         MouseArea { id: fm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                             onClicked: { gp.bin(["rice-fps", gp.fpsOn ? "off" : "on"]); gp.fpsOn = !gp.fpsOn } }
                     }
@@ -361,7 +367,7 @@ PanelWindow {
                                 width: 14; height: 14; radius: gp.recording ? 3 : 7; color: "#ff5c5c"
                                 Behavior on radius { NumberAnimation { duration: 200 } }
                             }
-                            Text { anchors.verticalCenter: parent.verticalCenter; text: gp.recording ? gp.recTime : "Record"
+                            Text { anchors.verticalCenter: parent.verticalCenter; text: gp.recording ? gp.recTime : Tr.t("Record")
                                 color: gp.fg; font.family: Fonts.numbers; font.pixelSize: 14; font.weight: Font.Medium }
                         }
                         MouseArea { id: rm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
@@ -384,7 +390,7 @@ PanelWindow {
                     opacity: gp.stg(4); transform: Translate { x: (1 - gp.stg(4)) * -26 }
                     spacing: 10
                     Stat { icon: "memory"; glyph: "󰍛"; label: "RAM"; value: gp.st.ram + "%"; chip: gp.st.ramu + " GB" }
-                    Stat { icon: "network_ping"; glyph: "󰄥"; label: "Ping"; value: gp.ping >= 0 ? gp.ping + " ms" : "–"; chip: "1.1.1.1" }
+                    Stat { icon: "network_ping"; glyph: "󰄥"; label: Tr.t("Ping"); value: gp.ping >= 0 ? gp.ping + " ms" : "–"; chip: "1.1.1.1" }
                 }
 
                 // ---- performance profile
@@ -396,7 +402,7 @@ PanelWindow {
                         x: 14; y: 14; width: parent.width - 28; spacing: 10
                         Row { spacing: 8
                             MIcon { size: 16; name: "bolt"; glyph: "󰓅"; color: gp.primary; anchors.verticalCenter: parent.verticalCenter }
-                            Text { text: gp.havePP ? "Performance profile" : "Performance profile (power-profiles-daemon not running)"; color: gp.fg; font.family: Fonts.main; font.pixelSize: 12; font.weight: Font.Medium } }
+                            Text { text: gp.havePP ? Tr.t("Performance profile") : Tr.t("Performance profile (power-profiles-daemon not running)"); color: gp.fg; font.family: Fonts.main; font.pixelSize: 12; font.weight: Font.Medium } }
                         Row {
                             visible: gp.havePP
                             spacing: 4
@@ -431,8 +437,8 @@ PanelWindow {
                     Behavior on color { ColorAnimation { duration: 160 } }
                     MIcon { x: 16; anchors.verticalCenter: parent.verticalCenter; size: 20; name: "sports_esports"; glyph: ""; color: parent.on ? gp.primary : gp.fg; filled: parent.on }
                     Column { x: 48; anchors.verticalCenter: parent.verticalCenter
-                        Text { text: "Gaming mode"; color: gp.fg; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium }
-                        Text { text: parent.parent.on ? "On: effects are off" : "Turns off blur, animations and shadows"; color: parent.parent.on ? gp.inkContainer : gp.dim; font.family: Fonts.main; font.pixelSize: 11 } }
+                        Text { text: Tr.t("Gaming mode"); color: gp.fg; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium }
+                        Text { text: parent.parent.on ? Tr.t("On: effects are off") : Tr.t("Turns off blur, animations and shadows"); color: parent.parent.on ? gp.inkContainer : gp.dim; font.family: Fonts.main; font.pixelSize: 11 } }
                     MouseArea { id: gm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                         onClicked: { const n = JSON.parse(JSON.stringify(gp.fx)); n.gaming = !parent.on; gp.fx = n; gp.bin(["rice-effects", "gaming", n.gaming ? "on" : "off"]); gp.later() } }
                 }
@@ -451,7 +457,7 @@ PanelWindow {
                     v: gp.bright / 100
                     onMoved: function(x) { const p = Math.max(1, Math.round(x * 100)); gp.bright = p; gp.sh("brightnessctl -q set " + p + "%") }
                 }
-                Text { width: parent.width; horizontalAlignment: Text.AlignHCenter; topPadding: 4; text: "SUPER + G or Esc to close"; color: Qt.rgba(1, 1, 1, 0.35); font.family: Fonts.main; font.pixelSize: 11 }
+                Text { width: parent.width; horizontalAlignment: Text.AlignHCenter; topPadding: 4; text: Tr.t("SUPER + G or Esc to close"); color: Qt.rgba(1, 1, 1, 0.35); font.family: Fonts.main; font.pixelSize: 11 }
             }
         }
     }

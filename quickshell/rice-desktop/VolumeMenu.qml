@@ -8,6 +8,7 @@ import QtQuick
 // The sound menu: right click the volume icon on the bar and it drops down under it (like a small pavucontrol).
 // Output volume, where the sound goes (speakers, headphones ...), the microphone and the apps that play right now.
 PanelWindow {
+    screen: Mon.screen
     id: vm
     property bool open: false
     property real t: 0
@@ -164,12 +165,12 @@ PanelWindow {
                 Item {
                     width: parent.width; height: 34
                     MIcon { x: 8; anchors.verticalCenter: parent.verticalCenter; name: "graphic_eq"; glyph: String.fromCodePoint(0xF1450); size: 20; color: vm.fg }
-                    Text { x: 40; anchors.verticalCenter: parent.verticalCenter; text: "Sound"; color: vm.fg; font.family: Fonts.main; font.pixelSize: 15; font.weight: Font.DemiBold }
+                    Text { x: 40; anchors.verticalCenter: parent.verticalCenter; text: Tr.t("Sound"); color: vm.fg; font.family: Fonts.main; font.pixelSize: 15; font.weight: Font.DemiBold }
                     Rectangle {   // open pavucontrol
                         anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
                         width: pv.implicitWidth + 22; height: 28; radius: 9
                         color: pvm.containsMouse ? Qt.rgba(1, 1, 1, 0.14) : Qt.rgba(1, 1, 1, 0.07)
-                        Text { id: pv; anchors.centerIn: parent; text: "More…"; color: vm.fg; font.family: Fonts.main; font.pixelSize: 12 }
+                        Text { id: pv; anchors.centerIn: parent; text: Tr.t("More…"); color: vm.fg; font.family: Fonts.main; font.pixelSize: 12 }
                         MouseArea { id: pvm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                             onClicked: { vm.hide(); Quickshell.execDetached(["bash", "-c", "pavucontrol || pwvucontrol"]) } }
                     }
@@ -177,20 +178,20 @@ PanelWindow {
 
                 VolRow { node: vm.sink; iconName: "volume_up"; glyph: 0xF057E }
 
-                Head { text: "Output"; visible: vm.sinks.length > 1 }
+                Head { text: Tr.t("Output"); visible: vm.sinks.length > 1 }
                 Repeater {
                     model: vm.sinks.length > 1 ? vm.sinks : []
                     delegate: DevRow { node: modelData; chosen: !!vm.sink && vm.sink.name === modelData.name; onPicked: Pipewire.preferredDefaultAudioSink = modelData }
                 }
 
-                Head { text: "Microphone"; visible: vm.source !== null }
+                Head { text: Tr.t("Microphone"); visible: vm.source !== null }
                 VolRow { visible: vm.source !== null; node: vm.source; iconName: "mic"; glyph: 0xF036C }
                 Repeater {
                     model: vm.sources.length > 1 ? vm.sources : []
                     delegate: DevRow { node: modelData; chosen: !!vm.source && vm.source.name === modelData.name; onPicked: Pipewire.preferredDefaultAudioSource = modelData }
                 }
 
-                Head { text: "Apps"; visible: vm.apps.length > 0 }
+                Head { text: Tr.t("Apps"); visible: vm.apps.length > 0 }
                 Repeater {
                     model: vm.apps
                     delegate: VolRow {

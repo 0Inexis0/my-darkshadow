@@ -329,7 +329,7 @@ Item {
                     onMoved: function(v) { if (isl.bar.sink && isl.bar.sink.audio) { isl.bar.sink.audio.muted = false; isl.bar.sink.audio.volume = v }; isl.show("volume", 1600) }
                 }
                 Text { visible: isl.mode === "mic"; width: parent.width - isl.bh - 48; anchors.verticalCenter: parent.verticalCenter
-                    text: isl.micMuted ? "Microphone off" : "Microphone on"; color: isl.pal ? isl.pal.fg : "white"; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium }
+                    text: isl.micMuted ? Tr.t("Microphone off") : Tr.t("Microphone on"); color: isl.pal ? isl.pal.fg : "white"; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium }
                 Text { width: 30; anchors.verticalCenter: parent.verticalCenter; horizontalAlignment: Text.AlignRight; visible: isl.mode !== "mic"
                     text: isl.muted ? "0" : Math.round(isl.vol * 100); color: isl.pal ? isl.pal.fg : "white"; font.family: Fonts.numbers; font.pixelSize: 13; font.weight: Font.Medium }
             }
@@ -363,7 +363,7 @@ Item {
                 id: wsRow
                 anchors.centerIn: parent
                 spacing: 7
-                Text { anchors.verticalCenter: parent.verticalCenter; text: "Workspace"; color: isl.pal ? isl.pal.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 12; font.weight: Font.Medium; rightPadding: 4 }
+                Text { anchors.verticalCenter: parent.verticalCenter; text: Tr.t("Workspace"); color: isl.pal ? isl.pal.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 12; font.weight: Font.Medium; rightPadding: 4 }
                 Repeater {
                     model: isl.bar ? Math.min(10, isl.bar.maxWs()) : 5
                     // follows Settings > DarkShadow bar > Workspace style: dots, Pac-Man, letters or numbers
@@ -494,10 +494,10 @@ Item {
                 Row {
                     id: tabRow
                     x: 4; y: 4; height: parent.height - 8
-                    Tab { id: tToday; label: "Today"; icon: "calendar_today"; on: isl.infoTab === "today"; onHit: isl.infoTab = "today" }
-                    Tab { id: tSys; label: "System"; icon: "memory"; on: isl.infoTab === "system"; onHit: isl.infoTab = "system" }
-                    Tab { id: tAbout; label: "About"; icon: "info"; on: isl.infoTab === "about"; onHit: isl.infoTab = "about" }
-                    Tab { visible: pl.has; label: "Music"; icon: "music_note"; on: false
+                    Tab { id: tToday; label: Tr.t("Today"); icon: "calendar_today"; on: isl.infoTab === "today"; onHit: isl.infoTab = "today" }
+                    Tab { id: tSys; label: Tr.t("System"); icon: "memory"; on: isl.infoTab === "system"; onHit: isl.infoTab = "system" }
+                    Tab { id: tAbout; label: Tr.t("About"); icon: "info"; on: isl.infoTab === "about"; onHit: isl.infoTab = "about" }
+                    Tab { visible: pl.has; label: Tr.t("Music"); icon: "music_note"; on: false
                         onHit: { isl.infoOpen = false; isl.pinned = true; if (!isl.hovering) pinT.restart() } }
                 }
             }
@@ -512,13 +512,11 @@ Item {
                 transform: Translate { x: isl.infoTab === "today" ? 0 : -24; Behavior on x { NumberAnimation { duration: 320; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.decel } } }
                 property var now: new Date()
                 Timer { interval: 30000; running: fInfo.act; repeat: true; triggeredOnStart: true; onTriggered: today.now = new Date() }
-                readonly property var days: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-                readonly property var months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
                 // left: the day and the weather
                 Column {
                     x: 22; y: 4; width: 228; spacing: 2
-                    Text { text: today.days[today.now.getDay()]; color: fInfo.pp ? fInfo.pp.primary : "#aaa"; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.DemiBold }
-                    Text { text: today.now.getDate() + " " + today.months[today.now.getMonth()]; color: fInfo.pp ? fInfo.pp.fg : "white"; font.family: Fonts.main; font.pixelSize: 26; font.weight: Font.DemiBold }
+                    Text { text: Tr.day(today.now.getDay()); color: fInfo.pp ? fInfo.pp.primary : "#aaa"; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.DemiBold }
+                    Text { text: today.now.getDate() + " " + Tr.month(today.now.getMonth(), true); color: fInfo.pp ? fInfo.pp.fg : "white"; font.family: Fonts.main; font.pixelSize: 26; font.weight: Font.DemiBold }
                 }
                 Item {
                     x: 22; y: 74; width: 228; height: 72
@@ -530,13 +528,13 @@ Item {
                         anchors.left: wIc.right; anchors.leftMargin: 14; anchors.verticalCenter: parent.verticalCenter; spacing: 1
                         width: parent.width - 80
                         Text { text: isl.wTemp !== "" ? isl.wTemp : "--"; color: fInfo.pp ? fInfo.pp.fg : "white"; font.family: Fonts.main; font.pixelSize: 26; font.weight: Font.DemiBold }
-                        Text { width: parent.width; elide: Text.ElideRight; text: isl.wCond !== "" ? isl.wCond : "No weather yet"; color: fInfo.pp ? fInfo.pp.fg : "white"; font.family: Fonts.main; font.pixelSize: 13 }
+                        Text { width: parent.width; elide: Text.ElideRight; text: isl.wCond !== "" ? isl.wCond : Tr.t("No weather yet"); color: fInfo.pp ? fInfo.pp.fg : "white"; font.family: Fonts.main; font.pixelSize: 13 }
                         Text { width: parent.width; elide: Text.ElideRight; visible: text !== ""; text: isl.wPlace; color: fInfo.pp ? fInfo.pp.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 11 }
                     }
                 }
                 // how much of the day has gone, as a wave
                 readonly property real dayFrac: (now.getHours() * 60 + now.getMinutes()) / 1440
-                Text { x: 22; y: 170; text: "Day"; color: fInfo.pp ? fInfo.pp.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 12 }
+                Text { x: 22; y: 170; text: Tr.t("Day"); color: fInfo.pp ? fInfo.pp.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 12 }
                 Text { x: 250 - width; y: 170; text: Math.round(today.dayFrac * 100) + "%"; color: fInfo.pp ? fInfo.pp.dim : "#aaa"; font.family: Fonts.numbers; font.pixelSize: 12 }
                 WavyLine { x: 22; y: 190; width: 228; height: 20; value: today.dayFrac; moving: fInfo.act
                     color: fInfo.pp ? fInfo.pp.primary : "white"; track: fInfo.pp ? fInfo.pp.track : "#444" }
@@ -550,7 +548,7 @@ Item {
                     readonly property var first: new Date(today.now.getFullYear(), today.now.getMonth() + off, 1)
                     readonly property int lead: (first.getDay() + 6) % 7          // Monday first
                     readonly property int count: new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate()
-                    Text { x: 4; y: 4; text: today.months[cal.first.getMonth()] + " " + cal.first.getFullYear()
+                    Text { x: 4; y: 4; text: Tr.month(cal.first.getMonth()) + " " + cal.first.getFullYear()
                         color: fInfo.pp ? fInfo.pp.fg : "white"; font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.DemiBold }
                     Row {
                         anchors.right: parent.right; y: 0; spacing: 2
@@ -562,7 +560,7 @@ Item {
                         y: 34; columns: 7; columnSpacing: 0; rowSpacing: 0
                         readonly property real cw: cal.width / 7
                         Repeater {
-                            model: ["M", "T", "W", "T", "F", "S", "S"]
+                            model: Tr.week(true)
                             delegate: Text { width: grid.cw; height: 22; horizontalAlignment: Text.AlignHCenter; text: modelData
                                 color: fInfo.pp ? fInfo.pp.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 11; font.weight: Font.Medium }
                         }
@@ -606,9 +604,9 @@ Item {
                 }
                 Column {
                     x: 142; y: 18; width: parent.width - 142 - 24; spacing: 3
-                    Text { text: "Your system"; color: fInfo.pp ? fInfo.pp.primary : "#aaa"; font.family: Fonts.main; font.pixelSize: 12; font.weight: Font.DemiBold }
+                    Text { text: Tr.t("Your system"); color: fInfo.pp ? fInfo.pp.primary : "#aaa"; font.family: Fonts.main; font.pixelSize: 12; font.weight: Font.DemiBold }
                     Text { width: parent.width; elide: Text.ElideRight; text: isl.osName; color: fInfo.pp ? fInfo.pp.fg : "white"; font.family: Fonts.main; font.pixelSize: 24; font.weight: Font.DemiBold }
-                    Text { width: parent.width; elide: Text.ElideRight; text: "DarkShadow's Shell" + (isl.up.installed ? "  V" + isl.up.installed : "")
+                    Text { width: parent.width; elide: Text.ElideRight; text: Tr.t("DarkShadow's Shell") + (isl.up.installed ? "  V" + isl.up.installed : "")
                         color: fInfo.pp ? fInfo.pp.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 13 }
                 }
                 // updates
@@ -626,11 +624,11 @@ Item {
                         anchors.left: upIc.right; anchors.leftMargin: 14; anchors.right: upBtn.left; anchors.rightMargin: 10
                         anchors.verticalCenter: parent.verticalCenter; spacing: 2
                         Text { width: parent.width; elide: Text.ElideRight
-                            text: isl.checking && !isl.up.installed ? "Looking for updates" : (isl.up.update ? "Update V" + isl.up.latest + " is ready" : "You are up to date")
+                            text: isl.checking && !isl.up.installed ? Tr.t("Looking for updates") : (isl.up.update ? Tr.t("Update V") + isl.up.latest + Tr.t(" is ready") : Tr.t("You are up to date"))
                             color: isl.up.update ? (fInfo.pp ? fInfo.pp.inkContainer : "white") : (fInfo.pp ? fInfo.pp.fg : "white")
                             font.family: Fonts.main; font.pixelSize: 15; font.weight: Font.DemiBold }
                         Text { width: parent.width; elide: Text.ElideRight; maximumLineCount: 2; wrapMode: Text.WordWrap
-                            text: isl.up.update && isl.up.news && isl.up.news.length > 0 ? isl.up.news[0] : (isl.checking ? "Asking GitHub ..." : "Checked " + isl.ago(isl.up.checked))
+                            text: isl.up.update && isl.up.news && isl.up.news.length > 0 ? isl.up.news[0] : (isl.checking ? Tr.t("Asking GitHub ...") : Tr.t("Checked ") + isl.ago(isl.up.checked))
                             color: fInfo.pp ? fInfo.pp.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 12 }
                         // a wave while it looks
                         WavyLine { visible: isl.checking; width: parent.width; height: 14; value: 1; handle: false; moving: true; thick: 3
@@ -642,7 +640,7 @@ Item {
                         width: ubt.implicitWidth + 36; height: 42; radius: ubm.pressed ? 14 : 21
                         Behavior on radius { NumberAnimation { duration: 200 } }
                         color: isl.up.update ? (fInfo.pp ? fInfo.pp.primary : "white") : (fInfo.pp ? fInfo.pp.cardHi : "#444")
-                        Text { id: ubt; anchors.centerIn: parent; text: isl.up.update ? "Update now" : "Check"
+                        Text { id: ubt; anchors.centerIn: parent; text: isl.up.update ? Tr.t("Update now") : Tr.t("Check")
                             color: isl.up.update ? (fInfo.pp ? fInfo.pp.inkPrimary : "black") : (fInfo.pp ? fInfo.pp.fg : "white")
                             font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.DemiBold }
                         MouseArea { id: ubm; anchors.fill: parent; cursorShape: Qt.PointingHandCursor
@@ -673,12 +671,12 @@ Item {
                 }
                 // the disk, as a wave
                 readonly property var disk: isl.disk0
-                Text { x: 32; y: 166; text: "Disk  " + (sys.disk ? sys.disk.mount : "/"); color: fInfo.pp ? fInfo.pp.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 12 }
+                Text { x: 32; y: 166; text: Tr.t("Disk  ") + (sys.disk ? sys.disk.mount : "/"); color: fInfo.pp ? fInfo.pp.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 12 }
                 Text { x: parent.width - 32 - width; y: 166; text: sys.disk ? isl.gb(sys.disk.used) + " / " + isl.gb(sys.disk.total) : ""
                     color: fInfo.pp ? fInfo.pp.dim : "#aaa"; font.family: Fonts.numbers; font.pixelSize: 12 }
                 WavyLine { x: 32; y: 186; width: parent.width - 64; height: 20; value: sys.disk ? sys.disk.pct / 100 : 0; moving: false
                     color: fInfo.pp ? fInfo.pp.primary : "white"; track: fInfo.pp ? fInfo.pp.track : "#444" }
-                Text { x: 32; y: 216; text: isl.st.uptime ? "Up " + isl.upText(isl.st.uptime) : ""; color: fInfo.pp ? fInfo.pp.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 11 }
+                Text { x: 32; y: 216; text: isl.st.uptime ? Tr.t("Up ") + isl.upText(isl.st.uptime) : ""; color: fInfo.pp ? fInfo.pp.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 11 }
             }
         }
 
@@ -732,7 +730,7 @@ Item {
             }
             Column {
                 x: 110; y: 18; width: parent.width - 110 - 70; spacing: 3
-                Text { text: (pl.p && pl.p.identity ? pl.p.identity : "Music").toUpperCase(); color: isl.pal ? isl.pal.primary : "#aaa"
+                Text { text: (pl.p && pl.p.identity ? pl.p.identity : Tr.t("Music")).toUpperCase(); color: isl.pal ? isl.pal.primary : "#aaa"
                     font.family: Fonts.main; font.pixelSize: 10; font.weight: Font.Bold; font.letterSpacing: 1.2 }
                 Text { width: parent.width; elide: Text.ElideRight; text: pl.title; color: isl.pal ? isl.pal.fg : "white"
                     font.family: Fonts.main; font.pixelSize: 17; font.weight: Font.DemiBold }
