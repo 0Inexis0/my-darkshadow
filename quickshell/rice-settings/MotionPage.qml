@@ -7,7 +7,7 @@ Item {
     id: page
     property var ctl
     readonly property var ha: ctl ? ctl.ha : ({})
-    readonly property string style: ha.style || "calm"
+    readonly property string style: ha.style === "bouncy" ? "expressive" : (ha.style || "calm")
 
     // a little stage that plays the chosen feeling: a shape that travels, grows and changes its corners
     property bool flip: false
@@ -16,7 +16,8 @@ Item {
     readonly property var styles: [
         { k: "calm", n: "Calm", d: "Smooth curves, no bounce", sym: "waves", g: "", over: 0, dur: 520 },
         { k: "lively", n: "Lively", d: "Springs with a small overshoot", sym: "airwave", g: "", over: 1.3, dur: 560 },
-        { k: "bouncy", n: "Bouncy", d: "A playful bounce", sym: "sports_volleyball", g: "", over: 2.2, dur: 680 },
+        { k: "fluid", n: "Fluid", d: "Material 3 emphasized: a long, soft landing, no bounce", sym: "water", g: "", over: 0, dur: 640 },
+        { k: "expressive", n: "Expressive", d: "Material 3 springs: a soft pop with a hint of overshoot", sym: "auto_awesome", g: "", over: 1.4, dur: 620 },
         { k: "snappy", n: "Snappy", d: "Short and quick", sym: "bolt", g: "", over: 0, dur: 260 },
         { k: "minimal", n: "Minimal", d: "Fades only", sym: "blur_on", g: "", over: 0, dur: 360 }
     ]

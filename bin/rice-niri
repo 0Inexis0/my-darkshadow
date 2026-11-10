@@ -340,6 +340,39 @@ def action_keys():
     return out
 
 
+def infinite_binds():
+    """Infinite Desktop on niri (rice-canvasd moves the floating windows): on / off, your keys + arrows move the
+    canvas, your other keys + arrows go to the next window. Your keys come from ~/.config/rice/infinite.conf"""
+    k = {"key_toggle": "SUPER + ALT + F", "mod_hold": "SUPER + ALT", "mod_go": "SUPER + ALT + SHIFT"}
+    pan = 180
+    try:
+        for line in open(RICE + "/infinite.conf"):
+            m = re.match(r"^\s*(\w+)\s*=\s*(.*?)\s*$", line)
+            if m and m.group(1) in k and m.group(2):
+                k[m.group(1)] = m.group(2)
+            elif m and m.group(1) == "pan":
+                try:
+                    pan = int(float(m.group(2)))
+                except ValueError:
+                    pass
+    except OSError:
+        pass
+    b = BIN + "/rice-infinite"
+    out = []
+    t = hypr_keys(k["key_toggle"])
+    if t:
+        out.append((t, 'hotkey-overlay-title="Infinite Desktop on / off"', "spawn %s %s;" % (q(b), q("toggle"))))
+    for key, dx, dy in (("Left", pan, 0), ("Right", -pan, 0), ("Up", 0, pan), ("Down", 0, -pan)):
+        h = hypr_keys(k["mod_hold"] + " + " + key)
+        if h:
+            out.append((h, "hotkey-overlay-title=null", "spawn %s %s %s %s;" % (q(b), q("pan"), q(str(dx)), q(str(dy)))))
+    for key in ("Left", "Right", "Up", "Down"):
+        g = hypr_keys(k["mod_go"] + " + " + key)
+        if g:
+            out.append((g, "hotkey-overlay-title=null", "spawn %s %s %s;" % (q(b), q("go"), q(key.lower()))))
+    return out
+
+
 def binds_section(f, s, term, files):
     custom = []
     for bd in s.get("binds") or []:
@@ -357,7 +390,9 @@ def binds_section(f, s, term, files):
         else:
             rest.append((k, props, act))
     seen, lines = set(), []
-    for k, props, act in custom + moved + rest:       # yours first: they replace the shell's
+    # Infinite Desktop's keys come after yours and the actions you moved, before niri's defaults (a default on the
+    # same key gives way to the key you chose for Infinite Desktop)
+    for k, props, act in custom + moved + infinite_binds() + rest:       # yours first: they replace the shell's
         nk = norm_key(k)
         if nk in seen:
             continue
@@ -373,8 +408,12 @@ MOTION = {
              {"ws": (1.0, 700), "view": (1.0, 700), "move": (1.0, 700), "resize": (1.0, 700), "ov": (1.0, 700)}),
     "lively": (("cubic", 360, (0.05, 0.7, 0.1, 1.0)), ("cubic", 200, (0.3, 0.0, 0.8, 0.15)),
                {"ws": (0.85, 800), "view": (0.85, 800), "move": (0.8, 800), "resize": (0.85, 800), "ov": (0.85, 800)}),
-    "bouncy": (("cubic", 420, (0.34, 1.56, 0.64, 1.0)), ("cubic", 220, (0.3, 0.0, 0.8, 0.15)),
-               {"ws": (0.7, 600), "view": (0.7, 600), "move": (0.65, 600), "resize": (0.7, 600), "ov": (0.7, 600)}),
+    # Fluid: Material 3 emphasized decelerate in, accelerate out, unhurried springs that never overshoot
+    "fluid": (("cubic", 440, (0.05, 0.7, 0.1, 1.0)), ("cubic", 180, (0.3, 0.0, 0.8, 0.15)),
+              {"ws": (1.0, 520), "view": (1.0, 520), "move": (1.0, 560), "resize": (1.0, 560), "ov": (1.0, 520)}),
+    # Expressive: Material 3 expressive springs: a hint of overshoot where things move, a soft pop when they open
+    "expressive": (("cubic", 480, (0.2, 1.22, 0.4, 1.0)), ("cubic", 180, (0.3, 0.0, 0.8, 0.15)),
+                   {"ws": (0.8, 700), "view": (0.8, 700), "move": (0.75, 640), "resize": (0.8, 700), "ov": (0.85, 640)}),
     "snappy": (("ease-out-expo", 160, None), ("ease-out-quad", 120, None),
                {"ws": (1.0, 1200), "view": (1.0, 1200), "move": (1.0, 1200), "resize": (1.0, 1200), "ov": (1.0, 1200)}),
     "minimal": (("ease-out-quad", 150, None), ("ease-out-quad", 120, None),
@@ -399,6 +438,7 @@ def animations(f, s, gaming, fx):
     if a.get("enabled") is False or (gaming and not fx["keep_anim"]):
         return block("animations", ["off"])
     style = a.get("style", "calm")
+    style = {"bouncy": "expressive"}.get(style, style)      # Bouncy (V3.97 and older) is now Expressive
     op, cl, sp = MOTION.get(style, MOTION["calm"])
     pct = clampf(a.get("speed", 100), 50, 200, 100)
     L = []
@@ -602,9 +642,11 @@ def layer_rules(f, flat):
     # full-screen layers that animate themselves get no shadow
     L += block("layer-rule", ['match namespace="^rice-(welcome|tour-dim)$"', "shadow { off; }"])
     # blur that shows what is behind the shell (windows too), not only the wallpaper: xray off for the shell's layers
-    # (the bar / Dynamic Island, menus, dock, widgets ...); the blur region itself still comes from the shell
+    # (the bar / Dynamic Island, menus, dock ...); the blur region itself still comes from the shell.
+    # The desktop widgets keep xray: they sit on the wallpaper under every window, and the experimental non-xray blur
+    # did not show behind them at all
     if f.blur and not flat:
-        L += block("layer-rule", ['match namespace="^rice-(bar|bluetooth|cc|deskmenu|dock|dock-apps|gamebar|hotcorner|launcher|notify-popup|power|volume|osd|wallum|walls|widget|wifi)$"']
+        L += block("layer-rule", ['match namespace="^rice-(bar|bluetooth|cc|deskmenu|dock|dock-apps|gamebar|hotcorner|launcher|notify-popup|power|volume|osd|wallum|walls|wifi)$"']
                    + block("background-effect", ["xray false"]))
     # blur: the shell asks niri for blur exactly where it draws (Quickshell, ext-background-effect), so no layer
     # gets a rule here: a rule would blur a whole surface, see-through margins included
@@ -625,6 +667,8 @@ def startup(f, s):
         b + "rice-bar start",
         b + "rice-desktop start",
         b + "rice-cursor restore",
+        # Infinite Desktop: hold your keys (SUPER + ALT) and move the mouse; new windows float while it is on
+        b + "rice-infinite daemon",
         # a password prompt for apps that need admin rights
         "systemctl --user start hyprpolkitagent.service 2>/dev/null || "
         "{ for a in /usr/lib/hyprpolkitagent/hyprpolkitagent /usr/libexec/hyprpolkitagent /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 "

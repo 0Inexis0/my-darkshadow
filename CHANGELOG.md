@@ -1,5 +1,11 @@
 # Changelog
 
+## V3.98: Infinite Desktop on niri, your keys, new motion
+- **Infinite Desktop on niri**: the windows of the workspace float on a canvas you move: hold your keys and move the mouse, or your keys + arrows; go from window to window with the canvas gliding to it; new windows float too while it is on. (niri cannot make windows smaller, so there is no zoom there.) On / off: SUPER + ALT + F on niri
+- **Your keys for Infinite Desktop** (Settings > Desktop > Infinite Desktop > Keys): on / off, what you hold to move the canvas, what goes to the next window, and the zoom key (Hyprland), on Hyprland and niri
+- **New motion styles** (Settings > Motion): **Fluid** (Material 3 emphasized curves: a long, soft landing, no bounce) and **Expressive** (Material 3 springs: a soft pop with a hint of overshoot), on Hyprland and niri. Bouncy is gone; if you had it, you get Expressive
+- niri: blur behind the desktop widgets works (they use niri's wallpaper blur now, not the experimental kind that did not show under them)
+
 ## V3.97: widgets: blur and transparency, the visualizer on niri
 - niri: the visualizer at the screen edge shows now (its window was bigger than the screen, niri left it out); every widget's window now stays inside the screen
 - Widgets: **Transparency** for all of them (Settings > Widgets, and Quick settings in Edit mode), next to **Blur behind widgets**, on Hyprland and niri

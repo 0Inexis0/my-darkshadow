@@ -157,7 +157,16 @@ def mon_rate(x):
 SPRINGS = {
     "ds-soft": (1, 150, 19),        # mass, stiffness, dampening: settles without a wobble
     "ds-lively": (1, 190, 15),      # a small overshoot
-    "ds-bouncy": (1, 230, 11),      # a playful bounce
+    "ds-expr": (1, 320, 27),        # Material 3 expressive, spatial: quick, a hint of overshoot (damping ~0.75)
+    "ds-expr-soft": (1, 240, 28),   # Material 3 expressive, slower parts: no overshoot to speak of
+}
+# Material 3's easing curves (the public motion tokens): emphasized decelerate / accelerate, standard, and a long
+# soft landing for menus
+BEZIERS = {
+    "md-emph": ((0.05, 0.7), (0.1, 1.0)),
+    "md-accel": ((0.3, 0.0), (0.8, 0.15)),
+    "md-std": ((0.2, 0.0), (0.0, 1.0)),
+    "md-menu": ((0.1, 1.0), (0.0, 1.0)),
 }
 MOTION = {
     "calm": None,
@@ -168,12 +177,25 @@ MOTION = {
         "layersIn": (5, "spring", "ds-lively", "popin 92%"), "layersOut": (3, "bezier", "quick", "popin 95%"),
         "fade": (4, "bezier", "smooth", None),
     },
-    "bouncy": {
-        "windows": (6, "spring", "ds-bouncy", "popin 80%"), "windowsIn": (6, "spring", "ds-bouncy", "popin 75%"),
-        "windowsOut": (5, "bezier", "quick", "popin 90%"), "windowsMove": (6, "spring", "ds-lively", None),
-        "workspaces": (8, "spring", "ds-lively", "slide"), "specialWorkspace": (5, "spring", "ds-lively", "slidevert"),
-        "layersIn": (5, "spring", "ds-bouncy", "popin 88%"), "layersOut": (3, "bezier", "quick", "popin 95%"),
-        "fade": (4, "bezier", "smooth", None),
+    # Fluid: Material 3 emphasized motion. Windows grow out of themselves on a long, soft landing and leave quickly;
+    # workspaces glide with a fade; menus and panels slide in like M3 menus. No bounce
+    "fluid": {
+        "windows": (5, "bezier", "md-emph", "popin 84%"), "windowsIn": (5, "bezier", "md-emph", "popin 80%"),
+        "windowsOut": (2.5, "bezier", "md-accel", "popin 90%"), "windowsMove": (5, "bezier", "md-emph", None),
+        "workspaces": (6, "bezier", "md-emph", "slidefade 24%"), "specialWorkspace": (5, "bezier", "md-emph", "slidefadevert 14%"),
+        "layers": (4, "bezier", "md-emph", "fade"), "layersIn": (4, "bezier", "md-menu", "popin 92%"),
+        "layersOut": (2, "bezier", "md-accel", "popin 94%"), "fadeLayersIn": (3, "bezier", "md-std", None),
+        "fadeLayersOut": (2, "bezier", "md-accel", None), "fade": (4, "bezier", "md-std", None),
+    },
+    # Expressive: Material 3 expressive springs. Windows pop open with a hint of overshoot, things you move follow
+    # like they have weight, workspaces slide; closing stays short and calm
+    "expressive": {
+        "windows": (6, "spring", "ds-expr", "popin 76%"), "windowsIn": (6, "spring", "ds-expr", "popin 72%"),
+        "windowsOut": (2.5, "bezier", "md-accel", "popin 88%"), "windowsMove": (6, "spring", "ds-expr-soft", None),
+        "workspaces": (7, "spring", "ds-expr-soft", "slide"), "specialWorkspace": (5, "spring", "ds-expr-soft", "slidevert"),
+        "layers": (4, "bezier", "md-emph", "fade"), "layersIn": (5, "spring", "ds-expr", "popin 90%"),
+        "layersOut": (2, "bezier", "md-accel", "popin 94%"), "fadeLayersIn": (3, "bezier", "md-std", None),
+        "fadeLayersOut": (2, "bezier", "md-accel", None), "fade": (4, "bezier", "md-std", None),
     },
     "snappy": {
         "windows": (2.5, "bezier", "quick", "popin 95%"), "windowsIn": (2.5, "bezier", "quick", "popin 92%"),
@@ -194,12 +216,19 @@ MOTION = {
 
 
 def spring_lines():
-    return ['hl.curve("%s", { type = "spring", mass = %d, stiffness = %d, dampening = %d })' % (n, m, k, d)
-            for n, (m, k, d) in SPRINGS.items()]
+    return (['hl.curve("%s", { type = "spring", mass = %d, stiffness = %d, dampening = %d })' % (n, m, k, d)
+             for n, (m, k, d) in SPRINGS.items()]
+            + ['hl.curve("%s", { type = "bezier", points = { { %s, %s }, { %s, %s } } })'
+               % (n, lua(float(a[0])), lua(float(a[1])), lua(float(b[0])), lua(float(b[1]))) for n, (a, b) in BEZIERS.items()])
+
+
+# Bouncy (V3.97 and older) is now Expressive
+OLD_STYLES = {"bouncy": "expressive"}
 
 
 def anim_lines(pct, style="calm"):
     out = []
+    style = OLD_STYLES.get(style, style)
     plan = MOTION.get(style)
     if plan:
         out += spring_lines()
@@ -313,7 +342,7 @@ def cmd_state():
         "borders": {"mode": b.get("mode", "wallpaper"), "active": b.get("active", "#F6F5F4"),
                     "inactive": b.get("inactive", "#444444")},
         "anim": {"enabled": s["anim"].get("enabled", True), "speed": int(s["anim"].get("speed", 100)),
-                 "style": s["anim"].get("style", "calm")},
+                 "style": OLD_STYLES.get(s["anim"].get("style", "calm"), s["anim"].get("style", "calm"))},
     }))
 
 

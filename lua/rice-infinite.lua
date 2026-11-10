@@ -41,12 +41,18 @@ end
 
 local bind_keys, unbind_keys
 
+-- your keys (Settings > Desktop > Infinite Desktop > Keys): on / off, the keys you hold (with the mouse or the
+-- arrows), the ones for going to the next window, and the one for zooming with the wheel
+RI.keys = { key_toggle = "SUPER + F", mod_hold = "SUPER + ALT", mod_go = "SUPER + CTRL", mod_zoom = "CTRL" }
+
 function RI.load_cfg()
     local f = io.open(CONF, "r")
     if not f then return end
     for line in f:lines() do
         local k, v = line:match("^%s*(%w+)%s*=%s*([%d%.]+)%s*$")
         if k and RI.cfg[k] ~= nil and tonumber(v) then RI.cfg[k] = tonumber(v) end
+        local kk, kv = line:match("^%s*([%w_]+)%s*=%s*(.-)%s*$")
+        if kk and RI.keys[kk] ~= nil and kv ~= "" then RI.keys[kk] = kv end
     end
     f:close()
 end
@@ -335,34 +341,38 @@ local function notify(text)
     run(hl.dsp.exec_cmd("command -v notify-send >/dev/null && notify-send -t 1600 -a 'Infinite Desktop' 'Infinite Desktop' '" .. text .. "'"))
 end
 
--- keys that only exist while it is on (CTRL + wheel goes back to your apps when it is off)
-local KEYS = { "CTRL + mouse_down", "CTRL + mouse_up", "SUPER + SHIFT + mouse_down", "SUPER + SHIFT + mouse_up",
-    "SUPER + ALT + left", "SUPER + ALT + right", "SUPER + ALT + up", "SUPER + ALT + down", "SUPER + ALT + 0",
-    "SUPER + CTRL + left", "SUPER + CTRL + right", "SUPER + CTRL + up", "SUPER + CTRL + down" }
+-- keys that only exist while it is on (CTRL + wheel goes back to your apps when it is off). Made from your keys
+local KEYS = {}
+local function k(mod, key) return mod .. " + " .. key end
 
 bind_keys = function()
     local p = function() return RI.cfg.pan end
+    local K = RI.keys
+    local hold, go, zoom = K.mod_hold, K.mod_go, K.mod_zoom
+    KEYS = { k(zoom, "mouse_down"), k(zoom, "mouse_up"), "SUPER + SHIFT + mouse_down", "SUPER + SHIFT + mouse_up",
+        k(hold, "left"), k(hold, "right"), k(hold, "up"), k(hold, "down"), k(hold, "0"),
+        k(go, "left"), k(go, "right"), k(go, "up"), k(go, "down") }
     pcall(hl.unbind, "SUPER + mouse_down")
     pcall(hl.unbind, "SUPER + mouse_up")
-    pcall(hl.bind, "CTRL + mouse_down", function() RI.zoom(-1) end)
-    pcall(hl.bind, "CTRL + mouse_up", function() RI.zoom(1) end)
+    pcall(hl.bind, k(zoom, "mouse_down"), function() RI.zoom(-1) end)
+    pcall(hl.bind, k(zoom, "mouse_up"), function() RI.zoom(1) end)
     pcall(hl.bind, "SUPER + mouse_down", function() RI.pan(0, -p()) end)
     pcall(hl.bind, "SUPER + mouse_up", function() RI.pan(0, p()) end)
     pcall(hl.bind, "SUPER + SHIFT + mouse_down", function() RI.pan(-p(), 0) end)
     pcall(hl.bind, "SUPER + SHIFT + mouse_up", function() RI.pan(p(), 0) end)
-    pcall(hl.bind, "SUPER + ALT + left", function() RI.pan(p(), 0) end, { repeating = true })
-    pcall(hl.bind, "SUPER + ALT + right", function() RI.pan(-p(), 0) end, { repeating = true })
-    pcall(hl.bind, "SUPER + ALT + up", function() RI.pan(0, p()) end, { repeating = true })
-    pcall(hl.bind, "SUPER + ALT + down", function() RI.pan(0, -p()) end, { repeating = true })
-    pcall(hl.bind, "SUPER + ALT + 0", function() RI.zoom_to(1.0) end)
-    pcall(hl.bind, "SUPER + CTRL + left", function() RI.go("left") end)
-    pcall(hl.bind, "SUPER + CTRL + right", function() RI.go("right") end)
-    pcall(hl.bind, "SUPER + CTRL + up", function() RI.go("up") end)
-    pcall(hl.bind, "SUPER + CTRL + down", function() RI.go("down") end)
+    pcall(hl.bind, k(hold, "left"), function() RI.pan(p(), 0) end, { repeating = true })
+    pcall(hl.bind, k(hold, "right"), function() RI.pan(-p(), 0) end, { repeating = true })
+    pcall(hl.bind, k(hold, "up"), function() RI.pan(0, p()) end, { repeating = true })
+    pcall(hl.bind, k(hold, "down"), function() RI.pan(0, -p()) end, { repeating = true })
+    pcall(hl.bind, k(hold, "0"), function() RI.zoom_to(1.0) end)
+    pcall(hl.bind, k(go, "left"), function() RI.go("left") end)
+    pcall(hl.bind, k(go, "right"), function() RI.go("right") end)
+    pcall(hl.bind, k(go, "up"), function() RI.go("up") end)
+    pcall(hl.bind, k(go, "down"), function() RI.go("down") end)
 end
 
 unbind_keys = function()
-    for _, k in ipairs(KEYS) do pcall(hl.unbind, k) end
+    for _, key in ipairs(KEYS) do pcall(hl.unbind, key) end
     pcall(hl.unbind, "SUPER + mouse_down")
     pcall(hl.unbind, "SUPER + mouse_up")
     -- the normal SUPER + wheel: next / previous workspace
@@ -370,13 +380,20 @@ unbind_keys = function()
     pcall(hl.bind, "SUPER + mouse_up", hl.dsp.focus({ workspace = "e-1" }))
 end
 
+-- the on / off key (yours, SUPER + F by default)
+local toggle_key = nil
+local function bind_toggle()
+    if toggle_key then pcall(hl.unbind, toggle_key) end
+    toggle_key = RI.keys.key_toggle
+    pcall(hl.bind, toggle_key, function() RI.toggle() end)
+end
+
 -- after Settings changed something
 function RI.reload()
+    if RI.on then for _, key in ipairs(KEYS) do pcall(hl.unbind, key) end end
     pcall(RI.load_cfg)
-    if RI.on then
-        for _, k in ipairs(KEYS) do pcall(hl.unbind, k) end
-        bind_keys()
-    end
+    pcall(bind_toggle)
+    if RI.on then bind_keys() end
 end
 
 -- ---------- the canvas of each workspace is remembered (turn it off and on: everything is where you left it) ----------
@@ -505,7 +522,7 @@ function RI.set(on)
         RI.last = a and a.address or nil
         bind_keys()
         daemon(true)
-        notify("On: hold SUPER + ALT and move the mouse, CTRL + wheel to zoom")
+        notify("On: hold " .. RI.keys.mod_hold .. " and move the mouse, " .. RI.keys.mod_zoom .. " + wheel to zoom")
         -- SUPER + ALT + mouse cannot read the mouse yet: say what the one step is (nothing happening is the worst)
         run(hl.dsp.exec_cmd(HOME .. "/.local/bin/rice-canvasd --tell"))
     else
@@ -558,7 +575,7 @@ end
 pcall(RI.load_cfg)
 pcall(restore)
 
-pcall(hl.bind, "SUPER + F", function() RI.toggle() end)
+pcall(bind_toggle)
 
 -- rice-canvasd runs with Hyprland (only one at a time; it stops when Hyprland stops)
 local CANVASD = HOME .. "/.local/bin/rice-infinite daemon"

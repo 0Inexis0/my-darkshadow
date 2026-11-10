@@ -2,16 +2,20 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 
-// Settings > Desktop > Infinite Desktop: the windows of a workspace float on an endless canvas that you zoom and
-// move (Hyprland). The work is done inside Hyprland by rice-infinite.lua; rice-infinite switches it.
+// Settings > Desktop > Infinite Desktop: the windows of a workspace float on an endless canvas that you move (and on
+// Hyprland zoom). Hyprland: rice-infinite.lua does the work; niri: rice-canvasd. rice-infinite switches it.
+// Your keys: Keys, below (rice-infinite key ...).
 Item {
     id: page
     property var ctl
     readonly property bool niri: !!Quickshell.env("NIRI_SOCKET")
-    property var st: ({ on: false, zoom: 1, step: 0.12, min: 0.2, pan: 180, speed: 1.0, dir: 1, push: 1, input: true, daemon: true, devices: null, loaded: true })
+    property var st: ({ keys: { key_toggle: "SUPER + F", mod_hold: "SUPER + ALT", mod_go: "SUPER + CTRL", mod_zoom: "CTRL" }, on: false, zoom: 1, step: 0.12, min: 0.2, pan: 180, speed: 1.0, dir: 1, push: 1, input: true, daemon: true, devices: null, loaded: true })
 
     function sh(args) { runner.command = ["bash", "-c", "\"$HOME/.local/bin/rice-infinite\" \"$@\" 2>&1", "_"].concat(args); runner.running = true }
     function fmt(n) { return String(Math.round(n * 100) / 100) }
+    function kv(k, d) { return page.st.keys && page.st.keys[k] ? page.st.keys[k] : d }
+    function nice(k) { return String(k).split(" + ").map(function(p) { return p.length > 1 ? p.charAt(0) + p.slice(1).toLowerCase() : p }).join(" + ") }
+    function setKey(k, v) { page.sh(["key", k, v]); const n = Object.assign({}, page.st); n.keys = Object.assign({}, page.st.keys || {}); n.keys[k] = v; page.st = n }
 
     Process {
         id: stateProc
@@ -24,6 +28,17 @@ Item {
     Timer { interval: 2000; running: page.visible; repeat: true; onTriggered: if (!stateProc.running) stateProc.running = true }
     onVisibleChanged: if (visible) stateProc.running = true
 
+    component KeyPick: SettingRow {
+        property string key: ""
+        property var choices: []
+        reserved: 520
+        Seg {
+            anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
+            options: parent.choices.map(function(c) { return { value: c, label: page.nice(c) } })
+            current: page.kv(parent.key, parent.choices[0])
+            onChosen: v => page.setKey(parent.key, v)
+        }
+    }
     component Key: Rectangle {
         property string keys: ""
         property string what: ""
@@ -95,14 +110,13 @@ Item {
                 spacing: 6
                 T { text: I18n.t("INFINITE DESKTOP"); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2
                     color: M3.alpha(page.st.on ? M3.inkPrimaryC : M3.ink, 0.7) }
-                T { kind: "title"; text: page.st.on ? I18n.t("On") + " · " + Math.round(page.st.zoom * 100) + " %" : I18n.t("Off"); font.pixelSize: 28; font.weight: Font.Medium
+                T { kind: "title"; text: page.st.on ? I18n.t("On") + (page.niri ? "" : " · " + Math.round(page.st.zoom * 100) + " %") : I18n.t("Off"); font.pixelSize: 28; font.weight: Font.Medium
                     color: page.st.on ? M3.inkPrimaryC : M3.ink }
                 T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 13; color: M3.alpha(page.st.on ? M3.inkPrimaryC : M3.ink, 0.8)
-                    text: page.niri ? I18n.t("niri is already an endless strip of windows, so this is for Hyprland.")
+                    text: page.niri ? I18n.t("Your windows float on an endless canvas: hold your keys and move the mouse, the canvas moves with it. (niri cannot zoom windows.)")
                                     : I18n.t("Your windows float on an endless canvas: zoom out to see them all, move the canvas to where you work.") }
                 Item { width: 1; height: 4 }
                 Btn {
-                    visible: !page.niri
                     text: page.st.on ? I18n.t("Turn off") : I18n.t("Turn on"); sym: page.st.on ? "close_fullscreen" : "open_in_full"; icon: ""
                     variant: page.st.on ? "tonal" : "filled"
                     onClicked: { page.sh([page.st.on ? "off" : "on"]); const n = Object.assign({}, page.st); n.on = !n.on; page.st = n }
@@ -116,7 +130,7 @@ Item {
             readonly property var dv: page.st.devices || null
             readonly property bool denied: !!dv && dv.denied > 0 && (dv.keyboards === 0 || dv.mice === 0)
             readonly property bool ready: page.st.daemon === true && !!dv && dv.keyboards > 0 && dv.mice > 0
-            visible: !page.niri && page.st.hypr !== false
+            visible: page.niri || page.st.hypr !== false
             width: parent.width; height: Math.max(72, ic.implicitHeight + 28); radius: M3.rL
             color: ready ? M3.surfaceC : M3.alpha(M3.primary, 0.10)
             border.width: ready ? 0 : 1; border.color: M3.alpha(M3.primary, 0.35)
@@ -130,7 +144,7 @@ Item {
                 width: parent.width - 66 - (allowBtn.visible ? allowBtn.width + 32 : 20)
                 spacing: 3
                 T { font.pixelSize: 14; font.weight: Font.DemiBold; width: parent.width; elide: Text.ElideRight
-                    text: cv.ready ? I18n.t("SUPER + ALT + mouse is ready")
+                    text: cv.ready ? page.nice(page.kv("mod_hold", "SUPER + ALT")) + " + " + I18n.t("mouse is ready")
                         : (cv.denied ? (page.st.group ? I18n.t("Log out and back in once") : I18n.t("One step for SUPER + ALT + mouse"))
                         : (page.st.daemon ? I18n.t("No keyboard or mouse found yet") : I18n.t("SUPER + ALT + mouse is not running"))) }
                 T { width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.inkDim
@@ -158,22 +172,30 @@ Item {
             text: I18n.t("Run the update once more (rice-update) so Hyprland loads it.")
         }
 
-        // ---------- the keys ----------
-        SectionTitle { text: I18n.t("Keys"); sub: I18n.t("SUPER + F turns it on and off. The other keys work while it is on, on the workspace where you turned it on.") }
+        // ---------- the keys: yours to change ----------
+        SectionTitle { text: I18n.t("Keys"); sub: I18n.t("Pick the keys you like. The ones with arrows and the wheel work while it is on, on the workspace where you turned it on.") }
+        KeyPick { label: I18n.t("On / off"); desc: page.nice(page.kv("key_toggle", "")); key: "key_toggle"
+            choices: page.niri ? ["SUPER + ALT + F", "SUPER + ALT + I", "SUPER + CTRL + I"] : ["SUPER + F", "SUPER + ALT + F", "SUPER + I"] }
+        KeyPick { label: I18n.t("Hold and move the mouse"); desc: I18n.t("The whole canvas moves with the mouse; with the arrows: one step"); key: "mod_hold"
+            choices: ["SUPER + ALT", "SUPER + SHIFT", "CTRL + ALT"] }
+        KeyPick { label: I18n.t("Next window") + " (+ " + I18n.t("Arrows") + ")"; desc: I18n.t("Go to the next window that way (the canvas glides to it)"); key: "mod_go"
+            choices: page.niri ? ["SUPER + ALT + SHIFT", "CTRL + ALT", "SUPER + CTRL"] : ["SUPER + CTRL", "SUPER + ALT + SHIFT", "CTRL + ALT"] }
+        KeyPick { visible: !page.niri; label: I18n.t("Zoom") + " (+ " + I18n.t("Mouse wheel") + ")"; desc: I18n.t("Zoom out (down) and in (up) around the pointer"); key: "mod_zoom"
+            choices: ["CTRL", "SUPER + CTRL", "ALT"] }
         Rectangle {
             width: parent.width; height: keys.implicitHeight; radius: M3.rL; color: M3.surfaceC; clip: true
             Column {
                 id: keys
                 width: parent.width
-                Key { keys: "Super + F"; what: I18n.t("Infinite Desktop on / off") }
-                Key { keys: "Ctrl + Mouse wheel"; what: I18n.t("Zoom out (down) and in (up) around the pointer") }
-                Key { keys: "Super + Mouse wheel"; what: I18n.t("Move the canvas up and down") }
-                Key { keys: "Super + Shift + Mouse wheel"; what: I18n.t("Move the canvas left and right") }
-                Key { keys: "Super + Alt + Arrows"; what: I18n.t("Move the canvas") }
-                Key { keys: "Super + Alt"; what: I18n.t("Hold and move the mouse: the whole canvas moves with it") }
-                Key { visible: page.st.push === 1; keys: "Super + Left mouse"; what: I18n.t("Drag a window to the edge of the screen and keep going: the others come to it") }
-                Key { keys: "Super + Alt + 0"; what: I18n.t("Back to 100 %") }
-                Key { keys: "Super + Ctrl + Arrows"; what: I18n.t("Go to the next window that way (the canvas glides to it)") }
+                Key { keys: page.nice(page.kv("key_toggle", "SUPER + F")); what: I18n.t("Infinite Desktop on / off") }
+                Key { keys: page.nice(page.kv("mod_hold", "SUPER + ALT")); what: I18n.t("Hold and move the mouse: the whole canvas moves with it") }
+                Key { keys: page.nice(page.kv("mod_hold", "SUPER + ALT")) + " + Arrows"; what: I18n.t("Move the canvas") }
+                Key { keys: page.nice(page.kv("mod_go", "SUPER + CTRL")) + " + Arrows"; what: I18n.t("Go to the next window that way (the canvas glides to it)") }
+                Key { visible: !page.niri; keys: page.nice(page.kv("mod_zoom", "CTRL")) + " + Mouse wheel"; what: I18n.t("Zoom out (down) and in (up) around the pointer") }
+                Key { visible: !page.niri; keys: "Super + Mouse wheel"; what: I18n.t("Move the canvas up and down") }
+                Key { visible: !page.niri; keys: "Super + Shift + Mouse wheel"; what: I18n.t("Move the canvas left and right") }
+                Key { visible: !page.niri && page.st.push === 1; keys: "Super + Left mouse"; what: I18n.t("Drag a window to the edge of the screen and keep going: the others come to it") }
+                Key { visible: !page.niri; keys: page.nice(page.kv("mod_hold", "SUPER + ALT")) + " + 0"; what: I18n.t("Back to 100 %") }
             }
         }
 
@@ -191,19 +213,21 @@ Item {
             }
         }
         SliderRow {
-            label: I18n.t("SUPER + ALT sensitivity")
+            label: I18n.t("Sensitivity of the mouse")
             desc: I18n.t("1.00x: the window under the pointer stays under it. Lower is calmer, higher goes farther")
             from: 0.3; to: 3; step: 0.05; decimals: 2; unit: "x"
             value: page.st.speed || 1.0
             onCommitted: function(v) { page.sh(["set", "speed", String(Math.round(v * 100) / 100)]); const n = Object.assign({}, page.st); n.speed = v; page.st = n }
         }
         ToggleRow {
+            visible: !page.niri
             label: I18n.t("SUPER + drag a window to the edge pushes the others")
             desc: I18n.t("Take a window to the edge of the screen and keep going: the other windows come towards it")
             checked: page.st.push === 1
             onToggled: function(v) { page.sh(["set", "push", v ? "1" : "0"]); const n = Object.assign({}, page.st); n.push = v ? 1 : 0; page.st = n }
         }
         SettingRow {
+            visible: !page.niri
             label: I18n.t("Zoom speed")
             desc: I18n.t("How much one turn of the wheel zooms")
             reserved: 300
@@ -215,6 +239,7 @@ Item {
             }
         }
         SettingRow {
+            visible: !page.niri
             label: I18n.t("Zoom out as far as")
             desc: I18n.t("Smaller means more windows fit on the screen")
             reserved: 300
