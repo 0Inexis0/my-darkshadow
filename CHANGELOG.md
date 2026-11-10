@@ -1,5 +1,8 @@
 # Changelog
 
+## V4.06: tray icons are back
+- Tray icons (Spotify, Discord, Steam ...) show again: since V4.05 the icons of apps that bring their own icon folder were not found, which left an empty spot in the tray. Their folder is now searched first, then every icon theme, and an app without any icon gets a plain app icon instead of a gap
+
 ## V4.05: no more icon crashes
 - **Quickshell no longer crashes on app icons** (NixOS with Qt 6.12: the bar, the dock and the widgets went down, also during an update). Every app icon (bar, tray, dock, launcher, notifications, island, hot corner, volume mixer and Settings) used Qt's icon theme engine, which crashed on some icons. Now the icons are found as plain files in the background (Icons.qml) and drawn as pictures, never through that engine
 

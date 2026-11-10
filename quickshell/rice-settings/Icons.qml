@@ -28,11 +28,18 @@ Singleton {
         if (!u) return ""
         u = String(u)
         if (u.indexOf("image://icon/") !== 0) return u
-        let n = u.substring(13)
+        let n = u.substring(13), dir = ""
         const q = n.indexOf("?")
-        if (q >= 0) n = n.substring(0, q)
+        if (q >= 0) {
+            // apps like Spotify, Discord or Steam bring their own icon folder: image://icon/NAME?path=FOLDER
+            const m = /(?:^|&)path=([^&]*)/.exec(n.substring(q + 1))
+            if (m) { try { dir = decodeURIComponent(m[1]) } catch (e) { dir = m[1] } }
+            n = n.substring(0, q)
+        }
         try { n = decodeURIComponent(n) } catch (e) {}
-        return one(n)
+        // never an empty spot in the tray: the app's own name, then a plain app icon
+        const p = one(dir !== "" ? n + "|" + dir : n)
+        return p !== "" ? p : one("application-x-executable")
     }
     function one(n) {
         if (!n) return ""

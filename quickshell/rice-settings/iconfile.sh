@@ -21,7 +21,14 @@ find_one() {
   local n="$1" ext r t s c d f
   [ -n "$n" ] || return 0
   if [ "${n#/}" != "$n" ]; then [ -f "$n" ] && echo "$n"; return 0; fi
+  # NAME|FOLDER: an app's own icon folder first (tray icons: image://icon/NAME?path=FOLDER)
+  local own=""
+  case "$n" in *"|"*) own="${n#*|}"; n="${n%%|*}" ;; esac
   n="${n%.png}"; n="${n%.svg}"
+  if [ -n "$own" ] && [ -d "$own" ]; then
+    f="$(find -L "$own" -maxdepth 5 \( -name "$n.png" -o -name "$n.svg" -o -name "$n.xpm" \) 2>/dev/null | sort -r | head -1)"
+    [ -n "$f" ] && { echo "$f"; return 0; }
+  fi
   for ext in png svg; do
     for r in "${roots[@]}"; do
       [ -d "$r" ] || continue
@@ -38,6 +45,12 @@ find_one() {
     for d in "${dd[@]}" /usr/share; do
       f="$d/pixmaps/$n.$ext"; [ -f "$f" ] && { echo "$f"; return 0; }
     done
+  done
+  # last: any icon theme on this computer (other themes, odd folder layouts)
+  for r in "${roots[@]}"; do
+    [ -d "$r" ] || continue
+    f="$(find -L "$r" -maxdepth 5 \( -name "$n.png" -o -name "$n.svg" \) 2>/dev/null | head -1)"
+    [ -n "$f" ] && { echo "$f"; return 0; }
   done
   return 0
 }
