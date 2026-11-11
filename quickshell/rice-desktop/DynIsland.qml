@@ -86,8 +86,10 @@ Item {
     onVolChanged: if (ready && !ghost && on("island_volume")) show("volume", 1600)
     onMutedChanged: if (ready && !ghost && on("island_volume")) show("volume", 1600)
     onMicMutedChanged: if (ready && !ghost && on("island_volume")) show("mic", 1600)
-    readonly property bool charging: bar ? bar.charging : false
-    onChargingChanged: if (ready && !ghost && bar && bar.hasBatt && on("island_charge")) show("charge", 2400)
+    // the charger: plugged in or out (UPower's "on battery", which also works when a laptop holds its battery
+    // below full and so never says "charging")
+    readonly property bool plugged: bar ? bar.plugged : false
+    onPluggedChanged: if (ready && !ghost && bar && bar.hasBatt && on("island_charge")) show("charge", 3200)
     readonly property int wsId: bar ? bar.focusedId : 1
     onWsIdChanged: if (ready && !ghost && on("island_ws") && flash !== "volume") show("ws", 1100)
     Connections {
@@ -199,7 +201,7 @@ Item {
         case "volume": case "mic": return 300
         case "ws": return Math.max(190, wsRow.implicitWidth + 40)
         case "rec": return recRow.implicitWidth + 30
-        case "charge": return 300
+        case "charge": return 340
         }
         return idleRow.implicitWidth + 30
     }
@@ -337,24 +339,117 @@ Item {
             }
         }
 
-        // ---------- the charger: plugged in or out, with how full the battery is ----------
+        // ---------- the charger: plugged in or out ----------
+        // plugged in: the bolt pops in with two green rings spreading from it, a glow sweeps through the island,
+        // the bar fills up to the battery level and the number counts up. Unplugged: the bolt drops out, the
+        // battery icon falls in with a small bounce, the bar shows what is left.
         Face {
-            name: "charge"; width: 300; height: isl.bh
+            id: chgFace
+            name: "charge"; width: 340; height: isl.bh
+            readonly property bool on: isl.plugged
+            readonly property color green: "#9be08f"
+            readonly property color tone: on ? green : (isl.bar && isl.bar.battPct <= 15 ? "#ff8a80" : (isl.pal ? isl.pal.primary : "white"))
+            property real fillV: 0          // the bar, 0..1
+            property real shown: 0          // the number
+            property real pop: 1            // the icon's size
+            property real ring: 1           // 0..1: the rings spreading
+            property real sweep: 1          // 0..1: the glow going through
+            onActChanged: if (act) { chgAnim.stop(); chgAnim.start() }
+            readonly property real pct: isl.bar ? isl.bar.battPct : 0
+            onPctChanged: if (!chgAnim.running) { fillV = pct / 100; shown = pct }
+            ParallelAnimation {
+                id: chgAnim
+                SequentialAnimation {
+                    PropertyAction { target: chgFace; property: "pop"; value: 0.2 }
+                    PauseAnimation { duration: 120 }
+                    NumberAnimation { target: chgFace; property: "pop"; to: 1; duration: 520; easing.type: Easing.OutBack; easing.overshoot: 3 }
+                }
+                SequentialAnimation {
+                    PropertyAction { target: chgFace; property: "ring"; value: 0 }
+                    PauseAnimation { duration: 160 }
+                    NumberAnimation { target: chgFace; property: "ring"; to: 1; duration: 1100; easing.type: Easing.OutCubic }
+                }
+                SequentialAnimation {
+                    PropertyAction { target: chgFace; property: "sweep"; value: 0 }
+                    PauseAnimation { duration: 220 }
+                    NumberAnimation { target: chgFace; property: "sweep"; to: 1; duration: 1300; easing.type: Easing.InOutQuad }
+                }
+                SequentialAnimation {
+                    PropertyAction { target: chgFace; property: "fillV"; value: chgFace.on ? 0 : 1 }
+                    PropertyAction { target: chgFace; property: "shown"; value: chgFace.on ? 0 : 100 }
+                    PauseAnimation { duration: 200 }
+                    ParallelAnimation {
+                        NumberAnimation { target: chgFace; property: "fillV"; to: chgFace.pct / 100; duration: 1200; easing.type: Easing.OutCubic }
+                        NumberAnimation { target: chgFace; property: "shown"; to: chgFace.pct; duration: 1200; easing.type: Easing.OutCubic }
+                    }
+                }
+            }
+            // the glow that goes through once (plugged in)
+            Rectangle {
+                visible: chgFace.on && chgFace.sweep > 0 && chgFace.sweep < 1
+                width: 130; height: parent.height - 6; radius: height / 2; y: 3
+                x: -width + (parent.width + width) * chgFace.sweep
+                opacity: Math.sin(Math.PI * chgFace.sweep) * 0.55
+                gradient: Gradient { orientation: Gradient.Horizontal
+                    GradientStop { position: 0; color: "transparent" }
+                    GradientStop { position: 0.5; color: chgFace.green }
+                    GradientStop { position: 1; color: "transparent" } }
+            }
             Row {
                 anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 16
                 spacing: 10
                 Item { width: isl.bh - 10; height: width; anchors.verticalCenter: parent.verticalCenter
-                    Blob { anchors.fill: parent; kind: Look.shape; color: isl.bar && isl.bar.charging ? "#9be08f" : (isl.pal ? isl.pal.container : "#333") }
-                    MIcon { anchors.centerIn: parent; size: 16; filled: true; glyph: ""; name: isl.bar && isl.bar.charging ? "bolt" : "battery_full"
-                        color: isl.bar && isl.bar.charging ? "#0f2a0c" : (isl.pal ? isl.pal.inkContainer : "white") } }
-                WavyLine {
-                    width: parent.width - isl.bh - 48; height: 18; anchors.verticalCenter: parent.verticalCenter
-                    value: isl.bar ? isl.bar.battPct / 100 : 0; moving: isl.bar && isl.bar.charging; handle: false
-                    color: isl.bar && isl.bar.charging ? "#9be08f" : (isl.bar && isl.bar.battPct <= 15 ? "#ff8a80" : (isl.pal ? isl.pal.primary : "white"))
-                    track: isl.pal ? isl.pal.track : "#444"
+                    // two rings spreading out of the icon
+                    Repeater {
+                        model: 2
+                        delegate: Rectangle {
+                            required property int index
+                            readonly property real r: Math.max(0, Math.min(1, chgFace.ring * 1.25 - index * 0.25))
+                            visible: chgFace.on && r > 0 && r < 1
+                            anchors.centerIn: parent
+                            width: parent.width * (1 + 1.6 * r); height: width; radius: width / 2
+                            color: "transparent"; border.width: 2; border.color: chgFace.green
+                            opacity: (1 - r) * 0.8
+                        }
+                    }
+                    Blob { anchors.fill: parent; kind: Look.shape; scale: 0.85 + 0.15 * chgFace.pop
+                        color: chgFace.on ? chgFace.green : (isl.pal ? isl.pal.container : "#333")
+                        Behavior on color { ColorAnimation { duration: 300 } } }
+                    MIcon { anchors.centerIn: parent; size: 16; filled: true; glyph: ""
+                        name: chgFace.on ? "bolt" : (chgFace.pct <= 15 ? "battery_alert" : "battery_full")
+                        scale: chgFace.pop; rotation: (1 - chgFace.pop) * (chgFace.on ? -40 : 25)
+                        color: chgFace.on ? "#0f2a0c" : (isl.pal ? isl.pal.inkContainer : "white") }
                 }
-                Text { width: 30; anchors.verticalCenter: parent.verticalCenter; horizontalAlignment: Text.AlignRight
-                    text: isl.bar ? isl.bar.battPct + "%" : ""; color: isl.pal ? isl.pal.fg : "white"; font.family: Fonts.numbers; font.pixelSize: 13; font.weight: Font.Medium }
+                Column {
+                    width: parent.width - isl.bh - 66; anchors.verticalCenter: parent.verticalCenter
+                    spacing: 4
+                    Text { text: chgFace.on ? (chgFace.pct >= 99 ? Tr.t("Fully charged") : Tr.t("Charging")) : Tr.t("On battery")
+                        color: isl.pal ? isl.pal.fg : "white"; font.family: Fonts.main; font.pixelSize: 12; font.weight: Font.Medium }
+                    Rectangle {
+                        width: parent.width; height: 5; radius: 2.5
+                        color: isl.pal ? isl.pal.track : "#444"
+                        Rectangle {
+                            width: Math.max(height, parent.width * chgFace.fillV); height: parent.height; radius: 2.5; clip: true
+                            color: chgFace.tone
+                            Behavior on color { ColorAnimation { duration: 300 } }
+                            // a light that runs along the bar while it charges
+                            Rectangle {
+                                visible: chgFace.on && chgFace.act
+                                width: 26; height: parent.height; radius: 2.5
+                                property real k: 0
+                                x: -width + (parent.width + width) * k
+                                gradient: Gradient { orientation: Gradient.Horizontal
+                                    GradientStop { position: 0; color: "transparent" }
+                                    GradientStop { position: 0.5; color: Qt.rgba(1, 1, 1, 0.7) }
+                                    GradientStop { position: 1; color: "transparent" } }
+                                NumberAnimation on k { from: 0; to: 1; duration: 1100; loops: Animation.Infinite; running: chgFace.on && chgFace.act }
+                            }
+                        }
+                    }
+                }
+                Text { width: 40; anchors.verticalCenter: parent.verticalCenter; horizontalAlignment: Text.AlignRight
+                    text: Math.round(chgFace.shown) + "%"; color: chgFace.on ? chgFace.green : (isl.pal ? isl.pal.fg : "white")
+                    font.family: Fonts.numbers; font.pixelSize: 14; font.weight: Font.DemiBold }
             }
         }
 

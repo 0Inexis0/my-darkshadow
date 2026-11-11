@@ -263,6 +263,7 @@ PanelWindow {
     readonly property bool hasBatt: batt && batt.isPresent && batt.isLaptopBattery
     readonly property real battPct: batt ? Math.round(batt.percentage * 100) : 0
     readonly property bool charging: batt && (batt.state === UPowerDeviceState.Charging || batt.state === UPowerDeviceState.FullyCharged)
+    readonly property bool plugged: hasBatt && !UPower.onBattery
 
     property var svc: ({})
     Process {

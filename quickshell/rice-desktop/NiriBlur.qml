@@ -81,6 +81,15 @@ Item {
         helper.want = Qt.binding(() => nb.want)
         if (!helper.apply()) { helper.destroy(); helper = null; made = -2 }      // no BackgroundEffect here
     }
+    // a window that was hidden (the launcher, menus) is a new surface for niri when it shows again: the blur
+    // region is sent again, or the window came back without blur
+    Connections {
+        target: nb.win
+        ignoreUnknownSignals: true
+        function onVisibleChanged() { if (nb.win && nb.win.visible && nb.helper) Qt.callLater(nb.reapply) }
+    }
+    onWantChanged: if (want && helper) Qt.callLater(reapply)
+    function reapply() { if (!helper) return; try { helper.clear() } catch (e) { } if (!helper.apply()) { helper.destroy(); helper = null; made = -2 } }
     onWinChanged: if (made !== -2) Qt.callLater(rebuild)
     onCountChanged: if (made !== -2) Qt.callLater(rebuild)
     Component.onCompleted: if (made !== -2) Qt.callLater(rebuild)

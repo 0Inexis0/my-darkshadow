@@ -20,6 +20,9 @@ Item {
     readonly property bool lightBg: pal ? pal.light : false
     readonly property color ink: pal ? pal.fg : "#F6F5F4"
     readonly property color hand: pal ? pal.primary : "#F6F5F4"
+    // frosted like the other widgets when blur is on (Hyprland: its layer rule; niri: the round region below)
+    readonly property bool glass: Look.blur && !Look.flat
+    onGlassChanged: cookie.requestPaint()
     onLightBgChanged: { cookie.requestPaint(); pixel.requestPaint() }
     onHandChanged: { cookie.requestPaint(); pixel.requestPaint() }
 
@@ -59,6 +62,22 @@ Item {
     }
 
     // ---- cookie
+    // niri blurs only behind the cards a widget names (Card.qml): this round one sits just inside the cookie's
+    // waves, so no blur shows outside the shape
+    Rectangle {
+        id: cookieBlur
+        visible: ck.clockStyle === "cookie" && ck.glass
+        anchors.centerIn: cookie
+        width: 212; height: 212; radius: 106
+        readonly property real blurRadius: 106
+        color: "#20000000"
+        opacity: 0
+        property var holderItem: null
+        Component.onCompleted: {
+            for (let p = parent; p; p = p.parent) if (p.widgetHolder === true) { holderItem = p; p.cards = p.cards.concat([this]); break }
+        }
+        Component.onDestruction: if (holderItem) { const me = this; holderItem.cards = holderItem.cards.filter(c => c !== me) }
+    }
     Canvas {
         id: cookie
         visible: ck.clockStyle === "cookie"
@@ -72,7 +91,8 @@ Item {
             const c = getContext("2d")
             c.reset()
             const cx = 125, cy = 125, R = 112
-            c.fillStyle = ck.lightBg ? "rgba(248,248,250,0.85)" : "rgba(44,44,48,0.82)"
+            c.fillStyle = ck.lightBg ? (ck.glass ? "rgba(248,248,250,0.55)" : "rgba(248,248,250,0.85)")
+                                     : (ck.glass ? "rgba(30,30,34,0.5)" : "rgba(44,44,48,0.82)")
             c.beginPath()
             for (let i = 0; i <= 360; i++) {
                 const a = i * Math.PI / 180
