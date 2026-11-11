@@ -1,5 +1,8 @@
 # Changelog
 
+## V4.18: blur behind the bar in the overview (niri)
+- niri: in the overview (Win + Tab) and while workspaces slide, windows pass behind the bar and the island; since V4.15 they showed through it unblurred, like a hole. The bar, the island and the dock blur what is behind them again, windows too (V4.15 had switched them to the shared wallpaper-only blur to save work). The desktop widgets keep the shared blur
+
 ## V4.17: no more overlapping in the bar while you switch workspaces
 - The Dynamic Island: the workspace face and the recording timer (or any two faces) were on top of each other when the modes changed quickly, e.g. scrolling through workspaces while recording. The old face now goes first and the new one comes after it
 - The bar: the window title showed over the buttons next to it (power, notifications ...) while it grew in or folded away when the focus changed. Modules are now cut at their slot while they move
