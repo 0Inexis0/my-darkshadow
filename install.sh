@@ -727,9 +727,37 @@ remember_repo() { mkdir -p "$HOME/.config/rice"; echo "$ROOT" >"$HOME/.config/ri
 remember_version() { mkdir -p "$HOME/.config/rice"; echo "$RICE_VERSION" >"$HOME/.config/rice/version"; }
 first_backup() { mkdir -p "$HOME/.config/rice" "$HOME/.cache/rice"; [ -f "$HOME/.config/rice/.first-backup" ] || echo "$BK" >"$HOME/.config/rice/.first-backup"; }
 
+# old backups pile up with every update (a slow, big ~/.config): keep the first one and the newest two
+prune_backups() {
+  [ "$DRY_RUN" = 1 ] && return 0
+  local first old d
+  first="$(cat "$HOME/.config/rice/.first-backup" 2>/dev/null)"
+  old="$(find "$HOME/.config" -maxdepth 1 -type d \( -name 'darkshadows-shell-backup-*' -o -name 'shadows-shell-backup-*' \) 2>/dev/null | sort | head -n -2)"
+  [ -n "$old" ] || return 0
+  while IFS= read -r d; do
+    [ "$d" = "$first" ] && continue
+    rm -rf "$d"
+  done <<<"$old"
+  return 0
+}
+# the quiet version of those tasks, for updates
+refresh_look() {
+  [ -f "$HOME/.config/waybar/config.jsonc" ] && t "$BIN/waybar-set" distro-icon on
+  [ -x "$BIN/desktop-set" ] && t "$BIN/desktop-set" state
+  [ -x "$BIN/rice-cc" ] && t "$BIN/rice-cc" migrate
+  t "$BIN/rice-notify" apply
+  command -v hyprlock >/dev/null 2>&1 && t "$BIN/rice-lock" apply
+  t "$BIN/rice-rofi" apply
+  [ -x "$BIN/rice-bar" ] && t bash -c "\"$BIN/rice-bar\" migrate && \"$BIN/rice-bar\" start"
+  t "$BIN/rice-hotcorner" apply
+  [ -x "$BIN/desktop-set" ] && t "$BIN/desktop-set" dock-blur
+  [ -x "$BIN/rice-dashboard" ] && t "$BIN/rice-dashboard" blur
+  return 0
+}
 step_finish() {
   local T=25
   task "Remembering your backup folder" first_backup
+  task "Removing old backups (keeps the first and the newest two)" prune_backups
   task "Remembering where this copy lives (for updates)" remember_repo
   task "Version V$RICE_VERSION" remember_version
   { [ "$FAMILY" = arch ] || [ "$FAMILY" = fedora ]; } && task "Power modes (power-profiles-daemon)" ensure_power_modes
@@ -742,16 +770,21 @@ step_finish() {
   grep -v '^nothing to fix$' "$fx" 2>/dev/null | while IFS= read -r line; do note "$line"; done
   rm -f "$fx"
   [ "${WANT[4]:-0}" = 1 ] && have_settings && step_settings
-  [ -f "$HOME/.config/waybar/config.jsonc" ] && task "Waybar: ${DISTRO_NAME} logo" t "$BIN/waybar-set" distro-icon on
-  [ -x "$BIN/desktop-set" ] && task "Desktop widgets settings" t "$BIN/desktop-set" state
-  [ -x "$BIN/rice-cc" ] && task "Notifications shown by the shell (Google-style pop-ups and control center)" t "$BIN/rice-cc" migrate
-  task "Notifications style and blur" t "$BIN/rice-notify" apply
-  command -v hyprlock >/dev/null 2>&1 && task "Lock screen and idle timers" t "$BIN/rice-lock" apply
-  task "Launcher and bar blur" t "$BIN/rice-rofi" apply
-  [ -x "$BIN/rice-bar" ] && task "DarkShadow bar (Waybar stays off)" t bash -c "\"$BIN/rice-bar\" migrate && \"$BIN/rice-bar\" start"
-  task "Hot corner" t "$BIN/rice-hotcorner" apply
-  [ -x "$BIN/desktop-set" ] && task "Dock and widget blur" t "$BIN/desktop-set" dock-blur
-  [ -x "$BIN/rice-dashboard" ] && task "Dashboard blur" t "$BIN/rice-dashboard" blur
+  if [ "$MODE" = update ]; then
+    # an update re-applies your settings quietly: one line instead of ten
+    task "Refreshing your settings (bar, dock, blur, notifications, lock screen)" refresh_look
+  else
+    [ -f "$HOME/.config/waybar/config.jsonc" ] && task "Waybar: ${DISTRO_NAME} logo" t "$BIN/waybar-set" distro-icon on
+    [ -x "$BIN/desktop-set" ] && task "Desktop widgets settings" t "$BIN/desktop-set" state
+    [ -x "$BIN/rice-cc" ] && task "Notifications shown by the shell (Google-style pop-ups and control center)" t "$BIN/rice-cc" migrate
+    task "Notifications style and blur" t "$BIN/rice-notify" apply
+    command -v hyprlock >/dev/null 2>&1 && task "Lock screen and idle timers" t "$BIN/rice-lock" apply
+    task "Launcher and bar blur" t "$BIN/rice-rofi" apply
+    [ -x "$BIN/rice-bar" ] && task "DarkShadow bar (Waybar stays off)" t bash -c "\"$BIN/rice-bar\" migrate && \"$BIN/rice-bar\" start"
+    task "Hot corner" t "$BIN/rice-hotcorner" apply
+    [ -x "$BIN/desktop-set" ] && task "Dock and widget blur" t "$BIN/desktop-set" dock-blur
+    [ -x "$BIN/rice-dashboard" ] && task "Dashboard blur" t "$BIN/rice-dashboard" blur
+  fi
   task "Theme colors for the wallpaper picker" patch_colors
   # last: it must stay the last module Hyprland loads
   [ -x "$BIN/rice-effects" ] && task "Blur, transparency and gaming mode" t "$BIN/rice-effects" apply --no-reload
@@ -858,14 +891,7 @@ if [ "$MODE" = update ]; then
   WANT=(1 0 0 1 1)
   [ "$SKIP_PKGS" = 1 ] && WANT[0]=0
   [ "$FAMILY" = arch ] || [ "$FAMILY" = fedora ] || WANT[0]=0
-  if [ "$ASSUME_YES" != 1 ] && confirm "Also replace your config files (Hyprland, Waybar, ...) with the new ones? Your current ones are backed up."; then
-    WANT[2]=1
-  fi
-  # the first update that brings saved settings: ask once (with --yes yours stay)
-  if have_settings && [ ! -d "$SET_STATE" ] && [ "$ASSUME_YES" != 1 ] && [ "$IS_TTY" = 1 ] &&
-     confirm "Use the settings saved in this copy (Waybar look, dashboard, widgets, hot corner, lock screen)? Yours are backed up."; then
-    TAKE_SETTINGS=1
-  fi
+  # an update asks nothing: your configs and settings stay as they are (--use-saved-settings takes the saved ones)
   MENU_CHOICE=99
 else
 if [ -n "$HAVE_VERSION" ]; then
@@ -897,6 +923,7 @@ if [ "$MENU_CHOICE" = 2 ]; then
   WANT=("${MENU_SEL[@]}")
 fi
 
+if [ "$MODE" != update ]; then
 title "Plan"
 info "Window manager: $(wm_name)"
 [ "${WANT[0]}" = 1 ] && info "Install packages for $DISTRO_NAME"
@@ -907,6 +934,7 @@ info "Window manager: $(wm_name)"
 info "Finish setup (theme, lock screen, notifications, hot corner)"
 note "Files that get replaced are saved in ${BK/#$HOME/~}"
 confirm "Start?" || { warn "Cancelled."; exit 0; }
+fi
 
 STEP_TOTAL=$(( WANT[0] + WANT[1] + WANT[2] + WANT[3] + 1 ))
 n=0
@@ -916,7 +944,7 @@ if [ "${WANT[2]}" = 1 ]; then n=$((n + 1)); step "$n" "Config files" "Your old f
 if [ "${WANT[3]}" = 1 ]; then n=$((n + 1)); step "$n" "Apps and scripts" "Settings app, desktop widgets and the commands behind them"; step_apps
   [ "${WANT[2]}" = 1 ] || task "Hyprland add-ons (keybinds, hot corner)" copy_lua
 fi
-n=$((n + 1)); step "$n" "Finishing" "Theme, lock screen, notifications and hot corner"; step_finish
+n=$((n + 1)); if [ "$MODE" = update ]; then step "$n" "Finishing" "Refreshing and cleaning up"; else step "$n" "Finishing" "Theme, lock screen, notifications and hot corner"; fi; step_finish
 
 # ------------------------------------------------------------------ summary
 miss="$(missing_cmds)"
@@ -954,6 +982,7 @@ if has_niri && [ "$IN_NIRI" = 1 ] && [ "$DRY_RUN" != 1 ]; then
   nerr="$(t niri validate 2>&1 | grep -iE 'error|fail' | head -3 || true)"
   if [ -n "$nerr" ]; then warn "niri reports config errors:"; printf '%s\n' "$nerr" | sed 's/^/        /'; fi
 fi
+if [ "$MODE" != update ]; then
 title "Next"
 if [ "$IN_HYPR" = 1 ] || [ "$IN_NIRI" = 1 ]; then info "Press SUPER + U to open Settings"
 else
@@ -967,6 +996,7 @@ fi
 has_niri && info "niri: SUPER + Tab or the top-left corner shows the overview, SUPER + Shift + / lists the keys"
 info "Touch the bottom-right corner of the screen for the hot corner"
 [ -d "$BK" ] && info "Undo everything:  ./install.sh --restore"
+fi
 note "Full log: $LOG"
 printf '\n'
 # the welcome intro (once): night falls, the moon draws itself in, then Settings opens with a short tour.

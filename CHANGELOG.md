@@ -1,5 +1,9 @@
 # Changelog
 
+## V4.09: a shorter update
+- The update no longer asks questions (your configs and settings stay) and no longer shows the install plan, the "Next" tips or ten separate lines for dashboard, blur, hot corner and so on: one line "Refreshing your settings"
+- Old backups are deleted after each install or update (the first and the newest two stay), so ~/.config stays small and fast
+
 ## V4.08: lint fix
 - GitHub check (ShellCheck) passes again
 
