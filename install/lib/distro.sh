@@ -76,12 +76,12 @@ FEDORA_PKGS=("${FPKG_DESKTOP[@]}" "${FPKG_SHELL[@]}" "${FPKG_TOOLS[@]}" "${FPKG_
 # elogind gives loginctl (suspend, reboot, lock) and seat access, and rice-sys starts PipeWire at login.
 VOID_HYPR_REPO="https://raw.githubusercontent.com/sofijacom/hyprland-void/repository-%s"
 VPKG_HYPR=(hyprland hyprlock hypridle xdg-desktop-portal-hyprland hyprpolkitagent hyprsunset)
-VPKG_BASE=(dbus elogind polkit xdg-desktop-portal xdg-desktop-portal-gtk xdg-utils qt5-wayland qt6-wayland polkit-gnome swayidle)
+VPKG_BASE=(procps-ng findutils dbus elogind polkit xdg-desktop-portal xdg-desktop-portal-gtk xdg-utils qt5-wayland qt6-wayland polkit-gnome swayidle)
 VPKG_SHELL=(quickshell qt6-multimedia Waybar SwayNotificationCenter awww cava kitty fish-shell fastfetch nautilus matugen)
 VPKG_TOOLS=(wf-recorder grim slurp wl-clipboard libnotify xdg-user-dirs jq curl python3 playerctl brightnessctl pamixer
             ImageMagick ffmpeg mpvpaper zenity NetworkManager bluez pipewire wireplumber btop cmatrix peaclock pavucontrol
             gnome-calendar upower power-profiles-daemon tar xz unzip git)
-VPKG_FONTS=(nerd-fonts-symbols-ttf noto-fonts-ttf noto-fonts-emoji font-inter)
+VPKG_FONTS=(fontconfig nerd-fonts-symbols-ttf noto-fonts-ttf noto-fonts-emoji font-inter)
 VPKG_LOOK=(papirus-icon-theme gnome-themes-extra adwaita-icon-theme)
 VPKG_NIRI=(niri xwayland-satellite xdg-desktop-portal-gnome gammastep)
 VOID_PKGS=("${VPKG_BASE[@]}" "${VPKG_SHELL[@]}" "${VPKG_TOOLS[@]}" "${VPKG_FONTS[@]}" "${VPKG_LOOK[@]}")

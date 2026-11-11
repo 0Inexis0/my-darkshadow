@@ -305,13 +305,23 @@ def restart_idle():
                                   capture_output=True, text=True, timeout=10).stdout.strip()
         except Exception:
             main = ""
-        pids = subprocess.run(["pgrep", "-x", "hypridle"], capture_output=True, text=True).stdout.split()
+        try:
+            pids = subprocess.run(["pgrep", "-x", "hypridle"], capture_output=True, text=True).stdout.split()
+        except Exception:
+            pids = []
         for pid in pids:
             if pid != main:
                 subprocess.run(["kill", pid], **q)
     else:
-        subprocess.run(["pkill", "-x", "hypridle"], **q)
-        subprocess.Popen(["hypridle"], start_new_session=True, **q)
+        # no systemd (Void) or a minimal system without pkill: every step may be missing, none may stop the update
+        try:
+            subprocess.run(["pkill", "-x", "hypridle"], **q)
+        except Exception:
+            pass
+        try:
+            subprocess.Popen(["hypridle"], start_new_session=True, **q)
+        except Exception:
+            pass
 
 
 def apply(c):

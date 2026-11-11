@@ -1,5 +1,9 @@
 # Changelog
 
+## V4.13: Void fixes from the first test
+- The lock screen and idle timers step no longer fails on a system without `pkill` or systemd (found on Void)
+- Void: `procps-ng`, `findutils` and `fontconfig` are installed with the rest, so the font check and process tools work on a minimal system
+
 ## V4.12: installer as root (containers, VMs), minimal systems
 - Run as root on purpose (`SHADOWS_ALLOW_ROOT=1`, a container or a VM): sudo is no longer called, so "sudo: PAM error" does not stop the package step
 - A minimal system without `find`, `sort` or `tar` (a Void container): the installer installs them first, or says what is missing instead of copying 0 scripts
