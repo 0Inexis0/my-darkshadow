@@ -1,5 +1,8 @@
 # Changelog
 
+## V4.16: a rounder charger animation
+- The charger glow and the light on the bar are round with soft ends (the square edges came from Qt ignoring the corner radius of a gradient); the rings stay inside the island; unplugging shows your level at once instead of counting down from 100
+
 ## V4.15: niri blur fixes, smoother niri, charger animation
 - **Charger animation** in the Dynamic Island: plug in and a green bolt pops in with two rings spreading out, a glow goes through the island, the bar fills up to your battery level and the number counts up; unplug and the battery icon drops in. It now follows "on battery" from UPower, so it also shows on laptops that keep the battery below full
 - niri: the **launcher** (and menus) blur again after the first time they open (the blur was lost when the window was shown again)

@@ -375,8 +375,8 @@ Item {
                     NumberAnimation { target: chgFace; property: "sweep"; to: 1; duration: 1300; easing.type: Easing.InOutQuad }
                 }
                 SequentialAnimation {
-                    PropertyAction { target: chgFace; property: "fillV"; value: chgFace.on ? 0 : 1 }
-                    PropertyAction { target: chgFace; property: "shown"; value: chgFace.on ? 0 : 100 }
+                    PropertyAction { target: chgFace; property: "fillV"; value: chgFace.on ? 0 : chgFace.pct / 100 }
+                    PropertyAction { target: chgFace; property: "shown"; value: chgFace.on ? 0 : chgFace.pct }
                     PauseAnimation { duration: 200 }
                     ParallelAnimation {
                         NumberAnimation { target: chgFace; property: "fillV"; to: chgFace.pct / 100; duration: 1200; easing.type: Easing.OutCubic }
@@ -384,16 +384,24 @@ Item {
                     }
                 }
             }
-            // the glow that goes through once (plugged in)
-            Rectangle {
+            // the glow that goes through once: drawn as a round, soft-ended pill (a Rectangle with a gradient
+            // ignores its radius and showed square ends), then only moved
+            Canvas {
+                id: glow
                 visible: chgFace.on && chgFace.sweep > 0 && chgFace.sweep < 1
-                width: 130; height: parent.height - 6; radius: height / 2; y: 3
-                x: -width + (parent.width + width) * chgFace.sweep
-                opacity: Math.sin(Math.PI * chgFace.sweep) * 0.55
-                gradient: Gradient { orientation: Gradient.Horizontal
-                    GradientStop { position: 0; color: "transparent" }
-                    GradientStop { position: 0.5; color: chgFace.green }
-                    GradientStop { position: 1; color: "transparent" } }
+                width: 110; height: parent.height - 12; y: 6
+                x: 8 + (parent.width - 16 - width) * chgFace.sweep
+                opacity: Math.sin(Math.PI * chgFace.sweep) * 0.8
+                onPaint: {
+                    const c = getContext("2d"); c.reset()
+                    const w = width, h = height, r = h / 2
+                    c.beginPath(); c.moveTo(r, 0); c.lineTo(w - r, 0); c.arc(w - r, r, r, -Math.PI / 2, Math.PI / 2)
+                    c.lineTo(r, h); c.arc(r, r, r, Math.PI / 2, Math.PI * 1.5); c.closePath(); c.clip()
+                    const g = c.createLinearGradient(0, 0, w, 0)
+                    g.addColorStop(0, "rgba(155,224,143,0)"); g.addColorStop(0.5, "rgba(155,224,143,0.85)"); g.addColorStop(1, "rgba(155,224,143,0)")
+                    c.fillStyle = g; c.fillRect(0, 0, w, h)
+                }
+                Component.onCompleted: requestPaint()
             }
             Row {
                 anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 16
@@ -407,9 +415,9 @@ Item {
                             readonly property real r: Math.max(0, Math.min(1, chgFace.ring * 1.25 - index * 0.25))
                             visible: chgFace.on && r > 0 && r < 1
                             anchors.centerIn: parent
-                            width: parent.width * (1 + 1.6 * r); height: width; radius: width / 2
+                            width: parent.width * (1 + 0.32 * r); height: width; radius: width / 2
                             color: "transparent"; border.width: 2; border.color: chgFace.green
-                            opacity: (1 - r) * 0.8
+                            opacity: (1 - r) * 0.9
                         }
                     }
                     Blob { anchors.fill: parent; kind: Look.shape; scale: 0.85 + 0.15 * chgFace.pop
@@ -435,13 +443,11 @@ Item {
                             // a light that runs along the bar while it charges
                             Rectangle {
                                 visible: chgFace.on && chgFace.act
-                                width: 26; height: parent.height; radius: 2.5
+                                width: 16; height: parent.height; radius: height / 2
                                 property real k: 0
-                                x: -width + (parent.width + width) * k
-                                gradient: Gradient { orientation: Gradient.Horizontal
-                                    GradientStop { position: 0; color: "transparent" }
-                                    GradientStop { position: 0.5; color: Qt.rgba(1, 1, 1, 0.7) }
-                                    GradientStop { position: 1; color: "transparent" } }
+                                x: (parent.width - width) * k
+                                color: "white"
+                                opacity: Math.sin(Math.PI * k) * 0.55
                                 NumberAnimation on k { from: 0; to: 1; duration: 1100; loops: Animation.Infinite; running: chgFace.on && chgFace.act }
                             }
                         }
