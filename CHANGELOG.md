@@ -1,5 +1,8 @@
 # Changelog
 
+## V4.14: Void badge
+- The README shows Void Linux next to Arch, CachyOS, Fedora and NixOS
+
 ## V4.13: Void fixes from the first test
 - The lock screen and idle timers step no longer fails on a system without `pkill` or systemd (found on Void)
 - Void: `procps-ng`, `findutils` and `fontconfig` are installed with the rest, so the font check and process tools work on a minimal system
