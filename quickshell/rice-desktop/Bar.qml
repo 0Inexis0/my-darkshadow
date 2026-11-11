@@ -730,6 +730,9 @@ PanelWindow {
                     visible: k > 0.01
                     width: (full + zone.sp) * k
                     height: bar.barH
+                    // a wide module (the window title) is centered in a slot that is still narrow while it grows in
+                    // or folds away: it showed over the buttons beside it. Clipped while the slot is not full.
+                    clip: k < 0.995
                     opacity: Math.min(1, k * 1.4)
                     scale: 0.7 + 0.3 * k
                     HoverHandler { id: sh; enabled: slot.lay }

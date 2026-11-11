@@ -1,5 +1,9 @@
 # Changelog
 
+## V4.17: no more overlapping in the bar while you switch workspaces
+- The Dynamic Island: the workspace face and the recording timer (or any two faces) were on top of each other when the modes changed quickly, e.g. scrolling through workspaces while recording. The old face now goes first and the new one comes after it
+- The bar: the window title showed over the buttons next to it (power, notifications ...) while it grew in or folded away when the focus changed. Modules are now cut at their slot while they move
+
 ## V4.16: a rounder charger animation
 - The charger glow and the light on the bar are round with soft ends (the square edges came from Qt ignoring the corner radius of a gradient); the rings stay inside the island; unplugging shows your level at once instead of counting down from 100
 

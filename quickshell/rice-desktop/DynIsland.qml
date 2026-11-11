@@ -206,6 +206,12 @@ Item {
         return idleRow.implicitWidth + 30
     }
     readonly property string pillMode: mode
+    // the face that is shown in the pill. When the mode changes the old face goes first and the new one comes
+    // after it, so two faces (workspace and recording timer, say) are never on top of each other, however fast
+    // the modes change (scrolling through workspaces while recording)
+    property string faceNow: pillMode
+    onPillModeChanged: { faceNow = ""; swapT.restart() }
+    Timer { id: swapT; interval: 70; onTriggered: isl.faceNow = isl.pillMode }
     property color fill: pal ? pal.surface : "#141414"
     property bool flatRest: false
     property real areaW: 1920                    // how wide the bar is (the card stays inside it)
@@ -878,7 +884,7 @@ Item {
         id: fc
         property string name: ""
         property bool inCard: false
-        readonly property bool act: inCard ? (isl.big && isl.cardMode === name) : isl.pillMode === name
+        readonly property bool act: inCard ? (isl.big && isl.cardMode === name) : isl.faceNow === name
         x: Math.round((parent.width - width) / 2)
         y: isl.down ? 0 : Math.round(parent.height - height)
         // it comes in once the shape has (nearly) grown to it, so it is never seen cut
@@ -888,8 +894,8 @@ Item {
         enabled: act
         // the old face leaves first, then the new one comes in (they never show on top of each other)
         Behavior on opacity { SequentialAnimation {
-            PauseAnimation { duration: fc.act ? 80 : 0 }
-            NumberAnimation { target: fc; property: "opacity"; duration: fc.act ? 200 : 80; easing.type: Easing.Linear } } }
+            PauseAnimation { duration: fc.act ? 20 : 0 }
+            NumberAnimation { target: fc; property: "opacity"; duration: fc.act ? 170 : 60; easing.type: Easing.Linear } } }
         Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.decel } }
     }
     // a small equalizer: round bars in your key color that bounce while music plays
