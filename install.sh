@@ -58,6 +58,20 @@ if [ "$(id -u)" = 0 ] && [ -z "${SHADOWS_ALLOW_ROOT:-}" ]; then
   exit 1
 fi
 
+# running as root on purpose (SHADOWS_ALLOW_ROOT: a container, a VM): there is nothing to ask sudo for
+if [ "$(id -u)" = 0 ]; then
+  sudo() { while [ "${1:-}" = -n ] || [ "${1:-}" = -v ] || [ "${1:-}" = -E ]; do [ "$1" = -v ] && return 0; shift; done; "$@"; }
+fi
+# find, sort and friends: a minimal image (a Void container) can lack them
+for c in find sort tar; do
+  command -v "$c" >/dev/null 2>&1 && continue
+  if command -v xbps-install >/dev/null 2>&1; then
+    [ "$DRY_RUN" = 1 ] || { echo "installing findutils, coreutils and tar first"; sudo xbps-install -y findutils coreutils tar >/dev/null 2>&1; }
+  fi
+  command -v "$c" >/dev/null 2>&1 || [ "$DRY_RUN" = 1 ] || { fail "$c is missing. Install findutils, coreutils and tar, then run ./install.sh again."; exit 1; }
+  break
+done
+
 STAMP="$(date +%Y%m%d-%H%M%S)"
 BK="$HOME/.config/darkshadows-shell-backup-$STAMP"
 LOG="${TMPDIR:-/tmp}/darkshadows-shell-install-$STAMP.log"

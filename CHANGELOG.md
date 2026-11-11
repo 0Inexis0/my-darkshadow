@@ -1,5 +1,9 @@
 # Changelog
 
+## V4.12: installer as root (containers, VMs), minimal systems
+- Run as root on purpose (`SHADOWS_ALLOW_ROOT=1`, a container or a VM): sudo is no longer called, so "sudo: PAM error" does not stop the package step
+- A minimal system without `find`, `sort` or `tar` (a Void container): the installer installs them first, or says what is missing instead of copying 0 scripts
+
 ## V4.11: Void Linux support
 - **Void Linux** (no systemd): `./install.sh` installs everything with xbps. Quickshell, niri, awww, matugen and the tools come from Void's own repositories; Hyprland (with Lua) from the hyprland-void binary repository, which the installer adds (when it cannot, niri is set up instead). glibc and musl, x86_64 and aarch64
 - runit services are turned on for you: D-Bus, elogind, Bluetooth, power modes, and NetworkManager only when nothing else manages your network
