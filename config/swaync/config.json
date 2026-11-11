@@ -60,7 +60,7 @@
       "actions": [
         {
           "label": "󰐥",
-          "command": "systemctl poweroff"
+          "command": "$HOME/.local/bin/rice-sys poweroff"
         },
         {
           "label": "󰌾",

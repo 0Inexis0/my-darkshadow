@@ -1,5 +1,12 @@
 # Changelog
 
+## V4.11: Void Linux support
+- **Void Linux** (no systemd): `./install.sh` installs everything with xbps. Quickshell, niri, awww, matugen and the tools come from Void's own repositories; Hyprland (with Lua) from the hyprland-void binary repository, which the installer adds (when it cannot, niri is set up instead). glibc and musl, x86_64 and aarch64
+- runit services are turned on for you: D-Bus, elogind, Bluetooth, power modes, and NetworkManager only when nothing else manages your network
+- PipeWire with WirePlumber and the PulseAudio bridge starts at login without systemd
+- New `rice-sys`: sleep, restart, shut down, lock and Keep Awake work with and without systemd (loginctl from elogind), in the power menu, the lock screen, notifications and the idle timers
+- Settings > Look & Feel installs shells and terminals with xbps on Void; package count in the system info counts xbps packages
+
 ## V4.10: README and installer text cleaned up
 - The README and the installer no longer mention the dashboard and the hot corner (both are long gone from the shell)
 

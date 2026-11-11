@@ -29,10 +29,10 @@ PanelWindow {
 
     readonly property var items: [
         { key: "lock", label: Tr.t("Lock"), icon: "lock", glyph: 0xF033E, cmd: "\"$HOME/.local/bin/rice-power\" lock", ask: false },
-        { key: "suspend", label: Tr.t("Sleep"), icon: "bedtime", glyph: 0xF0904, cmd: "\"$HOME/.local/bin/rice-power\" lock; sleep 0.6; systemctl suspend", ask: false },
+        { key: "suspend", label: Tr.t("Sleep"), icon: "bedtime", glyph: 0xF0904, cmd: "\"$HOME/.local/bin/rice-power\" lock; sleep 0.6; \"$HOME/.local/bin/rice-sys\" suspend", ask: false },
         { key: "logout", label: Tr.t("Log out"), icon: "logout", glyph: 0xF0343, cmd: "\"$HOME/.local/bin/logout\"", ask: true },
-        { key: "reboot", label: Tr.t("Restart"), icon: "restart_alt", glyph: 0xF0709, cmd: "systemctl reboot", ask: true },
-        { key: "poweroff", label: Tr.t("Shut down"), icon: "power_settings_new", glyph: 0xF0425, cmd: "systemctl poweroff", ask: true }
+        { key: "reboot", label: Tr.t("Restart"), icon: "restart_alt", glyph: 0xF0709, cmd: "\"$HOME/.local/bin/rice-sys\" reboot", ask: true },
+        { key: "poweroff", label: Tr.t("Shut down"), icon: "power_settings_new", glyph: 0xF0425, cmd: "\"$HOME/.local/bin/rice-sys\" poweroff", ask: true }
     ]
     function run(it) {
         if (it.ask && armed !== it.key) { armed = it.key; Sfx.play("click"); disarm.restart(); return }

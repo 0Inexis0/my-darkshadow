@@ -184,7 +184,9 @@ wm_name() { case "$WM" in niri) echo "niri" ;; both) echo "Hyprland and niri" ;;
 # the packages for that choice: niri's are added; niri alone leaves Hyprland itself (and its portal) out
 wm_packages() {
   local p keep=()
+  if has_hypr; then VOID_PKGS+=("${VPKG_HYPR[@]}"); fi
   if has_niri; then
+    VOID_PKGS+=("${VPKG_NIRI[@]}")
     ARCH_PKGS+=("${PKG_NIRI[@]}"); FEDORA_PKGS+=("${FPKG_NIRI[@]}"); FEDORA_COPRS+=("$FEDORA_NIRI_COPR")
     NEED_CMDS+=(niri xwayland-satellite)
   fi
@@ -275,6 +277,7 @@ flavor_notes() {
     garuda)      note "Garuda: Arch based, paru is used for the AUR packages." ;;
     manjaro)     warn "Manjaro holds packages back for weeks. Hyprland may be older than 0.55 (the Lua config needs 0.55): CachyOS or EndeavourOS work better." ;;
     nobara)      note "Nobara: Fedora based, the Fedora steps below are used." ;;
+    void)        note "Void: no systemd (runit + elogind). Packages come from Void's repositories; Hyprland from the hyprland-void repository." ;;
   esac
 }
 
@@ -303,6 +306,40 @@ install_yay() {
   local rc=$?
   rm -rf "$d"
   return $rc
+}
+
+# Void: the binary repository for this computer (x86_64, aarch64; glibc or musl)
+void_repo_url() {
+  local a; a="$(xbps-uhelper arch 2>/dev/null || uname -m)"
+  case "$a" in *-musl) a="${a%-musl}-musl" ;; *) a="$a-glibc" ;; esac
+  # shellcheck disable=SC2059
+  printf "$VOID_HYPR_REPO\n" "$a"
+}
+void_add_hypr_repo() {
+  echo "repository=$(void_repo_url)" | sudo tee /etc/xbps.d/hyprland-void.conf >/dev/null || return 1
+  # the repository's key is accepted once (xbps asks for it on the first sync)
+  { yes || true; } | sudo xbps-install -S || { sudo rm -f /etc/xbps.d/hyprland-void.conf; return 1; }
+  xbps-query -R hyprland >/dev/null 2>&1 || { sudo rm -f /etc/xbps.d/hyprland-void.conf; return 1; }
+}
+# PipeWire on Void: WirePlumber and pipewire-pulse start from PipeWire's config; rice-sys starts PipeWire at login
+void_pipewire() {
+  sudo mkdir -p /etc/pipewire/pipewire.conf.d
+  local f
+  for f in /usr/share/examples/wireplumber/10-wireplumber.conf /usr/share/examples/pipewire/20-pipewire-pulse.conf; do
+    [ -f "$f" ] && sudo ln -sf "$f" "/etc/pipewire/pipewire.conf.d/$(basename "$f")"
+  done
+  return 0
+}
+# runit: a service runs when its folder is linked into /var/service. NetworkManager only when nothing else
+# manages the network (dhcpcd, wpa_supplicant, iwd, connman): two of them fight over the connection.
+void_sv() { [ -d "/etc/sv/$1" ] || return 0; [ -e "/var/service/$1" ] && return 0; sudo ln -s "/etc/sv/$1" /var/service/ && echo "started: $1"; }
+void_services() {
+  local s other=0
+  for s in dbus elogind bluetoothd; do void_sv "$s"; done
+  if ! command -v tlp >/dev/null 2>&1 && ! command -v auto-cpufreq >/dev/null 2>&1; then void_sv power-profiles-daemon; fi
+  for s in dhcpcd wpa_supplicant iwd connmand; do [ -e "/var/service/$s" ] && other=1; done
+  if [ "$other" = 0 ]; then void_sv NetworkManager; else echo "network: kept your network service (NetworkManager not started)"; fi
+  return 0
 }
 
 step_packages() {
@@ -409,6 +446,41 @@ step_packages() {
         task "Turning on power modes (power-profiles-daemon)" sudo systemctl enable --now power-profiles-daemon.service
       fi
       rpm -q bluez >/dev/null 2>&1 && task "Turning on the Bluetooth service" sudo systemctl enable --now bluetooth.service
+      ;;
+    void)
+      sudo_keepalive || return 0
+      if [ "$DRY_RUN" = 1 ]; then
+        has_hypr && info "would add the Hyprland repository: $(void_repo_url)"
+        info "would install ${#VOID_PKGS[@]} packages: ${VOID_PKGS[*]}"; return 0
+      fi
+      task "Updating xbps first" sudo xbps-install -Syu xbps
+      task "Updating your system first" sudo xbps-install -yu
+      if has_hypr; then
+        if task "Adding the Hyprland repository (hyprland-void)" void_add_hypr_repo; then
+          ok "Hyprland repository added: /etc/xbps.d/hyprland-void.conf"
+        else
+          warn "The Hyprland repository could not be added: niri (in Void's own repositories) is set up instead"
+          WM=niri; VOID_PKGS=("${VOID_PKGS[@]/#hypr*/}"); VOID_PKGS=("${VOID_PKGS[@]/#xdg-desktop-portal-hyprland/}")
+          VOID_PKGS+=("${VPKG_NIRI[@]}"); NEED_CMDS=("${NEED_CMDS[@]/#Hyprland/}"); NEED_CMDS+=(niri xwayland-satellite)
+        fi
+      fi
+      local have=() absent=() p
+      for p in "${VOID_PKGS[@]}"; do
+        [ -n "$p" ] || continue
+        if xbps-query -R "$p" >/dev/null 2>&1 || xbps-query "$p" >/dev/null 2>&1; then have+=("$p"); else absent+=("$p"); fi
+      done
+      note "${#have[@]} packages to install${absent[0]:+, not in your repositories: ${absent[*]}}"
+      if ! task "Installing ${#have[@]} packages: desktop, shell, tools and fonts" sudo xbps-install -y "${have[@]}"; then
+        warn "Installing them together failed, trying one by one"
+        local failed=()
+        for p in "${have[@]}"; do
+          xbps-query "$p" >/dev/null 2>&1 && continue
+          task "  $p" sudo xbps-install -y "$p" || failed+=("$p")
+        done
+        [ "${#failed[@]}" -gt 0 ] && warn "Could not install: ${failed[*]} (see $LOG)"
+      fi
+      task "Sound: PipeWire with WirePlumber and the PulseAudio bridge" void_pipewire
+      task "Services: D-Bus, elogind, Bluetooth, power modes (runit)" void_services
       ;;
     nixos)
       info "NixOS installs packages from your system configuration, not from this script."
@@ -687,8 +759,14 @@ ensure_power_modes() {
               sudo -n pacman -S --needed --noconfirm power-profiles-daemon || return 0 ;;
       fedora) sudo -n true 2>/dev/null || { echo "power-profiles-daemon: needs sudo, skipped"; return 0; }
               rpm -q tuned-ppd >/dev/null 2>&1 || sudo -n dnf install -y power-profiles-daemon || return 0 ;;
+      void)   sudo -n true 2>/dev/null || { echo "power-profiles-daemon: needs sudo, skipped"; return 0; }
+              sudo -n xbps-install -y power-profiles-daemon || return 0 ;;
       *) echo "power-profiles-daemon: install it with your package manager"; return 0 ;;
     esac
+  fi
+  if [ "$FAMILY" = void ]; then
+    [ -d /etc/sv/power-profiles-daemon ] && [ ! -e /var/service/power-profiles-daemon ] && sudo -n ln -s /etc/sv/power-profiles-daemon /var/service/
+    echo "power modes: on"; return 0
   fi
   if systemctl list-unit-files power-profiles-daemon.service >/dev/null 2>&1 &&
      ! systemctl is-enabled power-profiles-daemon.service >/dev/null 2>&1; then
@@ -760,7 +838,7 @@ step_finish() {
   task "Removing old backups (keeps the first and the newest two)" prune_backups
   task "Remembering where this copy lives (for updates)" remember_repo
   task "Version V$RICE_VERSION" remember_version
-  { [ "$FAMILY" = arch ] || [ "$FAMILY" = fedora ]; } && task "Power modes (power-profiles-daemon)" ensure_power_modes
+  { [ "$FAMILY" = arch ] || [ "$FAMILY" = fedora ] || [ "$FAMILY" = void ]; } && task "Power modes (power-profiles-daemon)" ensure_power_modes
   task "Window manager: $(wm_name)" remember_wm
   task "Graphics card (NVIDIA cursor)" write_gpu
   task "Loading the shell's modules in Hyprland" wire_hypr
@@ -890,7 +968,7 @@ fi
 if [ "$MODE" = update ]; then
   WANT=(1 0 0 1 1)
   [ "$SKIP_PKGS" = 1 ] && WANT[0]=0
-  [ "$FAMILY" = arch ] || [ "$FAMILY" = fedora ] || WANT[0]=0
+  [ "$FAMILY" = arch ] || [ "$FAMILY" = fedora ] || [ "$FAMILY" = void ] || WANT[0]=0
   # an update asks nothing: your configs and settings stay as they are (--use-saved-settings takes the saved ones)
   MENU_CHOICE=99
 else
@@ -991,6 +1069,7 @@ else
     both) info "Log out and pick Hyprland or niri on the login screen (TTY: Hyprland or niri-session)" ;;
     *)    info "Log out and pick Hyprland on the login screen (or type Hyprland on a TTY)" ;;
   esac
+  [ "$FAMILY" = void ] && note "Void without a login screen: start it from the TTY with  dbus-run-session $([ "$WM" = niri ] && echo niri --session || echo Hyprland)"
   info "Then press SUPER + U to open Settings"
 fi
 has_niri && info "niri: SUPER + Tab or the top-left corner shows the overview, SUPER + Shift + / lists the keys"
@@ -1011,7 +1090,7 @@ if [ "$DRY_RUN" != 1 ]; then
     if [ "$ASSUME_YES" != 1 ] && [ "$IS_TTY" = 1 ] && confirm_no "Reboot now?"; then
       info "Rebooting..."
       sleep 1
-      systemctl reboot || sudo systemctl reboot || warn "Could not reboot. Reboot yourself to finish."
+      "$ROOT/bin/rice-sys" reboot || warn "Could not reboot. Reboot yourself to finish."
     else
       note "Reboot (or log out and back in) when you are ready."
     fi

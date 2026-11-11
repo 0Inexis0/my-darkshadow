@@ -121,6 +121,8 @@ def distro():
         return "fedora"
     if "debian" in ids or "ubuntu" in ids:
         return "debian"
+    if "void" in ids.split():
+        return "void"
     return "other"
 
 
@@ -635,7 +637,7 @@ def apply_all(c, force_fetch=False):
 
 # ---------------------------------------------------------------- install / open
 
-PKGS = {"arch": {"wezterm": "wezterm", "ghostty": "ghostty"},
+PKGS = {"arch": {"wezterm": "wezterm", "ghostty": "ghostty"}, "void": {"fish": "fish-shell"},
         "fedora": {"ghostty": "ghostty", "wezterm": "wezterm"}}
 
 
@@ -656,6 +658,8 @@ def install(name):
         s = 'echo "Installing %s ..."; sudo dnf install -y %s' % (name, pkg)
     elif d == "debian":
         s = 'echo "Installing %s ..."; sudo apt install -y %s' % (name, pkg)
+    elif d == "void":
+        s = 'echo "Installing %s ..."; sudo xbps-install -y %s' % (name, pkg)
     elif d == "nixos":
         s = ('echo "On NixOS, add %s to your configuration:"; echo; echo "  environment.systemPackages = [ pkgs.%s ];"; '
              'echo; echo "then: sudo nixos-rebuild switch"' % (name, pkg))

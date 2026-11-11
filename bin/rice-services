@@ -243,16 +243,16 @@ def session(what):
         else:
             run(["loginctl", "lock-session"])
     elif what == "suspend":
-        run(["systemctl", "suspend"], 10)
+        run([HOME + "/.local/bin/rice-sys", "suspend"], 10)
     elif what == "logout":
         if confirm("Log out?"):
             run([os.path.expanduser("~/.local/bin/rice-wm"), "exit"])      # Hyprland or niri
     elif what == "reboot":
         if confirm("Restart?"):
-            run(["systemctl", "reboot"], 10)
+            run([HOME + "/.local/bin/rice-sys", "reboot"], 10)
     elif what == "poweroff":
         if confirm("Shut down?"):
-            run(["systemctl", "poweroff"], 10)
+            run([HOME + "/.local/bin/rice-sys", "poweroff"], 10)
     else:
         sys.exit("session: lock|suspend|logout|reboot|poweroff")
 

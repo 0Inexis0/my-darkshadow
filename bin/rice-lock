@@ -251,8 +251,8 @@ def lock_text(c):
 
     if c["power"]:
         logout = BIN + "/logout" if os.access(BIN + "/logout", os.X_OK) else BIN + "/rice-wm exit"
-        icons = [(chr(0xF0343), logout), (chr(0xF0425), "systemctl poweroff"),
-                 (chr(0xF0904), "systemctl suspend"), (chr(0xF0709), "systemctl reboot")]
+        icons = [(chr(0xF0343), logout), (chr(0xF0425), "$HOME/.local/bin/rice-sys poweroff"),
+                 (chr(0xF0904), "$HOME/.local/bin/rice-sys suspend"), (chr(0xF0709), "$HOME/.local/bin/rice-sys reboot")]
         for i, (g, cmd) in enumerate(icons):
             x = (X + i * 90) if left else (-135 + i * 90)
             out.append(label("<span>%s </span>" % g, 30, ys["power"], rgba(WHITE, 0.6), mainf, x=x, onclick=cmd))
@@ -284,7 +284,7 @@ def idle_text(c):
         out.append("# screen off\nlistener {\n    timeout = %d\n    on-timeout = %s off\n    on-resume = %s on\n}"
                    % (c["screen_off_after"] * 60, sc, sc))
     if c["suspend_after"] > 0:
-        out.append("# sleep\nlistener {\n    timeout = %d\n    on-timeout = systemctl suspend\n}" % (c["suspend_after"] * 60))
+        out.append("# sleep\nlistener {\n    timeout = %d\n    on-timeout = $HOME/.local/bin/rice-sys suspend\n}" % (c["suspend_after"] * 60))
     return "\n\n".join(out) + "\n"
 
 

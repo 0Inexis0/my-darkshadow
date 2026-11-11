@@ -519,9 +519,9 @@ FocusScope {
                 armed = ""
                 if (!lv.isPreview) Quickshell.execDetached(["bash", "-c", cmd])
             }
-            Power { k: "suspend"; icon: "bedtime"; label: "Sleep"; onHit: pwr.act(k, "systemctl suspend") }
-            Power { k: "reboot"; icon: "restart_alt"; label: "Restart"; onHit: pwr.act(k, "systemctl reboot") }
-            Power { k: "poweroff"; icon: "power_settings_new"; label: "Shut down"; red: true; onHit: pwr.act(k, "systemctl poweroff") }
+            Power { k: "suspend"; icon: "bedtime"; label: "Sleep"; onHit: pwr.act(k, "\"$HOME/.local/bin/rice-sys\" suspend") }
+            Power { k: "reboot"; icon: "restart_alt"; label: "Restart"; onHit: pwr.act(k, "\"$HOME/.local/bin/rice-sys\" reboot") }
+            Power { k: "poweroff"; icon: "power_settings_new"; label: "Shut down"; red: true; onHit: pwr.act(k, "\"$HOME/.local/bin/rice-sys\" poweroff") }
         }
     }
 

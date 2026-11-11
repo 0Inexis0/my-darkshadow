@@ -68,6 +68,8 @@ def install_cmd():
     d = distro()
     if "arch" in d:
         return "sudo pacman -S --needed clamav && sudo freshclam"
+    if "void" in d.split():
+        return "sudo xbps-install -y clamav && sudo freshclam"
     if "fedora" in d or "rhel" in d:
         return "sudo dnf install clamav clamav-update && sudo freshclam"
     if "debian" in d or "ubuntu" in d:

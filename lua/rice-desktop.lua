@@ -1,5 +1,7 @@
 -- starts the desktop widgets, dock, hot corner and welcome screen (DarkShadow's Shell)
 hl.on("hyprland.start", function()
+    -- without systemd (Void): PipeWire and the password prompt agent are started here
+    hl.exec_cmd(os.getenv("HOME") .. "/.local/bin/rice-sys session")
     hl.exec_cmd(os.getenv("HOME") .. "/.local/bin/rice-desktop start")
     -- your cursor from Settings > Cursors (Bibata Modern Ice by default)
     hl.exec_cmd(os.getenv("HOME") .. "/.local/bin/rice-cursor restore")

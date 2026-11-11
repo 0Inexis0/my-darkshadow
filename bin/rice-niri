@@ -661,6 +661,8 @@ def startup(f, s):
         # the session knows it runs niri (portals, xdg-desktop-autostart)
         "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP NIRI_SOCKET DISPLAY 2>/dev/null; "
         "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP NIRI_SOCKET DISPLAY 2>/dev/null",
+        # without systemd (Void): PipeWire and the password prompt agent
+        b + "rice-sys session",
         "awww-daemon",
         b + "rice-notifyd",
         "hypridle",

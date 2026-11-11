@@ -63,13 +63,14 @@ The bar, the welcome window and Settings show **your distro's logo** automatical
 | **CachyOS** | new in V2.70 | `./install.sh` (Arch based: its repositories and `paru` are used) |
 | **EndeavourOS, Garuda** | Arch route | `./install.sh` |
 | **Fedora, Nobara** | new in V2.60 | `./install.sh` (COPR for Hyprland and Quickshell) |
+| **Void Linux** | new in V4.11 | `./install.sh` (no systemd: runit + elogind; Hyprland from the [hyprland-void](https://github.com/sofijacom/hyprland-void) repository, niri from Void's own) |
 | **Bazzite, Silverblue** | commands only | the installer prints the `rpm-ostree` steps |
 | **Manjaro** | may not work | its packages are held back, Hyprland can be older than 0.55 |
 
-CachyOS and Fedora support is new: if something does not install, open an issue with the installer log and it gets fixed fast.
+Void, CachyOS and Fedora support is new: if something does not install, open an issue with the installer log and it gets fixed fast.
 
 ### Hyprland or niri
-The shell runs on **Hyprland** and on **niri** (the scrollable-tiling window manager), on every system above. The installer asks which one you want (or both, then you pick one on the login screen); `./install.sh --wm=niri` skips the question.
+The shell runs on **Hyprland** and on **niri** (the scrollable-tiling window manager), on every system above. Hyprland is set up by default; `./install.sh --wm=niri` sets up niri, `--wm=both` both (then you pick one on the login screen).
 
 On niri everything works the same: the bar, the island, workspaces, widgets, dock, launcher, lock screen, Settings and its sliders (gaps, borders, corners, shadows, blur, animation styles, keyboard, monitors, your keybinds and autostart). The shell writes `~/.config/niri/config.kdl` for you (`rice-niri`) and checks it with `niri validate`, so it fits your niri version; your own niri settings go in `~/.config/niri/user.kdl` and always win. Blur needs niri 26.04 or newer. niri extras: `SUPER + Tab` (or the top-left corner) shows the overview, `SUPER + Shift + /` lists every key, and windows sit in columns (`SUPER + R` changes the width, `SUPER + F` maximizes, `SUPER + [` / `]` takes a window in or out of a column).
 
