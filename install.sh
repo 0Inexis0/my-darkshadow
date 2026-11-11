@@ -341,7 +341,7 @@ step_packages() {
             local want="${HELPER_ARG:-yay}"
             [ "${#need[@]}" -gt 0 ] && note "The shell needs these from the AUR: ${need[*]}, so $want is set up for them"
             info "Building $want (AUR helper). Its output is shown below."
-            if install_$want; then ok "$want is installed"; helper=$want; else fail "$want could not be built"; fi
+            if "install_$want"; then ok "$want is installed"; helper=$want; else fail "$want could not be built"; fi
           else
             note "No AUR helper: skipping ${AUR_PKGS[*]} (not needed; ./install.sh --aur gets them)"
             AUR_PKGS=()

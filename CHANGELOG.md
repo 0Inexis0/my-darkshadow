@@ -1,5 +1,8 @@
 # Changelog
 
+## V4.08: lint fix
+- GitHub check (ShellCheck) passes again
+
 ## V4.07: no cursor on CachyOS, AUR helper choice, no WM question
 - **Cursor fix**: the installer gave the cursor setup only 10 seconds, which cut off the Bibata download, so some computers (CachyOS) had no cursor. It now has 120 seconds, finds the theme under any spelling of its folder name, and falls back to a working theme
 - `rice-cursor doctor` (or `./install.sh --doctor`): prints what is installed (themes, yay, paru, session) to paste, and repairs the cursor
