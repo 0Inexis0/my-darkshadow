@@ -12,7 +12,7 @@ HAVE_VERSION="$(tr -d ' \r\n' 2>/dev/null <"$HOME/.config/rice/version" || true)
 # shellcheck source=install/lib/distro.sh
 . "$ROOT/install/lib/distro.sh"
 
-ASSUME_YES=0; DRY_RUN=0; MODE=install; SKIP_PKGS=0; PULLED=0; TAKE_SETTINGS_ARG=0; WM_ARG=""; AUR_ARG=""
+ASSUME_YES=0; DRY_RUN=0; MODE=install; SKIP_PKGS=0; PULLED=0; TAKE_SETTINGS_ARG=0; WM_ARG=""; AUR_ARG=""; HELPER_ARG=""; DOCTOR=0
 usage() {
   cat <<U
 DarkShadow's Shell installer V$RICE_VERSION
@@ -23,7 +23,9 @@ Usage: ./install.sh [options]
       --no-packages  skip the package step
       --update       get the newest version and update apps, scripts and packages (keeps your configs)
       --use-saved-settings  take the settings saved in this copy (settings/) even where you changed yours
-      --wm=hyprland|niri|both   the window manager to set up (asked otherwise; both: pick one at login)
+      --wm=hyprland|niri|both   the window manager to set up (default: Hyprland; both: pick one at login)
+      --helper=yay|paru   Arch: the AUR helper to use (or build yay); default: the one you have, paru first
+      --doctor       check cursor theme, AUR helper and session, print a report to paste and repair the cursor
       --aur          Arch: get yay and every AUR package (without it: only when the shell needs one)
       --no-aur       Arch: never build yay; AUR packages are skipped (the cursor and fonts come from GitHub)
       --no-input-group  do not join the input group (Infinite Desktop: SUPER + ALT + mouse then stays off)
@@ -43,6 +45,8 @@ for a in "$@"; do
     --wm=hyprland|--wm=niri|--wm=both) WM_ARG="${a#--wm=}" ;;
     --aur) AUR_ARG=yes ;;
     --no-aur) AUR_ARG=no ;;
+    --helper=yay|--helper=paru) HELPER_ARG="${a#--helper=}" ;;
+    --doctor) DOCTOR=1 ;;
     --no-input-group) NO_INPUT=1 ;;
     -h|--help) usage; exit 0 ;;
     *) fail "Unknown option: $a"; usage; exit 2 ;;
@@ -274,7 +278,21 @@ flavor_notes() {
   esac
 }
 
-aur_helper() { command -v paru >/dev/null 2>&1 && { echo paru; return; }; command -v yay >/dev/null 2>&1 && echo yay; return 0; }
+aur_helper() {
+  if [ -n "$HELPER_ARG" ]; then command -v "$HELPER_ARG" >/dev/null 2>&1 && echo "$HELPER_ARG"; return 0; fi
+  command -v paru >/dev/null 2>&1 && { echo paru; return; }; command -v yay >/dev/null 2>&1 && echo yay; return 0
+}
+# paru from the AUR the same way yay is built
+install_paru() {
+  local d rc
+  d="$(mktemp -d)"
+  sudo pacman -S --needed --noconfirm git base-devel rust &&
+  timeout 120 git clone --depth 1 https://aur.archlinux.org/paru-bin.git "$d/paru-bin" &&
+  (cd "$d/paru-bin" && makepkg -si --noconfirm --needed)
+  rc=$?
+  rm -rf "$d"
+  return $rc
+}
 
 install_yay() {
   local d
@@ -319,10 +337,11 @@ step_packages() {
           for p in "${AUR_PKGS[@]}"; do
             case " ${AUR_NEEDED[*]} " in *" $p "*) need+=("$p") ;; esac
           done
-          if [ "$AUR_ARG" = yes ] || { [ "$AUR_ARG" != no ] && [ "${#need[@]}" -gt 0 ]; }; then
-            [ "${#need[@]}" -gt 0 ] && note "The shell needs these from the AUR: ${need[*]}, so yay is set up for them"
-            info "Building yay (AUR helper). Its output is shown below."
-            if install_yay; then ok "yay is installed"; helper=yay; else fail "yay could not be built"; fi
+          if [ "$AUR_ARG" = yes ] || [ -n "$HELPER_ARG" ] || { [ "$AUR_ARG" != no ] && [ "${#need[@]}" -gt 0 ]; }; then
+            local want="${HELPER_ARG:-yay}"
+            [ "${#need[@]}" -gt 0 ] && note "The shell needs these from the AUR: ${need[*]}, so $want is set up for them"
+            info "Building $want (AUR helper). Its output is shown below."
+            if install_$want; then ok "$want is installed"; helper=$want; else fail "$want could not be built"; fi
           else
             note "No AUR helper: skipping ${AUR_PKGS[*]} (not needed; ./install.sh --aur gets them)"
             AUR_PKGS=()
@@ -430,8 +449,9 @@ set_look() {
     curl -fsSL -m 120 "https://github.com/ful1e5/Bibata_Cursor/releases/latest/download/$theme.tar.xz" |
       tar -xJ -C "$HOME/.local/share/icons" 2>/dev/null || echo "could not download the $theme cursor"
   fi
+  # a theme folder that has no cursors inside (a broken package) is no theme: rice-cursor gets a working one
   [ -f "$HOME/.config/rice/cursor.json" ] || { mkdir -p "$HOME/.config/rice"; echo '{"theme": "Bibata-Modern-Ice", "size": 24}' >"$HOME/.config/rice/cursor.json"; }
-  [ -x "$ROOT/bin/rice-cursor" ] && T=10 t "$ROOT/bin/rice-cursor" restore
+  [ -x "$ROOT/bin/rice-cursor" ] && T=120 t "$ROOT/bin/rice-cursor" restore
   # Nautilus opens folders
   command -v xdg-mime >/dev/null 2>&1 && [ -f /usr/share/applications/org.gnome.Nautilus.desktop ] &&
     xdg-mime default org.gnome.Nautilus.desktop inode/directory
@@ -795,8 +815,16 @@ flavor_notes
 if [ "$IN_HYPR" = 1 ]; then kv "Session" "Hyprland is running (changes apply right away)"
 elif [ "$IN_NIRI" = 1 ]; then kv "Session" "niri is running (changes apply right away)"
 else kv "Session" "no Hyprland or niri running here (changes apply at next login)"; fi
-if [ "$FAMILY" = arch ]; then h="$(aur_helper)"; kv "AUR" "${h:-none yet (yay can be installed for you)}"; fi
+if [ "$FAMILY" = arch ]; then h="$(aur_helper)"; kv "AUR" "${h:-no yay or paru yet (one can be installed for you: --helper=yay or --helper=paru)}"; fi
 [ "$DRY_RUN" = 1 ] && warn "Dry run: nothing will be changed."
+if [ "$DOCTOR" = 1 ]; then
+  title "Check"
+  kv "Hyprland" "$(command -v Hyprland || echo not found)"; kv "niri" "$(command -v niri || echo not found)"
+  for h in paru yay; do kv "$h" "$(command -v $h || echo not installed)"; done
+  [ -n "$HELPER_ARG" ] && kv "Chosen helper" "$HELPER_ARG"
+  if [ -x "$ROOT/bin/rice-cursor" ]; then "$ROOT/bin/rice-cursor" doctor; elif command -v rice-cursor >/dev/null 2>&1; then rice-cursor doctor; fi
+  exit 0
+fi
 [ "$MODE" = restore ] && do_restore
 
 if [ "$MODE" = update ]; then
@@ -856,21 +884,8 @@ WANT=(1 1 1 1 1)
 TAKE_SETTINGS=1     # a fresh install takes the saved settings (yours are backed up)
 fi
 [ "$TAKE_SETTINGS_ARG" = 1 ] && TAKE_SETTINGS=1
-# Hyprland, niri or both: asked on a new install (the one that runs now comes first), kept on updates
+# Hyprland by default (what runs now, or what was set up before, is kept); --wm=niri or --wm=both for others
 WM="${WM_ARG:-$(wm_guess)}"
-if [ -z "$WM_ARG" ] && [ "$MODE" != update ] && [ "$IS_TTY" = 1 ] && [ "$ASSUME_YES" != 1 ]; then
-  case "$WM" in niri) WM_ORDER=(niri hyprland both) ;; both) WM_ORDER=(both hyprland niri) ;; *) WM_ORDER=(hyprland niri both) ;; esac
-  WM_OPTS=()
-  for w in "${WM_ORDER[@]}"; do
-    case "$w" in
-      hyprland) WM_OPTS+=("Hyprland|dynamic tiling, the shell's first home") ;;
-      niri) WM_OPTS+=("niri|scrollable tiling: windows in columns you scroll through") ;;
-      both) WM_OPTS+=("Both|pick one on the login screen, the shell works on each") ;;
-    esac
-  done
-  menu_select "Which window manager?" "${WM_OPTS[@]}"
-  WM="${WM_ORDER[$MENU_CHOICE]}"
-fi
 wm_packages
 if [ "$MENU_CHOICE" = 2 ]; then
   menu_multi "Choose what to install" \

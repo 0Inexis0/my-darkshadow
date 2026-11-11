@@ -1,5 +1,11 @@
 # Changelog
 
+## V4.07: no cursor on CachyOS, AUR helper choice, no WM question
+- **Cursor fix**: the installer gave the cursor setup only 10 seconds, which cut off the Bibata download, so some computers (CachyOS) had no cursor. It now has 120 seconds, finds the theme under any spelling of its folder name, and falls back to a working theme
+- `rice-cursor doctor` (or `./install.sh --doctor`): prints what is installed (themes, yay, paru, session) to paste, and repairs the cursor
+- `./install.sh --helper=yay` or `--helper=paru`: choose the AUR helper (paru is used first when you have it; it can be built too)
+- The installer no longer asks "Which window manager?": Hyprland is set up (or what you had). niri: `./install.sh --wm=niri` or `--wm=both`
+
 ## V4.06: tray icons are back
 - Tray icons (Spotify, Discord, Steam ...) show again: since V4.05 the icons of apps that bring their own icon folder were not found, which left an empty spot in the tray. Their folder is now searched first, then every icon theme, and an app without any icon gets a plain app icon instead of a gap
 

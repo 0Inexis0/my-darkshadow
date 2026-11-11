@@ -5,6 +5,7 @@
   rice-cursor set THEME [SIZE]      use a theme everywhere (Hyprland, GTK 3/4, XWayland apps)
   rice-cursor size SIZE             change only the size
   rice-cursor restore               apply the saved choice again (runs at login)
+  rice-cursor doctor                report what is missing (themes, AUR helper) and repair it
   rice-cursor get PACK|all          download a cursor pack into ~/.local/share/icons (see PACKS)
 
 Hyprcursor themes (Hyprland's own format: manifest.hl + .hlc files) work too. Apps that only
@@ -322,6 +323,13 @@ def apply(c):
     theme, size = c["theme"], c["size"]
     ts = themes()
     t = ts.get(theme)
+    if t is None:
+        # another spelling of the same folder (bibata-modern-ice, Bibata_Modern_Ice from some packages)
+        norm = lambda x: re.sub(r"[^a-z0-9]", "", x.lower())
+        same = [k for k in ts if norm(k) == norm(theme) and ts[k]["dir"]]
+        if same:
+            theme = same[0]
+            t = ts[theme]
     if (t is None and theme.startswith("Bibata-")) or not any(x["dir"] for x in ts.values()):
         # the cursor theme is missing (or there is none at all): get Bibata first
         if get_bibata(theme if theme.startswith("Bibata-") else "Bibata-Modern-Ice"):
@@ -352,6 +360,42 @@ def apply(c):
         run([HOME + "/.local/bin/rice-niri", "apply"])
     else:
         run(["hyprctl", "setcursor", hypr, str(size)])
+
+
+def doctor(c):
+    """a report to paste when there is no cursor, then the repair (apply again, Bibata from GitHub when none is here)"""
+    def sh(*cmd):
+        try:
+            return subprocess.run(cmd, capture_output=True, text=True, timeout=10).stdout.strip() or "-"
+        except Exception as e:
+            return "(%s)" % e
+    print("== rice-cursor doctor ==")
+    print("saved:       %s %s  (%s)" % (c["theme"], c["size"], CFG if os.path.isfile(CFG) else "no cursor.json yet"))
+    print("session:     %s  hypr=%s niri=%s" % (os.environ.get("XDG_CURRENT_DESKTOP", "?"),
+          "yes" if os.environ.get("HYPRLAND_INSTANCE_SIGNATURE") else "no", "yes" if os.environ.get("NIRI_SOCKET") else "no"))
+    print("env:         XCURSOR_THEME=%s XCURSOR_SIZE=%s" % (os.environ.get("XCURSOR_THEME", "-"), os.environ.get("XCURSOR_SIZE", "-")))
+    for h in ("paru", "yay"):
+        print("%-12s %s" % (h + ":", shutil.which(h) or "not installed"))
+    if shutil.which("pacman"):
+        print("pacman:      " + sh("sh", "-c", "pacman -Qq | grep -i -E 'bibata|cursor' | tr '\\n' ' '"))
+    print("theme dirs:")
+    for d in DIRS:
+        if os.path.isdir(d):
+            for n in sorted(os.listdir(d)):
+                p = os.path.join(d, n)
+                if "bibata" in n.lower() or os.path.isdir(os.path.join(p, "cursors")) or os.path.isfile(os.path.join(p, "manifest.hl")):
+                    n_cur = len(os.listdir(os.path.join(p, "cursors"))) if os.path.isdir(os.path.join(p, "cursors")) else 0
+                    print("  %-44s cursors=%d%s" % (p, n_cur, "  (no cursors inside: broken)" if n_cur == 0 and not manifest(p) else ""))
+    ts = themes()
+    print("usable:      %s" % (", ".join(sorted(ts)) or "none"))
+    if shutil.which("hyprctl") and os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"):
+        print("hyprland:    " + sh("hyprctl", "getoption", "cursor:enable_hyprcursor"))
+    print("-- repair --")
+    apply(c)
+    ts = themes()
+    now = ts.get(c["theme"]) and c["theme"] or xfallback(ts)
+    print("applied:     %s %s%s" % (now, c["size"], "" if ts.get(c["theme"]) else "  (the saved theme is not on this computer: another one is used)"))
+    print("If there is still no cursor: log out and in once, and paste this report.")
 
 
 def packs_db():
@@ -477,6 +521,8 @@ def main(a):
         apply(c)
     elif cmd == "restore":
         apply(c)
+    elif cmd == "doctor":
+        doctor(c)
     else:
         sys.stderr.write(__doc__)
         sys.exit(1)
