@@ -1,5 +1,13 @@
 # Changelog
 
+## V4.21: the bar on the left or right edge, done properly
+- The styles work on a side bar too: dynamic and islands give a pill for each zone (top, middle, bottom), pills one for each module, island one pill, flat the whole edge (before, every style was one long joined pill)
+- The launcher on a side bar shows your distro's logo again (and the black hole or the moon), like on the top bar
+- Wi-Fi, Bluetooth, sound and power open beside a side bar, level with their icon (before, they opened up at the top, far from it)
+- The clock on a side bar works: a click opens the island's Today card (calendar, weather) at the top of the screen
+- The bar slides in when it moves to another edge and slides out of the old one (Hyprland and niri); top and bottom too
+- No second, odd Wi-Fi or Bluetooth icon in the tray of a side bar (nm-applet and blueman are hidden when the bar shows Wi-Fi and Bluetooth itself, as on the top bar)
+
 ## V4.20: menus blur sooner, colors in the sound menu, faster scrolling
 - niri: the Wi-Fi, Bluetooth, sound and power menus, the control center, the game bar and the wallpaper picker were see-through for half a second after opening and only then turned blurred; the blur now comes in as soon as the menu has nearly arrived
 - The sound menu has your theme color: the sliders, their knobs, the chosen output and microphone and the icon (all white before)

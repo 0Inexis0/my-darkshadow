@@ -29,6 +29,11 @@ PanelWindow {
 
     // ---------- data ----------
     property real cx: 0
+    // the bar on the left or right edge (VBar.qml): the menu opens beside the bar, level with the icon (cy)
+    property real cy: -1
+    readonly property bool side: bc.position === "left" || bc.position === "right"
+    readonly property bool atRight: bc.position === "right"
+    readonly property real sideSpace: (bc.enabled === false ? 34 : (bc.height ? bc.height + 4 : 42)) + (bc.style === "flat" ? 0 : 16) + 8
     property bool radio: true
     property var nets: []
     property var known: ({})
@@ -118,7 +123,7 @@ PanelWindow {
     function rescan() { Quickshell.execDetached(["nmcli", "dev", "wifi", "rescan"]); refreshTimer.interval = 1800; refreshTimer.restart() }
 
     // ---------- opening and closing ----------
-    function show(x) {
+    function show(x, y) { cy = (y === undefined || isNaN(y)) ? -1 : y;
         cx = x
         msg = ""; askFor = ""
         barProc.running = true
@@ -129,8 +134,8 @@ PanelWindow {
     Trigger {
         name: "wifi-open"
         onFired: function(o) {
-            const x = parseFloat(o.split(" ")[1])
-            if (wm.open) wm.hide(); else wm.show(isNaN(x) ? wm.width - 200 : x)
+            const x = parseFloat(o.split(" ")[1]), yv = parseFloat(o.split(" ")[2])
+            if (wm.open) wm.hide(); else wm.show(isNaN(x) ? wm.width - 200 : x, yv)
         }
     }
 
@@ -155,15 +160,19 @@ PanelWindow {
         width: wm.cardW
         height: head.height + 14 + wm.listH + (wm.msg !== "" ? 34 : 0) + 14
         Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-        x: Math.max(12, Math.min(wm.width - width - 12, wm.cx - width / 2))
-        y: wm.atBottom ? wm.height - wm.barSpace - height : wm.barSpace
+        x: wm.side ? (wm.atRight ? wm.width - wm.sideSpace - width : wm.sideSpace)
+                     : Math.max(12, Math.min(wm.width - width - 12, wm.cx - width / 2))
+        y: wm.side ? Math.max(12, Math.min(wm.height - height - 12, (wm.cy < 0 ? wm.height / 2 : wm.cy) - 30))
+                     : (wm.atBottom ? wm.height - wm.barSpace - height : wm.barSpace)
         radius: 20
         color: wm.bg
         border.width: 1; border.color: wm.line
         opacity: Math.min(1, wm.et * 1.6)
         scale: 0.9 + 0.1 * wm.et
-        transformOrigin: wm.atBottom ? Item.Bottom : Item.Top
-        transform: Translate { y: (1 - wm.et) * (wm.atBottom ? 26 : -26) }
+        transformOrigin: wm.side ? (wm.atRight ? Item.Right : Item.Left) : (wm.atBottom ? Item.Bottom : Item.Top)
+        // it comes out of the bar: down from a top bar, up from a bottom one, sideways from a bar on the side
+        transform: Translate { x: wm.side ? (1 - wm.et) * (wm.atRight ? 26 : -26) : 0
+                               y: wm.side ? 0 : (1 - wm.et) * (wm.atBottom ? 26 : -26) }
         focus: true
         Keys.onEscapePressed: wm.hide()
         MouseArea { anchors.fill: parent }

@@ -24,6 +24,12 @@ PanelWindow {
     // no bar.json yet (a fresh install or an update) = on. On the left or right edge VBar.qml is the bar instead
     readonly property bool vertical: bc.position === "left" || bc.position === "right"
     readonly property bool on: bc.enabled !== false && !vertical
+    // the bar on the left or right edge (VBar.qml): this window stays for the island's cards only (the clock on the
+    // side bar opens the island's Today card here, at the top), without the bar itself
+    readonly property bool ghostOnly: bc.enabled !== false && vertical
+    // the bar itself: 1 shown .. 0 gone (it fades when the bar moves to a side edge, and back)
+    property real barK: on ? 1 : 0
+    Behavior on barK { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
     // the style asked for; the bar fades and settles into it (sty follows want once the old look has gone)
     readonly property string want: bc.style === "google" || bc.style === undefined ? "dynamic"
         : (bc.style === "flat" || bc.style === "islands" || bc.style === "pills" || bc.style === "notch" || bc.style === "island" ? bc.style : "dynamic")
@@ -34,11 +40,17 @@ PanelWindow {
         if (!styReady) { sty = want; return }
         if (want !== sty) styAnim.restart()
     }
-    Timer { running: true; interval: 1200; onTriggered: { bar.sty = bar.want; bar.styReady = true } }
+    // top or bottom: a move to the other edge plays out the same way (it goes, moves, comes back)
+    readonly property bool wantBottom: bc.position === "bottom"
+    onWantBottomChanged: {
+        if (!styReady) { atBottom = wantBottom; return }
+        if (wantBottom !== atBottom) styAnim.restart()
+    }
+    Timer { running: true; interval: 1200; onTriggered: { bar.sty = bar.want; bar.atBottom = bar.wantBottom; bar.styReady = true } }
     SequentialAnimation {
         id: styAnim
         NumberAnimation { target: bar; property: "swap"; to: 1; duration: 170; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.accel }
-        ScriptAction { script: bar.sty = bar.want }
+        ScriptAction { script: { bar.sty = bar.want; bar.atBottom = bar.wantBottom } }
         PauseAnimation { duration: 60 }
         NumberAnimation { target: bar; property: "swap"; to: 0; duration: 520; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.decel }
     }
@@ -54,7 +66,7 @@ PanelWindow {
     readonly property bool shadowOn: bc.shadow !== false && Look.shadows && Look.shadowBar
     // auto-hide: shown while the pointer is on it (and a moment after it leaves)
     property bool peek: false
-    readonly property bool shownBar: !hideOn || peek
+    readonly property bool shownBar: !hideOn || peek || !on
     Timer { id: leaveT; interval: 700; onTriggered: bar.peek = false }
     readonly property bool island: sty === "island"
     readonly property bool floating: sty !== "flat"
@@ -70,7 +82,7 @@ PanelWindow {
     readonly property bool hasIsland: on && laid(lay, "island")
     property Item islSlot: null                 // where the island sits in its zone
     readonly property bool islAlone: ["left", "center", "right"].some(function(z) { const m = lay[z] || []; return m.length === 1 && m[0] === "island" })
-    readonly property bool atBottom: bc.position === "bottom"
+    property bool atBottom: false
     readonly property int barH: bc.height ? bc.height : 38
     // tray icons: Settings > DarkShadow bar > Tray icon size (never taller than the bar)
     readonly property int traySize: Math.min(barH - 8, bc.tray_size ? bc.tray_size : 18)
@@ -136,15 +148,15 @@ PanelWindow {
     }
 
     // ---------- the window ----------
-    visible: on
+    visible: on || ghostOnly || barK > 0.01
     color: "transparent"
     anchors { top: !atBottom; bottom: atBottom; left: true; right: true }
     // room below for the recording island; windows only keep away from the bar itself
     implicitHeight: barH + gap * 2 + 460      // room for the island's cards (the bar lets the pointer through there)
-    exclusionMode: hideOn ? ExclusionMode.Ignore : ExclusionMode.Normal
-    exclusiveZone: hideOn ? 0 : barH + gap * 2
+    exclusionMode: hideOn || !on ? ExclusionMode.Ignore : ExclusionMode.Normal
+    exclusiveZone: hideOn || !on ? 0 : barH + gap * 2
     // only the bar (and the recording island) take the pointer; auto-hide: only a thin strip at the edge
-    mask: Region { item: bar.shownBar ? hitBar : hitStrip; Region { item: hitRec } Region { item: hitIsl } Region { item: hitMenu } }
+    mask: Region { item: !bar.on ? hitNone : (bar.shownBar ? hitBar : hitStrip); Region { item: hitRec } Region { item: hitIsl } Region { item: hitMenu } }
     Item { id: hitMenu; x: bar.gap + trayMenu.x; y: body.y + trayMenu.y; width: trayMenu.visible ? trayMenu.width : 0; height: trayMenu.height }
     // a card of the island or the tray menu is open: Esc, a click on the desktop (shell.qml) or another window closes it
     readonly property bool sticky: isl.sticky || trayMenu.open
@@ -157,6 +169,7 @@ PanelWindow {
     Item { id: hitBar; width: parent.width; height: bar.barH + bar.gap * 2; y: bar.atBottom ? parent.height - height : 0 }
     Item { id: hitRec; x: recIsland.x + bar.gap; width: recIsland.width; height: bar.recOn && bar.shownBar ? 54 : 0; y: bar.atBottom ? 0 : bar.barH + bar.gap * 2 }
     Item { id: hitAll; anchors.fill: parent }
+    Item { id: hitNone; width: 0; height: 0 }
     Item { id: hitStrip; width: parent.width; height: 3; y: bar.atBottom ? parent.height - 3 : 0 }
     // niri: blur behind the bar's backgrounds, the island, its card and the tray menu (Hyprland: a layer rule).
     // These follow the island and its card in window coordinates, so the blur moves with them.
@@ -165,11 +178,12 @@ PanelWindow {
         width: isl.cardShown ? isl.cardItem.width : 0; height: isl.cardItem.height }
     NiriBlur {
         win: bar
-        on: bar.on && bar.shownBar && bar.swap < 0.05
+        on: (bar.on || bar.ghostOnly) && bar.shownBar && bar.swap < 0.05
         readonly property var parts: {
             const l = [], r = []
             const pill = bar.barH / 2
-            if (bar.sty === "island" || bar.sty === "flat") { l.push(bodyBg); r.push(bar.sty === "island" ? pill : 0) }
+            if (!bar.on) { }
+            else if (bar.sty === "island" || bar.sty === "flat") { l.push(bodyBg); r.push(bar.sty === "island" ? pill : 0) }
             else if (bar.notch) { l.push(notchBody); r.push(notchBg.corner) }
             else if (body.soft) {
                 for (const z of [zl, zc, zr]) if (z.any && !z.onlyIsland) { l.push(z); r.push(pill) }
@@ -275,7 +289,7 @@ PanelWindow {
     Timer { id: svcAgain; interval: 700; onTriggered: if (!svcProc.running) svcProc.running = true }
 
     property var now: new Date()
-    Timer { interval: bc.seconds === true ? 1000 : 15000; running: bar.on; repeat: true; triggeredOnStart: true; onTriggered: bar.now = new Date() }
+    Timer { interval: bc.seconds === true ? 1000 : 15000; running: bar.on || bar.ghostOnly; repeat: true; triggeredOnStart: true; onTriggered: bar.now = new Date() }
     function two(n) { return n < 10 ? "0" + n : "" + n }
     readonly property string days: "SunMonTueWedThuFriSat"
     readonly property string months: "JanFebMarAprMayJunJulAugSepOctNovDec"
@@ -753,11 +767,11 @@ PanelWindow {
         x: bar.gap; y: bar.atBottom ? bar.height - bar.barH - bar.gap : bar.gap
         width: parent.width - 2 * bar.gap
         height: bar.barH
-        opacity: (bar.on && bar.shownBar ? 1 : 0) * (1 - bar.swap)
+        opacity: (bar.shownBar ? 1 : 0) * (1 - bar.swap)
         Behavior on opacity { enabled: !styAnim.running; NumberAnimation { duration: 240 } }
         transform: [Scale { origin.x: body.width / 2; origin.y: bar.atBottom ? body.height : 0; xScale: 1 - 0.035 * bar.swap; yScale: 1 - 0.2 * bar.swap },
                     Translate { y: (bar.atBottom ? 8 : -8) * bar.swap }, Translate {
-            y: !bar.on ? (bar.atBottom ? 12 : -12) : (bar.shownBar ? 0 : (bar.atBottom ? 1 : -1) * (bar.barH + bar.gap * 2 + 4))
+            y: !bar.on && !bar.ghostOnly ? (bar.atBottom ? 12 : -12) : (bar.shownBar ? 0 : (bar.atBottom ? 1 : -1) * (bar.barH + bar.gap * 2 + 4))
             Behavior on y { NumberAnimation { duration: 360; easing.type: bar.shownBar ? Easing.OutBack : Easing.InCubic; easing.overshoot: 0.8 } }
         }]
 
@@ -765,7 +779,8 @@ PanelWindow {
         Rectangle {
             id: bodyBg
             anchors.fill: parent
-            visible: bar.sty === "island" || bar.sty === "flat"
+            visible: (bar.sty === "island" || bar.sty === "flat") && bar.barK > 0.01
+            opacity: bar.barK
             radius: bar.sty === "island" ? height / 2 : 0
             color: bar.bg
             border.width: bar.sty === "island" ? 1 : 0
@@ -796,7 +811,8 @@ PanelWindow {
             model: bar.shadowOn ? (bar.sty === "island" ? [body] : (bar.sty === "islands" || bar.goo ? [zl, zc, zr] : [])) : []
             delegate: Item {
                 readonly property var src: modelData
-                visible: src.visible !== false && src.width > 0 && src.onlyIsland !== true
+                visible: src.visible !== false && src.width > 0 && src.onlyIsland !== true && bar.barK > 0.01
+                opacity: bar.barK
                 x: src === body ? 0 : src.x; y: (src === body ? 0 : src.y) + 3
                 width: src.width; height: bar.barH
                 Rectangle { anchors.fill: parent; anchors.margins: -1; radius: height / 2; color: Qt.rgba(0, 0, 0, 0.18) }
@@ -810,7 +826,8 @@ PanelWindow {
         // ---------- notch background (and its shadow) ----------
         NotchShape {
             id: notchBg
-            visible: bar.notch
+            visible: bar.notch && bar.barK > 0.01
+            opacity: bar.barK
             flip: bar.atBottom
             width: Math.round(2 * body.nHalf) + 2 * ear + 40
             height: bar.barH + bar.gap
@@ -820,19 +837,19 @@ PanelWindow {
             shadow: bar.shadowOn
         }
 
-        Zone { id: zl; mods: bar.lay.left || []; soft: body.soft
+        Zone { id: zl; mods: bar.lay.left || []; soft: body.soft; opacity: bar.barK; visible: bar.barK > 0.01
             x: bar.notch ? body.nX : body.edge; y: 0 }
-        Zone { id: zc; mods: bar.lay.center || []; soft: body.soft
+        Zone { id: zc; mods: bar.lay.center || []; soft: body.soft; opacity: bar.barK; visible: bar.barK > 0.01
             x: Math.round(bar.notch ? body.nX + (zl.any ? zl.width + body.ngap : 0) : (body.width - width) / 2); y: 0 }
-        Zone { id: zr; mods: bar.lay.right || []; soft: body.soft
+        Zone { id: zr; mods: bar.lay.right || []; soft: body.soft; opacity: bar.barK; visible: bar.barK > 0.01
             x: bar.notch ? body.nX + body.nW - width : body.width - width - body.edge; y: 0 }
 
         // ---------- dynamic: the island in the middle ----------
         DynIsland {
             id: isl
             // without the island module only its cards show (the clock, SUPER + ALT + D, notifications stay pop-ups)
-            visible: bar.on
-            ghost: !(bar.hasIsland && bar.islSlot !== null)
+            visible: bar.on || bar.ghostOnly
+            ghost: !bar.on || !(bar.hasIsland && bar.islSlot !== null)
             bar: bar
             pal: gp
             nf: bar.nf

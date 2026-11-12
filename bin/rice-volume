@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # rice-volume up|down|mute|mic   the volume keys (the shell shows how loud it is)
-# rice-volume menu [X]           open the sound menu under the bar (X: where the icon is, pixels from the left)
+# rice-volume menu [X [Y]]       open the sound menu under the bar (X: where the icon is, from the left; Y: from the top, for a bar on the side)
 step=5
 case "${1:-}" in
   up|down|mute|mic)
@@ -22,7 +22,7 @@ case "${1:-}" in
   menu)
     if pgrep -f "quickshell/rice-desktop" >/dev/null 2>&1; then
       mkdir -p "$HOME/.cache/rice"
-      printf '%s %s\n' "$(date +%s.%N)" "${2:-0}" >"$HOME/.cache/rice/volume-open"
+      printf '%s %s\n' "$(date +%s.%N)" "${2:-0} ${3:-}" >"$HOME/.cache/rice/volume-open"
     else
       exec pavucontrol
     fi ;;

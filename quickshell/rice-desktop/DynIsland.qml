@@ -131,7 +131,7 @@ Item {
             if (p.length >= 2) { isl.wCond = p[0].trim(); isl.wTemp = p[1].trim().replace(/^\+/, ""); isl.wPlace = (p[2] || "").trim() } } }
     }
     onInfoOpenChanged: if (infoOpen && !wProc.running) wProc.running = true
-    Timer { interval: 1800000; repeat: true; triggeredOnStart: true; running: isl.visible && !isl.ghost && isl.cfg.island_weather !== false
+    Timer { interval: 1800000; repeat: true; triggeredOnStart: true; running: isl.visible && (!isl.ghost || isl.infoOpen) && isl.cfg.island_weather !== false
         onTriggered: if (!wProc.running) wProc.running = true }
     function wGlyph(c) {
         const s = String(c).toLowerCase()

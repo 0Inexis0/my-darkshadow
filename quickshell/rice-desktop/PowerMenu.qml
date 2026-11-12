@@ -24,6 +24,11 @@ PanelWindow {
     readonly property bool atBottom: bc.position === "bottom"
     readonly property real barSpace: (bc.enabled === false ? 34 : (bc.height ? bc.height : 38)) + (bc.style === "flat" ? 0 : 16) + 8
     property real cx: 0
+    // the bar on the left or right edge (VBar.qml): the menu opens beside the bar, level with the icon (cy)
+    property real cy: -1
+    readonly property bool side: bc.position === "left" || bc.position === "right"
+    readonly property bool atRight: bc.position === "right"
+    readonly property real sideSpace: (bc.enabled === false ? 34 : (bc.height ? bc.height + 4 : 42)) + (bc.style === "flat" ? 0 : 16) + 8
     property string armed: ""          // the action that waits for its second click
     property int hover: -1
 
@@ -47,13 +52,13 @@ PanelWindow {
         command: ["bash", "-c", "\"$HOME/.local/bin/rice-bar\" state 2>/dev/null"]
         stdout: StdioCollector { onStreamFinished: { try { pw.bc = JSON.parse(text) } catch (e) { } } }
     }
-    function show(x) { cx = x; armed = ""; barProc.running = true; open = true }
+    function show(x, y) { cy = (y === undefined || isNaN(y)) ? -1 : y; cx = x; armed = ""; barProc.running = true; open = true }
     function hide() { open = false; armed = "" }
     Trigger {
         name: "power-open"
         onFired: function(o) {
-            const x = parseFloat(o.split(" ")[1])
-            if (pw.open) pw.hide(); else pw.show(isNaN(x) ? pw.width - 120 : x)
+            const x = parseFloat(o.split(" ")[1]), yv = parseFloat(o.split(" ")[2])
+            if (pw.open) pw.hide(); else pw.show(isNaN(x) ? pw.width - 120 : x, yv)
         }
     }
 
@@ -74,15 +79,19 @@ PanelWindow {
         id: card
         width: 220
         height: col.height + 16
-        x: Math.max(12, Math.min(pw.width - width - 12, pw.cx - width / 2))
-        y: pw.atBottom ? pw.height - pw.barSpace - height : pw.barSpace
+        x: pw.side ? (pw.atRight ? pw.width - pw.sideSpace - width : pw.sideSpace)
+                     : Math.max(12, Math.min(pw.width - width - 12, pw.cx - width / 2))
+        y: pw.side ? Math.max(12, Math.min(pw.height - height - 12, (pw.cy < 0 ? pw.height / 2 : pw.cy) - 30))
+                     : (pw.atBottom ? pw.height - pw.barSpace - height : pw.barSpace)
         radius: 20
         color: pw.bg
         border.width: 1; border.color: pw.line
         opacity: Math.min(1, pw.et * 1.6)
         scale: 0.9 + 0.1 * pw.et
-        transformOrigin: pw.atBottom ? Item.Bottom : Item.Top
-        transform: Translate { y: (1 - pw.et) * (pw.atBottom ? 26 : -26) }
+        transformOrigin: pw.side ? (pw.atRight ? Item.Right : Item.Left) : (pw.atBottom ? Item.Bottom : Item.Top)
+        // it comes out of the bar: down from a top bar, up from a bottom one, sideways from a bar on the side
+        transform: Translate { x: pw.side ? (1 - pw.et) * (pw.atRight ? 26 : -26) : 0
+                               y: pw.side ? 0 : (1 - pw.et) * (pw.atBottom ? 26 : -26) }
         focus: true
         Keys.onEscapePressed: pw.hide()
         MouseArea { anchors.fill: parent }

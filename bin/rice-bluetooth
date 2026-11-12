@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# rice-bluetooth [X]   open the Bluetooth menu under the bar (X: where the icon is, pixels from the left)
+# rice-bluetooth [X [Y]]   open the Bluetooth menu under the bar (X: where the icon is, pixels from the left; Y: from the top, for a bar on the side)
 # rice-bluetooth list  devices for the menu: power, then one line per device  MAC|name|connected|paired|icon|battery
 if [ "${1:-}" = list ]; then
   p=$(bluetoothctl show 2>/dev/null | sed -n 's/^[[:space:]]*Powered: //p' | head -1)
@@ -19,11 +19,11 @@ if [ "${1:-}" = list ]; then
 fi
 if pgrep -f "quickshell/rice-desktop" >/dev/null 2>&1; then
   mkdir -p "$HOME/.cache/rice"
-  printf '%s %s\n' "$(date +%s.%N)" "${1:-0}" >"$HOME/.cache/rice/bluetooth-open"
+  printf '%s %s\n' "$(date +%s.%N)" "${1:-0} ${2:-}" >"$HOME/.cache/rice/bluetooth-open"
 else
   # the shell is not running: start it, then open the menu
   "$HOME/.local/bin/rice-desktop" start >/dev/null 2>&1
   sleep 1.5
   mkdir -p "$HOME/.cache/rice"
-  printf '%s %s\n' "$(date +%s.%N)" "${1:-0}" >"$HOME/.cache/rice/bluetooth-open"
+  printf '%s %s\n' "$(date +%s.%N)" "${1:-0} ${2:-}" >"$HOME/.cache/rice/bluetooth-open"
 fi

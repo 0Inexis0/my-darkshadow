@@ -28,6 +28,11 @@ PanelWindow {
     readonly property bool atBottom: bc.position === "bottom"
     readonly property real barSpace: (bc.enabled === false ? 34 : (bc.height ? bc.height : 38)) + (bc.style === "flat" ? 0 : 16) + 8
     property real cx: 0
+    // the bar on the left or right edge (VBar.qml): the menu opens beside the bar, level with the icon (cy)
+    property real cy: -1
+    readonly property bool side: bc.position === "left" || bc.position === "right"
+    readonly property bool atRight: bc.position === "right"
+    readonly property real sideSpace: (bc.enabled === false ? 34 : (bc.height ? bc.height + 4 : 42)) + (bc.style === "flat" ? 0 : 16) + 8
 
     // ---------- Pipewire ----------
     readonly property var sink: Pipewire.defaultAudioSink
@@ -49,13 +54,13 @@ PanelWindow {
         command: ["bash", "-c", "\"$HOME/.local/bin/rice-bar\" state 2>/dev/null"]
         stdout: StdioCollector { onStreamFinished: { try { vm.bc = JSON.parse(text) } catch (e) { } } }
     }
-    function show(x) { cx = x; barProc.running = true; open = true }
+    function show(x, y) { cy = (y === undefined || isNaN(y)) ? -1 : y; cx = x; barProc.running = true; open = true }
     function hide() { open = false }
     Trigger {
         name: "volume-open"
         onFired: function(o) {
-            const x = parseFloat(o.split(" ")[1])
-            if (vm.open) vm.hide(); else vm.show(isNaN(x) ? vm.width - 200 : x)
+            const x = parseFloat(o.split(" ")[1]), yv = parseFloat(o.split(" ")[2])
+            if (vm.open) vm.hide(); else vm.show(isNaN(x) ? vm.width - 200 : x, yv)
         }
     }
 
@@ -139,17 +144,21 @@ PanelWindow {
     Rectangle {
         id: card
         width: 380
-        height: Math.min(col.implicitHeight + 28, vm.height - vm.barSpace - 20)
-        x: Math.max(12, Math.min(vm.width - width - 12, vm.cx - width / 2))
-        y: vm.atBottom ? vm.height - vm.barSpace - height : vm.barSpace
+        height: Math.min(col.implicitHeight + 28, vm.height - (vm.side ? 24 : vm.barSpace + 20))
+        x: vm.side ? (vm.atRight ? vm.width - vm.sideSpace - width : vm.sideSpace)
+                     : Math.max(12, Math.min(vm.width - width - 12, vm.cx - width / 2))
+        y: vm.side ? Math.max(12, Math.min(vm.height - height - 12, (vm.cy < 0 ? vm.height / 2 : vm.cy) - 30))
+                     : (vm.atBottom ? vm.height - vm.barSpace - height : vm.barSpace)
         radius: 20
         color: vm.bg
         border.width: 1; border.color: vm.line
         clip: true
         opacity: Math.min(1, vm.et * 1.6)
         scale: 0.9 + 0.1 * vm.et
-        transformOrigin: vm.atBottom ? Item.Bottom : Item.Top
-        transform: Translate { y: (1 - vm.et) * (vm.atBottom ? 26 : -26) }
+        transformOrigin: vm.side ? (vm.atRight ? Item.Right : Item.Left) : (vm.atBottom ? Item.Bottom : Item.Top)
+        // it comes out of the bar: down from a top bar, up from a bottom one, sideways from a bar on the side
+        transform: Translate { x: vm.side ? (1 - vm.et) * (vm.atRight ? 26 : -26) : 0
+                               y: vm.side ? 0 : (1 - vm.et) * (vm.atBottom ? 26 : -26) }
         Behavior on height { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
         focus: true
         Keys.onEscapePressed: vm.hide()

@@ -10,7 +10,10 @@ import QtQuick
 
 // The DarkShadow bar on the LEFT or RIGHT edge (Settings > DarkShadow bar > Position). The same modules as the
 // top bar, stacked: the layout's left zone goes on top, center in the middle, right at the bottom. The clock
-// stands as hours over minutes, the workspaces as a column of dots, the visualizer grows sideways.
+// stands as hours over minutes (a click opens the island's Today card at the top of the screen, Bar.qml keeps the
+// island there), the workspaces as a column of dots, the visualizer grows sideways. The styles of the top bar
+// (flat, island, islands, pills, dynamic) and the launcher's logo work here too; the menus open beside the bar,
+// level with their icon, and the bar slides in and out when it moves.
 // (The top / bottom bar is Bar.qml; only one of the two shows.)
 PanelWindow {
     id: vb
@@ -30,11 +33,20 @@ PanelWindow {
             try { vb.bc = x === "" ? ({}) : JSON.parse(x) } catch (e) { }
         }
     }
-    readonly property bool atRight: bc.position === "right"
+    // the edge it sits on now. A move to the other edge (or a new style) plays out: it slides away, changes, slides back
+    readonly property bool wantRight: bc.position === "right"
+    property bool atRight: false
     readonly property bool on: bc.enabled !== false && (bc.position === "left" || bc.position === "right")
-    readonly property string sty: bc.style === "flat" ? "flat" : (bc.style === "dynamic" || bc.style === "google" || bc.style === undefined ? "dynamic" : "island")
+    // styles, like the top bar: flat (the whole edge), island (one pill), islands (a pill for each zone: top, middle,
+    // bottom), pills (a pill for each module), dynamic (islands in the Material colors of your theme). notch has no
+    // edge to grow out of standing up: islands
+    readonly property string want: bc.style === "flat" || bc.style === "island" || bc.style === "pills" ? bc.style
+        : (bc.style === "islands" || bc.style === "notch" ? "islands" : "dynamic")
+    property string sty: "dynamic"
     readonly property bool goo: sty === "dynamic"
     readonly property bool flat: sty === "flat"
+    readonly property bool zoned: sty === "islands" || sty === "dynamic"
+    readonly property bool pills: sty === "pills"
     readonly property int barW: bc.height ? bc.height + 4 : 42
     readonly property real gap: flat ? 0 : 8
     readonly property real alpha: Look.flat ? 1 : (bc.opacity !== undefined ? bc.opacity : 0.72)
@@ -42,24 +54,100 @@ PanelWindow {
     readonly property color fg: goo ? gp.fg : "#F6F5F4"
     readonly property color dim: goo ? gp.dim : Qt.rgba(0.965, 0.961, 0.957, 0.66)
     readonly property color bg: goo ? gp.surface : Qt.rgba(0.05, 0.05, 0.05, alpha)
+    readonly property color line: goo ? "transparent" : Qt.rgba(1, 1, 1, 0.07)
     readonly property int nws: bc.workspaces ? bc.workspaces : 5
     function noClock(l) { return (l || []).map(function(m) { return m === "clock" ? "island" : m }) }
     readonly property var lay: bc.layout ? ({ top: noClock(bc.layout.left), mid: noClock(bc.layout.center), bottom: noClock(bc.layout.right) })
         : ({ top: ["launcher", "workspaces"], mid: ["island"], bottom: ["tray", "volume", "bluetooth", "network", "battery", "notifications", "power"] })
     function run(cmd) { Quickshell.execDetached(["bash", "-c", cmd]) }
-    // the pop-up menus open next to the bar: they are told a spot near this edge
+    // the pop-up menus open beside the bar, level with the icon that opened them: "X Y" for rice-wifi and the others
     function menuX() { return atRight ? (vb.screen ? vb.screen.width - 260 : 1660) : 260 }
+    function menuAt(it) { const p = it.mapToItem(null, 0, it.height / 2); return menuX() + " " + Math.round(p.y) }
+
+    // ---------- coming and going ----------
+    // t: 0 gone .. 1 in place. It slides in from its edge when it comes (the bar moved here from the top, or was
+    // turned on), and out when it goes
+    property real t: 0
+    readonly property real et: 1 - Math.pow(1 - t, 3)
+    property bool ready: false
+    Behavior on t { enabled: vb.ready && !moveAnim.running; NumberAnimation { duration: vb.on ? 460 : 220; easing.type: Easing.Linear } }
+    onOnChanged: t = on ? 1 : 0
+    Timer { running: true; interval: 1200; onTriggered: { vb.atRight = vb.wantRight; vb.sty = vb.want; vb.ready = true; vb.t = vb.on ? 1 : 0 } }
+    onWantRightChanged: if (ready && wantRight !== atRight) moveAnim.restart()
+    onWantChanged: if (ready && want !== sty) moveAnim.restart()
+    SequentialAnimation {
+        id: moveAnim
+        NumberAnimation { target: vb; property: "t"; to: 0; duration: 200; easing.type: Easing.Linear }
+        ScriptAction { script: { vb.atRight = vb.wantRight; vb.sty = vb.want } }
+        PauseAnimation { duration: 40 }
+        NumberAnimation { target: vb; property: "t"; to: vb.on ? 1 : 0; duration: 460; easing.type: Easing.Linear }
+    }
+
+    // ---------- the launcher logo: your distro (Nerd Font), the app grid, the black hole or the moon ----------
+    readonly property var logos: ({
+        tux: 0xF17C, arch: 0xF303, gentoo: 0xF30D, fedora: 0xF30A, debian: 0xF306, ubuntu: 0xF31B, nixos: 0xF313,
+        cachyos: 0xF385, endeavouros: 0xF322, manjaro: 0xF312, linuxmint: 0xF30E, opensuse: 0xF314, void: 0xF32E,
+        alpine: 0xF300, pop: 0xF32A, kali: 0xF327, centos: 0xF304, raspbian: 0xF315, elementary: 0xF309, zorin: 0xF32F,
+        nobara: 0xF380, artix: 0xF31F, slackware: 0xF318, garuda: 0xF303, mageia: 0xF310, rocky: 0xF32B
+    })
+    readonly property string logoColor: bc.logo_color || "default"
+    function logoPal(kind) {
+        const k = logoColor, a = gp.primary
+        const P = {
+            white: ["#ffffff", "#e6e6ec", "#9c9caa", "#d8d8e0"],
+            gold: ["#fff6e4", "#ffb35c", "#ff8a3d", "#ff9d4d"],
+            ice: ["#f2fbff", "#7fd0ff", "#3d6bff", "#6fbfff"],
+            rose: ["#fff0f5", "#ff7aa8", "#8a3dff", "#ff6f9f"],
+            violet: ["#f6f0ff", "#b58cff", "#5b3dff", "#9d7bff"]
+        }
+        if (k === "theme") return [Qt.lighter(a, 1.5), a, Qt.darker(a, 1.7), a]
+        if (P[k]) return P[k]
+        return kind === "moon" ? ["#ffffff", "#b9bfd8", "#8a93d8", "#cfd6ff"] : ["#fff6e4", "#ffb35c", "#a46bff", "#ff9d4d"]
+    }
+    property var osIds: []
+    Process {
+        running: true
+        command: ["bash", "-c", ". /etc/os-release 2>/dev/null; echo \"$ID $ID_LIKE\""]
+        stdout: StdioCollector { onStreamFinished: vb.osIds = text.trim().toLowerCase().split(/\s+/) }
+    }
+    readonly property string logoKey: {
+        const k = bc.logo || "auto"
+        if (k === "apps" || k === "blackhole" || k === "moon") return k
+        if (k !== "auto") return logos[k] !== undefined ? k : "apps"
+        for (let i = 0; i < osIds.length; i++) {
+            const id = osIds[i] === "opensuse-tumbleweed" || osIds[i] === "opensuse-leap" ? "opensuse" : osIds[i]
+            if (logos[id] !== undefined) return id
+        }
+        return "tux"
+    }
 
     // ---------- the window ----------
-    visible: on
+    visible: on || t > 0.01
     color: "transparent"
     anchors { top: true; bottom: true; left: !atRight; right: atRight }
     implicitWidth: barW + gap * 2
     exclusionMode: ExclusionMode.Normal
-    exclusiveZone: barW + gap * 2
+    exclusiveZone: on ? barW + gap * 2 : 0
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.namespace: "rice-bar"
-    NiriBlur { win: vb; items: [panel]; radius: panel.radius; on: vb.on }
+    // niri: blur behind every background of the bar (Hyprland: a layer rule). Only once it has slid into place
+    property var pillBgs: []
+    readonly property var blurItems: flat || sty === "island" ? [panel] : (pills ? pillBgs.slice(0, 8) : [zTop.bgItem, zMid.bgItem, zBot.bgItem])
+    NiriBlur { win: vb; items: vb.blurItems; radius: vb.flat ? 0 : vb.barW / 2; on: vb.on && vb.t > 0.98 && !moveAnim.running }
+
+    // the tray, without the network and Bluetooth applets when the bar shows Wi-Fi and Bluetooth itself (niri and
+    // some distros start nm-applet and blueman on their own: a second, odd Wi-Fi icon)
+    function hasMod(n) { const l = vb.lay || {}; return [].concat(l.top || [], l.mid || [], l.bottom || []).indexOf(n) >= 0 }
+    readonly property var trayItems: {
+        const all = SystemTray.items.values || []
+        const net = hasMod("network"), bt = hasMod("bluetooth")
+        return all.filter(function(it) {
+            const k = ((it.id || "") + " " + (it.title || "")).toLowerCase()
+            if (net && /nm-applet|networkmanager|network manager|nm-tray|connman/.test(k)) return false
+            if (bt && /blueman|bluetooth/.test(k)) return false
+            return true
+        })
+    }
 
     // ---------- what it shows ----------
     readonly property var player: { const l = Mpris.players.values; for (let i = 0; i < l.length; i++) if (l[i].isPlaying) return l[i]; return l.length ? l[0] : null }
@@ -87,23 +175,79 @@ PanelWindow {
     function two(n) { return n < 10 ? "0" + n : "" + n }
 
     // ---------- the panel ----------
-    Rectangle {
-        id: panel
-        x: vb.gap; y: vb.gap
-        width: vb.barW; height: parent.height - vb.gap * 2
-        radius: vb.flat ? 0 : vb.barW / 2
-        color: vb.bg
-        border.width: vb.goo ? 0 : 1
-        border.color: Qt.rgba(1, 1, 1, 0.07)
+    Item {
+        id: content
+        x: vb.flat ? 0 : vb.gap; y: vb.flat ? 0 : vb.gap
+        width: vb.barW; height: parent.height - (vb.flat ? 0 : vb.gap * 2)
+        opacity: Math.min(1, vb.et * 1.4)
+        transform: Translate { x: (1 - vb.et) * (vb.atRight ? 1 : -1) * (vb.barW + vb.gap * 2 + 12) }
 
-        Column { id: topCol; anchors.horizontalCenter: parent.horizontalCenter; y: 10; spacing: 6
-            Repeater { model: vb.lay.top; delegate: Loader { anchors.horizontalCenter: parent.horizontalCenter; sourceComponent: vb.compFor(modelData) } } }
-        Column { anchors.centerIn: parent; spacing: 6
-            Repeater { model: vb.lay.mid; delegate: Loader { anchors.horizontalCenter: parent.horizontalCenter; sourceComponent: vb.compFor(modelData) } } }
-        Column { anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.bottom; anchors.bottomMargin: 10; spacing: 6
-            Repeater { model: vb.lay.bottom; delegate: Loader { anchors.horizontalCenter: parent.horizontalCenter; sourceComponent: vb.compFor(modelData) } } }
+        // island / flat: one background behind everything
+        Rectangle {
+            id: panel
+            anchors.fill: parent
+            visible: vb.flat || vb.sty === "island"
+            radius: vb.flat ? 0 : vb.barW / 2
+            color: vb.bg
+            border.width: vb.flat ? 0 : 1
+            border.color: vb.line
+            Rectangle { visible: vb.flat; width: 1; height: parent.height; color: Qt.rgba(1, 1, 1, 0.09)
+                x: vb.atRight ? 0 : parent.width - 1 }
+        }
+        Zone { id: zTop; mods: vb.lay.top || []; y: vb.flat ? 10 : (vb.zoned || vb.pills ? 0 : 10) }
+        Zone { id: zMid; mods: vb.lay.mid || []; y: (parent.height - height) / 2 }
+        Zone { id: zBot; mods: vb.lay.bottom || []; y: parent.height - height - (vb.zoned || vb.pills ? 0 : 10) }
     }
 
+    // a zone of the bar (top, middle, bottom): its modules in a column; islands / dynamic: in a pill of its own,
+    // pills: every module in its own pill
+    component Zone: Item {
+        id: z
+        property var mods: []
+        readonly property alias bgItem: zbg
+        width: vb.barW
+        height: mods.length === 0 ? 0 : zc.implicitHeight + (vb.zoned ? 16 : 0)
+        Rectangle {
+            id: zbg
+            anchors.fill: parent
+            visible: vb.zoned && z.mods.length > 0
+            radius: vb.barW / 2
+            color: vb.bg
+            border.width: vb.goo ? 0 : 1
+            border.color: vb.line
+        }
+        Column {
+            id: zc
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: vb.zoned ? 8 : 0
+            spacing: vb.pills ? 8 : 6
+            Repeater {
+                model: z.mods
+                delegate: Item {
+                    id: slot
+                    readonly property bool shows: ld.item !== null && vb.modShows(modelData)
+                    visible: shows
+                    width: vb.barW
+                    height: !shows ? 0 : (vb.pills ? Math.max(vb.barW, ld.item.height + 12) : ld.item.height)
+                    Rectangle {
+                        id: pbg
+                        anchors.fill: parent
+                        visible: vb.pills
+                        radius: vb.barW / 2
+                        color: vb.bg
+                        border.width: 1
+                        border.color: vb.line
+                        Component.onCompleted: vb.pillBgs = vb.pillBgs.concat([pbg])
+                        Component.onDestruction: vb.pillBgs = vb.pillBgs.filter(function(p) { return p !== pbg })
+                    }
+                    Loader { id: ld; anchors.centerIn: parent; sourceComponent: vb.compFor(modelData) }
+                }
+            }
+        }
+    }
+
+    // a module with nothing to show right now takes no room (music without a player, a battery on a desktop)
+    function modShows(n) { return n === "media" ? player !== null : (n === "battery" ? hasBatt : true) }
     function compFor(n) {
         switch (n) {
         case "launcher": return cLauncher
@@ -142,14 +286,24 @@ PanelWindow {
 
     Component { id: cLauncher
         Item { width: vb.barW - 6; height: width
+            readonly property bool ink: vb.goo
             Rectangle { anchors.fill: parent; radius: lm.pressed ? width * 0.3 : width / 2; visible: vb.goo
                 color: gp.mono ? gp.container : gp.primary; scale: lm.containsMouse ? 1.06 : 1
                 Behavior on radius { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
                 Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutBack } } }
-            BlackHoleMark { visible: vb.bc.logo === "blackhole"; anchors.centerIn: parent; size: parent.width; extras: false; running: visible && !Look.lite }
-            MoonMark { visible: vb.bc.logo === "moon"; anchors.centerIn: parent; size: parent.width - 8; extras: false; running: visible && !Look.lite }
-            MIcon { visible: vb.bc.logo !== "blackhole" && vb.bc.logo !== "moon"; anchors.centerIn: parent; name: "apps"; glyph: String.fromCodePoint(0xF003B); size: 18
+            BlackHoleMark { visible: vb.logoKey === "blackhole"; anchors.centerIn: parent; size: parent.width; extras: false
+                readonly property var pl: vb.logoPal("blackhole"); hot: pl[0]; warm: pl[1]; cool: pl[2]; glowColor: pl[3]
+                running: visible && !Look.lite }
+            MoonMark { visible: vb.logoKey === "moon"; anchors.centerIn: parent; size: parent.width - 8; extras: false
+                readonly property var pl: vb.logoPal("moon"); moonTop: pl[0]; moonBottom: pl[1]; glowColor: pl[3]
+                running: visible && !Look.lite }
+            MIcon { visible: vb.logoKey === "apps"; anchors.centerIn: parent; name: "apps"; glyph: String.fromCodePoint(0xF003B); size: 18
                 color: vb.goo ? (gp.mono ? gp.inkContainer : gp.inkPrimary) : vb.fg }
+            // your distro's logo (Settings > DarkShadow bar > Launcher icon: auto)
+            Text { visible: vb.logoKey !== "apps" && vb.logoKey !== "blackhole" && vb.logoKey !== "moon"; anchors.centerIn: parent; anchors.horizontalCenterOffset: 1
+                text: vb.logos[vb.logoKey] !== undefined ? String.fromCodePoint(vb.logos[vb.logoKey]) : ""
+                font.family: Fonts.icons; font.pixelSize: 18; color: vb.goo ? (gp.mono ? gp.inkContainer : gp.inkPrimary) : vb.fg
+                scale: lm.containsMouse ? 1.12 : 1; Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } } }
             MouseArea { id: lm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                 onClicked: { Sfx.play("click"); vb.run("\"$HOME/.local/bin/rice-launch\"") } }
         }
@@ -206,7 +360,7 @@ PanelWindow {
     Component { id: cTray
         Column { spacing: 6
             Repeater {
-                model: SystemTray.items.values || []
+                model: vb.trayItems
                 delegate: Item {
                     id: ti
                     width: vb.barW - 10; height: 24
@@ -229,22 +383,22 @@ PanelWindow {
     }
 
     Component { id: cVolume
-        Btn { icon: vb.muted ? "volume_off" : (vb.vol < 0.34 ? "volume_mute" : (vb.vol < 0.67 ? "volume_down" : "volume_up"))
+        Btn { id: vbtn; icon: vb.muted ? "volume_off" : (vb.vol < 0.34 ? "volume_mute" : (vb.vol < 0.67 ? "volume_down" : "volume_up"))
             glyph: String.fromCodePoint(vb.muted ? 0xF0581 : (vb.vol < 0.34 ? 0xF057F : (vb.vol < 0.67 ? 0xF0580 : 0xF057E)))
             tint: vb.muted ? vb.dim : vb.fg; isz: 20
             onHit: function(m) {
-                if (m.button === Qt.LeftButton) vb.run("\"$HOME/.local/bin/rice-volume\" menu " + vb.menuX())
+                if (m.button === Qt.LeftButton) vb.run("\"$HOME/.local/bin/rice-volume\" menu " + vb.menuAt(vbtn))
                 else if (vb.sink && vb.sink.audio) vb.sink.audio.muted = !vb.sink.audio.muted
             }
             onWheel: function(e) { if (vb.sink && vb.sink.audio) vb.sink.audio.volume = Math.max(0, Math.min(1, vb.sink.audio.volume + Look.notches(e) * 0.04)) } }
     }
     Component { id: cNet
-        Btn { icon: vb.svc.network ? "wifi" : "wifi_off"; glyph: String.fromCodePoint(vb.svc.network ? 0xF05A9 : 0xF05AA); tint: vb.svc.network ? vb.fg : vb.dim
-            onHit: function(m) { vb.run("\"$HOME/.local/bin/rice-wifi\" " + vb.menuX()) } }
+        Btn { id: nbtn; icon: vb.svc.network ? "wifi" : "wifi_off"; glyph: String.fromCodePoint(vb.svc.network ? 0xF05A9 : 0xF05AA); tint: vb.svc.network ? vb.fg : vb.dim
+            onHit: function(m) { vb.run("\"$HOME/.local/bin/rice-wifi\" " + vb.menuAt(nbtn)) } }
     }
     Component { id: cBt
-        Btn { icon: vb.svc.bluetooth ? "bluetooth" : "bluetooth_disabled"; glyph: String.fromCodePoint(vb.svc.bluetooth ? 0xF00AF : 0xF00B2); tint: vb.svc.bluetooth ? vb.fg : vb.dim
-            onHit: function(m) { vb.run("\"$HOME/.local/bin/rice-bluetooth\" " + vb.menuX()) } }
+        Btn { id: bbtn; icon: vb.svc.bluetooth ? "bluetooth" : "bluetooth_disabled"; glyph: String.fromCodePoint(vb.svc.bluetooth ? 0xF00AF : 0xF00B2); tint: vb.svc.bluetooth ? vb.fg : vb.dim
+            onHit: function(m) { vb.run("\"$HOME/.local/bin/rice-bluetooth\" " + vb.menuAt(bbtn)) } }
     }
     Component { id: cBatt
         Column { visible: vb.hasBatt; spacing: 1
@@ -258,8 +412,8 @@ PanelWindow {
             onHit: function(m) { vb.run(m.button === Qt.RightButton ? "\"$HOME/.local/bin/rice-cc\" dnd toggle" : "\"$HOME/.local/bin/rice-cc\" toggle"); svcAgain.restart() } }
     }
     Component { id: cPower
-        Btn { icon: "power_settings_new"; glyph: String.fromCodePoint(0xF0425); tint: "#ff8a80"
-            onHit: function(m) { vb.run("\"$HOME/.local/bin/rice-power\" " + vb.menuX()) } }
+        Btn { id: pbtn; icon: "power_settings_new"; glyph: String.fromCodePoint(0xF0425); tint: "#ff8a80"
+            onHit: function(m) { vb.run("\"$HOME/.local/bin/rice-power\" " + vb.menuAt(pbtn)) } }
     }
     Component { id: cViz
         BarViz { vertical: true; count: 10; thick: vb.barW - 18; active: vb.on; color: vb.goo ? gp.primary : vb.fg }
