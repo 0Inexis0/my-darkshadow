@@ -1,5 +1,8 @@
 # Changelog
 
+## V4.33: a transparent btop theme
+- btop now looks like the rest of the shell: a see-through theme ("darkshadow", purple accent; the terminal's own background and blur show through), used by default. With wallpaper colors on, btop uses the "matugen" theme, which follows the wallpaper. A theme you picked yourself in btop is left alone (the installer only replaces Default / TTY)
+
 ## V4.32: clipboard history, less memory, updates keep your edits
 - New: the clipboard (SUPER + V, issue #5). Everything you copy, texts and pictures, newest first (cliphist): search, Enter puts it back and pastes it into the window you were in, Del removes it, Ctrl + P pins a text to the top, Tab goes through All, Text, Pictures and Pinned. It rises from the bottom of the screen. Settings > Desktop > Clipboard: on / off, paste right away, pictures, how many to keep, clear the history. Float / tile a window moved to SUPER + SHIFT + V (Hyprland and niri). The installer adds cliphist and wtype
 - Less memory from the start (issue #6): a desktop widget that is off is no longer made at all (it used to sit in memory, hidden); the control center, the wallpaper picker, the game bar and the Wi-Fi, Bluetooth, power and volume menus are only made when you open them, and let go two minutes after they close

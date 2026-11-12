@@ -206,7 +206,7 @@ pretty_dir() {
   case "$1" in
     hypr) echo "Hyprland" ;; waybar) echo "Waybar" ;; swaync) echo "Notifications (swaync)" ;;
     rofi) echo "Rofi" ;; matugen) echo "Matugen colors" ;; kitty) echo "Kitty terminal" ;;
-    fastfetch) echo "Fastfetch" ;; fish) echo "Fish shell" ;; waybar-presets) echo "Waybar presets" ;; *) echo "$1" ;;
+    fastfetch) echo "Fastfetch" ;; btop) echo "btop theme (transparent)" ;; fish) echo "Fish shell" ;; waybar-presets) echo "Waybar presets" ;; *) echo "$1" ;;
   esac
 }
 
@@ -566,6 +566,22 @@ make_user_lua() {
 LUA
 }
 
+# btop: the transparent theme is used unless you picked a theme of your own
+set_btop() {
+  [ "$DRY_RUN" = 1 ] && return 0
+  command -v btop >/dev/null 2>&1 || return 0
+  local f="$HOME/.config/btop/btop.conf" th cur
+  th=darkshadow; [ -f "$HOME/.config/btop/themes/matugen.theme" ] && th=matugen
+  mkdir -p "$HOME/.config/btop"
+  [ -f "$f" ] || printf 'color_theme = "Default"\ntheme_background = True\n' >"$f"
+  cur="$(sed -n 's/^color_theme *= *"\(.*\)".*/\1/p' "$f" | head -1)"
+  case "$cur" in
+    ""|Default|TTY|darkshadow|matugen)
+      grep -q '^color_theme' "$f" && sed -i "s|^color_theme *=.*|color_theme = \"$th\"|" "$f" || echo "color_theme = \"$th\"" >>"$f"
+      grep -q '^theme_background' "$f" && sed -i 's|^theme_background *=.*|theme_background = False|' "$f" || echo "theme_background = False" >>"$f" ;;
+  esac
+}
+
 step_configs() {
   local d n
   n="$(config_dirs | wc -l)"
@@ -578,6 +594,7 @@ step_configs() {
   # your Settings for Hyprland (layout, gaps, keys ...) are written again over the file the update brought
   has_hypr && task "Your Hyprland settings" python3 "$ROOT/bin/hypr-set" regen
   has_hypr && make_user_lua
+  task "btop: transparent theme" set_btop
   task "Hyprland add-ons (keybinds, gaming mode)" copy_lua
   [ -d "$ROOT/wallpapers" ] && task "Wallpapers  ->  ~/Pictures/Wallpapers" put_wallpapers
   task "Fish: no welcome message" quiet_fish
