@@ -705,7 +705,7 @@ PanelWindow {
     }
     // a side bar (VBar.qml) opens these cards too: "KIND" in ~/.cache/rice/barpop-open
     Trigger { name: "barpop-open"; onFired: function(o) { const p = o.trim().split(" "); barPop.toggle(p[1] || "calendar", p[2] !== undefined ? parseFloat(p[2]) : 200) } }
-    function popAt(it, k) { const p = it.mapToItem(body, it.width / 2, 0); barPop.toggle(k, p.x) }
+    function popAt(it, k) { const p = it.mapToItem(body, it.width / 2, 0); barPop.fromW = it.width + 16; barPop.toggle(k, p.x) }
 
     Component { id: mWeather
         Item { property bool shown: true; width: wr.implicitWidth + 4; height: bar.barH
@@ -950,6 +950,7 @@ PanelWindow {
             areaW: body.width
             wx: bar.wx
             st: bar.st
+            barH: bar.barH
             y: down ? bar.barH + 8 : -height - 8
             z: 41
             onOpenChanged: if (open) trayMenu.close()

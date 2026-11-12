@@ -20,25 +20,70 @@ Item {
     function toggle(k, x) { if (open && kind === k) { open = false; return } kind = k; ax = x; open = true; if (k === "calendar") { todoProc.running = true; upProc.running = true; now = new Date() } }
     function close() { open = false }
 
-    property real t: open ? 1 : 0
-    Behavior on t { NumberAnimation { duration: bp.open ? 420 : 180; easing.type: Easing.BezierSpline; easing.bezierCurve: bp.open ? Look.decel : Look.accel } }
+    // the module it grows out of: its width on the bar and the bar's height (the card starts as that pill)
+    property real fromW: 60
+    property real barH: 38
+    // t: 0 closed .. 1 open. Like the Dynamic island: the module's pill stretches out of the bar into the card
+    // (a soft overshoot), the corners round off, and the content comes in once there is room for it
+    property real t: 0
+    onOpenChanged: { tAnim.stop(); tAnim.to = open ? 1 : 0; tAnim.duration = open ? 560 : 260
+        tAnim.easing.type = open ? Easing.OutBack : Easing.InCubic; tAnim.start() }
+    NumberAnimation { id: tAnim; target: bp; property: "t"; easing.overshoot: 0.9 }
+    // a new card while one is open (another module): the content cross-fades
+    onKindChanged: { swap.restart() }
+    property real cf: 1
+    SequentialAnimation { id: swap; NumberAnimation { target: bp; property: "cf"; to: 0; duration: 70 } NumberAnimation { target: bp; property: "cf"; to: 1; duration: 220; easing.type: Easing.OutCubic } }
     visible: t > 0.01
     width: 330
     height: (kind === "weather" ? wxCol.implicitHeight : (kind === "system" ? 228 : calCol.implicitHeight)) + 28
+    Behavior on height { enabled: bp.t > 0.98; NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
     x: Math.max(8, Math.min(areaW - width - 8, ax - width / 2))
-    opacity: Math.min(1, t * 1.6)
-    transform: [
-        Scale { origin.x: bp.ax - bp.x; origin.y: bp.down ? 0 : bp.height; xScale: 0.86 + 0.14 * bp.t; yScale: 0.6 + 0.4 * bp.t },
-        Translate { y: (1 - bp.t) * (bp.down ? -10 : 10) }
-    ]
     readonly property color fg: pal ? pal.fg : "#ECEDEE"
     readonly property color dim: pal ? pal.dim : "#A9ADB2"
     readonly property color acc: pal ? pal.primary : "#9ec9bd"
     readonly property color chip: pal ? pal.card : "#2a2c30"
 
-    Shadow { anchors.fill: bg; radius: bg.radius; on: Look.shadows && Look.shadowPanels; size: Look.shadowSize * 0.8; strength: Look.shadowStrength }
-    Rectangle { id: bg; anchors.fill: parent; radius: 24; color: bp.pal ? bp.pal.surface : "#141414"; border.width: 1; border.color: bp.pal ? bp.pal.line : Qt.rgba(1, 1, 1, 0.06) }
-    MouseArea { anchors.fill: parent }        // clicks inside do not fall through to the desktop
+    function gb(v) { return v === undefined ? "?" : (v >= 100 ? Math.round(v) : Number(v).toFixed(1)) }
+    readonly property var sys: [
+        { n: "CPU", icon: "memory", g: 0xF035B, v: st.cpu || 0, d: st.temp ? st.temp + "°C" : "" },
+        { n: "RAM", icon: "memory_alt", g: 0xF061A, v: st.ram || 0, d: gb(st.ramu) + " / " + gb(st.ramt) + " GB" },
+        { n: Tr.t("Disk"), icon: "hard_drive", g: 0xF02CA, v: st.disk || 0, d: gb(st.disku) + " / " + gb(st.diskt) + " GB" },
+        { n: "Swap", icon: "swap_horiz", g: 0xF04E1, v: st.swap || 0, d: st.swapt ? gb(st.swapu) + " / " + gb(st.swapt) + " GB" : Tr.t("Off") }
+    ]
+    property var now: new Date()
+    property var todos: []
+    property string up: ""
+    readonly property var week: {
+        const o = [], n = now, mon = new Date(n.getFullYear(), n.getMonth(), n.getDate() - ((n.getDay() + 6) % 7))
+        for (let i = 0; i < 7; i++) o.push(new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + i))
+        return o
+    }
+
+    // the shape: from the module's pill on the bar (k = 0) to the whole card (k = 1)
+    readonly property real k: Math.max(0, t)
+    readonly property real k1: Math.min(1, k)
+    readonly property real pillH: Math.max(24, barH - 10)
+    Item {
+        id: shape
+        readonly property real cx: bp.ax - bp.x
+        width: bp.fromW + (bp.width - bp.fromW) * bp.k
+        height: bp.pillH + (bp.height - bp.pillH) * bp.k
+        x: cx + (bp.width / 2 - cx) * bp.k1 - width / 2
+        // it starts on the bar, over the module, and drops into place
+        readonly property real y0: bp.down ? -8 - bp.barH / 2 - bp.pillH / 2 : bp.height + 8 + bp.barH / 2 - bp.pillH / 2
+        y: bp.down ? y0 * (1 - bp.k) : y0 + (bp.height - height - y0) * bp.k
+        opacity: Math.min(1, bp.t * 3)
+        clip: true
+        Shadow { anchors.fill: bg; radius: bg.radius; on: Look.shadows && Look.shadowPanels; size: Look.shadowSize * 0.8; strength: Look.shadowStrength * bp.k1 }
+        Rectangle { id: bg; anchors.fill: parent; radius: Math.min(height / 2, 24 + (1 - bp.k1) * 30); color: bp.pal ? bp.pal.surface : "#141414"; border.width: 1; border.color: bp.pal ? bp.pal.line : Qt.rgba(1, 1, 1, 0.06) }
+        MouseArea { anchors.fill: parent }        // clicks inside do not fall through to the desktop
+        // the content stays where it belongs while the shape opens over it
+        Item {
+            id: cont
+            x: -shape.x; y: -shape.y
+            width: bp.width; height: bp.height
+            opacity: Math.max(0, (bp.k1 - 0.45) / 0.55) * bp.cf
+            transform: Translate { y: (1 - bp.k1) * (bp.down ? -14 : 14) }
 
     // ---------- weather ----------
     Column {
@@ -97,13 +142,6 @@ Item {
     }
 
     // ---------- system ----------
-    function gb(v) { return v === undefined ? "?" : (v >= 100 ? Math.round(v) : Number(v).toFixed(1)) }
-    readonly property var sys: [
-        { n: "CPU", icon: "memory", g: 0xF035B, v: st.cpu || 0, d: st.temp ? st.temp + "°C" : "" },
-        { n: "RAM", icon: "memory_alt", g: 0xF061A, v: st.ram || 0, d: gb(st.ramu) + " / " + gb(st.ramt) + " GB" },
-        { n: Tr.t("Disk"), icon: "hard_drive", g: 0xF02CA, v: st.disk || 0, d: gb(st.disku) + " / " + gb(st.diskt) + " GB" },
-        { n: "Swap", icon: "swap_horiz", g: 0xF04E1, v: st.swap || 0, d: st.swapt ? gb(st.swapu) + " / " + gb(st.swapt) + " GB" : Tr.t("Off") }
-    ]
     Grid {
         visible: bp.kind === "system"
         x: 14; y: 14; width: parent.width - 28; height: 228
@@ -130,20 +168,12 @@ Item {
     }
 
     // ---------- calendar ----------
-    property var now: new Date()
-    property var todos: []
-    property string up: ""
     Process { id: todoProc; command: [Quickshell.env("HOME") + "/.local/bin/rice-todo", "list"]
         stdout: StdioCollector { onStreamFinished: { try { bp.todos = JSON.parse(text).filter(function(x) { return !x.done }) } catch (e) { bp.todos = [] } } } }
     Process { id: upProc; command: ["cat", "/proc/uptime"]
         stdout: StdioCollector { onStreamFinished: {
             const s = Math.floor(parseFloat(text.split(" ")[0]) || 0), d = Math.floor(s / 86400), h = Math.floor(s / 3600) % 24, m = Math.floor(s / 60) % 60
             bp.up = (d > 0 ? d + "d " : "") + (d > 0 || h > 0 ? h + "h " : "") + m + "m" } } }
-    readonly property var week: {
-        const o = [], n = now, mon = new Date(n.getFullYear(), n.getMonth(), n.getDate() - ((n.getDay() + 6) % 7))
-        for (let i = 0; i < 7; i++) o.push(new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + i))
-        return o
-    }
     Column {
         id: calCol
         visible: bp.kind === "calendar"
@@ -184,6 +214,8 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter; spacing: 6; visible: bp.up !== ""
             MIcon { anchors.verticalCenter: parent.verticalCenter; size: 13; name: "schedule"; glyph: String.fromCodePoint(0xF0954); color: bp.dim }
             Text { anchors.verticalCenter: parent.verticalCenter; text: Tr.t("Up for") + " " + bp.up; color: bp.dim; font.family: Fonts.main; font.pixelSize: 11 }
+        }
+    }
         }
     }
 }

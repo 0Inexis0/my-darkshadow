@@ -1,5 +1,9 @@
 # Changelog
 
+## V4.25: the bar's cards grow out of the bar
+- The cards of Weather, System and Date open like the Dynamic island: the module's pill stretches out of the bar into the card with a soft overshoot, the corners round off, and the content comes in once there is room; closing folds it back quickly
+- Going from one card to another (Weather, then System) cross-fades the content
+
 ## V4.24: Weather, System and Date on the bar
 - New bar modules (Settings > Bar layout): Weather (the sky and the temperature), System (CPU, RAM and disk in small rings) and Date (the day and the date, the time in a chip of your theme color)
 - Each opens a small card under it: Weather the place, the temperature, how it feels, high and low, wet and windy, and the next hours; System a tile for CPU, RAM, disk and swap with a bar and the numbers; Date the month, this week with today, your to-do tasks and how long the computer is up. Esc, a click outside or the module again closes it
