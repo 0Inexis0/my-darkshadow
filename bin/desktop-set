@@ -41,7 +41,7 @@ DEFAULTS = {
     "widgetBlur": True,
     "widgetTheme": "shadow",  # how the widget cards look: shadow (DarkShadow's Shell), google, outline
     "widgetAdapt": True,      # text and cards turn light or dark with the wallpaper behind each widget
-    "autoHide": False,       # widgets hide while windows are open (Settings > Desktop)      # blurred wallpaper behind the widget cards (Settings > Desktop > Widgets)
+    "autoHide": True,        # widgets hide while windows are open (Settings > Desktop); on from the start
     "editing": False,
 }
 CHOICES = {"placement": ["draggable", "leastBusy", "mostBusy"], "style": ["digital", "line", "cookie", "pixel"], "font": list(FONTS)}

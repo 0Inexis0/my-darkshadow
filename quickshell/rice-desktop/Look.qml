@@ -40,6 +40,11 @@ Singleton {
     readonly property var emph: [0.2, 0, 0, 1, 1, 1]
     // the accent color of your theme (Waybar colors), used by the Google style and the visualizer
     property color accent: "#9ec9bd"
+    // the same color made bright enough to stand out on the dark menus (a dark wallpaper gives a dark accent,
+    // which looked muddy on switches and sliders): the hue stays, it gets light and a little colorful
+    readonly property color accentHi: Qt.hsla(accent.hslHue < 0 ? 0 : accent.hslHue,
+        accent.hslSaturation < 0.08 ? accent.hslSaturation : Math.max(0.42, Math.min(0.85, accent.hslSaturation)),
+        Math.max(0.7, Math.min(0.82, accent.hslLightness)), 1)
 
     // brightness of the wallpaper (shell.qml's WallLum reads it): lumW x lumH cells, each 0 (black) .. 1 (white)
     property var lumGrid: []

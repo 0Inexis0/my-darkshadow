@@ -21,6 +21,8 @@ PanelWindow {
     readonly property color fg: "#F6F5F4"
     readonly property color dim: Qt.rgba(0.965, 0.961, 0.957, 0.6)
     readonly property color line: Qt.rgba(1, 1, 1, 0.09)
+    // your theme color: the filled part of the sliders, their knobs, the chosen output and microphone
+    readonly property color acc: Look.accentHi
     readonly property color bg: Qt.rgba(0.05, 0.05, 0.05, Look.flat ? 1 : 0.62)
     property var bc: ({})
     readonly property bool atBottom: bc.position === "bottom"
@@ -61,7 +63,7 @@ PanelWindow {
     // if the closing animation ever stalls (the compositor sent no frames for a moment), it still goes away
     Timer { id: closeT; property bool done: false; interval: 600; running: !open; onRunningChanged: if (running) done = false; onTriggered: done = true }
     // niri: blur behind it (Hyprland blurs this layer with its own rule)
-    NiriBlur { win: vm; items: [card]; radius: card.radius; on: vm.open && vm.t > 0.98 }
+    NiriBlur { win: vm; items: [card]; radius: card.radius; on: vm.open && vm.et > 0.94 }
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore
@@ -98,12 +100,13 @@ PanelWindow {
         Item {
             id: track
             x: 46; width: parent.width - 46 - 54; height: 32; y: ib.y
-            Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: 6; radius: 3; color: Qt.rgba(1, 1, 1, 0.12) }
+            Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: 6; radius: 3; color: Qt.rgba(vm.acc.r, vm.acc.g, vm.acc.b, 0.18) }
             Rectangle { anchors.verticalCenter: parent.verticalCenter; width: Math.max(6, parent.width * vr.v); height: 6; radius: 3
-                color: vr.muted ? Qt.rgba(1, 1, 1, 0.3) : vm.fg
+                color: vr.muted ? Qt.rgba(1, 1, 1, 0.3) : vm.acc
+                Behavior on color { ColorAnimation { duration: 160 } }
                 Behavior on width { enabled: !sm.pressed; NumberAnimation { duration: 120 } } }
             Rectangle { x: parent.width * vr.v - width / 2; anchors.verticalCenter: parent.verticalCenter
-                width: sm.pressed || sm.containsMouse ? 16 : 12; height: width; radius: width / 2; color: vm.fg
+                width: sm.pressed || sm.containsMouse ? 16 : 12; height: width; radius: width / 2; color: vr.muted ? vm.fg : vm.acc
                 Behavior on width { NumberAnimation { duration: 100 } } }
             MouseArea {
                 id: sm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
@@ -122,11 +125,11 @@ PanelWindow {
         property bool chosen: false
         signal picked()
         width: parent ? parent.width : 300; height: 36
-        Rectangle { anchors.fill: parent; radius: 11; color: dr.chosen ? Qt.rgba(1, 1, 1, 0.12) : (dm.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent")
+        Rectangle { anchors.fill: parent; radius: 11; color: dr.chosen ? Qt.rgba(vm.acc.r, vm.acc.g, vm.acc.b, 0.16) : (dm.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent")
             Behavior on color { ColorAnimation { duration: 120 } } }
         Rectangle { x: 14; anchors.verticalCenter: parent.verticalCenter; width: 14; height: 14; radius: 7; color: "transparent"
-            border.width: 2; border.color: dr.chosen ? vm.fg : vm.dim
-            Rectangle { anchors.centerIn: parent; width: 6; height: 6; radius: 3; color: vm.fg; visible: dr.chosen } }
+            border.width: 2; border.color: dr.chosen ? vm.acc : vm.dim
+            Rectangle { anchors.centerIn: parent; width: 6; height: 6; radius: 3; color: vm.acc; visible: dr.chosen } }
         Text { x: 40; anchors.verticalCenter: parent.verticalCenter; width: parent.width - 52; elide: Text.ElideRight
             text: vm.label(dr.node); color: dr.chosen ? vm.fg : vm.dim; font.family: Fonts.main; font.pixelSize: 13 }
         MouseArea { id: dm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: dr.picked() }
@@ -164,7 +167,7 @@ PanelWindow {
 
                 Item {
                     width: parent.width; height: 34
-                    MIcon { x: 8; anchors.verticalCenter: parent.verticalCenter; name: "graphic_eq"; glyph: String.fromCodePoint(0xF1450); size: 20; color: vm.fg }
+                    MIcon { x: 8; anchors.verticalCenter: parent.verticalCenter; name: "graphic_eq"; glyph: String.fromCodePoint(0xF1450); size: 20; color: vm.acc }
                     Text { x: 40; anchors.verticalCenter: parent.verticalCenter; text: Tr.t("Sound"); color: vm.fg; font.family: Fonts.main; font.pixelSize: 15; font.weight: Font.DemiBold }
                     Rectangle {   // open pavucontrol
                         anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter

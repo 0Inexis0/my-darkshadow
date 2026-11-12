@@ -145,7 +145,7 @@ PanelWindow {
     // if the closing animation ever stalls (the compositor sent no frames for a moment), it still goes away
     Timer { id: closeT; property bool done: false; interval: 600; running: !open; onRunningChanged: if (running) done = false; onTriggered: done = true }
     // niri: blur behind it (Hyprland blurs this layer with its own rule)
-    NiriBlur { win: gp; items: [panel]; radius: panel.radius; on: gp.open && gp.t > 0.98 && gp.blurOn }
+    NiriBlur { win: gp; items: [panel]; radius: panel.radius; on: gp.open && gp.et > 0.94 && gp.blurOn }
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore

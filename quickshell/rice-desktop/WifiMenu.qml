@@ -139,7 +139,7 @@ PanelWindow {
     // if the closing animation ever stalls (the compositor sent no frames for a moment), it still goes away
     Timer { id: closeT; property bool done: false; interval: 600; running: !open; onRunningChanged: if (running) done = false; onTriggered: done = true }
     // niri: blur behind the card (Hyprland blurs this layer with its own rule)
-    NiriBlur { win: wm; items: [card]; radius: card.radius; on: wm.open && wm.t > 0.98 }
+    NiriBlur { win: wm; items: [card]; radius: card.radius; on: wm.open && wm.et > 0.94 }
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore
@@ -186,7 +186,7 @@ PanelWindow {
                 id: sw
                 anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
                 width: 42; height: 24; radius: 12
-                color: wm.radio ? Look.accent : Qt.rgba(1, 1, 1, 0.14)
+                color: wm.radio ? Look.accentHi : Qt.rgba(1, 1, 1, 0.14)
                 Behavior on color { ColorAnimation { duration: 160 } }
                 Rectangle { y: 3; x: wm.radio ? 21 : 3; width: 18; height: 18; radius: 9; color: wm.radio ? "#0d0d0d" : "#F6F5F4"
                     Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutBack } } }
@@ -247,14 +247,14 @@ PanelWindow {
                             Behavior on color { ColorAnimation { duration: 120 } }
                         }
                         MouseArea { id: rm; x: 0; y: 0; width: parent.width; height: wm.rowH; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: wm.pick(modelData) }
-                        MIcon { x: 14; y: (wm.rowH - height) / 2; size: 22; color: modelData.active ? Look.accent : wm.fg
+                        MIcon { x: 14; y: (wm.rowH - height) / 2; size: 22; color: modelData.active ? Look.accentHi : wm.fg
                             name: modelData.signal > 66 ? "wifi" : (modelData.signal > 33 ? "wifi_2_bar" : "wifi_1_bar")
                             glyph: String.fromCodePoint(modelData.signal > 75 ? 0xF0928 : (modelData.signal > 50 ? 0xF0925 : (modelData.signal > 25 ? 0xF0922 : 0xF091F))) }
                         Column {
                             x: 50; y: (wm.rowH - height) / 2; spacing: 2
                             width: parent.width - 50 - 90
                             Text { width: parent.width; elide: Text.ElideRight; text: modelData.ssid; color: wm.fg; font.family: Fonts.main; font.pixelSize: 14; font.weight: modelData.active ? Font.DemiBold : Font.Normal }
-                            Text { visible: text !== ""; width: parent.width; elide: Text.ElideRight; color: modelData.active ? Look.accent : wm.dim; font.family: Fonts.main; font.pixelSize: 11
+                            Text { visible: text !== ""; width: parent.width; elide: Text.ElideRight; color: modelData.active ? Look.accentHi : wm.dim; font.family: Fonts.main; font.pixelSize: 11
                                 text: row.busy ? Tr.t("Connecting…") : (modelData.active ? Tr.t("Connected") : (modelData.known ? Tr.t("Saved") : "")) }
                         }
                         Row {
@@ -290,7 +290,7 @@ PanelWindow {
                                 MIcon { anchors.centerIn: parent; name: showPw.checked ? "visibility_off" : "visibility"; glyph: String.fromCodePoint(showPw.checked ? 0xF0209 : 0xF0208); size: 16; color: wm.dim }
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: showPw.checked = !showPw.checked } }
                             Rectangle { anchors.right: parent.right; anchors.rightMargin: 6; anchors.verticalCenter: parent.verticalCenter; width: 32; height: 28; radius: 9
-                                color: pwField.text.length >= 8 ? Look.accent : Qt.rgba(1, 1, 1, 0.1)
+                                color: pwField.text.length >= 8 ? Look.accentHi : Qt.rgba(1, 1, 1, 0.1)
                                 MIcon { anchors.centerIn: parent; name: "arrow_forward"; glyph: String.fromCodePoint(0xF0054); size: 16; color: pwField.text.length >= 8 ? "#0d0d0d" : wm.dim }
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: if (pwField.text.length >= 8) wm.connect(modelData, pwField.text) } }
                         }

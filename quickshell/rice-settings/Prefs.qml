@@ -4,10 +4,11 @@ import Quickshell.Io
 import QtQuick
 
 // Settings window preferences kept in ~/.config/rice/settings-app.json (Home > Settings).
-// Prefs.scroll: how fast the pages scroll with the wheel or the touchpad (1 = as before).
+// Prefs.scroll: how fast the pages scroll with the wheel or the touchpad (1 = 120 px a notch; the default is 1.8,
+// 1 felt slow).
 Singleton {
     id: prefs
-    property real scroll: 1.0
+    property real scroll: 1.8
     // the language of Settings (Settings > System > Languages): "en", "pl", "pt-BR" ...
     property string lang: "en"
     function setLang(v) { lang = v; save("lang", v) }

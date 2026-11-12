@@ -1,5 +1,12 @@
 # Changelog
 
+## V4.20: menus blur sooner, colors in the sound menu, faster scrolling
+- niri: the Wi-Fi, Bluetooth, sound and power menus, the control center, the game bar and the wallpaper picker were see-through for half a second after opening and only then turned blurred; the blur now comes in as soon as the menu has nearly arrived
+- The sound menu has your theme color: the sliders, their knobs, the chosen output and microphone and the icon (all white before)
+- The theme color in the menus (sound, Wi-Fi, Bluetooth) is made bright enough to stand out: a dark wallpaper gave a dark, muddy accent on the switches
+- Settings scrolls faster by default (1.8x; Home > Scrolling changes it)
+- "Hide while windows are open" is on for the desktop widgets from the start
+
 ## V4.19: a lighter visualizer
 - One cava for the whole shell: the visualizer on the bar and the visualizer widget used to start one cava each and read every frame twice; now they share one, and it stops when nothing shows the music
 - The visualizer widget draws with much less work: the colours of the bars are worked out once (not for every bar 30 times a second), bars of one colour are drawn in one go, and the fade is one gradient over the whole picture instead of one for every bar. Less work also means fewer pauses of the whole shell (the bar included) while music plays
