@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # prints one JSON line every 2 seconds (or every N seconds: rice-stats N):
-# {"cpu":N,"ram":N,"gpu":N,"temp":C,"gtemp":C,"ramu":GB,"ramt":GB}
+# {"cpu":N,"ram":N,"gpu":N,"temp":C,"gtemp":C,"ramu":GB,"ramt":GB,"swap":N,"swapu":GB,"swapt":GB,"disk":N,"disku":GB,"diskt":GB}
 # cpu/ram/gpu in %, temp = CPU temperature, gtemp = GPU temperature (0 when unknown)
 import glob
 import json
@@ -24,6 +24,24 @@ def ram():
     t = m.get("MemTotal", 1)
     used = t - m.get("MemAvailable", 0)
     return round(100 * used / t), round(used / 1048576, 1), round(t / 1048576, 1)
+
+
+def swap():
+    m = {}
+    for ln in open("/proc/meminfo"):
+        k, v = ln.split(":")[0], ln.split(":")[1].split()[0]
+        m[k] = int(v)
+    t = m.get("SwapTotal", 0)
+    used = t - m.get("SwapFree", 0)
+    return (round(100 * used / t) if t else 0), round(used / 1048576, 1), round(t / 1048576, 1)
+
+
+def disk():
+    try:
+        d = shutil.disk_usage("/")
+        return round(100 * d.used / d.total), round(d.used / 1e9), round(d.total / 1e9)
+    except OSError:
+        return 0, 0, 0
 
 
 def read(p):
@@ -90,6 +108,9 @@ while True:
     idle0, tot0 = idle1, tot1
     r, ru, rt = ram()
     g, gt = gpu()
+    s, su, stt = swap()
+    dk, du, dt2 = disk()
     sys.stdout.write(json.dumps({"cpu": max(0, min(100, c)), "ram": r, "gpu": max(0, min(100, g)),
-                                 "temp": cpu_temp(), "gtemp": gt, "ramu": ru, "ramt": rt}) + "\n")
+                                 "temp": cpu_temp(), "gtemp": gt, "ramu": ru, "ramt": rt,
+                                 "swap": s, "swapu": su, "swapt": stt, "disk": dk, "disku": du, "diskt": dt2}) + "\n")
     sys.stdout.flush()

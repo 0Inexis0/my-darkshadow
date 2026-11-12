@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Infinite Desktop is based on the idea of Sarods2D: https://github.com/sarodscommits/hyprland-infinitie-desktop-v2 (MIT)
 # rice-infinite: Infinite Desktop (Settings > Desktop > Infinite Desktop). On Hyprland the work is done inside
-# Hyprland by ~/.config/hypr/rice-infinite.lua; on niri by rice-canvasd (the windows float, the canvas moves).
+# Hyprland by ~/.config/hypr/rice-infinite.lua. Hyprland only (on niri it was rice-canvasd; gone in V4.23).
 #   rice-infinite on | off | toggle
-#   rice-infinite pan DX DY | go left|right|up|down     (niri: what its keys run)
+#   rice-infinite pan DX DY | go left|right|up|down     (niri used these; now it says Hyprland only)
 #   rice-infinite key key_toggle|mod_hold|mod_go|mod_zoom "SUPER + ALT"   your keys
 #   rice-infinite state                 JSON for the settings app
 #   rice-infinite set step|min|pan|speed|dir N   zoom step (0.05-0.4), how far it zooms out (0.1-0.9), move step in
@@ -21,9 +21,10 @@ val() { sed -n "s/^$1=//p" "$2" 2>/dev/null | head -1; }
 niri() { [ -n "$NIRI_SOCKET" ]; }
 case "$1" in
   on|off|toggle|pan|go)
-    if niri; then exec "$HOME/.local/bin/rice-canvasd" --niri "$@"; fi
+    # Hyprland only (V4.23): on niri it is gone; a canvas that was on there is put away
+    if niri; then "$HOME/.local/bin/rice-canvasd" --niri off >/dev/null 2>&1; echo "Infinite Desktop is for Hyprland only" >&2; exit 1; fi
     case "$1" in pan|go) exit 0 ;; esac
-    hypr || { echo "Infinite Desktop needs Hyprland or niri" >&2; exit 1; }
+    hypr || { echo "Infinite Desktop needs Hyprland" >&2; exit 1; }
     case "$1" in on) f='RiceInfinite.set(true)' ;; off) f='RiceInfinite.set(false)' ;; *) f='RiceInfinite.toggle()' ;; esac
     hyprctl eval "if RiceInfinite then $f end" >/dev/null ;;
   set)

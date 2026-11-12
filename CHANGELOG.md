@@ -1,5 +1,14 @@
 # Changelog
 
+## V4.23: new widgets, one widget style, Infinite Desktop for Hyprland only
+- New widget Forecast: where you are, the temperature in big numbers, the sky in your shape, how it feels, today's high and low and the next hours (rice-weather json, from wttr.in every half hour)
+- New widget System: a slim pill with CPU, RAM, disk and swap in small rings; a click opens a card under it with a tile for each (how much is used, a bar, the numbers and the CPU heat)
+- New widget Music card: the cover, the song, a wavy line and the buttons (the play button is a cookie that turns); the words button opens it downwards to the lyrics, which run with the song, the line being sung bright in the middle
+- New widget Date & time: a slim pill with the day and the date, the time in a chip of your theme color
+- One widget style: Google (Material You cards in your theme color); DarkShadow and Outline are gone
+- rice-stats also tells swap and disk use
+- niri: Infinite Desktop is gone (it stays on Hyprland); its keys are no longer made, Settings no longer lists it there
+
 ## V4.22: the shell starts again
 - V4.21 did not start on some Qt versions ("Zone is not a type" in VBar.qml): the side bar's zone is declared before it is used now
 

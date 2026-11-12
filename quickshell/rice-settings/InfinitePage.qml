@@ -3,7 +3,7 @@ import Quickshell.Io
 import QtQuick
 
 // Settings > Desktop > Infinite Desktop: the windows of a workspace float on an endless canvas that you move (and on
-// Hyprland zoom). Hyprland: rice-infinite.lua does the work; niri: rice-canvasd. rice-infinite switches it.
+// Hyprland zoom). Hyprland only (rice-infinite.lua does the work); on niri the page only says so (V4.23).
 // Your keys: Keys, below (rice-infinite key ...).
 Item {
     id: page
@@ -110,13 +110,14 @@ Item {
                 spacing: 6
                 T { text: I18n.t("INFINITE DESKTOP"); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2
                     color: M3.alpha(page.st.on ? M3.inkPrimaryC : M3.ink, 0.7) }
-                T { kind: "title"; text: page.st.on ? I18n.t("On") + (page.niri ? "" : " · " + Math.round(page.st.zoom * 100) + " %") : I18n.t("Off"); font.pixelSize: 28; font.weight: Font.Medium
+                T { kind: "title"; text: page.niri ? I18n.t("Hyprland only") : page.st.on ? I18n.t("On") + (page.niri ? "" : " · " + Math.round(page.st.zoom * 100) + " %") : I18n.t("Off"); font.pixelSize: 28; font.weight: Font.Medium
                     color: page.st.on ? M3.inkPrimaryC : M3.ink }
                 T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 13; color: M3.alpha(page.st.on ? M3.inkPrimaryC : M3.ink, 0.8)
-                    text: page.niri ? I18n.t("Your windows float on an endless canvas: hold your keys and move the mouse, the canvas moves with it. (niri cannot zoom windows.)")
+                    text: page.niri ? I18n.t("Infinite Desktop is made for Hyprland (it zooms and moves the windows on an endless canvas). niri scrolls its own way already, so here it is off.")
                                     : I18n.t("Your windows float on an endless canvas: zoom out to see them all, move the canvas to where you work.") }
                 Item { width: 1; height: 4 }
                 Btn {
+                    visible: !page.niri
                     text: page.st.on ? I18n.t("Turn off") : I18n.t("Turn on"); sym: page.st.on ? "close_fullscreen" : "open_in_full"; icon: ""
                     variant: page.st.on ? "tonal" : "filled"
                     onClicked: { page.sh([page.st.on ? "off" : "on"]); const n = Object.assign({}, page.st); n.on = !n.on; page.st = n }

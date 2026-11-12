@@ -17,7 +17,7 @@ Singleton {
     // compositor does not have to redraw the desktop under the windows)
     property bool covered: false
     // widget style (Settings > Widgets > Theme): shadow (DarkShadow's Shell), google, outline
-    property string theme: "shadow"
+    property string theme: "google"
     // text and cards turn light or dark with the wallpaper behind each widget (Settings > Widgets)
     property bool adapt: true
     // shell shadows (Settings > Desktop > Windows; rice-shadows): shell.qml fills these in from shadows.json

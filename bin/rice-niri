@@ -392,7 +392,8 @@ def binds_section(f, s, term, files):
     seen, lines = set(), []
     # Infinite Desktop's keys come after yours and the actions you moved, before niri's defaults (a default on the
     # same key gives way to the key you chose for Infinite Desktop)
-    for k, props, act in custom + moved + infinite_binds() + rest:       # yours first: they replace the shell's
+    # Infinite Desktop is Hyprland only (V4.23): no keys for it here
+    for k, props, act in custom + moved + rest:       # yours first: they replace the shell's
         nk = norm_key(k)
         if nk in seen:
             continue
