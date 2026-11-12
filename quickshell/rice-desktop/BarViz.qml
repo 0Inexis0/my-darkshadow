@@ -1,5 +1,4 @@
 import Quickshell
-import Quickshell.Io
 import Quickshell.Services.Mpris
 import QtQuick
 
@@ -18,25 +17,31 @@ Item {
     implicitWidth: vertical ? thick : count * 4 + (count - 1) * 2
     implicitHeight: vertical ? count * 4 + (count - 1) * 2 : thick
 
-    Process {
-        command: [Quickshell.env("HOME") + "/.local/bin/rice-cava"]
-        running: bv.listening
-        stdout: SplitParser {
-            onRead: function(line) {
-                const p = line.split(";").filter(function(s) { return s.length > 0 }).map(Number)
-                if (p.length < 8) return
-                // the 64 bands folded into a few: the low ones count most, the very high ones are left out
-                const n = bv.count, use = Math.floor(p.length * 0.75), out = []
-                for (let i = 0; i < n; i++) {
-                    const a = Math.floor(i * use / n), b = Math.max(a + 1, Math.floor((i + 1) * use / n))
-                    let s = 0
-                    for (let j = a; j < b; j++) s += p[j]
-                    out.push(Math.min(1, s / (b - a) / 100 * 1.25))
-                }
-                bv.levels = out
+    property bool quiet: false
+    onListeningChanged: if (!listening) { levels = []; quiet = false }
+    CavaUser { active: bv.listening }
+    Connections {
+        target: CavaFeed
+        enabled: bv.listening
+        function onFrame() {
+            const p = CavaFeed.bands
+            if (p.length < 8) return
+            // the 64 bands folded into a few: the low ones count most, the very high ones are left out
+            const n = bv.count, use = Math.floor(p.length * 0.75), out = []
+            let loud = 0
+            for (let i = 0; i < n; i++) {
+                const a = Math.floor(i * use / n), b = Math.max(a + 1, Math.floor((i + 1) * use / n))
+                let s = 0
+                for (let j = a; j < b; j++) s += p[j]
+                const v = Math.min(1, s / (b - a) / 100 * 1.25)
+                out.push(v)
+                if (v > loud) loud = v
             }
+            // a pause in the song: nothing moves, so nothing is updated
+            if (loud < 0.005 && bv.quiet) return
+            bv.quiet = loud < 0.005
+            bv.levels = out
         }
-        onRunningChanged: if (!running) bv.levels = []
     }
 
     Repeater {

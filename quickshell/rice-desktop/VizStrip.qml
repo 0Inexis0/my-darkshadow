@@ -1,5 +1,4 @@
 import Quickshell
-import Quickshell.Io
 import Quickshell.Wayland
 import QtQuick
 
@@ -25,20 +24,19 @@ PanelWindow {
     WlrLayershell.namespace: "rice-viz"
     mask: Region { }
 
-    Process {
-        command: [Quickshell.env("HOME") + "/.local/bin/rice-cava"]
-        running: vz.active
-        stdout: SplitParser {
-            onRead: function(line) {
-                const p = line.split(";").filter(function(s) { return s.length > 0 }).map(Number)
-                if (p.length === 0) return
-                // nothing changes while it is silent: skip the update
-                let loud = 0
-                for (let i = 0; i < p.length; i++) if (p[i] > loud) loud = p[i]
-                if (loud < 0.5 && vz.quiet) return
-                vz.quiet = loud < 0.5
-                vz.bars = p
-            }
+    CavaUser { active: vz.active }
+    Connections {
+        target: CavaFeed
+        enabled: vz.active
+        function onFrame() {
+            const p = CavaFeed.bands
+            if (p.length === 0) return
+            // nothing changes while it is silent: skip the update
+            let loud = 0
+            for (let i = 0; i < p.length; i++) if (p[i] > loud) loud = p[i]
+            if (loud < 0.5 && vz.quiet) return
+            vz.quiet = loud < 0.5
+            vz.bars = p
         }
     }
 

@@ -1,5 +1,4 @@
 import Quickshell
-import Quickshell.Io
 import QtQuick
 
 // Audio visualizer (cava). No background; styles: bars (straight bars like cava in a terminal), mirror, wave, dots.
@@ -30,7 +29,7 @@ Item {
         for (let j = Math.floor(i * k); j < Math.floor((i + 1) * k); j++) if ((b[j] || 0) > m) m = b[j]
         return Math.min(100, m * gain)
     }
-    onNBarsChanged: cv.requestPaint()
+    onNBarsChanged: vz.refresh()
     onShapeChanged: cv.requestPaint()
     onSpacingChanged: cv.requestPaint()
     readonly property real bw: Math.max(1, (width - gap * (count - 1)) / count)
@@ -50,33 +49,42 @@ Item {
         default: return Qt.hsla(hue, sat, tone, 1)
         }
     }
+    // the colour of every bar, worked out once (when the theme, the colours or the number of bars change), not
+    // 30 times a second for every bar
+    property var cols: []
+    function refresh() {
+        const o = []
+        for (let i = 0; i < count; i++) { const k = colorAt(i); o.push("rgb(" + Math.round(k.r * 255) + "," + Math.round(k.g * 255) + "," + Math.round(k.b * 255) + ")") }
+        cols = o
+        cv.requestPaint()
+    }
+    Component.onCompleted: refresh()
     function css(c, a) { return "rgba(" + Math.round(c.r * 255) + "," + Math.round(c.g * 255) + "," + Math.round(c.b * 255) + "," + a + ")" }
-    onColorModeChanged: cv.requestPaint()
+    onColorModeChanged: vz.refresh()
     onStyleChanged: cv.requestPaint()
     onFlipChanged: cv.requestPaint()
     onWidthChanged: cv.requestPaint()
     onHeightChanged: cv.requestPaint()
-    onLightBgChanged: cv.requestPaint()
-    onAccChanged: cv.requestPaint()
+    onLightBgChanged: vz.refresh()
+    onAccChanged: vz.refresh()
 
-    Process {
-        command: [Quickshell.env("HOME") + "/.local/bin/rice-cava"]
-        running: vz.running && vz.visible
-        stdout: SplitParser {
-            onRead: function(line) {
-                const p = line.split(";").filter(function(s) { return s.length > 0 }).map(Number)
-                if (p.length > 0) {
-                    // rises at once, falls softly
-                    const o = vz.bars, q = []
-                    let loud = 0
-                    for (let i = 0; i < p.length; i++) { const a = o[i] !== undefined ? o[i] : 0; const v = p[i] >= a ? p[i] : a * 0.8 + p[i] * 0.2; q.push(v); if (v > loud) loud = v }
-                    // silence: draw the empty picture once, then nothing (no work 30 times a second for no sound)
-                    if (loud < 0.5 && vz.quiet) return
-                    vz.quiet = loud < 0.5
-                    vz.bars = q
-                    cv.requestPaint()
-                }
-            }
+    readonly property bool listening: running && visible
+    CavaUser { active: vz.listening }
+    Connections {
+        target: CavaFeed
+        enabled: vz.listening
+        function onFrame() {
+            const p = CavaFeed.bands
+            if (p.length === 0) return
+            // rises at once, falls softly
+            const o = vz.bars, q = []
+            let loud = 0
+            for (let i = 0; i < p.length; i++) { const a = o[i] !== undefined ? o[i] : 0; const v = p[i] >= a ? p[i] : a * 0.8 + p[i] * 0.2; q.push(v); if (v > loud) loud = v }
+            // silence: draw the empty picture once, then nothing (no work 30 times a second for no sound)
+            if (loud < 0.5 && vz.quiet) return
+            vz.quiet = loud < 0.5
+            vz.bars = q
+            cv.requestPaint()
         }
     }
 
@@ -97,34 +105,36 @@ Item {
                 const mir = vz.style === "mirror"
                 const span = mir ? H / 2 : H
                 const rr = vz.shape === "pill" ? 0.5 : (vz.shape === "rounded" ? 0.3 : 0)
+                const w = Math.max(1, Math.round(vz.bw))
+                const r = Math.min(w / 2, Math.max(0, w * rr), 14)
+                const cols = vz.cols
+                const one = vz.colorMode === "accent" || vz.colorMode === "mono"
+                function bar(bx, by, bw2, bh2) { if (r > 0.5) c.roundedRect(bx, by, bw2, bh2, r, r); else c.rect(bx, by, bw2, bh2) }
+                if (one) { c.fillStyle = cols[0] || "#fff"; c.beginPath() }
                 for (let i = 0; i < n; i++) {
                     const v = Math.max(0, Math.min(1, vz.level(b, i) / 100))
-                    const w = Math.max(1, Math.round(vz.bw))
-                    const r = Math.min(w / 2, Math.max(0, w * rr), 14)
                     const h = Math.max(Math.max(2, r * 2), Math.round(v * span))
                     const x = Math.round(i * (vz.bw + vz.gap))
-                    const col = vz.colorAt(i)
-                    const y0 = mir ? H / 2 : (vz.flip ? 0 : H)           // where the bars start
-                    const y1 = mir ? 0 : (vz.flip ? H : 0)               // where a full bar ends
-                    const g = c.createLinearGradient(0, y0, 0, y1)
-                    g.addColorStop(0, vz.css(col, 0.82))
-                    g.addColorStop(0.5, vz.css(col, 1))
-                    g.addColorStop(1, vz.css(col, 0.3))
-                    c.fillStyle = g
-                    // a bar: straight, or with round ends
-                    function bar(bx, by, bw2, bh2) { c.beginPath(); if (r > 0.5) c.roundedRect(bx, by, bw2, bh2, r, r); else c.rect(bx, by, bw2, bh2); c.fill() }
-                    if (mir) {
-                        bar(x, H / 2 - h, w, h)
-                        const g2 = c.createLinearGradient(0, H / 2, 0, H)
-                        g2.addColorStop(0, vz.css(col, 0.82))
-                        g2.addColorStop(0.5, vz.css(col, 1))
-                        g2.addColorStop(1, vz.css(col, 0.3))
-                        c.fillStyle = g2
-                        bar(x, H / 2, w, h)
-                    } else {
-                        bar(x, vz.flip ? 0 : H - h, w, h)
-                    }
+                    if (!one) { c.fillStyle = cols[i] || "#fff"; c.beginPath() }
+                    if (mir) { bar(x, H / 2 - h, w, h); bar(x, H / 2, w, h) }
+                    else bar(x, vz.flip ? 0 : H - h, w, h)
+                    if (!one) c.fill()
                 }
+                if (one) c.fill()
+                // one soft fade over the whole height: a little dimmer at the base, brightest in the middle,
+                // fading toward the tip (two gradients a frame instead of one or two for every bar)
+                c.globalCompositeOperation = "destination-in"
+                // over the whole picture at once; mirror: the same fade both ways from the middle
+                const g = c.createLinearGradient(0, vz.flip && !mir ? H : 0, 0, vz.flip && !mir ? 0 : H)
+                if (mir) {
+                    g.addColorStop(0, "rgba(0,0,0,0.3)"); g.addColorStop(0.25, "rgba(0,0,0,1)"); g.addColorStop(0.5, "rgba(0,0,0,0.82)")
+                    g.addColorStop(0.75, "rgba(0,0,0,1)"); g.addColorStop(1, "rgba(0,0,0,0.3)")
+                } else {
+                    g.addColorStop(0, "rgba(0,0,0,0.3)"); g.addColorStop(0.5, "rgba(0,0,0,1)"); g.addColorStop(1, "rgba(0,0,0,0.82)")
+                }
+                c.fillStyle = g
+                c.fillRect(0, 0, W, H)
+                c.globalCompositeOperation = "source-over"
             } else if (vz.style === "wave") {
                 const pts = []
                 for (let i = 0; i < n; i++) {
@@ -170,15 +180,16 @@ Item {
                     const v = vz.level(b, i) / 100
                     const k = Math.max(1, Math.round(v * H / step))
                     const x = i * (vz.bw + vz.gap) + vz.bw / 2
-                    const col = vz.colorAt(i)
+                    c.fillStyle = vz.cols[i] || "#fff"
                     for (let j = 0; j < k; j++) {
                         const y = vz.flip ? d / 2 + j * step : H - d / 2 - j * step
-                        c.fillStyle = vz.css(col, (0.35 + 0.6 * (1 - j / Math.max(1, k))).toFixed(2))
+                        c.globalAlpha = 0.35 + 0.6 * (1 - j / Math.max(1, k))
                         c.beginPath()
                         c.arc(x, y, d / 2, 0, Math.PI * 2)
                         c.fill()
                     }
                 }
+                c.globalAlpha = 1
             }
         }
     }

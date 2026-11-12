@@ -1,5 +1,10 @@
 # Changelog
 
+## V4.19: a lighter visualizer
+- One cava for the whole shell: the visualizer on the bar and the visualizer widget used to start one cava each and read every frame twice; now they share one, and it stops when nothing shows the music
+- The visualizer widget draws with much less work: the colours of the bars are worked out once (not for every bar 30 times a second), bars of one colour are drawn in one go, and the fade is one gradient over the whole picture instead of one for every bar. Less work also means fewer pauses of the whole shell (the bar included) while music plays
+- cava rests after 2 seconds of silence
+
 ## V4.18: blur behind the bar in the overview (niri)
 - niri: in the overview (Win + Tab) and while workspaces slide, windows pass behind the bar and the island; since V4.15 they showed through it unblurred, like a hole. The bar, the island and the dock blur what is behind them again, windows too (V4.15 had switched them to the shared wallpaper-only blur to save work). The desktop widgets keep the shared blur
 
