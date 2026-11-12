@@ -260,12 +260,10 @@ Item {
             T { kind: "title"; text: I18n.t("Task view"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
             T {
                 width: parent.width; wrapMode: Text.WordWrap; kind: "dim"
-                text: page.ctl.niri ? I18n.t("niri has its own: Super + Tab shows every workspace and window, Alt + Tab switches windows.")
-                                    : I18n.t("Super + Tab shows every workspace with its windows: type to find one, drag a window to another workspace, middle click closes it. Alt + Tab switches windows: hold Alt, press Tab, let go. Other keys: Settings > Keybinds (the pencil).")
+                text: I18n.t("Super + Tab shows every workspace with its windows: type to find one, drag a window to another workspace, middle click closes it. Alt + Tab switches windows: hold Alt, press Tab, let go. Other keys: Settings > Keybinds (the pencil).")
             }
             Item {
                 id: tvs
-                visible: !page.ctl.niri
                 width: parent.width; height: tvCol.implicitHeight
                 property var c: ({ live: true, count: 10, empty: true, super: false })
                 Process { id: tvGet; running: true; command: ["bash", "-c", "\"$HOME/.local/bin/rice-taskview\" get 2>/dev/null"]
@@ -277,7 +275,7 @@ Item {
                 Column {
                     id: tvCol
                     width: parent.width; spacing: 8
-                    ToggleRow { label: I18n.t("Super alone opens it"); desc: I18n.t("Press Super and let go (Super + a key still does what it did)")
+                    ToggleRow { visible: !page.ctl.niri; label: I18n.t("Super alone opens it"); desc: I18n.t("Press Super and let go (Super + a key still does what it did)")
                         checked: tvs.c.super === true; onToggled: function(v) { tvs.setv("super", v ? "on" : "off") } }
                     ToggleRow { label: I18n.t("Live pictures of the windows"); desc: I18n.t("Off: their icons (lighter)")
                         checked: tvs.c.live !== false; onToggled: function(v) { tvs.setv("live", v ? "on" : "off") } }

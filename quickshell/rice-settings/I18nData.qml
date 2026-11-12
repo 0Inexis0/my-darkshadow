@@ -1192,6 +1192,8 @@ Singleton {
             "This is you": "To ty",
             "Three small shapes": "Trzy małe kształty",
             "Forecast": "Prognoza",
+            "niri's own overview": "Własny overview niri",
+            "Your own keybinds": "Twoje skróty",
             "Task view": "Widok zadań",
             "niri has its own: Super + Tab shows every workspace and window, Alt + Tab switches windows.": "niri ma własny: Super + Tab pokazuje wszystkie pulpity i okna, Alt + Tab przełącza okna.",
             "Super + Tab shows every workspace with its windows: type to find one, drag a window to another workspace, middle click closes it. Alt + Tab switches windows: hold Alt, press Tab, let go. Other keys: Settings > Keybinds (the pencil).": "Super + Tab pokazuje każdy pulpit z jego oknami: pisz, żeby znaleźć okno, przeciągnij okno na inny pulpit, środkowy klik je zamyka. Alt + Tab przełącza okna: przytrzymaj Alt, naciśnij Tab, puść. Inne klawisze: Ustawienia > Skróty (ołówek).",

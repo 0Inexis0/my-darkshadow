@@ -26,9 +26,7 @@ DEFAULTS = {
 # niri: the same actions, its keys (the launcher is SUPER + D there; Infinite Desktop is Hyprland only)
 NIRI_DEFAULTS = dict(DEFAULTS, launcher="SUPER + D")
 NIRI_DEFAULTS.pop("infinite")
-# niri has its own overview (Mod + Tab) and window switcher (Alt + Tab)
-NIRI_DEFAULTS.pop("taskview")
-NIRI_DEFAULTS.pop("switcher")
+# (the Task view and the switcher are the shell's on niri too: SUPER + Tab, ALT + Tab)
 MODS = [(64, "SUPER"), (4, "CTRL"), (8, "ALT"), (1, "SHIFT")]
 
 

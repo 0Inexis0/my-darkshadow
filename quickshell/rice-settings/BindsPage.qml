@@ -7,6 +7,7 @@ Column {
     property var ctl
     property var custom: []
     property var active: []
+    property bool showActive: true
     spacing: 10
 
     Process {
@@ -26,7 +27,7 @@ Column {
 
     Timer { id: refresh; interval: 700; onTriggered: bindsProc.running = true }
 
-    T { text: I18n.t("Custom keybinds"); font.pixelSize: 15; font.bold: true }
+    T { text: I18n.t("Your own keybinds"); font.pixelSize: 15; font.bold: true }
     T {
         width: parent.width
         text: Quickshell.env("NIRI_SOCKET") ? I18n.t("Run any command with a key combination. niri takes changes at once.") : I18n.t("Run any command with a key combination. Removing one takes effect after Reload Hyprland.")
@@ -104,8 +105,9 @@ Column {
         }
     }
 
-    T { text: I18n.t("Active keybinds"); font.pixelSize: 15; font.bold: true; topPadding: 12 }
+    T { visible: page.showActive; text: I18n.t("Active keybinds"); font.pixelSize: 15; font.bold: true; topPadding: 12 }
     Column {
+        visible: page.showActive
         width: parent.width
         spacing: 3
         Repeater {

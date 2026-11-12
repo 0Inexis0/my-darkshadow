@@ -52,7 +52,8 @@ Item {
         { name: "Workspaces", sym: "view_carousel", keys: [
             ["Super + 1 … 0", "Go to workspace 1 … 10"], ["Super + Shift + 1 … 0", "Move the window to a workspace"],
             ["Super + Page Up / Down", "Workspace above / below"], ["Super + Mouse wheel", "Workspace above / below"],
-            ["Super + Tab", "Overview: all workspaces and windows"], ["Super + Shift + Arrows", "Focus another screen"] ] },
+            ["Super + Tab", "Task view: every workspace and its windows", "taskview"], ["Alt + Tab", "Switch windows (hold Alt, Tab on, let go)", "switcher"],
+            ["Super + O", "niri's own overview"], ["Super + Shift + Arrows", "Focus another screen"] ] },
         { name: "Screenshots and recording", sym: "screenshot_monitor", keys: [
             ["Print", "Screenshot of an area", "shot"], ["Shift + Print", "Screenshot of the whole screen", "shotfull"],
             ["Alt + Print", "Screenshot of the window"], ["Super + Shift + R", "Record the screen (again: stop)", "record"] ] },
@@ -263,13 +264,9 @@ Item {
             Btn { anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
                 text: I18n.t("Reset all"); variant: "tonal"; onClicked: page.kmRun(["reset-all"]) }
         }
-        SettingRow {
-            label: I18n.t("Your own keybinds")
-            desc: I18n.t("Run any app or command with keys you pick")
-            reserved: 150
-            Btn { anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
-                text: I18n.t("Make one"); sym: "add"; icon: ""; variant: "tonal"; onClicked: if (page.ctl) page.ctl.page = 4 }
-        }
+        // your own keys for any app or command, right here (they were hidden in Windows > Keybinds)
+        Item { width: parent.width; height: 8 }
+        BindsPage { width: parent.width; ctl: page.ctl; showActive: false }
     }
 
     // ---------- change the keys of one action ----------

@@ -1,5 +1,9 @@
 # Changelog
 
+## V4.28: Task view and Alt + Tab on niri, your own keybinds in Keybinds
+- niri: SUPER + Tab opens the shell's Task view and ALT + Tab its window switcher (like on Hyprland). niri's own Alt + Tab switcher is turned off (recent-windows off), niri's overview moved to SUPER + O
+- Settings > Keybinds: your own keybinds (any app or command on keys you pick) are right on the page now, under the shell's keys (before, the button led to the Windows page and the Keybinds tab was easy to miss). The Task view and the switcher can get other keys there too (the pencil), on niri as well
+
 ## V4.27: Task view and Alt + Tab (Hyprland)
 - New: the Task view (SUPER + Tab): every workspace as a small screen with its windows where they are, as live pictures (or their icons). Type to find a window (Enter goes to it), arrows pick a workspace, a click goes to a window, drag a window onto another workspace to move it there, middle click or the x closes it, Esc closes the view. The screen behind it is blurred
 - New: the window switcher (ALT + Tab): your windows in the order you used them; hold ALT, Tab goes on, SHIFT + Tab back, let go to go to the picked one

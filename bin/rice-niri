@@ -86,6 +86,7 @@ class F:
         self.hot_corners = v >= (25, 5)
         self.corner_pick = v >= (25, 11)        # hot-corners { top-left / ... } (before: only on or off)
         self.max_to_edges = v >= (25, 11)
+        self.recent = v >= (25, 11)             # niri's own Alt + Tab switcher (recent-windows): turned off
 
     def json(self):
         return {k: v for k, v in self.__dict__.items() if k != "ver"}
@@ -284,8 +285,12 @@ def default_binds(f, term, files):
         ("Mod+Shift+WheelScrollDown", "", "focus-column-right;"),
         ("Mod+Shift+WheelScrollUp", "", "focus-column-left;"),
         # overview and help
-        ("Mod+Tab", 'repeat=false hotkey-overlay-title="Overview"', "toggle-overview;"),
-        ("Mod+O", "repeat=false", "toggle-overview;"),
+        # the shell's Task view (every workspace and its windows) and window switcher (rice-taskview); niri's own
+        # overview stays on Mod + O
+        ("Mod+Tab", 'repeat=false hotkey-overlay-title="Task view"', run(b + "rice-taskview", "overview")),
+        ("Alt+Tab", 'hotkey-overlay-title="Switch windows"', run(b + "rice-taskview", "switch")),
+        ("Alt+Shift+Tab", "hotkey-overlay-title=null", run(b + "rice-taskview", "back")),
+        ("Mod+O", 'repeat=false hotkey-overlay-title="niri overview"', "toggle-overview;"),
         ("Mod+Shift+Slash", 'hotkey-overlay-title="These keys"', "show-hotkey-overlay;"),
         ("Mod+Escape", "allow-inhibiting=false", "toggle-keyboard-shortcuts-inhibit;"),
         ("Mod+Shift+P", "", "power-off-monitors;"),
@@ -322,6 +327,7 @@ ACTION_KEYS = {
     "terminal": "Mod+Return", "launcher": "Mod+D", "launcher2": "Alt+Space", "settings": "Mod+U", "wallpaper": "Mod+W",
     "quick": "Mod+A", "cc": "Mod+N", "gamebar": "Mod+G", "dashboard": "Mod+Alt+D", "lock": "Mod+L", "close": "Mod+Q",
     "float": "Mod+V", "shot": "Print", "shotfull": "Shift+Print", "record": "Mod+Shift+R", "widgets": "Mod+Alt+W",
+    "taskview": "Mod+Tab", "switcher": "Alt+Tab",
 }
 
 
@@ -774,6 +780,9 @@ def build(f, user=True):
     L += window_rules(f, s, flat) + [""]
     L += layer_rules(f, flat) + [""]
     L += binds_section(f, s, terminal(), files_app()) + [""]
+    if f.recent:
+        # niri's own Alt + Tab switcher is off: Alt + Tab is the shell's (rice-taskview)
+        L += block("recent-windows", ["off"]) + [""]
     if not user:
         L.append("// (user.kdl is left out: niri did not accept it, see ~/.cache/rice/niri-config.log)")
     elif f.include:
