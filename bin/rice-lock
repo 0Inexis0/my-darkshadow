@@ -339,9 +339,19 @@ def greet():
     print("%s, %s" % (g, os.environ.get("USER") or getpass.getuser()))
 
 
+def shell_notify():
+    try:
+        return json.load(open(HOME + "/.config/rice/cc.json")).get("engine") == "shell"
+    except Exception:
+        return False
+
+
 def notif():
     try:
-        n = int(subprocess.run(["swaync-client", "-c"], capture_output=True, text=True, timeout=2).stdout.strip() or 0)
+        if shell_notify():
+            n = int(open(HOME + "/.cache/rice/notif-count").read().strip() or 0)
+        else:
+            n = int(subprocess.run(["swaync-client", "-c", "-sw"], capture_output=True, text=True, timeout=2).stdout.strip() or 0)
     except Exception:
         n = 0
     print("" if n <= 0 else "%s  %d notification%s" % (chr(0xF009A), n, "" if n == 1 else "s"))
@@ -377,8 +387,11 @@ def notif_count():
             return
     except Exception:
         pass
+    if shell_notify():
+        print(0)
+        return
     try:
-        print(int(subprocess.run(["swaync-client", "-c"], capture_output=True, text=True, timeout=2).stdout.strip() or 0))
+        print(int(subprocess.run(["swaync-client", "-c", "-sw"], capture_output=True, text=True, timeout=2).stdout.strip() or 0))
     except Exception:
         print(0)
 

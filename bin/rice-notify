@@ -993,8 +993,8 @@ def apply(c, reload_hypr=False):
     if wire_hypr():
         changed = True
     if not shell_engine():
-        quiet(["swaync-client", "-R"])
-        quiet(["swaync-client", "-rs"])
+        quiet(["swaync-client", "-R", "-sw"])
+        quiet(["swaync-client", "-rs", "-sw"])
     if changed or reload_hypr:
         quiet([os.path.expanduser("~/.local/bin/rice-wm"), "reload"])
 
@@ -1071,8 +1071,8 @@ def main(argv):
                 print("restored", p)
         if os.path.exists(LUA):
             os.remove(LUA)
-        quiet(["swaync-client", "-R"])
-        quiet(["swaync-client", "-rs"])
+        quiet(["swaync-client", "-R", "-sw"])
+        quiet(["swaync-client", "-rs", "-sw"])
         quiet([os.path.expanduser("~/.local/bin/rice-wm"), "reload"])
     else:
         die(__doc__)

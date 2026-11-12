@@ -217,11 +217,11 @@ def set_dnd(on):
     # rice-cc knows who shows notifications (the shell or swaync)
     cc = os.path.expanduser("~/.local/bin/rice-cc")
     if on:
-        q([cc, "dnd", "on"] if os.access(cc, os.X_OK) else ["swaync-client", "-dn"])
+        q([cc, "dnd", "on"] if os.access(cc, os.X_OK) else ["swaync-client", "-dn", "-sw"])
         open(DND_BY_US, "w").write("1\n")
     elif os.path.exists(DND_BY_US):
         os.remove(DND_BY_US)
-        q([cc, "dnd", "off"] if os.access(cc, os.X_OK) else ["swaync-client", "-df"])
+        q([cc, "dnd", "off"] if os.access(cc, os.X_OK) else ["swaync-client", "-df", "-sw"])
 
 
 def main(argv):

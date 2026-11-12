@@ -232,7 +232,7 @@ def confirm(question):
 
 def session(what):
     if not shell_notify():
-        run(["swaync-client", "-cp"])     # close the notification center first
+        run(["swaync-client", "-cp", "-sw"])     # close the notification center first
     if what == "lock":
         rp = os.path.expanduser("~/.local/bin/rice-power")
         if os.path.exists(rp):

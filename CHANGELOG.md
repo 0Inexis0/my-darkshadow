@@ -1,5 +1,11 @@
 # Changelog
 
+## V4.31: no more piling swaync-client processes (issue #10)
+- With DarkShadow notifications (not SwayNC), the hot corner panel's state still asked swaync-client for Do Not Disturb every few seconds. Without swaync running, swaync-client waits for it forever; when the caller was stopped, these calls stayed behind (dozens of them, each holding a D-Bus connection), until the user D-Bus ran out of files and the session ended. Thanks to the reporter of issue #10 for tracking it down
+- rice-hotcorner reads Do Not Disturb from the shell (cc.json) in DarkShadow mode, and its DND button goes through rice-cc (shell or SwayNC, whichever shows notifications)
+- The lock screen's notification count no longer asks swaync in DarkShadow mode
+- Every remaining swaync-client call (SwayNC mode) uses --skip-wait and a time limit, so none can hang
+
 ## V4.30: no more pale squares on niri, the music card cleans up
 - niri: the blur behind cards, menus, the island and the bar showed as pale squares around the rounded corners on some setups. The blur now follows the rounded corners from the inside (in small steps), so nothing shows past the edges
 - Music card: the lyrics box has its rounded corners again (its fades were square), and when nothing plays any more the last song's lyrics go away
