@@ -920,6 +920,37 @@ def cmd_kbd_set(layouts):
     print("Keyboard: " + ", ".join(lays))
 
 
+def cmd_kbd_remember():
+    """Before an update: the keyboard layout Hyprland uses now (set by hand in hyprland.lua, or by another tool) is
+    kept in hypr.json when the Settings app has none, so the update does not put the keyboard back to US."""
+    if NIRI or not shutil.which("hyprctl"):
+        return
+    s = load()
+    if s["kbd"].get("layouts"):
+        return
+    def opt(k):
+        try:
+            return (json.loads(sh(["hyprctl", "-j", "getoption", "input:" + k])) or {}).get("str", "") or ""
+        except Exception:
+            return ""
+    lay = opt("kb_layout").strip()
+    if not lay or lay == "us":
+        return
+    s["kbd"]["layouts"] = lay
+    s["kbd"]["variants"] = opt("kb_variant").strip()
+    s["kbd"]["options"] = opt("kb_options").strip()
+    save(s)
+    print("Keyboard layout kept: " + lay)
+
+
+def cmd_regen():
+    """Writes rice-settings.lua again from hypr.json (after an update put the shipped one in its place)"""
+    if os.path.exists(ST):
+        s = load()
+        os.makedirs(os.path.dirname(OUT), exist_ok=True)
+        open(OUT, "w").write(generate(s))
+
+
 def cmd_kbd_options(opts):
     if opts and not re.fullmatch(r"[a-z0-9_:,]+", opts):
         die("bad options")
@@ -953,6 +984,7 @@ def main(a):
         "state": (0, cmd_state), "set": (2, cmd_set), "border-mode": (1, cmd_border_mode),
         "border-color": (2, cmd_border_color), "anim-enabled": (1, cmd_anim_enabled),
         "anim-speed": (1, cmd_anim_speed), "monitor-save-all": (0, cmd_monitor_save_all), "anim-style": (1, cmd_anim_style), "binds": (0, cmd_binds), "bind-add": (2, cmd_bind_add),
+        "kbd-remember": (0, cmd_kbd_remember), "regen": (0, cmd_regen),
         "bind-del": (1, cmd_bind_del), "autostart": (0, cmd_autostart), "autostart-add": (1, cmd_autostart_add),
         "autostart-del": (1, cmd_autostart_del), "autostart-toggle": (1, cmd_autostart_toggle),
         "monitors": (0, cmd_monitors), "monitor-apply": (4, cmd_monitor_apply),

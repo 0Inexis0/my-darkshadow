@@ -73,7 +73,7 @@ PanelWindow {
     // V3.36: the island is the clock (an old "clock" in the layout is the island now)
     function noClock(l) { return (l || []).map(function(m) { return m === "clock" ? "island" : m }) }
     readonly property var layRaw: bc.layout ? ({ left: noClock(bc.layout.left), center: noClock(bc.layout.center), right: noClock(bc.layout.right) })
-        : ({ left: ["launcher", "workspaces", "title"], center: ["island"], right: ["tray", "volume", "bluetooth", "network", "battery", "notifications", "power"] })
+        : ({ left: ["launcher", "workspaces", "title"], center: ["island"], right: ["music", "tray", "volume", "bluetooth", "network", "battery", "notifications", "power"] })
     function laid(l, k) { return (l.left || []).indexOf(k) >= 0 || (l.center || []).indexOf(k) >= 0 || (l.right || []).indexOf(k) >= 0 }
     // the island is a module of the layout ("island", any zone, any style, with modules beside it). Dynamic without
     // it in the layout puts it in the middle, as before
@@ -326,6 +326,7 @@ PanelWindow {
         case "weather": return mWeather
         case "sysmon": return mSysmon
         case "date": return mDate
+        case "music": return mMusic
         }
         return null
     }
@@ -745,6 +746,35 @@ PanelWindow {
             HoverLine { on: sm2.containsMouse; color: bar.fg }
         }
     }
+    // Music: a note (three small bars dancing while a song plays); a click opens the music card
+    Component { id: mMusic
+        Item { property bool shown: true; width: mu.width + 6; height: bar.barH
+            Rectangle {
+                id: mu
+                anchors.centerIn: parent
+                readonly property bool playing: bar.player !== null
+                width: playing ? 52 : bar.barH - 10; height: bar.barH - 10; radius: height / 2
+                Behavior on width { NumberAnimation { duration: 320; easing.type: Easing.OutBack } }
+                color: bar.goo ? (playing ? gp.primary : gp.container) : (mum.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.05))
+                Behavior on color { ColorAnimation { duration: 200 } }
+                scale: mum.pressed ? 0.92 : (mum.containsMouse ? 1.05 : 1)
+                Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } }
+                readonly property color ic: bar.goo ? (playing ? gp.inkPrimary : gp.inkContainer) : bar.fg
+                Row { anchors.centerIn: parent; spacing: 4
+                    MIcon { anchors.verticalCenter: parent.verticalCenter; size: 16; name: "music_note"; glyph: String.fromCodePoint(0xF075A); color: mu.ic }
+                    Row { visible: mu.playing; anchors.verticalCenter: parent.verticalCenter; spacing: 2; height: 12
+                        Repeater { model: 3
+                            Rectangle { width: 3; radius: 1.5; anchors.bottom: parent.bottom; color: mu.ic
+                                property real h: 4
+                                height: h
+                                SequentialAnimation on h { running: mu.playing && !Look.lite; loops: Animation.Infinite
+                                    NumberAnimation { to: 12; duration: 280 + index * 80; easing.type: Easing.InOutSine }
+                                    NumberAnimation { to: 3; duration: 320 + index * 60; easing.type: Easing.InOutSine } } } } }
+                }
+            }
+            MouseArea { id: mum; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("click"); bar.popAt(parent, "music") } }
+        }
+    }
     Component { id: mDate
         Item { property bool shown: true; width: dr.implicitWidth + 4; height: bar.barH
             Row { id: dr; anchors.centerIn: parent; spacing: 8
@@ -952,6 +982,7 @@ PanelWindow {
             areaW: body.width
             wx: bar.wx
             st: bar.st
+            sink: bar.sink
             barH: bar.barH
             y: down ? bar.barH + 8 : -height - 8
             z: 41

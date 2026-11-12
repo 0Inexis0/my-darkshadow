@@ -337,6 +337,15 @@ Item {
         }
         ToggleRow { visible: page.v("engine", "shell") === "hyprlock"; label: I18n.t("Manage lock screen"); desc: I18n.t("Off keeps your own hyprlock.conf untouched"); checked: page.v("managed", true) === true; onToggled: function(x) { page.setv("managed", x ? "on" : "off") } }
         SegRow {
+            visible: page.v("engine", "shell") === "shell"
+            label: I18n.t("Style")
+            desc: I18n.t("Cards: the month, the time and your music on tall cards. Classic: one column")
+            options: [{ label: I18n.t("Cards"), value: "cards" }, { label: I18n.t("Classic"), value: "classic" }]
+            current: page.v("style", "cards")
+            onChosen: function(x) { page.setv("style", x) }
+        }
+        SegRow {
+            visible: page.v("style", "cards") === "classic"
             label: I18n.t("Layout")
             desc: I18n.t("Everything centered, or on the left side")
             options: [{ label: I18n.t("Center"), value: "center" }, { label: I18n.t("Left"), value: "left" }]
@@ -344,6 +353,7 @@ Item {
             onChosen: function(x) { page.setv("layout", x) }
         }
         SegRow {
+            visible: page.v("style", "cards") === "classic"
             label: I18n.t("Clock style")
             desc: I18n.t("Big, stacked hours over minutes, small, or inside your shape")
             options: [{ label: I18n.t("Big"), value: "big" }, { label: I18n.t("Stacked"), value: "stacked" }, { label: I18n.t("Minimal"), value: "minimal" }, { label: I18n.t("Shape"), value: "shape" }]

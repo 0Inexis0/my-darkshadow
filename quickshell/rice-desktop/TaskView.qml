@@ -103,6 +103,37 @@ PanelWindow {
         for (let i = 0; i < l.length; i++) if (l[i].appId === w.cls) return l[i]
         return null
     }
+    property int hoverWs: -1
+    function wsAt(x, y) {
+        for (let i = 0; i < cards.count; i++) {
+            const it = cards.itemAt(i)
+            if (!it) continue
+            const p = it.mapToItem(sheet, 0, 0)
+            if (x >= p.x && x <= p.x + it.width && y >= p.y && y <= p.y + it.height) return it.ws
+        }
+        return -1
+    }
+    // moves a window to workspace n: the view first (so it answers at once), then the window manager, then a fresh
+    // look a moment later
+    function moveNow(w, n) {
+        const nd = JSON.parse(JSON.stringify(d))
+        const there = nd.wins.filter(function(x) { return x.ws === n })
+        for (let i = 0; i < nd.wins.length; i++) {
+            const x = nd.wins[i]
+            if (String(x.id) !== String(w.id)) continue
+            x.ws = n
+            if (there.length === 0 && !x.float) { x.x = 0.01; x.y = 0.02; x.w = 0.98; x.h = 0.96 }
+            else if (!x.float) {
+                // beside the ones already there: each gets an equal share
+                const all = there.concat([x])
+                for (let j = 0; j < all.length; j++) { all[j].x = j / all.length + 0.005; all[j].w = 1 / all.length - 0.01; all[j].y = 0.02; all[j].h = 0.96 }
+            }
+        }
+        if (nd.used.indexOf(n) < 0) { nd.used.push(n); nd.used.sort(function(a, b) { return a - b }) }
+        d = nd
+        run(["move", String(w.id), String(n)])
+        reload.interval = 450; reload.restart()
+    }
     function goWin(w) { if (!w) return; run(["focus", String(w.id)]); hide() }
     function goWs(n) { run(["ws", String(n)]); hide() }
     function commit() { pendingCommit = false; const w = mru[sel]; if (w) run(["focus", String(w.id)]); hide() }
@@ -221,8 +252,8 @@ PanelWindow {
                     Rectangle {
                         anchors.fill: parent
                         radius: 18
-                        color: dropZone.containsDrag || cm.containsMouse ? Qt.rgba(pal.card.r, pal.card.g, pal.card.b, 0.95) : Qt.rgba(pal.card.r, pal.card.g, pal.card.b, 0.6)
-                        border.width: card.active || card.picked ? 2 : 1
+                        color: tv.hoverWs === card.ws || cm.containsMouse ? Qt.rgba(pal.card.r, pal.card.g, pal.card.b, 0.95) : Qt.rgba(pal.card.r, pal.card.g, pal.card.b, 0.6)
+                        border.width: card.active || card.picked || tv.hoverWs === card.ws ? 2 : 1
                         border.color: card.active ? pal.primary : (card.picked ? Qt.rgba(pal.primary.r, pal.primary.g, pal.primary.b, 0.5) : pal.line)
                         Behavior on color { ColorAnimation { duration: 140 } }
                     }
@@ -230,7 +261,6 @@ PanelWindow {
                     // empty: its number, big and faint
                     Text { anchors.centerIn: parent; visible: card.mine.length === 0; text: card.ws; color: pal.dim; opacity: 0.45
                         font.family: Fonts.numbers; font.pixelSize: Math.round(tv.cardH * 0.34); font.weight: Font.Medium }
-                    DropArea { id: dropZone; anchors.fill: parent; keys: ["rice-win"] }
                     // the windows, where they are on that workspace
                     Item {
                         id: area
@@ -259,25 +289,23 @@ PanelWindow {
                                         const p = wv.mapToItem(sheet, 0, 0)
                                         wv.parent = sheet; wv.x = p.x; wv.y = p.y; wv.z = 50
                                     } else if (home) {
-                                        // let go over another workspace: the window moves there
-                                        const cx = wv.x + wv.width / 2, cy = wv.y + wv.height / 2
-                                        for (let i = 0; i < cards.count; i++) {
-                                            const it = cards.itemAt(i)
-                                            if (!it) continue
-                                            const p = it.mapToItem(sheet, 0, 0)
-                                            if (cx >= p.x && cx <= p.x + it.width && cy >= p.y && cy <= p.y + it.height) {
-                                                if (it.ws !== card.ws) { tv.run(["move", String(wv.w.id), String(it.ws)]); reload.restart() }
-                                                break
-                                            }
-                                        }
+                                        // let go over another workspace: the window moves there at once (the view
+                                        // changes first, the window manager follows)
+                                        const to = tv.hoverWs
+                                        tv.hoverWs = -1
+                                        if (to > 0 && to !== card.ws) { tv.moveNow(wv.w, to); return }
                                         wv.parent = home; wv.z = w.float ? 2 : 1
                                         wv.x = Qt.binding(function() { return Math.max(0, Math.min(1, wv.w.x)) * area.width })
                                         wv.y = Qt.binding(function() { return Math.max(0, Math.min(1, wv.w.y)) * area.height })
                                     }
                                 }
-                                Drag.active: wm2.drag.active
-                                Drag.keys: ["rice-win"]
-                                Drag.hotSpot.x: width / 2; Drag.hotSpot.y: height / 2
+                                // a window comes in with a small pop (opening, or moved here)
+                                scale: 1
+                                Component.onCompleted: { scale = 0.82; popIn.start() }
+                                NumberAnimation { id: popIn; target: wv; property: "scale"; to: 1; duration: 260; easing.type: Easing.OutBack; easing.overshoot: 1.4 }
+                                // when the others on its workspace change, it slides to its new place
+                                Behavior on x { enabled: !wv.dragging && wv.home === null; NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+                                Behavior on width { enabled: !wv.dragging; NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
                                 Rectangle {
                                     id: tile
                                     anchors.fill: parent
@@ -330,12 +358,13 @@ PanelWindow {
                                     acceptedButtons: Qt.LeftButton | Qt.MiddleButton
                                     drag.target: wv
                                     drag.threshold: 8
+                                    // which workspace is under it (no drag-and-drop machinery: a plain look, cheap)
+                                    onPositionChanged: if (wv.dragging) tv.hoverWs = tv.wsAt(wv.x + wv.width / 2, wv.y + wv.height / 2)
                                     onClicked: function(m) {
                                         if (m.button === Qt.MiddleButton) { tv.run(["close", String(wv.w.id)]); reload.restart(); return }
                                         tv.goWin(wv.w)
                                     }
                                 }
-                                ToolTipLite { show: wm2.containsMouse && !wm2.drag.active; text: wv.w.title; pal: pal }
                             }
                         }
                     }

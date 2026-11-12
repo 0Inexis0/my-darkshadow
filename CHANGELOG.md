@@ -1,5 +1,12 @@
 # Changelog
 
+## V4.29: a new lock screen, a music card on the bar, dock icons in your colors, smoother Task view
+- New lock screen (Style: Cards, the default): the month with today in your shape, the time on its own tall card with the seconds going round, your music with the cover and buttons, and a bar at the bottom with the battery, the keyboard layout (click to switch), the password and the power buttons. SUPER + L: the wallpaper zooms and blurs in, the cards rise one after another. Every key drops in a shape with a ring around it; a wrong password shakes and the shapes fall; the right one opens the lock. Settings > Idle & Lockscreen > Style: Cards or Classic (the old one)
+- The keyboard layout no longer turns to US after an update: the installer keeps your layout (it is saved in hypr.json once) and writes your Hyprland settings again after copying the files
+- New bar module: Music (put on your bar once, on the right). A note with small dancing bars while a song plays; a click opens a music card that grows out of the bar: the cover in a turning halo of your shape, the song, synced lyrics, a wavy progress line you can drag, the buttons and the volume
+- Dock: app icons take a shade of your wallpaper's color (Settings > Interface > Dock > Match the wallpaper, on by default)
+- Task view: no more lagging label under the window you drag; a window dropped on another workspace moves there at once (with an animation), the workspace under it lights up while you drag
+
 ## V4.28: Task view and Alt + Tab on niri, your own keybinds in Keybinds
 - niri: SUPER + Tab opens the shell's Task view and ALT + Tab its window switcher (like on Hyprland). niri's own Alt + Tab switcher is turned off (recent-windows off), niri's overview moved to SUPER + O
 - Settings > Keybinds: your own keybinds (any app or command on keys you pick) are right on the page now, under the shell's keys (before, the button led to the Windows page and the Keybinds tab was easy to miss). The Task view and the switcher can get other keys there too (the pencil), on niri as well

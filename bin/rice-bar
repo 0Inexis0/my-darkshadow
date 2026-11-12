@@ -12,7 +12,8 @@
   rice-bar migrate                installer: a config from before the DarkShadow bar (or none) turns it on once
   rice-bar start                  autostart: Waybar only when the DarkShadow bar is off
 Modules: launcher workspaces title media island tray volume network bluetooth battery notifications power visualizer
-         weather sysmon date (these three open a small card: the forecast, CPU / RAM / disk / swap, the week and your tasks)
+         weather sysmon date music (these open a small card: the forecast, CPU / RAM / disk / swap, the week and your tasks,
+         the song with its lyrics)
 """
 import json
 import os
@@ -38,9 +39,9 @@ BOOLS = ("enabled", "seconds", "autohide", "shadow", "island_dynamic", "island_h
 RANGES = {"height": (28, 56), "workspaces": (3, 10), "opacity": (0.3, 1.0), "tray_size": (12, 28), "island_close": (2, 10)}
 # V3.36: the island is the clock (the old "clock" module becomes the island)
 MODULES = ["launcher", "workspaces", "title", "media", "island", "tray", "volume", "network", "bluetooth", "battery",
-           "notifications", "power", "visualizer", "weather", "sysmon", "date"]
+           "notifications", "power", "visualizer", "weather", "sysmon", "date", "music"]
 DEFAULT_LAYOUT = {"left": ["launcher", "workspaces", "title"], "center": ["island"],
-                  "right": ["tray", "volume", "bluetooth", "network", "battery", "notifications", "power"]}
+                  "right": ["music", "tray", "volume", "bluetooth", "network", "battery", "notifications", "power"]}
 
 
 def clean_layout(raw):
@@ -83,8 +84,23 @@ def load():
                 c[k] = int(max(RANGES[k][0], min(RANGES[k][1], float(v))))
             except Exception:
                 c[k] = d
-    c["layout"] = clean_layout(raw.get("layout", DEFAULT_LAYOUT) if "layout" in raw else DEFAULT_LAYOUT)
+    lay = raw.get("layout", DEFAULT_LAYOUT) if "layout" in raw else DEFAULT_LAYOUT
+    # V4.29: the Music module comes onto your bar once (on the right, first); take it off and it stays off
+    if raw.get("music_added") is not True and isinstance(lay, dict):
+        lay = {z: list(lay.get(z) or []) for z in ("left", "center", "right")}
+        if not any("music" in lay[z] for z in lay):
+            lay["right"].insert(0, "music")
+        c["music_added"] = True
+        c["_migrated"] = True
+    elif raw.get("music_added") is True:
+        c["music_added"] = True
+    c["layout"] = clean_layout(lay)
     c["v"] = raw.get("v", 1) if isinstance(raw.get("v", 1), int) else 1
+    if c.pop("_migrated", False) and raw:
+        try:
+            save(c)
+        except OSError:
+            pass
     return c
 
 

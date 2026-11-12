@@ -92,7 +92,7 @@ Item {
                             model: ["#e06c75", "#61afef", "#e5c07b", "#98c379", "#c678dd", "#56b6c2"]
                             delegate: Rectangle {
                                 width: 34; height: 34; radius: 10
-                                color: page.dv("tint", false) === true ? M3.inkDim : modelData
+                                color: page.dv("tint", false) === true ? M3.inkDim : (page.dv("shade", true) !== false ? Qt.tint(modelData, Qt.rgba(M3.primary.r, M3.primary.g, M3.primary.b, 0.62)) : modelData)
                                 opacity: 0.9
                             }
                         }
@@ -268,6 +268,13 @@ Item {
                 desc: I18n.t("Paint icons in a single neutral tone")
                 checked: page.dv("tint", false) === true
                 onToggled: function(v) { page.ctl.dset("dock", "tint", v ? "on" : "off") }
+            }
+            ToggleRow {
+                visible: page.dv("tint", false) !== true
+                label: I18n.t("Match the wallpaper")
+                desc: I18n.t("App icons take a shade of your wallpaper's color")
+                checked: page.dv("shade", true) !== false
+                onToggled: function(v) { page.ctl.dset("dock", "shade", v ? "on" : "off") }
             }
 
             T {

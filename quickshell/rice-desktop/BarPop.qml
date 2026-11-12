@@ -2,7 +2,8 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 
-// The small cards the bar's own modules open under them (Bar layout > Weather, System, Date):
+// The small cards the bar's own modules open under them (Bar layout > Music, Weather, System, Date):
+//   music     the song, its lyrics, the progress and the buttons (MusicPop.qml)
 //   weather   now, how it feels, high / low and the next hours (rice-weather json)
 //   system    CPU, RAM, disk and swap, each in a tile with a bar and the numbers (rice-stats)
 //   calendar  the month, this week with today, your to-do tasks (rice-todo) and how long the computer is up
@@ -17,6 +18,7 @@ Item {
     property bool open: false
     property var wx: null                       // the weather (the bar fetches it)
     property var st: ({})                       // the numbers (the bar reads them)
+    property var sink: null                     // the speakers (the music card's volume)
     function toggle(k, x) { if (open && kind === k) { open = false; return } kind = k; ax = x; open = true; if (k === "calendar") { todoProc.running = true; upProc.running = true; now = new Date() } }
     function close() { open = false }
 
@@ -34,8 +36,9 @@ Item {
     property real cf: 1
     SequentialAnimation { id: swap; NumberAnimation { target: bp; property: "cf"; to: 0; duration: 70 } NumberAnimation { target: bp; property: "cf"; to: 1; duration: 220; easing.type: Easing.OutCubic } }
     visible: t > 0.01
-    width: 330
-    height: (kind === "weather" ? wxCol.implicitHeight : (kind === "system" ? 228 : calCol.implicitHeight)) + 28
+    width: kind === "music" ? 412 : 330
+    Behavior on width { enabled: bp.t > 0.98; NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
+    height: (kind === "weather" ? wxCol.implicitHeight : (kind === "system" ? 228 : (kind === "music" ? musicCol.implicitHeight : calCol.implicitHeight))) + 28
     Behavior on height { enabled: bp.t > 0.98; NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
     x: Math.max(8, Math.min(areaW - width - 8, ax - width / 2))
     readonly property color fg: pal ? pal.fg : "#ECEDEE"
@@ -84,6 +87,15 @@ Item {
             width: bp.width; height: bp.height
             opacity: Math.max(0, (bp.k1 - 0.45) / 0.55) * bp.cf
             transform: Translate { y: (1 - bp.k1) * (bp.down ? -14 : 14) }
+
+    // ---------- music ----------
+    MusicPop {
+        id: musicCol
+        visible: bp.kind === "music"
+        x: 16; y: 14; width: parent.width - 32
+        bp: bp
+        sink: bp.sink
+    }
 
     // ---------- weather ----------
     Column {

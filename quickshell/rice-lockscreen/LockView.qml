@@ -19,7 +19,12 @@ FocusScope {
     // the first screen shows the music and reads the numbers (the others only the clock and the password)
     readonly property bool first: !scr || Quickshell.screens.length === 0 || scr === Quickshell.screens[0]
     readonly property bool atLeft: v("layout", "center") === "left"
+    // Style: Cards (the month, the time and the music on tall cards, a bar at the bottom) or Classic (one column)
+    readonly property bool cards: v("style", "cards") !== "classic"
     NPal { id: pal; theme: "shell"; alpha: 0.62 }
+    readonly property var npal: pal
+    readonly property var player: pl
+    readonly property bool focusOk: keys.activeFocus
 
     // ---------- in and out ----------
     property real t: 0
@@ -88,11 +93,11 @@ FocusScope {
         source: bgImg
         visible: bgImg.status === Image.Ready
         blurEnabled: lv.v("blur", 3) > 0
-        blur: Math.min(1, lv.v("blur", 3) / 4)
+        blur: Math.min(1, lv.v("blur", 3) / 4) * (lv.cards ? lv.ease(lv.t * 1.2) : 1)
         blurMax: 64
         // the wallpaper comes in slowly, a little larger at first
         opacity: lv.ease(lv.t * 1.4) * (1 - lv.gone)
-        scale: 1.06 - 0.06 * lv.ease(lv.t)
+        scale: (lv.cards ? 1.14 - 0.14 * lv.ease(lv.t) : 1.06 - 0.06 * lv.ease(lv.t)) + 0.05 * lv.gone
     }
     // a solid color background in your theme (Background: Color)
     Rectangle { anchors.fill: parent; visible: lv.bgKind === "color"
@@ -214,6 +219,7 @@ FocusScope {
 
         Column {
             id: main
+            visible: !lv.cards
             width: Math.min(lv.width - 64, 600)
             x: lv.atLeft ? Math.round(lv.width * 0.08) : Math.round((lv.width - width) / 2)
             // centred, a little above the middle; it moves smoothly when the music comes or goes
@@ -508,7 +514,7 @@ FocusScope {
         // ---------- power ----------
         Row {
             id: pwr
-            visible: lv.v("power", true) !== false
+            visible: !lv.cards && lv.v("power", true) !== false
             anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 32
             spacing: 12
             opacity: lv.stg(6)
@@ -524,6 +530,8 @@ FocusScope {
             Power { k: "poweroff"; icon: "power_settings_new"; label: "Shut down"; red: true; onHit: pwr.act(k, "\"$HOME/.local/bin/rice-sys\" poweroff") }
         }
     }
+
+    LockCards { anchors.fill: parent; visible: lv.cards; lv: lv; pal: lv.npal }
 
     function wGlyph(w) {
         const s = String(w).toLowerCase()

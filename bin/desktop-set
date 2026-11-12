@@ -33,7 +33,7 @@ DEFAULTS = {
     "widgets": {w: {"enabled": False} for w in WIDGETS},
     "clock": {"enabled": True, "onlyLocked": False, "placement": "draggable", "style": "digital", "font": "bebas"},   # the only widget at first: in the middle
     "dock": {"enabled": False, "position": "bottom", "background": True, "hover": True, "pinnedStartup": False,
-             "media": True, "nowText": True, "pinButton": True, "appsButton": True, "tint": False, "appMenu": True,
+             "media": True, "nowText": True, "pinButton": True, "appsButton": True, "tint": False, "shade": True, "appMenu": True,
              "opacity": 0.78, "blur": True, "reserve": True,
              "apps": ["kitty", "org.gnome.Nautilus", "firefox", "spotify", "discord", "steam"]},
     "lock": {"toolbars": False, "widgets": False, "media": False},

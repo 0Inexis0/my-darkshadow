@@ -39,7 +39,7 @@ DEFAULTS = {
     # idle
     "lock_after": 5, "screen_off_after": 0, "suspend_after": 15, "lock_before_sleep": True,
     # lock screen
-    "managed": True, "layout": "center", "clock": "big", "clock_24h": True, "accent_clock": False, "clock_font": "default",
+    "managed": True, "style": "cards", "layout": "center", "clock": "big", "clock_24h": True, "accent_clock": False, "clock_font": "default",
     "date": True, "greeting": True, "avatar": True, "input": "pill", "power": True,
     "background": "screenshot", "blur": 3, "dim": 0.5,
     "media": True, "resources": False, "notifications": True, "weather": False,
@@ -50,7 +50,7 @@ FLOATS = {"dim": (0.2, 1.0)}
 # clock fonts (rice-fonts downloads them; "default" is your Numbers font from Settings > Services)
 CLOCK_FONTS = {"default": "", "bebas": "Bebas Neue", "orbitron": "Orbitron", "outfit": "Outfit",
                "grotesk": "Space Grotesk", "unbounded": "Unbounded", "shoulders": "Big Shoulders Display"}
-CHOICES = {"engine": ["shell", "hyprlock"], "layout": ["center", "left"], "clock": ["big", "stacked", "minimal", "shape"], "clock_font": list(CLOCK_FONTS),
+CHOICES = {"engine": ["shell", "hyprlock"], "style": ["cards", "classic"], "layout": ["center", "left"], "clock": ["big", "stacked", "minimal", "shape"], "clock_font": list(CLOCK_FONTS),
            "input": ["pill", "box", "line"], "background": ["screenshot", "wallpaper", "color"]}
 
 

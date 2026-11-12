@@ -517,9 +517,13 @@ step_configs() {
   local d n
   n="$(config_dirs | wc -l)"
   if [ "$n" = 0 ]; then warn "This copy has no config files (config/ is empty)"; return 0; fi
+  # the keyboard layout you use now is kept (an update used to put it back to US)
+  has_hypr && task "Keeping your keyboard layout" python3 "$ROOT/bin/hypr-set" kbd-remember
   for d in $(config_dirs); do
     task "$(pretty_dir "$d")  ->  ~/.config/$d" copy_tree "$ROOT/config/$d" "$HOME/.config/$d"
   done
+  # your Settings for Hyprland (layout, gaps, keys ...) are written again over the file the update brought
+  has_hypr && task "Your Hyprland settings" python3 "$ROOT/bin/hypr-set" regen
   task "Hyprland add-ons (keybinds, gaming mode)" copy_lua
   [ -d "$ROOT/wallpapers" ] && task "Wallpapers  ->  ~/Pictures/Wallpapers" put_wallpapers
   task "Fish: no welcome message" quiet_fish

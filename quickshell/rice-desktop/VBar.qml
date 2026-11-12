@@ -58,7 +58,7 @@ PanelWindow {
     readonly property int nws: bc.workspaces ? bc.workspaces : 5
     function noClock(l) { return (l || []).map(function(m) { return m === "clock" ? "island" : m }) }
     readonly property var lay: bc.layout ? ({ top: noClock(bc.layout.left), mid: noClock(bc.layout.center), bottom: noClock(bc.layout.right) })
-        : ({ top: ["launcher", "workspaces"], mid: ["island"], bottom: ["tray", "volume", "bluetooth", "network", "battery", "notifications", "power"] })
+        : ({ top: ["launcher", "workspaces"], mid: ["island"], bottom: ["music", "tray", "volume", "bluetooth", "network", "battery", "notifications", "power"] })
     function run(cmd) { Quickshell.execDetached(["bash", "-c", cmd]) }
     // the pop-up menus open beside the bar, level with the icon that opened them: "X Y" for rice-wifi and the others
     function menuX() { return atRight ? (vb.screen ? vb.screen.width - 260 : 1660) : 260 }
@@ -266,6 +266,7 @@ PanelWindow {
         case "weather": return cWeather
         case "sysmon": return cSysmon
         case "date": return cDate
+        case "music": return cMusic
         }
         return null                     // the window title has no room standing up
     }
@@ -433,6 +434,9 @@ PanelWindow {
     }
     Component { id: cSysmon
         Btn { icon: "monitoring"; glyph: String.fromCodePoint(0xF0128); onHit: function(m) { vb.pop("system") } }
+    }
+    Component { id: cMusic
+        Btn { icon: "music_note"; glyph: String.fromCodePoint(0xF075A); onHit: function(m) { vb.pop("music") } }
     }
     Component { id: cDate
         Btn { icon: "calendar_month"; glyph: String.fromCodePoint(0xF00F0); onHit: function(m) { vb.pop("calendar") } }

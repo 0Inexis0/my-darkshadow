@@ -14,12 +14,12 @@ Item {
         "volume": ["\udb81\udd7e", "Volume"], "network": ["\udb81\udda9", "Wi-Fi"], "bluetooth": ["\udb80\udcaf", "Bluetooth"],
         "battery": ["\udb80\udc79", "Battery"], "notifications": ["\udb80\udc9a", "Notifications"], "power": ["\udb81\udc25", "Power"],
         "island": ["\udb80\udd50", "Island (clock)"], "visualizer": ["\udb81\udc7d", "Visualizer"],
-        "weather": ["\udb81\udd99", "Weather"], "sysmon": ["\udb80\udd28", "System (CPU, RAM, disk)"], "date": ["\udb80\udcf0", "Date"]
+        "weather": ["\udb81\udd99", "Weather"], "sysmon": ["\udb80\udd28", "System (CPU, RAM, disk)"], "date": ["\udb80\udcf0", "Date"], "music": ["\udb81\udf5a", "Music (player card)"]
     })
     readonly property var subsAll: []
     readonly property var defaults: ({
         left: ["launcher", "workspaces", "title"], center: ["island"],
-        right: ["tray", "volume", "bluetooth", "network", "battery", "notifications", "power"]
+        right: ["music", "tray", "volume", "bluetooth", "network", "battery", "notifications", "power"]
     })
 
     // the bar's settings (rice-bar)

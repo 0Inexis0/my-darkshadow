@@ -22,6 +22,8 @@ Scope {
     readonly property string edge: dc.position === "left" || dc.position === "right" ? dc.position : "bottom"
     readonly property bool vert: edge === "left" || edge === "right"
     readonly property real alpha: Look.flat ? 1 : (dc.opacity !== undefined ? Number(dc.opacity) : 0.78)
+    // the app icons: in a neutral grey (Tint), in a shade of your wallpaper (Match the wallpaper, the default) or as they come
+    readonly property string iconLook: dc.tint === true ? "grey" : (dc.shade !== false ? "shade" : "plain")
     readonly property int icon: 34          // app icon size
     readonly property int cell: 46          // room for one app along the dock
     readonly property int thick: 60         // the dock's width across
@@ -178,16 +180,21 @@ Scope {
                             sourceSize.width: 64; sourceSize.height: 64
                             asynchronous: true
                             smooth: true
-                            visible: dock.dc.tint !== true
+                            visible: dock.iconLook === "plain"
                             scale: appM.containsMouse ? 1.16 : 1
                             Behavior on scale { ScaleAnimator { duration: 140; easing.type: Easing.OutCubic } }
                         }
-                        // the grey look (Settings > Dock > Tint), only drawn when it is on
+                        // the grey look (Tint) or a shade of the wallpaper (the icon keeps its light and dark parts, in your
+                        // theme's color, a little of its own color left in), only drawn when one of them is on
                         Loader {
-                            active: dock.dc.tint === true
+                            active: dock.iconLook !== "plain"
                             anchors.fill: ico
                             sourceComponent: MultiEffect {
-                                source: ico; colorization: 1.0; colorizationColor: "#e4e4e7"
+                                source: ico
+                                colorization: dock.iconLook === "grey" ? 1.0 : 0.62
+                                colorizationColor: dock.iconLook === "grey" ? "#e4e4e7" : Look.accentHi
+                                saturation: dock.iconLook === "grey" ? 0 : 0.1
+                                Behavior on colorizationColor { ColorAnimation { duration: 600 } }
                                 scale: appM.containsMouse ? 1.16 : 1
                                 Behavior on scale { ScaleAnimator { duration: 140 } }
                             }
