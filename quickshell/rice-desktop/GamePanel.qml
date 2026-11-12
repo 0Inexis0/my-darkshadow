@@ -133,7 +133,7 @@ PanelWindow {
     Timer { id: again; interval: 700; onTriggered: gp.refresh() }
 
     Trigger {
-        name: "gamebar-open"
+        name: "gamebar-open"; fresh: true
         onFired: function(o) {
             const w = o.split(" ")[1] || "toggle"
             gp.open = w === "open" ? true : (w === "close" ? false : !gp.open)

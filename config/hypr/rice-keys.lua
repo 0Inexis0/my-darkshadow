@@ -27,6 +27,9 @@ hl.bind("SUPER + ALT + D",     hl.dsp.exec_cmd(bin .. "rice-dashboard open"))
 hl.bind("SUPER + G",           hl.dsp.exec_cmd(bin .. "rice-gamebar"))
 -- the control center: switches, sliders, music and notifications
 hl.bind("SUPER + N",           hl.dsp.exec_cmd(bin .. "rice-cc"))
+-- the clipboard history (float / tile moved to SUPER + SHIFT + V)
+pcall(hl.unbind, "SUPER + V")
+hl.bind("SUPER + V",           hl.dsp.exec_cmd(bin .. "rice-clip toggle"))
 
 -- the Task view (every workspace and its windows) and the window switcher (rice-taskview, TaskView.qml)
 pcall(hl.bind, "SUPER + TAB",       hl.dsp.exec_cmd(bin .. "rice-taskview overview"))
@@ -48,3 +51,7 @@ do
     if f then f:close() end
     if s:match('"super"%s*:%s*true') then RiceTask.super(true) end
 end
+
+-- a key bound with nothing held (a plain letter) can never be typed; anything that does that is taken off at
+-- start (hypr-set keycheck lists them, ~/.cache/rice/keycheck.log says what was taken off)
+pcall(hl.on, "hyprland.start", function() pcall(hl.exec_cmd, "sleep 5; " .. bin .. "hypr-set keycheck-fix >/dev/null 2>&1") end)

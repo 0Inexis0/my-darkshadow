@@ -18,6 +18,12 @@ hl.layer_rule({
     ignore_alpha = 0,
 })
 hl.layer_rule({
+    name  = "rice-clipboard-blur",
+    match = { namespace = "rice-clipboard" },
+    blur = true,
+    ignore_alpha = 0.1,
+})
+hl.layer_rule({
     name  = "rice-wifi-blur",
     match = { namespace = "rice-wifi" },
     blur = true,

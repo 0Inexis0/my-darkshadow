@@ -132,7 +132,7 @@ PanelWindow {
     }
     function hide() { open = false; askFor = "" }
     Trigger {
-        name: "wifi-open"
+        name: "wifi-open"; fresh: true
         onFired: function(o) {
             const x = parseFloat(o.split(" ")[1]), yv = parseFloat(o.split(" ")[2])
             if (wm.open) wm.hide(); else wm.show(isNaN(x) ? wm.width - 200 : x, yv)

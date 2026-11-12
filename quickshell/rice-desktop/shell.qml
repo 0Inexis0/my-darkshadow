@@ -60,6 +60,7 @@ ShellRoot {
     ]
     property var wins: ({})
     function reg(id, w) { const n = Object.assign({}, wins); n[id] = w; wins = n }
+    function unreg(id) { if (!wins[id]) return; const n = Object.assign({}, wins); delete n[id]; wins = n }
     function ds(args) { Quickshell.execDetached([home + "/.local/bin/desktop-set"].concat(args.map(function(a) { return String(a) }))) }
     function enabledOf(id) { return id === "clock" ? !!(cfg.clock && cfg.clock.enabled === true) : on(id) }
     function styleOf(id) {
@@ -244,225 +245,317 @@ ShellRoot {
     DeskMenu { editing: root.editing }
 
     // ---- clock
-    WidgetWindow {
-        id: clockWin
-        wid: "clock"
-        wc: root.placement === "draggable" ? (root.cfg.clock ? root.cfg.clock : ({})) : ({})
-        draggable: root.placement === "draggable"
-        editing: root.editing
-        hidden: root.hideWidgets
-        active: !!(root.cfg.clock && root.cfg.clock.enabled === true && (root.cfg.clock.onlyLocked !== true || root.locked || root.editing))
-        bw: root.sw
-        bh: root.sh
-        cw: clk.natW
-        ch: clk.natH
-        // never moved: in the middle, a little above the center of the screen
-        defX: root.placement === "draggable" || clk.fx < 0 ? Math.round((root.sw - cw) / 2) : Math.round(Math.max(30, Math.min(root.sw - cw - 30, clk.fx * root.sw - cw / 2)))
-        defY: root.placement === "draggable" || clk.fy < 0 ? Math.round(root.sh * 0.23) : Math.round(Math.max(60, Math.min(root.sh - ch - 30, clk.fy * root.sh - ch / 2)))
-        onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        Component.onCompleted: root.reg("clock", clockWin)
-        ClockWidget {
-            id: clk
-            anchors.fill: parent
-            clockStyle: clockWin.sty !== "" ? clockWin.sty : (root.cfg.clock && root.cfg.clock.style ? root.cfg.clock.style : "digital")
-            mode: root.placement
-            wallpaper: root.wallpaper
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: !!(root.cfg.clock && root.cfg.clock.enabled === true && (root.cfg.clock.onlyLocked !== true || root.locked || root.editing))
+        WidgetWindow {
+            id: clockWin
+            wid: "clock"
+            wc: root.placement === "draggable" ? (root.cfg.clock ? root.cfg.clock : ({})) : ({})
+            draggable: root.placement === "draggable"
+            editing: root.editing
+            hidden: root.hideWidgets
+            active: !!(root.cfg.clock && root.cfg.clock.enabled === true && (root.cfg.clock.onlyLocked !== true || root.locked || root.editing))
             bw: root.sw
             bh: root.sh
-            pal: clockWin.pal
-            fontKey: root.cfg.clock && root.cfg.clock.font ? root.cfg.clock.font : "default"
+            cw: clk.natW
+            ch: clk.natH
+            // never moved: in the middle, a little above the center of the screen
+            defX: root.placement === "draggable" || clk.fx < 0 ? Math.round((root.sw - cw) / 2) : Math.round(Math.max(30, Math.min(root.sw - cw - 30, clk.fx * root.sw - cw / 2)))
+            defY: root.placement === "draggable" || clk.fy < 0 ? Math.round(root.sh * 0.23) : Math.round(Math.max(60, Math.min(root.sh - ch - 30, clk.fy * root.sh - ch / 2)))
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg("clock", clockWin)
+            Component.onDestruction: root.unreg(wid)
+            ClockWidget {
+                id: clk
+                anchors.fill: parent
+                clockStyle: clockWin.sty !== "" ? clockWin.sty : (root.cfg.clock && root.cfg.clock.style ? root.cfg.clock.style : "digital")
+                mode: root.placement
+                wallpaper: root.wallpaper
+                bw: root.sw
+                bh: root.sh
+                pal: clockWin.pal
+                fontKey: root.cfg.clock && root.cfg.clock.font ? root.cfg.clock.font : "default"
+            }
         }
     }
 
     // ---- widgets (positions, sizes and looks come from the widget editor)
-    WidgetWindow {
-        id: weatherWin
-        wid: "weather"; wc: root.wc("weather"); active: root.on("weather"); editing: root.editing; hidden: root.hideWidgets
-        bw: root.sw; bh: root.sh; cw: 300; ch: 120; defX: 40; defY: 370
-        onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        Component.onCompleted: root.reg(wid, weatherWin)
-        WeatherWidget { anchors.fill: parent; pal: weatherWin.pal; running: root.on("weather") && !root.hideWidgets; bg: weatherWin.bgv }
-    }
-    WidgetWindow {
-        id: mediaWin
-        wid: "media"; wc: root.wc("media"); active: root.on("media"); editing: root.editing; hidden: root.hideWidgets
-        bw: root.sw; bh: root.sh; cw: 400; ch: 120; defX: root.sw - 440; defY: 60
-        onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        Component.onCompleted: root.reg(wid, mediaWin)
-        MediaWidget { anchors.fill: parent; pal: mediaWin.pal; bg: mediaWin.bgv; running: root.on("media") && !root.hideWidgets }
-    }
-    WidgetWindow {
-        id: calWin
-        wid: "calendar"; wc: root.wc("calendar"); active: root.on("calendar"); editing: root.editing; hidden: root.hideWidgets
-        bw: root.sw; bh: root.sh; cw: 340; ch: 340; defX: root.sw - 380; defY: 200
-        onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        Component.onCompleted: root.reg(wid, calWin)
-        CalendarWidget { anchors.fill: parent; pal: calWin.pal; bg: calWin.bgv }
-    }
-    WidgetWindow {
-        id: userWin
-        wid: "usercard"; wc: root.wc("usercard"); active: root.on("usercard"); editing: root.editing; hidden: root.hideWidgets
-        bw: root.sw; bh: root.sh; cw: 340; ch: 120; defX: root.sw - 380; defY: 560
-        onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        Component.onCompleted: root.reg(wid, userWin)
-        UserCard { anchors.fill: parent; pal: userWin.pal; bg: userWin.bgv }
-    }
-    WidgetWindow {
-        id: resWin
-        wid: "resources"; wc: root.wc("resources"); active: root.on("resources"); editing: root.editing; hidden: root.hideWidgets
-        bw: root.sw; bh: root.sh; cw: 160; ch: 380; defX: 40; defY: root.sh - 440
-        onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        Component.onCompleted: root.reg(wid, resWin)
-        ResourcesWidget { anchors.fill: parent; pal: resWin.pal; running: root.on("resources") && !root.hideWidgets; bg: resWin.bgv }
-    }
-    WidgetWindow {
-        id: batWin
-        wid: "battery"; wc: root.wc("battery"); active: root.on("battery"); editing: root.editing; hidden: root.hideWidgets
-        bw: root.sw; bh: root.sh; cw: 280; ch: 110; defX: 40; defY: 520
-        onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        Component.onCompleted: root.reg(wid, batWin)
-        BatteryWidget { anchors.fill: parent; pal: batWin.pal; running: root.on("battery") && !root.hideWidgets; bg: batWin.bgv }
-    }
-    // to-do list, focus timer, note (click them to type)
-    WidgetWindow {
-        id: todoWin
-        wid: "todo"; wc: root.wc("todo"); active: root.on("todo"); editing: root.editing; hidden: root.hideWidgets; keys: true; typing: todoW.typing
-        bw: root.sw; bh: root.sh; cw: 330; ch: 390; defX: 440; defY: 200
-        onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        Component.onCompleted: root.reg(wid, todoWin)
-        TodoWidget { id: todoW; anchors.fill: parent; pal: todoWin.pal; running: root.on("todo") && !root.hideWidgets; bg: todoWin.bgv }
-    }
-    WidgetWindow {
-        id: focusWin
-        wid: "focus"; wc: root.wc("focus"); active: root.on("focus"); editing: root.editing; hidden: root.hideWidgets
-        bw: root.sw; bh: root.sh; cw: 260; ch: 300; defX: 800; defY: 200
-        onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        Component.onCompleted: root.reg(wid, focusWin)
-        FocusWidget {
-            anchors.fill: parent; pal: focusWin.pal; bg: focusWin.bgv
-            focusMin: root.wc("focus").focus !== undefined ? root.wc("focus").focus : 25
-            onSetFocus: function(m) { root.patch("focus", { focus: m }); root.wset("focus", "focus", m) }
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("weather")
+        WidgetWindow {
+            id: weatherWin
+            wid: "weather"; wc: root.wc("weather"); active: root.on("weather"); editing: root.editing; hidden: root.hideWidgets
+            bw: root.sw; bh: root.sh; cw: 300; ch: 120; defX: 40; defY: 370
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, weatherWin)
+            Component.onDestruction: root.unreg(wid)
+            WeatherWidget { anchors.fill: parent; pal: weatherWin.pal; running: root.on("weather") && !root.hideWidgets; bg: weatherWin.bgv }
         }
     }
-    WidgetWindow {
-        id: notesWin
-        wid: "notes"; wc: root.wc("notes"); active: root.on("notes"); editing: root.editing; hidden: root.hideWidgets; keys: true; typing: notesW.typing
-        bw: root.sw; bh: root.sh; cw: 300; ch: 260; defX: 800; defY: 540
-        onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        Component.onCompleted: root.reg(wid, notesWin)
-        NotesWidget { id: notesW; anchors.fill: parent; pal: notesWin.pal; bg: notesWin.bgv }
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("media")
+        WidgetWindow {
+            id: mediaWin
+            wid: "media"; wc: root.wc("media"); active: root.on("media"); editing: root.editing; hidden: root.hideWidgets
+            bw: root.sw; bh: root.sh; cw: 400; ch: 120; defX: root.sw - 440; defY: 60
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, mediaWin)
+            Component.onDestruction: root.unreg(wid)
+            MediaWidget { anchors.fill: parent; pal: mediaWin.pal; bg: mediaWin.bgv; running: root.on("media") && !root.hideWidgets }
+        }
+    }
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("calendar")
+        WidgetWindow {
+            id: calWin
+            wid: "calendar"; wc: root.wc("calendar"); active: root.on("calendar"); editing: root.editing; hidden: root.hideWidgets
+            bw: root.sw; bh: root.sh; cw: 340; ch: 340; defX: root.sw - 380; defY: 200
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, calWin)
+            Component.onDestruction: root.unreg(wid)
+            CalendarWidget { anchors.fill: parent; pal: calWin.pal; bg: calWin.bgv }
+        }
+    }
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("usercard")
+        WidgetWindow {
+            id: userWin
+            wid: "usercard"; wc: root.wc("usercard"); active: root.on("usercard"); editing: root.editing; hidden: root.hideWidgets
+            bw: root.sw; bh: root.sh; cw: 340; ch: 120; defX: root.sw - 380; defY: 560
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, userWin)
+            Component.onDestruction: root.unreg(wid)
+            UserCard { anchors.fill: parent; pal: userWin.pal; bg: userWin.bgv }
+        }
+    }
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("resources")
+        WidgetWindow {
+            id: resWin
+            wid: "resources"; wc: root.wc("resources"); active: root.on("resources"); editing: root.editing; hidden: root.hideWidgets
+            bw: root.sw; bh: root.sh; cw: 160; ch: 380; defX: 40; defY: root.sh - 440
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, resWin)
+            Component.onDestruction: root.unreg(wid)
+            ResourcesWidget { anchors.fill: parent; pal: resWin.pal; running: root.on("resources") && !root.hideWidgets; bg: resWin.bgv }
+        }
+    }
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("battery")
+        WidgetWindow {
+            id: batWin
+            wid: "battery"; wc: root.wc("battery"); active: root.on("battery"); editing: root.editing; hidden: root.hideWidgets
+            bw: root.sw; bh: root.sh; cw: 280; ch: 110; defX: 40; defY: 520
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, batWin)
+            Component.onDestruction: root.unreg(wid)
+            BatteryWidget { anchors.fill: parent; pal: batWin.pal; running: root.on("battery") && !root.hideWidgets; bg: batWin.bgv }
+        }
+    }
+    // to-do list, focus timer, note (click them to type)
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("todo")
+        WidgetWindow {
+            id: todoWin
+            wid: "todo"; wc: root.wc("todo"); active: root.on("todo"); editing: root.editing; hidden: root.hideWidgets; keys: true; typing: todoW.typing
+            bw: root.sw; bh: root.sh; cw: 330; ch: 390; defX: 440; defY: 200
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, todoWin)
+            Component.onDestruction: root.unreg(wid)
+            TodoWidget { id: todoW; anchors.fill: parent; pal: todoWin.pal; running: root.on("todo") && !root.hideWidgets; bg: todoWin.bgv }
+        }
+    }
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("focus")
+        WidgetWindow {
+            id: focusWin
+            wid: "focus"; wc: root.wc("focus"); active: root.on("focus"); editing: root.editing; hidden: root.hideWidgets
+            bw: root.sw; bh: root.sh; cw: 260; ch: 300; defX: 800; defY: 200
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, focusWin)
+            Component.onDestruction: root.unreg(wid)
+            FocusWidget {
+                anchors.fill: parent; pal: focusWin.pal; bg: focusWin.bgv
+                focusMin: root.wc("focus").focus !== undefined ? root.wc("focus").focus : 25
+                onSetFocus: function(m) { root.patch("focus", { focus: m }); root.wset("focus", "focus", m) }
+            }
+        }
+    }
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("notes")
+        WidgetWindow {
+            id: notesWin
+            wid: "notes"; wc: root.wc("notes"); active: root.on("notes"); editing: root.editing; hidden: root.hideWidgets; keys: true; typing: notesW.typing
+            bw: root.sw; bh: root.sh; cw: 300; ch: 260; defX: 800; defY: 540
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, notesWin)
+            Component.onDestruction: root.unreg(wid)
+            NotesWidget { id: notesW; anchors.fill: parent; pal: notesWin.pal; bg: notesWin.bgv }
+        }
     }
     // audio visualizer: see-through, at the bottom of the screen by default, never takes clicks
-    WidgetWindow {
-        id: gaugeWin
-        wid: "gauge"; wc: root.wc("gauge"); active: root.on("gauge"); editing: root.editing; hidden: root.hideWidgets
-        bw: root.sw; bh: root.sh; cw: 220; ch: 220; defX: 40; defY: 140
-        onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        Component.onCompleted: root.reg(wid, gaugeWin)
-        GaugeWidget { anchors.fill: parent; pal: gaugeWin.pal; bg: gaugeWin.bgv; running: root.on("gauge") && !root.hideWidgets
-            shape: gaugeWin.sty !== "" ? gaugeWin.sty : (root.wc("gauge").style || "pentagon")
-            metric: root.optOf("gauge", "metric", "cpu") }
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("gauge")
+        WidgetWindow {
+            id: gaugeWin
+            wid: "gauge"; wc: root.wc("gauge"); active: root.on("gauge"); editing: root.editing; hidden: root.hideWidgets
+            bw: root.sw; bh: root.sh; cw: 220; ch: 220; defX: 40; defY: 140
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, gaugeWin)
+            Component.onDestruction: root.unreg(wid)
+            GaugeWidget { anchors.fill: parent; pal: gaugeWin.pal; bg: gaugeWin.bgv; running: root.on("gauge") && !root.hideWidgets
+                shape: gaugeWin.sty !== "" ? gaugeWin.sty : (root.wc("gauge").style || "pentagon")
+                metric: root.optOf("gauge", "metric", "cpu") }
+        }
     }
-    WidgetWindow {
-        id: dateWin
-        wid: "date"; wc: root.wc("date"); active: root.on("date"); editing: root.editing; hidden: root.hideWidgets
-        bw: root.sw; bh: root.sh; cw: 190; ch: 190; defX: 290; defY: 140
-        onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        Component.onCompleted: root.reg(wid, dateWin)
-        DateWidget { anchors.fill: parent; pal: dateWin.pal; bg: dateWin.bgv; running: root.on("date") && !root.hideWidgets
-            shape: dateWin.sty !== "" ? dateWin.sty : (root.wc("date").style || "flower") }
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("date")
+        WidgetWindow {
+            id: dateWin
+            wid: "date"; wc: root.wc("date"); active: root.on("date"); editing: root.editing; hidden: root.hideWidgets
+            bw: root.sw; bh: root.sh; cw: 190; ch: 190; defX: 290; defY: 140
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, dateWin)
+            Component.onDestruction: root.unreg(wid)
+            DateWidget { anchors.fill: parent; pal: dateWin.pal; bg: dateWin.bgv; running: root.on("date") && !root.hideWidgets
+                shape: dateWin.sty !== "" ? dateWin.sty : (root.wc("date").style || "flower") }
+        }
     }
-    WidgetWindow {
-        id: skyWin
-        wid: "sky"; wc: root.wc("sky"); active: root.on("sky"); editing: root.editing; hidden: root.hideWidgets
-        bw: root.sw; bh: root.sh; cw: 220; ch: 220; defX: 40; defY: 60
-        onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        Component.onCompleted: root.reg(wid, skyWin)
-        SkyWidget { anchors.fill: parent; pal: skyWin.pal; bg: skyWin.bgv; running: root.on("sky") && !root.hideWidgets }
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("sky")
+        WidgetWindow {
+            id: skyWin
+            wid: "sky"; wc: root.wc("sky"); active: root.on("sky"); editing: root.editing; hidden: root.hideWidgets
+            bw: root.sw; bh: root.sh; cw: 220; ch: 220; defX: 40; defY: 60
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, skyWin)
+            Component.onDestruction: root.unreg(wid)
+            SkyWidget { anchors.fill: parent; pal: skyWin.pal; bg: skyWin.bgv; running: root.on("sky") && !root.hideWidgets }
+        }
     }
-    WidgetWindow {
-        id: nowringWin
-        wid: "nowring"; wc: root.wc("nowring"); active: root.on("nowring"); editing: root.editing; hidden: root.hideWidgets
-        bw: root.sw; bh: root.sh; cw: 210; ch: 210; defX: 380; defY: 380
-        onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        Component.onCompleted: root.reg(wid, nowringWin)
-        NowRingWidget { anchors.fill: parent; pal: nowringWin.pal; bg: nowringWin.bgv; running: root.on("nowring") && !root.hideWidgets }
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("nowring")
+        WidgetWindow {
+            id: nowringWin
+            wid: "nowring"; wc: root.wc("nowring"); active: root.on("nowring"); editing: root.editing; hidden: root.hideWidgets
+            bw: root.sw; bh: root.sh; cw: 210; ch: 210; defX: 380; defY: 380
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, nowringWin)
+            Component.onDestruction: root.unreg(wid)
+            NowRingWidget { anchors.fill: parent; pal: nowringWin.pal; bg: nowringWin.bgv; running: root.on("nowring") && !root.hideWidgets }
+        }
     }
-    WidgetWindow {
-        id: playerWin
-        wid: "player"; wc: root.wc("player"); active: root.on("player"); editing: root.editing; hidden: root.hideWidgets
-        bw: root.sw; bh: root.sh; cw: 320; ch: 380; defX: root.sw - 360; defY: root.sh - 470
-        onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        Component.onCompleted: root.reg(wid, playerWin)
-        PlayerWidget { anchors.fill: parent; pal: playerWin.pal; bg: playerWin.bgv; running: root.on("player") && !root.hideWidgets }
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("player")
+        WidgetWindow {
+            id: playerWin
+            wid: "player"; wc: root.wc("player"); active: root.on("player"); editing: root.editing; hidden: root.hideWidgets
+            bw: root.sw; bh: root.sh; cw: 320; ch: 380; defX: root.sw - 360; defY: root.sh - 470
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, playerWin)
+            Component.onDestruction: root.unreg(wid)
+            PlayerWidget { anchors.fill: parent; pal: playerWin.pal; bg: playerWin.bgv; running: root.on("player") && !root.hideWidgets }
+        }
     }
-    WidgetWindow {
-        id: playpillWin
-        wid: "playpill"; wc: root.wc("playpill"); active: root.on("playpill"); editing: root.editing; hidden: root.hideWidgets
-        bw: root.sw; bh: root.sh; cw: 430; ch: 150; defX: 440; defY: root.sh - 240
-        onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        Component.onCompleted: root.reg(wid, playpillWin)
-        PlayPillWidget { anchors.fill: parent; pal: playpillWin.pal; bg: playpillWin.bgv; running: root.on("playpill") && !root.hideWidgets }
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("playpill")
+        WidgetWindow {
+            id: playpillWin
+            wid: "playpill"; wc: root.wc("playpill"); active: root.on("playpill"); editing: root.editing; hidden: root.hideWidgets
+            bw: root.sw; bh: root.sh; cw: 430; ch: 150; defX: 440; defY: root.sh - 240
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, playpillWin)
+            Component.onDestruction: root.unreg(wid)
+            PlayPillWidget { anchors.fill: parent; pal: playpillWin.pal; bg: playpillWin.bgv; running: root.on("playpill") && !root.hideWidgets }
+        }
     }
-    WidgetWindow {
-        id: lyricsWin
-        wid: "lyrics"; wc: root.wc("lyrics"); active: root.on("lyrics"); editing: root.editing; hidden: root.hideWidgets
-        bw: root.sw; bh: root.sh; cw: 320; ch: 320; defX: 40; defY: root.sh - 420
-        onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        Component.onCompleted: root.reg(wid, lyricsWin)
-        LyricsWidget { anchors.fill: parent; pal: lyricsWin.pal; bg: lyricsWin.bgv; running: root.on("lyrics") && !root.hideWidgets }
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("lyrics")
+        WidgetWindow {
+            id: lyricsWin
+            wid: "lyrics"; wc: root.wc("lyrics"); active: root.on("lyrics"); editing: root.editing; hidden: root.hideWidgets
+            bw: root.sw; bh: root.sh; cw: 320; ch: 320; defX: 40; defY: root.sh - 420
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, lyricsWin)
+            Component.onDestruction: root.unreg(wid)
+            LyricsWidget { anchors.fill: parent; pal: lyricsWin.pal; bg: lyricsWin.bgv; running: root.on("lyrics") && !root.hideWidgets }
+        }
     }
-    WidgetWindow {
-        id: storageWin
-        wid: "storage"; wc: root.wc("storage"); active: root.on("storage"); editing: root.editing; hidden: root.hideWidgets
-        bw: root.sw; bh: root.sh; cw: 330; ch: 76; defX: 660; defY: 440
-        onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        Component.onCompleted: root.reg(wid, storageWin)
-        StorageWidget { anchors.fill: parent; pal: storageWin.pal; bg: storageWin.bgv; running: root.on("storage") && !root.hideWidgets }
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("storage")
+        WidgetWindow {
+            id: storageWin
+            wid: "storage"; wc: root.wc("storage"); active: root.on("storage"); editing: root.editing; hidden: root.hideWidgets
+            bw: root.sw; bh: root.sh; cw: 330; ch: 76; defX: 660; defY: 440
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, storageWin)
+            Component.onDestruction: root.unreg(wid)
+            StorageWidget { anchors.fill: parent; pal: storageWin.pal; bg: storageWin.bgv; running: root.on("storage") && !root.hideWidgets }
+        }
     }
-    WidgetWindow {
-        id: trioWin
-        wid: "trio"; wc: root.wc("trio"); active: root.on("trio"); editing: root.editing; hidden: root.hideWidgets
-        bw: root.sw; bh: root.sh; cw: 330; ch: 104; defX: 660; defY: 530
-        onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        Component.onCompleted: root.reg(wid, trioWin)
-        TrioWidget { anchors.fill: parent; pal: trioWin.pal; bg: trioWin.bgv; running: root.on("trio") && !root.hideWidgets }
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("trio")
+        WidgetWindow {
+            id: trioWin
+            wid: "trio"; wc: root.wc("trio"); active: root.on("trio"); editing: root.editing; hidden: root.hideWidgets
+            bw: root.sw; bh: root.sh; cw: 330; ch: 104; defX: 660; defY: 530
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, trioWin)
+            Component.onDestruction: root.unreg(wid)
+            TrioWidget { anchors.fill: parent; pal: trioWin.pal; bg: trioWin.bgv; running: root.on("trio") && !root.hideWidgets }
+        }
     }
-    WidgetWindow {
-        id: forecastWin
-        wid: "forecast"; wc: root.wc("forecast"); active: root.on("forecast"); editing: root.editing; hidden: root.hideWidgets
-        bw: root.sw; bh: root.sh; cw: 360; ch: 240; defX: root.sw - 400; defY: 90
-        onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        Component.onCompleted: root.reg(wid, forecastWin)
-        ForecastWidget { anchors.fill: parent; pal: forecastWin.pal; bg: forecastWin.bgv; running: root.on("forecast") && !root.hideWidgets }
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("forecast")
+        WidgetWindow {
+            id: forecastWin
+            wid: "forecast"; wc: root.wc("forecast"); active: root.on("forecast"); editing: root.editing; hidden: root.hideWidgets
+            bw: root.sw; bh: root.sh; cw: 360; ch: 240; defX: root.sw - 400; defY: 90
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, forecastWin)
+            Component.onDestruction: root.unreg(wid)
+            ForecastWidget { anchors.fill: parent; pal: forecastWin.pal; bg: forecastWin.bgv; running: root.on("forecast") && !root.hideWidgets }
+        }
     }
-    WidgetWindow {
-        id: musicWin
-        wid: "music"; wc: root.wc("music"); active: root.on("music"); editing: root.editing; hidden: root.hideWidgets
-        // it grows when you open the lyrics
-        bw: root.sw; bh: root.sh; cw: 420; ch: Math.ceil(musW.wantH); defX: 40; defY: root.sh - 520
-        onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        Component.onCompleted: root.reg(wid, musicWin)
-        MusicCardWidget { id: musW; anchors.fill: parent; pal: musicWin.pal; bg: musicWin.bgv; running: root.on("music") && !root.hideWidgets }
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("music")
+        WidgetWindow {
+            id: musicWin
+            wid: "music"; wc: root.wc("music"); active: root.on("music"); editing: root.editing; hidden: root.hideWidgets
+            // it grows when you open the lyrics
+            bw: root.sw; bh: root.sh; cw: 420; ch: Math.ceil(musW.wantH); defX: 40; defY: root.sh - 520
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, musicWin)
+            Component.onDestruction: root.unreg(wid)
+            MusicCardWidget { id: musW; anchors.fill: parent; pal: musicWin.pal; bg: musicWin.bgv; running: root.on("music") && !root.hideWidgets }
+        }
     }
-    WidgetWindow {
-        id: datepillWin
-        wid: "datepill"; wc: root.wc("datepill"); active: root.on("datepill"); editing: root.editing; hidden: root.hideWidgets
-        bw: root.sw; bh: root.sh; cw: Math.max(160, Math.ceil(dpW.wantW)); ch: 52; defX: 40; defY: 300
-        onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        Component.onCompleted: root.reg(wid, datepillWin)
-        DatePillWidget { id: dpW; anchors.fill: parent; pal: datepillWin.pal; bg: datepillWin.bgv; running: root.on("datepill") && !root.hideWidgets }
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("datepill")
+        WidgetWindow {
+            id: datepillWin
+            wid: "datepill"; wc: root.wc("datepill"); active: root.on("datepill"); editing: root.editing; hidden: root.hideWidgets
+            bw: root.sw; bh: root.sh; cw: Math.max(160, Math.ceil(dpW.wantW)); ch: 52; defX: 40; defY: 300
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, datepillWin)
+            Component.onDestruction: root.unreg(wid)
+            DatePillWidget { id: dpW; anchors.fill: parent; pal: datepillWin.pal; bg: datepillWin.bgv; running: root.on("datepill") && !root.hideWidgets }
+        }
     }
-    WidgetWindow {
-        id: vizWin
-        wid: "visualizer"; wc: root.wc("visualizer"); active: root.on("visualizer"); editing: root.editing; hidden: root.hideWidgets
-        free: true; passive: true
-        bw: root.sw; bh: root.sh
-        defW: root.sw; defH: 180; defX: 0; defY: root.sh - 180
-        Component.onCompleted: root.reg(wid, vizWin)
-        VizWidget { anchors.fill: parent; running: root.on("visualizer") && !root.hideWidgets && !Look.lite && !Look.covered; style: vizWin.sty !== "" ? vizWin.sty : "bars"; flip: vizWin.flp; pal: vizWin.pal; colorMode: vizWin.vcolor !== "" ? vizWin.vcolor : "accent"
-            nBars: Number(root.optOf("visualizer", "bars", 64)); shape: root.optOf("visualizer", "shape", "square"); spacing: root.optOf("visualizer", "gap", "normal")
-            gain: Number(root.optOf("visualizer", "gain", "1.4")) }
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("visualizer")
+        WidgetWindow {
+            id: vizWin
+            wid: "visualizer"; wc: root.wc("visualizer"); active: root.on("visualizer"); editing: root.editing; hidden: root.hideWidgets
+            free: true; passive: true
+            bw: root.sw; bh: root.sh
+            defW: root.sw; defH: 180; defX: 0; defY: root.sh - 180
+            Component.onCompleted: root.reg(wid, vizWin)
+            Component.onDestruction: root.unreg(wid)
+            VizWidget { anchors.fill: parent; running: root.on("visualizer") && !root.hideWidgets && !Look.lite && !Look.covered; style: vizWin.sty !== "" ? vizWin.sty : "bars"; flip: vizWin.flp; pal: vizWin.pal; colorMode: vizWin.vcolor !== "" ? vizWin.vcolor : "accent"
+                nBars: Number(root.optOf("visualizer", "bars", 64)); shape: root.optOf("visualizer", "shape", "square"); spacing: root.optOf("visualizer", "gap", "normal")
+                gain: Number(root.optOf("visualizer", "gain", "1.4")) }
+        }
     }
 
     // reads how bright the wallpaper is in each part of the screen, so every widget can pick dark or light text
@@ -476,7 +569,9 @@ ShellRoot {
     Launcher { }
     // SUPER + Tab: every workspace with its windows; ALT + Tab: the window switcher (rice-taskview)
     TaskView { }
-    WallPicker { }
+    // the clipboard history (SUPER + V)
+    LazyPanel { name: "clip-open"; ClipboardPanel { } }
+    LazyPanel { name: "walls-open"; WallPicker { } }
     Bar { id: mainBar; nf: notifs }
     // the bar on the left or right edge (Settings > DarkShadow bar > Position)
     VBar { }
@@ -491,14 +586,15 @@ ShellRoot {
         WlrLayershell.namespace: "rice-island-catch"
         MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons; onPressed: mainBar.closeCards() }
     }
-    WifiMenu { }
-    BluetoothMenu { }
-    PowerMenu { }
-    VolumeMenu { }
+    LazyPanel { name: "wifi-open"; WifiMenu { } }
+    LazyPanel { name: "bluetooth-open"; BluetoothMenu { } }
+    LazyPanel { name: "power-open"; PowerMenu { } }
+    LazyPanel { name: "volume-open"; VolumeMenu { } }
     VolumeOsd { islandTakes: mainBar.islandVolume }
-    GamePanel { gb: root.cfg.gamebar ? root.cfg.gamebar : ({}) }
+    LazyPanel { name: "gamebar-open"; GamePanel { gb: root.cfg.gamebar ? root.cfg.gamebar : ({}) } }
     Notifs { id: notifs; islandTakes: mainBar.islandNotifs && notifs.shellMode }
-    ControlCenter { nf: notifs }
+    // made only when opened, let go two minutes after it closed (less memory from the start)
+    LazyPanel { name: "cc-open"; ControlCenter { nf: notifs } }
 
     Dock { dc: root.cfg.dock ? root.cfg.dock : ({}) }
 

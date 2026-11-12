@@ -13,6 +13,9 @@ Item {
     property int every: 1500               // the safety-net re-read, in ms
     signal fired(string line)
     signal content(string text)            // the text changed (for files that hold settings)
+    // made just now because of this very line (LazyPanel.qml): the line at start fires too, when its time stamp
+    // (the first word, seconds) is from the last few seconds
+    property bool fresh: false
     property string prevText: "\u0000"
     property string last: ""
     property bool primed: false
@@ -29,6 +32,10 @@ Item {
             if (t !== tr.prevText) { tr.prevText = t; tr.content(t) }
             const o = t.trim()
             if (tr.primed && o !== "" && o !== tr.last) tr.fired(o)
+            else if (!tr.primed && tr.fresh && o !== "") {
+                const ts = parseFloat(o.split(/\s+/)[0])
+                if (!isNaN(ts) && Math.abs(Date.now() / 1000 - ts) < 4) tr.fired(o)
+            }
             if (o !== "") tr.last = o
             tr.primed = true
         }

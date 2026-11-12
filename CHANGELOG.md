@@ -1,5 +1,12 @@
 # Changelog
 
+## V4.32: clipboard history, less memory, updates keep your edits
+- New: the clipboard (SUPER + V, issue #5). Everything you copy, texts and pictures, newest first (cliphist): search, Enter puts it back and pastes it into the window you were in, Del removes it, Ctrl + P pins a text to the top, Tab goes through All, Text, Pictures and Pinned. It rises from the bottom of the screen. Settings > Desktop > Clipboard: on / off, paste right away, pictures, how many to keep, clear the history. Float / tile a window moved to SUPER + SHIFT + V (Hyprland and niri). The installer adds cliphist and wtype
+- Less memory from the start (issue #6): a desktop widget that is off is no longer made at all (it used to sit in memory, hidden); the control center, the wallpaper picker, the game bar and the Wi-Fi, Bluetooth, power and volume menus are only made when you open them, and let go two minutes after they close
+- Light mode (Settings > Desktop > Performance, or Home): the control center and the bar's cards open quicker. Light mode already turns off blur, see-through and shadows for slower laptops
+- Updates keep your edits (issue: "Updates break custom configs"): a Quickshell file you changed is kept as it is; the new version lands next to it (FILE.rice-update) and the update lists them. Your own Hyprland settings go into ~/.config/hypr/user.lua: loaded last, no update ever touches it (RICE_OVERWRITE=1 ./install.sh --update takes every new file)
+- A key that could not be typed (issue: "cant use letter after a", B): anything that binds a plain letter with no modifier is taken off at start, with a notification saying what it was (hypr-set keycheck lists them, ~/.cache/rice/keycheck.log)
+
 ## V4.31: no more piling swaync-client processes (issue #10)
 - With DarkShadow notifications (not SwayNC), the hot corner panel's state still asked swaync-client for Do Not Disturb every few seconds. Without swaync running, swaync-client waits for it forever; when the caller was stopped, these calls stayed behind (dozens of them, each holding a D-Bus connection), until the user D-Bus ran out of files and the session ended. Thanks to the reporter of issue #10 for tracking it down
 - rice-hotcorner reads Do Not Disturb from the shell (cc.json) in DarkShadow mode, and its DND button goes through rice-cc (shell or SwayNC, whichever shows notifications)

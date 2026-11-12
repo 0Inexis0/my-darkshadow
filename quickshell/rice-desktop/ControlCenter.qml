@@ -17,7 +17,8 @@ PanelWindow {
     property real t: 0
     // t runs evenly in time; every part eases on its own (quick start, long soft landing, like Material 3's
     // emphasized-decelerate), so the panel opens in one smooth wave and closes with a quick, accelerating fade
-    Behavior on t { NumberAnimation { duration: cc.open ? 720 : 260; easing.type: Easing.Linear } }
+    // Light mode (slower computers): a quicker opening (fewer frames to draw)
+    Behavior on t { NumberAnimation { duration: cc.open ? (Look.lite ? 280 : 720) : (Look.lite ? 160 : 260); easing.type: Easing.Linear } }
     function ease(p) { return 1 - Math.pow(1 - p, 4) }
     readonly property real et: ease(t)
     // each part of the panel comes in a little after the one above it (i = its place, from the top)
@@ -110,7 +111,7 @@ PanelWindow {
     }
 
     Trigger {
-        name: "cc-open"
+        name: "cc-open"; fresh: true
         onFired: function(o) {
             const w = o.split(" ")[1] || "toggle"
             cc.open = w === "open" ? true : (w === "close" ? false : !cc.open)

@@ -27,7 +27,7 @@ if [ "$FAMILY" = fedora ] && [ -e "${OSTREE_BOOTED:-/run/ostree-booted}" ]; then
 # Arch packages, grouped so the installer can explain what it is doing.
 PKG_DESKTOP=(hyprland hyprlock hypridle xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent qt5-wayland qt6-wayland)
 PKG_SHELL=(quickshell qt6-multimedia waybar swaync awww cava kitty fish fastfetch nautilus matugen)
-PKG_TOOLS=(wf-recorder grim slurp wl-clipboard libnotify xdg-user-dirs jq curl python playerctl brightnessctl pamixer
+PKG_TOOLS=(wf-recorder grim slurp wl-clipboard cliphist wtype libnotify xdg-user-dirs jq curl python playerctl brightnessctl pamixer
            imagemagick ffmpeg mpvpaper zenity networkmanager bluez bluez-utils pipewire pipewire-pulse wireplumber
            btop cmatrix peaclock pavucontrol gnome-calendar hyprsunset upower power-profiles-daemon)
 PKG_FONTS=(ttf-jetbrains-mono-nerd ttf-nerd-fonts-symbols noto-fonts noto-fonts-emoji inter-font)
@@ -62,7 +62,7 @@ FEDORA_COPRS=(nett00n/hyprland errornointernet/quickshell scottames/awww)
 FPKG_DESKTOP=(hyprland hyprlock hypridle hyprsunset hyprpolkitagent xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
               qt5-qtwayland qt6-qtwayland)
 FPKG_SHELL=(quickshell qt6-qtmultimedia waybar SwayNotificationCenter awww cava kitty fish fastfetch nautilus matugen)
-FPKG_TOOLS=(wf-recorder grim slurp wl-clipboard libnotify xdg-user-dirs jq curl python3 playerctl brightnessctl pamixer
+FPKG_TOOLS=(wf-recorder grim slurp wl-clipboard cliphist wtype libnotify xdg-user-dirs jq curl python3 playerctl brightnessctl pamixer
             ImageMagick "ffmpeg-free|ffmpeg" mpvpaper zenity NetworkManager bluez pipewire pipewire-pulseaudio wireplumber
             btop cmatrix pavucontrol gnome-calendar upower power-profiles-daemon tar xz unzip)
 FPKG_FONTS=(rsms-inter-fonts google-noto-sans-fonts google-noto-emoji-fonts)

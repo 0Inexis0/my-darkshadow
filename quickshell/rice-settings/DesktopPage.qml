@@ -287,6 +287,67 @@ Item {
                 }
             }
 
+            // ---------- Clipboard (rice-clip, cliphist) ----------
+            T { kind: "title"; text: I18n.t("Clipboard"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
+            T {
+                width: parent.width; wrapMode: Text.WordWrap; kind: "dim"
+                text: I18n.t("Super + V shows everything you copied, texts and pictures. Type to search, Enter puts it back (and pastes it), Del removes it, Ctrl + P pins a text to the top. Float / tile a window moved to Super + Shift + V. Other keys: Settings > Keybinds.")
+            }
+            Item {
+                id: clip
+                width: parent.width; height: clipCol.implicitHeight
+                property var c: ({ enabled: true, paste: true, images: true, max: 200, cliphist: true, wtype: true })
+                property bool armed: false
+                Process { running: true; command: ["bash", "-c", "\"$HOME/.local/bin/rice-clip\" state 2>/dev/null"]
+                    stdout: StdioCollector { onStreamFinished: { try { clip.c = JSON.parse(text) } catch (e) { } } } }
+                function setv(k, v) {
+                    const n = JSON.parse(JSON.stringify(clip.c)); n[k] = (v === "on") ? true : (v === "off" ? false : Number(v)); clip.c = n
+                    Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-clip\" set \"$1\" \"$2\"", "_", k, String(v)])
+                }
+                Timer { id: clipDisarm; interval: 3000; onTriggered: clip.armed = false }
+                Column {
+                    id: clipCol
+                    width: parent.width; spacing: 8
+                    T { visible: clip.c.cliphist === false; width: parent.width; wrapMode: Text.WordWrap; color: "#e5c07b"; font.pixelSize: 12
+                        text: I18n.t("cliphist is not installed. Run the installer again (Settings > Update Center), or install cliphist and wl-clipboard.") }
+                    ToggleRow { label: I18n.t("Keep a clipboard history"); desc: I18n.t("Off: nothing you copy is written down")
+                        checked: clip.c.enabled !== false; onToggled: function(v) { clip.setv("enabled", v ? "on" : "off") } }
+                    ToggleRow { label: I18n.t("Paste right away"); desc: clip.c.wtype === false ? I18n.t("Needs wtype (the installer adds it)") : I18n.t("Picking an entry also pastes it into the window you were in")
+                        checked: clip.c.paste !== false; onToggled: function(v) { clip.setv("paste", v ? "on" : "off") } }
+                    ToggleRow { label: I18n.t("Pictures too"); desc: I18n.t("Screenshots and copied images, with a small preview")
+                        checked: clip.c.images !== false; onToggled: function(v) { clip.setv("images", v ? "on" : "off") } }
+                    SegRow { label: I18n.t("How many to keep"); desc: I18n.t("The oldest go first")
+                        options: [{ label: "50", value: "50" }, { label: "200", value: "200" }, { label: "500", value: "500" }, { label: "1000", value: "1000" }]
+                        current: String(clip.c.max || 200); onChosen: function(v) { clip.setv("max", v) } }
+                    Row {
+                        spacing: 8
+                        Pill { label: I18n.t("Open the clipboard"); onClicked: Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-clip\" open"]) }
+                        Pill { label: clip.armed ? I18n.t("Sure? Click again") : I18n.t("Clear the history")
+                            onClicked: { if (!clip.armed) { clip.armed = true; clipDisarm.restart(); return } clip.armed = false
+                                Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-clip\" wipe"]) } }
+                    }
+                }
+            }
+
+            // ---------- Performance (rice-effects lite) ----------
+            T { kind: "title"; text: I18n.t("Performance"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
+            Item {
+                id: perf
+                width: parent.width; height: perfCol.implicitHeight
+                property bool lite: false
+                Process { running: true; command: ["bash", "-c", "\"$HOME/.local/bin/rice-effects\" state 2>/dev/null"]
+                    stdout: StdioCollector { onStreamFinished: { try { perf.lite = JSON.parse(text).lite === true } catch (e) { } } } }
+                Column {
+                    id: perfCol
+                    width: parent.width; spacing: 8
+                    ToggleRow { label: I18n.t("Light mode"); desc: I18n.t("For laptops and older graphics: no blur, no see-through, no shadows, quicker panels, widgets hide behind windows")
+                        checked: perf.lite
+                        onToggled: function(v) { perf.lite = v; Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-effects\" lite \"$1\"", "_", v ? "on" : "off"]) } }
+                    T { width: parent.width; wrapMode: Text.WordWrap; kind: "dim"
+                        text: I18n.t("Less memory: turn off the widgets you do not use (an off widget takes no memory now), and the Visualizer. Panels like the control center are only made when you open them.") }
+                }
+            }
+
             // ---------- visualizer ----------
             T { kind: "title"; text: I18n.t("Visualizer"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
             SegRow {

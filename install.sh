@@ -94,6 +94,38 @@ def k(v):
 sys.exit(0 if k(sys.argv[1]) > k(sys.argv[2]) else 1)
 PY
 }
+# ---- your own edits survive updates (V4.32) ----
+# The installer remembers what it wrote (~/.config/rice/installed.sums). A Quickshell file (.qml, .js) you changed
+# since then is kept as it is on an update: the new version lands next to it as FILE.rice-update and the summary
+# lists it. Before there was a list, the version the repo had before this update (git) tells if it was changed.
+SUMS="$HOME/.config/rice/installed.sums"
+KEPTF="$HOME/.cache/rice/kept-edits"
+PREV_REV=""
+sum_of() { sha256sum 2>/dev/null | cut -c1-64; }
+rec_sum() { # rec_sum DST: what is in DST now is ours
+  [ "$DRY_RUN" = 1 ] && return 0
+  case "$1" in "$HOME"/.config/quickshell/*.qml|"$HOME"/.config/quickshell/*.js) ;; *) return 0 ;; esac
+  mkdir -p "$(dirname "$SUMS")"
+  printf '%s  %s\n' "$(sum_of <"$1")" "${1#"$HOME"/}" >>"$SUMS"
+}
+user_edited() { # user_edited SRC DST: true when you changed DST after the installer wrote it
+  local src="$1" dst="$2" rel cur rec old
+  [ "${RICE_OVERWRITE:-0}" = 1 ] && return 1
+  case "$dst" in "$HOME"/.config/quickshell/*.qml|"$HOME"/.config/quickshell/*.js) ;; *) return 1 ;; esac
+  rel="${dst#"$HOME"/}"
+  cur="$(sum_of <"$dst")"
+  rec="$(grep -F "  $rel" "$SUMS" 2>/dev/null | awk -v r="$rel" '$2 == r { s = $1 } END { print s }')"
+  if [ -n "$rec" ]; then [ "$cur" != "$rec" ]; return; fi
+  [ -n "$PREV_REV" ] || return 1
+  git -C "$ROOT" cat-file -e "$PREV_REV:${src#"$ROOT"/}" 2>/dev/null || return 1      # not in that version
+  old="$(git -C "$ROOT" show "$PREV_REV:${src#"$ROOT"/}" 2>/dev/null | sed -e "s|@HOME@|$HOME|g" -e "s|@USER@|$USER|g" | sum_of)"
+  [ -n "$old" ] && [ "$cur" != "$old" ]
+}
+keep_edit() { # keep_edit SRC DST: your file stays, the new one goes next to it
+  put "$1" "$2.rice-update"
+  mkdir -p "$(dirname "$KEPTF")"; printf '%s\n' "${2#"$HOME"/}" >>"$KEPTF"
+}
+
 # put SRC DST: copy one file, fill in @HOME@/@USER@, back up what it replaces
 put() {
   local src="$1" dst="$2" rel
@@ -123,7 +155,7 @@ copy_tree() { # copy_tree SRC_DIR DST_DIR
     rel="${f#"$src"/}"
     if [ -e "$dst/$rel" ] || [ -L "$dst/$rel" ]; then kept_files+=("$f"); else new_files+=("$f"); fi
   done < <(find -L "$src" -type f ! -name '*.bak*' ! -name '.gitkeep' ! -name shell.qml -print0)
-  for f in "${new_files[@]}"; do put "$f" "$dst/${f#"$src"/}"; done
+  for f in "${new_files[@]}"; do put "$f" "$dst/${f#"$src"/}"; rec_sum "$dst/${f#"$src"/}"; done
   # the changed ones are written next to their old selves first and then swapped in all at once, so a running
   # Quickshell never reloads with half of the new files (a new Bar.qml with an old DynIsland.qml); files that
   # did not change are not touched at all
@@ -133,27 +165,29 @@ copy_tree() { # copy_tree SRC_DIR DST_DIR
     d="$dst/${f#"$src"/}"
     if [ "$DRY_RUN" = 1 ]; then continue; fi
     put "$f" "$d.rice-new"
-    if cmp -s "$d.rice-new" "$d"; then rm -f "$d.rice-new"; continue; fi
+    if cmp -s "$d.rice-new" "$d"; then rm -f "$d.rice-new" "$d.rice-update"; rec_sum "$d"; continue; fi
+    if user_edited "$f" "$d"; then rm -f "$d.rice-new"; keep_edit "$f" "$d"; continue; fi
     rel2="${d#"$HOME"/}"
     mkdir -p "$BK/$(dirname "$rel2")"
     cp -aL "$d" "$BK/$rel2" 2>/dev/null || true
     [ -L "$d" ] && rm -f "$d"
     staged+=("$d")
   done
-  for d in "${staged[@]}"; do mv -f "$d.rice-new" "$d"; done
+  for d in "${staged[@]}"; do mv -f "$d.rice-new" "$d"; rm -f "$d.rice-update"; rec_sum "$d"; done
   # shell.qml last, swapped in whole as well (Quickshell must never read it half written)
   if [ -f "$src/shell.qml" ] && [ "$DRY_RUN" != 1 ]; then
     d="$dst/shell.qml"
     if [ -e "$d" ]; then
       put "$src/shell.qml" "$d.rice-new"
-      if cmp -s "$d.rice-new" "$d"; then rm -f "$d.rice-new"
+      if cmp -s "$d.rice-new" "$d"; then rm -f "$d.rice-new"; rec_sum "$d"
+      elif user_edited "$src/shell.qml" "$d"; then rm -f "$d.rice-new"; keep_edit "$src/shell.qml" "$d"
       else
         rel2="${d#"$HOME"/}"; mkdir -p "$BK/$(dirname "$rel2")"; cp -aL "$d" "$BK/$rel2" 2>/dev/null || true
         [ -L "$d" ] && rm -f "$d"
-        mv -f "$d.rice-new" "$d"
+        mv -f "$d.rice-new" "$d"; rec_sum "$d"
       fi
     else
-      put "$src/shell.qml" "$d"
+      put "$src/shell.qml" "$d"; rec_sum "$d"
     fi
   fi
   return 0
@@ -513,6 +547,25 @@ step_fonts() {
   else warn "JetBrains Mono Nerd Font is missing: icons will show as boxes"; fi
 }
 
+# ~/.config/hypr/user.lua: your own Hyprland settings, loaded last; no update ever writes over it
+make_user_lua() {
+  local f="$HOME/.config/hypr/user.lua"
+  [ "$DRY_RUN" = 1 ] || [ -e "$f" ] && return 0
+  mkdir -p "$HOME/.config/hypr"
+  cat >"$f" <<'LUA'
+-- Your own Hyprland settings. DarkShadow's Shell never changes this file (updates leave it alone).
+-- It is loaded last, so whatever you set here wins over the shell's config. Put your changes here instead of
+-- hyprland.lua (an update brings a new hyprland.lua; your old one is in ~/.config/darkshadows-shell-backup-*).
+-- Docs: https://wiki.hypr.land
+--
+-- Examples:
+-- hl.bind("SUPER + B", hl.dsp.exec_cmd("firefox"))
+-- hl.config({ input = { repeat_delay = 300, repeat_rate = 40 } })
+-- hl.config({ general = { gaps_in = 4, gaps_out = 8 } })
+-- hl.on("hyprland.start", function() hl.exec_cmd("discord") end)
+LUA
+}
+
 step_configs() {
   local d n
   n="$(config_dirs | wc -l)"
@@ -524,6 +577,7 @@ step_configs() {
   done
   # your Settings for Hyprland (layout, gaps, keys ...) are written again over the file the update brought
   has_hypr && task "Your Hyprland settings" python3 "$ROOT/bin/hypr-set" regen
+  has_hypr && make_user_lua
   task "Hyprland add-ons (keybinds, gaming mode)" copy_lua
   [ -d "$ROOT/wallpapers" ] && task "Wallpapers  ->  ~/Pictures/Wallpapers" put_wallpapers
   task "Fish: no welcome message" quiet_fish
@@ -880,6 +934,7 @@ if [ "$MODE" = update ]; then
   if [ "$PULLED" = 1 ]; then ok "Got the newest version"
   elif [ -d "$ROOT/.git" ] && command -v git >/dev/null 2>&1; then
     old="$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo ?)"
+    export RICE_PREV_REV="${RICE_PREV_REV:-$(git -C "$ROOT" rev-parse HEAD 2>/dev/null)}"
     if [ "$DRY_RUN" = 1 ]; then info "would run: git pull"
     elif { u="$(git -C "$ROOT" remote get-url origin 2>/dev/null)"; case "$u" in *shadowww-dev/shadows-shell*) git -C "$ROOT" remote set-url origin https://github.com/shadowww-dev/DarkShadowShell.git ;; esac
            GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never git -c credential.helper= -C "$ROOT" pull --ff-only >>"$LOG" 2>&1; }; then
@@ -913,6 +968,13 @@ if [ "$MODE" = update ]; then
     fi
   fi
 fi
+
+# the version you have, as the repo had it (its tag, or the commit before the pull): your edits are told apart from it
+if [ "$MODE" = update ] && [ -d "$ROOT/.git" ] && command -v git >/dev/null 2>&1; then
+  PREV_REV="$(git -C "$ROOT" rev-parse -q --verify "v${HAVE_VERSION:-0}^{commit}" 2>/dev/null || true)"
+  [ -n "$PREV_REV" ] || PREV_REV="${RICE_PREV_REV:-}"
+fi
+rm -f "$KEPTF"
 
 if [ "$MODE" = update ]; then
   if ver_newer "$RICE_VERSION" "${HAVE_VERSION:-2.01}"; then
@@ -995,6 +1057,11 @@ else
 fi
 hr
 if [ -n "$miss" ]; then warn "Still missing: $miss"; else ok "All needed programs are installed"; fi
+if [ -s "$KEPTF" ] && [ "$DRY_RUN" != 1 ]; then
+  warn "You changed these files, so they were kept as they are (the new versions are next to them, .rice-update):"
+  sed 's/^/        ~\//' "$KEPTF" | head -20
+  note "If something looks broken, take the new one:  mv FILE.rice-update FILE   (or update with RICE_OVERWRITE=1)"
+fi
 if [ -f "$HOME/.cache/rice/gpu-env-fixed" ] && [ "$DRY_RUN" != 1 ]; then
   warn "Log out and back in once: videos in Brave, Chrome and Discord (and GIFs) play again after that."
   note "An older version set NVIDIA video variables that broke them; they are gone now."

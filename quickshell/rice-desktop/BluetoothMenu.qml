@@ -115,7 +115,7 @@ PanelWindow {
     }
     function hide() { open = false }
     Trigger {
-        name: "bluetooth-open"
+        name: "bluetooth-open"; fresh: true
         onFired: function(o) {
             const x = parseFloat(o.split(" ")[1]), yv = parseFloat(o.split(" ")[2])
             if (wm.open) wm.hide(); else wm.show(isNaN(x) ? wm.width - 200 : x, yv)

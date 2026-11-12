@@ -33,7 +33,7 @@ PanelWindow {
     WlrLayershell.namespace: "rice-walls"
     WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
-    Trigger { name: "walls-open"; onFired: function(l) { wp.open = !wp.open } }
+    Trigger { name: "walls-open"; fresh: true; onFired: function(l) { wp.open = !wp.open } }
 
     // ---------- the wallpapers ----------
     property var all: []

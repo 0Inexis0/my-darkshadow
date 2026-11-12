@@ -55,7 +55,7 @@ PanelWindow {
     function show(x, y) { cy = (y === undefined || isNaN(y)) ? -1 : y; cx = x; armed = ""; barProc.running = true; open = true }
     function hide() { open = false; armed = "" }
     Trigger {
-        name: "power-open"
+        name: "power-open"; fresh: true
         onFired: function(o) {
             const x = parseFloat(o.split(" ")[1]), yv = parseFloat(o.split(" ")[2])
             if (pw.open) pw.hide(); else pw.show(isNaN(x) ? pw.width - 120 : x, yv)

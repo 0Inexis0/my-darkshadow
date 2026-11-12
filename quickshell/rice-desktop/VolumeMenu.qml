@@ -57,7 +57,7 @@ PanelWindow {
     function show(x, y) { cy = (y === undefined || isNaN(y)) ? -1 : y; cx = x; barProc.running = true; open = true }
     function hide() { open = false }
     Trigger {
-        name: "volume-open"
+        name: "volume-open"; fresh: true
         onFired: function(o) {
             const x = parseFloat(o.split(" ")[1]), yv = parseFloat(o.split(" ")[2])
             if (vm.open) vm.hide(); else vm.show(isNaN(x) ? vm.width - 200 : x, yv)

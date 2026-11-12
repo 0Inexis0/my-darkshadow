@@ -5,6 +5,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 
 HOME = os.path.expanduser("~")
 DIR = HOME + "/.config/rice"
@@ -468,6 +469,39 @@ def cmd_binds():
         d = (str(b.get("dispatcher", "")) + " " + str(b.get("arg", ""))).strip()
         act.append("%s  ->  %s" % (keys, b.get("description") or d))
     print(json.dumps({"custom": s["binds"], "active": act[:120]}))
+
+
+def cmd_keycheck(fix=""):
+    """a key bound with no modifier (a plain letter or digit) eats that key: you cannot type it anywhere.
+    Lists them; `keycheck fix` takes them off (written to ~/.cache/rice/keycheck.log)"""
+    if NIRI:
+        print("[]")
+        return
+    try:
+        data = json.loads(sh(["hyprctl", "-j", "binds"]))
+    except Exception:
+        data = []
+    bad = []
+    for b in data:
+        if b.get("modmask", 0) or b.get("mouse") or b.get("submap"):
+            continue
+        key = str(b.get("key") or "")
+        code = int(b.get("keycode", 0) or 0)
+        # letters, digits, space and the punctuation keys; or a key code in the letter rows (10-61)
+        if (len(key) == 1 and (key.isalnum() or key in "`-=[];',./\\")) or key.lower() == "space" or (not key and 10 <= code <= 61):
+            bad.append({"key": key or "code:%d" % code, "does": (str(b.get("description") or "") or
+                        (str(b.get("dispatcher", "")) + " " + str(b.get("arg", ""))).strip())})
+    if fix and bad:
+        os.makedirs(HOME + "/.cache/rice", exist_ok=True)
+        with open(HOME + "/.cache/rice/keycheck.log", "a") as f:
+            for x in bad:
+                ok = ev("hl.unbind(%s)" % json.dumps(x["key"]))
+                f.write("%s  took off a bind on the plain key %s (%s)%s\n" % (time.strftime("%Y-%m-%d %H:%M"), x["key"], x["does"], "" if ok else " FAILED"))
+        if shutil.which("notify-send"):
+            subprocess.Popen(["notify-send", "-a", "DarkShadow's Shell", "A key could not be typed",
+                              "Something bound the plain key %s, so it never reached your apps. It is free again "
+                              "(details: ~/.cache/rice/keycheck.log)." % ", ".join(x["key"] for x in bad)])
+    print(json.dumps(bad))
 
 
 def cmd_bind_add(keys, cmd):
@@ -985,7 +1019,7 @@ def main(a):
         "border-color": (2, cmd_border_color), "anim-enabled": (1, cmd_anim_enabled),
         "anim-speed": (1, cmd_anim_speed), "monitor-save-all": (0, cmd_monitor_save_all), "anim-style": (1, cmd_anim_style), "binds": (0, cmd_binds), "bind-add": (2, cmd_bind_add),
         "kbd-remember": (0, cmd_kbd_remember), "regen": (0, cmd_regen),
-        "bind-del": (1, cmd_bind_del), "autostart": (0, cmd_autostart), "autostart-add": (1, cmd_autostart_add),
+        "bind-del": (1, cmd_bind_del), "keycheck": (0, cmd_keycheck), "keycheck-fix": (0, lambda: cmd_keycheck("fix")), "autostart": (0, cmd_autostart), "autostart-add": (1, cmd_autostart_add),
         "autostart-del": (1, cmd_autostart_del), "autostart-toggle": (1, cmd_autostart_toggle),
         "monitors": (0, cmd_monitors), "monitor-apply": (4, cmd_monitor_apply),
         "monitor-keep": (0, cmd_monitor_keep), "monitor-revert": (0, cmd_monitor_revert),

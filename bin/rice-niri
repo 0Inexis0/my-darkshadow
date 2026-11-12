@@ -239,8 +239,9 @@ def default_binds(f, term, files):
         # windows
         ("Mod+Q", 'repeat=false hotkey-overlay-title="Close the window"', "close-window;"),
         ("Mod+C", "repeat=false", "close-window;"),
-        ("Mod+V", 'hotkey-overlay-title="Float / tile the window"', "toggle-window-floating;"),
-        ("Mod+Shift+V", "", "switch-focus-between-floating-and-tiling;"),
+        ("Mod+V", 'repeat=false hotkey-overlay-title="Clipboard"', run(b + "rice-clip", "toggle")),
+        ("Mod+Shift+V", 'hotkey-overlay-title="Float / tile the window"', "toggle-window-floating;"),
+        ("Mod+Ctrl+V", "", "switch-focus-between-floating-and-tiling;"),
         ("Mod+F", 'hotkey-overlay-title="Maximize the column"', "maximize-column;"),
         ("Mod+Shift+F", 'hotkey-overlay-title="Fullscreen"', "fullscreen-window;"),
         ("Mod+Ctrl+F", "", "expand-column-to-available-width;"),
@@ -326,7 +327,7 @@ def default_binds(f, term, files):
 ACTION_KEYS = {
     "terminal": "Mod+Return", "launcher": "Mod+D", "launcher2": "Alt+Space", "settings": "Mod+U", "wallpaper": "Mod+W",
     "quick": "Mod+A", "cc": "Mod+N", "gamebar": "Mod+G", "dashboard": "Mod+Alt+D", "lock": "Mod+L", "close": "Mod+Q",
-    "float": "Mod+V", "shot": "Print", "shotfull": "Shift+Print", "record": "Mod+Shift+R", "widgets": "Mod+Alt+W",
+    "float": "Mod+Shift+V", "clipboard": "Mod+V", "shot": "Print", "shotfull": "Shift+Print", "record": "Mod+Shift+R", "widgets": "Mod+Alt+W",
     "taskview": "Mod+Tab", "switcher": "Alt+Tab",
 }
 
@@ -657,7 +658,7 @@ def layer_rules(f, flat):
     # (wallpaper only) the windows showed through the bar unblurred, like a hole. Only the small area behind each
     # surface is blurred, so it costs little. The desktop widgets are different: they sit on the wallpaper under every window, so their blur is the shared one.
     if f.blur and not flat:
-        L += block("layer-rule", ['match namespace="^rice-(bar|bluetooth|cc|deskmenu|dock|dock-apps|gamebar|hotcorner|launcher|notify-popup|power|volume|osd|taskview|wallum|walls|wifi)$"']
+        L += block("layer-rule", ['match namespace="^rice-(bar|bluetooth|cc|clipboard|deskmenu|dock|dock-apps|gamebar|hotcorner|launcher|notify-popup|power|volume|osd|taskview|wallum|walls|wifi)$"']
                    + block("background-effect", ["xray false"]))
     # blur: the shell asks niri for blur exactly where it draws (Quickshell, ext-background-effect), so no layer
     # gets a rule here: a rule would blur a whole surface, see-through margins included

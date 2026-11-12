@@ -28,7 +28,7 @@ Item {
     // t: 0 closed .. 1 open. Like the Dynamic island: the module's pill stretches out of the bar into the card
     // (a soft overshoot), the corners round off, and the content comes in once there is room for it
     property real t: 0
-    onOpenChanged: { tAnim.stop(); tAnim.to = open ? 1 : 0; tAnim.duration = open ? 560 : 260
+    onOpenChanged: { tAnim.stop(); tAnim.to = open ? 1 : 0; tAnim.duration = open ? (Look.lite ? 260 : 560) : (Look.lite ? 150 : 260)
         tAnim.easing.type = open ? Easing.OutBack : Easing.InCubic; tAnim.start() }
     NumberAnimation { id: tAnim; target: bp; property: "t"; easing.overshoot: 0.9 }
     // a new card while one is open (another module): the content cross-fades
