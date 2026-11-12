@@ -748,19 +748,21 @@ PanelWindow {
     }
     // Music: a note (three small bars dancing while a song plays); a click opens the music card
     Component { id: mMusic
-        Item { property bool shown: true; width: mu.width + 6; height: bar.barH
+        Item { property bool shown: true; width: mu.width; height: bar.barH
             Rectangle {
                 id: mu
                 anchors.centerIn: parent
                 readonly property bool playing: bar.player !== null
-                width: playing ? 52 : bar.barH - 10; height: bar.barH - 10; radius: height / 2
+                // nothing plays: just the note, as narrow as the other icons; a song: a pill with the bars
+                width: playing ? 46 : 24; height: bar.barH - 12; radius: height / 2
                 Behavior on width { NumberAnimation { duration: 320; easing.type: Easing.OutBack } }
-                color: bar.goo ? (playing ? gp.primary : gp.container) : (mum.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.05))
+                color: playing ? (bar.goo ? gp.primary : Qt.rgba(1, 1, 1, mum.containsMouse ? 0.16 : 0.08))
+                               : (mum.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : "transparent")
                 Behavior on color { ColorAnimation { duration: 200 } }
                 scale: mum.pressed ? 0.92 : (mum.containsMouse ? 1.05 : 1)
                 Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } }
-                readonly property color ic: bar.goo ? (playing ? gp.inkPrimary : gp.inkContainer) : bar.fg
-                Row { anchors.centerIn: parent; spacing: 4
+                readonly property color ic: bar.goo && playing ? gp.inkPrimary : bar.fg
+                Row { anchors.centerIn: parent; spacing: 3
                     MIcon { anchors.verticalCenter: parent.verticalCenter; size: 16; name: "music_note"; glyph: String.fromCodePoint(0xF075A); color: mu.ic }
                     Row { visible: mu.playing; anchors.verticalCenter: parent.verticalCenter; spacing: 2; height: 12
                         Repeater { model: 3

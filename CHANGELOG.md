@@ -1,5 +1,10 @@
 # Changelog
 
+## V4.30: no more pale squares on niri, the music card cleans up
+- niri: the blur behind cards, menus, the island and the bar showed as pale squares around the rounded corners on some setups. The blur now follows the rounded corners from the inside (in small steps), so nothing shows past the edges
+- Music card: the lyrics box has its rounded corners again (its fades were square), and when nothing plays any more the last song's lyrics go away
+- Bar: the Music module is as narrow as the other icons while nothing plays (it had extra room around it); a song makes it a small pill with the bars
+
 ## V4.29: a new lock screen, a music card on the bar, dock icons in your colors, smoother Task view
 - New lock screen (Style: Cards, the default): the month with today in your shape, the time on its own tall card with the seconds going round, your music with the cover and buttons, and a bar at the bottom with the battery, the keyboard layout (click to switch), the password and the power buttons. SUPER + L: the wallpaper zooms and blurs in, the cards rise one after another. Every key drops in a shape with a ring around it; a wrong password shakes and the shapes fall; the right one opens the lock. Settings > Idle & Lockscreen > Style: Cards or Classic (the old one)
 - The keyboard layout no longer turns to US after an update: the installer keeps your layout (it is saved in hypr.json once) and writes your Hyprland settings again after copying the files

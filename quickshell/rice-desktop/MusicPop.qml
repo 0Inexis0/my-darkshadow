@@ -32,6 +32,9 @@ Item {
     property bool loading: false
     property string songKey: ""
     readonly property string want: pl.has && on ? pl.artist + "|" + pl.title : ""
+    // nothing plays (the player closed): the last song's lyrics go too
+    readonly property bool hasSong: pl.has
+    onHasSongChanged: if (!hasSong) { lines = []; plain = ""; songKey = ""; loading = false }
     onWantChanged: lookT.restart()
     Timer { id: lookT; interval: 400; onTriggered: mp.look() }
     function look() {
@@ -107,7 +110,7 @@ Item {
         ListView {
             id: lyr
             anchors.fill: parent; anchors.margins: 6
-            visible: mp.lines.length > 0
+            visible: mp.hasSong && mp.lines.length > 0
             model: mp.lines
             interactive: false
             currentIndex: Math.max(0, mp.cur)
@@ -132,7 +135,7 @@ Item {
         }
         Flickable {
             anchors.fill: parent; anchors.margins: 12
-            visible: mp.lines.length === 0 && mp.plain !== ""
+            visible: mp.hasSong && mp.lines.length === 0 && mp.plain !== ""
             contentHeight: ptx.implicitHeight
             contentY: Math.max(0, (ptx.implicitHeight - height) * pl.frac)
             interactive: false
@@ -149,9 +152,9 @@ Item {
                 text: !pl.has ? Tr.t("Nothing playing") : (mp.loading ? Tr.t("Looking for the lyrics...") : Tr.t("No lyrics for this song")) }
         }
         // soft edges, the lines fade in and out
-        Rectangle { anchors.top: parent.top; width: parent.width; height: 22; gradient: Gradient {
+        Rectangle { anchors.top: parent.top; width: parent.width; height: 30; radius: words.radius; gradient: Gradient {
             GradientStop { position: 0; color: mp.chip } GradientStop { position: 1; color: Qt.rgba(mp.chip.r, mp.chip.g, mp.chip.b, 0) } } }
-        Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 22; gradient: Gradient {
+        Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 30; radius: words.radius; gradient: Gradient {
             GradientStop { position: 0; color: Qt.rgba(mp.chip.r, mp.chip.g, mp.chip.b, 0) } GradientStop { position: 1; color: mp.chip } } }
     }
 

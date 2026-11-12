@@ -35,6 +35,7 @@ Item {
         return { x: x, y: y, k: k }
     }
     readonly property int count: Math.min(8, items ? items.length : 0)
+    readonly property int steps: 6
     Repeater {
         id: mirrors
         model: nb.count
@@ -47,6 +48,22 @@ Item {
             y: g.y
             width: src && src.visible !== false ? src.width * g.k : 0
             height: src ? src.height * g.k : 0
+            // the rounded corners as a few steps that stay inside the curve: rounded regions came out square on
+            // some setups (pale squares at the corners of cards and menus), steps inside the corner never show
+            readonly property real rr: Math.min(width / 2, height / 2, ((nb.radii || []).length > index ? nb.radii[index] : nb.radius) * k)
+            Repeater {
+                id: steps
+                model: nb.steps
+                delegate: Item {
+                    required property int index
+                    readonly property real th: index / (nb.steps - 1) * Math.PI / 2
+                    readonly property real dx: Math.round(parent.rr * (1 - Math.cos(th)))
+                    readonly property real dy: Math.round(parent.rr * (1 - Math.sin(th)))
+                    x: dx; y: dy
+                    width: Math.max(0, parent.width - 2 * dx); height: Math.max(0, parent.height - 2 * dy)
+                }
+            }
+            function step(j) { return steps.itemAt(j) }
         }
     }
 
@@ -59,25 +76,20 @@ Item {
         if (helper && made === n) return
         if (helper) { try { helper.clear(); helper.destroy() } catch (e) { } helper = null }
         let regs = ""
-        for (let i = 0; i < n; i++)
-            regs += "Region { item: h.want && h.boxes.length > " + i + " ? h.boxes[" + i + "] : null; radius: Math.round(((h.radii || []).length > " + i + " ? h.radii[" + i + "] : h.radius) * (h.boxes.length > " + i + " && h.boxes[" + i + "] ? h.boxes[" + i + "].k : 1)) }\n"
-        const make = r => Qt.createQmlObject(
-            "import Quickshell\nimport Quickshell.Wayland\nimport QtQuick\n" +
-            "QtObject { id: h\n property var win: null\n property var boxes: []\n property real radius: 0\n property var radii: []\n property bool want: false\n" +
-            " property var reg: Region {\n" + r + " }\n" +
-            " function apply() { if (!win) return true; try { win.BackgroundEffect.blurRegion = reg; return true } catch (e) { return false } }\n" +
-            " function clear() { try { if (win) win.BackgroundEffect.blurRegion = null } catch (e) { } }\n}", nb, "niriblur")
-        try { helper = make(regs) }
-        catch (e) {
-            // Quickshell 0.3.0 has blur but no rounded regions: square corners then
-            try { helper = make(regs.replace(/; radius: [^}]*\}/g, " }")) }
-            catch (e2) { helper = null; made = -2; return }      // this Quickshell cannot blur
-        }
+        const m = n * nb.steps
+        for (let i = 0; i < m; i++)
+            regs += "Region { item: h.want && h.boxes.length > " + i + " ? h.boxes[" + i + "] : null }\n"
+        try {
+            helper = Qt.createQmlObject(
+                "import Quickshell\nimport Quickshell.Wayland\nimport QtQuick\n" +
+                "QtObject { id: h\n property var win: null\n property var boxes: []\n property bool want: false\n" +
+                " property var reg: Region {\n" + regs + " }\n" +
+                " function apply() { if (!win) return true; try { win.BackgroundEffect.blurRegion = reg; return true } catch (e) { return false } }\n" +
+                " function clear() { try { if (win) win.BackgroundEffect.blurRegion = null } catch (e) { } }\n}", nb, "niriblur")
+        } catch (e) { helper = null; made = -2; return }      // this Quickshell cannot blur
         made = n
         helper.win = Qt.binding(() => nb.win)
-        helper.boxes = Qt.binding(() => { const l = []; for (let i = 0; i < mirrors.count; i++) l.push(mirrors.itemAt(i)); return l })
-        helper.radius = Qt.binding(() => nb.radius)
-        helper.radii = Qt.binding(() => nb.radii)
+        helper.boxes = Qt.binding(() => { const l = []; for (let i = 0; i < mirrors.count; i++) { const it = mirrors.itemAt(i); for (let j = 0; j < nb.steps; j++) l.push(it ? it.step(j) : null) } return l })
         helper.want = Qt.binding(() => nb.want)
         if (!helper.apply()) { helper.destroy(); helper = null; made = -2 }      // no BackgroundEffect here
     }
