@@ -1,5 +1,8 @@
 # Changelog
 
+## V4.22: the shell starts again
+- V4.21 did not start on some Qt versions ("Zone is not a type" in VBar.qml): the side bar's zone is declared before it is used now
+
 ## V4.21: the bar on the left or right edge, done properly
 - The styles work on a side bar too: dynamic and islands give a pill for each zone (top, middle, bottom), pills one for each module, island one pill, flat the whole edge (before, every style was one long joined pill)
 - The launcher on a side bar shows your distro's logo again (and the black hole or the moon), like on the top bar

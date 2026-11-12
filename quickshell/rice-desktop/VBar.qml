@@ -174,31 +174,7 @@ PanelWindow {
     Trigger { path: vb.home + "/.config/rice/region.json"; every: 5000; onContent: function(t) { vb.h12 = /"clock": *"12"/.test(t) } }
     function two(n) { return n < 10 ? "0" + n : "" + n }
 
-    // ---------- the panel ----------
-    Item {
-        id: content
-        x: vb.flat ? 0 : vb.gap; y: vb.flat ? 0 : vb.gap
-        width: vb.barW; height: parent.height - (vb.flat ? 0 : vb.gap * 2)
-        opacity: Math.min(1, vb.et * 1.4)
-        transform: Translate { x: (1 - vb.et) * (vb.atRight ? 1 : -1) * (vb.barW + vb.gap * 2 + 12) }
-
-        // island / flat: one background behind everything
-        Rectangle {
-            id: panel
-            anchors.fill: parent
-            visible: vb.flat || vb.sty === "island"
-            radius: vb.flat ? 0 : vb.barW / 2
-            color: vb.bg
-            border.width: vb.flat ? 0 : 1
-            border.color: vb.line
-            Rectangle { visible: vb.flat; width: 1; height: parent.height; color: Qt.rgba(1, 1, 1, 0.09)
-                x: vb.atRight ? 0 : parent.width - 1 }
-        }
-        Zone { id: zTop; mods: vb.lay.top || []; y: vb.flat ? 10 : (vb.zoned || vb.pills ? 0 : 10) }
-        Zone { id: zMid; mods: vb.lay.mid || []; y: (parent.height - height) / 2 }
-        Zone { id: zBot; mods: vb.lay.bottom || []; y: parent.height - height - (vb.zoned || vb.pills ? 0 : 10) }
-    }
-
+    // (declared before it is used: an older Qt cannot see a component further down the file)
     // a zone of the bar (top, middle, bottom): its modules in a column; islands / dynamic: in a pill of its own,
     // pills: every module in its own pill
     component Zone: Item {
@@ -244,6 +220,31 @@ PanelWindow {
                 }
             }
         }
+    }
+
+    // ---------- the panel ----------
+    Item {
+        id: content
+        x: vb.flat ? 0 : vb.gap; y: vb.flat ? 0 : vb.gap
+        width: vb.barW; height: parent.height - (vb.flat ? 0 : vb.gap * 2)
+        opacity: Math.min(1, vb.et * 1.4)
+        transform: Translate { x: (1 - vb.et) * (vb.atRight ? 1 : -1) * (vb.barW + vb.gap * 2 + 12) }
+
+        // island / flat: one background behind everything
+        Rectangle {
+            id: panel
+            anchors.fill: parent
+            visible: vb.flat || vb.sty === "island"
+            radius: vb.flat ? 0 : vb.barW / 2
+            color: vb.bg
+            border.width: vb.flat ? 0 : 1
+            border.color: vb.line
+            Rectangle { visible: vb.flat; width: 1; height: parent.height; color: Qt.rgba(1, 1, 1, 0.09)
+                x: vb.atRight ? 0 : parent.width - 1 }
+        }
+        Zone { id: zTop; mods: vb.lay.top || []; y: vb.flat ? 10 : (vb.zoned || vb.pills ? 0 : 10) }
+        Zone { id: zMid; mods: vb.lay.mid || []; y: (parent.height - height) / 2 }
+        Zone { id: zBot; mods: vb.lay.bottom || []; y: parent.height - height - (vb.zoned || vb.pills ? 0 : 10) }
     }
 
     // a module with nothing to show right now takes no room (music without a player, a battery on a desktop)
