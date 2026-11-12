@@ -263,6 +263,9 @@ PanelWindow {
         case "notifications": return cNotif
         case "power": return cPower
         case "visualizer": return cViz
+        case "weather": return cWeather
+        case "sysmon": return cSysmon
+        case "date": return cDate
         }
         return null                     // the window title has no room standing up
     }
@@ -415,6 +418,24 @@ PanelWindow {
     Component { id: cPower
         Btn { id: pbtn; icon: "power_settings_new"; glyph: String.fromCodePoint(0xF0425); tint: "#ff8a80"
             onHit: function(m) { vb.run("\"$HOME/.local/bin/rice-power\" " + vb.menuAt(pbtn)) } }
+    }
+    // Weather, System, Date: their cards open at the top of the screen, beside this bar (Bar.qml shows them)
+    function pop(k) { run("mkdir -p \"$HOME/.cache/rice\"; printf '%s %s %s\\n' \"$(date +%s.%N)\" " + k + " " + (atRight ? (vb.screen ? vb.screen.width - 420 : 1500) : 230) + " > \"$HOME/.cache/rice/barpop-open\"") }
+    property var wx: null
+    Trigger { path: vb.home + "/.cache/rice/weather.json"; every: 60000; onContent: function(t) { try { vb.wx = JSON.parse(t) } catch (e) { } } }
+    Component { id: cWeather
+        Item { width: vb.barW - 10; height: wc.implicitHeight + 6
+            Column { id: wc; anchors.centerIn: parent; spacing: 0
+                WxIcon { anchors.horizontalCenter: parent.horizontalCenter; size: 18; cond: vb.wx ? vb.wx.cond : ""; color: vb.goo ? gp.primary : vb.fg }
+                Text { anchors.horizontalCenter: parent.horizontalCenter; text: vb.wx ? vb.wx.temp + "°" : "--"; color: vb.fg; font.family: Fonts.main; font.pixelSize: 11 } }
+            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("click"); vb.pop("weather") } }
+        }
+    }
+    Component { id: cSysmon
+        Btn { icon: "monitoring"; glyph: String.fromCodePoint(0xF0128); onHit: function(m) { vb.pop("system") } }
+    }
+    Component { id: cDate
+        Btn { icon: "calendar_month"; glyph: String.fromCodePoint(0xF00F0); onHit: function(m) { vb.pop("calendar") } }
     }
     Component { id: cViz
         BarViz { vertical: true; count: 10; thick: vb.barW - 18; active: vb.on; color: vb.goo ? gp.primary : vb.fg }

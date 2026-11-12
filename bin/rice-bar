@@ -11,7 +11,8 @@
   rice-bar enabled                exit code 0 while the DarkShadow bar is on
   rice-bar migrate                installer: a config from before the DarkShadow bar (or none) turns it on once
   rice-bar start                  autostart: Waybar only when the DarkShadow bar is off
-Modules: launcher workspaces title media island tray volume network bluetooth battery notifications power
+Modules: launcher workspaces title media island tray volume network bluetooth battery notifications power visualizer
+         weather sysmon date (these three open a small card: the forecast, CPU / RAM / disk / swap, the week and your tasks)
 """
 import json
 import os
@@ -37,7 +38,7 @@ BOOLS = ("enabled", "seconds", "autohide", "shadow", "island_dynamic", "island_h
 RANGES = {"height": (28, 56), "workspaces": (3, 10), "opacity": (0.3, 1.0), "tray_size": (12, 28), "island_close": (2, 10)}
 # V3.36: the island is the clock (the old "clock" module becomes the island)
 MODULES = ["launcher", "workspaces", "title", "media", "island", "tray", "volume", "network", "bluetooth", "battery",
-           "notifications", "power", "visualizer"]
+           "notifications", "power", "visualizer", "weather", "sysmon", "date"]
 DEFAULT_LAYOUT = {"left": ["launcher", "workspaces", "title"], "center": ["island"],
                   "right": ["tray", "volume", "bluetooth", "network", "battery", "notifications", "power"]}
 

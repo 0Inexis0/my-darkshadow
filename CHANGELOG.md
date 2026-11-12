@@ -1,5 +1,11 @@
 # Changelog
 
+## V4.24: Weather, System and Date on the bar
+- New bar modules (Settings > Bar layout): Weather (the sky and the temperature), System (CPU, RAM and disk in small rings) and Date (the day and the date, the time in a chip of your theme color)
+- Each opens a small card under it: Weather the place, the temperature, how it feels, high and low, wet and windy, and the next hours; System a tile for CPU, RAM, disk and swap with a bar and the numbers; Date the month, this week with today, your to-do tasks and how long the computer is up. Esc, a click outside or the module again closes it
+- On a side bar they are there too; their cards open at the top, beside the bar
+- The System desktop widget from V4.23 is gone (it lives on the bar now); Forecast, Music card and Date & time stay
+
 ## V4.23: new widgets, one widget style, Infinite Desktop for Hyprland only
 - New widget Forecast: where you are, the temperature in big numbers, the sky in your shape, how it feels, today's high and low and the next hours (rice-weather json, from wttr.in every half hour)
 - New widget System: a slim pill with CPU, RAM, disk and swap in small rings; a click opens a card under it with a tile for each (how much is used, a bar, the numbers and the CPU heat)

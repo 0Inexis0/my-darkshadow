@@ -53,7 +53,6 @@ ShellRoot {
         { id: "storage", name: "Storage", icon: "\uf0a0", card: true },
         { id: "trio", name: "CPU · GPU · RAM", icon: "\uf2db", card: true },
         { id: "forecast", name: "Forecast", icon: "\uf0c2", card: true },
-        { id: "system", name: "System", icon: "\uf2db", card: true },
         { id: "music", name: "Music card", icon: "\uf001", card: true },
         { id: "datepill", name: "Date & time", icon: "\uf017", card: true },
         { id: "date", name: "Date", icon: "\uf073", card: true,
@@ -435,15 +434,6 @@ ShellRoot {
         onMoved: function(id, x, y) { root.savePos(id, x, y) }
         Component.onCompleted: root.reg(wid, forecastWin)
         ForecastWidget { anchors.fill: parent; pal: forecastWin.pal; bg: forecastWin.bgv; running: root.on("forecast") && !root.hideWidgets }
-    }
-    WidgetWindow {
-        id: systemWin
-        wid: "system"; wc: root.wc("system"); active: root.on("system"); editing: root.editing; hidden: root.hideWidgets
-        // it grows when you open its card
-        bw: root.sw; bh: root.sh; cw: 340; ch: Math.ceil(sysW.wantH); defX: root.sw - 380; defY: 350
-        onMoved: function(id, x, y) { root.savePos(id, x, y) }
-        Component.onCompleted: root.reg(wid, systemWin)
-        SystemWidget { id: sysW; anchors.fill: parent; pal: systemWin.pal; bg: systemWin.bgv; running: root.on("system") && !root.hideWidgets }
     }
     WidgetWindow {
         id: musicWin

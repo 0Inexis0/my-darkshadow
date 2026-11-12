@@ -27,7 +27,6 @@ Item {
         { key: "storage", label: I18n.t("Storage"), icon: "\uf0a0", desc: I18n.t("Used and free disk space") },
         { key: "trio", label: I18n.t("CPU · GPU · RAM"), icon: "\uf2db", desc: I18n.t("Three small shapes") },
         { key: "forecast", label: I18n.t("Forecast"), icon: "\uf0c2", desc: I18n.t("Now, how it feels and the next hours") },
-        { key: "system", label: I18n.t("System"), icon: "\uf2db", desc: I18n.t("CPU, RAM, disk and swap; a click shows more") },
         { key: "music", label: I18n.t("Music card"), icon: "\uf001", desc: I18n.t("Cover and buttons; opens to the lyrics") },
         { key: "datepill", label: I18n.t("Date & time"), icon: "\uf017", desc: I18n.t("A slim pill with the date and the time") }
     ]

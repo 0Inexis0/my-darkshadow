@@ -156,11 +156,12 @@ PanelWindow {
     exclusionMode: hideOn || !on ? ExclusionMode.Ignore : ExclusionMode.Normal
     exclusiveZone: hideOn || !on ? 0 : barH + gap * 2
     // only the bar (and the recording island) take the pointer; auto-hide: only a thin strip at the edge
-    mask: Region { item: !bar.on ? hitNone : (bar.shownBar ? hitBar : hitStrip); Region { item: hitRec } Region { item: hitIsl } Region { item: hitMenu } }
+    mask: Region { item: !bar.on ? hitNone : (bar.shownBar ? hitBar : hitStrip); Region { item: hitRec } Region { item: hitIsl } Region { item: hitMenu } Region { item: hitPop } }
     Item { id: hitMenu; x: bar.gap + trayMenu.x; y: body.y + trayMenu.y; width: trayMenu.visible ? trayMenu.width : 0; height: trayMenu.height }
+    Item { id: hitPop; x: bar.gap + barPop.x; y: body.y + barPop.y; width: barPop.visible ? barPop.width : 0; height: barPop.height }
     // a card of the island or the tray menu is open: Esc, a click on the desktop (shell.qml) or another window closes it
-    readonly property bool sticky: isl.sticky || trayMenu.open
-    function closeCards() { isl.closeCards(); trayMenu.close() }
+    readonly property bool sticky: isl.sticky || trayMenu.open || barPop.open
+    function closeCards() { isl.closeCards(); trayMenu.close(); barPop.close() }
     onStickyChanged: if (sticky) keyCatch.forceActiveFocus()
     Item { id: keyCatch; focus: true; Keys.onEscapePressed: bar.closeCards() }
     WlrLayershell.keyboardFocus: sticky ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
@@ -193,6 +194,7 @@ PanelWindow {
             if (!isl.ghost && isl.visible) { l.push(blurIsl); r.push(pill) }
             if (isl.cardItem.opacity > 0.98) { l.push(blurCard); r.push(28) }
             if (trayMenu.visible) { l.push(hitMenu); r.push(24) }
+            if (barPop.t > 0.98) { l.push(hitPop); r.push(24) }
             return { items: l, radii: r }
         }
         items: parts.items
@@ -321,6 +323,9 @@ PanelWindow {
         case "power": return mPower
         case "island": return mIsland
         case "visualizer": return mViz
+        case "weather": return mWeather
+        case "sysmon": return mSysmon
+        case "date": return mDate
         }
         return null
     }
@@ -580,7 +585,7 @@ PanelWindow {
                             if (m.button === Qt.RightButton || modelData.onlyMenu) {
                                 const p = ti.mapToItem(body, ti.width / 2, 0)
                                 if (trayMenu.open && trayMenu.item === modelData) trayMenu.close()
-                                else trayMenu.show(modelData, p.x)
+                                else { barPop.close(); trayMenu.show(modelData, p.x) }
                             } else if (m.button === Qt.MiddleButton) modelData.secondaryActivate()
                             else modelData.activate()
                         }
@@ -681,6 +686,79 @@ PanelWindow {
         Item { property bool shown: true; width: vz.implicitWidth + 8; height: bar.barH
             BarViz { id: vz; anchors.centerIn: parent; active: bar.on; thick: Math.round(bar.barH * 0.5); color: bar.goo ? gp.primary : bar.fg }
             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: if (bar.player) bar.player.togglePlaying() }
+        }
+    }
+
+    // ---------- Weather, System, Date: small modules that open a card under them (BarPop.qml) ----------
+    property var wx: null
+    Process {
+        id: wxProc
+        command: [bar.home + "/.local/bin/rice-weather", "json"]
+        stdout: StdioCollector { onStreamFinished: { try { const j = JSON.parse(text.trim().split("\n").pop()); if (j && j.temp !== undefined) bar.wx = j } catch (e) { } } }
+    }
+    Timer { interval: 1800000; running: (bar.on || bar.ghostOnly) && (bar.hasMod("weather") || barPop.open); repeat: true; triggeredOnStart: true; onTriggered: if (!wxProc.running) wxProc.running = true }
+    property var st: ({})
+    Process {
+        command: [bar.home + "/.local/bin/rice-stats", "3"]
+        running: (bar.on || bar.ghostOnly) && (bar.hasMod("sysmon") || (barPop.open && barPop.kind === "system"))
+        stdout: SplitParser { onRead: function(l) { try { bar.st = JSON.parse(l) } catch (e) { } } }
+    }
+    // a side bar (VBar.qml) opens these cards too: "KIND" in ~/.cache/rice/barpop-open
+    Trigger { name: "barpop-open"; onFired: function(o) { const p = o.trim().split(" "); barPop.toggle(p[1] || "calendar", p[2] !== undefined ? parseFloat(p[2]) : 200) } }
+    function popAt(it, k) { const p = it.mapToItem(body, it.width / 2, 0); barPop.toggle(k, p.x) }
+
+    Component { id: mWeather
+        Item { property bool shown: true; width: wr.implicitWidth + 4; height: bar.barH
+            Row { id: wr; anchors.centerIn: parent; spacing: 5
+                WxIcon { anchors.verticalCenter: parent.verticalCenter; size: 17; cond: bar.wx ? bar.wx.cond : ""; color: bar.goo ? gp.primary : bar.fg
+                    night: { const h = bar.now.getHours(); return h < 6 || h >= 19 } }
+                Text { anchors.verticalCenter: parent.verticalCenter; text: bar.wx ? bar.wx.temp + "°" : "--"; color: bar.fg; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium }
+            }
+            MouseArea { id: wm2; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("click"); bar.popAt(parent, "weather") } }
+            HoverLine { on: wm2.containsMouse; color: bar.fg }
+        }
+    }
+    Component { id: mSysmon
+        Item { property bool shown: true; width: sr.implicitWidth + 4; height: bar.barH
+            Row { id: sr; anchors.centerIn: parent; spacing: 6
+                Repeater {
+                    model: [["memory", 0xF035B, bar.st.cpu || 0], ["memory_alt", 0xF061A, bar.st.ram || 0], ["hard_drive", 0xF02CA, bar.st.disk || 0]]
+                    delegate: Item {
+                        width: 24; height: 24; anchors.verticalCenter: parent.verticalCenter
+                        // a ring that fills with the use
+                        Canvas {
+                            anchors.fill: parent
+                            readonly property real v: modelData[2] / 100
+                            readonly property color c: bar.goo ? gp.primary : bar.fg
+                            onVChanged: requestPaint(); onCChanged: requestPaint()
+                            onPaint: {
+                                const g = getContext("2d"); g.reset(); g.lineWidth = 2.4; g.lineCap = "round"
+                                g.strokeStyle = Qt.rgba(c.r, c.g, c.b, 0.22); g.beginPath(); g.arc(12, 12, 10, 0, Math.PI * 2); g.stroke()
+                                if (v > 0.005) { g.strokeStyle = c; g.beginPath(); g.arc(12, 12, 10, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, v)); g.stroke() }
+                            }
+                        }
+                        MIcon { anchors.centerIn: parent; size: 11; name: modelData[0]; glyph: String.fromCodePoint(modelData[1]); color: bar.fg }
+                    }
+                }
+            }
+            MouseArea { id: sm2; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("click"); bar.popAt(parent, "system") } }
+            HoverLine { on: sm2.containsMouse; color: bar.fg }
+        }
+    }
+    Component { id: mDate
+        Item { property bool shown: true; width: dr.implicitWidth + 4; height: bar.barH
+            Row { id: dr; anchors.centerIn: parent; spacing: 8
+                Text { anchors.verticalCenter: parent.verticalCenter; color: bar.fg; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium
+                    text: Qt.locale().dayName(bar.now.getDay(), Locale.ShortFormat) + ", " + bar.two(bar.now.getDate()) + "/" + bar.two(bar.now.getMonth() + 1) }
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: dt.implicitWidth + 18; height: bar.barH - 14; radius: height / 2
+                    color: gp.primary
+                    Text { id: dt; anchors.centerIn: parent; color: gp.inkPrimary; font.family: Fonts.numbers; font.pixelSize: 12; font.weight: Font.DemiBold
+                        text: bar.h12 ? ((bar.now.getHours() + 11) % 12 + 1) + ":" + bar.two(bar.now.getMinutes()) : bar.two(bar.now.getHours()) + ":" + bar.two(bar.now.getMinutes()) }
+                }
+            }
+            MouseArea { id: dm2; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("click"); bar.popAt(parent, "calendar") } }
         }
     }
 
@@ -864,6 +942,18 @@ PanelWindow {
         }
 
         // ---------- the tray menu ----------
+        // the cards of the Weather, System and Date modules
+        BarPop {
+            id: barPop
+            pal: gp
+            down: !bar.atBottom
+            areaW: body.width
+            wx: bar.wx
+            st: bar.st
+            y: down ? bar.barH + 8 : -height - 8
+            z: 41
+            onOpenChanged: if (open) trayMenu.close()
+        }
         TrayMenu {
             id: trayMenu
             pal: gp

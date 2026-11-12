@@ -13,7 +13,8 @@ Item {
         "media": ["\udb81\udf5a", "Music"], "tray": ["\udb81\udd70", "Tray"],
         "volume": ["\udb81\udd7e", "Volume"], "network": ["\udb81\udda9", "Wi-Fi"], "bluetooth": ["\udb80\udcaf", "Bluetooth"],
         "battery": ["\udb80\udc79", "Battery"], "notifications": ["\udb80\udc9a", "Notifications"], "power": ["\udb81\udc25", "Power"],
-        "island": ["\udb80\udd50", "Island (clock)"], "visualizer": ["\udb81\udc7d", "Visualizer"]
+        "island": ["\udb80\udd50", "Island (clock)"], "visualizer": ["\udb81\udc7d", "Visualizer"],
+        "weather": ["\udb81\udd99", "Weather"], "sysmon": ["\udb80\udd28", "System (CPU, RAM, disk)"], "date": ["\udb80\udcf0", "Date"]
     })
     readonly property var subsAll: []
     readonly property var defaults: ({

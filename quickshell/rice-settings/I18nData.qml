@@ -1192,6 +1192,7 @@ Singleton {
             "This is you": "To ty",
             "Three small shapes": "Trzy małe kształty",
             "Forecast": "Prognoza",
+            "System (CPU, RAM, disk)": "System (CPU, RAM, dysk)",
             "Now, how it feels and the next hours": "Teraz, odczuwalna i najbliższe godziny",
             "CPU, RAM, disk and swap; a click shows more": "CPU, RAM, dysk i swap; kliknięcie pokazuje więcej",
             "Music card": "Karta muzyki",
