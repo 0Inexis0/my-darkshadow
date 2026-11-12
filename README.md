@@ -13,7 +13,6 @@
   <a href="#supported-systems"><img src="https://img.shields.io/badge/CachyOS-08A283?style=for-the-badge&labelColor=11111b&logo=cachyos&logoColor=08A283&color=1a1b26" alt="CachyOS"></a>
   <a href="#supported-systems"><img src="https://img.shields.io/badge/Fedora-51A2DA?style=for-the-badge&labelColor=11111b&logo=fedora&logoColor=51A2DA&color=1a1b26" alt="Fedora"></a>
   <a href="#supported-systems"><img src="https://img.shields.io/badge/NixOS-5277C3?style=for-the-badge&labelColor=11111b&logo=nixos&logoColor=7EBAE4&color=1a1b26" alt="NixOS"></a>
-  <a href="#supported-systems"><img src="https://img.shields.io/badge/Void-478061?style=for-the-badge&labelColor=11111b&logo=voidlinux&logoColor=478061&color=1a1b26" alt="Void Linux"></a>
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/Hyprland-0.55%2B-58E1FF?style=for-the-badge&labelColor=11111b&logo=hyprland&logoColor=58E1FF&color=1a1b26" alt="Hyprland 0.55+">
@@ -64,11 +63,10 @@ The bar, the welcome window and Settings show **your distro's logo** automatical
 | **CachyOS** | new in V2.70 | `./install.sh` (Arch based: its repositories and `paru` are used) |
 | **EndeavourOS, Garuda** | Arch route | `./install.sh` |
 | **Fedora, Nobara** | new in V2.60 | `./install.sh` (COPR for Hyprland and Quickshell) |
-| **Void Linux** | new in V4.11 | `./install.sh` (no systemd: runit + elogind; Hyprland from the [hyprland-void](https://github.com/sofijacom/hyprland-void) repository, niri from Void's own) |
 | **Bazzite, Silverblue** | commands only | the installer prints the `rpm-ostree` steps |
 | **Manjaro** | may not work | its packages are held back, Hyprland can be older than 0.55 |
 
-Void, CachyOS and Fedora support is new: if something does not install, open an issue with the installer log and it gets fixed fast.
+CachyOS and Fedora support is new: if something does not install, open an issue with the installer log and it gets fixed fast.
 
 ### Hyprland or niri
 The shell runs on **Hyprland** and on **niri** (the scrollable-tiling window manager), on every system above. Hyprland is set up by default; `./install.sh --wm=niri` sets up niri, `--wm=both` both (then you pick one on the login screen).

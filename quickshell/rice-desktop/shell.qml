@@ -152,6 +152,7 @@ ShellRoot {
                     Look.widgetAlpha = j.widgetOpacity !== undefined ? Math.max(0.2, Math.min(1, Number(j.widgetOpacity))) : 1
                     // one widget style now: Google (Material You cards in your theme color)
                     Look.theme = "google"
+                    Look.fps = j.fps !== undefined ? Math.max(0, Number(j.fps)) : 60
                     Look.adapt = j.widgetAdapt !== false
                 } catch (e) { }
             }

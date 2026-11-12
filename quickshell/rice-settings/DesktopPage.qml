@@ -241,6 +241,16 @@ Item {
                     Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" widgets-opacity \"$1\"", "_", o])
                 }
             }
+            SegRow {
+                label: I18n.t("Frame rate")
+                desc: I18n.t("How smooth the moving parts of the widgets are (turning shapes, the visualizer). Screen: as fast as your monitor (144, 180 Hz ...), a little more work")
+                options: [{ label: "30", value: "30" }, { label: "60", value: "60" }, { label: "120", value: "120" }, { label: I18n.t("Screen"), value: "0" }]
+                current: String(page.ctl.dst.fps !== undefined ? page.ctl.dst.fps : 60)
+                onChosen: function(v) {
+                    const d = JSON.parse(JSON.stringify(page.ctl.dst)); d.fps = Number(v); page.ctl.dst = d
+                    Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" widgets-fps \"$1\"", "_", v])
+                }
+            }
             Row {
                 spacing: 8
                 Pill { label: I18n.t("Reset widget positions"); onClicked: page.ctl.dreset() }

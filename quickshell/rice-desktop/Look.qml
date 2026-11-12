@@ -40,6 +40,9 @@ Singleton {
     readonly property var emph: [0.2, 0, 0, 1, 1, 1]
     // the accent color of your theme (Waybar colors), used by the Google style and the visualizer
     property color accent: "#9ec9bd"
+    // frames a second for the moving parts of the widgets (turning shapes, the visualizer): Settings > Desktop >
+    // Frame rate. 0 = as fast as the screen (180 Hz: 180)
+    property int fps: 60
     // the same color made bright enough to stand out on the dark menus (a dark wallpaper gives a dark accent,
     // which looked muddy on switches and sliders): the hue stays, it gets light and a little colorful
     readonly property color accentHi: Qt.hsla(accent.hslHue < 0 ? 0 : accent.hslHue,

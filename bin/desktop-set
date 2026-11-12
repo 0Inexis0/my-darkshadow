@@ -326,6 +326,13 @@ def main(a):
     elif cmd == "widgets-opacity":
         # widgets-opacity 0.2-1: how strong the widget cards are (all of them)
         c["widgetOpacity"] = round(max(0.2, min(1.0, float(a[2] if len(a) > 2 else 1))), 2)
+    elif cmd == "widgets-fps":
+        # widgets-fps 30|60|120|0: how smooth the moving parts of the widgets are (0 = as fast as your screen)
+        try:
+            v = int(float(a[2] if len(a) > 2 else 60))
+        except ValueError:
+            v = 60
+        c["fps"] = 0 if v <= 0 else max(20, min(240, v))
     elif cmd == "widgets-adapt":
         c["widgetAdapt"] = tobool(a[2] if len(a) > 2 else "on")
     elif cmd == "auto-hide":
@@ -375,7 +382,7 @@ def main(a):
         lock_conf(c)
     if cmd == "dock" and a[2] == "blur" or cmd in ("dock-blur", "widgets-blur") or (cmd == "gamebar" and a[2] == "blur"):
         dock_blur(c)
-    elif cmd not in ("pos", "geom", "wset", "edit", "reset-widget", "widgets-theme", "widgets-adapt", "widgets-opacity", "dock-apps", "dock-pin", "dock-unpin", "gamebar"):
+    elif cmd not in ("pos", "geom", "wset", "edit", "reset-widget", "widgets-theme", "widgets-adapt", "widgets-opacity", "widgets-fps", "dock-apps", "dock-pin", "dock-unpin", "gamebar"):
         ensure_shell()
     elif cmd == "edit" and c["editing"]:
         ensure_shell()

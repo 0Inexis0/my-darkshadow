@@ -928,6 +928,8 @@ PanelWindow {
             // without the island module only its cards show (the clock, SUPER + ALT + D, notifications stay pop-ups)
             visible: bar.on || bar.ghostOnly
             ghost: !bar.on || !(bar.hasIsland && bar.islSlot !== null)
+            onInfoOpenChanged: if (infoOpen) barPop.close()
+            onPinnedChanged: if (pinned) barPop.close()
             bar: bar
             pal: gp
             nf: bar.nf
@@ -953,7 +955,8 @@ PanelWindow {
             barH: bar.barH
             y: down ? bar.barH + 8 : -height - 8
             z: 41
-            onOpenChanged: if (open) trayMenu.close()
+            // one card at a time: the island's card folds away when one of these opens, and the other way round
+            onOpenChanged: if (open) { trayMenu.close(); isl.closeCards() }
         }
         TrayMenu {
             id: trayMenu

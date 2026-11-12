@@ -14,11 +14,10 @@ case " $DISTRO_ID $DISTRO_LIKE " in
   *" nixos "*) FAMILY=nixos ;;
   *" arch "*|*" archlinux "*|*" cachyos "*|*" endeavouros "*|*" manjaro "*|*" garuda "*) FAMILY=arch ;;
   *" fedora "*|*" nobara "*|*" ultramarine "*) FAMILY=fedora ;;
-  *" void "*) FAMILY=void ;;
 esac
 # the flavour inside a family, for messages (CachyOS, EndeavourOS, Manjaro, Nobara, Bazzite ...)
 DISTRO_FLAVOR="$DISTRO_ID"
-case "$FAMILY" in arch|fedora|void) : ;; *) DISTRO_FLAVOR="$FAMILY" ;; esac
+case "$FAMILY" in arch|fedora) : ;; *) DISTRO_FLAVOR="$FAMILY" ;; esac
 # the Hyprland config is Lua, which needs Hyprland 0.55 or newer
 HYPR_MIN_MAJOR=0; HYPR_MIN_MINOR=55
 # Fedora Atomic (Bazzite, Silverblue, Kinoite...): packages are layered with rpm-ostree, not dnf
@@ -70,18 +69,3 @@ FPKG_FONTS=(rsms-inter-fonts google-noto-sans-fonts google-noto-emoji-fonts)
 FPKG_LOOK=(papirus-icon-theme adw-gtk3-theme adwaita-cursor-theme)
 FEDORA_PKGS=("${FPKG_DESKTOP[@]}" "${FPKG_SHELL[@]}" "${FPKG_TOOLS[@]}" "${FPKG_FONTS[@]}" "${FPKG_LOOK[@]}")
 
-# Void Linux (xbps, runit, no systemd). Quickshell, niri, awww, matugen, mpvpaper and the rest are in Void's own
-# repositories. Hyprland is not (Void does not package it): it comes from the hyprland-void binary repository
-# (github.com/sofijacom/hyprland-void, Hyprland with Lua), added only when Hyprland is set up. Without systemd,
-# elogind gives loginctl (suspend, reboot, lock) and seat access, and rice-sys starts PipeWire at login.
-VOID_HYPR_REPO="https://raw.githubusercontent.com/sofijacom/hyprland-void/repository-%s"
-VPKG_HYPR=(hyprland hyprlock hypridle xdg-desktop-portal-hyprland hyprpolkitagent hyprsunset)
-VPKG_BASE=(procps-ng findutils dbus elogind polkit xdg-desktop-portal xdg-desktop-portal-gtk xdg-utils qt5-wayland qt6-wayland polkit-gnome swayidle)
-VPKG_SHELL=(quickshell qt6-multimedia Waybar SwayNotificationCenter awww cava kitty fish-shell fastfetch nautilus matugen)
-VPKG_TOOLS=(wf-recorder grim slurp wl-clipboard libnotify xdg-user-dirs jq curl python3 playerctl brightnessctl pamixer
-            ImageMagick ffmpeg mpvpaper zenity NetworkManager bluez pipewire wireplumber btop cmatrix peaclock pavucontrol
-            gnome-calendar upower power-profiles-daemon tar xz unzip git)
-VPKG_FONTS=(fontconfig nerd-fonts-symbols-ttf noto-fonts-ttf noto-fonts-emoji font-inter)
-VPKG_LOOK=(papirus-icon-theme gnome-themes-extra adwaita-icon-theme)
-VPKG_NIRI=(niri xwayland-satellite xdg-desktop-portal-gnome gammastep)
-VOID_PKGS=("${VPKG_BASE[@]}" "${VPKG_SHELL[@]}" "${VPKG_TOOLS[@]}" "${VPKG_FONTS[@]}" "${VPKG_LOOK[@]}")

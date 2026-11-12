@@ -10,10 +10,14 @@ write_cfg() {
   local method="pipewire" source="auto"
   local s; s="$(sink)"
   if [ -n "$s" ] && command -v pactl >/dev/null 2>&1; then method="pulse"; source="$s.monitor"; fi
+  # frames a second: Settings > Desktop > Frame rate (desktop.json "fps"; 0 = as fast as the screen: 144)
+  local fps; fps="$(sed -n 's/.*"fps": *\([0-9]*\).*/\1/p' "$HOME/.config/rice/desktop.json" 2>/dev/null | head -1)"
+  case "$fps" in ''|*[!0-9]*) fps=60 ;; 0) fps=144 ;; esac
+  [ "$fps" -gt 240 ] && fps=240
   cat > "$cfg" <<CONF
 [general]
 bars = 64
-framerate = 30
+framerate = $fps
 # silence for 2 s: cava rests (no frames, almost no CPU) until the music comes back
 sleep_timer = 2
 autosens = 1
@@ -40,12 +44,18 @@ trap 'kill "$pid" 2>/dev/null; exit 0' TERM INT HUP
 while :; do
   write_cfg
   cur="$(sink)"
+  curfps="$(grep -m1 '^framerate' "$cfg")"
   cava -p "$cfg" 2>>"$log" &
   pid=$!
   # a new output (headphones, HDMI ...): start again on it
   while kill -0 "$pid" 2>/dev/null; do
     sleep 3
     [ "$(sink)" != "$cur" ] && { kill "$pid" 2>/dev/null; wait "$pid" 2>/dev/null; break; }
+    # a new frame rate (Settings): start again with it
+    f="$(sed -n 's/.*"fps": *\([0-9]*\).*/\1/p' "$HOME/.config/rice/desktop.json" 2>/dev/null | head -1)"
+    case "$f" in ''|*[!0-9]*) f=60 ;; 0) f=144 ;; esac
+    [ "$f" -gt 240 ] && f=240
+    [ "framerate = $f" != "$curfps" ] && { kill "$pid" 2>/dev/null; wait "$pid" 2>/dev/null; break; }
   done
   kill -0 "$pid" 2>/dev/null || sleep 1
 done

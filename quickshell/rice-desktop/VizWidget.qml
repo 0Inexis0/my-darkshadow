@@ -29,7 +29,7 @@ Item {
         for (let j = Math.floor(i * k); j < Math.floor((i + 1) * k); j++) if ((b[j] || 0) > m) m = b[j]
         return Math.min(100, m * gain)
     }
-    onNBarsChanged: vz.refresh()
+    onNBarsChanged: vz.refreshLater()
     onShapeChanged: cv.requestPaint()
     onSpacingChanged: cv.requestPaint()
     readonly property real bw: Math.max(1, (width - gap * (count - 1)) / count)
@@ -60,13 +60,20 @@ Item {
     }
     Component.onCompleted: refresh()
     function css(c, a) { return "rgba(" + Math.round(c.r * 255) + "," + Math.round(c.g * 255) + "," + Math.round(c.b * 255) + "," + a + ")" }
-    onColorModeChanged: vz.refresh()
+    // the colours are worked out after the change has gone through everything (Qt.callLater): read straight from
+    // the accent's change signal, hue and sat were still the old ones, so the bars kept the previous wallpaper's
+    // colour until the next change
+    function refreshLater() { Qt.callLater(vz.refresh) }
+    onColorModeChanged: vz.refreshLater()
     onStyleChanged: cv.requestPaint()
     onFlipChanged: cv.requestPaint()
     onWidthChanged: cv.requestPaint()
     onHeightChanged: cv.requestPaint()
-    onLightBgChanged: vz.refresh()
-    onAccChanged: vz.refresh()
+    onLightBgChanged: vz.refreshLater()
+    onAccChanged: vz.refreshLater()
+    onHueChanged: vz.refreshLater()
+    onSatChanged: vz.refreshLater()
+    onToneChanged: vz.refreshLater()
 
     readonly property bool listening: running && visible
     CavaUser { active: vz.listening }

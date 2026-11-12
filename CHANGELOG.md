@@ -1,5 +1,12 @@
 # Changelog
 
+## V4.26: the updater works again, colors follow the wallpaper at once, frame rate for widgets
+- Update Center (Settings): when git pull could not go through (files changed in the repo, or a history that went another way), the update carried on with the old files and said it was done, so the version never moved. Now your changes are kept aside (a branch rice-before-update-DATE and a git stash) and the repo takes GitHub's newest version; offline, it says so and changes nothing
+- The visualizer kept the previous wallpaper's color until the next change (it read the new color one step too early); it takes the new one at once now
+- New: Settings > Desktop > Frame rate for the moving parts of the widgets (turning shapes, the visualizer): 30, 60 (default), 120 or Screen (as fast as your monitor, 144 or 180 Hz). desktop-set widgets-fps
+- The island's card and the bar's cards (Weather, System, Date) no longer stay open together: one closes when the other opens
+- Void Linux is no longer supported: gone from the installer and the README
+
 ## V4.25: the bar's cards grow out of the bar
 - The cards of Weather, System and Date open like the Dynamic island: the module's pill stretches out of the bar into the card with a soft overshoot, the corners round off, and the content comes in once there is room; closing folds it back quickly
 - Going from one card to another (Weather, then System) cross-fades the content
