@@ -77,6 +77,8 @@ Item {
             ["Super + Arrows", "Focus the window next to it"],
             ["Super + Left mouse", "Drag to move the window"], ["Super + Right mouse", "Drag to resize the window"] ] },
         { name: "Workspaces", sym: "view_carousel", keys: [
+            ["Super + Tab", "Task view: every workspace and its windows", "taskview"],
+            ["Alt + Tab", "Switch windows (hold Alt, Tab on, let go)", "switcher"],
             ["Super + 1 … 0", "Go to workspace 1 … 10"], ["Super + Shift + 1 … 0", "Move the window to a workspace"],
             ["Super + Mouse wheel", "Next / previous workspace"], ["Super + S", "The hidden scratch workspace"] ] },
         { name: "Screenshots and recording", sym: "screenshot_monitor", keys: [

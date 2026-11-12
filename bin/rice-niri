@@ -651,7 +651,7 @@ def layer_rules(f, flat):
     # (wallpaper only) the windows showed through the bar unblurred, like a hole. Only the small area behind each
     # surface is blurred, so it costs little. The desktop widgets are different: they sit on the wallpaper under every window, so their blur is the shared one.
     if f.blur and not flat:
-        L += block("layer-rule", ['match namespace="^rice-(bar|bluetooth|cc|deskmenu|dock|dock-apps|gamebar|hotcorner|launcher|notify-popup|power|volume|osd|wallum|walls|wifi)$"']
+        L += block("layer-rule", ['match namespace="^rice-(bar|bluetooth|cc|deskmenu|dock|dock-apps|gamebar|hotcorner|launcher|notify-popup|power|volume|osd|taskview|wallum|walls|wifi)$"']
                    + block("background-effect", ["xray false"]))
     # blur: the shell asks niri for blur exactly where it draws (Quickshell, ext-background-effect), so no layer
     # gets a rule here: a rule would blur a whole surface, see-through margins included

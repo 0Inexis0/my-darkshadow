@@ -12,6 +12,12 @@ hl.layer_rule({
     ignore_alpha = 0.1,
 })
 hl.layer_rule({
+    name  = "rice-taskview-blur",
+    match = { namespace = "rice-taskview" },
+    blur = true,
+    ignore_alpha = 0,
+})
+hl.layer_rule({
     name  = "rice-wifi-blur",
     match = { namespace = "rice-wifi" },
     blur = true,

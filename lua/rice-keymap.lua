@@ -29,6 +29,8 @@ RK.actions = {
     shotfull  = { "SHIFT + Print",     exec(BIN .. "rice-hotcorner shot full") },
     record    = { "SUPER + SHIFT + R", exec(BIN .. "rice-hotcorner record region") },
     widgets   = { "SUPER + ALT + W",   exec(BIN .. "desktop-set edit toggle") },
+    taskview  = { "SUPER + TAB",       exec(BIN .. "rice-taskview overview") },
+    switcher  = { "ALT + TAB",         exec(BIN .. "rice-taskview switch") },
     infinite  = { "SUPER + F",         function() return function() if RiceInfinite then RiceInfinite.toggle() end end end },
 }
 

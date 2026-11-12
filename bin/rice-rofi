@@ -115,6 +115,9 @@ def lua_text(c):
     # the wallpaper picker: the sheet is blurred, the dim scrim around it is not
     out.append('hl.layer_rule({\n    name  = "rice-walls-blur",\n    match = { namespace = "rice-walls" },\n'
                '    blur = true,\n    ignore_alpha = 0.4,\n})\n')
+    # the Task view: the whole screen behind it is blurred
+    out.append('hl.layer_rule({\n    name  = "rice-taskview-blur",\n    match = { namespace = "rice-taskview" },\n'
+               '    blur = true,\n    ignore_alpha = 0,\n})\n')
     out.append('hl.layer_rule({\n    name  = "rice-wifi-blur",\n    match = { namespace = "rice-wifi" },\n'
                '    blur = true,\n    ignore_alpha = 0.1,\n})\n')
     out.append('hl.layer_rule({\n    name  = "rice-bluetooth-blur",\n    match = { namespace = "rice-bluetooth" },\n'

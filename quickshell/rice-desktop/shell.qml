@@ -474,6 +474,8 @@ ShellRoot {
 
     // ---- dashboard (middle of the bar edge, SUPER + W for wallpapers)
     Launcher { }
+    // SUPER + Tab: every workspace with its windows; ALT + Tab: the window switcher (rice-taskview)
+    TaskView { }
     WallPicker { }
     Bar { id: mainBar; nf: notifs }
     // the bar on the left or right edge (Settings > DarkShadow bar > Position)

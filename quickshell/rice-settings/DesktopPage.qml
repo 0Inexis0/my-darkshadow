@@ -256,6 +256,39 @@ Item {
                 Pill { label: I18n.t("Reset widget positions"); onClicked: page.ctl.dreset() }
             }
 
+            // ---------- Task view (rice-taskview) ----------
+            T { kind: "title"; text: I18n.t("Task view"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
+            T {
+                width: parent.width; wrapMode: Text.WordWrap; kind: "dim"
+                text: page.ctl.niri ? I18n.t("niri has its own: Super + Tab shows every workspace and window, Alt + Tab switches windows.")
+                                    : I18n.t("Super + Tab shows every workspace with its windows: type to find one, drag a window to another workspace, middle click closes it. Alt + Tab switches windows: hold Alt, press Tab, let go. Other keys: Settings > Keybinds (the pencil).")
+            }
+            Item {
+                id: tvs
+                visible: !page.ctl.niri
+                width: parent.width; height: tvCol.implicitHeight
+                property var c: ({ live: true, count: 10, empty: true, super: false })
+                Process { id: tvGet; running: true; command: ["bash", "-c", "\"$HOME/.local/bin/rice-taskview\" get 2>/dev/null"]
+                    stdout: StdioCollector { onStreamFinished: { try { tvs.c = JSON.parse(text) } catch (e) { } } } }
+                function setv(k, v) {
+                    const n = JSON.parse(JSON.stringify(tvs.c)); n[k] = (v === "on") ? true : (v === "off" ? false : Number(v)); tvs.c = n
+                    Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-taskview\" set \"$1\" \"$2\"", "_", k, String(v)])
+                }
+                Column {
+                    id: tvCol
+                    width: parent.width; spacing: 8
+                    ToggleRow { label: I18n.t("Super alone opens it"); desc: I18n.t("Press Super and let go (Super + a key still does what it did)")
+                        checked: tvs.c.super === true; onToggled: function(v) { tvs.setv("super", v ? "on" : "off") } }
+                    ToggleRow { label: I18n.t("Live pictures of the windows"); desc: I18n.t("Off: their icons (lighter)")
+                        checked: tvs.c.live !== false; onToggled: function(v) { tvs.setv("live", v ? "on" : "off") } }
+                    ToggleRow { label: I18n.t("Empty workspaces too"); desc: I18n.t("Off: only the workspaces with windows")
+                        checked: tvs.c.empty !== false; onToggled: function(v) { tvs.setv("empty", v ? "on" : "off") } }
+                    SegRow { label: I18n.t("Workspaces"); desc: I18n.t("How many it shows (more when you use more)")
+                        options: [{ label: "5", value: "5" }, { label: "10", value: "10" }]
+                        current: String(tvs.c.count || 10); onChosen: function(v) { tvs.setv("count", v) } }
+                }
+            }
+
             // ---------- visualizer ----------
             T { kind: "title"; text: I18n.t("Visualizer"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
             SegRow {

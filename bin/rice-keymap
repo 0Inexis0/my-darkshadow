@@ -21,11 +21,14 @@ DEFAULTS = {
     "wallpaper": "SUPER + W", "quick": "SUPER + A", "cc": "SUPER + N", "gamebar": "SUPER + G",
     "dashboard": "SUPER + ALT + D", "lock": "SUPER + L", "close": "SUPER + Q", "float": "SUPER + V",
     "shot": "Print", "shotfull": "SHIFT + Print", "record": "SUPER + SHIFT + R", "widgets": "SUPER + ALT + W",
-    "infinite": "SUPER + F",
+    "infinite": "SUPER + F", "taskview": "SUPER + TAB", "switcher": "ALT + TAB",
 }
 # niri: the same actions, its keys (the launcher is SUPER + D there; Infinite Desktop is Hyprland only)
 NIRI_DEFAULTS = dict(DEFAULTS, launcher="SUPER + D")
 NIRI_DEFAULTS.pop("infinite")
+# niri has its own overview (Mod + Tab) and window switcher (Alt + Tab)
+NIRI_DEFAULTS.pop("taskview")
+NIRI_DEFAULTS.pop("switcher")
 MODS = [(64, "SUPER"), (4, "CTRL"), (8, "ALT"), (1, "SHIFT")]
 
 

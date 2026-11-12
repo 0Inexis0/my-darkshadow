@@ -27,3 +27,24 @@ hl.bind("SUPER + ALT + D",     hl.dsp.exec_cmd(bin .. "rice-dashboard open"))
 hl.bind("SUPER + G",           hl.dsp.exec_cmd(bin .. "rice-gamebar"))
 -- the control center: switches, sliders, music and notifications
 hl.bind("SUPER + N",           hl.dsp.exec_cmd(bin .. "rice-cc"))
+
+-- the Task view (every workspace and its windows) and the window switcher (rice-taskview, TaskView.qml)
+pcall(hl.bind, "SUPER + TAB",       hl.dsp.exec_cmd(bin .. "rice-taskview overview"))
+pcall(hl.bind, "ALT + TAB",         hl.dsp.exec_cmd(bin .. "rice-taskview switch"))
+pcall(hl.bind, "ALT + SHIFT + TAB", hl.dsp.exec_cmd(bin .. "rice-taskview back"))
+-- letting go of ALT goes to the window picked in the switcher (written straight to the file: no program starts)
+local taskfile = os.getenv("HOME") .. "/.cache/rice/taskview-open"
+local commit = "sh -c 'printf \"%s commit\\n\" \"$(date +%s.%N)\" > " .. taskfile .. "'"
+pcall(hl.bind, "ALT + ALT_L", hl.dsp.exec_cmd(commit), { release = true })
+-- SUPER alone (pressed and let go) opens the Task view, when it is on (Settings > Desktop > Task view)
+RiceTask = RiceTask or {}
+function RiceTask.super(on)
+    pcall(hl.unbind, "SUPER + SUPER_L")
+    if on then pcall(hl.bind, "SUPER + SUPER_L", hl.dsp.exec_cmd(bin .. "rice-taskview overview"), { release = true }) end
+end
+do
+    local f = io.open(os.getenv("HOME") .. "/.config/rice/taskview.json", "r")
+    local s = f and f:read("*a") or ""
+    if f then f:close() end
+    if s:match('"super"%s*:%s*true') then RiceTask.super(true) end
+end

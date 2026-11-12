@@ -1,5 +1,11 @@
 # Changelog
 
+## V4.27: Task view and Alt + Tab (Hyprland)
+- New: the Task view (SUPER + Tab): every workspace as a small screen with its windows where they are, as live pictures (or their icons). Type to find a window (Enter goes to it), arrows pick a workspace, a click goes to a window, drag a window onto another workspace to move it there, middle click or the x closes it, Esc closes the view. The screen behind it is blurred
+- New: the window switcher (ALT + Tab): your windows in the order you used them; hold ALT, Tab goes on, SHIFT + Tab back, let go to go to the picked one
+- Settings > Desktop > Task view: Super alone opens it (press and let go), live pictures, empty workspaces too, 5 or 10 workspaces. The keys can be changed in Settings > Keybinds (the pencil)
+- niri keeps its own overview (Mod + Tab) and switcher (Alt + Tab)
+
 ## V4.26: the updater works again, colors follow the wallpaper at once, frame rate for widgets
 - Update Center (Settings): when git pull could not go through (files changed in the repo, or a history that went another way), the update carried on with the old files and said it was done, so the version never moved. Now your changes are kept aside (a branch rice-before-update-DATE and a git stash) and the repo takes GitHub's newest version; offline, it says so and changes nothing
 - The visualizer kept the previous wallpaper's color until the next change (it read the new color one step too early); it takes the new one at once now
