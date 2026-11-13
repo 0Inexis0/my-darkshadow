@@ -45,6 +45,17 @@ in {
     services.blueman.enable = true;
     security.rtkit.enable = true;
     security.polkit.enable = true;
+    systemd.user.services.hyprpolkitagent = {
+      description = "Hyprland authentication agent";
+      wantedBy = [ "graphical-session.target" ];
+      after = [ "graphical-session.target" ];
+      serviceConfig = {
+        ExecStart = "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent";
+        Restart = "on-failure";
+      };
+    };
+    # The shell owns notifications; keep the fallback daemon from claiming D-Bus first.
+    systemd.user.services.swaync.enable = false;
     services.pipewire.alsa.enable = true;
     services.pipewire.wireplumber.enable = true;
     xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
