@@ -480,6 +480,18 @@ Rectangle {
         }
     }
 
+    // the big on-screen keyboard (Qt's qtvirtualkeyboard, which SDDM starts when its config says so, often because of
+    // another theme) is put away as soon as it opens: this login screen is for a keyboard. theme.conf
+    // virtualKeyboard=true leaves it for a touch screen.
+    Connections {
+        target: Qt.inputMethod
+        function onVisibleChanged() { if (Qt.inputMethod.visible && root.cfg("virtualKeyboard", "false") !== "true") Qt.inputMethod.hide() }
+    }
+    Timer {
+        interval: 400; running: root.awake; repeat: true
+        onTriggered: if (Qt.inputMethod.visible && root.cfg("virtualKeyboard", "false") !== "true") Qt.inputMethod.hide()
+    }
+
     // ---------------- waking it up ----------------
     focus: true
     Keys.onPressed: function(event) {

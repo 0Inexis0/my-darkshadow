@@ -1,5 +1,8 @@
 # Changelog
 
+## V4.41: the login screen puts the on-screen keyboard away by itself
+- The big on-screen keyboard still came back after a reboot for some (SDDM's own config can start it, and a config line is easy to miss). The login screen now hides it as soon as it opens, whatever SDDM's config says. For a touch screen: virtualKeyboard=true in the theme's theme.conf. Put the new theme in with Settings > Idle & Lockscreen > Login screen > Update it, or rice-sddm install
+
 ## V4.40: the installer shows the long steps, and can skip the system update
 - "It spins for ever": the system update (Arch: pacman -Syu) and the package install ran behind a spinner with their output hidden, so a slow download, a full system update on an old install or another pacman holding the lock looked like a hang (one report: 1100 s). They now print what they do, line by line, with the time at the end (the same for dnf on Fedora)
 - ./install.sh --no-upgrade (Arch): skip the full system update and only install what the shell needs
