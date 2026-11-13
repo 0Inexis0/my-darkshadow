@@ -4,7 +4,8 @@
 #   imports = [ /path/to/shadows-shell/nix/module.nix ];      (or the flake: inputs.shadows-shell.nixosModules.default)
 #   programs.shadows-shell.user = "shadow";                   your user: joins the "input" group (SUPER + ALT + mouse)
 #
-# Options (all optional): enable (true), user (null), niri (true), extras (true: live wallpapers, video previews).
+# Options (all optional): enable (true), user (null), niri (true), extras (true: live wallpapers, video previews),
+# sddm (false: the shell's login screen; it follows your wallpaper when user is set).
 # A package your nixpkgs does not have is skipped instead of stopping the rebuild (awww falls back to swww).
 { config, lib, pkgs, options, ... }:
 let
@@ -30,6 +31,11 @@ in
       type = lib.types.bool;
       default = true;
       description = "Also install niri (the shell runs on it too; pick it on the login screen).";
+    };
+    sddm = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Use SDDM with the shell's own login screen (Material 3). With user set, it follows your wallpaper and colors.";
     };
     extras = lib.mkOption {
       type = lib.types.bool;
@@ -76,6 +82,27 @@ in
     (lib.mkIf (cfg.user != null) {
       users.users.${cfg.user}.extraGroups = [ "input" ];
     })
+
+    # the login screen: the theme is in the Nix store; its wallpaper, colors and font are in /var/lib, written by
+    # rice-sddm sync (your user owns that folder; SDDM only reads it)
+    (lib.mkIf cfg.sddm (let
+      theme = pkgs.runCommand "darkshadow-shell-sddm-theme" { } ''
+        d=$out/share/sddm/themes/darkshadow-shell
+        mkdir -p $d
+        cp ${../sddm/darkshadow-shell}/*.qml ${../sddm/darkshadow-shell}/metadata.desktop ${../sddm/darkshadow-shell}/theme.conf $d/
+        ln -s /var/lib/darkshadow-shell-sddm/theme.conf.user $d/theme.conf.user
+      '';
+    in {
+      services.displayManager.sddm = {
+        enable = lib.mkDefault true;
+        wayland.enable = lib.mkDefault true;
+        theme = "darkshadow-shell";
+      } // lib.optionalAttrs (pkgs ? kdePackages && pkgs.kdePackages ? sddm) {
+        package = lib.mkDefault pkgs.kdePackages.sddm;
+      };
+      environment.systemPackages = [ theme ];
+      systemd.tmpfiles.rules = lib.optional (cfg.user != null) "d /var/lib/darkshadow-shell-sddm 0755 ${cfg.user} - -";
+    }))
 
     # niri: programs.niri brings niri, its session, the GNOME portal (screen sharing) and polkit;
     # xwayland-satellite runs X11 apps, gammastep is the night light there

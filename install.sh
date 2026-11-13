@@ -594,6 +594,7 @@ step_configs() {
   # your Settings for Hyprland (layout, gaps, keys ...) are written again over the file the update brought
   has_hypr && task "Your Hyprland settings" python3 "$ROOT/bin/hypr-set" regen
   has_hypr && make_user_lua
+  has_hypr && task "Your window rules" t "$ROOT/bin/rice-rules" apply
   task "btop: transparent theme" set_btop
   task "Hyprland add-ons (keybinds, gaming mode)" copy_lua
   [ -d "$ROOT/wallpapers" ] && task "Wallpapers  ->  ~/Pictures/Wallpapers" put_wallpapers
@@ -889,6 +890,15 @@ step_finish() {
       task "niri: keys, borders, corners, animations and blur" t "$BIN/rice-niri" apply
     else
       task "niri config (written again for your niri when it first starts)" t "$BIN/rice-niri" apply
+    fi
+  fi
+  # the login screen (SDDM): it follows your wallpaper; a fresh install asks whether to use it
+  if [ -x "$BIN/rice-sddm" ] && [ "$DRY_RUN" != 1 ]; then
+    if [ -w /usr/share/sddm/themes/darkshadow-shell/user ]; then
+      task "Login screen (SDDM): your wallpaper and colors" t "$BIN/rice-sddm" sync
+    elif [ "$MODE" != update ] && [ "$ASSUME_YES" != 1 ] && command -v sddm >/dev/null 2>&1 && [ ! -e /etc/NIXOS ] \
+         && confirm "Use the shell's login screen for SDDM? (it asks for your password)"; then
+      "$BIN/rice-sddm" install || warn "The login screen was not put in (Settings > Desktop > Idle & Lockscreen can do it later)"
     fi
   fi
   # Settings > Security > Shell files: the files are watched from here on (after every install and update)

@@ -508,5 +508,8 @@ require("rice-gaming")
 -- your own keys for the shell's actions (Settings > System > Keybinds)
 pcall(require, "rice-keymap")
 
+-- your window rules and the gaming workspace (Settings > Desktop > Window rules)
+pcall(require, "rice-rules")
+
 -- yours: ~/.config/hypr/user.lua (updates never change it; it is loaded last, so it wins)
 pcall(require, "user")

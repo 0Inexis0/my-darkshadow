@@ -641,6 +641,58 @@ def window_rules(f, s, flat):
     return L
 
 
+def user_rules():
+    """your window rules and the gaming workspace (Settings > Desktop > Window rules, kept by rice-rules)"""
+    try:
+        import importlib.machinery
+        import importlib.util
+        path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "rice-rules")
+        loader = importlib.machinery.SourceFileLoader("rice_rules", path)
+        spec = importlib.util.spec_from_loader("rice_rules", loader)
+        rr = importlib.util.module_from_spec(spec)
+        loader.exec_module(rr)
+        c = rr.load()
+    except Exception:
+        return []
+    L, names = [], []
+    g = c["gaming"]
+    if g["on"]:
+        names.append(g["ws"])
+        body = ["match app-id=" + q(rr.GAME_RX), "open-on-workspace " + q(g["ws"])]
+        if g["fullscreen"]:
+            body.append("open-fullscreen true")
+        if not g["follow"]:
+            body.append("open-focused false")
+        L += block("window-rule", body)
+        if g["launchers"]:
+            L += block("window-rule", ["match app-id=" + q(rr.LAUNCHER_RX), "open-on-workspace " + q(g["ws"]),
+                                       "open-focused false"])
+    for r in c["rules"]:
+        if not r["on"] or not rr.valid_rx(r["match"]):
+            continue
+        body = ["match %s=%s" % ("title" if r["by"] == "title" else "app-id", q(r["match"]))]
+        if r["float"] or r["pin"]:
+            body.append("open-floating true")
+        if r["w"] and r["h"]:
+            body += block("default-column-width", ["fixed %d" % r["w"]])
+            body.append("default-window-height { fixed %d; }" % r["h"])
+        if r["ws"]:
+            if r["ws"] not in names:
+                names.append(r["ws"])
+            body.append("open-on-workspace " + q(r["ws"]))
+            if r["silent"]:
+                body.append("open-focused false")
+        if r["opacity"] < 0.999:
+            body.append("opacity %s" % flt(r["opacity"]))
+        if r["fullscreen"]:
+            body.append("open-fullscreen true")
+        elif r["maximize"]:
+            body.append("open-maximized true")
+        L += ["// " + (r["name"] or r["match"]).replace("\n", " ")] + block("window-rule", body)
+    # niri opens a window on a workspace only by its name: those are made here
+    return ["workspace " + q(n) for n in names] + L
+
+
 def layer_rules(f, flat):
     L = []
     # the overview (SUPER + Tab): the shell's blurred wallpaper (rice-backdrop) behind the zoomed-out workspaces;
@@ -781,6 +833,10 @@ def build(f, user=True):
     L += animations(f, s, gaming, fx) + [""]
     L += window_rules(f, s, flat) + [""]
     L += layer_rules(f, flat) + [""]
+    if user:
+        ur = user_rules()
+        if ur:
+            L += ["// your window rules (Settings > Desktop > Window rules)"] + ur + [""]
     L += binds_section(f, s, terminal(), files_app()) + [""]
     if f.recent:
         # niri's own Alt + Tab switcher is off: Alt + Tab is the shell's (rice-taskview)

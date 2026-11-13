@@ -1,5 +1,10 @@
 # Changelog
 
+## V4.37: your own window rules, a gaming workspace, the shell's own login screen (SDDM)
+- Settings > Desktop > Window rules: rules of your own for any app (where it opens and whether in the background, floating, centered, a size, on every workspace, fullscreen or maximized, see-through). Pick a window that is open now, or type its app id or title. They are kept in ~/.config/rice/rules.json, which no update touches (editing hyprland.lua by hand is lost on update; this is not). Hyprland and niri
+- Gaming workspace (Window rules, or Gaming > Gaming workspace): Steam, Proton, Wine, gamescope and Minecraft games open on a workspace of their own (9 by default, or any number or name). Options: go there when a game starts, the launchers (Steam, Heroic, Lutris, Bottles, Prism, RetroArch) there too, games fullscreen, no gaps there
+- The shell's own login screen for SDDM, in Material 3: your wallpaper and a big clock; press a key and it blurs, the clock moves up and the login card rises, with your picture in a slowly turning shape, the session and keyboard layout, sleep, restart and shut down. It follows your wallpaper, its colors, the shell's font and language by itself. Settings > Desktop > Idle & Lockscreen > Login screen: Use it (asks for your password once), Preview, Make SDDM start at boot, Back to SDDM's theme. A fresh install asks. NixOS: programs.shadows-shell.sddm = true;
+
 ## V4.36: Settings follows the wallpaper's colors, real blur on niri, Settings always opens at once
 - Settings took its colors only when it started: change the wallpaper while it was open (or waiting in the background) and it kept the old ones, green on a black wallpaper. It now reads the theme's colors again whenever they change
 - niri: Settings blurred only the wallpaper (xray), not the windows behind it (a browser did not show through). Its blur now shows what is really behind it
