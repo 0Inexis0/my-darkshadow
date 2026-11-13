@@ -109,7 +109,7 @@ nix flake check --no-build
 bash personal/build-iso.sh generic
 ```
 
-The ISO workflow supports manual builds and `v*` tags, with generic and Legion images and SHA-256 checksums. Tagged artifacts are attached to a draft release. `personal/publish.sh` creates the fork and pushes the reviewed commit when GitHub CLI authentication is available. The fork uses only `main`; upstream history is preserved without force pushes.
+The ISO workflow supports manual builds and `v*` tags, with generic and Legion images and SHA-256 checksums. Files are uploaded directly to a draft release, avoiding intermediate Actions artifact storage. `personal/publish.sh` creates the fork and pushes the reviewed commit when GitHub CLI authentication is available. The fork uses only `main`; upstream history is preserved without force pushes.
 
 Only reviewed configuration is exported. Wi-Fi credentials, browser data, keys, tokens, history, caches, integrity snapshots, private tasks/notes and host filesystem identifiers are excluded. Build products are ignored.
 
