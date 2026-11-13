@@ -1,5 +1,10 @@
 # Changelog
 
+## V4.47: the bar's shadow no longer costs frames; Settings need not wait in memory
+- Performance (thanks to R31tr0, issue #14): the notch's shadow was drawn with a canvas blur that the CPU computes, 70-140 ms every time the notch changed width, and it changes all the time (the island, the music, the clock). The bar dropped to 2-3 fps while moving and games lost frames to it. The shadow is now a few soft outlines: about 1 ms, and it looks the same
+- The second `qs` process (about 300 MB) was Settings waiting hidden, so it opens at once. New switch: Settings > Desktop > Performance > "Keep Settings ready in the background". Off: it starts when you open it and quits three minutes after you close it
+- (Turning shell shadows off is still Settings > Desktop > Windows > Shell shadows; editing Look.qml by hand is not seen by the switch)
+
 ## V4.46: pick your file manager, in the wallpaper's colors; your picture on the login screen
 - Settings > Desktop > Look & Feel > File manager: Files (Nautilus), Thunar, Nemo, Dolphin or PCManFM, with an Install button for the ones you do not have. The one you pick opens with SUPER + E (Hyprland and niri) and for every "open folder" from your other apps (xdg-mime)
 - Colors from the wallpaper (on by default, a switch turns it off): the file manager and your other GTK apps get the wallpaper's Material colors through ~/.config/gtk-3.0 and gtk-4.0/darkshadow.css (your gtk.css keeps your own CSS and only gets one import line, with a backup), Dolphin and the other KDE apps through a DarkShadow color scheme. It follows every wallpaper change; open the app again to see it

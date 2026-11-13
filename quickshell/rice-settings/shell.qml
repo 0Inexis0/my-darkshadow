@@ -46,6 +46,7 @@ FloatingWindow {
     function park() {
         parked = true
         if (flat) parkT.restart()
+        else lazyP.running = true
         Quickshell.execDetached(["bash", "-c", "mkdir -p \"$HOME/.cache/rice\"; : > \"$HOME/.cache/rice/settings-parked\""])
     }
     onVisibleChanged: {
@@ -59,6 +60,9 @@ FloatingWindow {
             stateTimer.restart(); hrefresh.restart()
         }
     }
+    // "Keep Settings ready" turned off (rice-settings lazy): it quits after three minutes, like in Light mode
+    Process { id: lazyP; command: ["bash", "-c", "[ -e \"$HOME/.config/rice/settings-lazy\" ]"]
+        onExited: function(code) { if (code === 0 && win.parked) parkT.restart() } }
     Timer { id: parkT; interval: 180000; onTriggered: { Quickshell.execDetached(["bash", "-c", "rm -f \"$HOME/.cache/rice/settings-parked\""]); Qt.quit() } }
     // "TIME PAGE" opens it (on that page; "-" keeps the page), "TIME hide" closes it
     property string lastShow: ""
