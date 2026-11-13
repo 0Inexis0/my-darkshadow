@@ -12,6 +12,8 @@
 import fcntl
 import json
 import os
+from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -76,17 +78,6 @@ def git(r, *a, timeout=25):
 NEW_URL = "https://github.com/0Inexis0/my-darkshadow.git"
 
 
-def fix_remote(r):
-    """the project moved (shadows-shell -> DarkShadowShell): an old address goes to the new one, before GitHub's
-    redirect is the thing that asks for a login"""
-    try:
-        u = git(r, "remote", "get-url", "origin", timeout=5).stdout.strip()
-        if "shadowww-dev/shadows-shell" in u:
-            git(r, "remote", "set-url", "origin", NEW_URL, timeout=5)
-    except Exception:
-        pass
-
-
 def news(text, version):
     """first lines of the CHANGELOG entry for this version"""
     out, on = [], False
@@ -103,7 +94,7 @@ def news(text, version):
 
 
 def latest(offline=False):
-    """newest version: GitHub (through your repo's git remote), else the raw file, else your repo.
+    """Newest version: the fork main, else its raw file, else your repo.
     Also: how many new commits GitHub has that this computer does not (an update without a new number)."""
     r = repo()
     found, err = [], ""
@@ -111,15 +102,10 @@ def latest(offline=False):
     if r and os.path.isdir(r + "/.git") and shutil.which("git"):
         try:
             if not offline:
-                fix_remote(r)
-                f = git(r, "fetch", "--quiet")
+                f = git(r, "fetch", "--quiet", "--no-tags", NEW_URL, "main")
                 if f.returncode != 0:
                     err = (f.stderr.strip().splitlines() or ["git fetch failed"])[-1]
-            refs = []
-            u = git(r, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}", timeout=5)
-            if u.returncode == 0 and u.stdout.strip():
-                refs.append(u.stdout.strip())
-            refs += ["origin/main", "origin/master"]
+            refs = ["origin/main"] if offline else (["FETCH_HEAD"] if f.returncode == 0 else [])
             for ref in refs:
                 s = git(r, "show", ref + ":VERSION", timeout=5)
                 if s.returncode == 0 and clean(s.stdout):
@@ -155,19 +141,44 @@ def latest(offline=False):
     return (max(found, key=key) if found else ""), err
 
 
+def managed():
+    return os.path.exists(DIR + "/managed-by-nixos")
+
+
+def managed_latest(offline=False):
+    """Compare exact commits from the fork's main; never fetch into the installed store source."""
+    try:
+        have = Path(DIR, "fork-revision").read_text().strip()
+    except OSError:
+        have = "unknown"
+    sha, error = have, ""
+    if not offline:
+        try:
+            result = git(HOME, "ls-remote", NEW_URL, "refs/heads/main")
+            candidate = result.stdout.split()[0] if result.returncode == 0 and result.stdout.split() else ""
+            if not re.fullmatch(r"[0-9a-f]{40}", candidate):
+                raise RuntimeError(result.stderr.strip() or "Could not read fork main")
+            sha = candidate
+        except Exception as exc:
+            error = str(exc)
+    return {"installed": installed(), "latest": installed(), "update": sha != have,
+            "changes": int(sha != have), "commit": sha[:12], "installedCommit": have[:12],
+            "news": ["my-darkshadow main: " + sha[:12]] if sha != have else [],
+            "checked": int(time.time()), "error": error, "managed": True,
+            "source": "0Inexis0/my-darkshadow · main"}
+
+
 def check(offline=False):
     have = installed()
-    if os.path.exists(DIR + "/managed-by-nixos"):
-        new, err = have, ""
-        latest.ahead, latest.sha, latest.log = 0, "", ""
-    else:
-        new, err = latest(offline)
+    new, err = (have, "") if managed() else latest(offline)
     newer = bool(new) and key(new) > key(have)
     ahead = getattr(latest, "ahead", 0)
     out = {"installed": have, "latest": new or have, "update": newer or ahead > 0,
            "changes": ahead, "commit": getattr(latest, "sha", ""),
            "news": news(getattr(latest, "log", ""), new or have)[:4],
            "checked": int(time.time()), "error": err if not new else ""}
+    if managed():
+        out = managed_latest(offline)
     os.makedirs(CACHE, exist_ok=True)
     try:
         with open(STATE, "w") as stream:
@@ -230,8 +241,8 @@ def gui(args):
     r = repo()
     os.makedirs(CACHE, exist_ok=True)
     if not r:
-        open(LIVE_LOG, "w").write("    \u2718 Could not find your copy of the repo (~/shadows-shell). Clone it again:\n"
-                                  "      git clone https://github.com/0Inexis0/my-darkshadow ~/shadows-shell\n")
+        open(LIVE_LOG, "w").write("    \u2718 Could not find your copy of the repo (~/my-darkshadow). Clone it again:\n"
+                                  "      git clone https://github.com/0Inexis0/my-darkshadow ~/my-darkshadow\n")
         put_live(state="failed", code=1, started=int(time.time()), ended=int(time.time()), pid=0)
         return 1
     if os.fork() != 0:
@@ -349,7 +360,7 @@ def run(args):
     r = repo()
     if not r:
         print("Could not find your copy of the repo. Clone it again:")
-        print("  git clone https://github.com/0Inexis0/my-darkshadow ~/shadows-shell")
+        print("  git clone https://github.com/0Inexis0/my-darkshadow ~/my-darkshadow")
         input("Press Enter to close")
         sys.exit(1)
     os.chdir(r)
@@ -362,16 +373,79 @@ def run(args):
     sys.exit(code)
 
 
+def managed_checkout():
+    """Use a dedicated user checkout, preserving any local modifications or diverged history."""
+    target = os.path.join(HOME, ".local/share/my-darkshadow/update-source")
+    if not os.path.exists(target):
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        result = git(HOME, "clone", "--single-branch", "--branch", "main", NEW_URL, target, timeout=120)
+        if result.returncode:
+            raise RuntimeError(result.stderr.strip())
+    if not os.path.isdir(target + "/.git"):
+        raise RuntimeError("Update folder is not a Git checkout: " + target)
+    if git(target, "status", "--porcelain", timeout=10).stdout.strip():
+        raise RuntimeError("Local edits in " + target + "; commit or move them before updating.")
+    branch = git(target, "branch", "--show-current").stdout.strip()
+    if branch != "main":
+        raise RuntimeError("Update checkout must be on main; leaving it unchanged.")
+    for args in [("fetch", "--no-tags", NEW_URL, "main"), ("merge", "--ff-only", "FETCH_HEAD")]:
+        result = git(target, *args, timeout=120)
+        if result.returncode:
+            raise RuntimeError(result.stderr.strip() or result.stdout.strip())
+    return target
+
+
+def managed_run():
+    os.makedirs(CACHE, exist_ok=True)
+    lock = open(CACHE + "/system-update.lock", "w")
+    try:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        print("An update is already running.")
+        return 1
+    started = int(time.time())
+    put_live(state="running", code=-1, started=started, pid=os.getpid())
+    code = 1
+    target_revision = ""
+    with open(LIVE_LOG, "w", buffering=1) as log:
+        def report(message):
+            print(message, flush=True)
+            log.write(message + "\n")
+        try:
+            report("▶ Fetch 0Inexis0/my-darkshadow · main")
+            checkout = managed_checkout()
+            target_revision = git(checkout, "rev-parse", "--short=12", "HEAD").stdout.strip()
+            report("✔ Fetch 0Inexis0/my-darkshadow · main")
+            try:
+                profile = Path(DIR, "personal-profile").read_text().strip()
+            except OSError:
+                profile = "generic"
+            if profile not in ("generic", "legion"):
+                raise RuntimeError("Unknown installed hardware profile")
+            report("▶ Build NixOS boot generation — enter your password in this terminal")
+            code = subprocess.call(["bash", "personal/bootstrap.sh", "--system", "--yes", "--profile", profile], cwd=checkout)
+            if code == 0:
+                report("✔ Build NixOS boot generation — reboot to activate the update")
+            else:
+                report("✘ NixOS build failed; see the terminal output")
+        except Exception as exc:
+            report("✘ " + str(exc))
+    put_live(state="done" if code == 0 else "failed", code=code, started=started,
+             ended=int(time.time()), pid=0, reboot=code == 0, commit=target_revision)
+    try:
+        input("Press Enter to close")
+    except EOFError:
+        pass
+    return code
+
+
 def main(a):
     cmd = a[1] if len(a) > 1 else ""
-    if os.path.exists(DIR + "/managed-by-nixos") and cmd not in ("check", "watch", "notify", "center", "-h", "--help", "help"):
-        message = "Managed by NixOS. Update your my-darkshadow checkout, then run personal/bootstrap.sh --system. See GUIDE.md."
-        print(message)
+    if managed() and cmd not in ("check", "watch", "notify", "center", "-h", "--help", "help"):
         if cmd == "gui":
-            os.makedirs(CACHE, exist_ok=True)
-            open(LIVE_LOG, "w").write(message + "\n")
-            put_live(state="failed", code=1, started=int(time.time()), ended=int(time.time()), pid=0)
-        return 1
+            terminal_update()
+            return 0
+        return managed_run()
     if cmd == "check":
         st = check(offline="--offline" in a)
         if "--json" in a:

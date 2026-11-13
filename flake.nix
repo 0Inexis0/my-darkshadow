@@ -5,7 +5,10 @@
     system = "x86_64-linux";
     mkIso = profile: nixpkgs.lib.nixosSystem {
       inherit system;
-      modules = [ ./nix/iso.nix { programs.my-darkshadow.profile = profile; } ];
+      modules = [ ./nix/iso.nix { programs.my-darkshadow = {
+        inherit profile;
+        revision = self.rev or "unknown";
+      }; } ];
     };
   in {
     nixosModules.default = import ./nix/module.nix;

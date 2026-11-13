@@ -3,8 +3,7 @@ import Quickshell.Io
 import QtQuick
 
 // Settings > Update Center: your version, the newest one on GitHub and what is new in it, and the update itself,
-// right here: no terminal. rice-update gui runs the installer in the background (it keeps going when Settings
-// reloads with its new files) and this page reads what it does, live, from ~/.cache/rice/update-live.log.
+// Standalone updates run in the background; NixOS builds open a terminal for sudo and build output.
 Item {
     id: page
     property var ctl
@@ -191,12 +190,14 @@ Item {
                 T { kind: "title"; font.pixelSize: 26; font.weight: Font.Medium; color: M3.inkPrimaryC; width: parent.width; wrapMode: Text.WordWrap
                     text: page.running ? I18n.t("Updating...")
                         : page.failed ? I18n.t("The update did not finish")
+                        : page.lv.reboot && page.lv.commit !== page.st.installedCommit ? I18n.t("Update ready — reboot to activate")
                         : page.finished && !page.hasUpdate && page.lv.ended && page.now - page.lv.ended < 3600 ? I18n.t("Updated to V%1", page.st.installed || page.lv.now || "?")
                         : page.hasUpdate ? I18n.t("V%1 is available", page.st.latest)
                         : page.checking ? I18n.t("Looking for updates...")
                         : I18n.t("You are up to date") }
                 T { kind: "reading"; font.pixelSize: 13; color: M3.inkPrimaryC; opacity: 0.85; width: parent.width; wrapMode: Text.WordWrap
-                    text: page.running ? (page.current ? page.current.t : I18n.t("Getting the newest version from GitHub..."))
+                    text: page.running && page.st.managed ? I18n.t("Continue in the update terminal. Enter your password there; NixOS build output is shown there.")
+                        : page.running ? (page.current ? page.current.t : I18n.t("Getting the newest version from GitHub..."))
                         : page.failed ? I18n.t("Nothing is broken: what was done stays, the rest keeps your old files. Try again, or look at the steps below.")
                         : page.hasUpdate ? (page.st.installed !== page.st.latest ? I18n.t("You have V%1.", page.st.installed) : I18n.t("%1 new changes on GitHub.", page.st.changes))
                         : I18n.t("DarkShadow's Shell V%1", page.st.installed || "?") + (page.st.checked ? "  ·  " + I18n.t("checked %1", page.ago(page.st.checked)) : "") }
@@ -225,6 +226,8 @@ Item {
         }
         T { visible: !!page.st.error && !page.running; text: I18n.t("Could not reach GitHub: %1", page.st.error || ""); font.pixelSize: 12; color: M3.inkDim
             leftPadding: 6; width: parent.width; wrapMode: Text.WordWrap }
+        T { text: "0Inexis0/my-darkshadow · main" + (page.st.commit ? " · " + page.st.commit : "");
+            font.pixelSize: 12; color: M3.inkDim; leftPadding: 6; width: parent.width; wrapMode: Text.WordWrap }
 
         // ---------- what the update is doing, live ----------
         SectionTitle {

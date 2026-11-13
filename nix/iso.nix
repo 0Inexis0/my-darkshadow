@@ -22,7 +22,11 @@
     '')
   ];
   # Keep the installer beside its module and assets, so it can deploy fully offline files.
-  environment.etc."my-darkshadow-source".source = lib.cleanSource ../.;
+  environment.etc."my-darkshadow-source".source = pkgs.runCommand "my-darkshadow-installer-source" {} ''
+    cp -r ${lib.cleanSource ../.} "$out"
+    chmod u+w "$out/personal"
+    printf '%s\n' ${lib.escapeShellArg config.programs.my-darkshadow.revision} > "$out/personal/REVISION"
+  '';
   environment.etc."xdg/my-darkshadow-install.desktop".text = ''
     [Desktop Entry]
     Type=Application
@@ -35,7 +39,7 @@
     Categories=System;
   '';
   system.activationScripts.darkshadow-live-launcher = {
-    deps = [ "my-darkshadow" ];
+    deps = [ "my-darkshadow" "etc" ];
     text = ''
       ${pkgs.util-linux}/bin/setpriv --reuid nixos --regid users --init-groups --reset-env \
         ${pkgs.coreutils}/bin/install -D -m 0644 /etc/xdg/my-darkshadow-install.desktop \

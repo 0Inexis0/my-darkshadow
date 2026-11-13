@@ -12,6 +12,8 @@ Download all three `.iso.part-*` files for your chosen profile, its `PARTSUMS-*`
 
 Open **Install my-darkshadow** from the live desktop launcher, or run `sudo darkshadow-install`. The installer erases one selected disk after typed confirmation; it creates GPT, EFI, ext4 and systemd-boot. Internet is needed for missing packages. Dual boot, encryption and custom partitioning are not offered by the guided installer.
 
+The Update Center follows `0Inexis0/my-darkshadow` on `main`. NixOS-managed updates open a terminal for the password/build and stage a boot generation; reboot to activate it. Upstream changes are integrated through the fork.
+
 Existing NixOS users can use `personal/bootstrap.sh --system` instead. See [GUIDE.md](https://github.com/0Inexis0/my-darkshadow/blob/main/GUIDE.md) for installation, backups and rollback.
 
 Validation: Python regression checks and QML login/scaling checks; ShellCheck; NixOS module evaluation; successful generic/Legion image builds; GitHub CI; redacted secret scans. Unicode/newline and PNG clipboard restoration were checked on the live Wayland clipboard with synthetic data, preserving existing history.

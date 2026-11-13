@@ -30,6 +30,11 @@ in {
     enable = lib.mkEnableOption "the personal DarkShadow desktop";
     user = lib.mkOption { type = lib.types.str; default = "user"; };
     profile = lib.mkOption { type = lib.types.enum [ "generic" "legion" ]; default = "generic"; };
+    revision = lib.mkOption {
+      type = lib.types.str;
+      default = if builtins.pathExists ../personal/REVISION
+        then lib.strings.trim (builtins.readFile ../personal/REVISION) else "unknown";
+    };
     login.enable = lib.mkOption { type = lib.types.bool; default = true; };
   };
   config = lib.mkIf cfg.enable (lib.mkMerge [ {
@@ -89,7 +94,7 @@ in {
             ${pkgs.python3}/bin/python3 ${source}/personal/apply.py \
             --source ${source} --home ${lib.escapeShellArg home} \
             --user ${lib.escapeShellArg cfg.user} \
-            --profile ${cfg.profile} --managed-nixos
+            --profile ${cfg.profile} --managed-nixos --revision ${lib.escapeShellArg cfg.revision}
         fi
       '';
     };

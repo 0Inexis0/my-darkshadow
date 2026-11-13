@@ -135,16 +135,61 @@ class InstallerSafetyTests(unittest.TestCase):
             self.assertNotIn("initialPassword", generated)
             self.assertEqual(hardware.read_text(), "{ fileSystems = {}; }")
 
-    def test_nixos_managed_update_never_fetches_or_reinstalls_dotfiles(self):
+    def test_nixos_check_compares_fork_main_without_using_store_checkout(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "managed-by-nixos").touch()
+            (root / "fork-revision").write_text("a" * 40)
+            result = subprocess.CompletedProcess([], 0, "b" * 40 + "\trefs/heads/main\n", "")
             with patch.object(updater, "DIR", directory), patch.object(updater, "CACHE", directory), \
                  patch.object(updater, "STATE", str(root / "update.json")), \
-                 patch.object(updater, "installed", return_value="4.33"), \
-                 patch.object(updater, "latest", side_effect=AssertionError("must not fetch")):
-                self.assertFalse(updater.check()["update"])
-                self.assertEqual(updater.main(["rice-update"]), 1)
+                 patch.object(updater, "installed", return_value="4.35"), \
+                 patch.object(updater, "git", return_value=result) as git, \
+                 patch.object(updater, "repo", side_effect=AssertionError("must not touch store checkout")):
+                self.assertTrue(updater.check()["update"])
+                git.assert_called_once_with(updater.HOME, "ls-remote", updater.NEW_URL, "refs/heads/main")
+                self.assertFalse(updater.check(offline=True)["update"])
+
+    def test_managed_button_opens_terminal_instead_of_legacy_installer(self):
+        with patch.object(updater, "managed", return_value=True), \
+             patch.object(updater, "terminal_update") as terminal, \
+             patch.object(updater, "gui", side_effect=AssertionError("legacy installer called")):
+            self.assertEqual(updater.main(["rice-update", "gui"]), 0)
+            terminal.assert_called_once()
+
+    def test_update_checkout_keeps_local_edits_without_reset_or_rebuild(self):
+        dirty = subprocess.CompletedProcess([], 0, " M bin/rice-clip\n", "")
+        with patch.object(updater.os.path, "exists", return_value=True), \
+             patch.object(updater.os.path, "isdir", return_value=True), \
+             patch.object(updater, "git", return_value=dirty) as git:
+            with self.assertRaisesRegex(RuntimeError, "Local edits"):
+                updater.managed_checkout()
+            self.assertEqual(git.call_count, 1)
+
+    def test_failed_nixos_build_keeps_profile_and_never_reports_ready(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "personal-profile").write_text("legion\n")
+            revision = subprocess.CompletedProcess([], 0, "a" * 12, "")
+            with patch.object(updater, "DIR", directory), patch.object(updater, "CACHE", directory), \
+                 patch.object(updater, "LIVE_LOG", str(root / "log")), \
+                 patch.object(updater, "managed_checkout", return_value=directory), \
+                 patch.object(updater, "git", return_value=revision), \
+                 patch.object(updater, "put_live") as state, \
+                 patch.object(updater.subprocess, "call", return_value=1) as build, \
+                 patch("builtins.input", return_value=""), contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(updater.managed_run(), 1)
+                self.assertEqual(build.call_args.args[0][-2:], ["--profile", "legion"])
+                self.assertEqual(state.call_args.kwargs["state"], "failed")
+                self.assertFalse(state.call_args.kwargs["reboot"])
+
+    def test_nixos_revision_survives_source_snapshot_and_deployment(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            configure.configure(ROOT, root, "alice", "generic", new_host="desktop")
+            revision = (root / "my-darkshadow/source/personal/REVISION").read_text().strip()
+            self.assertRegex(revision, r"^[0-9a-f]{40}$")
+
 
 
 class PublicationTests(unittest.TestCase):

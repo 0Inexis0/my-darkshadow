@@ -70,6 +70,10 @@ def configure(source, directory, username, profile, new_host=None):
     for name in ["VERSION", "LICENSE", "flake.nix", "flake.lock", "install.sh", "sync.sh", "GUIDE.md", "README.md"]:
         if (source / name).exists():
             shutil.copy2(source / name, staging / name)
+    if (source / ".git").exists():
+        revision = subprocess.check_output(["git", "-c", f"safe.directory={source}", "-C", str(source),
+                                            "rev-parse", "HEAD"], text=True).strip()
+        (staging / "personal/REVISION").write_text(revision + "\n")
     if destination.exists():
         destination.rename(backup / "source")
     staging.rename(destination)

@@ -44,7 +44,7 @@ def digest(content):
 
 
 def deploy(source, home, user, profile="generic", dry_run=False, force=False,
-           extras=False, managed=False):
+           extras=False, managed=False, revision="unknown"):
     home = home.absolute()
     state = home / ".local/state/my-darkshadow/installed.json"
     try:
@@ -63,6 +63,7 @@ def deploy(source, home, user, profile="generic", dry_run=False, force=False,
     files[".config/rice/fork-version"] = ((source / "personal/FORK_VERSION").read_bytes(), False)
     if managed:
         files[".config/rice/managed-by-nixos"] = (b"Update through the NixOS configuration; see GUIDE.md.\n", False)
+        files[".config/rice/fork-revision"] = ((revision + "\n").encode(), False)
     wall = home / ".cache/hyprquickpaper-current"
     if not wall.exists():
         files[".cache/hyprquickpaper-current"] = (f"{home}/Wallpapers/mono-peaks.jpg\n".encode(), False)
@@ -132,11 +133,12 @@ def main():
     parser.add_argument("--force", action="store_true", help="Replace edited files, retaining backups")
     parser.add_argument("--extras", action="store_true", help="Fonts and initial wallpaper only")
     parser.add_argument("--managed-nixos", action="store_true")
+    parser.add_argument("--revision", default="unknown")
     args = parser.parse_args()
     if os.geteuid() == 0:
         parser.error("Run the deployer as the desktop account; system activation drops privileges first")
     deploy(args.source.resolve(), args.home, args.user, args.profile, args.dry_run,
-           args.force, args.extras, args.managed_nixos)
+           args.force, args.extras, args.managed_nixos, args.revision)
 
 
 if __name__ == "__main__":

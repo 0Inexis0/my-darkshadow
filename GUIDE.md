@@ -90,9 +90,9 @@ git pull --ff-only
 bash personal/bootstrap.sh --system --profile generic
 ```
 
-Keep the profile used at installation. The module owns the deployed source; the shell updater directs you here instead of modifying the Nix store. On an ISO-installed system, clone the fork first; the same bootstrap updates `/etc/nixos/my-darkshadow/source`.
+Keep the profile used at installation. **Settings → Update Center** checks exact commits on `0Inexis0/my-darkshadow`, branch `main`. On NixOS-managed/ISO installations, **Update now** opens a terminal for your sudo password and build output. It maintains a separate user checkout, preserves the installed hardware profile and runs the bootstrap to stage a new boot generation. Reboot to activate it. Local edits or diverged history in the update checkout stop the update instead of being overwritten. The Nix store is never modified. The manual commands above remain available.
 
-Standalone installs made with `install.sh` use `rice-update`, following the fork's `origin` remote. Update packages with your distribution's package manager.
+Standalone installs made with `install.sh` use `rice-update` and the same fork's `main`. Update packages with your distribution's package manager. Upstream changes reach this desktop only after they have been integrated into the fork.
 
 The personal deployer backs up replaced files under `~/.local/state/my-darkshadow/backups/`. Later deployments preserve files edited since deployment. `python3 personal/apply.py --force` explicitly replaces edited files while retaining backups. The upstream installer uses its own `~/.config/darkshadows-shell-backup-*` directories. NixOS source backups are stored under `/etc/nixos/before-my-darkshadow-*`.
 
