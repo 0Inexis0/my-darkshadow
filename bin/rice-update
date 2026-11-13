@@ -4,7 +4,9 @@
   rice-update               install the newest version (runs ./install.sh --update in the repo)
   rice-update check [--json] [--offline]
                             compare your version with the newest one on GitHub
-  rice-update watch         background: checks after login and every 15 minutes, shows a notification
+  rice-update watch [on|off]  background: checks after login and once a day (update.json: every_minutes), shows a
+                            notification; off: no background checks at all
+  rice-update every N       how often the background check asks GitHub, in minutes (60 - 10080)
   rice-update notify        show the "Update is Available!" notification now (to try it)
   rice-update gui           update in the background for Settings > Update Center (no terminal): the steps go to
                             ~/.cache/rice/update-live.log, the state to ~/.cache/rice/update-live.json
@@ -27,10 +29,31 @@ LIVE_LOG = CACHE + "/update-live.log"
 LIVE = CACHE + "/update-live.json"
 RAW = "https://raw.githubusercontent.com/shadowww-dev/DarkShadowShell/main/VERSION"
 FIRST_WAIT = 45            # seconds after login
-EVERY = 15 * 60            # GitHub is asked every 15 minutes
+UPDATE_CFG = DIR + "/update.json"
+DEFAULTS = {"watch": True, "every_minutes": 1440}   # one ask a day: enough for updates, a smaller trail at GitHub
 TICK = 30                  # a check from the About tab of the dashboard is noticed within this many seconds
 APP = "DarkShadow's Shell"
 ICON = HOME + "/.local/share/rice/icon.png"
+
+
+def cfg():
+    """background checks: on by default (a security fix has to reach people), once a day, and the user decides"""
+    c = dict(DEFAULTS)
+    try:
+        raw = json.load(open(UPDATE_CFG))
+        if isinstance(raw, dict):
+            c.update({k: raw[k] for k in DEFAULTS if k in raw})
+        c["every_minutes"] = max(60, min(10080, int(c["every_minutes"])))
+    except Exception:
+        pass
+    return c
+
+
+def save_cfg(c):
+    os.makedirs(DIR, exist_ok=True)
+    tmp = UPDATE_CFG + ".tmp"
+    json.dump(c, open(tmp, "w"))
+    os.replace(tmp, UPDATE_CFG)
 
 
 def repo():
@@ -314,6 +337,10 @@ def mtime(p):
 
 
 def watch():
+    c = cfg()
+    if c.get("watch") is False:
+        return
+    every = int(c["every_minutes"]) * 60
     os.makedirs(CACHE, exist_ok=True)
     lk = open(CACHE + "/update-watch.lock", "w")
     try:
@@ -324,7 +351,7 @@ def watch():
     last, seen = 0.0, 0.0
     while True:
         try:
-            if time.time() - last >= EVERY:
+            if time.time() - last >= every:
                 last = time.time()
                 st = check()
                 seen = mtime(STATE)
@@ -371,7 +398,23 @@ def main(a):
         else:
             print("Up to date: V%s%s" % (st["installed"], ("  (could not check: %s)" % st["error"]) if st["error"] else ""))
     elif cmd == "watch":
-        watch()
+        if len(a) > 2 and a[2] in ("on", "off"):
+            c = cfg()
+            c["watch"] = a[2] == "on"
+            save_cfg(c)
+            print("Background update checks: " + ("on" if c["watch"] else "off"))
+            if c["watch"]:
+                subprocess.Popen([sys.executable, os.path.abspath(__file__), "watch"], stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, start_new_session=True)
+        else:
+            watch()
+    elif cmd == "every":
+        if len(a) < 3 or not a[2].isdigit():
+            sys.exit("rice-update every N   (minutes, 60 - 10080)")
+        c = cfg()
+        c["every_minutes"] = max(60, min(10080, int(a[2])))
+        save_cfg(c)
+        print("Background update checks: every %d minutes" % c["every_minutes"])
     elif cmd == "notify":
         st = check(offline="--offline" in a)
         if not st["news"]:
