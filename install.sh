@@ -21,6 +21,7 @@ Usage: ./install.sh [options]
   -y, --yes          install everything, no questions
   -n, --dry-run      show what would happen, change nothing
       --no-packages  skip the package step
+      --no-upgrade   Arch: do not update the whole system first (faster; new packages may then need an update later)
       --update       get the newest version and update apps, scripts and packages (keeps your configs)
       --use-saved-settings  take the settings saved in this copy (settings/) even where you changed yours
       --wm=hyprland|niri|both   the window manager to set up (default: Hyprland; both: pick one at login)
@@ -38,6 +39,7 @@ for a in "$@"; do
     -y|--yes) ASSUME_YES=1 ;;
     -n|--dry-run) DRY_RUN=1 ;;
     --no-packages) SKIP_PKGS=1 ;;
+    --no-upgrade) NO_UPGRADE=1 ;;
     --restore) MODE=restore ;;
     --update) MODE=update ;;
     --pulled) MODE=update; PULLED=1 ;;
@@ -357,11 +359,22 @@ step_packages() {
       if [ "$DRY_RUN" = 1 ]; then
         info "would install ${#ARCH_PKGS[@]} packages: ${ARCH_PKGS[*]}"; return 0
       fi
-      task "Updating your system first (Arch needs this before new packages)" sudo pacman -Syu --noconfirm
+      # a stuck pacman is almost always another pacman, or its lock file left behind
+      if pgrep -x pacman >/dev/null 2>&1; then
+        warn "Another pacman is running right now (a software center, another terminal?). Wait for it, or this waits too."
+      elif [ -e /var/lib/pacman/db.lck ]; then
+        warn "pacman's lock file is left behind from an update that was stopped: sudo rm /var/lib/pacman/db.lck"
+      fi
+      if [ "${NO_UPGRADE:-0}" = 1 ]; then
+        note "Skipping the system update (--no-upgrade): if a package then fails to download, run: sudo pacman -Syu"
+      else
+        note "A full system update can take long on a slow connection or an old system. Skip it with ./install.sh --no-upgrade"
+        live "Updating your system first (Arch needs this before new packages)" sudo pacman -Syu --noconfirm
+      fi
       task "Checking where each package comes from" pkg_check
       pkg_load
       note "${#REPO_PKGS[@]} from the official repositories, ${#AUR_PKGS[@]} from the AUR"
-      if ! task "Installing ${#REPO_PKGS[@]} packages: desktop, shell, tools and fonts" \
+      if ! live "Installing ${#REPO_PKGS[@]} packages: desktop, shell, tools and fonts" \
            sudo pacman -S --needed --noconfirm "${REPO_PKGS[@]}"; then
         # one package (a conflict, a typo upstream) must not stop all the others
         warn "Installing them together failed, trying one by one"
@@ -436,7 +449,7 @@ step_packages() {
       # repoquery did not work at all: just try everything (first names)
       if [ "${#have[@]}" = 0 ]; then have=(); for p in "${FEDORA_PKGS[@]}"; do have+=("${p%%|*}"); done; absent=(); fi
       note "${#have[@]} packages to install${absent[0]:+, not in your repositories: ${absent[*]}}"
-      if ! task "Installing ${#have[@]} packages: desktop, shell, tools and fonts" sudo dnf install -y --skip-unavailable "${have[@]}"; then
+      if ! live "Installing ${#have[@]} packages: desktop, shell, tools and fonts" sudo dnf install -y --skip-unavailable "${have[@]}"; then
         warn "Installing them together failed, trying one by one"
         local failed=()
         for p in "${have[@]}"; do

@@ -1,5 +1,13 @@
 # Changelog
 
+## V4.40: the installer shows the long steps, and can skip the system update
+- "It spins for ever": the system update (Arch: pacman -Syu) and the package install ran behind a spinner with their output hidden, so a slow download, a full system update on an old install or another pacman holding the lock looked like a hang (one report: 1100 s). They now print what they do, line by line, with the time at the end (the same for dnf on Fedora)
+- ./install.sh --no-upgrade (Arch): skip the full system update and only install what the shell needs
+- It says so before it starts when another pacman is running or pacman's lock file (db.lck) was left behind by a stopped update
+
+## V4.39: no big on-screen keyboard on the login screen
+- The login screen showed Qt's on-screen keyboard when the password field was clicked (a theme installed before sets InputMethod=qtvirtualkeyboard in /etc/sddm.conf). Use it now turns that off too (the line is kept and Back to SDDM's theme puts it back)
+
 ## V4.38: the login screen wins over another SDDM theme
 - A theme installed before (sddm-astronaut and others) often sets itself in /etc/sddm.conf, which SDDM reads last, so the shell's login screen never showed. Use it now switches that line off (and keeps it: Back to SDDM's theme puts it back), and Settings shows which theme SDDM really uses
 
