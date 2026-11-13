@@ -74,6 +74,8 @@ darkshadow-install --dry-run
 
 The dock pins Nautilus, Brave, Discord and Steam. The bar has four Pac-Man workspaces. Idle times are 10 minutes to lock, 15 to turn displays off and 60 to suspend. Successful Quickshell reloads stay quiet; load errors retain their diagnostic popup.
 
+The desktop audio visualizer keeps playing behind open windows, even when desktop widget auto-hide is enabled. It remains visible on exposed desktop areas and through transparent windows. Light mode still pauses it to save resources.
+
 `rice-scale-sync` follows the main display's scale and publishes XSettings/Xresources DPI for X11 apps. Native Wayland apps keep compositor-managed scaling. Existing X11 apps may need restarting after a DPI change. SDDM reads the same monitor settings through a root service that exports numeric scales to `/run`, without exposing the private home directory.
 
 Clipboard history restores raw text/image bytes without waiting on the background clipboard owner's output pipes. Failed clipboard writes do not trigger a paste of stale content. Opening the panel recovers a missing desktop shell; reopening clears the previous search. Clipboard history and private pins are never part of this repository or its ISO.

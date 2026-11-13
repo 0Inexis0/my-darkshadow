@@ -552,13 +552,14 @@ ShellRoot {
     LazyLoader { active: root.on("visualizer")
         WidgetWindow {
             id: vizWin
-            wid: "visualizer"; wc: root.wc("visualizer"); active: root.on("visualizer"); editing: root.editing; hidden: root.hideWidgets
+            // Keep the visualizer behind open windows, including when other widgets auto-hide.
+            wid: "visualizer"; wc: root.wc("visualizer"); active: root.on("visualizer"); editing: root.editing
             free: true; passive: true
             bw: root.sw; bh: root.sh
             defW: root.sw; defH: 180; defX: 0; defY: root.sh - 180
             Component.onCompleted: root.reg(wid, vizWin)
             Component.onDestruction: root.unreg(wid)
-            VizWidget { anchors.fill: parent; running: root.on("visualizer") && !root.hideWidgets && !Look.lite && !Look.covered; style: vizWin.sty !== "" ? vizWin.sty : "bars"; flip: vizWin.flp; pal: vizWin.pal; colorMode: vizWin.vcolor !== "" ? vizWin.vcolor : "accent"
+            VizWidget { anchors.fill: parent; running: root.on("visualizer") && !Look.lite; style: vizWin.sty !== "" ? vizWin.sty : "bars"; flip: vizWin.flp; pal: vizWin.pal; colorMode: vizWin.vcolor !== "" ? vizWin.vcolor : "accent"
                 nBars: Number(root.optOf("visualizer", "bars", 64)); shape: root.optOf("visualizer", "shape", "square"); spacing: root.optOf("visualizer", "gap", "normal")
                 gain: Number(root.optOf("visualizer", "gain", "1.4")) }
         }
