@@ -818,6 +818,9 @@ def terminal():
 
 
 def files_app():
+    # the one you picked in Settings > Desktop > Look & Feel
+    if os.access(BIN + "/rice-files", os.X_OK):
+        return BIN + "/rice-files"
     for t in ("nautilus", "dolphin", "thunar", "nemo"):
         if shutil.which(t):
             return t

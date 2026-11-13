@@ -43,7 +43,7 @@ hl.monitor({
 
 -- Set programs that you use
 local terminal    = "$HOME/.local/bin/rice-term"   -- your terminal (Settings > Desktop > Look & Feel)
-local fileManager = "dolphin"
+local fileManager = "$HOME/.local/bin/rice-files"   -- your file manager (Settings > Desktop > Look & Feel)
 local menu        = "$HOME/.local/bin/rice-launch"   -- the launcher (SUPER + R, ALT + Space)
 
 

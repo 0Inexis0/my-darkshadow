@@ -1,5 +1,10 @@
 # Changelog
 
+## V4.46: pick your file manager, in the wallpaper's colors; your picture on the login screen
+- Settings > Desktop > Look & Feel > File manager: Files (Nautilus), Thunar, Nemo, Dolphin or PCManFM, with an Install button for the ones you do not have. The one you pick opens with SUPER + E (Hyprland and niri) and for every "open folder" from your other apps (xdg-mime)
+- Colors from the wallpaper (on by default, a switch turns it off): the file manager and your other GTK apps get the wallpaper's Material colors through ~/.config/gtk-3.0 and gtk-4.0/darkshadow.css (your gtk.css keeps your own CSS and only gets one import line, with a backup), Dolphin and the other KDE apps through a DarkShadow color scheme. It follows every wallpaper change; open the app again to see it
+- Login screen: the picture you choose in Settings now shows there too (it used to change only with the next wallpaper change)
+
 ## V4.45: smooth CPU / RAM rings, one workspace color from the wallpaper, the RAM icon
 - The CPU, RAM and disk rings in the bar blinked out for a moment at every reading (every 3 seconds, very visible while playing): they were made again each time. They now stay, and glide to the new value. The same for the System card of the bar (its bars now slide instead of jumping)
 - Workspaces in the bar and in the dynamic island: the one you are on is in your wallpaper's color. It used to turn a little around the color wheel for every workspace, so each had its own color

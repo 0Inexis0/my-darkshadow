@@ -7,6 +7,15 @@ import QtQuick
 Singleton {
     readonly property var d: ({
         "pl": ({
+            "File manager": "Menedżer plików",
+            "The app Super + E opens, and every \"open folder\" from your other apps.": "Aplikacja, którą otwiera Super + E, i każde „otwórz folder” z innych aplikacji.",
+            "Colors from the wallpaper": "Kolory z tapety",
+            "The file manager and your other apps (GTK and KDE) follow the wallpaper. Open them again to see it": "Menedżer plików i inne aplikacje (GTK i KDE) biorą kolory z tapety. Otwórz je ponownie, żeby to zobaczyć",
+            "GNOME's: clean, tabs, quick search": "Z GNOME: przejrzysty, karty, szybkie szukanie",
+            "Xfce's: light, fast, your own actions": "Z Xfce: lekki, szybki, własne akcje",
+            "Cinnamon's: two panes, many options": "Z Cinnamon: dwa panele, dużo opcji",
+            "KDE's: split view, a terminal panel": "Z KDE: podzielony widok, panel terminala",
+            "Tiny and very quick": "Malutki i bardzo szybki",
             "A number (the workspace at that place) or a name (a named workspace)": "Numer (workspace na tym miejscu) albo nazwa (nazwany workspace)",
             "SDDM now uses: ": "SDDM używa teraz: ",
             "Window rules": "Reguły okien",

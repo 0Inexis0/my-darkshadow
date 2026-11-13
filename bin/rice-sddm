@@ -7,6 +7,7 @@
 #   rice-sddm remove         SDDM goes back to its own theme (asks for your password)
 #   rice-sddm sync           your wallpaper, colors, font and picture to the login screen (no password; it runs by
 #                            itself when the wallpaper changes)
+#   rice-sddm face           only your picture (Settings runs it when you pick one)
 #   rice-sddm preview        show the login screen in a window (sddm-greeter test mode)
 #
 # The theme lives in /usr/share/sddm/themes/darkshadow-shell. Its user/ folder belongs to you, so the shell can
@@ -91,12 +92,14 @@ root_install() {   # root-install SRC USER [use-sddm]
   rm -f "$OLDCONF"
   # another theme in sddm.conf wins over sddm.conf.d (an installed theme often puts itself there): that line is
   # switched off, and kept, so "Back to SDDM's theme" can put it back
-  if [ -f "$MAIN" ] && grep -qE '^[[:space:]]*Current[[:space:]]*=' "$MAIN"; then
-    grep -E '^[[:space:]]*Current[[:space:]]*=' "$MAIN" | tail -1 >"$PREV"
-    cp -f "$MAIN" "$MAIN.bak-darkshadow"
-    sed -i -E 's/^([[:space:]]*Current[[:space:]]*=.*)$/# (DarkShadow'"'"'s Shell login screen: see sddm.conf.d) \1/' "$MAIN"
+  # (Current= for the theme, InputMethod= for the on-screen keyboard: the login screen has its own card, and a big
+  # keyboard rising when you click the password is not wanted)
+  if [ -f "$MAIN" ] && grep -qE '^[[:space:]]*(Current|InputMethod)[[:space:]]*=' "$MAIN"; then
+    grep -E '^[[:space:]]*(Current|InputMethod)[[:space:]]*=' "$MAIN" >"$PREV"
+    [ -f "$MAIN.bak-darkshadow" ] || cp -f "$MAIN" "$MAIN.bak-darkshadow"
+    sed -i -E 's/^([[:space:]]*(Current|InputMethod)[[:space:]]*=.*)$/# (DarkShadow'"'"'s Shell login screen: see sddm.conf.d) \1/' "$MAIN"
   fi
-  printf '# DarkShadow'"'"'s Shell: its login screen (rice-sddm remove takes this away)\n[Theme]\nCurrent=%s\n' "$NAME" >"$CONF"
+  printf '# DarkShadow'"'"'s Shell: its login screen (rice-sddm remove takes this away)\n[General]\nInputMethod=\n\n[Theme]\nCurrent=%s\n' "$NAME" >"$CONF"
   if [ "${3:-}" = use-sddm ]; then
     if command -v systemctl >/dev/null 2>&1; then
       systemctl enable --force sddm.service && echo "SDDM starts at the next boot"
@@ -137,6 +140,23 @@ color() { python3 -c 'import json,sys
 try: print(json.load(open(sys.argv[1])).get(sys.argv[2], ""))
 except Exception: print("")' "$HOME/.config/rice/palette.json" "$1"; }
 
+# your picture (Settings > your picture saves ~/.face): to the login screen; none: the first letter of your name
+face_sync() {
+  local im="${1:-}" f face="" out="$U/faces/$(id -un).png"
+  [ -z "$im" ] && { command -v magick >/dev/null 2>&1 && im=magick || { command -v convert >/dev/null 2>&1 && im=convert; }; }
+  mkdir -p "$U/faces"
+  for f in "$HOME/.face" "$HOME/.face.icon" "/var/lib/AccountsService/icons/$(id -un)"; do [ -s "$f" ] && { face="$f"; break; }; done
+  if [ -z "$face" ]; then rm -f "$out"; return 0; fi
+  # written next to it and swapped in, so the login screen never reads half a picture
+  if [ -n "$im" ] && $im "$face[0]" -auto-orient -resize '256x256^' -gravity center -extent 256x256 "PNG:$out.tmp" 2>/dev/null; then
+    mv -f "$out.tmp" "$out"
+  else
+    rm -f "$out.tmp"; cp -f "$face" "$out"
+  fi
+  chmod 644 "$out" 2>/dev/null
+  return 0
+}
+
 sync() {
   [ -d "$U" ] && [ -w "$U" ] || { echo "the login screen is not installed (rice-sddm install)"; return 0; }
   local w im="" out="$U/theme.conf.user.tmp" f face
@@ -154,14 +174,7 @@ sync() {
   # the shell's font (SDDM cannot see the fonts in your home)
   f="$(find "$HOME/.local/share/fonts" -iname 'GoogleSansFlex*.ttf' 2>/dev/null | head -1)"
   [ -n "$f" ] && ! cmp -s "$f" "$U/font.ttf" && cp -f "$f" "$U/font.ttf"
-  # your picture: ~/.face, or the one of AccountsService
-  mkdir -p "$U/faces"
-  face=""
-  for f in "$HOME/.face" "$HOME/.face.icon" "/var/lib/AccountsService/icons/$(id -un)"; do [ -f "$f" ] && { face="$f"; break; }; done
-  if [ -n "$face" ]; then
-    if [ -n "$im" ]; then $im "$face[0]" -resize '256x256^' -gravity center -extent 256x256 "$U/faces/$(id -un).png" 2>/dev/null
-    else cp -f "$face" "$U/faces/$(id -un).png"; fi
-  fi
+  face_sync "$im"
   {
     echo "[General]"
     [ -f "$U/bg.jpg" ] && echo "background=$U/bg.jpg"
@@ -202,6 +215,7 @@ case "${1:-state}" in
   use-sddm) install use-sddm ;;
   remove) sudo_run "$(readlink -f "$0")" root-remove ;;
   sync) sync ;;
+  face) [ -d "$U" ] && [ -w "$U" ] && face_sync && echo "picture synced" || echo "the login screen is not installed" ;;
   preview) preview ;;
   root-install) shift; root_install "$@" ;;
   root-remove) root_remove ;;
