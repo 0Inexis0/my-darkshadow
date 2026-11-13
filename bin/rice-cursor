@@ -12,6 +12,7 @@ Hyprcursor themes (Hyprland's own format: manifest.hl + .hlc files) work too. Ap
 know Xcursor (GTK, XWayland) then use a normal theme as fallback (Bibata if you have it).
 """
 import configparser
+import hashlib
 import json
 import os
 import re
@@ -288,7 +289,34 @@ def xfallback(ts):
     return "Adwaita"
 
 
-BIBATA_URL = "https://github.com/ful1e5/Bibata_Cursor/releases/latest/download/%s.tar.xz"
+BIBATA_VERSION = "v2.0.7"
+BIBATA_URL = "https://github.com/ful1e5/Bibata_Cursor/releases/download/" + BIBATA_VERSION + "/%s.tar.xz"
+
+
+def checksum_file():
+    """the one list of pinned downloads (install/checksums.txt in the repo, installed for the shell)"""
+    here = os.path.dirname(os.path.abspath(__file__))
+    for p in (HOME + "/.local/share/rice/checksums.txt",
+              os.path.join(here, "..", "install", "checksums.txt")):
+        if p and os.path.isfile(p):
+            return p
+    return ""
+
+
+def expected_sha(name):
+    """hash for NAME from the checksum list; nothing there means the file is not downloaded at all"""
+    p = checksum_file()
+    if not p:
+        return ""
+    try:
+        with open(p) as f:
+            for ln in f:
+                parts = ln.split()
+                if len(parts) == 2 and parts[1] == name and re.fullmatch(r"[0-9a-fA-F]{64}", parts[0]):
+                    return parts[0].lower()
+    except OSError:
+        pass
+    return ""
 
 
 def get_bibata(name="Bibata-Modern-Ice"):
@@ -296,11 +324,17 @@ def get_bibata(name="Bibata-Modern-Ice"):
     cursor theme at all Hyprland shows no cursor)"""
     if not name.startswith("Bibata-"):
         return False
+    want = expected_sha(name + ".tar.xz")
+    if not want:
+        # nothing pinned: no download (add the name and its SHA-256 to install/checksums.txt to allow it)
+        return False
     tmp = tempfile.mkdtemp(prefix="rice-bibata-")
     try:
         arch = os.path.join(tmp, "b.tar.xz")
         with urllib.request.urlopen(BIBATA_URL % name, timeout=60) as r, open(arch, "wb") as o:
             shutil.copyfileobj(r, o)
+        if hashlib.sha256(open(arch, "rb").read()).hexdigest() != want:
+            return False
         out = os.path.join(tmp, "x")
         os.makedirs(out)
         safe_extract(arch, "tar", out)

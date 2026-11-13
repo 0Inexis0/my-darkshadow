@@ -11,6 +11,12 @@ HAVE_VERSION="$(tr -d ' \r\n' 2>/dev/null <"$HOME/.config/rice/version" || true)
 . "$ROOT/install/lib/ui.sh"
 # shellcheck source=install/lib/distro.sh
 . "$ROOT/install/lib/distro.sh"
+# shellcheck source=install/lib/secure.sh
+. "$ROOT/install/lib/secure.sh"
+
+# pinned releases: the URLs below use these tags, and install/checksums.txt has their hashes
+MATUGEN_VERSION="4.2.0"
+BIBATA_VERSION="v2.0.7"
 
 ASSUME_YES=0; DRY_RUN=0; MODE=install; SKIP_PKGS=0; PULLED=0; TAKE_SETTINGS_ARG=0; WM_ARG=""; AUR_ARG=""; HELPER_ARG=""; DOCTOR=0
 usage() {
@@ -29,7 +35,9 @@ Usage: ./install.sh [options]
       --doctor       check cursor theme, AUR helper and session, print a report to paste and repair the cursor
       --aur          Arch: get yay and every AUR package (without it: only when the shell needs one)
       --no-aur       Arch: never build yay; AUR packages are skipped (the cursor and fonts come from GitHub)
-      --no-input-group  do not join the input group (Infinite Desktop: SUPER + ALT + mouse then stays off)
+      --input-group  join the input group (Infinite Desktop: SUPER + ALT + mouse). That lets every program you run
+                     read every keyboard on this computer; off unless you ask for it
+      --no-input-group  keep it off (the default; same thing)
       --restore      put back the files from the newest backup
   -h, --help         this help
 U
@@ -50,6 +58,7 @@ for a in "$@"; do
     --helper=yay|--helper=paru) HELPER_ARG="${a#--helper=}" ;;
     --doctor) DOCTOR=1 ;;
     --no-input-group) NO_INPUT=1 ;;
+    --input-group) NO_INPUT=0 ;;
     -h|--help) usage; exit 0 ;;
     *) fail "Unknown option: $a"; usage; exit 2 ;;
   esac
@@ -290,14 +299,15 @@ fedora_pick() {
 matugen_download() {
   local arch url d
   arch="$(uname -m)"
-  url="$(curl -fsSL --max-time 20 https://api.github.com/repos/InioX/matugen/releases/latest 2>/dev/null |
-         grep -oE '"browser_download_url": *"[^"]+"' | grep -oE 'https://[^"]+' |
-         grep -iE "${arch}.*\.tar\.gz$" | head -1)"
-  [ -n "$url" ] || return 1
+  url="https://github.com/InioX/matugen/releases/download/v$MATUGEN_VERSION/matugen-$MATUGEN_VERSION-$arch.tar.gz"
   d="$(mktemp -d)"
-  if curl -fsSL --max-time 120 -o "$d/m.tar.gz" "$url" && tar -xzf "$d/m.tar.gz" -C "$d" 2>/dev/null; then
+  if fetch_verified "$url" "$d/m.tar.gz" "matugen-$MATUGEN_VERSION-$arch.tar.gz" &&
+     extract_verified "$d/m.tar.gz" "$d"; then
     local bin; bin="$(find "$d" -type f -name matugen | head -1)"
-    if [ -n "$bin" ]; then mkdir -p "$HOME/.local/bin"; install -m 755 "$bin" "$HOME/.local/bin/matugen"; rm -rf "$d"; return 0; fi
+    # a release asset is a binary, not a script: an ELF for this machine or nothing
+    if [ -n "$bin" ] && [ "$(head -c 4 "$bin" | od -An -tx1 | tr -d ' \n')" = "7f454c46" ]; then
+      mkdir -p "$HOME/.local/bin"; install -m 755 "$bin" "$HOME/.local/bin/matugen"; rm -rf "$d"; return 0
+    fi
   fi
   rm -rf "$d"
   return 1
@@ -503,9 +513,11 @@ set_look() {
   fi
   # Bibata is not packaged everywhere (Fedora): download it for this user when it is missing
   if [ ! -d "/usr/share/icons/$theme" ] && [ ! -d "$HOME/.local/share/icons/$theme" ] && [ ! -d "$HOME/.icons/$theme" ]; then
-    mkdir -p "$HOME/.local/share/icons"
-    curl -fsSL -m 120 "https://github.com/ful1e5/Bibata_Cursor/releases/latest/download/$theme.tar.xz" |
-      tar -xJ -C "$HOME/.local/share/icons" 2>/dev/null || echo "could not download the $theme cursor"
+    local arc; arc="$(mktemp "${TMPDIR:-/tmp}/rice-bibata.XXXXXX.tar.xz")"
+    if fetch_verified "https://github.com/ful1e5/Bibata_Cursor/releases/download/$BIBATA_VERSION/$theme.tar.xz" \
+       "$arc" "$theme.tar.xz" && extract_verified "$arc" "$HOME/.local/share/icons"; then :;
+    else echo "could not download the $theme cursor"; fi
+    rm -f "$arc"
   fi
   # a theme folder that has no cursors inside (a broken package) is no theme: rice-cursor gets a working one
   [ -f "$HOME/.config/rice/cursor.json" ] || { mkdir -p "$HOME/.config/rice"; echo '{"theme": "Bibata-Modern-Ice", "size": 24}' >"$HOME/.config/rice/cursor.json"; }
@@ -692,6 +704,8 @@ step_apps() {
   task "Helper scripts ($n)  ->  ~/.local/bin" copy_bins
   [ -d "$ROOT/sounds" ] && task "Notification sounds  ->  ~/.local/share/rice/sounds" copy_tree "$ROOT/sounds" "$HOME/.local/share/rice/sounds"
   [ -f "$ROOT/assets/icon.png" ] && task "App icon  ->  ~/.local/share/rice/icon.png" put "$ROOT/assets/icon.png" "$HOME/.local/share/rice/icon.png"
+  # the pinned hashes for downloads, for the scripts that fetch things after the install (rice-cursor)
+  [ -f "$ROOT/install/checksums.txt" ] && task "Pinned download hashes  ->  ~/.local/share/rice/checksums.txt" put "$ROOT/install/checksums.txt" "$HOME/.local/share/rice/checksums.txt"
   for d in "$ROOT"/quickshell/*/; do
     [ -d "$d" ] || continue
     d="$(basename "$d")"
@@ -762,7 +776,11 @@ LUA
 ensure_input_group() {
   [ "$DRY_RUN" = 1 ] && return 0
   if id -nG "$USER" 2>/dev/null | tr ' ' '\n' | grep -qx input; then echo "input group: yes"; return 0; fi
-  if [ "${NO_INPUT:-0}" = 1 ]; then echo "input group: skipped (--no-input-group)"; return 0; fi
+  if [ "${NO_INPUT:-1}" = 1 ]; then
+    echo "input group: not joined (off by default: it lets any program you run read every keyboard)"
+    echo "  Infinite Desktop (SUPER + ALT + mouse) needs it: ./install.sh --input-group, or Settings > Desktop > Infinite Desktop > Allow"
+    return 0
+  fi
   if [ "$FAMILY" = nixos ]; then
     echo "NixOS: add \"input\" to users.users.$USER.extraGroups in /etc/nixos/configuration.nix, then sudo nixos-rebuild switch"
     return 0
@@ -976,11 +994,15 @@ if [ "$MODE" = update ]; then
     old="$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo ?)"
     export RICE_PREV_REV="${RICE_PREV_REV:-$(git -C "$ROOT" rev-parse HEAD 2>/dev/null)}"
     if [ "$DRY_RUN" = 1 ]; then info "would run: git pull"
+    elif ! update_remote_ok; then
+      fail "The update remote is not this project: $(git -C "$ROOT" remote get-url origin 2>/dev/null). Not updating."
+      exit 1
     elif { u="$(git -C "$ROOT" remote get-url origin 2>/dev/null)"; case "$u" in *shadowww-dev/shadows-shell*) git -C "$ROOT" remote set-url origin https://github.com/shadowww-dev/DarkShadowShell.git ;; esac
            GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never git -c credential.helper= -C "$ROOT" pull --ff-only >>"$LOG" 2>&1; }; then
       new="$(git -C "$ROOT" rev-parse --short HEAD)"
       if [ "$old" != "$new" ]; then
         # new files from GitHub, maybe a new installer too: start the new one
+        update_guard "$old" "$new" || exit 1
         exec "$ROOT/install.sh" --update --pulled "$@"
       fi
     else
@@ -992,6 +1014,9 @@ if [ "$MODE" = update ]; then
       gq() { GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never git -c credential.helper= -C "$ROOT" "$@" >>"$LOG" 2>&1; }
       up="$(git -C "$ROOT" rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || echo origin/main)"
       if gq fetch origin; then
+        prev="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || true)"
+        target="$(git -C "$ROOT" rev-parse "$up" 2>/dev/null || true)"
+        update_guard "$prev" "$target" || exit 1
         stamp="$(date +%Y%m%d-%H%M%S)"
         gq branch "rice-before-update-$stamp" HEAD || true
         gq stash push -u -m "rice: your changes before the update of $stamp" || true

@@ -10,7 +10,7 @@ import QtQuick
 Item {
     id: logo
     property real size: 140
-    property bool running: true
+    property bool running: visible
     property bool intro: false
     // the colors of the disk: white-hot inside, amber, then a violet edge
     property color hot: "#fff6e4"

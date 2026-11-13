@@ -17,5 +17,8 @@ jobs:
           for f in bin/*; do
             if head -n1 "$f" | grep -q python; then python3 -m py_compile "$f"; fi
           done
+      - name: Security checks
+        run: |
+          bash tests/security.sh
       - name: Installer dry run
         run: SHADOWS_ALLOW_ROOT=1 ./install.sh --yes --dry-run
