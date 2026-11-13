@@ -35,12 +35,14 @@
     Categories=System;
   '';
   system.activationScripts.darkshadow-live-launcher = {
-    deps = [ "users" ];
+    deps = [ "my-darkshadow" ];
     text = ''
-      mkdir -p /home/nixos/.local/share/applications /home/nixos/Schreibtisch
-      cp /etc/xdg/my-darkshadow-install.desktop /home/nixos/.local/share/applications/darkshadow-install.desktop
-      cp /etc/xdg/my-darkshadow-install.desktop /home/nixos/Schreibtisch/darkshadow-install.desktop
-      chown -R nixos:users /home/nixos/.local/share/applications /home/nixos/Schreibtisch
+      ${pkgs.util-linux}/bin/setpriv --reuid nixos --regid users --init-groups --reset-env \
+        ${pkgs.coreutils}/bin/install -D -m 0644 /etc/xdg/my-darkshadow-install.desktop \
+        /home/nixos/.local/share/applications/darkshadow-install.desktop
+      ${pkgs.util-linux}/bin/setpriv --reuid nixos --regid users --init-groups --reset-env \
+        ${pkgs.coreutils}/bin/install -D -m 0644 /etc/xdg/my-darkshadow-install.desktop \
+        /home/nixos/Schreibtisch/darkshadow-install.desktop
     '';
   };
 }
