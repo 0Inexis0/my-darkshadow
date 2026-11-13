@@ -95,7 +95,8 @@ git clone https://github.com/shadowww-dev/DarkShadowShell shadows-shell && cd sh
 git clone https://github.com/shadowww-dev/DarkShadowShell shadows-shell && cd shadows-shell
 # add to /etc/nixos/configuration.nix:
 #   imports = [ /path/to/shadows-shell/nix/module.nix ];
-#   programs.shadows-shell.user = "yourname";    # Infinite Desktop: SUPER + ALT + mouse (input group)
+#   programs.shadows-shell.user = "yourname";
+#   programs.shadows-shell.inputGroup = true;    # only for Infinite Desktop (SUPER + ALT + mouse)
 sudo nixos-rebuild switch && ./install.sh
 ```
 

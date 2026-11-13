@@ -35,7 +35,9 @@ Usage: ./install.sh [options]
       --doctor       check cursor theme, AUR helper and session, print a report to paste and repair the cursor
       --aur          Arch: get yay and every AUR package (without it: only when the shell needs one)
       --no-aur       Arch: never build yay; AUR packages are skipped (the cursor and fonts come from GitHub)
-      --no-input-group  do not join the input group (Infinite Desktop: SUPER + ALT + mouse then stays off)
+      --input-group  join the input group (Infinite Desktop: SUPER + ALT + mouse). That lets every program you run
+                     read every keyboard on this computer; off unless you ask for it
+      --no-input-group  keep it off (the default; same thing)
       --restore      put back the files from the newest backup
   -h, --help         this help
 U
@@ -56,6 +58,7 @@ for a in "$@"; do
     --helper=yay|--helper=paru) HELPER_ARG="${a#--helper=}" ;;
     --doctor) DOCTOR=1 ;;
     --no-input-group) NO_INPUT=1 ;;
+    --input-group) NO_INPUT=0 ;;
     -h|--help) usage; exit 0 ;;
     *) fail "Unknown option: $a"; usage; exit 2 ;;
   esac
@@ -771,7 +774,11 @@ LUA
 ensure_input_group() {
   [ "$DRY_RUN" = 1 ] && return 0
   if id -nG "$USER" 2>/dev/null | tr ' ' '\n' | grep -qx input; then echo "input group: yes"; return 0; fi
-  if [ "${NO_INPUT:-0}" = 1 ]; then echo "input group: skipped (--no-input-group)"; return 0; fi
+  if [ "${NO_INPUT:-1}" = 1 ]; then
+    echo "input group: not joined (off by default: it lets any program you run read every keyboard)"
+    echo "  Infinite Desktop (SUPER + ALT + mouse) needs it: ./install.sh --input-group, or Settings > Desktop > Infinite Desktop > Allow"
+    return 0
+  fi
   if [ "$FAMILY" = nixos ]; then
     echo "NixOS: add \"input\" to users.users.$USER.extraGroups in /etc/nixos/configuration.nix, then sudo nixos-rebuild switch"
     return 0

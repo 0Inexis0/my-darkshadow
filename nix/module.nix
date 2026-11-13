@@ -2,7 +2,8 @@
 # Dotfiles and apps are still installed per user with ./install.sh (pick "Tools", "Apps", "Dotfiles").
 #
 #   imports = [ /path/to/shadows-shell/nix/module.nix ];      (or the flake: inputs.shadows-shell.nixosModules.default)
-#   programs.shadows-shell.user = "shadow";                   your user: joins the "input" group (SUPER + ALT + mouse)
+#   programs.shadows-shell.user = "shadow";                   your user (login screen wallpaper follows it)
+#   programs.shadows-shell.inputGroup = true;                 Infinite Desktop: SUPER + ALT + mouse (see the option)
 #
 # Options (all optional): enable (true), user (null), niri (true), extras (true: live wallpapers, video previews),
 # sddm (false: the shell's login screen; it follows your wallpaper when user is set).
@@ -25,7 +26,16 @@ in
       type = lib.types.nullOr lib.types.str;
       default = null;
       example = "shadow";
-      description = "Your user name. It joins the input group, so Infinite Desktop (SUPER + ALT + mouse) can read the mouse.";
+      description = "Your user name (the login screen follows its wallpaper and colors).";
+    };
+    inputGroup = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        Put the user in the "input" group, so Infinite Desktop (SUPER + ALT + mouse) can read the keyboard and the
+        mouse. That is a real permission: every program the user runs can then read every keyboard on this machine.
+        Off by default; everything else in the shell works without it.
+      '';
     };
     niri = lib.mkOption {
       type = lib.types.bool;
@@ -79,7 +89,7 @@ in
     }
 
     # Infinite Desktop reads the mouse and the keyboard (SUPER + ALT + mouse): your user in the input group
-    (lib.mkIf (cfg.user != null) {
+    (lib.mkIf (cfg.inputGroup && cfg.user != null) {
       users.users.${cfg.user}.extraGroups = [ "input" ];
     })
 
