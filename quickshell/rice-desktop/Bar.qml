@@ -723,13 +723,18 @@ PanelWindow {
         Item { property bool shown: true; width: sr.implicitWidth + 4; height: bar.barH
             Row { id: sr; anchors.centerIn: parent; spacing: 6
                 Repeater {
-                    model: [["memory", 0xF035B, bar.st.cpu || 0], ["memory_alt", 0xF061A, bar.st.ram || 0], ["hard_drive", 0xF02CA, bar.st.disk || 0]]
+                    // a fixed model: the rings stay and only their value moves (a model built from the numbers made
+                    // all three again at every reading, so they blinked out every few seconds)
+                    model: [["memory", 0xF035B, "cpu"], ["memory_alt", 0xF061A, "ram"], ["hard_drive", 0xF02CA, "disk"]]
                     delegate: Item {
                         width: 24; height: 24; anchors.verticalCenter: parent.verticalCenter
+                        // the use, gliding to each new reading
+                        property real use: Math.max(0, Math.min(100, bar.st[modelData[2]] || 0)) / 100
+                        Behavior on use { NumberAnimation { duration: 900; easing.type: Easing.OutCubic } }
                         // a ring that fills with the use
                         Canvas {
                             anchors.fill: parent
-                            readonly property real v: modelData[2] / 100
+                            readonly property real v: parent.use
                             readonly property color c: bar.goo ? gp.primary : bar.fg
                             onVChanged: requestPaint(); onCChanged: requestPaint()
                             onPaint: {
@@ -808,11 +813,9 @@ PanelWindow {
     }
 
     // each workspace has its own color: your key color turned around the color wheel
-    function wsTint(id) {
-        const c = gp.primary
-        const h = (c.hslHue < 0 ? 0.55 : c.hslHue) + (id - 1) * 0.12
-        return Qt.hsla(h - Math.floor(h), gp.mono ? 0 : Math.max(0.35, c.hslSaturation), c.hslLightness, 1)
-    }
+    // the workspace you are on, in the bar and the island: the wallpaper's color (it used to turn a little around the
+    // color wheel for every workspace, so each one had its own color)
+    function wsTint(id) { return gp.primary }
 
     // ---------- one side of the bar: a row of modules ----------
     component Zone: Rectangle {

@@ -1,5 +1,10 @@
 # Changelog
 
+## V4.45: smooth CPU / RAM rings, one workspace color from the wallpaper, the RAM icon
+- The CPU, RAM and disk rings in the bar blinked out for a moment at every reading (every 3 seconds, very visible while playing): they were made again each time. They now stay, and glide to the new value. The same for the System card of the bar (its bars now slide instead of jumping)
+- Workspaces in the bar and in the dynamic island: the one you are on is in your wallpaper's color. It used to turn a little around the color wheel for every workspace, so each had its own color
+- Settings > About: Memory had an empty box for its icon (that icon is not in the shell's icon font); it now has the memory chip
+
 ## V4.44: window rules put apps on their workspace (Hyprland and niri)
 - "Assigning apps to workspaces doesn't work, the gaming workspace neither": on niri a number made a separate named workspace at the top instead of using the workspace at that place, and on Hyprland a rule acts only at the moment a window opens, which misses the many apps that get their name a moment later (Discord, Spotify, games through Proton or Wine). A small watcher (rice-rules watch, started with the shell) now looks at each new window for a few seconds and moves it to its workspace when the rule did not; a window already in place is left alone, and windows that were open before are never moved
 - niri: a workspace number is the workspace at that place; a name is still a named workspace
