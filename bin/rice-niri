@@ -613,8 +613,8 @@ def window_rules(f, s, flat):
         if f.blur:
             L += block("window-rule", ['match app-id="^(kitty|foot|footclient|Alacritty|com\\\\.mitchellh\\\\.ghostty|org\\\\.wezfurlong\\\\.wezterm)$"'] +
                        block("background-effect", ["blur true"]))
-            # the Settings app: frosted like on Hyprland
-            L += block("window-rule", ['match title="^Rice Settings$"'] + block("background-effect", ["blur true", "xray true"]))
+            # the Settings app: frosted like on Hyprland, over the windows behind it (xray would show only the wallpaper)
+            L += block("window-rule", ['match title="^Rice Settings$"'] + block("background-effect", ["blur true", "xray false"]))
     # pop-up apps float in the middle, like on Hyprland
     floats = [
         ('title="^Rice Settings$"', None),

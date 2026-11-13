@@ -64,7 +64,7 @@ Singleton {
         command: ["bash", "-c", "cat \"$HOME/.config/rice/sfx.json\" 2>/dev/null || echo '{}'"]
         stdout: StdioCollector { onStreamFinished: sfx.applyCfg(text) }
     }
-    Timer { interval: 1500; running: true; repeat: true; onTriggered: sfx.reload() }
+    Timer { interval: 1500; running: Prefs.shown; repeat: true; onTriggered: sfx.reload() }
 
     Component.onCompleted: {
         // QtMultimedia is optional: without it the sounds still play (a little later) through pw-play

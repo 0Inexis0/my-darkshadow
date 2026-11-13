@@ -8,10 +8,17 @@ import QtQuick
 Singleton {
     id: m
     property string seed: "#9ec9bd"
-    Process {
-        running: true
-        command: ["bash", "-c", "sed -n 's/^@define-color accent *\\(#[0-9a-fA-F]\\{6\\}\\).*/\\1/p' \"$HOME/.config/waybar/colors.css\" 2>/dev/null | head -1"]
-        stdout: StdioCollector { onStreamFinished: { const c = text.trim(); if (/^#[0-9a-fA-F]{6}$/.test(c)) m.seed = c } }
+    // the accent of your theme (matugen writes it with every new wallpaper): read again whenever it changes, so
+    // Settings takes the new colors while it is open (it kept the old ones, e.g. green on a black wallpaper)
+    FileView {
+        path: Quickshell.env("HOME") + "/.config/waybar/colors.css"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: {
+            const r = /@define-color accent *(#[0-9a-fA-F]{6})/.exec(text())
+            if (r) m.seed = r[1]
+        }
     }
 
     function rgb(c) { const q = Qt.color(c); return [q.r, q.g, q.b] }

@@ -55,7 +55,7 @@ Item {
         }
     }
     Timer { id: refresh; interval: 800; onTriggered: stateProc.running = true }
-    Timer { interval: 20000; running: true; repeat: true; onTriggered: page.now = new Date() }
+    Timer { interval: 20000; running: Prefs.shown; repeat: true; onTriggered: page.now = new Date() }
 
     PageScroll {
         anchors.fill: parent

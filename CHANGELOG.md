@@ -1,5 +1,10 @@
 # Changelog
 
+## V4.36: Settings follows the wallpaper's colors, real blur on niri, Settings always opens at once
+- Settings took its colors only when it started: change the wallpaper while it was open (or waiting in the background) and it kept the old ones, green on a black wallpaper. It now reads the theme's colors again whenever they change
+- niri: Settings blurred only the wallpaper (xray), not the windows behind it (a browser did not show through). Its blur now shows what is really behind it
+- Settings opens at once every time: it starts hidden a few seconds after login and waits, and after you close it it waits again instead of quitting (before, it waited three minutes, so most openings were a cold start). While it waits it does nothing (no checks every few seconds). Light mode keeps the old way, to save memory. How each opening went is in ~/.cache/rice/settings-open.log
+
 ## V4.35: the whole shell in your language, blur stays, Japanese / Korean / Chinese letters
 - Languages for the whole shell, not only Settings: the bar, its cards, the control center, the menus (Wi-Fi, Bluetooth, power, volume), notifications, the launcher, the clipboard, the wallpaper picker, the widgets and the lock screen now come in all 20 languages of Settings > System > Languages (they were only English and Polish). The lock screen's dates, days and months follow the language too
 - Settings lost its blur in Polish (and other languages): the window's title was translated, and Hyprland and niri find the Settings window by its title (blur, size, floating). The title now stays the same in every language

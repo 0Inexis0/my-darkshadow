@@ -35,18 +35,28 @@ FloatingWindow {
     Timer { id: sizeSoon; interval: 120; onTriggered: win.applySize() }
     Connections { target: Prefs; function onSizeChanged() { sizeSoon.restart() } }
     color: "transparent"
-    visible: true
-    // Closed, Settings waits hidden for three minutes, so opening it again is instant (rice-settings wakes it
-    // through ~/.cache/rice/settings-show); then it really quits. ~/.cache/rice/settings-parked: it is waiting.
+    // RICE_SETTINGS_HIDDEN=1 (rice-settings preload, at login): it starts hidden and waits, so the first opening is
+    // instant too
+    readonly property bool startHidden: Quickshell.env("RICE_SETTINGS_HIDDEN") === "1"
+    visible: !startHidden
+    // Closed, Settings waits hidden (rice-settings wakes it through ~/.cache/rice/settings-show), so opening it again
+    // is instant. It stays ready; only in Light mode it quits after three minutes, to free the memory.
+    // ~/.cache/rice/settings-parked: it is waiting.
     property bool parked: false
+    function park() {
+        parked = true
+        if (flat) parkT.restart()
+        Quickshell.execDetached(["bash", "-c", "mkdir -p \"$HOME/.cache/rice\"; : > \"$HOME/.cache/rice/settings-parked\""])
+    }
     onVisibleChanged: {
-        if (!visible) {
-            parked = true; parkT.restart()
-            Quickshell.execDetached(["bash", "-c", "mkdir -p \"$HOME/.cache/rice\"; : > \"$HOME/.cache/rice/settings-parked\""])
-        } else if (parked) {
+        Prefs.shown = visible
+        if (!visible) park()
+        else if (parked) {
             parked = false; parkT.stop()
             Quickshell.execDetached(["bash", "-c", "rm -f \"$HOME/.cache/rice/settings-parked\""])
             sizeSoon.restart()
+            // it may have waited a long time: what the pages show is read again
+            stateTimer.restart(); hrefresh.restart()
         }
     }
     Timer { id: parkT; interval: 180000; onTriggered: { Quickshell.execDetached(["bash", "-c", "rm -f \"$HOME/.cache/rice/settings-parked\""]); Qt.quit() } }
@@ -272,7 +282,7 @@ FloatingWindow {
         running: true
         stdout: StdioCollector { onStreamFinished: win.flat = text.trim() === "1" }
     }
-    Timer { interval: 1500; running: true; repeat: true; onTriggered: if (!flatProc.running) flatProc.running = true }
+    Timer { interval: 1500; running: win.visible; repeat: true; triggeredOnStart: true; onTriggered: if (!flatProc.running) flatProc.running = true }
 
     function dset(group, key, value) {
         const d = JSON.parse(JSON.stringify(dst))
@@ -485,7 +495,7 @@ FloatingWindow {
         } else { navX = 0; navY = rb >= ra ? 1 : -1 }
     }
     onPageChanged: { navFrom(prevPage, page); prevPage = page; openFor(page); const n = Object.assign({}, lastIn); n[railOf(page)] = page; lastIn = n }
-    Component.onCompleted: openFor(page)
+    Component.onCompleted: { openFor(page); Prefs.shown = !startHidden; if (startHidden) park() }
 
     readonly property string hyprTool: home + "/.local/bin/hypr-set"
     property var hv: ({})

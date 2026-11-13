@@ -27,6 +27,8 @@ case "$1" in
       l="$(grep -o '"lang": *"[^"]*"' "$HOME/.config/rice/settings-app.json" 2>/dev/null | sed 's/.*"\([^"]*\)"$/\1/')"
       case "$l" in ja*|ko*|zh*) [ -x "$HOME/.local/bin/rice-fonts" ] && "$HOME/.local/bin/rice-fonts" cjk "$l" >/dev/null 2>&1 & ;; esac
     fi
+    # Settings ready in the background, so it opens at once (not in Light mode)
+    if [ "$1" = start ] && [ -x "$HOME/.local/bin/rice-settings" ]; then ( sleep 8; "$HOME/.local/bin/rice-settings" preload ) >/dev/null 2>&1 & fi
     # the clipboard history (SUPER + V): every copy goes into cliphist
     [ -x "$HOME/.local/bin/rice-clip" ] && "$HOME/.local/bin/rice-clip" watch >/dev/null 2>&1 &
     # Hyprland: the blur rules of the dock, widgets, game bar and desktop menu (written again when one is missing)
