@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+"""Stable shell-facing entry point; VPN privileges remain in the NixOS module."""
+import json
+import os
+from pathlib import Path
+import shutil
+import sys
+
+backend = shutil.which('usa-vpn')
+try:
+    supported = backend and 'usa-vpn-control.py' in Path(backend).read_text()
+except (OSError, UnicodeError):
+    supported = False
+if supported:
+    os.execv(backend, [backend] + (sys.argv[1:] or ['state']))
+print(json.dumps({'available': False, 'status': 'unavailable', 'provider': 'Riseup',
+                  'country': 'US', 'message': 'VPN support is not installed on this desktop.'}))
+sys.exit(0 if len(sys.argv) < 2 or sys.argv[1] == 'state' else 1)

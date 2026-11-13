@@ -131,7 +131,7 @@ FloatingWindow {
         monitor: ["monitor", "screen", "display"], dark: ["dark", "black", "theme"], wallpaper: ["wallpaper", "background"],
         background: ["background", "wallpaper"], top: ["top", "position"], bottom: ["bottom", "position"],
         place: ["position"], where: ["position"], size: ["size", "width", "height", "scale"], big: ["size", "scale"],
-        speed: ["speed", "animation"], fast: ["speed"], slow: ["speed", "light", "performance"], lag: ["light", "performance"], laggy: ["light", "performance"], performance: ["light", "performance"], power: ["power", "battery"], wifi: ["wi-fi", "wifi", "network"],
+        speed: ["speed", "animation"], fast: ["speed"], slow: ["speed", "light", "performance"], lag: ["light", "performance"], laggy: ["light", "performance"], performance: ["light", "performance"], power: ["power", "battery"], wifi: ["wi-fi", "wifi", "network"], vpn: ["vpn", "usa", "riseup"], privacy: ["vpn"], usa: ["vpn", "usa"],
         launcher: ["launcher", "apps"], rofi: ["launcher"], record: ["record", "recorder", "recording"], recording: ["record", "recorder"], video: ["record", "recorder", "video"], desktop: ["widgets", "widget"], widget: ["widgets", "widget"], hide: ["auto-hide", "hide"], apps: ["apps", "rofi", "dock"], game: ["gaming"], games: ["gaming"], layout: ["layout", "keyboard"], color: ["color", "role", "theme"], switch: ["switch", "icons"], slider: ["slider", "thickness"], wavy: ["wavy", "progress"], spring: ["spring", "motion"]
     })
     function buildIndex() {
@@ -386,7 +386,8 @@ FloatingWindow {
         { name: "Security", icon: "\uf132" },
         { name: "Infinite Desktop", icon: "\uf065" },
         { name: "Themes", icon: "\uf53f" },
-        { name: "Update Center", icon: "\uf021" }
+        { name: "Update Center", icon: "\uf021" },
+        { name: "VPN", icon: "\uf132" }
     ]
 
 
@@ -400,7 +401,7 @@ FloatingWindow {
         { group: "desk", name: "Desktop", icon: "\uf108", sym: "desktop_windows", pages: niri ? [29, 12, 25, 4, 11] : [29, 33, 12, 25, 4, 11], caption: I18n.t("Look & feel, widgets, windows, %1 and the lock screen", wmLabel) },
         { group: "bar", name: "Bar & launcher", icon: "\uf0c9", sym: "toolbar", pages: [2, 3, 6, 7], caption: I18n.t("The bar, the dynamic island and the launcher") },
         { group: "snd", name: "Sound & language", icon: "\uf028", sym: "graphic_eq", pages: [1, 10, 26], caption: I18n.t("Sounds, notifications, language and region") },
-        { group: "sys", name: "System", icon: "\uf013", sym: "settings", pages: [30, 31, 28, 5, 23, 15], caption: I18n.t("Keybinds, languages, monitors, recording, keyboard and services") },
+        { group: "sys", name: "System", icon: "\uf013", sym: "settings", pages: [30, 31, 28, 5, 23, 15, 36], caption: I18n.t("Keybinds, languages, monitors, recording, keyboard and services") },
         { group: "game", name: "Gaming", icon: "\uf11b", sym: "sports_esports", pages: [16], caption: I18n.t("Play without distractions") },
         { group: "about", name: "About", icon: "\uf05a", sym: "info", pages: [17], caption: I18n.t("Version, system and credits") },
         { group: "upd", name: "Update Center", icon: "\uf021", sym: "system_update_alt", pages: [35], caption: I18n.t("Get the newest version, right here") }
@@ -949,6 +950,7 @@ FloatingWindow {
             PageSlot { nav: win; idx: 33; cur: win.page; page: Component { InfinitePage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 34; cur: win.page; page: Component { ThemesPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 35; cur: win.page; page: Component { UpdatePage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 36; cur: win.page; page: Component { VpnPage { anchors.fill: parent; ctl: win } } }
         }
 
         // results: the setting, and where it is (page > section)

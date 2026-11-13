@@ -106,6 +106,39 @@ The personal deployer backs up replaced files under `~/.local/state/my-darkshado
 
 Boot a previous NixOS generation to roll back packages. Home configuration remains mutable: restore its backup separately if needed. Remove the `./my-darkshadow.nix` import and rebuild to remove the managed desktop.
 
+## USA VPN
+
+The Wi-Fi menu has a USA VPN switch; its row opens **Settings → System → VPN**.
+Both controls share the same background connection. Closing a menu or Settings
+keeps it connected; use Disconnect to stop it. The page shows connection progress,
+the current US location and exit IP, errors, and the available US locations.
+The automatic choice ranks the provider's current US endpoints by connection latency.
+
+The personal NixOS module enables the accountless, donation-funded Riseup VPN by
+default. To disable it, set `programs.usa-vpn.enable = false;` and rebuild. Other
+NixOS configurations can import `nix/vpn/module.nix` (flake output
+`nixosModules.usa-vpn`) and set:
+
+```nix
+programs.usa-vpn = {
+  enable = true;
+  allowedUsers = [ "your-user" ];
+};
+```
+
+Only active local sessions of the listed users may invoke the fixed VPN helper
+without a password. The helper validates the endpoint and certificate input;
+it cannot execute commands from a downloaded VPN profile. Connection certificates
+are obtained directly from Riseup without an account and kept out of settings,
+logs and the Nix store. DNS and routes are restored on disconnect. IPv6 is routed
+into the tunnel and blocked there. There is no kill switch: if the VPN drops,
+the normal connection may continue. Speed and availability depend on Riseup.
+
+`rice-vpn state|connect|disconnect|toggle|locations` is the shell-facing JSON API.
+`rice-vpn set-location auto` restores automatic US selection. A location change
+requires disconnecting first. Runtime status lives under `$XDG_RUNTIME_DIR/usa-vpn`;
+only the chosen location is saved in `~/.config/rice/vpn.json`.
+
 ## Development and releases
 
 ```sh

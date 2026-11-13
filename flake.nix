@@ -14,6 +14,7 @@
     nixosModules.default = import ./nix/module.nix;
     nixosModules.shadows-shell = self.nixosModules.default;
     nixosModules.personal = import ./nix/personal.nix;
+    nixosModules.usa-vpn = import ./nix/vpn/module.nix;
     nixosConfigurations.live = mkIso "generic";
     nixosConfigurations.live-legion = mkIso "legion";
     packages.${system} = {

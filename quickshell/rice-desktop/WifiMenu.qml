@@ -43,6 +43,7 @@ PanelWindow {
     readonly property int cardW: 360
     readonly property int rowH: 54
     readonly property int maxRows: 7
+    VpnControl { id: vpn; watching: wm.open }
 
     function split(line) {                 // nmcli -t: fields split by ":", a ":" inside a field is "\:"
         const out = []
@@ -158,7 +159,7 @@ PanelWindow {
     Rectangle {
         id: card
         width: wm.cardW
-        height: head.height + 14 + wm.listH + (wm.msg !== "" ? 34 : 0) + 14
+        height: head.height + 14 + wm.listH + (wm.msg !== "" ? 34 : 0) + 14 + vpnSection.height
         Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
         x: wm.side ? (wm.atRight ? wm.width - wm.sideSpace - width : wm.sideSpace)
                      : Math.max(12, Math.min(wm.width - width - 12, wm.cx - width / 2))
@@ -311,8 +312,60 @@ PanelWindow {
         // ---------- an error, if there was one ----------
         Text {
             visible: wm.msg !== ""
-            x: 18; y: parent.height - 38; width: parent.width - 36; elide: Text.ElideRight
+            x: 18; y: parent.height - vpnSection.height - 38; width: parent.width - 36; elide: Text.ElideRight
             text: wm.msg; color: "#ff8a8a"; font.family: Fonts.main; font.pixelSize: 12
+        }
+
+        // VPN shares its state with Settings; closing this menu leaves the tunnel running.
+        Item {
+            id: vpnSection
+            width: parent.width
+            height: vpn.error !== "" ? 109 : 83
+            anchors.bottom: parent.bottom
+            Rectangle { x: 18; width: parent.width - 36; height: 1; color: wm.line }
+            Rectangle {
+                x: 8; y: 9; width: parent.width - 16; height: 62; radius: 14
+                color: vpn.connected ? Qt.rgba(Look.accentHi.r, Look.accentHi.g, Look.accentHi.b, 0.12)
+                                     : (vpnMouse.containsMouse ? wm.hot : "transparent")
+                Behavior on color { ColorAnimation { duration: 160 } }
+                MouseArea {
+                    id: vpnMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: Quickshell.execDetached([Quickshell.env("HOME") + "/.local/bin/rice-settings", "36"])
+                }
+                MIcon { x: 14; anchors.verticalCenter: parent.verticalCenter; name: vpn.connected ? "verified_user" : "shield"
+                    glyph: "\uf132"; size: 22; color: vpn.connected ? Look.accentHi : wm.fg }
+                Column {
+                    x: 50; anchors.verticalCenter: parent.verticalCenter; spacing: 3
+                    width: parent.width - 126
+                    Text { text: "USA VPN"; color: wm.fg; font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.DemiBold }
+                    Text { width: parent.width; elide: Text.ElideRight; text: vpn.connected ? (vpn.state.location || Tr.t("United States")) + " · " + Tr.t("Connected") : Tr.t(vpn.statusText)
+                        color: vpn.connected ? Look.accentHi : wm.dim; font.family: Fonts.main; font.pixelSize: 11 }
+                }
+                Rectangle {
+                    anchors.right: parent.right; anchors.rightMargin: 14; anchors.verticalCenter: parent.verticalCenter
+                    width: 42; height: 24; radius: 12
+                    opacity: vpn.available ? 1 : 0.4
+                    color: vpn.connected ? Look.accentHi : Qt.rgba(1, 1, 1, 0.14)
+                    Behavior on color { ColorAnimation { duration: 160 } }
+                    Rectangle { y: 3; x: vpn.connected ? 21 : 3; width: 18; height: 18; radius: 9
+                        color: vpn.connected ? "#0d0d0d" : "#F6F5F4"
+                        Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutBack } }
+                        opacity: vpn.busy ? 0.45 : 1
+                        SequentialAnimation on opacity {
+                            running: vpn.busy; loops: Animation.Infinite
+                            NumberAnimation { to: 0.35; duration: 550 }
+                            NumberAnimation { to: 1; duration: 550 }
+                        }
+                    }
+                    MouseArea { anchors.fill: parent; enabled: vpn.available && vpn.state.status !== "disconnecting"
+                        cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play(vpn.connected ? "switch-off" : "switch-on"); vpn.toggle() } }
+                }
+            }
+            Text { visible: vpn.error !== ""; x: 18; y: 77; width: parent.width - 36; elide: Text.ElideRight
+                text: Tr.t(vpn.error); color: "#ff8a8a"; font.family: Fonts.main; font.pixelSize: 11 }
         }
     }
 }

@@ -25,7 +25,7 @@ let
       --output /run/darkshadow-login/themes/darkshadow
   '';
 in {
-  imports = [ ./module.nix ];
+  imports = [ ./module.nix ./vpn/module.nix ];
   options.programs.my-darkshadow = {
     enable = lib.mkEnableOption "the personal DarkShadow desktop";
     user = lib.mkOption { type = lib.types.str; default = "user"; };
@@ -46,6 +46,10 @@ in {
     programs.dconf.enable = true;
     environment.localBinInPath = true;
     networking.networkmanager.enable = true;
+    programs.usa-vpn = {
+      enable = lib.mkDefault true;
+      allowedUsers = [ cfg.user ];
+    };
     hardware.bluetooth.enable = true;
     services.blueman.enable = true;
     security.rtkit.enable = true;
