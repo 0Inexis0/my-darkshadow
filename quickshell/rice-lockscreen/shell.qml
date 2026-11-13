@@ -77,7 +77,7 @@ ShellRoot {
         console.log("[lock] checking the password with PAM:", pam.config)
         if (!pam.start()) {
             console.warn("[lock] PAM did not start (" + pam.config + ")")
-            fail("Could not check the password (PAM did not start)")
+            fail(Tr.t("Could not check the password (PAM did not start)"))
         }
     }
     function fail(text) {
@@ -96,11 +96,11 @@ ShellRoot {
             console.log("[lock] PAM says:", message, messageIsError ? "(error)" : "")
             if (messageIsError) lockShell.msg = message
         }
-        onError: function(e) { console.warn("[lock] PAM error", e); lockShell.msg = "Could not check the password" }
+        onError: function(e) { console.warn("[lock] PAM error", e); lockShell.msg = Tr.t("Could not check the password") }
         onCompleted: function(result) {
             console.log("[lock] PAM finished:", result === PamResult.Success ? "right password" : "result " + result)
             if (result === PamResult.Success) { lockShell.phase = "done"; lockShell.pending = ""; lockShell.unlock(); return }
-            lockShell.fail(lockShell.msg !== "" ? lockShell.msg : (result === PamResult.MaxTries ? "Too many tries, wait a moment" : "That is not the password"))
+            lockShell.fail(lockShell.msg !== "" ? lockShell.msg : (result === PamResult.MaxTries ? Tr.t("Too many tries, wait a moment") : Tr.t("That is not the password")))
         }
     }
     Timer { id: wrongT; interval: 2600; onTriggered: if (lockShell.phase === "wrong") { lockShell.phase = "idle"; lockShell.msg = "" } }

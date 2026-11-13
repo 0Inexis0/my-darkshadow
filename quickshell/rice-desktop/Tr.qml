@@ -3,8 +3,8 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 
-// The language of the desktop shell: the one chosen in Settings > System > Languages (settings-app.json "lang";
-// shell.qml sets it). Tr.t("English text") gives the text in that language, from lang/<code>.json next to this
+// The language of the desktop shell and the lock screen: the one chosen in Settings > System > Languages
+// (settings-app.json "lang"). Tr.t("English text") gives the text in that language, from lang/<code>.json next to this
 // file, or the English text when there is no translation. Tr.loc: day and month names in that language.
 Singleton {
     id: tr
@@ -28,8 +28,23 @@ Singleton {
         }
         return o
     }
+    // the language itself (the lock screen has no shell.qml of the desktop to set it): settings-app.json "lang"
+    readonly property string home: Quickshell.env("HOME")
     FileView {
-        path: tr.lang === "en" ? "" : Quickshell.shellPath("lang/" + tr.lang + ".json")
+        path: tr.home + "/.config/rice/settings-app.json"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: {
+            let j = {}
+            try { j = JSON.parse(text()) } catch (e) { j = {} }
+            tr.lang = (typeof j.lang === "string" && /^[a-zA-Z-]{2,6}$/.test(j.lang)) ? j.lang : "en"
+        }
+    }
+    // the words: lang/<code>.json of the desktop shell (one place for the shell and the lock screen)
+    FileView {
+        path: tr.lang === "en" ? "" : tr.home + "/.config/quickshell/rice-desktop/lang/" + tr.lang + ".json"
+        printErrors: false
         onLoaded: { try { tr.table = JSON.parse(text()) } catch (e) { tr.table = {} } }
         onLoadFailed: tr.table = {}
     }

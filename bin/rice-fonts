@@ -28,6 +28,32 @@ CLOCK_FONTS=(
   "Big Shoulders Display|$GF/bigshouldersdisplay/BigShouldersDisplay%5Bwght%5D.ttf|BigShouldersDisplay-Variable.ttf"
 )
 
+# Japanese, Korean and Chinese text (Settings > System > Languages): Noto Sans CJK for that language, three weights
+# (about 13 MB). rice-fonts cjk ja|ko|zh-CN  (exit 0: there now, 2: it was there already, 1: could not download)
+CJK_URL="https://raw.githubusercontent.com/notofonts/noto-cjk/main/Sans/SubsetOTF"
+if [ "${1:-}" = "cjk" ]; then
+  case "${2:-}" in
+    ja*) sub=JP; lc=ja ;; ko*) sub=KR; lc=ko ;; zh-TW|zh-HK) sub=TC; lc=zh-tw ;; zh*) sub=SC; lc=zh-cn ;;
+    *) echo "rice-fonts cjk ja|ko|zh-CN" >&2; exit 1 ;;
+  esac
+  if fc-list ":lang=$lc" family 2>/dev/null | grep -q .; then echo "Fonts for $lc: already installed"; exit 2; fi
+  command -v curl >/dev/null || { echo "rice-fonts: curl is needed" >&2; exit 1; }
+  mkdir -p "$dir/cjk"
+  ok=0
+  for w in Regular Medium Bold; do
+    f="NotoSans$sub-$w.otf"
+    if curl -fsSL -o "$dir/cjk/$f.part" "$CJK_URL/$sub/$f" && [ "$(head -c 4 "$dir/cjk/$f.part")" = "OTTO" ]; then
+      mv "$dir/cjk/$f.part" "$dir/cjk/$f"; ok=1
+    else
+      rm -f "$dir/cjk/$f.part"
+    fi
+  done
+  [ "$ok" = 1 ] || { echo "Fonts for $lc: could not download"; exit 1; }
+  fc-cache -f "$dir" >/dev/null 2>&1 || true
+  echo "Fonts for $lc: installed (Noto Sans $sub)"
+  exit 0
+fi
+
 if [ "${1:-}" = "status" ]; then
   for f in "Google Sans Flex" "Google Sans Code" Inter Rubik "Material Symbols Rounded" "Bebas Neue" Orbitron Outfit "Space Grotesk" Unbounded "Big Shoulders Display"; do if has "$f"; then echo "$f: installed"; else echo "$f: missing"; fi; done
   exit 0

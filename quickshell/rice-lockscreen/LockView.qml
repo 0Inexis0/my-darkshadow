@@ -43,7 +43,8 @@ FocusScope {
     readonly property string mm: two(now.getMinutes())
     readonly property var days: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
     readonly property var months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-    readonly property string dateText: days[now.getDay()] + ", " + now.getDate() + " " + months[now.getMonth()]
+    readonly property string dateText: Tr.lang === "en" ? days[now.getDay()] + ", " + now.getDate() + " " + months[now.getMonth()]
+                                                        : Tr.day(now.getDay()) + ", " + now.getDate() + " " + Tr.month(now.getMonth(), true)
     readonly property var clockFonts: ({ bebas: "Bebas Neue", orbitron: "Orbitron", outfit: "Outfit", grotesk: "Space Grotesk",
                                          unbounded: "Unbounded", shoulders: "Big Shoulders Display" })
     readonly property string clockFont: {
@@ -419,7 +420,7 @@ FocusScope {
                     Text {
                         anchors.left: lk.right; anchors.leftMargin: 14; anchors.verticalCenter: parent.verticalCenter
                         visible: !!root && root.pass === ""
-                        text: passArea.checking ? "Checking ..." : (lv.isPreview ? "Password (preview, Esc closes)" : "Enter your password")
+                        text: passArea.checking ? Tr.t("Checking ...") : (lv.isPreview ? Tr.t("Password (preview, Esc closes)") : Tr.t("Enter your password"))
                         color: pal.dim; font.family: Fonts.main; font.pixelSize: 15
                     }
                     // Enter, as a button too
@@ -497,8 +498,8 @@ FocusScope {
             Row { id: fbRow; anchors.centerIn: parent; spacing: 10
                 MIcon { anchors.verticalCenter: parent.verticalCenter; size: 20; name: "keyboard"; glyph: ""; color: pal.primary }
                 Column { anchors.verticalCenter: parent.verticalCenter
-                    Text { text: "Keyboard not working?"; color: pal.fg; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.DemiBold }
-                    Text { text: "Switch to the classic lock (hyprlock)"; color: pal.dim; font.family: Fonts.main; font.pixelSize: 11 } } }
+                    Text { text: Tr.t("Keyboard not working?"); color: pal.fg; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.DemiBold }
+                    Text { text: Tr.t("Switch to the classic lock (hyprlock)"); color: pal.dim; font.family: Fonts.main; font.pixelSize: 11 } } }
             MouseArea { id: fbm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: if (lv.root) lv.root.fallback() }
         }
         // rice-lock test: it unlocks itself
@@ -508,7 +509,7 @@ FocusScope {
             height: 36; radius: 18; width: tst.implicitWidth + 32
             color: pal.primary
             Text { id: tst; anchors.centerIn: parent; color: pal.inkPrimary; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.DemiBold
-                text: lv.root ? "Test: it unlocks itself in " + lv.root.testLeft + " s" : "" }
+                text: lv.root ? Tr.t("Test: it unlocks itself in ") + lv.root.testLeft + " s" : "" }
         }
 
         // ---------- power ----------
@@ -525,9 +526,9 @@ FocusScope {
                 armed = ""
                 if (!lv.isPreview) Quickshell.execDetached(["bash", "-c", cmd])
             }
-            Power { k: "suspend"; icon: "bedtime"; label: "Sleep"; onHit: pwr.act(k, "\"$HOME/.local/bin/rice-sys\" suspend") }
-            Power { k: "reboot"; icon: "restart_alt"; label: "Restart"; onHit: pwr.act(k, "\"$HOME/.local/bin/rice-sys\" reboot") }
-            Power { k: "poweroff"; icon: "power_settings_new"; label: "Shut down"; red: true; onHit: pwr.act(k, "\"$HOME/.local/bin/rice-sys\" poweroff") }
+            Power { k: "suspend"; icon: "bedtime"; label: Tr.t("Sleep"); onHit: pwr.act(k, "\"$HOME/.local/bin/rice-sys\" suspend") }
+            Power { k: "reboot"; icon: "restart_alt"; label: Tr.t("Restart"); onHit: pwr.act(k, "\"$HOME/.local/bin/rice-sys\" reboot") }
+            Power { k: "poweroff"; icon: "power_settings_new"; label: Tr.t("Shut down"); red: true; onHit: pwr.act(k, "\"$HOME/.local/bin/rice-sys\" poweroff") }
         }
     }
 
@@ -592,7 +593,7 @@ FocusScope {
         Row { anchors.centerIn: parent; spacing: 8
             MIcon { anchors.verticalCenter: parent.verticalCenter; size: 20; name: pw.icon; glyph: ""
                 color: pw.red ? (pw.armed ? "#3b0a0a" : "#ffb4ab") : (pw.armed ? pal.inkPrimary : pal.fg) }
-            Text { id: lab; visible: pw.armed; anchors.verticalCenter: parent.verticalCenter; text: "Again: " + pw.label.toLowerCase()
+            Text { id: lab; visible: pw.armed; anchors.verticalCenter: parent.verticalCenter; text: Tr.t("Again: ") + pw.label.toLowerCase()
                 color: pw.red ? "#3b0a0a" : pal.inkPrimary; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium } }
         MouseArea { id: pwm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: pw.hit() }
     }

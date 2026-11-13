@@ -56,16 +56,16 @@ Item {
             idx: 0
             Text {
                 x: 22; y: 10
-                text: Qt.locale().standaloneMonthName(lc.now.getMonth(), Locale.ShortFormat).replace(".", "").toUpperCase()
+                text: Tr.loc.standaloneMonthName(lc.now.getMonth(), Locale.ShortFormat).replace(".", "").toUpperCase()
                 color: lc.acc
                 font.family: lv ? lv.clockFont : Fonts.numbers; font.pixelSize: Math.round(96 * lc.k); font.weight: Font.Black
                 width: parent.width - 30; fontSizeMode: Text.HorizontalFit; minimumPixelSize: 40
             }
             Column {
                 x: 24; y: Math.round(130 * lc.k); spacing: 2
-                Text { text: Qt.locale().standaloneDayName(lc.now.getDay(), Locale.LongFormat) + " " + lc.now.getDate()
+                Text { text: Tr.day(lc.now.getDay()) + " " + lc.now.getDate()
                     color: lc.fg; font.family: Fonts.main; font.pixelSize: Math.round(21 * lc.k); font.weight: Font.DemiBold; font.capitalization: Font.Capitalize }
-                Text { text: lc.now.getFullYear() + "  ·  " + "week " + lc.week(lc.now)
+                Text { text: lc.now.getFullYear() + "  ·  " + Tr.t("week ") + lc.week(lc.now)
                     color: lc.dim; font.family: Fonts.main; font.pixelSize: Math.round(12 * lc.k); font.letterSpacing: 1 }
             }
             // the month grid, today in your shape
@@ -76,7 +76,7 @@ Item {
                 readonly property real cellW: (parent.width - 32) / 7
                 Repeater {
                     model: 7
-                    Text { width: mg.cellW; horizontalAlignment: Text.AlignHCenter; text: Qt.locale().dayName((index + 1) % 7, Locale.ShortFormat).slice(0, 2)
+                    Text { width: mg.cellW; horizontalAlignment: Text.AlignHCenter; text: Tr.week(false)[index]
                         color: lc.dim; opacity: 0.7; font.family: Fonts.main; font.pixelSize: Math.round(10 * lc.k) }
                 }
                 Repeater {
@@ -264,7 +264,7 @@ Item {
             Text {
                 anchors.left: lk.right; anchors.leftMargin: 12; anchors.verticalCenter: parent.verticalCenter
                 visible: !!lc.root && lc.root.pass === ""
-                text: pass.wrong && lc.root && lc.root.msg !== "" ? lc.root.msg : (pass.checking ? "Checking ..." : (lv && lv.isPreview ? "Password (preview, Esc closes)" : "Enter your password"))
+                text: pass.wrong && lc.root && lc.root.msg !== "" ? lc.root.msg : (pass.checking ? Tr.t("Checking ...") : (lv && lv.isPreview ? Tr.t("Password (preview, Esc closes)") : Tr.t("Enter your password")))
                 color: pass.wrong ? "#ffb4ab" : lc.dim; font.family: Fonts.main; font.pixelSize: 14
                 width: pass.width - 110; elide: Text.ElideRight
             }

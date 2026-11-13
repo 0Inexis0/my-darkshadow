@@ -375,6 +375,11 @@ Singleton {
             "Change any part of the theme you chose": "Zmień dowolną część wybranego motywu",
             "Change the keys": "Zmień klawisze",
             "Change the wallpaper by itself": "Zmieniaj tapetę sama",
+            "Getting the font for this language…": "Pobieranie czcionki dla tego języka…",
+            "Font installed. Settings opens again in a moment": "Czcionka zainstalowana. Ustawienia za chwilę otworzą się ponownie",
+            "Could not download the font. Install Noto Sans CJK with your package manager (Arch: noto-fonts-cjk)": "Nie udało się pobrać czcionki. Zainstaluj Noto Sans CJK menedżerem pakietów (Arch: noto-fonts-cjk)",
+            "Settings, the bar, the panels, the menus and the lock screen follow it. A few pages are still partly in English.": "Ustawienia, pasek, panele, menu i ekran blokady idą za nim. Kilka stron jest jeszcze częściowo po angielsku.",
+            "The language of the whole shell. It changes right away.": "Język całego shella. Zmienia się od razu.",
             "Wallpaper control": "Sterowanie tapetą",
             "Use your own wallpaper tool, or turn off the wallpaper picker.": "Użyj własnego programu do tapet albo wyłącz wybór tapet.",
             "Wallpapers from the shell": "Tapety z shella",
@@ -2577,6 +2582,11 @@ Singleton {
             "Scan every week": "Ellenőrzés hetente"
         }),
         "ja": ({
+            "Getting the font for this language…": "この言語のフォントを取得しています…",
+            "Font installed. Settings opens again in a moment": "フォントをインストールしました。設定はまもなく開き直します",
+            "Could not download the font. Install Noto Sans CJK with your package manager (Arch: noto-fonts-cjk)": "フォントをダウンロードできませんでした。パッケージマネージャーで Noto Sans CJK をインストールしてください (Arch: noto-fonts-cjk)",
+            "Settings, the bar, the panels, the menus and the lock screen follow it. A few pages are still partly in English.": "設定、バー、パネル、メニュー、ロック画面がこの言語になります。一部のページはまだ英語のままです。",
+            "The language of the whole shell. It changes right away.": "シェル全体の言語です。すぐに切り替わります。",
             "Home": "ホーム",
             "Sfx & sounds": "サウンドとエフェクト",
             "DarkShadow bar": "DarkShadow バー",
@@ -2664,6 +2674,11 @@ Singleton {
             "Scan every week": "毎週スキャン"
         }),
         "ko": ({
+            "Getting the font for this language…": "이 언어의 글꼴을 받는 중…",
+            "Font installed. Settings opens again in a moment": "글꼴을 설치했습니다. 설정이 곧 다시 열립니다",
+            "Could not download the font. Install Noto Sans CJK with your package manager (Arch: noto-fonts-cjk)": "글꼴을 받지 못했습니다. 패키지 관리자로 Noto Sans CJK를 설치하세요 (Arch: noto-fonts-cjk)",
+            "Settings, the bar, the panels, the menus and the lock screen follow it. A few pages are still partly in English.": "설정, 바, 패널, 메뉴, 잠금 화면이 이 언어를 따릅니다. 일부 페이지는 아직 영어입니다.",
+            "The language of the whole shell. It changes right away.": "셸 전체의 언어입니다. 바로 바뀝니다.",
             "Home": "홈",
             "Sfx & sounds": "소리 및 효과",
             "DarkShadow bar": "DarkShadow 바",
@@ -2751,6 +2766,11 @@ Singleton {
             "Scan every week": "매주 검사"
         }),
         "zh-CN": ({
+            "Getting the font for this language…": "正在获取此语言的字体…",
+            "Font installed. Settings opens again in a moment": "字体已安装。设置稍后会重新打开",
+            "Could not download the font. Install Noto Sans CJK with your package manager (Arch: noto-fonts-cjk)": "无法下载字体。请用包管理器安装 Noto Sans CJK(Arch:noto-fonts-cjk)",
+            "Settings, the bar, the panels, the menus and the lock screen follow it. A few pages are still partly in English.": "设置、状态栏、面板、菜单和锁屏都会使用它。部分页面仍有英文。",
+            "The language of the whole shell. It changes right away.": "整个桌面的语言,立即生效。",
             "Home": "主页",
             "Sfx & sounds": "声音与音效",
             "DarkShadow bar": "DarkShadow 状态栏",

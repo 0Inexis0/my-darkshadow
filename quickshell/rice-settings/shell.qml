@@ -6,7 +6,8 @@ import QtQuick
 ShellRoot {
 FloatingWindow {
     id: win
-    title: I18n.t("Rice Settings")
+    // never translated: Hyprland and niri find the window by this title (its blur, size and floating rules)
+    title: "Rice Settings"
     // about half of a 1080p screen, a little bigger on bigger screens, never more than fits
     readonly property var scr0: Quickshell.screens && Quickshell.screens.length > 0 ? Quickshell.screens[0] : null
     readonly property int sw0: scr0 ? scr0.width : 1920

@@ -1,5 +1,10 @@
 # Changelog
 
+## V4.35: the whole shell in your language, blur stays, Japanese / Korean / Chinese letters
+- Languages for the whole shell, not only Settings: the bar, its cards, the control center, the menus (Wi-Fi, Bluetooth, power, volume), notifications, the launcher, the clipboard, the wallpaper picker, the widgets and the lock screen now come in all 20 languages of Settings > System > Languages (they were only English and Polish). The lock screen's dates, days and months follow the language too
+- Settings lost its blur in Polish (and other languages): the window's title was translated, and Hyprland and niri find the Settings window by its title (blur, size, floating). The title now stays the same in every language
+- Japanese, Korean and Chinese showed boxes: choosing one of them downloads its font (Noto Sans JP / KR / SC, about 13 MB, no password), then Settings and the shell start again with it. At login the font is fetched too if it is missing
+
 ## V4.34: a new wallpaper picker, wallpapers off, Bluetooth headphones, Flatpak apps
 - New wallpaper picker (SUPER + W): a Material 3 carousel. The wallpaper in focus is big in the middle (sharp, the picture itself), the ones next to it get narrower the farther they are. Wheel, arrows or a click move it; Enter, a click on the big one or Set as wallpaper sets it. Search, and All / Pictures / Live (Tab), shuffle. It is much lighter: only 15 cards are ever made, they use the small previews, and one mask rounds all of them (the old grid made a card with its own effect for every wallpaper and read the list again every few seconds, which could crash it with many wallpapers)
 - Settings > Wallpaper > Wallpaper control: Wallpapers from the shell off = the shell sets no wallpaper at all (no awww, no live wallpaper, no slideshow), for your own wallpaper tool; Wallpaper picker off = SUPER + W does nothing

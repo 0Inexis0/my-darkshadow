@@ -251,5 +251,17 @@
  "Set as wallpaper": "Ustaw jako tapetę",
  "Headphones need PipeWire's Bluetooth audio: install pipewire-audio (Arch), then log in again": "Słuchawki potrzebują dźwięku Bluetooth w PipeWire: zainstaluj pipewire-audio (Arch) i zaloguj się ponownie",
  "Headphones need WirePlumber running: systemctl --user enable --now wireplumber": "Słuchawki potrzebują działającego WirePlumbera: systemctl --user enable --now wireplumber",
- "Could not connect. Is the device on and close by?": "Nie udało się połączyć. Czy urządzenie jest włączone i blisko?"
+ "Could not connect. Is the device on and close by?": "Nie udało się połączyć. Czy urządzenie jest włączone i blisko?",
+ "Again: ": "Jeszcze raz: ",
+ "Checking ...": "Sprawdzanie ...",
+ "Could not check the password": "Nie udało się sprawdzić hasła",
+ "Could not check the password (PAM did not start)": "Nie udało się sprawdzić hasła (PAM nie wystartował)",
+ "Enter your password": "Wpisz hasło",
+ "Keyboard not working?": "Klawiatura nie działa?",
+ "Password (preview, Esc closes)": "Hasło (podgląd, Esc zamyka)",
+ "Switch to the classic lock (hyprlock)": "Przełącz na klasyczną blokadę (hyprlock)",
+ "Test: it unlocks itself in ": "Test: odblokuje się za ",
+ "That is not the password": "To nie jest hasło",
+ "Too many tries, wait a moment": "Za dużo prób, poczekaj chwilę",
+ "week ": "tydzień "
 }

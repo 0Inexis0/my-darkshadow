@@ -22,6 +22,11 @@ case "$1" in
     [ -x "$HOME/.local/bin/rice-ws-watch" ] && setsid -f "$HOME/.local/bin/rice-ws-watch" >/dev/null 2>&1
     [ -x "$HOME/.local/bin/rice-update" ] && setsid -f "$HOME/.local/bin/rice-update" watch >/dev/null 2>&1
     [ -x "$HOME/.local/bin/rice-welcome" ] && "$HOME/.local/bin/rice-welcome" start >/dev/null 2>&1 &
+    # Japanese, Korean or Chinese chosen in Settings > Languages: their font, if it is not there yet (rice-fonts cjk)
+    if [ "$1" = start ]; then
+      l="$(grep -o '"lang": *"[^"]*"' "$HOME/.config/rice/settings-app.json" 2>/dev/null | sed 's/.*"\([^"]*\)"$/\1/')"
+      case "$l" in ja*|ko*|zh*) [ -x "$HOME/.local/bin/rice-fonts" ] && "$HOME/.local/bin/rice-fonts" cjk "$l" >/dev/null 2>&1 & ;; esac
+    fi
     # the clipboard history (SUPER + V): every copy goes into cliphist
     [ -x "$HOME/.local/bin/rice-clip" ] && "$HOME/.local/bin/rice-clip" watch >/dev/null 2>&1 &
     # Hyprland: the blur rules of the dock, widgets, game bar and desktop menu (written again when one is missing)
