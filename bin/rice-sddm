@@ -15,7 +15,10 @@ set -u
 NAME=darkshadow-shell
 THEME="/usr/share/sddm/themes/$NAME"
 CONFD=/etc/sddm.conf.d
-CONF="$CONFD/10-darkshadow-shell.conf"
+CONF="$CONFD/99-darkshadow-shell.conf"
+OLDCONF="$CONFD/10-darkshadow-shell.conf"   # where V4.37 put it
+MAIN=/etc/sddm.conf
+PREV="$CONFD/.darkshadow-shell-previous"     # the line of sddm.conf it switched off
 U="$THEME/user"
 # NixOS (programs.shadows-shell.sddm = true): the theme is in the Nix store, your part in /var/lib
 NIXU=/var/lib/darkshadow-shell-sddm
@@ -27,7 +30,8 @@ have_sddm() { command -v sddm >/dev/null 2>&1 || [ -x /usr/bin/sddm ]; }
 dm_now() { [ -L /etc/systemd/system/display-manager.service ] || return 0; local l; l="$(readlink -f /etc/systemd/system/display-manager.service 2>/dev/null)"; l="${l##*/}"; echo "${l%.service}"; }
 theme_now() {
   local f v=""
-  for f in /etc/sddm.conf "$CONFD"/*.conf; do
+  # the order SDDM reads them: its own defaults, sddm.conf.d (by name), then sddm.conf, which wins
+  for f in /usr/lib/sddm/sddm.conf.d/*.conf "$CONFD"/*.conf "$MAIN"; do
     [ -f "$f" ] || continue
     local x; x="$(awk -F= '/^\[Theme\]/{t=1;next} /^\[/{t=0} t&&$1~/^ *Current *$/{gsub(/^ +| +$/,"",$2); print $2}' "$f" | tail -1)"
     [ -n "$x" ] && v="$x"
@@ -84,6 +88,14 @@ root_install() {   # root-install SRC USER [use-sddm]
   chmod 644 "$U/theme.conf.user"
   ln -sfn user/theme.conf.user "$THEME/theme.conf.user"
   mkdir -p "$CONFD"
+  rm -f "$OLDCONF"
+  # another theme in sddm.conf wins over sddm.conf.d (an installed theme often puts itself there): that line is
+  # switched off, and kept, so "Back to SDDM's theme" can put it back
+  if [ -f "$MAIN" ] && grep -qE '^[[:space:]]*Current[[:space:]]*=' "$MAIN"; then
+    grep -E '^[[:space:]]*Current[[:space:]]*=' "$MAIN" | tail -1 >"$PREV"
+    cp -f "$MAIN" "$MAIN.bak-darkshadow"
+    sed -i -E 's/^([[:space:]]*Current[[:space:]]*=.*)$/# (DarkShadow'"'"'s Shell login screen: see sddm.conf.d) \1/' "$MAIN"
+  fi
   printf '# DarkShadow'"'"'s Shell: its login screen (rice-sddm remove takes this away)\n[Theme]\nCurrent=%s\n' "$NAME" >"$CONF"
   if [ "${3:-}" = use-sddm ]; then
     if command -v systemctl >/dev/null 2>&1; then
@@ -94,7 +106,12 @@ root_install() {   # root-install SRC USER [use-sddm]
 }
 root_remove() {
   [ "$(id -u)" = 0 ] || { echo "needs root"; exit 1; }
-  rm -f "$CONF"
+  rm -f "$CONF" "$OLDCONF"
+  # the theme sddm.conf had before comes back
+  if [ -f "$PREV" ] && [ -f "$MAIN" ]; then
+    sed -i -E 's/^# \(DarkShadow'"'"'s Shell login screen: see sddm.conf.d\) //' "$MAIN"
+    rm -f "$PREV"
+  fi
   echo "removed (SDDM uses its own theme again)"
 }
 

@@ -1,5 +1,8 @@
 # Changelog
 
+## V4.38: the login screen wins over another SDDM theme
+- A theme installed before (sddm-astronaut and others) often sets itself in /etc/sddm.conf, which SDDM reads last, so the shell's login screen never showed. Use it now switches that line off (and keeps it: Back to SDDM's theme puts it back), and Settings shows which theme SDDM really uses
+
 ## V4.37: your own window rules, a gaming workspace, the shell's own login screen (SDDM)
 - Settings > Desktop > Window rules: rules of your own for any app (where it opens and whether in the background, floating, centered, a size, on every workspace, fullscreen or maximized, see-through). Pick a window that is open now, or type its app id or title. They are kept in ~/.config/rice/rules.json, which no update touches (editing hyprland.lua by hand is lost on update; this is not). Hyprland and niri
 - Gaming workspace (Window rules, or Gaming > Gaming workspace): Steam, Proton, Wine, gamescope and Minecraft games open on a workspace of their own (9 by default, or any number or name). Options: go there when a game starts, the launchers (Steam, Heroic, Lutris, Bottles, Prism, RetroArch) there too, games fullscreen, no gaps there

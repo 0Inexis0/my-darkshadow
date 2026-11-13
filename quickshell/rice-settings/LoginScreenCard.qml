@@ -80,7 +80,7 @@ Column {
                     : !card.st.sddm ? I18n.t("SDDM is not installed. Install it first: ") + card.st.pkg
                     : card.st.in_use && !card.usingSddm ? I18n.t("Your computer starts ") + (card.st.dm || I18n.t("another login screen")) + I18n.t(". Make SDDM the one that starts to see it.")
                     : card.st.in_use ? I18n.t("It follows your wallpaper and colors by itself. Press a key on it to sign in.")
-                    : I18n.t("Asks for your password once (the theme goes into /usr/share/sddm/themes).")
+                    : (card.st.theme ? I18n.t("SDDM now uses: ") + card.st.theme + ". " : "") + I18n.t("Asks for your password once (the theme goes into /usr/share/sddm/themes).")
             }
             Flow {
                 width: parent.width
