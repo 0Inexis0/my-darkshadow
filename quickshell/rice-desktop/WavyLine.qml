@@ -8,6 +8,7 @@ Item {
     property real value: 0                // 0 .. 1
     property bool moving: true            // the wave travels (music playing ...)
     property bool wavy: Look.wavy
+    property bool activity: false        // a full activity wave, without a progress percentage
     property real thick: Look.waveThick
     property color color: "#9ec9bd"
     property color track: Qt.rgba(1, 1, 1, 0.14)
@@ -22,6 +23,7 @@ Item {
     onShownChanged: cv.requestPaint()
     onThickChanged: cv.requestPaint()
     onWavyChanged: cv.requestPaint()
+    onActivityChanged: cv.requestPaint()
     onColorChanged: cv.requestPaint()
     onWidthChanged: cv.requestPaint()
     Canvas {
@@ -43,7 +45,7 @@ Item {
                 c.beginPath(); c.arc(w - t / 2, mid, Math.max(1.5, t / 2 - 0.5), 0, Math.PI * 2); c.fill()
             }
             // the part that is done
-            const amp = wl.wavy ? Math.min(mid - t / 2 - 1, 2.2 + t * 0.45) * Math.sin(Math.PI * f) : 0
+            const amp = wl.wavy ? Math.min(mid - t / 2 - 1, 2.2 + t * 0.45) * (wl.activity ? 1 : Math.sin(Math.PI * f)) : 0
             const wlen = 20 + t * 2.5
             c.strokeStyle = wl.color
             c.beginPath()

@@ -160,6 +160,9 @@ Item {
         ToggleRow { label: I18n.t("Music on hover"); desc: I18n.t("Point at the island while something plays to open the player")
             enabled: page.v("island_dynamic", true) !== false; opacity: enabled ? 1 : 0.45
             checked: page.v("island_hover", true) !== false; onToggled: function(x) { page.setv("island_hover", x ? "on" : "off") } }
+        ToggleRow { label: I18n.t("Codex / Claude"); desc: I18n.t("Hover for live agent activity, click for usage")
+            enabled: page.v("island_dynamic", true) !== false; opacity: enabled ? 1 : 0.45
+            checked: page.v("island_ai", true) !== false; onToggled: function(x) { page.setv("island_ai", x ? "on" : "off") } }
         ToggleRow { label: I18n.t("Volume and microphone"); desc: I18n.t("A wavy level you can drag, instead of the pop-up at the bottom")
             enabled: page.v("island_dynamic", true) !== false; opacity: enabled ? 1 : 0.45
             checked: page.v("island_volume", true) !== false; onToggled: function(x) { page.setv("island_volume", x ? "on" : "off") } }
@@ -176,7 +179,7 @@ Item {
         // ---------- the card ----------
         SectionTitle { text: I18n.t("The card"); sub: I18n.t("What a click opens. Esc, a click on the desktop or another window closes it.") }
         SegRow { label: I18n.t("Opens on"); desc: I18n.t("The tab a click on the island opens")
-            options: [ { label: I18n.t("Today"), value: "today" }, { label: I18n.t("System"), value: "system" }, { label: I18n.t("About"), value: "about" } ]
+            options: [ { label: I18n.t("Today"), value: "today" }, { label: I18n.t("System"), value: "system" }, { label: "AI", value: "ai" }, { label: I18n.t("About"), value: "about" } ]
             current: page.v("island_tab", "today"); onChosen: function(x) { page.setv("island_tab", x) } }
         SliderRow { label: I18n.t("Closes after"); desc: I18n.t("Seconds after the pointer leaves it")
             from: 2; to: 10; step: 1; unit: " s"; value: page.v("island_close", 4)

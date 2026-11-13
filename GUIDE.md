@@ -62,6 +62,12 @@ darkshadow-install --dry-run
 
 ## Daily use
 
+The Dynamic Island's **AI** tab shows local Codex / Claude Code activity and usage.
+Working agents appear beside the clock. Hover shows live activity and animation;
+click opens usage details.
+See [AI Island setup and supported sessions](docs/ai-island.md), including optional
+Claude permission hooks.
+
 | Keys | Action |
 | --- | --- |
 | SUPER + U | Settings |

@@ -26,16 +26,16 @@ CFG = DIR + "/bar.json"
 DEFAULTS = {"enabled": True, "style": "dynamic", "position": "top", "height": 38, "workspaces": 5,
             "seconds": False, "opacity": 0.72, "ws_style": "dots", "logo": "auto", "autohide": False, "shadow": True,
             "island_dynamic": True, "island_hover": True, "island_volume": True, "island_ws": True, "island_notifs": True, "tray_size": 18,
-            "island_date": False, "island_weather": True, "island_charge": True, "island_tab": "today", "island_close": 4,
+            "island_date": False, "island_weather": True, "island_charge": True, "island_ai": True, "island_tab": "today", "island_close": 4,
             "logo_color": "default", "title_icon": "right"}
 CHOICES = {"style": ("flat", "island", "islands", "pills", "notch", "dynamic"), "position": ("top", "bottom", "left", "right"),
            "ws_style": ("dots", "pacman", "letters", "numbers"), "title_icon": ("left", "right", "off"),
-           "logo_color": ("default", "white", "gold", "ice", "rose", "violet", "theme"), "island_tab": ("today", "system", "about"),
+           "logo_color": ("default", "white", "gold", "ice", "rose", "violet", "theme"), "island_tab": ("today", "system", "ai", "about"),
            "logo": ("auto", "apps", "blackhole", "moon", "tux", "arch", "gentoo", "fedora", "debian", "ubuntu", "nixos", "cachyos", "endeavouros",
                     "manjaro", "linuxmint", "opensuse", "void", "alpine", "pop", "kali", "centos", "raspbian",
                     "elementary", "zorin", "nobara", "artix", "slackware", "mageia", "rocky")}
 BOOLS = ("enabled", "seconds", "autohide", "shadow", "island_dynamic", "island_hover", "island_volume", "island_ws", "island_notifs",
-         "island_date", "island_weather", "island_charge")
+         "island_date", "island_weather", "island_charge", "island_ai")
 RANGES = {"height": (28, 56), "workspaces": (3, 10), "opacity": (0.3, 1.0), "tray_size": (12, 28), "island_close": (2, 10)}
 # V3.36: the island is the clock (the old "clock" module becomes the island)
 MODULES = ["launcher", "workspaces", "title", "media", "island", "tray", "volume", "network", "bluetooth", "battery",

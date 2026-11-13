@@ -1712,6 +1712,8 @@ Singleton {
             "Scan every week": "Analyser chaque semaine"
         }),
         "de": ({
+            "Codex / Claude": "Codex / Claude",
+            "Hover for live agent activity, click for usage": "Live-Aktivität beim Darüberfahren, Verbrauch per Klick",
             "Home": "Start",
             "Sfx & sounds": "Töne und Effekte",
             "DarkShadow bar": "DarkShadow-Leiste",

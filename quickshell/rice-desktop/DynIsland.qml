@@ -12,6 +12,7 @@ import QtQuick
 //   ws      you switched workspace: which one
 //   notif   a notification came in (the shell shows notifications): its icon in your shape, the text, and a
 //           wave that runs out while it stays
+//   ai      Codex / Claude are working locally: activity and usage on hover or click
 //   rec     the screen is being recorded: the time, the microphone and stop
 // Everything moves on springs (Material 3 spatial motion); the content fades in after the shape has grown.
 // The small things (time, volume, workspace, recording) change the island in the bar itself; the player and
@@ -39,13 +40,16 @@ Item {
     // the card beside the bar: a notification, the info card (today, system) or the player
     property string flash: ""                  // volume | mic | ws (for a moment)
     property bool hoverOpen: false
+    property bool hoverAi: false
     property bool pinned: false                // the player, opened from the info card
     property var note: null                    // the notification it shows
     property bool infoOpen: false
-    property string infoTab: "today"           // today | system
-    readonly property string mode: flash !== "" ? flash : (bar && bar.recOn ? "rec" : "idle")
+    property string infoTab: "today"           // today | system | ai | about
+    readonly property bool aiActive: !ghost && on("island_ai") && AiStatus.active
+    readonly property string mode: flash !== "" ? flash : (bar && bar.recOn ? "rec" : (aiActive ? "ai" : "idle"))
+    onAiActiveChanged: if (aiActive) { if (ready) bump.restart(); if (hoverOpen && !pinned) hoverAi = true }
     readonly property string cardWant: note ? "notif"
-        : (infoOpen ? "info" : ((pinned || hoverOpen) && pl.has && !ghost ? "media" : ""))
+        : (infoOpen ? "info" : (hoverOpen && hoverAi && !pinned && !ghost ? "ai" : ((pinned || hoverOpen) && pl.has && !ghost ? "media" : "")))
     readonly property bool big: cardWant !== ""
     function show(what, ms) { if (flash !== what) bump.restart(); flash = what; flashT.interval = ms; flashT.restart() }
     // something new in the island: it gives a small squeeze, like a drop landing
@@ -60,7 +64,7 @@ Item {
     property bool ghost: false
     // the cards you opened (not the ones that come and go by themselves): Esc, the desktop or another window close them
     readonly property bool sticky: big && (infoOpen || pinned)
-    function closeCards() { infoOpen = false; pinned = false; hoverOpen = false }
+    function closeCards() { infoOpen = false; pinned = false; hoverOpen = false; hoverAi = false }
     // Another window taking the focus closes the opened card. Opening the card takes the keyboard, so the window
     // that had it (Settings, a browser) lets it go: that is not "another window" and must not close the card again
     // (it did: with any window open the card closed as soon as it opened).
@@ -108,7 +112,7 @@ Item {
         onFired: function(line) {
             const p = String(line).trim().split(/\s+/)
             if (p.length < 2) return
-            isl.openInfo(p[1] === "system" || p[1] === "about" ? p[1] : "today", p[2] !== "open")
+            isl.openInfo(["system", "ai", "about"].indexOf(p[1]) >= 0 ? p[1] : "today", p[2] !== "open")
         }
     }
     // it stays while the wave runs out; pointing at it holds the wave
@@ -201,6 +205,7 @@ Item {
         case "volume": case "mic": return 300
         case "ws": return Math.max(190, wsRow.implicitWidth + 40)
         case "rec": return recRow.implicitWidth + 30
+        case "ai": return aiRow.implicitWidth + 30
         case "charge": return 340
         }
         return idleRow.implicitWidth + 30
@@ -241,11 +246,14 @@ Item {
         if (hovering) { closeT.stop(); pinT.stop(); if (on("island_hover") && !big && !ghost) openT.restart() }
         else { openT.stop(); closeT.restart(); if (pinned || infoOpen) pinT.restart() }
     }
-    Timer { id: openT; interval: 280; onTriggered: isl.hoverOpen = pl.has }
+    Timer { id: openT; interval: 280; onTriggered: {
+        isl.hoverAi = isl.aiActive
+        isl.hoverOpen = isl.aiActive || pl.has
+    } }
     Timer { id: closeT; interval: 450; onTriggered: isl.hoverOpen = false }
     Timer { id: pinT; interval: Math.max(2, isl.cfg.island_close || 4) * 1000; onTriggered: { isl.pinned = false; isl.infoOpen = false } }
     // the player closes by itself when nothing plays any more
-    onPlayingChanged: if (!playing && !hovering) { pinT.restart(); closeT.restart() }
+    onPlayingChanged: if (!playing && !hovering && !hoverAi) { pinT.restart(); closeT.restart() }
     readonly property bool playing: pl.playing
 
     // ---------- the shape ----------
@@ -263,7 +271,7 @@ Item {
         // it works whatever the island shows (the recording's buttons and the volume line sit on top of it)
         MouseArea {
             anchors.fill: parent; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
-            onClicked: function(m) { isl.openInfo(m.button === Qt.RightButton ? "system" : (isl.cfg.island_tab || "today"), true) }
+            onClicked: function(m) { isl.openInfo(m.button === Qt.RightButton ? "system" : (isl.aiActive ? "ai" : (isl.cfg.island_tab || "today")), true) }
             onWheel: function(e) { if (isl.bar.sink && isl.bar.sink.audio) isl.bar.sink.audio.volume = Math.max(0, Math.min(1, isl.bar.sink.audio.volume + Look.notches(e) * 0.04)) }
         }
 
@@ -293,6 +301,27 @@ Item {
                         font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium }
                 }
                 Eq { visible: pl.playing; anchors.verticalCenter: parent.verticalCenter; h: 14; go: isl.pillMode === "idle" }
+            }
+        }
+
+        // ---------- ai: local agents at work ----------
+        Face {
+            name: "ai"; width: aiRow.implicitWidth + 30; height: isl.bh
+            Row {
+                id: aiRow
+                anchors.centerIn: parent; spacing: 9
+                Item { width: 24; height: 24; anchors.verticalCenter: parent.verticalCenter
+                    Blob { anchors.fill: parent; kind: Look.shape; color: isl.pal ? isl.pal.container : "#333"
+                        SlowSpin { turn: 360; period: 9000; running: isl.pillMode === "ai" && !Look.lite } }
+                    MIcon { anchors.centerIn: parent; size: 15; name: "code"; glyph: ""; color: isl.pal ? isl.pal.primary : "white" }
+                }
+                Text { anchors.verticalCenter: parent.verticalCenter; text: isl.bar ? isl.bar.timeText : ""
+                    color: isl.pal ? isl.pal.fg : "white"; font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.DemiBold }
+                Text { anchors.verticalCenter: parent.verticalCenter; text: AiStatus.label
+                    color: isl.pal ? isl.pal.primary : "white"; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium }
+                Text { visible: AiStatus.current.state === "waiting"; anchors.verticalCenter: parent.verticalCenter; text: Tr.t("Needs approval")
+                    color: isl.pal ? isl.pal.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 11 }
+                Eq { anchors.verticalCenter: parent.verticalCenter; h: 14; go: isl.pillMode === "ai" && AiStatus.current.state === "working" }
             }
         }
 
@@ -571,7 +600,7 @@ Item {
         // the player tints the card with your key color
         Rectangle {
             anchors.fill: parent; radius: parent.radius
-            opacity: isl.cardMode === "media" ? 1 : 0
+            opacity: isl.cardMode === "media" || isl.cardMode === "ai" ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: 300 } }
             gradient: Gradient {
                 orientation: Gradient.Horizontal
@@ -580,6 +609,11 @@ Item {
             }
         }
 
+
+        Face {
+            name: "ai"; inCard: true; width: 470; height: 184
+            AiActivity { anchors.fill: parent; pal: isl.pal; animate: isl.big && isl.cardMode === "ai" }
+        }
 
         // ---------- the info card: today (calendar, weather, the day) and system (CPU, GPU, RAM, disk) ----------
         Face {
@@ -594,7 +628,7 @@ Item {
                 Rectangle { anchors.fill: parent; radius: height / 2; color: fInfo.pp ? fInfo.pp.card : "#222" }
                 Rectangle {
                     id: tabPill
-                    readonly property var cur: isl.infoTab === "system" ? tSys : (isl.infoTab === "about" ? tAbout : tToday)
+                    readonly property var cur: isl.infoTab === "system" ? tSys : (isl.infoTab === "ai" ? tAi : (isl.infoTab === "about" ? tAbout : tToday))
                     x: 4 + cur.x; y: 4; width: cur.width; height: parent.height - 8; radius: height / 2
                     color: fInfo.pp ? fInfo.pp.primary : "white"
                     Behavior on x { SpringAnimation { spring: 4; damping: 0.4; epsilon: 0.3 } }
@@ -605,6 +639,7 @@ Item {
                     x: 4; y: 4; height: parent.height - 8
                     Tab { id: tToday; label: Tr.t("Today"); icon: "calendar_today"; on: isl.infoTab === "today"; onHit: isl.infoTab = "today" }
                     Tab { id: tSys; label: Tr.t("System"); icon: "memory"; on: isl.infoTab === "system"; onHit: isl.infoTab = "system" }
+                    Tab { id: tAi; label: "AI"; icon: "code"; on: isl.infoTab === "ai"; onHit: isl.infoTab = "ai" }
                     Tab { id: tAbout; label: Tr.t("About"); icon: "info"; on: isl.infoTab === "about"; onHit: isl.infoTab = "about" }
                     Tab { visible: pl.has; label: Tr.t("Music"); icon: "music_note"; on: false
                         onHit: { isl.infoOpen = false; isl.pinned = true; if (!isl.hovering) pinT.restart() } }
@@ -759,6 +794,15 @@ Item {
                             } }
                     }
                 }
+            }
+
+            AiPanel {
+                x: 0; y: 62; width: parent.width; height: parent.height - 62
+                pal: isl.pal
+                opacity: isl.infoTab === "ai" ? 1 : 0
+                visible: opacity > 0.01
+                animate: fInfo.act && visible
+                Behavior on opacity { NumberAnimation { duration: 220 } }
             }
 
             // ---------- system ----------
@@ -929,7 +973,7 @@ Item {
         property string icon: ""
         property bool on: false
         signal hit()
-        width: visible ? tr.implicitWidth + 28 : 0; height: parent ? parent.height : 30
+        width: visible ? tr.implicitWidth + 20 : 0; height: parent ? parent.height : 30
         Row { id: tr; anchors.centerIn: parent; spacing: 6
             MIcon { anchors.verticalCenter: parent.verticalCenter; size: 16; filled: tb.on; name: tb.icon; glyph: ""
                 color: tb.on ? (isl.pal ? isl.pal.inkPrimary : "black") : (isl.pal ? isl.pal.fg : "white") }

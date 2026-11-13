@@ -5,7 +5,7 @@
 set -Euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-TOOLS=(rice-effects rice-run rice-busy hypr-set waybar-set waybar-preset waybar-reload waybar-autohide font-set desktop-set rice-settings rice-settings-size
+TOOLS=(rice-ai rice-effects rice-run rice-busy hypr-set waybar-set waybar-preset waybar-reload waybar-autohide font-set desktop-set rice-settings rice-settings-size
        rice-colors rice-welcome rice-wallpaper rice-rofi rice-notify rice-lock rice-fonts rice-hotcorner
        rice-desktop rice-stats rice-sysline rice-nowplaying rice-weather rice-cava rice-media rice-cursor rice-update rice-ws-watch rice-calendar rice-sound rice-sfx rice-services rice-battery rice-todo rice-dashboard border-sync logout)
 CONFIG_DIRS=(hypr waybar waybar-presets swaync rofi matugen kitty fish fastfetch)    # folders from ~/.config to publish

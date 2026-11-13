@@ -9,7 +9,7 @@
                                         V3.34: without the classic dashboard (the default) it opens the bar's
                                         island instead: today (calendar, weather) or system; control: the
                                         control center; wallpaper: the wallpaper picker
-  rice-dashboard island [today|system|about]  open the island's card (toggle)
+  rice-dashboard island [today|system|ai|about]  open the island's card (toggle)
   rice-dashboard layout TAB JSON        cards of a tab: [{"id": "cpu", "w": 5, "h": 1}, ...]
   rice-dashboard reset-layout TAB       back to the default cards
   rice-dashboard blur                   write the blur rule for Hyprland (rice-dashboard.lua)
@@ -239,7 +239,7 @@ def classic(c=None):
 
 def island(tab, toggle=True):
     os.makedirs(CACHE, exist_ok=True)
-    open(CACHE + "/island-open", "w").write("%f %s %s\n" % (time.time(), tab if tab in ("today", "system", "about") else "today",
+    open(CACHE + "/island-open", "w").write("%f %s %s\n" % (time.time(), tab if tab in ("today", "system", "ai", "about") else "today",
                                                              "toggle" if toggle else "open"))
     ensure_shell()
 

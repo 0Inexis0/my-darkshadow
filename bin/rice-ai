@@ -1,0 +1,357 @@
+#!/usr/bin/env python3
+"""Local Codex / Claude Code activity for the Dynamic Island (no network or credentials).
+
+rice-ai [watch|status]          JSON snapshots; watch follows appended session records
+rice-ai hook claude             consume a Claude hook on stdin, never block the agent
+rice-ai install-claude-hooks    merge lifecycle hooks, preserving existing settings
+"""
+import argparse
+import datetime as dt
+import hashlib
+import json
+import os
+from pathlib import Path
+import shlex
+import signal
+import sys
+import time
+
+
+BUSY = {"working", "waiting"}
+STALE = 900
+
+
+def timestamp(value):
+    try:
+        return dt.datetime.fromisoformat(str(value).replace("Z", "+00:00")).timestamp()
+    except (ValueError, TypeError):
+        return 0
+
+
+def number(value):
+    return max(0, int(value)) if isinstance(value, (int, float)) else 0
+
+
+def empty(provider):
+    return dict(provider=provider, state="offline", model="", source="", project="",
+                updated=0, started=0, input=0, output=0, cached=0, context=None,
+                context_window=None, limits=[], active=0, usage_available=False,
+                action="thinking", tools=0)
+
+
+def action_for(name, wrapper=""):
+    """Classify a tool, emitting only a fixed activity label, never its arguments."""
+    name = str(name).lower()
+    if name in ("functions.exec", "functions.exec_command"):
+        # Codex's orchestration wrapper can contain a more specific tool name.
+        for marker, action in (("tools.apply_patch", "editing"), ("tools.view_image", "reviewing"),
+                               ("tools.web__run", "searching"), ("tools.exec_command", "terminal")):
+            if marker in str(wrapper):
+                return action
+    for names, action in ((("apply_patch", "edit", "write", "notebookedit"), "editing"),
+                          (("bash", "exec_command", "write_stdin", "terminal"), "terminal"),
+                          (("search", "grep", "glob", "web", "find"), "searching"),
+                          (("read", "open", "fetch", "view", "screenshot"), "reviewing")):
+        if any(part in name for part in names):
+            return action
+    return "tools"
+
+
+class Session:
+    def __init__(self, path, provider):
+        self.path = path
+        self.data = empty(provider)
+        self.offset = 0
+        self.inode = None
+        self.messages = {}
+        self.tool_calls = {}
+        self.tool_seen = set()
+
+    def tool_start(self, key, name, wrapper=""):
+        if not key:
+            return
+        self.tool_calls[key] = action_for(name, wrapper)
+        self.tool_seen.add(key)
+        self.data.update(action=self.tool_calls[key], tools=len(self.tool_seen))
+
+    def tool_end(self, key):
+        self.tool_calls.pop(key, None)
+        self.data["action"] = list(self.tool_calls.values())[-1] if self.tool_calls else "thinking"
+
+    def read(self):
+        try:
+            stat = self.path.stat()
+            if self.inode != stat.st_ino or stat.st_size < self.offset:
+                self.__init__(self.path, self.data["provider"])
+                self.inode = stat.st_ino
+            if stat.st_size == self.offset:
+                return
+            with self.path.open("rb") as stream:
+                stream.seek(self.offset)
+                # Keep partial JSON records until the writer finishes the line.
+                for line in stream:
+                    if not line.endswith(b"\n"):
+                        break
+                    self.offset += len(line)
+                    try:
+                        record = json.loads(line)
+                        if isinstance(record, dict):
+                            self.consume(record)
+                    except (ValueError, TypeError, AttributeError):
+                        continue
+        except OSError:
+            pass
+
+    def consume(self, record):
+        d = self.data
+        kind = record.get("type")
+        p = record.get("payload") or {}
+        stamp = timestamp(record.get("timestamp"))
+        if stamp:
+            d["updated"] = max(d["updated"], stamp)
+        if d["provider"] == "codex":
+            if kind == "session_meta":
+                d["source"] = "Desktop" if "desktop" in str(p.get("originator", "")).lower() else "CLI"
+                d["project"] = Path(p.get("cwd") or "").name
+            elif kind == "turn_context":
+                d["model"] = p.get("model") or ""
+                d["project"] = Path(p.get("cwd") or d["project"]).name
+            elif kind == "event_msg":
+                event = p.get("type")
+                if event in ("task_started", "turn_started"):
+                    d.update(state="working", started=stamp, action="thinking", tools=0)
+                    self.tool_calls.clear()
+                    self.tool_seen.clear()
+                elif event in ("task_complete", "task_completed", "turn_complete", "turn_aborted"):
+                    d["state"] = "idle"
+                elif event == "token_count":
+                    info = p.get("info") or {}
+                    usage = info.get("total_token_usage") or {}
+                    if usage:
+                        d.update(input=number(usage.get("input_tokens")),
+                                 output=number(usage.get("output_tokens")),
+                                 cached=number(usage.get("cached_input_tokens")), usage_available=True)
+                    last = info.get("last_token_usage") or {}
+                    window = number(info.get("model_context_window"))
+                    if window and last:
+                        d["context_window"] = window
+                        d["context"] = min(1, number(last.get("total_tokens")) / window)
+                    limits = p.get("rate_limits")
+                    if isinstance(limits, dict):
+                        d["limits"] = [dict(used=max(0, min(100, float(v["used_percent"]))),
+                                        minutes=number(v.get("window_minutes")),
+                                        resets=number(v.get("resets_at")))
+                                   for k in ("primary", "secondary")
+                                   if isinstance((v := limits.get(k)), dict) and v.get("used_percent") is not None]
+            elif kind == "response_item":
+                if p.get("type") in ("function_call", "custom_tool_call"):
+                    self.tool_start(p.get("call_id"), p.get("name"), p.get("input", ""))
+                elif p.get("type") in ("function_call_output", "custom_tool_call_output"):
+                    self.tool_end(p.get("call_id"))
+                elif p.get("type") == "message" and p.get("role") == "assistant" and not self.tool_calls:
+                    d["action"] = "responding"
+        else:
+            # Claude Code's local transcripts are shared by CLI and local Desktop Code.
+            # Subagents are excluded at discovery so their Stop cannot end a parent turn.
+            d["source"] = "Desktop" if record.get("userType") == "desktop" or record.get("source") == "desktop" else "Local"
+            if record.get("cwd"):
+                d["project"] = Path(record["cwd"]).name
+            message = record.get("message") or {}
+            if kind == "user" and not record.get("isMeta"):
+                if d["state"] not in BUSY:
+                    d["started"] = stamp
+                    self.tool_calls.clear()
+                    self.tool_seen.clear()
+                    d.update(tools=0, action="thinking")
+                d["state"] = "working"
+                content = message.get("content")
+                if isinstance(content, list):
+                    for item in content:
+                        if isinstance(item, dict) and item.get("type") == "tool_result":
+                            self.tool_end(item.get("tool_use_id"))
+            if kind == "assistant":
+                d["model"] = message.get("model") or d["model"]
+                usage = message.get("usage")
+                mid = message.get("id")
+                if isinstance(usage, dict) and mid:
+                    # Streaming chunks may repeat the same message ID: replace, never add twice.
+                    self.messages[mid] = (number(usage.get("input_tokens")) + number(usage.get("cache_read_input_tokens"))
+                                          + number(usage.get("cache_creation_input_tokens")),
+                                          number(usage.get("output_tokens")), number(usage.get("cache_read_input_tokens")))
+                    totals = list(zip(*self.messages.values()))
+                    d.update(input=sum(totals[0]), output=sum(totals[1]), cached=sum(totals[2]), usage_available=True)
+                if message.get("stop_reason") in ("end_turn", "stop_sequence"):
+                    d["state"] = "idle"
+                else:
+                    d["state"] = "working"
+                content = message.get("content")
+                if isinstance(content, list):
+                    for item in content:
+                        if isinstance(item, dict) and item.get("type") == "tool_use":
+                            self.tool_start(item.get("id"), item.get("name"))
+                    if not self.tool_calls:
+                        d["action"] = "responding" if any(isinstance(i, dict) and i.get("type") == "text" for i in content) else "thinking"
+            if kind == "system" and record.get("subtype") == "turn_duration":
+                d["state"] = "idle"
+
+
+class Monitor:
+    def __init__(self, home=None):
+        self.home = Path(home or Path.home())
+        self.codex = Path(os.environ.get("CODEX_HOME", self.home / ".codex"))
+        self.claude = Path(os.environ.get("CLAUDE_CONFIG_DIR", self.home / ".claude"))
+        self.cache = Path(os.environ.get("XDG_CACHE_HOME", self.home / ".cache")) / "rice/ai"
+        self.sessions = {}
+        self.scanned = 0
+
+    def discover(self, now):
+        if now - self.scanned < 5:
+            return
+        self.scanned = now
+        for provider, root, pattern in (("codex", self.codex / "sessions", "rollout-*.jsonl"),
+                                        ("claude", self.claude / "projects", "*.jsonl")):
+            candidates = []
+            for path in root.glob("**/" + pattern):
+                if "subagents" in path.parts or path.name.startswith("agent-"):
+                    continue
+                try:
+                    modified = path.stat().st_mtime
+                    if now - modified < 7 * 86400:
+                        candidates.append((modified, path))
+                except OSError:
+                    continue
+            paths = {p for _, p in sorted(candidates, reverse=True)[:32]}
+            self.sessions = {p: s for p, s in self.sessions.items() if s.data["provider"] != provider or p in paths}
+            for path in paths:
+                if path not in self.sessions:
+                    self.sessions[path] = Session(path, provider)
+
+    def snapshot(self, now=None):
+        now = now or time.time()
+        self.discover(now)
+        values = []
+        transcripts = {}
+        for session in self.sessions.values():
+            session.read()
+            value = dict(session.data)
+            transcripts[session.path] = value
+            values.append(value)
+        # Hooks give Claude explicit permission/interrupt/end states, overriding only
+        # older transcript records for that session. They contain no prompts or tool input.
+        hooks = {}
+        for path in self.cache.glob("claude-*.json"):
+            try:
+                hook = json.loads(path.read_text())
+                if now - hook["updated"] < 7 * 86400:
+                    hooks[hook["session"]] = hook
+            except (OSError, ValueError, KeyError, TypeError):
+                continue
+        for session in self.sessions.values():
+            if session.data["provider"] != "claude":
+                continue
+            hook = hooks.pop(session.path.stem, None)
+            if hook:
+                value = transcripts[session.path]
+                if hook["updated"] >= value["updated"]:
+                    value.update({k: hook[k] for k in ("state", "updated", "source", "action", "started") if k in hook})
+        for hook in hooks.values():
+            value = empty("claude")
+            value.update({k: hook[k] for k in ("state", "updated", "source", "project", "action", "started") if k in hook})
+            values.append(value)
+        providers = []
+        for provider in ("codex", "claude"):
+            group = [v for v in values if v["provider"] == provider]
+            for value in group:
+                if value["state"] in BUSY and now - value["updated"] > STALE:
+                    value["state"] = "unknown"
+            group.sort(key=lambda v: (v["state"] in BUSY, v["state"] == "waiting", v["updated"]), reverse=True)
+            value = group[0] if group else empty(provider)
+            value["active"] = sum(v["state"] in BUSY for v in group)
+            providers.append(value)
+        return dict(providers=providers, active=sum(v["active"] for v in providers), updated=now)
+
+
+def hook_claude():
+    try:
+        record = json.load(sys.stdin)
+        event = record.get("hook_event_name")
+        states = {"UserPromptSubmit": "working", "PreToolUse": "working", "PostToolUse": "working",
+                  "PermissionRequest": "waiting", "Stop": "idle", "SessionEnd": "offline",
+                  "StopFailure": "idle", "SessionStart": "idle"}
+        state = states.get(event)
+        if event == "Notification" and record.get("notification_type") == "permission_prompt":
+            state = "waiting"
+        if not state or not record.get("session_id"):
+            return
+        monitor = Monitor()
+        monitor.cache.mkdir(parents=True, exist_ok=True, mode=0o700)
+        session = str(record["session_id"])
+        path = monitor.cache / ("claude-" + hashlib.sha256(session.encode()).hexdigest() + ".json")
+        try:
+            previous = json.loads(path.read_text())
+        except (OSError, ValueError):
+            previous = {}
+        now = time.time()
+        data = dict(session=session, state=state, updated=time.time(),
+                    project=Path(record.get("cwd") or "").name,
+                    started=now if event == "UserPromptSubmit" else previous.get("started", now),
+                    action=action_for(record.get("tool_name")) if event == "PreToolUse" else "thinking",
+                    source="Desktop" if record.get("source") == "desktop" else "Local")
+        temporary = path.with_suffix("." + str(os.getpid()) + ".tmp")
+        fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w") as stream:
+            json.dump(data, stream)
+        temporary.replace(path)
+    except (OSError, ValueError, TypeError):
+        pass  # A display helper must never interrupt the coding agent.
+
+
+def install_hooks():
+    path = Monitor().claude / "settings.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    raw = path.read_text() if path.exists() else "{}"
+    settings = json.loads(raw)
+    hooks = settings.setdefault("hooks", {})
+    command = shlex.join([str(Path(__file__).resolve()), "hook", "claude"])
+    for event in ("SessionStart", "UserPromptSubmit", "PreToolUse", "PermissionRequest", "PostToolUse",
+                  "Stop", "StopFailure", "SessionEnd", "Notification"):
+        entries = hooks.setdefault(event, [])
+        if not any(h.get("command") == command for entry in entries for h in entry.get("hooks", [])):
+            entries.append({"hooks": [{"type": "command", "command": command, "timeout": 3}]})
+    updated = json.dumps(settings, indent=2, ensure_ascii=False) + "\n"
+    if raw != updated:
+        if path.exists():
+            backup = path.with_name("settings.json.before-rice-ai-" + str(time.time_ns()))
+            backup.write_text(raw)
+            backup.chmod(0o600)
+        temporary = path.with_name("settings.json.rice-ai.tmp")
+        temporary.write_text(updated)
+        temporary.chmod(0o600)
+        temporary.replace(path)
+    print("Claude activity hooks installed; existing settings preserved.")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("command", nargs="?", default="status", choices=("status", "watch", "hook", "install-claude-hooks"))
+    parser.add_argument("provider", nargs="?", choices=("claude",))
+    args = parser.parse_args()
+    if args.command == "hook":
+        hook_claude()
+    elif args.command == "install-claude-hooks":
+        install_hooks()
+    else:
+        monitor = Monitor()
+        while True:
+            print(json.dumps(monitor.snapshot(), separators=(",", ":")), flush=True)
+            if args.command != "watch":
+                break
+            time.sleep(1)
+
+
+if __name__ == "__main__":
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass
