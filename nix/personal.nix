@@ -82,9 +82,13 @@ in {
       deps = [ "users" ];
       text = ''
         if id ${lib.escapeShellArg cfg.user} >/dev/null 2>&1; then
-          ${pkgs.python3}/bin/python3 ${source}/personal/apply.py \
+          ${pkgs.util-linux}/bin/setpriv \
+            --reuid ${lib.escapeShellArg cfg.user} \
+            --regid ${lib.escapeShellArg config.users.users.${cfg.user}.group} \
+            --init-groups --reset-env \
+            ${pkgs.python3}/bin/python3 ${source}/personal/apply.py \
             --source ${source} --home ${lib.escapeShellArg home} \
-            --user ${lib.escapeShellArg cfg.user} --owner ${lib.escapeShellArg cfg.user} \
+            --user ${lib.escapeShellArg cfg.user} \
             --profile ${cfg.profile} --managed-nixos
         fi
       '';

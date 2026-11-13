@@ -5,7 +5,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import pwd
 import shutil
 import tempfile
 
@@ -45,7 +44,7 @@ def digest(content):
 
 
 def deploy(source, home, user, profile="generic", dry_run=False, force=False,
-           extras=False, owner=None, managed=False):
+           extras=False, managed=False):
     home = home.absolute()
     state = home / ".local/state/my-darkshadow/installed.json"
     try:
@@ -77,8 +76,6 @@ def deploy(source, home, user, profile="generic", dry_run=False, force=False,
             path = path.parent
         for directory in reversed(missing):
             directory.mkdir(exist_ok=True)
-            if owner:
-                os.chown(directory, *owner)
 
     for rel, (content, executable) in files.items():
         target = home / rel
@@ -102,13 +99,9 @@ def deploy(source, home, user, profile="generic", dry_run=False, force=False,
                 base = home / ".local/state/my-darkshadow/backups"
                 mkdir(base)
                 backup = Path(tempfile.mkdtemp(prefix="before-install-", dir=base))
-                if owner:
-                    os.chown(backup, *owner)
             saved = backup / rel
             mkdir(saved.parent)
             shutil.copy2(target, saved, follow_symlinks=False)
-            if owner:
-                os.chown(saved, *owner, follow_symlinks=False)
             if target.is_symlink():
                 target.unlink()
         mkdir(target.parent)
@@ -116,8 +109,6 @@ def deploy(source, home, user, profile="generic", dry_run=False, force=False,
             temporary = Path(stream.name)
             stream.write(content)
         temporary.chmod(0o755 if executable else 0o644)
-        if owner:
-            os.chown(temporary, *owner)
         temporary.replace(target)
         previous[rel] = digest(content)
     if not dry_run:
@@ -125,8 +116,6 @@ def deploy(source, home, user, profile="generic", dry_run=False, force=False,
         temporary = state.with_suffix(".tmp")
         temporary.write_text(json.dumps(previous, indent=2) + "\n")
         temporary.replace(state)
-        if owner:
-            os.chown(state, *owner)
     print(f"{'Plan' if dry_run else 'Installed'}: {counts}; profile={profile}")
     if backup:
         print(f"Backup: {backup}")
@@ -142,17 +131,12 @@ def main():
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--force", action="store_true", help="Replace edited files, retaining backups")
     parser.add_argument("--extras", action="store_true", help="Fonts and initial wallpaper only")
-    parser.add_argument("--owner", help="Root deployment: assign created files to this account")
     parser.add_argument("--managed-nixos", action="store_true")
     args = parser.parse_args()
-    owner = None
-    if args.owner:
-        if os.geteuid() != 0:
-            parser.error("--owner requires root")
-        entry = pwd.getpwnam(args.owner)
-        owner = (entry.pw_uid, entry.pw_gid)
+    if os.geteuid() == 0:
+        parser.error("Run the deployer as the desktop account; system activation drops privileges first")
     deploy(args.source.resolve(), args.home, args.user, args.profile, args.dry_run,
-           args.force, args.extras, owner, args.managed_nixos)
+           args.force, args.extras, args.managed_nixos)
 
 
 if __name__ == "__main__":

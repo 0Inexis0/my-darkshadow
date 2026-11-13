@@ -2,6 +2,8 @@
 import importlib.util
 from importlib.machinery import SourceFileLoader
 import json
+import contextlib
+import io
 from pathlib import Path
 import subprocess
 import tempfile
@@ -60,6 +62,15 @@ class DeploymentTests(unittest.TestCase):
     def test_dry_run_does_not_create_home_or_manifest(self):
         apply.deploy(self.source, self.home, "alice", dry_run=True)
         self.assertFalse(self.home.exists())
+
+    def test_cli_cannot_write_user_controlled_paths_as_root(self):
+        with patch.object(apply.os, "geteuid", return_value=0), \
+             patch("sys.argv", ["apply.py", "--dry-run"]), \
+             contextlib.redirect_stderr(io.StringIO()), patch.object(apply, "deploy") as deploy:
+            with self.assertRaises(SystemExit) as stopped:
+                apply.main()
+            self.assertEqual(stopped.exception.code, 2)
+            deploy.assert_not_called()
 
     def test_symlink_directory_cannot_redirect_root_deployment(self):
         outside = self.home.parent / "outside"

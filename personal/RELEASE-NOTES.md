@@ -14,4 +14,4 @@ Open **Install my-darkshadow** from the live desktop launcher, or run `sudo dark
 
 Existing NixOS users can use `personal/bootstrap.sh --system` instead. See [GUIDE.md](https://github.com/0Inexis0/my-darkshadow/blob/main/GUIDE.md) for installation, backups and rollback.
 
-Validation: 28 Python checks and 10 QML login/scaling checks; ShellCheck; NixOS module evaluation; successful generic/Legion image builds; GitHub CI; redacted secret scans. Unicode/newline and PNG clipboard restoration were checked on the live Wayland clipboard with synthetic data, preserving existing history.
+Validation: Python regression checks and QML login/scaling checks; ShellCheck; NixOS module evaluation; successful generic/Legion image builds; GitHub CI; redacted secret scans. Unicode/newline and PNG clipboard restoration were checked on the live Wayland clipboard with synthetic data, preserving existing history.
