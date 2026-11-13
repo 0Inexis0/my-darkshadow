@@ -32,7 +32,8 @@ public issue for something that runs code or exposes data.
   IP. Until then the widgets show the cached answer or nothing.
 - **Lyrics**: `rice-lyrics on` allows asking lrclib.net about the current song (artist and title). Cached lyrics
   are used either way.
-- **Update checks**: on by default, once a day (`rice-update every N`), off with `rice-update watch off`.
+- **Update checks**: on by default, once a day (`every_minutes` in `~/.config/rice/update.json`), off with
+  `rice-update watch off`.
 
 ## Known limits
 
@@ -49,5 +50,4 @@ public issue for something that runs code or exposes data.
 
 ## Checks
 
-`tests/secure.sh`, `tests/update.sh` and `tests/checksums.sh` run on any machine (no Linux needed) and in CI on
-every push.
+`tests/security.sh` runs on any machine (no Linux needed) and in CI on every push.

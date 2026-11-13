@@ -52,7 +52,7 @@ extract_verified() { # extract_verified ARCHIVE DEST: unpack only into DEST, and
 # an update is code from the network: it may only come from this project (any fork of it), never from an address
 # that was edited into the repo
 update_remote_ok() {
-  local u="${RICE_UPDATE_REMOTE:-$(git -C "$ROOT" remote get-url origin 2>/dev/null || true)}"
+  local u; u="$(git -C "$ROOT" remote get-url origin 2>/dev/null || true)"
   [[ "$u" =~ github\.com[:/][A-Za-z0-9_.-]+/DarkShadowShell(\.git)?/?$ ]]
 }
 

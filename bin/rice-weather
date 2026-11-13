@@ -10,25 +10,10 @@
 #   rice-weather off                (no requests; the last cached answer is still shown)
 CFG="$HOME/.config/rice/weather.json"
 
-cfg_place() {
-  python3 - "$CFG" <<'PY' 2>/dev/null
-import json, sys
-try:
-    print(json.load(open(sys.argv[1])).get("place", ""))
-except Exception:
-    pass
-PY
-}
-
+weather_place() { python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("place",""))' "$CFG" 2>/dev/null; }
 save_place() {
   mkdir -p "$(dirname "$CFG")"
-  python3 - "$CFG" "$1" <<'PY'
-import json, os, sys
-p, place = sys.argv[1], sys.argv[2].strip()
-tmp = p + ".tmp"
-json.dump({"place": place}, open(tmp, "w"))
-os.replace(tmp, p)
-PY
+  python3 -c 'import json,os,sys; p=sys.argv[1]; t=p+".tmp"; json.dump({"place": sys.argv[2].strip()}, open(t,"w")); os.replace(t,p)' "$CFG" "$1"
 }
 
 case "${1:-}" in
@@ -37,10 +22,8 @@ case "${1:-}" in
     save_place "$2" && echo "Weather for: $2" ;;
   off)
     save_place "" && echo "Weather requests: off (the cached answer is still shown)" ;;
-  state)
-    printf '{"place":"%s"}\n' "$(cfg_place)" ;;
   *)
-    loc="$(cfg_place)"
+    loc="$(weather_place)"
     unit="m"
     grep -q '"units": *"f"' "$HOME/.config/rice/region.json" 2>/dev/null && unit="u"
     url_place=""

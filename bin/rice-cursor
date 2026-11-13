@@ -296,8 +296,7 @@ BIBATA_URL = "https://github.com/ful1e5/Bibata_Cursor/releases/download/" + BIBA
 def checksum_file():
     """the one list of pinned downloads (install/checksums.txt in the repo, installed for the shell)"""
     here = os.path.dirname(os.path.abspath(__file__))
-    for p in (os.environ.get("RICE_CHECKSUMS", ""),
-              HOME + "/.local/share/rice/checksums.txt",
+    for p in (HOME + "/.local/share/rice/checksums.txt",
               os.path.join(here, "..", "install", "checksums.txt")):
         if p and os.path.isfile(p):
             return p

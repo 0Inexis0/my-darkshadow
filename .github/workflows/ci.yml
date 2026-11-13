@@ -19,8 +19,6 @@ jobs:
           done
       - name: Security checks
         run: |
-          bash tests/secure.sh
-          bash tests/update.sh
-          bash tests/checksums.sh
+          bash tests/security.sh
       - name: Installer dry run
         run: SHADOWS_ALLOW_ROOT=1 ./install.sh --yes --dry-run

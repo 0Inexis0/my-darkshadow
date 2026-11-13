@@ -6,10 +6,10 @@
 - The `input` group (Infinite Desktop, SUPER + ALT + mouse) is no longer granted by the installer: `./install.sh --input-group`, or Settings > Desktop > Infinite Desktop > Allow, which explains that any program you run can then read every keyboard. NixOS: `programs.shadows-shell.inputGroup = true`
 - Weather asks for nothing until you set a place: `rice-weather place "Warsaw"` (before, wttr.in geolocated the IP). `rice-weather off` stops it; the cached answer is still shown
 - Lyrics are opt-in: `rice-lyrics on` / `off`. Cached lyrics always work
-- Update checks: once a day instead of every 15 minutes, configurable with `rice-update every N` minutes, and `rice-update watch off` stops them
+- Update checks: once a day instead of every 15 minutes (`every_minutes` in `~/.config/rice/update.json`), and `rice-update watch off` stops them
 - All pinned hashes are in one file, `install/checksums.txt` (installed as `~/.local/share/rice/checksums.txt`); `rice-cursor` reads it too, so a new download is allowed by adding one line there
 - `sync.sh` warns about real key shapes before publishing a config and stops instead of only printing a warning
-- `tests/secure.sh` and `tests/update.sh` cover the checks above; CI runs them
+- `tests/security.sh` covers the checks above; CI runs it
 
 ## V4.46: pick your file manager, in the wallpaper's colors; your picture on the login screen
 - Settings > Desktop > Look & Feel > File manager: Files (Nautilus), Thunar, Nemo, Dolphin or PCManFM, with an Install button for the ones you do not have. The one you pick opens with SUPER + E (Hyprland and niri) and for every "open folder" from your other apps (xdg-mime)

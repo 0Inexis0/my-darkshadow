@@ -67,17 +67,13 @@ case "$1" in
     echo "in through something else) can read every keyboard on this computer, not only this shell's keys."
     echo "Everything else in the shell works without it."
     echo
-    case " ${*:-} " in
-      *" --yes "*) ;;
-      *)
-        if [ ! -t 0 ]; then
-          echo "Not joining without a confirmation. Run:  rice-infinite allow --yes" >&2
-          exit 1
-        fi
-        printf 'Join the input group? [y/N] '
-        read -r a || a=""
-        case "$a" in y | Y | yes | YES) ;; *) echo "Nothing was changed."; exit 1 ;; esac ;;
-    esac
+    if [ ! -t 0 ]; then
+      echo "Not joining without a confirmation: run  rice-infinite allow  in a terminal." >&2
+      exit 1
+    fi
+    printf 'Join the input group? [y/N] '
+    read -r a || a=""
+    case "$a" in y | Y | yes | YES) ;; *) echo "Nothing was changed."; exit 1 ;; esac
     sudo usermod -aG input "$USER" && echo && echo "Done. Log out and back in, then it works." ;;
   state)
     on=$(val on "$st"); z=$(val z "$st")

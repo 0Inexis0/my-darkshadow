@@ -4,9 +4,8 @@
   rice-update               install the newest version (runs ./install.sh --update in the repo)
   rice-update check [--json] [--offline]
                             compare your version with the newest one on GitHub
-  rice-update watch [on|off]  background: checks after login and once a day (update.json: every_minutes), shows a
-                            notification; off: no background checks at all
-  rice-update every N       how often the background check asks GitHub, in minutes (60 - 10080)
+  rice-update watch [on|off]  background: checks after login and once a day, shows a notification; off: no checks
+                            (how often: every_minutes in ~/.config/rice/update.json, 60 - 10080)
   rice-update notify        show the "Update is Available!" notification now (to try it)
   rice-update gui           update in the background for Settings > Update Center (no terminal): the steps go to
                             ~/.cache/rice/update-live.log, the state to ~/.cache/rice/update-live.json
@@ -408,13 +407,6 @@ def main(a):
                                  stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, start_new_session=True)
         else:
             watch()
-    elif cmd == "every":
-        if len(a) < 3 or not a[2].isdigit():
-            sys.exit("rice-update every N   (minutes, 60 - 10080)")
-        c = cfg()
-        c["every_minutes"] = max(60, min(10080, int(a[2])))
-        save_cfg(c)
-        print("Background update checks: every %d minutes" % c["every_minutes"])
     elif cmd == "notify":
         st = check(offline="--offline" in a)
         if not st["news"]:
