@@ -4,6 +4,12 @@ import Quickshell.Wayland
 import QtQuick
 
 ShellRoot {
+    // Keep successful hot reloads quiet; load errors still show their diagnostic popup.
+    Connections {
+        target: Quickshell
+        function onReloadCompleted() { Quickshell.inhibitReloadPopup() }
+    }
+
 FloatingWindow {
     id: win
     // never translated: Hyprland and niri find the window by this title (its blur, size and floating rules)

@@ -9,7 +9,13 @@ hl.layer_rule({
     name  = "rice-bar-blur",
     match = { namespace = "rice-bar" },
     blur = true,
-    ignore_alpha = 0.1,
+    ignore_alpha = 0.25,
+})
+hl.layer_rule({
+    name  = "rice-walls-blur",
+    match = { namespace = "rice-walls" },
+    blur = true,
+    ignore_alpha = 0.4,
 })
 hl.layer_rule({
     name  = "rice-taskview-blur",
@@ -52,4 +58,10 @@ hl.layer_rule({
     match = { namespace = "rice-osd" },
     blur = true,
     ignore_alpha = 0.1,
+})
+hl.layer_rule({
+    name  = "rice-gamebar-blur",
+    match = { namespace = "rice-gamebar" },
+    blur = true,
+    ignore_alpha = 0.5,
 })

@@ -43,7 +43,7 @@ hl.monitor({
 
 -- Set programs that you use
 local terminal    = "$HOME/.local/bin/rice-term"   -- your terminal (Settings > Desktop > Look & Feel)
-local fileManager = "dolphin"
+local fileManager = "nautilus"
 local menu        = "$HOME/.local/bin/rice-launch"   -- the launcher (SUPER + R, ALT + Space)
 
 
@@ -63,6 +63,7 @@ hl.on("hyprland.start", function ()
    hl.exec_cmd("hypridle")
    hl.exec_cmd("$HOME/.local/bin/border-sync")
    hl.exec_cmd("$HOME/.local/bin/ws-watch")
+   hl.exec_cmd("$HOME/.local/bin/rice-scale-sync")
  end)
 
 
@@ -84,6 +85,10 @@ pcall(function()
     end
     hl.env("XDG_DATA_DIRS", d)
 end)
+
+-- Render X11 apps at physical resolution. rice-scale-sync publishes the
+-- shell's display scale as desktop DPI so apps draw text at the right size.
+hl.config({ xwayland = { force_zero_scaling = true } })
 
 
 -----------------------
@@ -242,7 +247,7 @@ hl.config({
 
 hl.config({
     input = {
-        kb_layout  = "us",
+        kb_layout  = "de",
         kb_variant = "",
         kb_model   = "",
         kb_options = "",
@@ -284,7 +289,7 @@ local closeWindowBind = hl.bind(mainMod .. " + C", hl.dsp.window.close())
 -- closeWindowBind:set_enabled(false)
 hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"))
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
-hl.bind(mainMod .. " + SHIFT + V", hl.dsp.window.float({ action = "toggle" }))   -- SUPER + V: the clipboard
+hl.bind(mainMod .. " + SHIFT + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only
@@ -502,11 +507,14 @@ pcall(require, "rice-infinite")
 
 require("rice-dashboard")
 
--- must stay last: gaming mode and "no blur & transparency" override
-require("rice-gaming")
 
 -- your own keys for the shell's actions (Settings > System > Keybinds)
 pcall(require, "rice-keymap")
 
--- yours: ~/.config/hypr/user.lua (updates never change it; it is loaded last, so it wins)
+pcall(require, "rice-gpu")
+
+-- must stay last: gaming mode and "no blur & transparency" override
+require("rice-gaming")
+
+-- Personal overrides are always loaded last.
 pcall(require, "user")

@@ -2,8 +2,8 @@
   "widgets": {
     "weather": {
       "enabled": false,
-      "x": 725,
-      "y": 274,
+      "x": 1261,
+      "y": 832,
       "scale": 1.0
     },
     "media": {
@@ -14,14 +14,15 @@
     },
     "resources": {
       "enabled": false,
-      "x": 55,
-      "y": 598,
+      "x": 18,
+      "y": 63,
       "scale": 1.0
     },
     "usercard": {
       "enabled": false,
-      "x": 1538,
-      "y": 81
+      "x": 630,
+      "y": 573,
+      "scale": 1.0
     },
     "calendar": {
       "enabled": false,
@@ -29,21 +30,73 @@
       "y": 607
     },
     "visualizer": {
-      "enabled": false,
+      "enabled": true,
       "x": 0,
       "y": 1040,
       "w": 1920,
       "h": 40,
       "style": "bars",
-      "flip": false
+      "flip": false,
+      "gain": "1"
     },
     "battery": {
       "enabled": false,
-      "x": 779,
-      "y": 471,
+      "x": 1311,
+      "y": 63,
       "scale": 0.937,
       "opacity": 1.0,
       "bg": 1.0
+    },
+    "todo": {
+      "enabled": false
+    },
+    "focus": {
+      "enabled": false
+    },
+    "notes": {
+      "enabled": false
+    },
+    "gauge": {
+      "enabled": false
+    },
+    "date": {
+      "enabled": false
+    },
+    "sky": {
+      "enabled": false,
+      "x": 34,
+      "y": 60,
+      "scale": 1.0
+    },
+    "nowring": {
+      "enabled": false
+    },
+    "player": {
+      "enabled": false
+    },
+    "playpill": {
+      "enabled": false
+    },
+    "lyrics": {
+      "enabled": false
+    },
+    "storage": {
+      "enabled": false
+    },
+    "trio": {
+      "enabled": false,
+      "x": 635,
+      "y": 827,
+      "scale": 1.0
+    },
+    "forecast": {
+      "enabled": false
+    },
+    "music": {
+      "enabled": false
+    },
+    "datepill": {
+      "enabled": false
     }
   },
   "clock": {
@@ -54,21 +107,24 @@
     "font": "bebas"
   },
   "dock": {
-    "enabled": false,
+    "enabled": true,
+    "position": "bottom",
     "background": true,
-    "hover": true,
+    "hover": false,
     "pinnedStartup": false,
     "media": true,
+    "nowText": true,
     "pinButton": true,
     "appsButton": true,
-    "tint": false,
+    "tint": true,
+    "shade": true,
+    "appMenu": true,
     "opacity": 0.78,
     "blur": true,
+    "reserve": true,
     "apps": [
-      "kitty",
       "org.gnome.Nautilus",
-      "firefox",
-      "spotify",
+      "brave-browser",
       "discord",
       "steam"
     ]
@@ -78,7 +134,13 @@
     "widgets": false,
     "media": false
   },
+  "gamebar": {
+    "opacity": 0.9,
+    "blur": true
+  },
   "widgetBlur": true,
-  "autoHide": true,
+  "widgetTheme": "shadow",
+  "widgetAdapt": true,
+  "autoHide": false,
   "editing": false
 }

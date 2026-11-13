@@ -208,7 +208,7 @@ PanelWindow {
         Text {
             visible: wm.nets.length === 0
             x: 18; y: head.height + 24; width: parent.width - 36; horizontalAlignment: Text.AlignHCenter
-            text: wm.radio ? Tr.t("No networks found") : Tr.t("Wi-Fi is off")
+            text: stateProc.running ? Tr.t("Scanning…") : (wm.radio ? Tr.t("No networks found") : Tr.t("Wi-Fi is off"))
             color: wm.dim; font.family: Fonts.main; font.pixelSize: 13
         }
         Flickable {

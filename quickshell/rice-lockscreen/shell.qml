@@ -11,6 +11,12 @@ import QtQuick
 // RICE_LOCK_PREVIEW=1 shows it in a normal full-screen window (Settings > Preview): Esc closes it.
 // The shared parts (Look, Fonts, Blob, WavyLine ...) are copied here from rice-desktop by rice-lock.
 ShellRoot {
+    // Keep successful hot reloads quiet; load errors still show their diagnostic popup.
+    Connections {
+        target: Quickshell
+        function onReloadCompleted() { Quickshell.inhibitReloadPopup() }
+    }
+
     id: lockShell
     // the views reach this through LockCtx (an id or a property passed into the lock window was not always seen)
     Component.onCompleted: LockCtx.root = lockShell

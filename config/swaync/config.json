@@ -34,6 +34,7 @@
     "notifications",
     "mpris",
     "volume",
+    "backlight",
     "buttons-grid#session"
   ],
   "widget-config": {
@@ -43,7 +44,9 @@
       "button-text": "󰩺  Clear"
     },
     "backlight": {
-      "label": "󰃟"
+      "label": "󰃟",
+      "device": "nvidia_0",
+      "subsystem": "backlight"
     },
     "dnd": {
       "text": "Do Not Disturb"
@@ -60,7 +63,7 @@
       "actions": [
         {
           "label": "󰐥",
-          "command": "$HOME/.local/bin/rice-sys poweroff"
+          "command": "systemctl poweroff"
         },
         {
           "label": "󰌾",
@@ -112,18 +115,18 @@
           "update-command": "@HOME@/.local/bin/rice-services is dnd"
         },
         {
+          "label": "󰖔",
+          "type": "toggle",
+          "active": false,
+          "command": "@HOME@/.local/bin/rice-services toggle nightlight",
+          "update-command": "@HOME@/.local/bin/rice-services is nightlight"
+        },
+        {
           "label": "󰅶",
           "type": "toggle",
           "active": false,
           "command": "@HOME@/.local/bin/rice-services toggle awake",
           "update-command": "@HOME@/.local/bin/rice-services is awake"
-        },
-        {
-          "label": "󰍬",
-          "type": "toggle",
-          "active": false,
-          "command": "@HOME@/.local/bin/rice-services toggle mic",
-          "update-command": "@HOME@/.local/bin/rice-services is mic"
         }
       ]
     },
@@ -181,11 +184,23 @@
   },
   "scripts": {
     "rice-sound": {
-      "exec": "@HOME@/.local/bin/rice-sound notify",
+      "exec": "exec /bin/sh @HOME@/.local/bin/rice-run rice-sound notify",
       "app-name": ".*",
       "run-on": "receive"
+    },
+    "rice-keep": {
+      "exec": "exec /bin/sh @HOME@/.local/bin/rice-run rice-notify keep",
+      "app-name": ".*",
+      "run-on": "action"
     }
   },
   "control-center-positionX": "right",
-  "control-center-positionY": "top"
+  "control-center-positionY": "top",
+  "notification-grouping": false,
+  "notification-visibility": {
+    "rice-kept": {
+      "category": "^rice\\.kept$",
+      "state": "muted"
+    }
+  }
 }

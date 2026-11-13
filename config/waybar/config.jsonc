@@ -36,7 +36,7 @@
     "scroll-step": 5,
     "format": "{icon} {volume}%",
     "format-muted": "󰝟 muted",
-    "on-click": "pavucontrol",
+    "on-click": "$HOME/.local/bin/rice-sfx play click >/dev/null 2>&1 & pavucontrol",
     "format-icons": {
       "default": [
         "󰕿",
@@ -60,7 +60,7 @@
       }
     },
     "first-day-of-week": 1,
-    "on-click": "pkill -x gsimplecal || XDG_CONFIG_HOME=$HOME/.config/gsimplecal-home GTK_THEME=Adwaita:dark gsimplecal"
+    "on-click": "$HOME/.local/bin/rice-sfx play click >/dev/null 2>&1 & pkill -x gsimplecal || XDG_CONFIG_HOME=$HOME/.config/gsimplecal-home GTK_THEME=Adwaita:dark gsimplecal"
   },
   "group/apps": {
     "orientation": "horizontal",
@@ -79,7 +79,7 @@
     "format-connected": "󰂱",
     "tooltip-format": "{status}",
     "tooltip-format-connected": "{device_alias}",
-    "on-click": "overskride",
+    "on-click": "$HOME/.local/bin/rice-sfx play click >/dev/null 2>&1 & overskride",
     "format-on": "󰂯",
     "format-off": "󰂲",
     "format-disabled": "󰂲"
@@ -99,14 +99,14 @@
     },
     "return-type": "json",
     "exec": "swaync-client -swb",
-    "on-click": "swaync-client -t -sw",
-    "on-click-right": "swaync-client -d -sw",
+    "on-click": "$HOME/.local/bin/rice-sfx play click >/dev/null 2>&1 & swaync-client -t -sw",
+    "on-click-right": "$HOME/.local/bin/rice-sfx play click >/dev/null 2>&1 & swaync-client -d -sw",
     "escape": true,
     "exec-if": "which swaync-client"
   },
   "custom/lock": {
     "format": "󰐥",
-    "on-click": "hyprlock",
+    "on-click": "$HOME/.local/bin/rice-sfx play click >/dev/null 2>&1 & hyprlock",
     "tooltip": true,
     "tooltip-format": "Lock Screen"
   },
@@ -118,7 +118,7 @@
     "tooltip-format-wifi": "{essid} ({signalStrength}%)",
     "tooltip-format-ethernet": "{ifname}",
     "tooltip-format-disconnected": "Disconnected",
-    "on-click": "$HOME/.local/bin/wifi-menu"
+    "on-click": "$HOME/.local/bin/rice-sfx play click >/dev/null 2>&1 & $HOME/.local/bin/rice-wifi"
   },
   "group/ws": {
     "orientation": "horizontal",
@@ -136,7 +136,7 @@
     "signal": 8,
     "format": "{}",
     "tooltip": false,
-    "on-click": "$HOME/.local/bin/ws-go 1",
+    "on-click": "$HOME/.local/bin/rice-sfx play click >/dev/null 2>&1 & $HOME/.local/bin/ws-go 1",
     "on-scroll-up": "$HOME/.local/bin/ws-go e-1",
     "on-scroll-down": "$HOME/.local/bin/ws-go e+1"
   },
@@ -147,7 +147,7 @@
     "signal": 8,
     "format": "{}",
     "tooltip": false,
-    "on-click": "$HOME/.local/bin/ws-go 2",
+    "on-click": "$HOME/.local/bin/rice-sfx play click >/dev/null 2>&1 & $HOME/.local/bin/ws-go 2",
     "on-scroll-up": "$HOME/.local/bin/ws-go e-1",
     "on-scroll-down": "$HOME/.local/bin/ws-go e+1"
   },
@@ -158,7 +158,7 @@
     "signal": 8,
     "format": "{}",
     "tooltip": false,
-    "on-click": "$HOME/.local/bin/ws-go 3",
+    "on-click": "$HOME/.local/bin/rice-sfx play click >/dev/null 2>&1 & $HOME/.local/bin/ws-go 3",
     "on-scroll-up": "$HOME/.local/bin/ws-go e-1",
     "on-scroll-down": "$HOME/.local/bin/ws-go e+1"
   },
@@ -169,7 +169,7 @@
     "signal": 8,
     "format": "{}",
     "tooltip": false,
-    "on-click": "$HOME/.local/bin/ws-go 4",
+    "on-click": "$HOME/.local/bin/rice-sfx play click >/dev/null 2>&1 & $HOME/.local/bin/ws-go 4",
     "on-scroll-up": "$HOME/.local/bin/ws-go e-1",
     "on-scroll-down": "$HOME/.local/bin/ws-go e+1"
   },
@@ -177,13 +177,13 @@
     "path": "/run/current-system/sw/share/icons/hicolor/scalable/apps/nix-snowflake-white.svg",
     "size": 16,
     "tooltip": false,
-    "on-click": "rofi -show drun"
+    "on-click": "$HOME/.local/bin/rice-sfx play click >/dev/null 2>&1 & rofi -show drun"
   },
   "custom/distro": {
     "exec": "echo .",
     "interval": "once",
     "format": "",
     "tooltip": false,
-    "on-click": "rofi -show drun"
+    "on-click": "$HOME/.local/bin/rice-sfx play click >/dev/null 2>&1 & rofi -show drun"
   }
 }

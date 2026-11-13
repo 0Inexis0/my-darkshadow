@@ -4,6 +4,12 @@ import Quickshell.Wayland
 import QtQuick
 
 ShellRoot {
+    // Keep successful hot reloads quiet; load errors still show their diagnostic popup.
+    Connections {
+        target: Quickshell
+        function onReloadCompleted() { Quickshell.inhibitReloadPopup() }
+    }
+
     id: root
     property var cfg: ({ widgets: {}, clock: {}, dock: {}, lock: {} })
     property string cfgText: ""

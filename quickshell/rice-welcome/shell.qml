@@ -9,6 +9,12 @@ import QtQuick.Effects
 // draws itself in, and "Take a look" opens the night up again from the moon. Then Settings opens with a
 // short tour.
 ShellRoot {
+    // Keep successful hot reloads quiet; load errors still show their diagnostic popup.
+    Connections {
+        target: Quickshell
+        function onReloadCompleted() { Quickshell.inhibitReloadPopup() }
+    }
+
     id: root
     readonly property string home: Quickshell.env("HOME")
     readonly property string user: Quickshell.env("USER")

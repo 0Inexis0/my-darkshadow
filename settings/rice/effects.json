@@ -1,1 +1,1 @@
-{"lite": false, "keep_blur": false, "keep_anim": false, "keep_gaps": false, "keep_shadows": false, "dnd": false, "edge": false}
+{"lite": false, "keep_blur": true, "keep_anim": true, "keep_gaps": true, "keep_shadows": true, "dnd": false, "edge": false}

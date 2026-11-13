@@ -7,7 +7,29 @@ fp_add() { case ":${XDG_DATA_DIRS}:" in *":$1:"*) ;; *) [ -d "$1" ] && XDG_DATA_
 fp_add "${XDG_DATA_HOME:-$HOME/.local/share}/flatpak/exports/share"
 fp_add "/var/lib/flatpak/exports/share"
 export XDG_DATA_DIRS
-running() { pgrep -f "quickshell/rice-desktop" >/dev/null; }
+# Quickshell's crash recovery can relaunch without the original -p argument.
+# Its instance registry still knows the config; command-line matching does not.
+running() {
+    local instances
+    instances=$(qs list -p "$dir" -j 2>/dev/null) || return 1
+    printf '%s\n' "$instances" | python3 -c '
+import json, sys
+try:
+    instances = json.load(sys.stdin)
+    sys.exit(0 if isinstance(instances, list) and instances else 1)
+except (ValueError, OSError):
+    sys.exit(1)
+'
+}
+stop_shell() {
+    running || return 0
+    qs kill -p "$dir" >/dev/null 2>&1
+}
+start_shell() {
+    # Work around observed Qt QML GC crashes with non-incremental collection.
+    # This still collects garbage; an explicit environment value takes priority.
+    QV4_GC_TIMELIMIT="${QV4_GC_TIMELIMIT:-0}" setsid -f qs -n -p "$dir" >/dev/null 2>&1
+}
 # a fresh login never starts in the widget editor
 [ "$1" = start ] && "$HOME/.local/bin/desktop-set" edit off >/dev/null 2>&1
 case "$1" in
@@ -40,11 +62,11 @@ case "$1" in
     running && exit 0
     [ -f "$dir/shell.qml" ] || { echo "missing $dir/shell.qml" >&2; exit 1; }
     "$HOME/.local/bin/desktop-set" state >/dev/null 2>&1
-    setsid -f qs -n -p "$dir" >/dev/null 2>&1
+    start_shell
     ;;
-  stop) pkill -f "quickshell/rice-desktop" ;;
+  stop) stop_shell ;;
   restart)
-    pkill -f "quickshell/rice-desktop"
+    stop_shell || exit 1
     # background helpers: start the new versions
     pkill -f "\.local/bin/rice-ws-watch" 2>/dev/null
     pkill -f "\.local/bin/rice-update watch" 2>/dev/null
@@ -52,7 +74,8 @@ case "$1" in
     [ -x "$HOME/.local/bin/rice-ws-watch" ] && setsid -f "$HOME/.local/bin/rice-ws-watch" >/dev/null 2>&1
     [ -x "$HOME/.local/bin/rice-update" ] && setsid -f "$HOME/.local/bin/rice-update" watch >/dev/null 2>&1
     for _ in 1 2 3 4 5 6 7 8 9 10; do running || break; sleep 0.2; done
-    setsid -f qs -n -p "$dir" >/dev/null 2>&1
+    running && { echo "desktop shell did not stop" >&2; exit 1; }
+    start_shell
     ;;
   status) running && echo running || { echo stopped; exit 1; } ;;
   *) echo "usage: rice-desktop start|stop|restart|ensure|status" >&2; exit 1 ;;

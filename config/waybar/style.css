@@ -219,6 +219,10 @@ tooltip label {
 
 /* rice-ui */
 
+window#waybar, window#waybar * {
+    font-family: "Google Sans Flex", "JetBrainsMono Nerd Font";
+}
+
 window#waybar {
     background: rgba(13, 13, 13, 0.25);
 }

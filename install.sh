@@ -874,6 +874,7 @@ step_finish() {
   task "Theme colors for the wallpaper picker" patch_colors
   # last: it must stay the last module Hyprland loads
   [ -x "$BIN/rice-effects" ] && task "Blur, transparency and gaming mode" t "$BIN/rice-effects" apply --no-reload
+  task "my-darkshadow: bundled fonts and wallpaper defaults" t python3 "$ROOT/personal/apply.py" --extras
   [ -x "$BIN/rice-fonts" ] && T=400 task "Fonts: Google Sans Flex & Code, Material Symbols, Nerd Font icons (skips what you have)" t "$BIN/rice-fonts"
   [ -x "$BIN/font-set" ] && task "Google Sans Flex as the interface font" t "$BIN/font-set" migrate
   [ -x "$BIN/rice-look" ] && task "Look & Feel: your shell, terminal and fastfetch" t "$BIN/rice-look" apply

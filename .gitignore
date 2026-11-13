@@ -3,3 +3,16 @@ __pycache__/
 *.bak*
 .env
 *.log
+.env.*
+!.env.example
+result
+result-*
+dist/
+*.iso
+*.bundle
+*.qcow2
+*.raw
+*.pem
+*.key
+secrets/
+auth.json

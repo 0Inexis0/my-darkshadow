@@ -1,0 +1,18 @@
+{
+  "folders": [],
+  "waypaper": true,
+  "waypaper_post": "",
+  "slideshow": {
+    "on": false,
+    "minutes": 30,
+    "order": "shuffle",
+    "folder": ""
+  },
+  "live": {
+    "sound": false
+  },
+  "transition": {
+    "style": "portal",
+    "speed": 1.0
+  }
+}

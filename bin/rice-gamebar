@@ -2,7 +2,7 @@
 # rice-gamebar [toggle|open|close]   the game bar (SUPER + G): CPU / GPU, RAM, ping, capture, power mode,
 # gaming mode, volume and brightness on one panel over your game.
 mkdir -p "$HOME/.cache/rice"
-if ! pgrep -f "quickshell/rice-desktop" >/dev/null 2>&1; then
+if ! "$HOME/.local/bin/rice-desktop" status >/dev/null 2>&1; then
   [ -x "$HOME/.local/bin/rice-desktop" ] && "$HOME/.local/bin/rice-desktop" ensure >/dev/null 2>&1
   sleep 1
 fi

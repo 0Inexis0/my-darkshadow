@@ -51,7 +51,7 @@ if [ "${1:-}" = list ]; then
   done
   exit 0
 fi
-if pgrep -f "quickshell/rice-desktop" >/dev/null 2>&1; then
+if "$HOME/.local/bin/rice-desktop" status >/dev/null 2>&1; then
   mkdir -p "$HOME/.cache/rice"
   printf '%s %s\n' "$(date +%s.%N)" "${1:-0} ${2:-}" >"$HOME/.cache/rice/bluetooth-open"
 else

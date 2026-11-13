@@ -11,3 +11,15 @@ hl.layer_rule({
     blur = true,
     ignore_alpha = 0.1,
 })
+hl.layer_rule({
+    name  = "rice-cc-blur",
+    match = { namespace = "rice-cc" },
+    blur = true,
+    ignore_alpha = 0.5,
+})
+hl.layer_rule({
+    name  = "rice-notify-popup-blur",
+    match = { namespace = "rice-notify-popup" },
+    blur = true,
+    ignore_alpha = 0.5,
+})

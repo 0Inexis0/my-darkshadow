@@ -3,5 +3,5 @@ hl.layer_rule({
     name  = "rice-hotcorner-blur",
     match = { namespace = "rice-hotcorner" },
     blur = true,
-    ignore_alpha = 0.1,
+    ignore_alpha = 0.35,
 })

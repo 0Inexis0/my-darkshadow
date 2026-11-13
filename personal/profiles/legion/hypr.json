@@ -1,0 +1,24 @@
+{
+  "opts": {},
+  "borders": {},
+  "anim": {
+    "style": "calm"
+  },
+  "monitors": {
+    "eDP-1": {
+      "mode": "2560x1600@240",
+      "position": "0x0",
+      "scale": 1.6
+    },
+    "eDP-2": {
+      "mode": "2560x1600@240",
+      "position": "0x0",
+      "scale": 1.6,
+      "transform": 0,
+      "disabled": false
+    }
+  },
+  "binds": [],
+  "autostart": [],
+  "kbd": {}
+}

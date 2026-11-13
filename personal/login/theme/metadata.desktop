@@ -1,0 +1,12 @@
+[SddmGreeterTheme]
+Name=DarkShadow
+Description=Monochromer Anmeldebildschirm passend zu DarkShadowShell
+Author=Tyler
+License=MIT
+Type=sddm-theme
+Version=1.0
+MainScript=Main.qml
+ConfigFile=theme.conf
+Theme-Id=darkshadow
+Theme-API=2.0
+QtVersion=6

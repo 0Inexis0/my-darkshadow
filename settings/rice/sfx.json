@@ -1,0 +1,10 @@
+{
+  "enabled": false,
+  "volume": 45,
+  "pack": "pebble",
+  "click": true,
+  "switch": true,
+  "slider": true,
+  "typing": true,
+  "music": true
+}
