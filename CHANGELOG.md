@@ -1,5 +1,8 @@
 # Changelog
 
+## V4.49: CI green again
+- The ShellCheck step of CI failed on two notes in the new `install/lib/secure.sh` (V4.48). Both are intended code, now marked as such. Nothing changes for you
+
 ## V4.48: security and privacy: verified downloads, guarded updates, opt-in permissions and lookups
 Thanks to notwafel, who reviewed the shell and sent all of this (pull request #15).
 - Downloads: matugen and the Bibata cursor are pinned to a release tag and checked against `install/checksums.txt` (SHA-256) before they are unpacked or installed. An archive with `../`, absolute paths or links pointing out of its folder is refused (`install/lib/secure.sh`)

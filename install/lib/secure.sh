@@ -66,6 +66,7 @@ update_precheck() {
   up="$(git -C "$ROOT" rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || echo origin/main)"
   t="$(git -C "$ROOT" rev-parse "$up" 2>/dev/null || true)"
   update_guard "$(git -C "$ROOT" rev-parse HEAD 2>/dev/null)" "$t" || return 1
+  # shellcheck disable=SC2034  # read by install.sh, which sources this file
   GUARD_CHECKED="$t"
 }
 
@@ -85,6 +86,7 @@ update_guard() {
   if [ ! -t 0 ] || [ -n "${RICE_GUI:-}" ]; then
     # from Settings > Update Center: a terminal opens with rice-update, which shows this and asks (nothing moves here)
     if [ -n "${RICE_GUI:-}" ] && [ -n "${WAYLAND_DISPLAY:-}" ] && [ -x "$HOME/.local/bin/rice-term" ]; then
+      # shellcheck disable=SC2016  # the single quotes are meant: the terminal's own shell expands $HOME
       setsid -f "$HOME/.local/bin/rice-term" -e bash -c '"$HOME/.local/bin/rice-update"; echo; read -n1 -rsp "Press a key to close"' >/dev/null 2>&1
       fail "This update changes the installer: a terminal opened to show what changes and ask you. Nothing was changed yet."
     else
