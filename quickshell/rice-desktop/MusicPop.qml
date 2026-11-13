@@ -88,7 +88,7 @@ Item {
                             Rectangle { width: 2.5; radius: 1.25; anchors.bottom: parent.bottom; color: mp.acc
                                 property real h: 4
                                 height: h
-                                SequentialAnimation on h { running: mp.on && pl.playing; loops: Animation.Infinite
+                                SequentialAnimation on h { running: mp.on && pl.playing && !Look.lite; loops: Animation.Infinite
                                     NumberAnimation { to: 12; duration: 260 + index * 90; easing.type: Easing.InOutSine }
                                     NumberAnimation { to: 3; duration: 300 + index * 70; easing.type: Easing.InOutSine } } } } } }
                 Text { id: idt; anchors.verticalCenter: parent.verticalCenter; text: pl.p ? (pl.p.identity || "Music") : ""; color: mp.acc
