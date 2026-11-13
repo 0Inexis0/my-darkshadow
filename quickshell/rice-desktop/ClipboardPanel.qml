@@ -18,7 +18,7 @@ PanelWindow {
     readonly property real et: ease(t)
     onOpenChanged: {
         t = open ? 1 : 0
-        if (open) { query = ""; cur = 0; filter = "all"; armed = false; listP.running = true; field.forceActiveFocus(); appear.restart() }
+        if (open) { field.text = ""; query = ""; cur = 0; filter = "all"; armed = false; loaded = false; listP.running = true; field.forceActiveFocus(); appear.restart() }
     }
 
     Trigger {

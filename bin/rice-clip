@@ -51,10 +51,14 @@ def save(c):
     os.replace(tmp, CFG)
 
 
-def run(cmd, inp=None, timeout=4, text=True):
+def run(cmd, inp=None, timeout=4, text=True, capture=True):
     try:
-        r = subprocess.run(cmd, input=inp, capture_output=True, timeout=timeout, text=text)
-        return r.returncode, r.stdout
+        # cliphist list supplies a text entry line even when decode returns raw image/text bytes.
+        if not text and isinstance(inp, str):
+            inp = inp.encode("utf-8")
+        output = {"capture_output": True} if capture else {"stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL}
+        r = subprocess.run(cmd, input=inp, timeout=timeout, text=text, **output)
+        return r.returncode, r.stdout if capture else ("" if text else b"")
     except Exception:
         return 1, "" if text else b""
 
@@ -147,12 +151,17 @@ def cmd_copy(cid):
     code, data = cliphist("decode", inp=line + "\n", text=False)
     if code != 0:
         sys.exit(1)
-    run(["wl-copy"], inp=data, text=False)
+    # wl-copy forks a clipboard owner; capturing its inherited pipes would wait until the selection changes.
+    code, _ = run(["wl-copy"], inp=data, text=False, capture=False)
+    if code != 0:
+        sys.exit("Could not update the Wayland clipboard")
     paste_later()
 
 
 def cmd_copy_text(t):
-    run(["wl-copy", "--", t])
+    code, _ = run(["wl-copy"], inp=t, capture=False)
+    if code != 0:
+        sys.exit("Could not update the Wayland clipboard")
     paste_later()
 
 
@@ -203,7 +212,14 @@ def cmd_unwatch():
 def cmd_open(how):
     os.makedirs(CACHE, exist_ok=True)
     cmd_watch()
-    open(CACHE + "/clip-open", "w").write("%.4f %s\n" % (time.time(), how))
+    if how != "close":
+        code, status = run([HOME + "/.local/bin/rice-desktop", "status"])
+        if code != 0 or status.strip() != "running":
+            subprocess.Popen([HOME + "/.local/bin/rice-desktop", "ensure"],
+                             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL, start_new_session=True)
+    with open(CACHE + "/clip-open", "w") as stream:
+        stream.write("%.4f %s\n" % (time.time(), how))
 
 
 def main(a):
@@ -251,4 +267,5 @@ def main(a):
         sys.exit(__doc__)
 
 
-main(sys.argv)
+if __name__ == "__main__":
+    main(sys.argv)

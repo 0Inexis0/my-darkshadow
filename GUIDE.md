@@ -76,6 +76,8 @@ The dock pins Nautilus, Brave, Discord and Steam. The bar has four Pac-Man works
 
 `rice-scale-sync` follows the main display's scale and publishes XSettings/Xresources DPI for X11 apps. Native Wayland apps keep compositor-managed scaling. Existing X11 apps may need restarting after a DPI change. SDDM reads the same monitor settings through a root service that exports numeric scales to `/run`, without exposing the private home directory.
 
+Clipboard history restores raw text/image bytes without waiting on the background clipboard owner's output pipes. Failed clipboard writes do not trigger a paste of stale content. Opening the panel recovers a missing desktop shell; reopening clears the previous search. Clipboard history and private pins are never part of this repository or its ISO.
+
 The Quickshell recovery fix queries the configuration's instance registry instead of process arguments. Wi-Fi, Bluetooth, sound, power, launcher, gamebar and control-center routing share this check. Stop/restart target only the desktop configuration. `QV4_GC_TIMELIMIT` defaults to `0`, selecting non-incremental garbage collection. It does **not** disable collection; an explicit environment value takes precedence. This is a workaround for observed crashes, not a proven correction of their underlying cause. See [Qt documentation](https://doc.qt.io/qt-6/qtqml-javascript-finetuning.html).
 
 ## Update and rollback
