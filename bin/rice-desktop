@@ -20,6 +20,7 @@ case "$1" in
     done
     "$HOME/.local/bin/rice-bar" enabled 2>/dev/null || "$HOME/.local/bin/waybar-autohide" ensure >/dev/null 2>&1 &
     [ -x "$HOME/.local/bin/rice-ws-watch" ] && setsid -f "$HOME/.local/bin/rice-ws-watch" >/dev/null 2>&1
+    [ -x "$HOME/.local/bin/rice-rules" ] && setsid -f "$HOME/.local/bin/rice-rules" watch >/dev/null 2>&1
     [ -x "$HOME/.local/bin/rice-update" ] && setsid -f "$HOME/.local/bin/rice-update" watch >/dev/null 2>&1
     [ -x "$HOME/.local/bin/rice-welcome" ] && "$HOME/.local/bin/rice-welcome" start >/dev/null 2>&1 &
     # Japanese, Korean or Chinese chosen in Settings > Languages: their font, if it is not there yet (rice-fonts cjk)
@@ -49,9 +50,11 @@ case "$1" in
     pkill -f "quickshell/rice-desktop"
     # background helpers: start the new versions
     pkill -f "\.local/bin/rice-ws-watch" 2>/dev/null
+    pkill -f "\.local/bin/rice-rules watch" 2>/dev/null
     pkill -f "\.local/bin/rice-update watch" 2>/dev/null
     sleep 0.2
     [ -x "$HOME/.local/bin/rice-ws-watch" ] && setsid -f "$HOME/.local/bin/rice-ws-watch" >/dev/null 2>&1
+    [ -x "$HOME/.local/bin/rice-rules" ] && setsid -f "$HOME/.local/bin/rice-rules" watch >/dev/null 2>&1
     [ -x "$HOME/.local/bin/rice-update" ] && setsid -f "$HOME/.local/bin/rice-update" watch >/dev/null 2>&1
     for _ in 1 2 3 4 5 6 7 8 9 10; do running || break; sleep 0.2; done
     setsid -f qs -n -p "$dir" >/dev/null 2>&1

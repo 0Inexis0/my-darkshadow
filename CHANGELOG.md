@@ -1,5 +1,10 @@
 # Changelog
 
+## V4.44: window rules put apps on their workspace (Hyprland and niri)
+- "Assigning apps to workspaces doesn't work, the gaming workspace neither": on niri a number made a separate named workspace at the top instead of using the workspace at that place, and on Hyprland a rule acts only at the moment a window opens, which misses the many apps that get their name a moment later (Discord, Spotify, games through Proton or Wine). A small watcher (rice-rules watch, started with the shell) now looks at each new window for a few seconds and moves it to its workspace when the rule did not; a window already in place is left alone, and windows that were open before are never moved
+- niri: a workspace number is the workspace at that place; a name is still a named workspace
+- Task view: moving a window to another workspace focuses it first on a Lua-config Hyprland (its move has no window to name)
+
 ## V4.43: Alt + Tab focuses the window on Hyprland 0.55+ (issue #11)
 - The Alt + Tab switcher and the Task view moved, closed and focused windows with the old dispatcher names (focuswindow, closewindow, movetoworkspacesilent, workspace), which a Lua-config Hyprland (0.55 and newer) refuses: you could cycle through windows, but letting go of Alt did not focus the one picked. They now use the Lua calls (hl.dsp.focus, hl.dsp.window.close / move) and fall back to the old names on an older Hyprland. Window addresses are checked before they go into a command. Thanks, Fedora 44 reporter, for finding the exact line
 

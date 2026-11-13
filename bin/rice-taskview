@@ -38,10 +38,12 @@ def run(cmd, timeout=4):
 def hypr_dispatch(lua, *legacy):
     """Hyprland 0.55+ (Lua config) takes a Lua expression: hyprctl dispatch 'hl.dsp.focus({ ... })'; the old
     dispatcher names (focuswindow, closewindow ...) fail there. An older Hyprland only knows those: tried next."""
-    try:
-        out = subprocess.run(["hyprctl", "dispatch", lua], capture_output=True, text=True, timeout=4).stdout
-    except Exception:
-        out = ""
+    out = ""
+    if lua:
+        try:
+            out = subprocess.run(["hyprctl", "dispatch", lua], capture_output=True, text=True, timeout=4).stdout
+        except Exception:
+            out = ""
     if out.strip().lower().startswith("ok"):
         return True
     if legacy:
@@ -202,8 +204,10 @@ def main(a):
         else:
             w, n = addr(a[2]), str(a[3])
             if w and n.replace("-", "").replace("_", "").isalnum():
-                hypr_dispatch('hl.dsp.window.move({ workspace = "%s", follow = false, window = "address:%s" })' % (n, w),
-                              "movetoworkspacesilent", "%s,address:%s" % (n, w))
+                # Lua Hyprland moves the focused window (window.move has no window = ...): focus it, then move it
+                if not (hypr_dispatch('hl.dsp.focus({ window = "address:%s" })' % w)
+                        and hypr_dispatch('hl.dsp.window.move({ workspace = "%s", follow = false })' % n)):
+                    hypr_dispatch("", "movetoworkspacesilent", "%s,address:%s" % (n, w))
     elif cmd == "ws" and len(a) > 2:
         if niri():
             run(["niri", "msg", "action", "focus-workspace", a[2]])

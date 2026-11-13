@@ -7,6 +7,7 @@ import QtQuick
 Singleton {
     readonly property var d: ({
         "pl": ({
+            "A number (the workspace at that place) or a name (a named workspace)": "Numer (workspace na tym miejscu) albo nazwa (nazwany workspace)",
             "SDDM now uses: ": "SDDM używa teraz: ",
             "Window rules": "Reguły okien",
             "Look & feel, widgets, windows, window rules, %1 and the lock screen": "Wygląd, widżety, okna, reguły okien, %1 i ekran blokady",

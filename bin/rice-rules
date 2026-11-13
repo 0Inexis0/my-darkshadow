@@ -7,7 +7,15 @@ They are kept in ~/.config/rice/rules.json, which no update touches. Hyprland ge
   rice-rules save JSON         save everything (the same shape as list) and apply it
   rice-rules windows           JSON: the windows open now (app id and title), to make a rule from one
   rice-rules apply             write the Hyprland file again / rebuild the niri config
+  rice-rules watch             keeps "this app opens on that workspace" (started by rice-desktop; one copy runs).
+                               Hyprland: a window rule acts only at the moment a window opens, and many apps
+                               (Discord, Spotify, games through Proton) get their class a moment later, so the
+                               rule missed them. niri: open-on-workspace only knows named workspaces. This
+                               watches new windows for a few seconds and moves one that is not where it should be.
 """
+import fcntl
+import socket
+import time
 import json
 import os
 import re
@@ -158,8 +166,19 @@ def run(cmd, timeout=20):
         return ""
 
 
+def start_watch():
+    """the watcher (it does nothing when there is nothing to watch; only one copy runs)"""
+    if os.access(BIN + "/rice-rules", os.X_OK):
+        try:
+            subprocess.Popen([BIN + "/rice-rules", "watch"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                             start_new_session=True)
+        except Exception:
+            pass
+
+
 def apply(c=None):
     c = c or load()
+    start_watch()
     if niri():
         if os.access(BIN + "/rice-niri", os.X_OK):
             run([BIN + "/rice-niri", "apply"], timeout=30)
@@ -197,6 +216,177 @@ def windows():
     return uniq
 
 
+# ---------------- watch: new windows go to their workspace ----------------
+def target(c, cls, title):
+    """(workspace, follow) for a window, or None: your rules first, then the gaming workspace"""
+    for r in c["rules"]:
+        if not r["on"] or not r["ws"] or not valid_rx(r["match"]):
+            continue
+        if re.search(r["match"], title if r["by"] == "title" else cls):
+            return r["ws"], not r["silent"]
+    g = c["gaming"]
+    if g["on"]:
+        if re.search(GAME_RX, cls):
+            return g["ws"], g["follow"]
+        if g["launchers"] and re.search(LAUNCHER_RX, cls):
+            return g["ws"], False
+    return None
+
+
+def hypr_disp(lua, *legacy):
+    out = run(["hyprctl", "dispatch", lua], timeout=4).strip().lower() if lua else ""
+    if out.startswith("ok"):
+        return True
+    if legacy:
+        return run(["hyprctl", "dispatch", *legacy], timeout=4).strip().lower().startswith("ok")
+    return False
+
+
+def hypr_move(addr, ws, follow):
+    """move one window to a workspace (Lua Hyprland moves the focused window: focus it first)"""
+    sel = ws if ws.isdigit() else "name:" + ws
+    if hypr_disp('hl.dsp.focus({ window = "address:%s" })' % addr):
+        if hypr_disp('hl.dsp.window.move({ workspace = "%s", follow = %s })' % (sel, "true" if follow else "false")):
+            return True
+    return hypr_disp("", "movetoworkspace" if follow else "movetoworkspacesilent", "%s,address:%s" % (sel, addr))
+
+
+def hypr_client(addr):
+    try:
+        for w in json.loads(run(["hyprctl", "-j", "clients"]) or "[]"):
+            if w.get("address") == addr:
+                return w
+    except ValueError:
+        pass
+    return None
+
+
+def hypr_check(addr, c, done):
+    w = hypr_client(addr)
+    if not w:
+        return True                       # gone
+    t = target(c, w.get("class") or w.get("initialClass") or "", w.get("title") or "")
+    if not t:
+        return False                      # no class yet, maybe later
+    ws, follow = t
+    cur = w.get("workspace") or {}
+    if (ws.isdigit() and str(cur.get("id")) == ws) or str(cur.get("name")) == ws:
+        return True                       # the rule did it
+    hypr_move(addr, ws, follow)
+    return True
+
+
+def hypr_sock():
+    rt = os.environ.get("XDG_RUNTIME_DIR", "/run/user/%d" % os.getuid())
+    sig = os.environ.get("HYPRLAND_INSTANCE_SIGNATURE", "")
+    return "%s/hypr/%s/.socket2.sock" % (rt, sig)
+
+
+def watch_hypr():
+    pending = {}                          # address -> time it opened
+    while True:
+        try:
+            sk = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            sk.connect(hypr_sock())
+            sk.settimeout(0.25)
+            buf = b""
+            while True:
+                try:
+                    data = sk.recv(4096)
+                    if not data:
+                        break
+                    buf += data
+                    while b"\n" in buf:
+                        line, buf = buf.split(b"\n", 1)
+                        if line.startswith(b"openwindow>>"):
+                            a = line[12:].split(b",", 1)[0].decode(errors="ignore")
+                            pending["0x" + a if not a.startswith("0x") else a] = time.time()
+                except socket.timeout:
+                    pass
+                if pending:
+                    c = load()
+                    if not c["gaming"]["on"] and not any(r["on"] and r["ws"] for r in c["rules"]):
+                        pending.clear()
+                        continue
+                    now = time.time()
+                    for a, t0 in list(pending.items()):
+                        if now - t0 < 0.35:
+                            continue              # give the rule its moment first
+                        if hypr_check(a, c, None) or now - t0 > 4:
+                            pending.pop(a, None)
+        except Exception:
+            pass
+        time.sleep(2)
+
+
+def niri_json(what):
+    try:
+        return json.loads(run(["niri", "msg", "-j", what]) or "null")
+    except ValueError:
+        return None
+
+
+def watch_niri():
+    seen = {}                             # id -> time it first showed up
+    done = set()
+    first = True
+    while True:
+        try:
+            p = subprocess.Popen(["niri", "msg", "-j", "event-stream"], stdout=subprocess.PIPE,
+                                 stderr=subprocess.DEVNULL, text=True)
+            for line in p.stdout:
+                try:
+                    ev = json.loads(line)
+                except ValueError:
+                    continue
+                if "WindowsChanged" in ev:
+                    # the windows open when it starts (or niri restarted the stream): leave them where they are
+                    for w in ev["WindowsChanged"].get("windows", []):
+                        done.add(w.get("id"))
+                    first = False
+                    continue
+                w = (ev.get("WindowOpenedOrChanged") or {}).get("window")
+                if not w or w.get("id") in done:
+                    continue
+                wid = w.get("id")
+                seen.setdefault(wid, time.time())
+                if time.time() - seen[wid] > 4:
+                    done.add(wid)
+                    continue
+                c = load()
+                t = target(c, w.get("app_id") or "", w.get("title") or "")
+                if not t:
+                    continue
+                ws, follow = t
+                if not ws.isdigit():
+                    done.add(wid)                 # a named workspace: niri's own open-on-workspace does it
+                    continue
+                cur = next((x for x in (niri_json("workspaces") or []) if x.get("id") == w.get("workspace_id")), {})
+                done.add(wid)
+                if str(cur.get("idx")) == ws:
+                    continue
+                run(["niri", "msg", "action", "move-window-to-workspace", "--window-id", str(wid),
+                     "--focus", "true" if follow else "false", ws])
+            p.wait()
+        except Exception:
+            pass
+        time.sleep(2)
+
+
+def watch():
+    os.makedirs(HOME + "/.cache/rice", exist_ok=True)
+    lock = open(HOME + "/.cache/rice/rules-watch.lock", "w")
+    try:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        return 0                          # one copy runs already
+    if niri():
+        watch_niri()
+    elif os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"):
+        watch_hypr()
+    return 0
+
+
 def main(a):
     cmd = a[0] if a else "list"
     if cmd == "list":
@@ -221,6 +411,8 @@ def main(a):
         print(json.dumps(windows()))
     elif cmd == "apply":
         apply()
+    elif cmd == "watch":
+        return watch()
     elif cmd == "lua":
         sys.stdout.write(lua_text(load()))
     else:

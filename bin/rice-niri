@@ -656,17 +656,24 @@ def user_rules():
         return []
     L, names = [], []
     g = c["gaming"]
+    # a number is the workspace at that place (niri has no rule for that: rice-rules watch moves the window);
+    # a name is a named workspace, which niri's open-on-workspace knows
+    def on_ws(ws):
+        if ws.isdigit():
+            return []
+        if ws not in names:
+            names.append(ws)
+        return ["open-on-workspace " + q(ws)]
     if g["on"]:
-        names.append(g["ws"])
-        body = ["match app-id=" + q(rr.GAME_RX), "open-on-workspace " + q(g["ws"])]
+        body = ["match app-id=" + q(rr.GAME_RX)] + on_ws(g["ws"])
         if g["fullscreen"]:
             body.append("open-fullscreen true")
         if not g["follow"]:
             body.append("open-focused false")
         L += block("window-rule", body)
         if g["launchers"]:
-            L += block("window-rule", ["match app-id=" + q(rr.LAUNCHER_RX), "open-on-workspace " + q(g["ws"]),
-                                       "open-focused false"])
+            if not g["ws"].isdigit():
+                L += block("window-rule", ["match app-id=" + q(rr.LAUNCHER_RX)] + on_ws(g["ws"]) + ["open-focused false"])
     for r in c["rules"]:
         if not r["on"] or not rr.valid_rx(r["match"]):
             continue
@@ -676,10 +683,8 @@ def user_rules():
         if r["w"] and r["h"]:
             body += block("default-column-width", ["fixed %d" % r["w"]])
             body.append("default-window-height { fixed %d; }" % r["h"])
-        if r["ws"]:
-            if r["ws"] not in names:
-                names.append(r["ws"])
-            body.append("open-on-workspace " + q(r["ws"]))
+        if r["ws"] and not r["ws"].isdigit():
+            body += on_ws(r["ws"])
             if r["silent"]:
                 body.append("open-focused false")
         if r["opacity"] < 0.999:

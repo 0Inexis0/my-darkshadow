@@ -152,7 +152,7 @@ Item {
             visible: page.gaming.on === true
             SettingRow {
                 label: I18n.t("Which workspace")
-                desc: page.niri ? I18n.t("A name or a number. niri makes a named workspace for it") : I18n.t("A number (1 to 10 are on SUPER + 1 ... 0) or a name")
+                desc: page.niri ? I18n.t("A number (the workspace at that place) or a name (a named workspace)") : I18n.t("A number (1 to 10 are on SUPER + 1 ... 0) or a name")
                 reserved: 150
                 Field {
                     id: gwsField
