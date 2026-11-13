@@ -985,11 +985,15 @@ if [ "$MODE" = update ]; then
     old="$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo ?)"
     export RICE_PREV_REV="${RICE_PREV_REV:-$(git -C "$ROOT" rev-parse HEAD 2>/dev/null)}"
     if [ "$DRY_RUN" = 1 ]; then info "would run: git pull"
+    elif ! update_remote_ok; then
+      fail "The update remote is not this project: $(git -C "$ROOT" remote get-url origin 2>/dev/null). Not updating."
+      exit 1
     elif { u="$(git -C "$ROOT" remote get-url origin 2>/dev/null)"; case "$u" in *shadowww-dev/shadows-shell*) git -C "$ROOT" remote set-url origin https://github.com/shadowww-dev/DarkShadowShell.git ;; esac
            GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never git -c credential.helper= -C "$ROOT" pull --ff-only >>"$LOG" 2>&1; }; then
       new="$(git -C "$ROOT" rev-parse --short HEAD)"
       if [ "$old" != "$new" ]; then
         # new files from GitHub, maybe a new installer too: start the new one
+        update_guard "$old" "$new" || exit 1
         exec "$ROOT/install.sh" --update --pulled "$@"
       fi
     else
@@ -1001,6 +1005,9 @@ if [ "$MODE" = update ]; then
       gq() { GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never git -c credential.helper= -C "$ROOT" "$@" >>"$LOG" 2>&1; }
       up="$(git -C "$ROOT" rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || echo origin/main)"
       if gq fetch origin; then
+        prev="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || true)"
+        target="$(git -C "$ROOT" rev-parse "$up" 2>/dev/null || true)"
+        update_guard "$prev" "$target" || exit 1
         stamp="$(date +%Y%m%d-%H%M%S)"
         gq branch "rice-before-update-$stamp" HEAD || true
         gq stash push -u -m "rice: your changes before the update of $stamp" || true
