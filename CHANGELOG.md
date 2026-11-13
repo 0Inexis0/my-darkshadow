@@ -1,5 +1,8 @@
 # Changelog
 
+## V4.43: Alt + Tab focuses the window on Hyprland 0.55+ (issue #11)
+- The Alt + Tab switcher and the Task view moved, closed and focused windows with the old dispatcher names (focuswindow, closewindow, movetoworkspacesilent, workspace), which a Lua-config Hyprland (0.55 and newer) refuses: you could cycle through windows, but letting go of Alt did not focus the one picked. They now use the Lua calls (hl.dsp.focus, hl.dsp.window.close / move) and fall back to the old names on an older Hyprland. Window addresses are checked before they go into a command. Thanks, Fedora 44 reporter, for finding the exact line
+
 ## V4.42: foot 1.26 and newer (issue #13)
 - foot 1.28 refused ~/.config/foot/darkshadow.ini ("invalid section name"): the shell wrote the old [colors] and [cursor] sections, which foot 1.26 renamed to [colors-dark] (the cursor colors moved into it). rice-look now asks foot for its version and writes the right ones for it (an older foot keeps the old ones). Thanks, Kikurory, for the exact report
 
