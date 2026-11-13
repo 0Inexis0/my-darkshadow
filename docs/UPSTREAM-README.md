@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner-dark.svg" alt="DarkShadow's Shell" width="100%">
+  <img src="../assets/banner-dark.svg" alt="DarkShadow's Shell" width="100%">
 </p>
 
 <p align="center">
@@ -23,7 +23,7 @@
   <a href="https://github.com/shadowww-dev/DarkShadowShell/releases/latest"><img src="https://img.shields.io/github/v/release/shadowww-dev/DarkShadowShell?style=for-the-badge&labelColor=11111b&logo=github&logoColor=white&color=8B7BFF&label=release" alt="Latest release"></a>
   <a href="https://github.com/shadowww-dev/DarkShadowShell/stargazers"><img src="https://img.shields.io/github/stars/shadowww-dev/DarkShadowShell?style=for-the-badge&labelColor=11111b&logo=starship&logoColor=f5c542&color=f5c542" alt="Stars"></a>
   <a href="https://github.com/shadowww-dev/DarkShadowShell/commits"><img src="https://img.shields.io/github/last-commit/shadowww-dev/DarkShadowShell?style=for-the-badge&labelColor=11111b&logo=git&logoColor=white&color=4c566a&label=updated" alt="Last commit"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2ea043?style=for-the-badge&labelColor=11111b&logo=opensourceinitiative&logoColor=white" alt="MIT license"></a>
+  <a href="../LICENSE"><img src="https://img.shields.io/badge/license-MIT-2ea043?style=for-the-badge&labelColor=11111b&logo=opensourceinitiative&logoColor=white" alt="MIT license"></a>
   <a href="https://www.tiktok.com/@shadoww.dev"><img src="https://img.shields.io/badge/TikTok-shadoww.dev-ff0050?style=for-the-badge&labelColor=11111b&logo=tiktok&logoColor=white" alt="TikTok"></a>
 </p>
 
@@ -32,23 +32,23 @@
   <a href="#supported-systems">Systems</a> ·
   <a href="#features">Features</a> ·
   <a href="#keybinds">Keybinds</a> ·
-  <a href="docs/INSTALL.md">Docs</a> ·
-  <a href="docs/CUSTOMIZE.md">Customize</a>
+  <a href="INSTALL.md">Docs</a> ·
+  <a href="CUSTOMIZE.md">Customize</a>
 </p>
 
 ---
 
 ## Screenshots
 <p align="center">
-  <img src="assets/screenshot-desktop.png" alt="DarkShadow's Shell: the desktop with widgets, the island in the notch and the visualizer" width="100%"><br>
+  <img src="../assets/screenshot-desktop.png" alt="DarkShadow's Shell: the desktop with widgets, the island in the notch and the visualizer" width="100%"><br>
   <sub>The desktop: widgets in your shape with wavy rings, the dynamic island in the notch and the visualizer</sub>
 </p>
 <p align="center">
-  <img src="assets/screenshot-settings.png" alt="The Settings app (SUPER + U)" width="100%"><br>
+  <img src="../assets/screenshot-settings.png" alt="The Settings app (SUPER + U)" width="100%"><br>
   <sub>The Settings app (<code>SUPER + U</code>)</sub>
 </p>
 <p align="center">
-  <img src="assets/screenshot-edit.png" alt="Edit mode (SUPER + ALT + W)" width="100%"><br>
+  <img src="../assets/screenshot-edit.png" alt="Edit mode (SUPER + ALT + W)" width="100%"><br>
   <sub>Edit mode (<code>SUPER + ALT + W</code>): widgets, quick settings, the bar and the visualizer</sub>
 </p>
 <!-- more screenshots: put the files in assets/ and add them here -->

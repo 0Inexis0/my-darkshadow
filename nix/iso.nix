@@ -8,6 +8,7 @@
     user = "nixos";
   };
   networking.hostName = "my-darkshadow-live";
+  boot.supportedFilesystems = [ "ext4" "vfat" ];
   services.displayManager.autoLogin = { enable = true; user = "nixos"; };
   services.openssh.enable = lib.mkForce false;
   image.baseName = lib.mkForce "my-darkshadow-1.0.0-${config.programs.my-darkshadow.profile}-x86_64";

@@ -37,9 +37,9 @@ def partition_plan(disk):
         ["mkfs.fat", "-F", "32", "-n", "DS-BOOT", efi],
         ["mkfs.ext4", "-F", "-L", "darkshadow-root", root],
         ["mkdir", "-p", "/mnt"],
-        ["mount", root, "/mnt"],
+        ["mount", "-t", "ext4", root, "/mnt"],
         ["mkdir", "-p", "/mnt/boot"],
-        ["mount", efi, "/mnt/boot"],
+        ["mount", "-t", "vfat", efi, "/mnt/boot"],
     ]
 
 
@@ -114,7 +114,7 @@ def main():
         print("Set the new account password (never stored in this repository):")
         subprocess.run(["nixos-enter", "--root", "/mnt", "--command", f"passwd {username}"], check=True)
     except (OSError, subprocess.SubprocessError) as error:
-        print(f"Installation stopped: {error}. The target remains mounted at /mnt for recovery.", file=sys.stderr)
+        print(f"Installation stopped: {error}. Target filesystems may remain mounted at /mnt for recovery.", file=sys.stderr)
         sys.exit(1)
     print("Installation complete. Reboot, remove the USB drive and log in to Hyprland.")
 

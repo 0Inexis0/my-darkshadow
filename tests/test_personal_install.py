@@ -94,6 +94,8 @@ class InstallerSafetyTests(unittest.TestCase):
             mkfs = next(c for c in commands if c[0] == "mkfs.ext4")
             self.assertEqual(mkfs[-1], expected)
             self.assertEqual(commands[0], ["wipefs", "--all", device])
+            self.assertIn(["mount", "-t", "ext4", expected, "/mnt"], commands)
+            self.assertIn(["mount", "-t", "vfat", disk.partition_name(device, 1), "/mnt/boot"], commands)
 
     def test_account_names_cannot_inject_shell_or_nix(self):
         for value in ["root", "nixos", "a;reboot", 'a"; builtins.abort "', "../home", ""]:
