@@ -24,6 +24,8 @@ Item {
     // ---- the lyrics (only while open)
     property var lines: []
     property string plain: ""
+    // rice-lyrics answered that lookups are off (Settings > Language & region > Online lookups)
+    property bool lyOff: false
     property bool loading: false
     property string songKey: ""
     readonly property string want: pl.has && open ? pl.artist + "|" + pl.title : ""
@@ -38,7 +40,7 @@ Item {
     }
     Process {
         id: fetch
-        stdout: StdioCollector { onStreamFinished: { mc.loading = false; try { const j = JSON.parse(text); mc.lines = j.synced || []; mc.plain = j.plain || "" } catch (e) { } } }
+        stdout: StdioCollector { onStreamFinished: { mc.loading = false; try { const j = JSON.parse(text); mc.lines = j.synced || []; mc.plain = j.plain || ""; mc.lyOff = j.off === true } catch (e) { } } }
     }
     readonly property int cur: {
         const l = lines, t = pl.pos + 0.3
@@ -160,7 +162,7 @@ Item {
             Blob { width: 16; height: 16; kind: "cookie"; color: mc.fg3; anchors.verticalCenter: parent.verticalCenter
                 RotationAnimator on rotation { from: 0; to: 360; duration: 1600; loops: Animation.Infinite; running: mc.loading } }
             T { anchors.verticalCenter: parent.verticalCenter; font.pixelSize: 12; color: mc.fg3
-                text: !pl.has ? Tr.t("Nothing playing") : (mc.loading ? Tr.t("Looking for the lyrics...") : Tr.t("No lyrics for this song")) }
+                text: !pl.has ? Tr.t("Nothing playing") : (mc.loading ? Tr.t("Looking for the lyrics...") : (mc.lyOff ? Tr.t("Lyrics are off: Settings > Language & region") : Tr.t("No lyrics for this song"))) }
         }
     }
 }

@@ -4,7 +4,7 @@
   rice-update               install the newest version (runs ./install.sh --update in the repo)
   rice-update check [--json] [--offline]
                             compare your version with the newest one on GitHub
-  rice-update watch [on|off]  background: checks after login and once a day, shows a notification; off: no checks
+  rice-update watch [on|off|state]  background: checks after login and once a day, shows a notification; off: no checks
                             (how often: every_minutes in ~/.config/rice/update.json, 60 - 10080)
   rice-update notify        show the "Update is Available!" notification now (to try it)
   rice-update gui           update in the background for Settings > Update Center (no terminal): the steps go to
@@ -349,6 +349,11 @@ def watch():
     time.sleep(FIRST_WAIT)
     last, seen = 0.0, 0.0
     while True:
+        # Settings > Language & region > Check for updates is read again every tick: off stops this one at once
+        c = cfg()
+        if c.get("watch") is False:
+            return
+        every = int(c["every_minutes"]) * 60
         try:
             if time.time() - last >= every:
                 last = time.time()
@@ -397,7 +402,10 @@ def main(a):
         else:
             print("Up to date: V%s%s" % (st["installed"], ("  (could not check: %s)" % st["error"]) if st["error"] else ""))
     elif cmd == "watch":
-        if len(a) > 2 and a[2] in ("on", "off"):
+        if len(a) > 2 and a[2] == "state":
+            c = cfg()
+            print(json.dumps({"watch": c.get("watch") is not False, "every_minutes": c["every_minutes"]}))
+        elif len(a) > 2 and a[2] in ("on", "off"):
             c = cfg()
             c["watch"] = a[2] == "on"
             save_cfg(c)

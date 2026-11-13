@@ -41,8 +41,10 @@ fetch_verified() { # fetch_verified URL DEST NAME: download once, and only keep 
 extract_verified() { # extract_verified ARCHIVE DEST: unpack only into DEST, and only paths that stay inside it
   local arc="$1" dst="$2" list
   list="$(tar -tf "$arc" 2>/dev/null)" || { warn "not a readable archive: $arc"; return 1; }
-  # absolute paths, ../ and links pointing out of DEST write over files the archive has no business touching
-  if printf '%s\n' "$list" | grep -qE '(^/|(^|/)\.\.(/|$)| -> /| -> \.\./| link to /| link to \.\./)'; then
+  # absolute paths, ../ and links pointing out of DEST write over files the archive has no business touching.
+  # Names come from tar -t; link targets only show in the long listing (tar -tv)
+  if printf '%s\n' "$list" | grep -qE '(^/|(^|/)\.\.(/|$))' ||
+     tar -tvf "$arc" 2>/dev/null | grep -qE '( -> | link to )(/|(.*/)?\.\.(/|$))'; then
     fail "refusing $arc: it would write outside $dst"
     return 1
   fi
@@ -54,6 +56,17 @@ extract_verified() { # extract_verified ARCHIVE DEST: unpack only into DEST, and
 update_remote_ok() {
   local u; u="$(git -C "$ROOT" remote get-url origin 2>/dev/null || true)"
   [[ "$u" =~ github\.com[:/][A-Za-z0-9_.-]+/DarkShadowShell(\.git)?/?$ ]]
+}
+
+# update_precheck: before the pull moves anything, fetch and ask about a changed installer (an answer after the pull
+# came too late: the new files were already there, and the next run started them without asking)
+update_precheck() {
+  local up t
+  GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never git -c credential.helper= -C "$ROOT" fetch origin >>"${LOG:-/dev/null}" 2>&1 || return 0
+  up="$(git -C "$ROOT" rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || echo origin/main)"
+  t="$(git -C "$ROOT" rev-parse "$up" 2>/dev/null || true)"
+  update_guard "$(git -C "$ROOT" rev-parse HEAD 2>/dev/null)" "$t" || return 1
+  GUARD_CHECKED="$t"
 }
 
 # update_guard OLD NEW: an update can bring a new install.sh, and that script runs with your files and asks for
@@ -70,7 +83,13 @@ update_guard() {
   warn "This update changes install.sh, the script that runs with your files and may ask for sudo:"
   git -C "$ROOT" diff --stat "$old" "$new" -- install.sh 2>/dev/null | sed 's/^/      /'
   if [ ! -t 0 ] || [ -n "${RICE_GUI:-}" ]; then
-    fail "Not starting it on its own. Run  rice-update  in a terminal to see what changed and apply it."
+    # from Settings > Update Center: a terminal opens with rice-update, which shows this and asks (nothing moves here)
+    if [ -n "${RICE_GUI:-}" ] && [ -n "${WAYLAND_DISPLAY:-}" ] && [ -x "$HOME/.local/bin/rice-term" ]; then
+      setsid -f "$HOME/.local/bin/rice-term" -e bash -c '"$HOME/.local/bin/rice-update"; echo; read -n1 -rsp "Press a key to close"' >/dev/null 2>&1
+      fail "This update changes the installer: a terminal opened to show what changes and ask you. Nothing was changed yet."
+    else
+      fail "Not starting it on its own. Run  rice-update  in a terminal to see what changed and apply it."
+    fi
     return 1
   fi
   printf '  Apply this update? [y/N] '

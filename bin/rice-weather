@@ -8,6 +8,7 @@
 # place is set. That keeps your approximate location out of a third party's log.
 #   rice-weather place "Warsaw"     (or any place name wttr.in knows)
 #   rice-weather off                (no requests; the last cached answer is still shown)
+#   rice-weather state              {"place": "..."} (Settings > Language & region > Online lookups)
 CFG="$HOME/.config/rice/weather.json"
 
 weather_place() { python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("place",""))' "$CFG" 2>/dev/null; }
@@ -16,7 +17,19 @@ save_place() {
   python3 -c 'import json,os,sys; p=sys.argv[1]; t=p+".tmp"; json.dump({"place": sys.argv[2].strip()}, open(t,"w")); os.replace(t,p)' "$CFG" "$1"
 }
 
+# An install from before V4.48 already showed the weather: wttr.in had named its place (the third field of the
+# cached answer). That place is kept, so the weather goes on without asking where the IP is again.
+if [ ! -e "$CFG" ] && [ -s "$HOME/.cache/rice/weather.txt" ]; then
+  old="$(cut -d'|' -s -f3 "$HOME/.cache/rice/weather.txt" | head -1 | tr -d '\r')"
+  case "$old" in ""|*"<"*|*Unknown*) ;; *) save_place "$old" ;; esac
+fi
+
 case "${1:-}" in
+  state)
+    python3 -c 'import json,sys
+try: p = json.load(open(sys.argv[1])).get("place", "")
+except Exception: p = ""
+print(json.dumps({"place": p}))' "$CFG" ;;
   place)
     [ -n "${2:-}" ] || { echo "rice-weather place \"Warsaw\"" >&2; exit 2; }
     save_place "$2" && echo "Weather for: $2" ;;

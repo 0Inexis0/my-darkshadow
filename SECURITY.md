@@ -20,18 +20,21 @@ public issue for something that runs code or exposes data.
   pointing out of the destination.
 - **Updates only come from this project.** The origin must be `github.com/<owner>/DarkShadowShell`.
 - **A changed installer is not started on its own.** An update that brings a new `install.sh` shows the diffstat
-  and asks in a terminal; an update started from Settings (no terminal) is refused and points to `rice-update`.
-  `RICE_TRUST_UPDATE=1` is the explicit opt-out.
+  and asks in a terminal before anything is pulled; an update started from Settings opens a terminal with
+  `rice-update` for that question instead of going on. `RICE_TRUST_UPDATE=1` is the explicit opt-out.
 - **The input group is opt-in.** Infinite Desktop reads `/dev/input`, so it needs it, but that permission lets
   every program you run read every keyboard on the machine. `./install.sh --input-group` (or Settings > Desktop >
   Infinite Desktop > Allow) enables it after saying so.
 
 ## What is a choice, not a default
 
-- **Weather**: `rice-weather place "Warsaw"` is required before any request; otherwise wttr.in would geolocate your
-  IP. Until then the widgets show the cached answer or nothing.
-- **Lyrics**: `rice-lyrics on` allows asking lrclib.net about the current song (artist and title). Cached lyrics
-  are used either way.
+All three are in Settings > Language & region > Online lookups.
+
+- **Weather**: a place is required before any request (`rice-weather place "Warsaw"`); otherwise wttr.in would
+  geolocate your IP. Until then the widgets show the cached answer or nothing. An install that already showed the
+  weather keeps the place wttr.in had named.
+- **Lyrics**: asking lrclib.net about the current song (artist and title) is off for new installs (`rice-lyrics on`).
+  An install that already had lyrics keeps them on. Cached lyrics are used either way.
 - **Update checks**: on by default, once a day (`every_minutes` in `~/.config/rice/update.json`), off with
   `rice-update watch off`.
 

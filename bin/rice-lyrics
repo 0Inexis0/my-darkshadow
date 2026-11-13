@@ -23,9 +23,20 @@ UA = "DarkShadow's Shell lyrics widget (https://github.com/shadowww-dev/DarkShad
 
 
 def enabled():
-    """off by default: every lookup tells a third party what this computer is playing"""
+    """off by default: every lookup tells a third party what this computer is playing. An install from before V4.48
+    that already fetched lyrics (songs in the cache) keeps them on; the choice is written down the first time"""
     try:
         return json.load(open(CFG)).get("enabled", False) is True
+    except FileNotFoundError:
+        try:
+            on = any(f.endswith(".json") for f in os.listdir(CACHE))
+        except OSError:
+            on = False
+        try:
+            set_enabled(on)
+        except OSError:
+            pass
+        return on
     except Exception:
         return False
 
@@ -80,7 +91,7 @@ def main(a):
         print(open(cf).read())
         return
     if not enabled():
-        print(json.dumps({"synced": [], "plain": "", "found": False}))
+        print(json.dumps({"synced": [], "plain": "", "found": False, "off": True}))
         return
     base = "https://lrclib.net/api/"
     q = {"artist_name": artist, "track_name": title}

@@ -13,6 +13,8 @@ Item {
     readonly property color ink: pal ? pal.fg : "#F6F5F4"
     property var lines: []          // [[seconds, text], ...]
     property string plain: ""
+    // rice-lyrics answered that lookups are off (Settings > Language & region > Online lookups)
+    property bool lyOff: false
     property bool loading: false
     property string songKey: ""
     readonly property string want: pl.has ? pl.artist + "|" + pl.title : ""
@@ -32,7 +34,7 @@ Item {
         stdout: StdioCollector {
             onStreamFinished: {
                 ly.loading = false
-                try { const j = JSON.parse(text); ly.lines = j.synced || []; ly.plain = j.plain || "" } catch (e) { }
+                try { const j = JSON.parse(text); ly.lines = j.synced || []; ly.plain = j.plain || ""; ly.lyOff = j.off === true } catch (e) { }
             }
         }
     }
@@ -103,7 +105,7 @@ Item {
             spacing: 8
             Blob { width: 16; height: 16; kind: "cookie"; color: ly.pal ? ly.pal.fg3 : "#8a8a8f"; anchors.verticalCenter: parent.verticalCenter
                 RotationAnimator on rotation { from: 0; to: 360; duration: 1600; loops: Animation.Infinite; running: ly.loading } }
-            T { text: !pl.has ? Tr.t("Nothing playing") : (ly.loading ? Tr.t("Looking for the lyrics...") : Tr.t("No lyrics for this song")); font.pixelSize: 12; color: ly.pal ? ly.pal.fg3 : "#8a8a8f"; anchors.verticalCenter: parent.verticalCenter }
+            T { text: !pl.has ? Tr.t("Nothing playing") : (ly.loading ? Tr.t("Looking for the lyrics...") : (ly.lyOff ? Tr.t("Lyrics are off: Settings > Language & region") : Tr.t("No lyrics for this song"))); font.pixelSize: 12; color: ly.pal ? ly.pal.fg3 : "#8a8a8f"; anchors.verticalCenter: parent.verticalCenter }
         }
     }
     // how far the song is

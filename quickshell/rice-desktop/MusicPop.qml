@@ -29,6 +29,8 @@ Item {
     // ---------- the lyrics ----------
     property var lines: []
     property string plain: ""
+    // rice-lyrics answered that lookups are off (Settings > Language & region > Online lookups)
+    property bool lyOff: false
     property bool loading: false
     property string songKey: ""
     readonly property string want: pl.has && on ? pl.artist + "|" + pl.title : ""
@@ -46,7 +48,7 @@ Item {
     }
     Process {
         id: fetch
-        stdout: StdioCollector { onStreamFinished: { mp.loading = false; try { const j = JSON.parse(text); mp.lines = j.synced || []; mp.plain = j.plain || "" } catch (e) { } } }
+        stdout: StdioCollector { onStreamFinished: { mp.loading = false; try { const j = JSON.parse(text); mp.lines = j.synced || []; mp.plain = j.plain || ""; mp.lyOff = j.off === true } catch (e) { } } }
     }
     readonly property int cur: {
         const l = lines, t = pl.pos + 0.3
@@ -149,7 +151,7 @@ Item {
             Blob { width: 16; height: 16; kind: Look.shape; color: mp.dim; anchors.verticalCenter: parent.verticalCenter
                 RotationAnimator on rotation { from: 0; to: 360; duration: 1600; loops: Animation.Infinite; running: mp.loading && mp.on } }
             Text { anchors.verticalCenter: parent.verticalCenter; color: mp.dim; font.family: Fonts.main; font.pixelSize: 12
-                text: !pl.has ? Tr.t("Nothing playing") : (mp.loading ? Tr.t("Looking for the lyrics...") : Tr.t("No lyrics for this song")) }
+                text: !pl.has ? Tr.t("Nothing playing") : (mp.loading ? Tr.t("Looking for the lyrics...") : (mp.lyOff ? Tr.t("Lyrics are off: Settings > Language & region") : Tr.t("No lyrics for this song"))) }
         }
         // soft edges, the lines fade in and out
         Rectangle { anchors.top: parent.top; width: parent.width; height: 30; radius: words.radius; gradient: Gradient {

@@ -1,15 +1,17 @@
 # Changelog
 
-## V4.48: security and privacy defaults: verified downloads, guarded updates, opt-in permissions
-- Downloads: matugen and the Bibata cursor are pinned to a release tag and checked against `install/checksums.txt` before they are unpacked or installed; an archive with `../`, absolute paths or links outside its folder is refused (`install/lib/secure.sh`). An unpinned file is never downloaded
-- Updates: the remote must be this project (or a fork of it), and an update that changes `install.sh` shows what changes and asks in a terminal; from Settings it is refused instead of started (Settings > Update Center says to run `rice-update` in a terminal). `RICE_TRUST_UPDATE=1` overrides
-- The `input` group (Infinite Desktop, SUPER + ALT + mouse) is no longer granted by the installer: `./install.sh --input-group`, or Settings > Desktop > Infinite Desktop > Allow, which explains that any program you run can then read every keyboard. NixOS: `programs.shadows-shell.inputGroup = true`
-- Weather asks for nothing until you set a place: `rice-weather place "Warsaw"` (before, wttr.in geolocated the IP). `rice-weather off` stops it; the cached answer is still shown
-- Lyrics are opt-in: `rice-lyrics on` / `off`. Cached lyrics always work
-- Update checks: once a day instead of every 15 minutes (`every_minutes` in `~/.config/rice/update.json`), and `rice-update watch off` stops them
-- All pinned hashes are in one file, `install/checksums.txt` (installed as `~/.local/share/rice/checksums.txt`); `rice-cursor` reads it too, so a new download is allowed by adding one line there
-- `sync.sh` warns about real key shapes before publishing a config and stops instead of only printing a warning
-- `tests/security.sh` covers the checks above; CI runs it
+## V4.48: security and privacy: verified downloads, guarded updates, opt-in permissions and lookups
+Thanks to notwafel, who reviewed the shell and sent all of this (pull request #15).
+- Downloads: matugen and the Bibata cursor are pinned to a release tag and checked against `install/checksums.txt` (SHA-256) before they are unpacked or installed. An archive with `../`, absolute paths or links pointing out of its folder is refused (`install/lib/secure.sh`)
+- Updates come only from this project (or a fork of it). An update that changes `install.sh` shows what changes and asks before anything is pulled; from Settings > Update Center a terminal opens with that question
+- The `input` group (Infinite Desktop, SUPER + ALT + mouse) is no longer granted by the installer: `./install.sh --input-group`, or Settings > Desktop > Infinite Desktop > Allow, which says that any program you run can then read every keyboard. NixOS: `programs.shadows-shell.inputGroup = true`
+- Settings > Language & region > Online lookups: what the shell asks other websites, each with its own switch
+  - Weather place: weather is asked for that place only (without one, wttr.in looked up where your IP is). If the weather already worked for you, the place it found is kept
+  - Song lyrics (lrclib.net learns the artist and the title): off for new installs; on if you already had lyrics. The lyrics cards say when it is off
+  - Check for updates: once a day instead of every 15 minutes; off stops the checks at once
+- `sync.sh` looks for real key shapes before publishing a config, and stops instead of only warning
+- Animations stop while what they draw is hidden (the island's equalizer, the logos, the lock screen's shape, the music popover)
+- `SECURITY.md` and `tests/security.sh` (26 checks, in CI)
 
 ## V4.47: the bar's shadow no longer costs frames; Settings need not wait in memory
 - Performance (thanks to R31tr0, issue #14): the notch's shadow was drawn with a canvas blur that the CPU computes, 70-140 ms every time the notch changed width, and it changes all the time (the island, the music, the clock). The bar dropped to 2-3 fps while moving and games lost frames to it. The shadow is now a few soft outlines: about 1 ms, and it looks the same

@@ -60,6 +60,14 @@ extract_verified "$tmp/evil.tar" "$tmp/out" && bad "extract_verified accepted ..
 extract_verified "$tmp/abs.tar" "$tmp/out" && bad "extract_verified accepted an absolute path"
 [ ! -e /tmp/escaped ] && ok "extract_verified refuses absolute paths" || { rm -f /tmp/escaped; bad "wrote /tmp/escaped"; }
 
+mkdir -p "$tmp/ln/pkg" && ln -s /etc "$tmp/ln/pkg/out" && ln -s ../../x "$tmp/ln/pkg/up"
+tar -cf "$tmp/link.tar" -C "$tmp/ln" pkg/out
+tar -cf "$tmp/link2.tar" -C "$tmp/ln" pkg/up
+extract_verified "$tmp/link.tar" "$tmp/out" && bad "extract_verified accepted a link to /etc"
+ok "extract_verified refuses a link pointing to an absolute path"
+extract_verified "$tmp/link2.tar" "$tmp/out" && bad "extract_verified accepted a link to ../"
+ok "extract_verified refuses a link pointing up with ../"
+
 # ---- the update guards: remote allowlist, changed installer
 mkdir -p "$ROOT"
 git -C "$ROOT" init -q
@@ -84,11 +92,20 @@ remote "https://github.com/evil/other" && bad "accepted another repo" || ok "ref
 
 update_guard "$old" "$old" && ok "same commit needs no confirmation" || bad "same commit"
 update_guard "$new" "$other" </dev/null && ok "an update without a new installer passes" || bad "unchanged install.sh"
-RICE_GUI=1 update_guard "$old" "$new" </dev/null && bad "started a changed installer from Settings"
+WAYLAND_DISPLAY= RICE_GUI=1 update_guard "$old" "$new" </dev/null && bad "started a changed installer from Settings"
 ok "refuses a changed installer without a terminal"
 out="$(update_guard "$old" "$new" </dev/null 2>&1 || true)"
 case "$out" in *"install.sh"*) ok "says which file changed" ;; *) bad "no summary shown" ;; esac
 RICE_TRUST_UPDATE=1 update_guard "$old" "$new" </dev/null && ok "RICE_TRUST_UPDATE=1 starts it" || bad "RICE_TRUST_UPDATE ignored"
+
+# ---- the question comes before the pull: a refused update leaves the files as they were
+git clone -q "$ROOT" "$tmp/clone"
+git -C "$tmp/clone" reset -q --hard "$old"
+printf 'echo newer\n' >"$ROOT/install.sh"
+git -C "$ROOT" -c user.name=t -c user.email=t@t commit -qam newer
+( ROOT="$tmp/clone"; LOG=/dev/null; update_precheck </dev/null ) && bad "update_precheck let a changed installer through"
+[ "$(git -C "$tmp/clone" rev-parse HEAD)" = "$old" ] && ok "a refused update moves nothing (asked before the pull)" \
+  || bad "the files moved before the question"
 
 # ---- rice-cursor reads the same list (installed copy) and refuses unpinned files
 mkdir -p "$tmp/home/.local/bin" "$tmp/home/.local/share/rice"
