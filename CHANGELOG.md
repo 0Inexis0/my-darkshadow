@@ -7,6 +7,7 @@
 - Weather asks for nothing until you set a place: `rice-weather place "Warsaw"` (before, wttr.in geolocated the IP). `rice-weather off` stops it; the cached answer is still shown
 - Lyrics are opt-in: `rice-lyrics on` / `off`. Cached lyrics always work
 - Update checks: once a day instead of every 15 minutes, configurable with `rice-update every N` minutes, and `rice-update watch off` stops them
+- All pinned hashes are in one file, `install/checksums.txt` (installed as `~/.local/share/rice/checksums.txt`); `rice-cursor` reads it too, so a new download is allowed by adding one line there
 - `sync.sh` warns about real key shapes before publishing a config and stops instead of only printing a warning
 - `tests/secure.sh` and `tests/update.sh` cover the checks above; CI runs them
 

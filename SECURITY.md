@@ -13,7 +13,9 @@ public issue for something that runs code or exposes data.
 
 - **Downloads are verified before use.** Everything the installer unpacks or runs is pinned to a release tag and
   its SHA-256 is in `install/checksums.txt` (`install/lib/secure.sh`). A file with an unpinned name is not
-  downloaded at all, a hash mismatch is deleted and reported.
+  downloaded at all, a hash mismatch is deleted and reported. The same list is the only place hashes live: it is
+  installed as `~/.local/share/rice/checksums.txt`, and `rice-cursor` reads it too. Adding a line is all it takes
+  to allow a new download.
 - **Archives cannot write outside their folder.** `extract_verified` refuses absolute paths, `../` and links
   pointing out of the destination.
 - **Updates only come from this project.** The origin must be `github.com/<owner>/DarkShadowShell`.
@@ -47,4 +49,5 @@ public issue for something that runs code or exposes data.
 
 ## Checks
 
-`tests/secure.sh` and `tests/update.sh` run on any machine (no Linux needed) and in CI on every push.
+`tests/secure.sh`, `tests/update.sh` and `tests/checksums.sh` run on any machine (no Linux needed) and in CI on
+every push.

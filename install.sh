@@ -704,6 +704,8 @@ step_apps() {
   task "Helper scripts ($n)  ->  ~/.local/bin" copy_bins
   [ -d "$ROOT/sounds" ] && task "Notification sounds  ->  ~/.local/share/rice/sounds" copy_tree "$ROOT/sounds" "$HOME/.local/share/rice/sounds"
   [ -f "$ROOT/assets/icon.png" ] && task "App icon  ->  ~/.local/share/rice/icon.png" put "$ROOT/assets/icon.png" "$HOME/.local/share/rice/icon.png"
+  # the pinned hashes for downloads, for the scripts that fetch things after the install (rice-cursor)
+  [ -f "$ROOT/install/checksums.txt" ] && task "Pinned download hashes  ->  ~/.local/share/rice/checksums.txt" put "$ROOT/install/checksums.txt" "$HOME/.local/share/rice/checksums.txt"
   for d in "$ROOT"/quickshell/*/; do
     [ -d "$d" ] || continue
     d="$(basename "$d")"

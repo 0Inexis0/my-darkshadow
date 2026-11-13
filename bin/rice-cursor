@@ -291,11 +291,33 @@ def xfallback(ts):
 
 BIBATA_VERSION = "v2.0.7"
 BIBATA_URL = "https://github.com/ful1e5/Bibata_Cursor/releases/download/" + BIBATA_VERSION + "/%s.tar.xz"
-# the themes this shell chooses; anything else is not downloaded (its hash is not pinned here)
-BIBATA_SHA = {
-    "Bibata-Modern-Ice.tar.xz": "a68cae60c4dc706350e194ebc91c5fe48bc7bc9d59e119555834a2a7ee5078ef",
-    "Bibata-Modern-Classic.tar.xz": "7d3495864e5bbef02f5e77de760b2905903b63c71495a78ef6306d19a3b556d8",
-}
+
+
+def checksum_file():
+    """the one list of pinned downloads (install/checksums.txt in the repo, installed for the shell)"""
+    here = os.path.dirname(os.path.abspath(__file__))
+    for p in (os.environ.get("RICE_CHECKSUMS", ""),
+              HOME + "/.local/share/rice/checksums.txt",
+              os.path.join(here, "..", "install", "checksums.txt")):
+        if p and os.path.isfile(p):
+            return p
+    return ""
+
+
+def expected_sha(name):
+    """hash for NAME from the checksum list; nothing there means the file is not downloaded at all"""
+    p = checksum_file()
+    if not p:
+        return ""
+    try:
+        with open(p) as f:
+            for ln in f:
+                parts = ln.split()
+                if len(parts) == 2 and parts[1] == name and re.fullmatch(r"[0-9a-fA-F]{64}", parts[0]):
+                    return parts[0].lower()
+    except OSError:
+        pass
+    return ""
 
 
 def get_bibata(name="Bibata-Modern-Ice"):
@@ -303,9 +325,9 @@ def get_bibata(name="Bibata-Modern-Ice"):
     cursor theme at all Hyprland shows no cursor)"""
     if not name.startswith("Bibata-"):
         return False
-    want = BIBATA_SHA.get(name + ".tar.xz")
+    want = expected_sha(name + ".tar.xz")
     if not want:
-        # shortcut: only the shell's own Bibata themes are hash-pinned; pin another one here before allowing it
+        # nothing pinned: no download (add the name and its SHA-256 to install/checksums.txt to allow it)
         return False
     tmp = tempfile.mkdtemp(prefix="rice-bibata-")
     try:
