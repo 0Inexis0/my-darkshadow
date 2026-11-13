@@ -39,8 +39,9 @@ public issue for something that runs code or exposes data.
   your own fork and review what the update changes before answering "y".
 - **`rice-security` integrity baseline is tamper-evident, not tamper-proof.** It is a hash list in your own
   `~/.config`, so it notices accidental or casual changes; a process running as you can rewrite it.
-- **Font and cursor packs** are data, not code. `rice-cursor` checks archive paths; the fonts `rice-fonts`
-  downloads are fetched over HTTPS from GitHub but are not hash-pinned here.
+- **Other downloads are data, not code.** `rice-cursor` pins Bibata to a release and checks its SHA-256, and every
+  archive it opens is path-checked; the other cursor packs and the fonts `rice-fonts` downloads come over HTTPS
+  from GitHub but are not hash-pinned here.
 - **Local code is trusted.** The shell runs what is in `~/.config/quickshell` and `~/.config/hypr` at login. The
   checks above cover the path *into* your machine, not someone who can already write there.
 
