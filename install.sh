@@ -11,6 +11,12 @@ HAVE_VERSION="$(tr -d ' \r\n' 2>/dev/null <"$HOME/.config/rice/version" || true)
 . "$ROOT/install/lib/ui.sh"
 # shellcheck source=install/lib/distro.sh
 . "$ROOT/install/lib/distro.sh"
+# shellcheck source=install/lib/secure.sh
+. "$ROOT/install/lib/secure.sh"
+
+# pinned releases: the URLs below use these tags, and install/checksums.txt has their hashes
+MATUGEN_VERSION="4.2.0"
+BIBATA_VERSION="v2.0.7"
 
 ASSUME_YES=0; DRY_RUN=0; MODE=install; SKIP_PKGS=0; PULLED=0; TAKE_SETTINGS_ARG=0; WM_ARG=""; AUR_ARG=""; HELPER_ARG=""; DOCTOR=0
 usage() {
@@ -290,14 +296,15 @@ fedora_pick() {
 matugen_download() {
   local arch url d
   arch="$(uname -m)"
-  url="$(curl -fsSL --max-time 20 https://api.github.com/repos/InioX/matugen/releases/latest 2>/dev/null |
-         grep -oE '"browser_download_url": *"[^"]+"' | grep -oE 'https://[^"]+' |
-         grep -iE "${arch}.*\.tar\.gz$" | head -1)"
-  [ -n "$url" ] || return 1
+  url="https://github.com/InioX/matugen/releases/download/v$MATUGEN_VERSION/matugen-$MATUGEN_VERSION-$arch.tar.gz"
   d="$(mktemp -d)"
-  if curl -fsSL --max-time 120 -o "$d/m.tar.gz" "$url" && tar -xzf "$d/m.tar.gz" -C "$d" 2>/dev/null; then
+  if fetch_verified "$url" "$d/m.tar.gz" "matugen-$MATUGEN_VERSION-$arch.tar.gz" &&
+     extract_verified "$d/m.tar.gz" "$d"; then
     local bin; bin="$(find "$d" -type f -name matugen | head -1)"
-    if [ -n "$bin" ]; then mkdir -p "$HOME/.local/bin"; install -m 755 "$bin" "$HOME/.local/bin/matugen"; rm -rf "$d"; return 0; fi
+    # a release asset is a binary, not a script: an ELF for this machine or nothing
+    if [ -n "$bin" ] && [ "$(head -c 4 "$bin" | od -An -tx1 | tr -d ' \n')" = "7f454c46" ]; then
+      mkdir -p "$HOME/.local/bin"; install -m 755 "$bin" "$HOME/.local/bin/matugen"; rm -rf "$d"; return 0
+    fi
   fi
   rm -rf "$d"
   return 1
@@ -503,9 +510,11 @@ set_look() {
   fi
   # Bibata is not packaged everywhere (Fedora): download it for this user when it is missing
   if [ ! -d "/usr/share/icons/$theme" ] && [ ! -d "$HOME/.local/share/icons/$theme" ] && [ ! -d "$HOME/.icons/$theme" ]; then
-    mkdir -p "$HOME/.local/share/icons"
-    curl -fsSL -m 120 "https://github.com/ful1e5/Bibata_Cursor/releases/latest/download/$theme.tar.xz" |
-      tar -xJ -C "$HOME/.local/share/icons" 2>/dev/null || echo "could not download the $theme cursor"
+    local arc; arc="$(mktemp "${TMPDIR:-/tmp}/rice-bibata.XXXXXX.tar.xz")"
+    if fetch_verified "https://github.com/ful1e5/Bibata_Cursor/releases/download/$BIBATA_VERSION/$theme.tar.xz" \
+       "$arc" "$theme.tar.xz" && extract_verified "$arc" "$HOME/.local/share/icons"; then :;
+    else echo "could not download the $theme cursor"; fi
+    rm -f "$arc"
   fi
   # a theme folder that has no cursors inside (a broken package) is no theme: rice-cursor gets a working one
   [ -f "$HOME/.config/rice/cursor.json" ] || { mkdir -p "$HOME/.config/rice"; echo '{"theme": "Bibata-Modern-Ice", "size": 24}' >"$HOME/.config/rice/cursor.json"; }

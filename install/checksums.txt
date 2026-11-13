@@ -1,0 +1,4 @@
+# SHA-256 of everything install.sh downloads before it unpacks or runs it.
+# The URLs are pinned to these tags in install.sh: bump both together.
+a2e3b50e49ed6439999ba3c252ed04fabd98ee4e9d12e5e5dff2e66370569751  matugen-4.2.0-x86_64.tar.gz
+a68cae60c4dc706350e194ebc91c5fe48bc7bc9d59e119555834a2a7ee5078ef  Bibata-Modern-Ice.tar.xz
