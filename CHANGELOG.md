@@ -1,5 +1,13 @@
 # Changelog
 
+## V4.34: a new wallpaper picker, wallpapers off, Bluetooth headphones, Flatpak apps
+- New wallpaper picker (SUPER + W): a Material 3 carousel. The wallpaper in focus is big in the middle (sharp, the picture itself), the ones next to it get narrower the farther they are. Wheel, arrows or a click move it; Enter, a click on the big one or Set as wallpaper sets it. Search, and All / Pictures / Live (Tab), shuffle. It is much lighter: only 15 cards are ever made, they use the small previews, and one mask rounds all of them (the old grid made a card with its own effect for every wallpaper and read the list again every few seconds, which could crash it with many wallpapers)
+- Settings > Wallpaper > Wallpaper control: Wallpapers from the shell off = the shell sets no wallpaper at all (no awww, no live wallpaper, no slideshow), for your own wallpaper tool; Wallpaper picker off = SUPER + W does nothing
+- Bluetooth headphones that connected for a second and dropped: connecting stops the device search first, trusts the device and checks it stays connected (it tries again). When PipeWire has no Bluetooth audio, the menu says so (Arch: the installer adds pipewire-audio)
+- Flatpak apps in the launcher: the shell (and Hyprland's apps) know flatpak's app folders, also when the session did not get them from /etc/profile.d. Nothing to add by hand any more (and no update removes it)
+- Settings opens instantly the second time: closed, it waits hidden for three minutes before it quits
+- btop: the transparent theme is put in place right away by the update
+
 ## V4.33: a transparent btop theme
 - btop now looks like the rest of the shell: a see-through theme ("darkshadow", purple accent; the terminal's own background and blur show through), used by default. With wallpaper colors on, btop uses the "matugen" theme, which follows the wallpaper. A theme you picked yourself in btop is left alone (the installer only replaces Default / TTY)
 

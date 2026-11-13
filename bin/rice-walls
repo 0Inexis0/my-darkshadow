@@ -18,6 +18,10 @@
   rice-walls awww-args            the awww options for that (commands.sh uses them)
   rice-walls start                at login: a wallpaper when there is none yet, the live wallpaper again,
                                   and the slideshow when it is on
+  rice-walls manage on|off        off: the shell sets no wallpaper at all (no awww, no live wallpaper, no
+                                  slideshow), for your own wallpaper tool
+  rice-walls picker on|off        the wallpaper picker (SUPER + W) on or off
+  rice-walls awww                 starts awww-daemon at login (only when the shell sets the wallpaper)
 Settings > Home > Wallpaper uses it, and so do the wallpaper pickers. Settings: ~/.config/rice/wallpapers.json.
 """
 import configparser
@@ -51,7 +55,7 @@ PID = RUN + "/rice-walls.pid"
 
 PICS = ("jpg", "jpeg", "png", "webp", "gif", "bmp", "jxl", "avif")
 VIDEOS = ("mp4", "webm", "mkv", "mov", "avi", "m4v")
-DEFAULTS = {"folders": [], "waypaper": True, "waypaper_post": "",
+DEFAULTS = {"folders": [], "waypaper": True, "waypaper_post": "", "manage": True, "picker": True,
             "slideshow": {"on": False, "minutes": 30, "order": "shuffle", "folder": ""},
             "live": {"sound": False},
             # how a new wallpaper comes in (Settings > Wallpaper > Animation)
@@ -298,7 +302,7 @@ def cmd_list():
                 os._exit(0)
         except OSError:
             pass
-    print(json.dumps({"dir": ds[0][0] if ds else "", "dirs": [{"path": d, "from": w} for d, w in ds],
+    print(json.dumps({"manage": managed(c), "picker": c.get("picker") is not False, "dir": ds[0][0] if ds else "", "dirs": [{"path": d, "from": w} for d, w in ds],
                       "current": cur, "still": read(CURRENT), "walls": out}))
 
 
@@ -355,7 +359,18 @@ def apply_picture(p, live=False):
         open(CURRENT, "w").write(p)
 
 
+def managed(c=None):
+    return (c or load()).get("manage") is not False
+
+
+def off_note():
+    notify("Wallpapers are off", "The shell does not set wallpapers (Settings > Wallpaper > Wallpapers from the shell).")
+
+
 def cmd_set(f):
+    if not managed():
+        off_note()
+        sys.exit("rice-walls: wallpapers are off (rice-walls manage on)")
     f = os.path.abspath(os.path.expanduser(f))
     if not os.path.isfile(f):
         sys.exit("rice-walls: not a file: " + f)
@@ -395,6 +410,8 @@ def pick_next(c):
 
 
 def cmd_next():
+    if not managed():
+        sys.exit("rice-walls: wallpapers are off (rice-walls manage on)")
     f = pick_next(load())
     if f:
         cmd_set(f)
@@ -415,7 +432,7 @@ def daemon():
     try:
         while True:
             c = load()
-            if not c["slideshow"].get("on"):
+            if not c["slideshow"].get("on") or not managed(c):
                 return
             if live_now():          # a live wallpaper stays until you pick another one
                 time.sleep(30)
@@ -491,8 +508,41 @@ def ensure_wallpaper():
         apply_picture(p)
 
 
+def awww_running():
+    return subprocess.run(["pgrep", "-x", "awww-daemon"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0 or \
+        subprocess.run(["pgrep", "-x", "swww-daemon"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
+
+
+def start_awww():
+    for t in ("awww-daemon", "swww-daemon"):
+        if shutil.which(t):
+            subprocess.Popen([t], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL,
+                             start_new_session=True)
+            return True
+    return False
+
+
+def manage(on):
+    c = load()
+    c["manage"] = on
+    save(c)
+    if on:
+        if not awww_running():
+            start_awww()
+            time.sleep(0.6)
+        cmd_start()
+    else:
+        # everything the shell put on the desktop goes: the slideshow, the live wallpaper and awww
+        stop_daemon()
+        stop_live()
+        subprocess.run(["pkill", "-x", "awww-daemon"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(["pkill", "-x", "swww-daemon"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
 def cmd_start():
     c = load()
+    if not managed(c):
+        return
     ensure_wallpaper()
     v = live_now()
     if v and not subprocess.run(["pgrep", "-f", MPV_PAT], stdout=subprocess.DEVNULL).returncode == 0:
@@ -545,6 +595,7 @@ def state():
     print(json.dumps({"dirs": [{"path": d, "from": w} for d, w in dirs(c)], "folders": c["folders"],
                       "waypaper": c["waypaper"], "waypaper_found": bool(waypaper_dirs()), "waypaper_hook": hook,
                       "slideshow": c["slideshow"], "live": dict(c["live"], now=live_now()),
+                      "manage": managed(c), "picker": c.get("picker") is not False,
                       "transition": c.get("transition") or {},
                       "have": {t: shutil.which(t) is not None for t in ("mpvpaper", "ffmpeg", "matugen", "awww")}
                       | {"magick": bool(shutil.which("magick") or shutil.which("convert"))},
@@ -572,6 +623,18 @@ def main(a):
         cmd_next()
     elif cmd == "start":
         cmd_start()
+    elif cmd == "manage" and arg in ("on", "off"):
+        manage(arg == "on")
+    elif cmd == "picker" and arg in ("on", "off"):
+        c = load()
+        c["picker"] = arg == "on"
+        save(c)
+    elif cmd == "awww":
+        # at login (hyprland.lua, niri): awww-daemon, unless the shell sets no wallpaper
+        if managed() and not awww_running():
+            for t in ("awww-daemon", "swww-daemon"):
+                if shutil.which(t):
+                    os.execvp(t, [t])
     elif cmd == "daemon":
         daemon()
     elif cmd == "folder" and arg in ("add", "remove") and len(a) > 3:

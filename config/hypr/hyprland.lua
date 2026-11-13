@@ -58,7 +58,7 @@ local menu        = "$HOME/.local/bin/rice-launch"   -- the launcher (SUPER + R,
 --
 hl.on("hyprland.start", function ()
     hl.exec_cmd("$HOME/.local/bin/rice-bar start")
-   hl.exec_cmd("awww-daemon")
+   hl.exec_cmd("$HOME/.local/bin/rice-walls awww")
    hl.exec_cmd("$HOME/.local/bin/rice-notifyd")
    hl.exec_cmd("hypridle")
    hl.exec_cmd("$HOME/.local/bin/border-sync")
@@ -74,6 +74,16 @@ hl.on("hyprland.start", function ()
 
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
+-- Flatpak apps in the launchers: flatpak's exports, when the session did not get them from /etc/profile.d
+pcall(function()
+    local d = os.getenv("XDG_DATA_DIRS") or "/usr/local/share:/usr/share"
+    if d == "" then d = "/usr/local/share:/usr/share" end
+    local h = os.getenv("HOME") or ""
+    for _, p in ipairs({ h .. "/.local/share/flatpak/exports/share", "/var/lib/flatpak/exports/share" }) do
+        if not string.find(":" .. d .. ":", ":" .. p .. ":", 1, true) then d = d .. ":" .. p end
+    end
+    hl.env("XDG_DATA_DIRS", d)
+end)
 
 
 -----------------------

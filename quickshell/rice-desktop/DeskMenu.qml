@@ -66,6 +66,8 @@ Scope {
     // ---------- what it shows ----------
     property var walls: []
     property string current: ""
+    // Settings > Wallpaper > Wallpapers from the shell is off: no wallpapers in this menu
+    property bool wallsOn: true
     Process {
         id: wallsP
         command: ["bash", "-c", "\"$HOME/.local/bin/rice-walls\" list 2>/dev/null"]
@@ -73,6 +75,7 @@ Scope {
             try {
                 const j = JSON.parse(text)
                 dm.current = j.current || ""
+                dm.wallsOn = j.manage !== false
                 // the one you have first, then the others (videos too: they are live wallpapers)
                 const l = (j.walls || []).slice(0)
                 l.sort(function(a, b) { return (b.path === dm.current) - (a.path === dm.current) })
@@ -249,6 +252,7 @@ Scope {
 
                 // ---- header: the wallpapers, and All
                 Item {
+                    visible: dm.wallsOn
                     width: parent.width; height: 32
                     opacity: dm.stg(0); transform: Translate { y: (1 - dm.stg(0)) * -10 }
                     Column { x: 6; anchors.verticalCenter: parent.verticalCenter
@@ -266,12 +270,13 @@ Scope {
                                 font.family: Fonts.main; font.pixelSize: 12; font.weight: Font.DemiBold }
                             MIcon { anchors.verticalCenter: parent.verticalCenter; size: 16; name: "arrow_forward"; glyph: ""; color: allM.containsMouse ? pal.inkPrimary : pal.inkContainer } }
                         MouseArea { id: allM; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                            onClicked: { Sfx.play("click"); dm.run("printf '%s toggle\\n' \"$(date +%s.%N)\" > \"$HOME/.cache/rice/walls-open\"") } }
+                            onClicked: { Sfx.play("click"); dm.run("\"$HOME/.local/bin/rice-dashboard\" wallpaper") } }
                     }
                 }
                 // ---- the wallpapers: the one you have first; the wheel scrolls sideways
                 ListView {
                     id: wl
+                    visible: dm.wallsOn
                     width: parent.width; height: 72
                     orientation: ListView.Horizontal
                     spacing: 8

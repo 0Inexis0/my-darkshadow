@@ -128,6 +128,26 @@ Item {
             }
         }
 
+        // ---------- whether the shell sets the wallpaper at all, and the picker ----------
+        SectionTitle { text: I18n.t("Wallpaper control"); sub: I18n.t("Use your own wallpaper tool, or turn off the wallpaper picker.") }
+        ToggleRow {
+            label: I18n.t("Wallpapers from the shell")
+            desc: page.st.manage === false ? I18n.t("Off: the shell sets no wallpaper (no pictures, no live wallpapers, no slideshow). Your own tool can do it")
+                                           : I18n.t("On: the shell sets your wallpaper and takes its colors")
+            checked: page.st.manage !== false
+            onToggled: function(v) { const n = Object.assign({}, page.st); n.manage = v; page.st = n
+                page.walls(["manage", v ? "on" : "off"], v ? I18n.t("Wallpapers on") : I18n.t("Wallpapers off")) }
+        }
+        ToggleRow {
+            enabled: page.st.manage !== false
+            opacity: enabled ? 1 : 0.5
+            label: I18n.t("Wallpaper picker")
+            desc: I18n.t("SUPER + W and All in the desktop menu open it")
+            checked: page.st.picker !== false && page.st.manage !== false
+            onToggled: function(v) { const n = Object.assign({}, page.st); n.picker = v; page.st = n
+                page.walls(["picker", v ? "on" : "off"], I18n.t("Saved")) }
+        }
+
         // ---------- all wallpapers ----------
         SectionTitle {
             text: I18n.t("Your wallpapers")

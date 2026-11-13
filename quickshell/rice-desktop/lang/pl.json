@@ -242,5 +242,14 @@
  "paste": "wklej",
  "remove": "usuń",
  "pin": "przypnij",
- "kinds": "rodzaje"
+ "kinds": "rodzaje",
+ "Search wallpapers": "Szukaj tapet",
+ "Live": "Na żywo",
+ "No live wallpapers: put videos in a wallpaper folder": "Brak tapet na żywo: wrzuć filmy do folderu z tapetami",
+ "Enter sets it  ·  Tab: All, Pictures, Live": "Enter ustawia  ·  Tab: Wszystko, Obrazy, Na żywo",
+ "In use": "W użyciu",
+ "Set as wallpaper": "Ustaw jako tapetę",
+ "Headphones need PipeWire's Bluetooth audio: install pipewire-audio (Arch), then log in again": "Słuchawki potrzebują dźwięku Bluetooth w PipeWire: zainstaluj pipewire-audio (Arch) i zaloguj się ponownie",
+ "Headphones need WirePlumber running: systemctl --user enable --now wireplumber": "Słuchawki potrzebują działającego WirePlumbera: systemctl --user enable --now wireplumber",
+ "Could not connect. Is the device on and close by?": "Nie udało się połączyć. Czy urządzenie jest włączone i blisko?"
 }

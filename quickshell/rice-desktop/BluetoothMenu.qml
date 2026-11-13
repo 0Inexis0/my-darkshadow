@@ -75,7 +75,13 @@ PanelWindow {
         onExited: function(code) {
             wm.busyFor = ""
             if (code === 0) { wm.msg = ""; Sfx.play("done") }
-            else { wm.msg = "Could not connect. Is the device on and close by?"; Sfx.play("remove") }
+            else {
+                // rice-bluetooth connect: 3 = no Bluetooth audio in PipeWire, 4 = WirePlumber is not running
+                wm.msg = code === 3 ? Tr.t("Headphones need PipeWire's Bluetooth audio: install pipewire-audio (Arch), then log in again")
+                       : (code === 4 ? Tr.t("Headphones need WirePlumber running: systemctl --user enable --now wireplumber")
+                       : Tr.t("Could not connect. Is the device on and close by?"))
+                Sfx.play("remove")
+            }
             refreshTimer.restart()
         }
     }
@@ -88,8 +94,9 @@ PanelWindow {
     function pick(n) {
         msg = ""
         if (n.active) return
-        if (n.paired) sh("bluetoothctl connect " + n.mac, n.mac)
-        else sh("bluetoothctl pair " + n.mac + " && bluetoothctl trust " + n.mac + " && bluetoothctl connect " + n.mac, n.mac)
+        // rice-bluetooth connect: stops searching first, trusts the device, checks it stays connected (tries again)
+        if (scanProc.running) scanProc.running = false
+        sh("\"$HOME/.local/bin/rice-bluetooth\" connect " + n.mac, n.mac)
     }
     function scan() { if (scanning) return; scanning = true; scanProc.running = true; refreshTimer.interval = 2500; refreshTimer.restart() }
     function power(on) { radio = on; sh((on ? "rfkill unblock bluetooth; " : "") + "bluetoothctl power " + (on ? "on" : "off"), ""); if (on) scan() }
@@ -141,7 +148,7 @@ PanelWindow {
     Rectangle {
         id: card
         width: wm.cardW
-        height: head.height + 14 + wm.listH + (wm.msg !== "" ? 34 : 0) + 14
+        height: head.height + 14 + wm.listH + (wm.msg !== "" ? (wm.msg.length > 52 ? 48 : 34) : 0) + 14
         Behavior on height { NumberAnimation { duration: 360; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
         Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
         x: wm.side ? (wm.atRight ? wm.width - wm.sideSpace - width : wm.sideSpace)
@@ -279,7 +286,8 @@ PanelWindow {
         // ---------- an error, if there was one ----------
         Text {
             visible: wm.msg !== ""
-            x: 18; y: parent.height - 38; width: parent.width - 36; elide: Text.ElideRight
+            x: 18; y: parent.height - 14 - height; width: parent.width - 36
+            wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight
             text: wm.msg; color: "#ff8a8a"; font.family: Fonts.main; font.pixelSize: 12
         }
     }

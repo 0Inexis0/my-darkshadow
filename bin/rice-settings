@@ -1,17 +1,37 @@
 #!/usr/bin/env bash
 # rice-settings          open the Settings app, or close it when it is open
 # rice-settings PAGE     open it on a page (a number: 0 Home, 2 DarkShadow bar, 7 Launcher, 8 Theme, 10 Notifications ...)
-if [ -n "${1:-}" ]; then
-  mkdir -p "$HOME/.cache/rice"
-  printf '%s\n' "$1" >"$HOME/.cache/rice/settings-page"
-  if pgrep -f "quickshell/rice-settings" >/dev/null; then
-    pkill -f "quickshell/rice-settings"
-    sleep 0.4
-  fi
-  exec qs -n -p "$HOME/.config/quickshell/rice-settings"
-fi
-if pgrep -f "quickshell/rice-settings" >/dev/null; then
+# Closed, Settings waits hidden for three minutes (~/.cache/rice/settings-parked), so opening it again is instant:
+# it is woken through ~/.cache/rice/settings-show ("TIME PAGE", "TIME -" or "TIME hide").
+C="$HOME/.cache/rice"
+P="$C/settings-parked"
+mkdir -p "$C"
+alive() { pgrep -f "quickshell/rice-settings" >/dev/null; }
+ask() { printf '%s %s\n' "$(date +%s.%N)" "$1" >"$C/settings-show"; }
+# wake the waiting one; it answers by removing the parked file (if it does not, it is started again)
+wake() {
+  ask "${1:--}"
+  for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do [ -e "$P" ] || return 0; sleep 0.1; done
+  return 1
+}
+# an older Settings (from before an update) does not answer: it is closed the old way
+pid="$(pgrep -f "quickshell/rice-settings" | head -1)"
+if [ -n "$pid" ] && [ "$(cat "$C/settings-pid" 2>/dev/null)" != "$pid" ]; then
   pkill -f "quickshell/rice-settings"
-else
-  exec qs -n -p "$HOME/.config/quickshell/rice-settings"
+  rm -f "$P"
+  [ -z "${1:-}" ] && exit 0
+  sleep 0.4
 fi
+if alive; then
+  if [ -e "$P" ]; then
+    wake "${1:-}" && exit 0
+    pkill -f "quickshell/rice-settings"; sleep 0.4
+  elif [ -n "${1:-}" ]; then
+    ask "$1"; exit 0            # open: it goes to that page
+  else
+    ask hide; exit 0            # it is open: close it
+  fi
+fi
+rm -f "$P"
+[ -n "${1:-}" ] && printf '%s\n' "$1" >"$C/settings-page"
+exec qs -n -p "$HOME/.config/quickshell/rice-settings"

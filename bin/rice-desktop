@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 dir="$HOME/.config/quickshell/rice-desktop"
+# Flatpak apps in the launcher: their .desktop files live in flatpak's exports, which a session started without
+# /etc/profile.d (Hyprland or niri from a display manager or a TTY) does not know about
+fp_add() { case ":${XDG_DATA_DIRS}:" in *":$1:"*) ;; *) [ -d "$1" ] && XDG_DATA_DIRS="${XDG_DATA_DIRS:+$XDG_DATA_DIRS:}$1" ;; esac; }
+[ -n "${XDG_DATA_DIRS:-}" ] || XDG_DATA_DIRS="/usr/local/share:/usr/share"
+fp_add "${XDG_DATA_HOME:-$HOME/.local/share}/flatpak/exports/share"
+fp_add "/var/lib/flatpak/exports/share"
+export XDG_DATA_DIRS
 running() { pgrep -f "quickshell/rice-desktop" >/dev/null; }
 # a fresh login never starts in the widget editor
 [ "$1" = start ] && "$HOME/.local/bin/desktop-set" edit off >/dev/null 2>&1

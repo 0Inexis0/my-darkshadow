@@ -245,6 +245,13 @@ def island(tab, toggle=True):
 
 
 def walls_picker():
+    # Settings > Wallpaper can turn the picker off (or the shell sets no wallpaper at all): SUPER + W does nothing
+    try:
+        w = json.load(open(HOME + "/.config/rice/wallpapers.json"))
+        if w.get("picker") is False or w.get("manage") is False:
+            return
+    except Exception:
+        pass
     os.makedirs(CACHE, exist_ok=True)
     open(CACHE + "/walls-open", "w").write("%f toggle\n" % time.time())
     ensure_shell()

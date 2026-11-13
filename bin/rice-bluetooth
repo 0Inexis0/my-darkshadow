@@ -1,6 +1,40 @@
 #!/usr/bin/env bash
 # rice-bluetooth [X [Y]]   open the Bluetooth menu under the bar (X: where the icon is, pixels from the left; Y: from the top, for a bar on the side)
 # rice-bluetooth list  devices for the menu: power, then one line per device  MAC|name|connected|paired|icon|battery
+# rice-bluetooth connect MAC   pair (when new), trust and connect; it checks the device stays connected and tries
+#                              again. Exit 3: headphones drop because PipeWire has no Bluetooth audio (plugin
+#                              missing), 4: no WirePlumber running, 1: could not connect
+if [ "${1:-}" = connect ] && [ -n "${2:-}" ]; then
+  m="$2"
+  # searching for new devices while connecting makes many adapters drop the connection again
+  pkill -f "bluetoothctl --timeout [0-9]* scan on" 2>/dev/null
+  bluetoothctl scan off >/dev/null 2>&1
+  info() { bluetoothctl info "$m" 2>/dev/null; }
+  if ! info | grep -q "Paired: yes"; then
+    bluetoothctl --timeout 25 pair "$m" >/dev/null 2>&1 || { info | grep -q "Paired: yes" || exit 1; }
+  fi
+  # trusted: it may connect again by itself, and audio is not refused
+  bluetoothctl trust "$m" >/dev/null 2>&1
+  audio=0; info | grep -qE "Icon: audio|UUID: Audio Sink|UUID: Headset|UUID: Handsfree" && audio=1
+  for _ in 1 2 3; do
+    bluetoothctl --timeout 15 connect "$m" >/dev/null 2>&1
+    sleep 3
+    info | grep -q "Connected: yes" && exit 0
+    sleep 1
+  done
+  # headphones that connect for a moment and drop: nothing takes their sound
+  if [ "$audio" = 1 ]; then
+    pgrep -x wireplumber >/dev/null 2>&1 || exit 4
+    # PipeWire's plugins are there, but not the Bluetooth one (Arch: pipewire-audio)
+    found=0; seen=0
+    for d in /usr/lib/spa-0.2 /usr/lib64/spa-0.2 /usr/lib/x86_64-linux-gnu/spa-0.2 /usr/lib/aarch64-linux-gnu/spa-0.2; do
+      [ -d "$d" ] || continue
+      seen=1; [ -d "$d/bluez5" ] && found=1
+    done
+    [ "$seen" = 1 ] && [ "$found" = 0 ] && exit 3
+  fi
+  exit 1
+fi
 if [ "${1:-}" = list ]; then
   p=$(bluetoothctl show 2>/dev/null | sed -n 's/^[[:space:]]*Powered: //p' | head -1)
   echo "power:${p:-no}"

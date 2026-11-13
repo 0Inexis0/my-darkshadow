@@ -35,7 +35,44 @@ FloatingWindow {
     Connections { target: Prefs; function onSizeChanged() { sizeSoon.restart() } }
     color: "transparent"
     visible: true
-    onVisibleChanged: if (!visible) Qt.quit()
+    // Closed, Settings waits hidden for three minutes, so opening it again is instant (rice-settings wakes it
+    // through ~/.cache/rice/settings-show); then it really quits. ~/.cache/rice/settings-parked: it is waiting.
+    property bool parked: false
+    onVisibleChanged: {
+        if (!visible) {
+            parked = true; parkT.restart()
+            Quickshell.execDetached(["bash", "-c", "mkdir -p \"$HOME/.cache/rice\"; : > \"$HOME/.cache/rice/settings-parked\""])
+        } else if (parked) {
+            parked = false; parkT.stop()
+            Quickshell.execDetached(["bash", "-c", "rm -f \"$HOME/.cache/rice/settings-parked\""])
+            sizeSoon.restart()
+        }
+    }
+    Timer { id: parkT; interval: 180000; onTriggered: { Quickshell.execDetached(["bash", "-c", "rm -f \"$HOME/.cache/rice/settings-parked\""]); Qt.quit() } }
+    // "TIME PAGE" opens it (on that page; "-" keeps the page), "TIME hide" closes it
+    property string lastShow: ""
+    property bool showPrimed: false
+    function showReq(t) {
+        t = (t || "").trim()
+        if (!showPrimed) { showPrimed = true; lastShow = t; return }
+        if (t === "" || t === lastShow) return
+        lastShow = t
+        const w = t.split(/\s+/)
+        if (w[1] === "hide") { visible = false; return }
+        const n = parseInt(w[1])
+        if (!isNaN(n) && n >= 0 && n < pages.length) page = n
+        visible = true
+    }
+    // which Settings answers settings-show (rice-settings checks it is this one, not an older version still open)
+    Process { running: true; command: ["bash", "-c", "mkdir -p \"$HOME/.cache/rice\"; echo \"$PPID\" > \"$HOME/.cache/rice/settings-pid\""] }
+    FileView {
+        path: win.home + "/.cache/rice/settings-show"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: win.showReq(text())
+        onLoadFailed: win.showPrimed = true
+    }
 
     readonly property string home: Quickshell.env("HOME")
     // the tour is on: the rest of the screen goes dark (dimWin below)
@@ -59,7 +96,7 @@ FloatingWindow {
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" auto-hide \"$1\"", "_", on ? "on" : "off"])
         status = "Auto-hide widgets " + (on ? "on" : "off")
     }
-    function closeNow() { Qt.quit() }
+    function closeNow() { visible = false }
     // pages are made when you go to them; the first search makes all of them (search looks inside every page)
     property bool searchWanted: false
     property string lastQuery: ""

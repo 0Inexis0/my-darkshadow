@@ -675,7 +675,8 @@ def startup(f, s):
         "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP NIRI_SOCKET DISPLAY 2>/dev/null",
         # without systemd (Void): PipeWire and the password prompt agent
         b + "rice-sys session",
-        "awww-daemon",
+        # the wallpaper (not when Settings > Wallpaper says the shell sets none)
+        b + "rice-walls awww",
         b + "rice-notifyd",
         "hypridle",
         b + "rice-bar start",
