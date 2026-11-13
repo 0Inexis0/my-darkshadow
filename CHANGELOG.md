@@ -1,5 +1,15 @@
 # Changelog
 
+## V4.47: security and privacy defaults: verified downloads, guarded updates, opt-in permissions
+- Downloads: matugen and the Bibata cursor are pinned to a release tag and checked against `install/checksums.txt` before they are unpacked or installed; an archive with `../`, absolute paths or links outside its folder is refused (`install/lib/secure.sh`). An unpinned file is never downloaded
+- Updates: the remote must be this project (or a fork of it), and an update that changes `install.sh` shows what changes and asks in a terminal; from Settings it is refused instead of started (Settings > Update Center says to run `rice-update` in a terminal). `RICE_TRUST_UPDATE=1` overrides
+- The `input` group (Infinite Desktop, SUPER + ALT + mouse) is no longer granted by the installer: `./install.sh --input-group`, or Settings > Desktop > Infinite Desktop > Allow, which explains that any program you run can then read every keyboard. NixOS: `programs.shadows-shell.inputGroup = true`
+- Weather asks for nothing until you set a place: `rice-weather place "Warsaw"` (before, wttr.in geolocated the IP). `rice-weather off` stops it; the cached answer is still shown
+- Lyrics are opt-in: `rice-lyrics on` / `off`. Cached lyrics always work
+- Update checks: once a day instead of every 15 minutes, configurable with `rice-update every N` minutes, and `rice-update watch off` stops them
+- `sync.sh` warns about real key shapes before publishing a config and stops instead of only printing a warning
+- `tests/secure.sh` and `tests/update.sh` cover the checks above; CI runs them
+
 ## V4.46: pick your file manager, in the wallpaper's colors; your picture on the login screen
 - Settings > Desktop > Look & Feel > File manager: Files (Nautilus), Thunar, Nemo, Dolphin or PCManFM, with an Install button for the ones you do not have. The one you pick opens with SUPER + E (Hyprland and niri) and for every "open folder" from your other apps (xdg-mime)
 - Colors from the wallpaper (on by default, a switch turns it off): the file manager and your other GTK apps get the wallpaper's Material colors through ~/.config/gtk-3.0 and gtk-4.0/darkshadow.css (your gtk.css keeps your own CSS and only gets one import line, with a backup), Dolphin and the other KDE apps through a DarkShadow color scheme. It follows every wallpaper change; open the app again to see it
