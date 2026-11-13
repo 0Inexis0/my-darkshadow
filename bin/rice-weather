@@ -3,14 +3,56 @@
 # °C or °F follows Settings > Language & region (rice-region).
 # rice-weather json: more for the Forecast widget (now, feels like, high / low, rain, the next hours), as one JSON
 # line, kept for 30 minutes in ~/.cache/rice/weather.json
-unit="m"
-grep -q '"units": *"f"' "$HOME/.config/rice/region.json" 2>/dev/null && unit="u"
-if [ "${1:-}" = json ]; then
-  f="$HOME/.cache/rice/weather.json"
-  mkdir -p "$HOME/.cache/rice"
-  if [ -s "$f" ] && [ -n "$(find "$f" -mmin -30 2>/dev/null)" ]; then cat "$f"; exit 0; fi
-  raw="$(curl -s -m 12 "wttr.in/?format=j1&lang=en")" || { [ -s "$f" ] && cat "$f"; exit 1; }
-  j="$(printf '%s' "$raw" | python3 -c '
+#
+# Privacy: wttr.in answers for the caller's IP when the URL has no place, so the shell does not ask at all until a
+# place is set. That keeps your approximate location out of a third party's log.
+#   rice-weather place "Warsaw"     (or any place name wttr.in knows)
+#   rice-weather off                (no requests; the last cached answer is still shown)
+CFG="$HOME/.config/rice/weather.json"
+
+cfg_place() {
+  python3 - "$CFG" <<'PY' 2>/dev/null
+import json, sys
+try:
+    print(json.load(open(sys.argv[1])).get("place", ""))
+except Exception:
+    pass
+PY
+}
+
+save_place() {
+  mkdir -p "$(dirname "$CFG")"
+  python3 - "$CFG" "$1" <<'PY'
+import json, os, sys
+p, place = sys.argv[1], sys.argv[2].strip()
+tmp = p + ".tmp"
+json.dump({"place": place}, open(tmp, "w"))
+os.replace(tmp, p)
+PY
+}
+
+case "${1:-}" in
+  place)
+    [ -n "${2:-}" ] || { echo "rice-weather place \"Warsaw\"" >&2; exit 2; }
+    save_place "$2" && echo "Weather for: $2" ;;
+  off)
+    save_place "" && echo "Weather requests: off (the cached answer is still shown)" ;;
+  state)
+    printf '{"place":"%s"}\n' "$(cfg_place)" ;;
+  *)
+    loc="$(cfg_place)"
+    unit="m"
+    grep -q '"units": *"f"' "$HOME/.config/rice/region.json" 2>/dev/null && unit="u"
+    url_place=""
+    [ -n "$loc" ] && url_place="$(python3 -c 'import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))' "$loc")"
+    if [ "${1:-}" = json ]; then
+      f="$HOME/.cache/rice/weather.json"
+      mkdir -p "$HOME/.cache/rice"
+      if [ -s "$f" ] && [ -n "$(find "$f" -mmin -30 2>/dev/null)" ]; then cat "$f"; exit 0; fi
+      # no place: no request, only what was already cached
+      [ -n "$url_place" ] || { [ -s "$f" ] && cat "$f"; exit 1; }
+      raw="$(curl -s -m 12 "wttr.in/$url_place?format=j1&lang=en")" || { [ -s "$f" ] && cat "$f"; exit 1; }
+      j="$(printf '%s' "$raw" | python3 -c '
 import json, sys, datetime
 f = sys.argv[1] == "u"
 try:
@@ -43,12 +85,15 @@ out = {"temp": t(c, "temp_"), "feels": t(c, "FeelsLike"), "cond": (c.get("weathe
                  "c": ((x.get("hourly") or [{}]*5)[4].get("weatherDesc") or [{}])[0].get("value", "").strip()} for x in days[:3]]}
 print(json.dumps(out))
 ' "$unit")" || { [ -s "$f" ] && cat "$f"; exit 1; }
-  printf '%s\n' "$j" > "$f"
-  printf '%s\n' "$j"
-  exit 0
-fi
-out="$(curl -s -m 10 "wttr.in/?format=%C|%t|%l&${unit}&lang=en")" || exit 1
-case "$out" in ""|*Unknown*|*"<"*|*"|"*"|"*"|"*) exit 1 ;; esac
-mkdir -p "$HOME/.cache/rice"
-printf '%s\n' "$out" > "$HOME/.cache/rice/weather.txt"
-printf '%s\n' "$out"
+      printf '%s\n' "$j" > "$f"
+      printf '%s\n' "$j"
+      exit 0
+    fi
+    [ -n "$url_place" ] || { [ -s "$HOME/.cache/rice/weather.txt" ] && cat "$HOME/.cache/rice/weather.txt"; exit 1; }
+    out="$(curl -s -m 10 "wttr.in/$url_place?format=%C|%t|%l&${unit}&lang=en")" || exit 1
+    case "$out" in ""|*Unknown*|*"<"*) exit 1 ;; esac
+    [ "$(printf '%s' "$out" | tr -cd '|' | wc -c | tr -d ' ')" = 2 ] || exit 1
+    mkdir -p "$HOME/.cache/rice"
+    printf '%s\n' "$out" > "$HOME/.cache/rice/weather.txt"
+    printf '%s\n' "$out" ;;
+esac
