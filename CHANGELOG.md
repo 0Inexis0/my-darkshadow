@@ -1,5 +1,8 @@
 # Changelog
 
+## V4.42: foot 1.26 and newer (issue #13)
+- foot 1.28 refused ~/.config/foot/darkshadow.ini ("invalid section name"): the shell wrote the old [colors] and [cursor] sections, which foot 1.26 renamed to [colors-dark] (the cursor colors moved into it). rice-look now asks foot for its version and writes the right ones for it (an older foot keeps the old ones). Thanks, Kikurory, for the exact report
+
 ## V4.41: the login screen puts the on-screen keyboard away by itself
 - The big on-screen keyboard still came back after a reboot for some (SDDM's own config can start it, and a config line is easy to miss). The login screen now hides it as soon as it opens, whatever SDDM's config says. For a touch screen: virtualKeyboard=true in the theme's theme.conf. Put the new theme in with Settings > Idle & Lockscreen > Login screen > Update it, or rice-sddm install
 

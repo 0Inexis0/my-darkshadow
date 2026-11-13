@@ -569,9 +569,21 @@ def apply_terms(c):
         cols += ["bright%d=%s" % (i, p["color%d" % (i + 8)][1:]) for i in range(8)]
         cols += ["selection-foreground=%s" % p["selection_foreground"][1:],
                  "selection-background=%s" % p["selection_background"][1:]]
+        # foot 1.26 renamed [colors] to [colors-dark] (and moved the cursor colors into it); 1.28 refuses the old name.
+        # An older foot only knows the old one.
+        new_foot = True
+        try:
+            m = re.search(r"(\d+)\.(\d+)", subprocess.run(["foot", "--version"], capture_output=True, text=True, timeout=5).stdout)
+            if m:
+                new_foot = (int(m.group(1)), int(m.group(2))) >= (1, 26)
+        except Exception:
+            pass
+        if new_foot:
+            colors = "[colors-dark]\n%s\ncursor=%s %s\n" % ("\n".join(cols), p["background"][1:], p["cursor"][1:])
+        else:
+            colors = "[colors]\n%s\n\n[cursor]\ncolor=%s %s\n" % ("\n".join(cols), p["background"][1:], p["cursor"][1:])
         write(CFG + "/foot/darkshadow.ini",
-              "# %s: written again when the wallpaper changes\nfont=%s:size=11\npad=10x10\nshell=%s\n\n"
-              "[colors]\n%s\n\n[cursor]\ncolor=%s %s\n" % (MARK, font, shp, "\n".join(cols), p["background"][1:], p["cursor"][1:]))
+              "# %s: written again when the wallpaper changes\nfont=%s:size=11\npad=10x10\nshell=%s\n\n%s" % (MARK, font, shp, colors))
         main = CFG + "/foot/foot.ini"
         st = own_file(main, "include=~/.config/foot/darkshadow.ini", "darkshadow.ini")
         if st == "own":
