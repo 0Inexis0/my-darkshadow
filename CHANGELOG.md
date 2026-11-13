@@ -1,6 +1,6 @@
 # Changelog
 
-## V4.47: security and privacy defaults: verified downloads, guarded updates, opt-in permissions
+## V4.48: security and privacy defaults: verified downloads, guarded updates, opt-in permissions
 - Downloads: matugen and the Bibata cursor are pinned to a release tag and checked against `install/checksums.txt` before they are unpacked or installed; an archive with `../`, absolute paths or links outside its folder is refused (`install/lib/secure.sh`). An unpinned file is never downloaded
 - Updates: the remote must be this project (or a fork of it), and an update that changes `install.sh` shows what changes and asks in a terminal; from Settings it is refused instead of started (Settings > Update Center says to run `rice-update` in a terminal). `RICE_TRUST_UPDATE=1` overrides
 - The `input` group (Infinite Desktop, SUPER + ALT + mouse) is no longer granted by the installer: `./install.sh --input-group`, or Settings > Desktop > Infinite Desktop > Allow, which explains that any program you run can then read every keyboard. NixOS: `programs.shadows-shell.inputGroup = true`
@@ -10,6 +10,11 @@
 - All pinned hashes are in one file, `install/checksums.txt` (installed as `~/.local/share/rice/checksums.txt`); `rice-cursor` reads it too, so a new download is allowed by adding one line there
 - `sync.sh` warns about real key shapes before publishing a config and stops instead of only printing a warning
 - `tests/security.sh` covers the checks above; CI runs it
+
+## V4.47: the bar's shadow no longer costs frames; Settings need not wait in memory
+- Performance (thanks to R31tr0, issue #14): the notch's shadow was drawn with a canvas blur that the CPU computes, 70-140 ms every time the notch changed width, and it changes all the time (the island, the music, the clock). The bar dropped to 2-3 fps while moving and games lost frames to it. The shadow is now a few soft outlines: about 1 ms, and it looks the same
+- The second `qs` process (about 300 MB) was Settings waiting hidden, so it opens at once. New switch: Settings > Desktop > Performance > "Keep Settings ready in the background". Off: it starts when you open it and quits three minutes after you close it
+- (Turning shell shadows off is still Settings > Desktop > Windows > Shell shadows; editing Look.qml by hand is not seen by the switch)
 
 ## V4.46: pick your file manager, in the wallpaper's colors; your picture on the login screen
 - Settings > Desktop > Look & Feel > File manager: Files (Nautilus), Thunar, Nemo, Dolphin or PCManFM, with an Install button for the ones you do not have. The one you pick opens with SUPER + E (Hyprland and niri) and for every "open folder" from your other apps (xdg-mime)

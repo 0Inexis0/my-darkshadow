@@ -823,6 +823,8 @@ Singleton {
             "Keep gaps": "Zostaw odstępy",
             "Keep notifications when clicked": "Zachowaj powiadomienia po kliknięciu",
             "Keep shadows": "Zostaw cienie",
+            "Keep Settings ready in the background": "Trzymaj Ustawienia w gotowości w tle",
+            "Opens at once, but waits in memory (about 300 MB). Off: it starts when you open it and quits after you close it": "Otwierają się od razu, ale czekają w pamięci (ok. 300 MB). Wyłączone: startują przy otwarciu i kończą po zamknięciu",
             "Keep the split direction when windows close (Dwindle)": "Zachowaj kierunek podziału przy zamykaniu okien (Dwindle)",
             "Keep these display settings? Reverting in ": "Zachować te ustawienia ekranu? Powrót za ",
             "Keep this? It goes back in ": "Zachować? Powrót za ",
