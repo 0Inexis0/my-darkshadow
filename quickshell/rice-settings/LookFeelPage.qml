@@ -12,6 +12,7 @@ Item {
     readonly property var ff: st.fetch || {}
     readonly property string shellNow: st.shell ? (st.shell.current || "") : ""
     readonly property string termNow: st.terminal ? (st.terminal.current || "") : ""
+    readonly property string filesNow: st.files ? (st.files.current || "") : ""
     readonly property var termInfo: {
         const l = st.terminal && st.terminal.list ? st.terminal.list : []
         for (let i = 0; i < l.length; i++) if (l[i].id === termNow) return l[i]
@@ -115,7 +116,7 @@ Item {
             x: 16; y: 68; width: parent.width - 32
             spacing: 2
             T { text: tl.name; font.pixelSize: 15; font.weight: Font.DemiBold; color: tl.on ? M3.inkPrimaryC : M3.ink }
-            T { kind: "reading"; text: tl.desc; width: parent.width; wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight
+            T { kind: "reading"; text: I18n.t(tl.desc); width: parent.width; wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight
                 font.pixelSize: 12; color: tl.on ? M3.alpha(M3.inkPrimaryC, 0.8) : M3.inkDim }
         }
         MouseArea {
@@ -306,6 +307,36 @@ Item {
             width: parent.width; wrapMode: Text.WordWrap; topPadding: 4
             text: (page.termInfo ? page.termInfo.name : page.termNow) + I18n.t(" keeps its own look and starts your login shell.")
             color: M3.inkDim; font.pixelSize: 12
+        }
+
+        // ---------- file manager ----------
+        SectionTitle { text: I18n.t("File manager"); sub: I18n.t("The app Super + E opens, and every \"open folder\" from your other apps.") }
+        Flow {
+            width: parent.width
+            spacing: 10
+            Repeater {
+                model: page.st.files ? page.st.files.list : []
+                delegate: Tile {
+                    name: modelData.name
+                    desc: modelData.desc
+                    icon: modelData.app
+                    fallbackIcon: "system-file-manager"
+                    on: page.filesNow === modelData.id
+                    installed: modelData.installed
+                    working: page.busy === "files-" + modelData.id
+                    onPicked: if (!on) page.look(["files", modelData.id], "files-" + modelData.id)
+                    onInstall: { page.waiting = true; page.look(["install", modelData.id], "files-" + modelData.id) }
+                }
+            }
+        }
+        ToggleRow {
+            label: I18n.t("Colors from the wallpaper")
+            desc: I18n.t("The file manager and your other apps (GTK and KDE) follow the wallpaper. Open them again to see it")
+            checked: !page.st.files || page.st.files.colors !== false
+            onToggled: function(v) {
+                const s2 = Object.assign({}, page.st); s2.files = Object.assign({}, page.st.files || {}); s2.files.colors = v; page.st = s2
+                page.look(["files-colors", v ? "on" : "off"])
+            }
         }
     }
 }

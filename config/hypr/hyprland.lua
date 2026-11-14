@@ -43,7 +43,7 @@ hl.monitor({
 
 -- Set programs that you use
 local terminal    = "$HOME/.local/bin/rice-term"   -- your terminal (Settings > Desktop > Look & Feel)
-local fileManager = "nautilus"
+local fileManager = "$HOME/.local/bin/rice-files"   -- defaults to Nautilus; selectable in Look & Feel
 local menu        = "$HOME/.local/bin/rice-launch"   -- the launcher (SUPER + R, ALT + Space)
 
 
@@ -511,9 +511,11 @@ require("rice-dashboard")
 -- your own keys for the shell's actions (Settings > System > Keybinds)
 pcall(require, "rice-keymap")
 
+-- your window rules and the gaming workspace (Settings > Desktop > Window rules)
+pcall(require, "rice-rules")
 pcall(require, "rice-gpu")
 
--- must stay last: gaming mode and "no blur & transparency" override
+-- Gaming and personal overrides keep their fork precedence.
 require("rice-gaming")
 
 -- Personal overrides are always loaded last.

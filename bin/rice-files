@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# rice-files [PATH]: open the file manager you picked in Settings > Desktop > Look & Feel (~/.config/rice/files),
+# or the first one this computer has. SUPER + E runs this.
+f="$(cat "$HOME/.config/rice/files" 2>/dev/null)"
+for t in "$f" nautilus thunar nemo dolphin pcmanfm; do
+  [ -n "$t" ] && command -v "$t" >/dev/null 2>&1 && exec "$t" "$@"
+done
+command -v notify-send >/dev/null 2>&1 && notify-send -a "DarkShadow's Shell" "No file manager" "Install one in Settings > Desktop > Look & Feel"
+exit 1

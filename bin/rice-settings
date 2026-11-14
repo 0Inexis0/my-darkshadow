@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # rice-settings          open the Settings app, or close it when it is open
+# rice-settings preload  start it hidden (at login), so it opens at once
 # rice-settings PAGE     open it on a page (a number: 0 Home, 2 DarkShadow bar, 7 Launcher, 8 Theme, 10 Notifications ...)
-# Closed, Settings waits hidden for three minutes (~/.cache/rice/settings-parked), so opening it again is instant:
+# Closed, Settings waits hidden (Light mode or "lazy": it quits after three minutes) (~/.cache/rice/settings-parked), so opening it again is instant:
 # it is woken through ~/.cache/rice/settings-show ("TIME PAGE", "TIME -" or "TIME hide").
 C="$HOME/.cache/rice"
 P="$C/settings-parked"
@@ -11,9 +12,32 @@ ask() { printf '%s %s\n' "$(date +%s.%N)" "$1" >"$C/settings-show"; }
 # wake the waiting one; it answers by removing the parked file (if it does not, it is started again)
 wake() {
   ask "${1:--}"
-  for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do [ -e "$P" ] || return 0; sleep 0.1; done
+  for _ in 1 2 3 4 5 6 7 8; do [ -e "$P" ] || return 0; sleep 0.1; done
   return 1
 }
+# rice-settings lazy on|off|state: do not keep Settings ready in the background (it takes about 300 MB of memory);
+# it then starts when you open it (a second or two slower). ~/.config/rice/settings-lazy
+LAZY="$HOME/.config/rice/settings-lazy"
+if [ "${1:-}" = lazy ]; then
+  case "${2:-state}" in
+    on)  mkdir -p "$HOME/.config/rice"; : >"$LAZY"
+         # the hidden one that waits is closed now (an open window is left alone: it is the one you are using)
+         [ -e "$P" ] && { pkill -f "quickshell/rice-settings"; rm -f "$P"; } ;;
+    off) rm -f "$LAZY" ;;
+  esac
+  [ -e "$LAZY" ] && echo on || echo off
+  exit 0
+fi
+# rice-settings preload (at login): Settings starts hidden and waits, so even the first opening is instant.
+# Not in Light mode (it keeps memory free there), nor when you chose "lazy".
+if [ "${1:-}" = preload ]; then
+  alive && exit 0
+  [ -e "$C/flat" ] && exit 0
+  [ -e "$LAZY" ] && exit 0
+  rm -f "$P"
+  RICE_SETTINGS_HIDDEN=1 setsid -f qs -n -p "$HOME/.config/quickshell/rice-settings" >/dev/null 2>&1
+  exit 0
+fi
 # an older Settings (from before an update) does not answer: it is closed the old way
 pid="$(pgrep -f "quickshell/rice-settings" | head -1)"
 if [ -n "$pid" ] && [ "$(cat "$C/settings-pid" 2>/dev/null)" != "$pid" ]; then
@@ -22,9 +46,11 @@ if [ -n "$pid" ] && [ "$(cat "$C/settings-pid" 2>/dev/null)" != "$pid" ]; then
   [ -z "${1:-}" ] && exit 0
   sleep 0.4
 fi
+log() { printf '%s %s\n' "$(date '+%F %T')" "$1" >>"$C/settings-open.log" 2>/dev/null; }
 if alive; then
   if [ -e "$P" ]; then
-    wake "${1:-}" && exit 0
+    wake "${1:-}" && { log "instant (it was waiting)"; exit 0; }
+    log "it was waiting but did not answer: started again"
     pkill -f "quickshell/rice-settings"; sleep 0.4
   elif [ -n "${1:-}" ]; then
     ask "$1"; exit 0            # open: it goes to that page
@@ -33,5 +59,7 @@ if alive; then
   fi
 fi
 rm -f "$P"
+log "started (takes a moment)"
+tail -n 40 "$C/settings-open.log" >"$C/settings-open.log.tmp" 2>/dev/null && mv "$C/settings-open.log.tmp" "$C/settings-open.log"
 [ -n "${1:-}" ] && printf '%s\n' "$1" >"$C/settings-page"
 exec qs -n -p "$HOME/.config/quickshell/rice-settings"

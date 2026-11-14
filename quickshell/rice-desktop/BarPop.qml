@@ -159,20 +159,21 @@ Item {
         x: 14; y: 14; width: parent.width - 28; height: 228
         columns: 2; spacing: 8
         Repeater {
-            model: bp.sys
+            model: 4          // fixed: the tiles stay, their numbers change (bp.sys rebuilt them every reading)
             delegate: Rectangle {
+                readonly property var md: bp.sys[index]
                 width: (bp.width - 28 - 8) / 2; height: (228 - 8) / 2
                 radius: 20; color: bp.chip
-                MIcon { x: 14; y: 12; size: 18; name: modelData.icon; glyph: String.fromCodePoint(modelData.g); color: bp.acc }
-                Text { anchors.right: parent.right; anchors.rightMargin: 14; y: 9; text: modelData.v + "%"; color: bp.fg; font.family: Fonts.numbers; font.pixelSize: 19; font.weight: Font.DemiBold }
+                MIcon { x: 14; y: 12; size: 18; name: md.icon; glyph: String.fromCodePoint(md.g); color: bp.acc }
+                Text { anchors.right: parent.right; anchors.rightMargin: 14; y: 9; text: md.v + "%"; color: bp.fg; font.family: Fonts.numbers; font.pixelSize: 19; font.weight: Font.DemiBold }
                 Column { x: 14; y: 42; width: parent.width - 28; spacing: 1
-                    Text { text: modelData.n; color: bp.fg; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.DemiBold }
-                    Text { width: parent.width; elide: Text.ElideRight; text: modelData.d; color: bp.dim; font.family: Fonts.main; font.pixelSize: 10 } }
+                    Text { text: md.n; color: bp.fg; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.DemiBold }
+                    Text { width: parent.width; elide: Text.ElideRight; text: md.d; color: bp.dim; font.family: Fonts.main; font.pixelSize: 10 } }
                 Rectangle {
                     x: 14; width: parent.width - 28; height: 6; radius: 3
                     anchors.bottom: parent.bottom; anchors.bottomMargin: 13
                     color: Qt.rgba(bp.acc.r, bp.acc.g, bp.acc.b, 0.2)
-                    Rectangle { width: Math.max(6, parent.width * Math.min(1, modelData.v / 100)); height: 6; radius: 3; color: modelData.v >= 90 ? "#e06c75" : bp.acc
+                    Rectangle { width: Math.max(6, parent.width * Math.min(1, md.v / 100)); height: 6; radius: 3; color: md.v >= 90 ? "#e06c75" : bp.acc
                         Behavior on width { NumberAnimation { duration: 500; easing.type: Easing.OutCubic } } }
                 }
             }

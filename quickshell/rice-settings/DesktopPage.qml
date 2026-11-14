@@ -335,6 +335,9 @@ Item {
                 id: perf
                 width: parent.width; height: perfCol.implicitHeight
                 property bool lite: false
+                property bool lazy: false
+                Process { running: true; command: ["bash", "-c", "[ -e \"$HOME/.config/rice/settings-lazy\" ] && echo 1"]
+                    stdout: StdioCollector { onStreamFinished: perf.lazy = text.trim() === "1" } }
                 Process { running: true; command: ["bash", "-c", "\"$HOME/.local/bin/rice-effects\" state 2>/dev/null"]
                     stdout: StdioCollector { onStreamFinished: { try { perf.lite = JSON.parse(text).lite === true } catch (e) { } } } }
                 Column {
@@ -343,6 +346,9 @@ Item {
                     ToggleRow { label: I18n.t("Light mode"); desc: I18n.t("For laptops and older graphics: no blur, no see-through, no shadows, quicker panels, widgets hide behind windows")
                         checked: perf.lite
                         onToggled: function(v) { perf.lite = v; Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-effects\" lite \"$1\"", "_", v ? "on" : "off"]) } }
+                    ToggleRow { label: I18n.t("Keep Settings ready in the background"); desc: I18n.t("Opens at once, but waits in memory (about 300 MB). Off: it starts when you open it and quits after you close it")
+                        checked: !perf.lazy
+                        onToggled: function(v) { perf.lazy = !v; Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-settings\" lazy \"$1\"", "_", v ? "off" : "on"]) } }
                     T { width: parent.width; wrapMode: Text.WordWrap; kind: "dim"
                         text: I18n.t("Less memory: turn off the widgets you do not use (an off widget takes no memory now), and the Visualizer. Panels like the control center are only made when you open them.") }
                 }

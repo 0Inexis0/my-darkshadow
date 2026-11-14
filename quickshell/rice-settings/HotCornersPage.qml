@@ -89,7 +89,7 @@ Item {
                 color: page.accent
                 opacity: 0.55
                 SequentialAnimation on opacity {
-                    loops: Animation.Infinite
+                    running: page.visible; loops: Animation.Infinite
                     NumberAnimation { to: 0.15; duration: 900; easing.type: Easing.InOutSine }
                     NumberAnimation { to: 0.6; duration: 900; easing.type: Easing.InOutSine }
                 }

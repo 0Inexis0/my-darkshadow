@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../assets/banner-dark.svg" alt="DarkShadow's Shell" width="100%">
+  <img src="assets/banner-dark.svg" alt="DarkShadow's Shell" width="100%">
 </p>
 
 <p align="center">
@@ -23,7 +23,7 @@
   <a href="https://github.com/shadowww-dev/DarkShadowShell/releases/latest"><img src="https://img.shields.io/github/v/release/shadowww-dev/DarkShadowShell?style=for-the-badge&labelColor=11111b&logo=github&logoColor=white&color=8B7BFF&label=release" alt="Latest release"></a>
   <a href="https://github.com/shadowww-dev/DarkShadowShell/stargazers"><img src="https://img.shields.io/github/stars/shadowww-dev/DarkShadowShell?style=for-the-badge&labelColor=11111b&logo=starship&logoColor=f5c542&color=f5c542" alt="Stars"></a>
   <a href="https://github.com/shadowww-dev/DarkShadowShell/commits"><img src="https://img.shields.io/github/last-commit/shadowww-dev/DarkShadowShell?style=for-the-badge&labelColor=11111b&logo=git&logoColor=white&color=4c566a&label=updated" alt="Last commit"></a>
-  <a href="../LICENSE"><img src="https://img.shields.io/badge/license-MIT-2ea043?style=for-the-badge&labelColor=11111b&logo=opensourceinitiative&logoColor=white" alt="MIT license"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2ea043?style=for-the-badge&labelColor=11111b&logo=opensourceinitiative&logoColor=white" alt="MIT license"></a>
   <a href="https://www.tiktok.com/@shadoww.dev"><img src="https://img.shields.io/badge/TikTok-shadoww.dev-ff0050?style=for-the-badge&labelColor=11111b&logo=tiktok&logoColor=white" alt="TikTok"></a>
 </p>
 
@@ -32,23 +32,23 @@
   <a href="#supported-systems">Systems</a> ·
   <a href="#features">Features</a> ·
   <a href="#keybinds">Keybinds</a> ·
-  <a href="INSTALL.md">Docs</a> ·
-  <a href="CUSTOMIZE.md">Customize</a>
+  <a href="docs/INSTALL.md">Docs</a> ·
+  <a href="docs/CUSTOMIZE.md">Customize</a>
 </p>
 
 ---
 
 ## Screenshots
 <p align="center">
-  <img src="../assets/screenshot-desktop.png" alt="DarkShadow's Shell: the desktop with widgets, the island in the notch and the visualizer" width="100%"><br>
+  <img src="assets/screenshot-desktop.png" alt="DarkShadow's Shell: the desktop with widgets, the island in the notch and the visualizer" width="100%"><br>
   <sub>The desktop: widgets in your shape with wavy rings, the dynamic island in the notch and the visualizer</sub>
 </p>
 <p align="center">
-  <img src="../assets/screenshot-settings.png" alt="The Settings app (SUPER + U)" width="100%"><br>
+  <img src="assets/screenshot-settings.png" alt="The Settings app (SUPER + U)" width="100%"><br>
   <sub>The Settings app (<code>SUPER + U</code>)</sub>
 </p>
 <p align="center">
-  <img src="../assets/screenshot-edit.png" alt="Edit mode (SUPER + ALT + W)" width="100%"><br>
+  <img src="assets/screenshot-edit.png" alt="Edit mode (SUPER + ALT + W)" width="100%"><br>
   <sub>Edit mode (<code>SUPER + ALT + W</code>): widgets, quick settings, the bar and the visualizer</sub>
 </p>
 <!-- more screenshots: put the files in assets/ and add them here -->
@@ -95,7 +95,8 @@ git clone https://github.com/shadowww-dev/DarkShadowShell shadows-shell && cd sh
 git clone https://github.com/shadowww-dev/DarkShadowShell shadows-shell && cd shadows-shell
 # add to /etc/nixos/configuration.nix:
 #   imports = [ /path/to/shadows-shell/nix/module.nix ];
-#   programs.shadows-shell.user = "yourname";    # Infinite Desktop: SUPER + ALT + mouse (input group)
+#   programs.shadows-shell.user = "yourname";
+#   programs.shadows-shell.inputGroup = true;    # only for Infinite Desktop (SUPER + ALT + mouse)
 sudo nixos-rebuild switch && ./install.sh
 ```
 
@@ -135,6 +136,8 @@ The installer asks which window manager you want (Hyprland, niri or both), insta
 | **Monitors** | resolution, refresh rate, scale, rotation, arrangement and turning a screen off, on Hyprland and niri |
 | **Bar layout** | five ready-made Material 3 layouts, and drag and drop the modules between left, center and right: launcher, workspaces, window title, music, the island (your clock), tray (right-click an app: its menu and Close app; long menus scroll), volume, Bluetooth, Wi-Fi, battery, notifications, power, a music visualizer; the window title with its app icon on the left or right |
 | **Dock** | bottom, left or right edge, its own app menu with search, pinned favourite apps (also in Settings > Dock), open apps, hover to reveal, media player, tinted icons; windows keep away from it while it stays out |
+| **Window rules** | Settings > Desktop > Window rules: your own rules for any app (workspace, floating, centered, size, on every workspace, fullscreen, see-through), picked from the windows open now; kept in `~/.config/rice/rules.json`, so updates never touch them. An optional **gaming workspace**: games (Steam, Proton, Wine, gamescope, Minecraft) and their launchers open on their own workspace |
+| **Login screen** | the shell's own SDDM theme in Material 3: your wallpaper and a big clock; a key press blurs it and brings up the login card (your picture, session, keyboard layout, sleep, restart, shut down). It follows your wallpaper, colors, font and language. Settings > Desktop > Idle & Lockscreen > Login screen, or `rice-sddm install`. NixOS: `programs.shadows-shell.sddm = true;` |
 | **Hyprland & niri** | gaps, borders, rounding, blur, shadows and animations from sliders, no config editing, on either window manager |
 | **Theme** | 21 color schemes: Auto and Grey from your wallpaper, six monochrome (Mono, Slate, Stone, Steel, Ash, Ink) and thirteen colors (Navy, Ocean, Sky, Teal, Mint, Forest, Lime, Gold, Sunset, Ember, Rose, Orchid, Violet). They recolor Waybar, borders, notifications and the lock screen |
 | **Control center** | `SUPER + N` or the bell: switches, sliders, music with a wavy, seekable progress line and your notifications, with smooth Material 3 motion |

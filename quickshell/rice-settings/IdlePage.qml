@@ -55,7 +55,7 @@ Item {
         }
     }
     Timer { id: refresh; interval: 800; onTriggered: stateProc.running = true }
-    Timer { interval: 20000; running: true; repeat: true; onTriggered: page.now = new Date() }
+    Timer { interval: 20000; running: Prefs.shown; repeat: true; onTriggered: page.now = new Date() }
 
     PageScroll {
         anchors.fill: parent
@@ -451,6 +451,8 @@ Item {
         ToggleRow { label: I18n.t("Resources"); desc: I18n.t("CPU, RAM and GPU usage"); checked: page.v("resources", false) === true; onToggled: function(x) { page.setv("resources", x ? "on" : "off") } }
         ToggleRow { label: I18n.t("Notifications"); desc: I18n.t("How many notifications are waiting"); checked: page.v("notifications", true) === true; onToggled: function(x) { page.setv("notifications", x ? "on" : "off") } }
         ToggleRow { label: I18n.t("Weather"); desc: I18n.t("Current weather from wttr.in"); checked: page.v("weather", false) === true; onToggled: function(x) { page.setv("weather", x ? "on" : "off") } }
+
+        LoginScreenCard { ctl: page.ctl }
 
         Row {
             topPadding: 8

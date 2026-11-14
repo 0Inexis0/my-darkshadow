@@ -73,6 +73,21 @@ task() {
   return "$rc"
 }
 
+# like task, but what the command prints is shown as it comes (for the long ones: a system update, a package install),
+# so a slow download or a build can be seen and is never a spinner that might be stuck
+live() {
+  local msg="$1"; shift
+  if [ "${DRY_RUN:-0}" = 1 ] || [ "$IS_TTY" != 1 ]; then task "$msg" "$@"; return; fi
+  printf '    %s▶%s %s\n' "$CBL" "$C0" "$msg"
+  note "What it prints is shown below (also in $LOG). Ctrl+C stops it."
+  { echo; echo "### $msg"; } >>"$LOG"
+  local t0=$SECONDS rc
+  "$@" 2>&1 </dev/null | tee -a "$LOG"
+  rc=${PIPESTATUS[0]}
+  if [ "$rc" = 0 ]; then ok "$msg  ($((SECONDS - t0))s)"; else fail "$msg  (details: $LOG)"; fi
+  return "$rc"
+}
+
 read_key() {
   local k rest
   IFS= read -rsn1 k || { echo quit; return; }

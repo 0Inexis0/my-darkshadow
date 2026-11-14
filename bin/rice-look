@@ -9,7 +9,11 @@
   rice-look shell fish|zsh|bash    the shell your terminals start
   rice-look login-shell            make it your login shell too (opens a terminal: chsh asks your password)
   rice-look terminal NAME          the terminal the keys open (kitty, foot, alacritty, ghostty, wezterm, konsole)
-  rice-look install NAME           install a shell or terminal (opens a terminal with the package manager)
+  rice-look files NAME             the file manager (nautilus, thunar, nemo, dolphin, pcmanfm): SUPER + E and every
+                                   "open folder" (xdg-mime) open it
+  rice-look files-colors on|off    the file manager (and the other GTK apps, Dolphin) in the wallpaper's colors
+  rice-look files-theme            write those colors again (the wallpaper changed)
+  rice-look install NAME           install a shell, terminal or file manager (opens a terminal with the package manager)
   rice-look try                    open your terminal with fastfetch in it
   rice-look colors                 the wallpaper changed: the terminals' colors, fastfetch's colors and logo
   rice-look apply                  write everything again from the saved choices (the installer runs this)
@@ -51,7 +55,21 @@ TERMS = [
     {"id": "wezterm", "name": "WezTerm", "app": "org.wezfurlong.wezterm", "desc": "Tabs, splits, set up in Lua, images", "images": True},
     {"id": "konsole", "name": "Konsole", "app": "org.kde.konsole", "desc": "KDE's terminal", "images": False},
 ]
-DEFAULTS = {"shell": "", "terminal": "", "on_open": False, "logo": "distro", "info": "full", "labels": "text",
+# file managers: the binary, its .desktop file (the default for folders), its icon and its toolkit
+FILES = [
+    {"id": "nautilus", "name": "Files", "app": "org.gnome.Nautilus", "desktop": "org.gnome.Nautilus.desktop",
+     "kit": "gtk", "desc": "GNOME's: clean, tabs, quick search"},
+    {"id": "thunar", "name": "Thunar", "app": "org.xfce.thunar", "desktop": "thunar.desktop",
+     "kit": "gtk", "desc": "Xfce's: light, fast, your own actions"},
+    {"id": "nemo", "name": "Nemo", "app": "nemo", "desktop": "nemo.desktop",
+     "kit": "gtk", "desc": "Cinnamon's: two panes, many options"},
+    {"id": "dolphin", "name": "Dolphin", "app": "system-file-manager", "desktop": "org.kde.dolphin.desktop",
+     "kit": "qt", "desc": "KDE's: split view, a terminal panel"},
+    {"id": "pcmanfm", "name": "PCManFM", "app": "system-file-manager", "desktop": "pcmanfm.desktop",
+     "kit": "gtk", "desc": "Tiny and very quick"},
+]
+FILESFILE = RICE + "/files"
+DEFAULTS = {"files": "", "files_colors": True, "shell": "", "terminal": "", "on_open": False, "logo": "distro", "info": "full", "labels": "text",
             "colors": "wallpaper"}
 
 # ---------------------------------------------------------------- small helpers
@@ -569,9 +587,21 @@ def apply_terms(c):
         cols += ["bright%d=%s" % (i, p["color%d" % (i + 8)][1:]) for i in range(8)]
         cols += ["selection-foreground=%s" % p["selection_foreground"][1:],
                  "selection-background=%s" % p["selection_background"][1:]]
+        # foot 1.26 renamed [colors] to [colors-dark] (and moved the cursor colors into it); 1.28 refuses the old name.
+        # An older foot only knows the old one.
+        new_foot = True
+        try:
+            m = re.search(r"(\d+)\.(\d+)", subprocess.run(["foot", "--version"], capture_output=True, text=True, timeout=5).stdout)
+            if m:
+                new_foot = (int(m.group(1)), int(m.group(2))) >= (1, 26)
+        except Exception:
+            pass
+        if new_foot:
+            colors = "[colors-dark]\n%s\ncursor=%s %s\n" % ("\n".join(cols), p["background"][1:], p["cursor"][1:])
+        else:
+            colors = "[colors]\n%s\n\n[cursor]\ncolor=%s %s\n" % ("\n".join(cols), p["background"][1:], p["cursor"][1:])
         write(CFG + "/foot/darkshadow.ini",
-              "# %s: written again when the wallpaper changes\nfont=%s:size=11\npad=10x10\nshell=%s\n\n"
-              "[colors]\n%s\n\n[cursor]\ncolor=%s %s\n" % (MARK, font, shp, "\n".join(cols), p["background"][1:], p["cursor"][1:]))
+              "# %s: written again when the wallpaper changes\nfont=%s:size=11\npad=10x10\nshell=%s\n\n%s" % (MARK, font, shp, colors))
         main = CFG + "/foot/foot.ini"
         st = own_file(main, "include=~/.config/foot/darkshadow.ini", "darkshadow.ini")
         if st == "own":
@@ -635,10 +665,214 @@ def apply_all(c, force_fetch=False):
     apply_fetch(c, force_fetch)
 
 
+# ---------------------------------------------------------------- file managers
+
+def files_installed(f):
+    return bool(shutil.which(f["id"]))
+
+
+def current_files(c):
+    t = read(FILESFILE).strip() or c["files"]
+    for f in FILES:
+        if f["id"] == t and files_installed(f):
+            return t
+    for f in FILES:
+        if files_installed(f):
+            return f["id"]
+    return ""
+
+
+def m3():
+    """the wallpaper's Material colors (matugen writes palette.json); without them: the terminal's colors"""
+    try:
+        j = json.load(open(RICE + "/palette.json"))
+    except Exception:
+        j = {}
+    p = palette()
+    d = {"surface": p["background"], "surface_low": p["background"], "surface_container": p["color8"],
+         "surface_high": p["color8"], "surface_highest": p["color8"], "on_surface": p["foreground"],
+         "on_surface_variant": p["color7"], "outline": p["color8"], "outline_variant": p["color8"],
+         "primary": p["primary"], "on_primary": p["background"], "primary_container": p["color8"],
+         "on_primary_container": p["foreground"], "secondary": p["secondary"], "secondary_container": p["color8"],
+         "tertiary": p["tertiary"], "error": p["color1"]}
+    for k in d:
+        v = str(j.get(k, ""))
+        if re.match(r"^#[0-9a-fA-F]{6}$", v):
+            d[k] = v.lower()
+    return d
+
+
+def gtk_css(c, gtk3):
+    head = "/* %s: your file manager and the other GTK apps in the wallpaper's colors (Settings > Desktop >\n" \
+           "   Look & Feel). Written again when the wallpaper changes: put your own CSS in gtk.css. */\n" % MARK
+    if not c["files_colors"]:
+        return head + "/* off */\n"
+    m = m3()
+    names = [
+        ("accent_color", "primary"), ("accent_bg_color", "primary"), ("accent_fg_color", "on_primary"),
+        ("window_bg_color", "surface"), ("window_fg_color", "on_surface"),
+        ("view_bg_color", "surface_low"), ("view_fg_color", "on_surface"),
+        ("headerbar_bg_color", "surface_container"), ("headerbar_fg_color", "on_surface"),
+        ("headerbar_backdrop_color", "surface"), ("headerbar_border_color", "outline_variant"),
+        ("sidebar_bg_color", "surface_container"), ("sidebar_fg_color", "on_surface"),
+        ("sidebar_backdrop_color", "surface_low"), ("sidebar_border_color", "outline_variant"),
+        ("secondary_sidebar_bg_color", "surface_low"), ("secondary_sidebar_fg_color", "on_surface"),
+        ("card_bg_color", "surface_high"), ("card_fg_color", "on_surface"),
+        ("popover_bg_color", "surface_high"), ("popover_fg_color", "on_surface"),
+        ("dialog_bg_color", "surface_container"), ("dialog_fg_color", "on_surface"),
+        ("thumbnail_bg_color", "surface_high"), ("thumbnail_fg_color", "on_surface"),
+        ("destructive_color", "error"),
+    ]
+    if gtk3:
+        # Adwaita (GTK 3) and the themes made like it
+        names += [("theme_bg_color", "surface"), ("theme_fg_color", "on_surface"), ("theme_base_color", "surface_low"),
+                  ("theme_text_color", "on_surface"), ("theme_selected_bg_color", "primary"),
+                  ("theme_selected_fg_color", "on_primary"), ("insensitive_bg_color", "surface_container"),
+                  ("insensitive_fg_color", "on_surface_variant"), ("borders", "outline_variant"),
+                  ("theme_unfocused_bg_color", "surface"), ("theme_unfocused_fg_color", "on_surface"),
+                  ("theme_unfocused_base_color", "surface_low"), ("theme_unfocused_text_color", "on_surface"),
+                  ("theme_unfocused_selected_bg_color", "primary"), ("theme_unfocused_selected_fg_color", "on_primary")]
+    return head + "".join("@define-color %s %s;\n" % (n, m[k]) for n, k in names)
+
+
+IMPORT = '@import url("darkshadow.css");'
+
+
+def link_gtk(d):
+    """gtk.css loads darkshadow.css: added on top of yours (a backup is kept); a gtk.css that is a link
+    (another theming tool owns it) is left alone"""
+    main = d + "/gtk.css"
+    if os.path.islink(main):
+        return "own"
+    t = read(main)
+    if IMPORT in t:
+        return "linked"
+    if t.strip() and not os.path.exists(main + ".bak-darkshadow"):
+        write(main + ".bak-darkshadow", t)
+    write(main, IMPORT + "\n" + t)
+    return "linked"
+
+
+def kde_rgb(h):
+    r, g, b = rgb(h)
+    return "%d,%d,%d" % (r, g, b)
+
+
+def kde_groups(m):
+    """a KDE color scheme from the wallpaper's colors (Dolphin and the other KDE apps)"""
+    def grp(bg, alt, fg):
+        return [("BackgroundNormal", kde_rgb(m[bg])), ("BackgroundAlternate", kde_rgb(m[alt])),
+                ("ForegroundNormal", kde_rgb(m[fg])), ("ForegroundInactive", kde_rgb(m["on_surface_variant"])),
+                ("ForegroundActive", kde_rgb(m["primary"])), ("ForegroundLink", kde_rgb(m["primary"])),
+                ("ForegroundVisited", kde_rgb(m["tertiary"])), ("ForegroundNegative", kde_rgb(m["error"])),
+                ("ForegroundNeutral", kde_rgb(m["tertiary"])), ("ForegroundPositive", kde_rgb(m["secondary"])),
+                ("DecorationFocus", kde_rgb(m["primary"])), ("DecorationHover", kde_rgb(m["primary"]))]
+    return [
+        ("Colors:Window", grp("surface", "surface_container", "on_surface")),
+        ("Colors:View", grp("surface_low", "surface", "on_surface")),
+        ("Colors:Button", grp("surface_high", "surface_container", "on_surface")),
+        ("Colors:Header", grp("surface_container", "surface", "on_surface")),
+        ("Colors:Tooltip", grp("surface_highest", "surface_high", "on_surface")),
+        ("Colors:Complementary", grp("surface_container", "surface", "on_surface")),
+        ("Colors:Selection", [("BackgroundNormal", kde_rgb(m["primary"])), ("BackgroundAlternate", kde_rgb(m["primary"])),
+                              ("ForegroundNormal", kde_rgb(m["on_primary"])), ("ForegroundInactive", kde_rgb(m["on_primary"])),
+                              ("ForegroundActive", kde_rgb(m["on_primary"])), ("DecorationFocus", kde_rgb(m["primary"])),
+                              ("DecorationHover", kde_rgb(m["primary"]))]),
+    ]
+
+
+def ini_set(path, groups):
+    """put these groups (name, [(key, value)]) in a KDE ini file: other groups, and keys of these groups that are
+    not set here, are kept as they are"""
+    lines = read(path).split("\n")
+    out, cur, seen = [], None, set()
+    want = {g: dict(kv) for g, kv in groups}
+
+    def flush_missing(g):
+        if g in want and g not in seen:
+            seen.add(g)
+            # the keys this group did not have yet go at its end, before the empty line that ends it
+            blank = 0
+            while out and out[-1] == "" and blank < len(out):
+                out.pop()
+                blank += 1
+            for k, v in want[g].items():
+                if not done.get((g, k)):
+                    out.append("%s=%s" % (k, v))
+            out.extend([""] * blank)
+    done = {}
+    for ln in lines:
+        m = re.match(r"^\[(.+)\]\s*$", ln)
+        if m:
+            flush_missing(cur)
+            cur = m.group(1)
+            out.append(ln)
+            continue
+        km = re.match(r"^([^=#;\[]+?)\s*=", ln)
+        if cur in want and km and km.group(1) in want[cur]:
+            done[(cur, km.group(1))] = True
+            out.append("%s=%s" % (km.group(1), want[cur][km.group(1)]))
+            continue
+        out.append(ln)
+    flush_missing(cur)
+    while out and out[-1] == "":
+        out.pop()
+    for g, kv in groups:
+        if g not in seen and not any(re.match(r"^\[%s\]\s*$" % re.escape(g), x) for x in out):
+            out += ["", "[%s]" % g] + ["%s=%s" % (k, v) for k, v in kv]
+    text = "\n".join(out) + "\n"
+    if read(path) != text:
+        if os.path.exists(path) and not os.path.exists(path + ".bak-darkshadow"):
+            write(path + ".bak-darkshadow", read(path))
+        write(path, text)
+
+
+def apply_files_theme(c):
+    res = {}
+    for d, g3 in ((CFG + "/gtk-4.0", False), (CFG + "/gtk-3.0", True)):
+        write(d + "/darkshadow.css", gtk_css(c, g3))
+        res["gtk4" if not g3 else "gtk3"] = link_gtk(d)
+    # KDE apps (Dolphin): a color scheme, used by Dolphin and written into kdeglobals for the others
+    if c["files_colors"] and (shutil.which("dolphin") or os.path.exists(CFG + "/kdeglobals")):
+        m = m3()
+        groups = kde_groups(m)
+        scheme = HOME + "/.local/share/color-schemes/DarkShadow.colors"
+        write(scheme, "# %s: the wallpaper's colors (rice-look)\n[General]\nName=DarkShadow\nColorScheme=DarkShadow\n\n" % MARK +
+              "\n\n".join("[%s]\n" % g + "\n".join("%s=%s" % kv for kv in kv_) for g, kv_ in groups) + "\n")
+        ini_set(CFG + "/kdeglobals", groups + [("General", [("ColorScheme", "DarkShadow")])])
+        if not re.search(r"^\[Icons\]", read(CFG + "/kdeglobals"), re.M):
+            ini_set(CFG + "/kdeglobals", [("Icons", [("Theme", "Papirus-Dark")])])
+        ini_set(CFG + "/dolphinrc", [("UiSettings", [("ColorScheme", "DarkShadow")])])
+        res["kde"] = "on"
+    return res
+
+
+def desktop_exists(name):
+    dirs = [HOME + "/.local/share/applications", "/usr/share/applications", "/usr/local/share/applications",
+            "/var/lib/flatpak/exports/share/applications", HOME + "/.local/share/flatpak/exports/share/applications",
+            "/run/current-system/sw/share/applications", HOME + "/.nix-profile/share/applications"]
+    return any(os.path.exists(d + "/" + name) for d in dirs)
+
+
+def apply_files_choice(c):
+    f = current_files(c)
+    if not f:
+        return ""
+    write(FILESFILE, f + "\n")
+    info = next(x for x in FILES if x["id"] == f)
+    # every "open folder" (the browser's downloads, other apps) opens it too
+    if shutil.which("xdg-mime") and desktop_exists(info["desktop"]):
+        run(["xdg-mime", "default", info["desktop"], "inode/directory"], 5)
+    # niri: SUPER + E is in its config
+    if os.environ.get("NIRI_SOCKET") and os.access(BIN + "/rice-niri", os.X_OK):
+        spawn([BIN + "/rice-niri", "apply"])
+    return f
+
+
 # ---------------------------------------------------------------- install / open
 
-PKGS = {"arch": {"wezterm": "wezterm", "ghostty": "ghostty"}, "void": {"fish": "fish-shell"},
-        "fedora": {"ghostty": "ghostty", "wezterm": "wezterm"}}
+PKGS = {"arch": {"wezterm": "wezterm", "ghostty": "ghostty", "pcmanfm": "pcmanfm-gtk3"}, "void": {"fish": "fish-shell"},
+        "fedora": {"ghostty": "ghostty", "wezterm": "wezterm", "thunar": "Thunar"}}
 
 
 def term_cmd(script):
@@ -649,7 +883,7 @@ def term_cmd(script):
 
 def install(name):
     d = distro()
-    if name not in [x["id"] for x in SHELLS + TERMS]:
+    if name not in [x["id"] for x in SHELLS + TERMS + FILES]:
         sys.exit("unknown: " + name)
     pkg = PKGS.get(d, {}).get(name, name)
     if d == "arch":
@@ -691,6 +925,8 @@ def state():
                      "list": [dict(x, installed=bool(shutil.which(x["id"])),
                                    look=(x["id"] == "kitty" or res.get(x["id"], False)))
                               for x in TERMS]},
+        "files": {"current": current_files(c), "colors": c["files_colors"],
+                  "list": [dict(x, installed=files_installed(x)) for x in FILES]},
         "distro": distro(),
         "wallpaper": wallpaper(),
     }
@@ -747,6 +983,24 @@ def main(a):
         apply_terms(c)
         apply_fetch(c)
         print("The terminal is now %s" % a[2])
+    elif cmd == "files" and len(a) == 3:
+        f = next((x for x in FILES if x["id"] == a[2]), None)
+        if not f:
+            sys.exit("unknown file manager")
+        if not files_installed(f):
+            sys.exit("%s is not installed" % f["name"])
+        c["files"] = a[2]
+        save(c)
+        apply_files_choice(c)
+        apply_files_theme(c)
+        print("Files open in %s" % f["name"])
+    elif cmd == "files-colors" and len(a) == 3 and a[2] in ("on", "off"):
+        c["files_colors"] = a[2] == "on"
+        save(c)
+        apply_files_theme(c)
+        print("File manager colors: " + ("from the wallpaper (open it again)" if c["files_colors"] else "its own"))
+    elif cmd == "files-theme":
+        apply_files_theme(c)
     elif cmd == "install" and len(a) == 3:
         install(a[2])
     elif cmd == "try":
@@ -758,6 +1012,7 @@ def main(a):
             spawn([BIN + "/rice-term", "-e", "sh", "-c", 'fastfetch; exec "$0"', shp])
         print("Opened %s" % current_term(c))
     elif cmd == "colors":
+        apply_files_theme(c)
         apply_terms(c)
         if c["logo"] == "wallpaper":
             make_logo_png(c)
@@ -766,6 +1021,10 @@ def main(a):
         if c["terminal"]:
             write(TERMFILE, c["terminal"] + "\n")
         apply_all(c)
+        # the default for folders only once you picked one in Settings (an update does not change yours)
+        if c["files"]:
+            apply_files_choice(c)
+        apply_files_theme(c)
         print("Look & Feel applied")
     else:
         print(__doc__)

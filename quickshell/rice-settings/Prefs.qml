@@ -11,6 +11,8 @@ Singleton {
     property real scroll: 1.8
     // the language of Settings (Settings > System > Languages): "en", "pl", "pt-BR" ...
     property string lang: "en"
+    // the window is on screen (shell.qml): what looks again every few seconds rests while Settings waits hidden
+    property bool shown: true
     function setLang(v) { lang = v; save("lang", v) }
     // the live pictures at the top of some pages (Home > Settings > Previews); off by default
     property bool previews: false

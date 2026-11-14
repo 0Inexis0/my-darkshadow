@@ -1,0 +1,15 @@
+[SddmGreeterTheme]
+Name=DarkShadow's Shell
+Description=Material 3 login screen of DarkShadow's Shell: your wallpaper and its colors
+Author=shadowww-dev
+Copyright=(c) 2026 shadowww-dev, MIT
+License=MIT
+Type=sddm-theme
+Version=1.0
+Website=https://github.com/shadowww-dev/DarkShadowShell
+MainScript=Main.qml
+ConfigFile=theme.conf
+TranslationsDirectory=translations
+Theme-Id=darkshadow-shell
+Theme-API=2.0
+QtVersion=6

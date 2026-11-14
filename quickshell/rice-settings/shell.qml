@@ -41,20 +41,34 @@ FloatingWindow {
     Timer { id: sizeSoon; interval: 120; onTriggered: win.applySize() }
     Connections { target: Prefs; function onSizeChanged() { sizeSoon.restart() } }
     color: "transparent"
-    visible: true
-    // Closed, Settings waits hidden for three minutes, so opening it again is instant (rice-settings wakes it
-    // through ~/.cache/rice/settings-show); then it really quits. ~/.cache/rice/settings-parked: it is waiting.
+    // RICE_SETTINGS_HIDDEN=1 (rice-settings preload, at login): it starts hidden and waits, so the first opening is
+    // instant too
+    readonly property bool startHidden: Quickshell.env("RICE_SETTINGS_HIDDEN") === "1"
+    visible: !startHidden
+    // Closed, Settings waits hidden (rice-settings wakes it through ~/.cache/rice/settings-show), so opening it again
+    // is instant. It stays ready; only in Light mode it quits after three minutes, to free the memory.
+    // ~/.cache/rice/settings-parked: it is waiting.
     property bool parked: false
+    function park() {
+        parked = true
+        if (flat) parkT.restart()
+        else lazyP.running = true
+        Quickshell.execDetached(["bash", "-c", "mkdir -p \"$HOME/.cache/rice\"; : > \"$HOME/.cache/rice/settings-parked\""])
+    }
     onVisibleChanged: {
-        if (!visible) {
-            parked = true; parkT.restart()
-            Quickshell.execDetached(["bash", "-c", "mkdir -p \"$HOME/.cache/rice\"; : > \"$HOME/.cache/rice/settings-parked\""])
-        } else if (parked) {
+        Prefs.shown = visible
+        if (!visible) park()
+        else if (parked) {
             parked = false; parkT.stop()
             Quickshell.execDetached(["bash", "-c", "rm -f \"$HOME/.cache/rice/settings-parked\""])
             sizeSoon.restart()
+            // it may have waited a long time: what the pages show is read again
+            stateTimer.restart(); hrefresh.restart()
         }
     }
+    // "Keep Settings ready" turned off (rice-settings lazy): it quits after three minutes, like in Light mode
+    Process { id: lazyP; command: ["bash", "-c", "[ -e \"$HOME/.config/rice/settings-lazy\" ]"]
+        onExited: function(code) { if (code === 0 && win.parked) parkT.restart() } }
     Timer { id: parkT; interval: 180000; onTriggered: { Quickshell.execDetached(["bash", "-c", "rm -f \"$HOME/.cache/rice/settings-parked\""]); Qt.quit() } }
     // "TIME PAGE" opens it (on that page; "-" keeps the page), "TIME hide" closes it
     property string lastShow: ""
@@ -278,7 +292,7 @@ FloatingWindow {
         running: true
         stdout: StdioCollector { onStreamFinished: win.flat = text.trim() === "1" }
     }
-    Timer { interval: 1500; running: true; repeat: true; onTriggered: if (!flatProc.running) flatProc.running = true }
+    Timer { interval: 1500; running: win.visible; repeat: true; triggeredOnStart: true; onTriggered: if (!flatProc.running) flatProc.running = true }
 
     function dset(group, key, value) {
         const d = JSON.parse(JSON.stringify(dst))
@@ -387,7 +401,8 @@ FloatingWindow {
         { name: "Infinite Desktop", icon: "\uf065" },
         { name: "Themes", icon: "\uf53f" },
         { name: "Update Center", icon: "\uf021" },
-        { name: "VPN", icon: "\uf132" }
+        { name: "VPN", icon: "\uf132" },
+        { name: "Window rules", icon: "\uf2d2" }
     ]
 
 
@@ -398,7 +413,7 @@ FloatingWindow {
         { group: "wall", name: "Wallpaper", icon: "\uf03e", sym: "wallpaper", pages: [18], caption: I18n.t("Wallpaper and the colors it gives") },
         { group: "look", name: "Appearance", icon: "\udb80\udfd8", sym: "palette", pages: [34, 8, 21, 19, 24, 22, 9, 14], caption: I18n.t("Themes, colors, fonts, shapes, components, cursors and the dock") },
         { group: "motion", name: "Motion", icon: "\uf1e6", sym: "animation", pages: [20], caption: I18n.t("How windows and Settings move") },
-        { group: "desk", name: "Desktop", icon: "\uf108", sym: "desktop_windows", pages: niri ? [29, 12, 25, 4, 11] : [29, 33, 12, 25, 4, 11], caption: I18n.t("Look & feel, widgets, windows, %1 and the lock screen", wmLabel) },
+        { group: "desk", name: "Desktop", icon: "\uf108", sym: "desktop_windows", pages: niri ? [29, 12, 25, 37, 4, 11] : [29, 33, 12, 25, 37, 4, 11], caption: I18n.t("Look & feel, widgets, windows, window rules, %1 and the lock screen", wmLabel) },
         { group: "bar", name: "Bar & launcher", icon: "\uf0c9", sym: "toolbar", pages: [2, 3, 6, 7], caption: I18n.t("The bar, the dynamic island and the launcher") },
         { group: "snd", name: "Sound & language", icon: "\uf028", sym: "graphic_eq", pages: [1, 10, 26], caption: I18n.t("Sounds, notifications, language and region") },
         { group: "sys", name: "System", icon: "\uf013", sym: "settings", pages: [30, 31, 28, 5, 23, 15, 36], caption: I18n.t("Keybinds, languages, monitors, recording, keyboard and services") },
@@ -492,7 +507,7 @@ FloatingWindow {
         } else { navX = 0; navY = rb >= ra ? 1 : -1 }
     }
     onPageChanged: { navFrom(prevPage, page); prevPage = page; openFor(page); const n = Object.assign({}, lastIn); n[railOf(page)] = page; lastIn = n }
-    Component.onCompleted: openFor(page)
+    Component.onCompleted: { openFor(page); Prefs.shown = !startHidden; if (startHidden) park() }
 
     readonly property string hyprTool: home + "/.local/bin/hypr-set"
     property var hv: ({})
@@ -951,6 +966,7 @@ FloatingWindow {
             PageSlot { nav: win; idx: 34; cur: win.page; page: Component { ThemesPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 35; cur: win.page; page: Component { UpdatePage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 36; cur: win.page; page: Component { VpnPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 37; cur: win.page; page: Component { WindowRulesPage { anchors.fill: parent; ctl: win } } }
         }
 
         // results: the setting, and where it is (page > section)

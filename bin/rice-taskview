@@ -35,6 +35,34 @@ def run(cmd, timeout=4):
         return ""
 
 
+def hypr_dispatch(lua, *legacy):
+    """Hyprland 0.55+ (Lua config) takes a Lua expression: hyprctl dispatch 'hl.dsp.focus({ ... })'; the old
+    dispatcher names (focuswindow, closewindow ...) fail there. An older Hyprland only knows those: tried next."""
+    out = ""
+    if lua:
+        try:
+            out = subprocess.run(["hyprctl", "dispatch", lua], capture_output=True, text=True, timeout=4).stdout
+        except Exception:
+            out = ""
+    if out.strip().lower().startswith("ok"):
+        return True
+    if legacy:
+        try:
+            out = subprocess.run(["hyprctl", "dispatch", *legacy], capture_output=True, text=True, timeout=4).stdout
+        except Exception:
+            return False
+        return out.strip().lower().startswith("ok")
+    return False
+
+
+def addr(a):
+    """a window address as Hyprland prints it (0x...): checked, because it goes into a Lua expression"""
+    a = str(a)
+    if not a.startswith("0x"):
+        a = "0x" + a
+    return a if all(c in "0123456789abcdefx" for c in a.lower()) and len(a) < 24 else ""
+
+
 def js(cmd):
     try:
         return json.loads(run(cmd) or "null")
@@ -160,22 +188,33 @@ def main(a):
         if niri():
             run(["niri", "msg", "action", "focus-window", "--id", a[2]])
         else:
-            run(["hyprctl", "dispatch", "focuswindow", "address:" + a[2]])
+            w = addr(a[2])
+            if w:
+                hypr_dispatch('hl.dsp.focus({ window = "address:%s" })' % w, "focuswindow", "address:" + w)
     elif cmd == "close" and len(a) > 2:
         if niri():
             run(["niri", "msg", "action", "close-window", "--id", a[2]])
         else:
-            run(["hyprctl", "dispatch", "closewindow", "address:" + a[2]])
+            w = addr(a[2])
+            if w:
+                hypr_dispatch('hl.dsp.window.close({ window = "address:%s" })' % w, "closewindow", "address:" + w)
     elif cmd == "move" and len(a) > 3:
         if niri():
             run(["niri", "msg", "action", "move-window-to-workspace", "--window-id", a[2], "--focus", "false", a[3]])
         else:
-            run(["hyprctl", "dispatch", "movetoworkspacesilent", "%s,address:%s" % (a[3], a[2])])
+            w, n = addr(a[2]), str(a[3])
+            if w and n.replace("-", "").replace("_", "").isalnum():
+                # Lua Hyprland moves the focused window (window.move has no window = ...): focus it, then move it
+                if not (hypr_dispatch('hl.dsp.focus({ window = "address:%s" })' % w)
+                        and hypr_dispatch('hl.dsp.window.move({ workspace = "%s", follow = false })' % n)):
+                    hypr_dispatch("", "movetoworkspacesilent", "%s,address:%s" % (n, w))
     elif cmd == "ws" and len(a) > 2:
         if niri():
             run(["niri", "msg", "action", "focus-workspace", a[2]])
         else:
-            run(["hyprctl", "dispatch", "workspace", a[2]])
+            n = str(a[2])
+            if n.replace("-", "").replace("_", "").replace("+", "").isalnum():
+                hypr_dispatch('hl.dsp.focus({ workspace = "%s" })' % n, "workspace", n)
     elif cmd == "get":
         print(json.dumps(cfg()))
     elif cmd == "set" and len(a) > 3:

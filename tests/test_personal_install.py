@@ -59,6 +59,13 @@ class DeploymentTests(unittest.TestCase):
         apply.deploy(self.source, self.home, "alice", force=True)
         self.assertEqual(target.read_text(), "new upstream value")
 
+    def test_managed_deployment_includes_upstream_download_checksums(self):
+        (self.source / "install").mkdir()
+        expected = "a" * 64 + "  Bibata-Modern-Ice.tar.xz\n"
+        (self.source / "install/checksums.txt").write_text(expected)
+        apply.deploy(self.source, self.home, "alice", managed=True)
+        self.assertEqual((self.home / ".local/share/rice/checksums.txt").read_text(), expected)
+
     def test_dry_run_does_not_create_home_or_manifest(self):
         apply.deploy(self.source, self.home, "alice", dry_run=True)
         self.assertFalse(self.home.exists())

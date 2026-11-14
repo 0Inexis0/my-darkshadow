@@ -21,6 +21,20 @@ Item {
     }
     property var now: new Date()
     Timer { interval: 1000; running: page.visible; repeat: true; onTriggered: page.now = new Date() }
+    // Online lookups (V4.48): what the shell asks other websites; nothing goes out for one that is off
+    property var on: ({ weather: { place: "" }, lyrics: { enabled: false }, updates: { watch: true } })
+    Process {
+        id: onSt
+        command: ["bash", "-c", "b=\"$HOME/.local/bin\"; printf '{\"weather\":%s,\"lyrics\":%s,\"updates\":%s}' \"$(\"$b/rice-weather\" state 2>/dev/null || echo '{}')\" \"$(\"$b/rice-lyrics\" state 2>/dev/null || echo '{}')\" \"$(\"$b/rice-update\" watch state 2>/dev/null || echo '{}')\""]
+        running: true
+        stdout: StdioCollector { onStreamFinished: { try { page.on = JSON.parse(text); placeField.text = page.on.weather.place || "" } catch (e) { } } }
+    }
+    function runBin(args, msg) {
+        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/$1\" \"${@:2}\"", "_"].concat(args))
+        page.ctl.status = msg
+        onAgain.restart()
+    }
+    Timer { id: onAgain; interval: 700; onTriggered: onSt.running = true }
     function two(n) { return n < 10 ? "0" + n : "" + n }
     readonly property string clockText: rg.clock === "12"
         ? ((now.getHours() + 11) % 12 + 1) + ":" + two(now.getMinutes()) + (now.getHours() < 12 ? " AM" : " PM")
@@ -75,6 +89,34 @@ Item {
             options: [{ label: I18n.t("Monday"), value: "mon" }, { label: I18n.t("Sunday"), value: "sun" }]
             current: page.rg.week
             onChosen: function(x) { page.set("week", x) }
+        }
+
+        SectionTitle { text: I18n.t("Online lookups"); sub: I18n.t("What the shell asks other websites. Nothing goes out for one that is off.") }
+        SettingRow {
+            label: I18n.t("Weather place"); desc: page.on.weather && page.on.weather.place
+                ? I18n.t("The weather widgets ask wttr.in about this place")
+                : I18n.t("Off. Type a city to turn it on (without one, wttr.in would locate your IP)")
+            reserved: 330
+            Row {
+                anchors.right: parent.right; anchors.rightMargin: 16; anchors.verticalCenter: parent.verticalCenter
+                spacing: 8
+                Field { id: placeField; width: 170; placeholder: I18n.t("e.g. Warsaw")
+                    onAccepted: if (text.trim() !== "") page.runBin(["rice-weather", "place", text.trim()], I18n.t("Weather place saved")) }
+                Btn { text: I18n.t("Save"); variant: "tonal"; anchors.verticalCenter: parent.verticalCenter
+                    onClicked: if (placeField.text.trim() !== "") page.runBin(["rice-weather", "place", placeField.text.trim()], I18n.t("Weather place saved")) }
+                Btn { visible: !!(page.on.weather && page.on.weather.place); text: I18n.t("Off"); variant: "text"; anchors.verticalCenter: parent.verticalCenter
+                    onClicked: { placeField.text = ""; page.runBin(["rice-weather", "off"], I18n.t("Weather lookups off")) } }
+            }
+        }
+        ToggleRow {
+            label: I18n.t("Song lyrics"); desc: I18n.t("Asks lrclib.net for the lyrics of what you play (it learns the artist and the title). Lyrics already found keep working")
+            checked: !!(page.on.lyrics && page.on.lyrics.enabled)
+            onToggled: function(v) { page.runBin(["rice-lyrics", v ? "on" : "off"], v ? I18n.t("Lyrics lookups on") : I18n.t("Lyrics lookups off")) }
+        }
+        ToggleRow {
+            label: I18n.t("Check for updates"); desc: I18n.t("Asks GitHub once a day whether a new version is out, and tells you")
+            checked: !(page.on.updates && page.on.updates.watch === false)
+            onToggled: function(v) { page.runBin(["rice-update", "watch", v ? "on" : "off"], v ? I18n.t("Update checks on") : I18n.t("Update checks off")) }
         }
 
         SectionTitle { text: I18n.t("Language"); sub: I18n.t("The shell speaks English for now. Your choice is kept, so the shell can switch when a translation arrives.") }

@@ -60,7 +60,7 @@ Singleton {
     }
     Timer {
         interval: 4000
-        running: true
+        running: Prefs.shown
         repeat: true
         onTriggered: { if (!proc.running) proc.running = true }
     }
