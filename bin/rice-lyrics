@@ -2,7 +2,13 @@
 """rice-lyrics ARTIST TITLE [ALBUM] [SECONDS]
 Lyrics for the Lyrics widget, from LRCLIB (lrclib.net, free and open, no account). Prints JSON:
 {"synced": [[seconds, "line"], ...], "plain": "text", "found": true|false}
-Answers are kept in ~/.cache/rice/lyrics, so a song is asked for only once."""
+Answers are kept in ~/.cache/rice/lyrics, so a song is asked for only once.
+
+Asking LRCLIB sends the artist and the title of what you are playing to a third party, which is a listening log
+when it happens for every song. It is off until you say otherwise:
+  rice-lyrics on          allow the requests (cached lyrics are always used)
+  rice-lyrics off         stop them again
+  rice-lyrics state       what the setting is"""
 import hashlib
 import json
 import os
@@ -12,7 +18,34 @@ import urllib.parse
 import urllib.request
 
 CACHE = os.path.expanduser("~/.cache/rice/lyrics")
+CFG = os.path.expanduser("~/.config/rice/lyrics.json")
 UA = "DarkShadow's Shell lyrics widget (https://github.com/shadowww-dev/DarkShadowShell)"
+
+
+def enabled():
+    """off by default: every lookup tells a third party what this computer is playing. An install from before V4.48
+    that already fetched lyrics (songs in the cache) keeps them on; the choice is written down the first time"""
+    try:
+        return json.load(open(CFG)).get("enabled", False) is True
+    except FileNotFoundError:
+        try:
+            on = any(f.endswith(".json") for f in os.listdir(CACHE))
+        except OSError:
+            on = False
+        try:
+            set_enabled(on)
+        except OSError:
+            pass
+        return on
+    except Exception:
+        return False
+
+
+def set_enabled(on):
+    os.makedirs(os.path.dirname(CFG), exist_ok=True)
+    tmp = CFG + ".tmp"
+    json.dump({"enabled": bool(on)}, open(tmp, "w"))
+    os.replace(tmp, CFG)
 
 
 def get(url):
@@ -36,6 +69,13 @@ def parse(lrc):
 
 
 def main(a):
+    if len(a) > 1 and a[1] in ("on", "off"):
+        set_enabled(a[1] == "on")
+        print("Lyrics lookups: " + ("on" if a[1] == "on" else "off"))
+        return
+    if len(a) > 1 and a[1] == "state":
+        print(json.dumps({"enabled": enabled()}))
+        return
     if len(a) < 3:
         sys.exit(__doc__)
     artist, title = a[1].strip(), a[2].strip()
@@ -49,6 +89,9 @@ def main(a):
     cf = os.path.join(CACHE, key + ".json")
     if os.path.exists(cf):
         print(open(cf).read())
+        return
+    if not enabled():
+        print(json.dumps({"synced": [], "plain": "", "found": False, "off": True}))
         return
     base = "https://lrclib.net/api/"
     q = {"artist_name": artist, "track_name": title}

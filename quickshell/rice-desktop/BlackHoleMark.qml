@@ -10,7 +10,7 @@ import QtQuick
 Item {
     id: logo
     property real size: 140
-    property bool running: true
+    property bool running: visible
     property bool intro: false
     // the stars and the falling bits around it (off for small places, like the bar)
     property bool extras: true

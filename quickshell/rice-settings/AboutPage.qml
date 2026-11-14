@@ -88,7 +88,7 @@ Item {
                     { k: "os", n: "System", g: "" }, { k: "kernel", n: "Kernel", g: "" },
                     { k: "hypr", n: page.info.wm || "Hyprland", g: "" }, { k: "qs", n: "Quickshell", g: "" },
                     { k: "cpu", n: "Processor", g: "" }, { k: "gpu", n: "Graphics", g: "" },
-                    { k: "mem", n: "Memory", g: "" }, { k: "up", n: "Up for", g: "" }
+                    { k: "mem", n: "Memory", g: String.fromCodePoint(0xF035B) }, { k: "up", n: "Up for", g: "" }
                 ]
                 delegate: Rectangle {
                     width: (grid.width - (grid.columns - 1) * 10) / grid.columns

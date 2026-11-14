@@ -62,8 +62,18 @@ case "$1" in
       exit 0
     fi
     echo "SUPER + ALT + mouse reads the mouse and the keyboard directly. For that your user joins the 'input' group."
-    echo "(Programs you run can then read the keyboard and the mouse too.)"
     echo
+    echo "This is a real permission, not a setting of this shell: every program you run (including one that got"
+    echo "in through something else) can read every keyboard on this computer, not only this shell's keys."
+    echo "Everything else in the shell works without it."
+    echo
+    if [ ! -t 0 ]; then
+      echo "Not joining without a confirmation: run  rice-infinite allow  in a terminal." >&2
+      exit 1
+    fi
+    printf 'Join the input group? [y/N] '
+    read -r a || a=""
+    case "$a" in y | Y | yes | YES) ;; *) echo "Nothing was changed."; exit 1 ;; esac
     sudo usermod -aG input "$USER" && echo && echo "Done. Log out and back in, then it works." ;;
   state)
     on=$(val on "$st"); z=$(val z "$st")

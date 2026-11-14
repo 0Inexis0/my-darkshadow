@@ -1,5 +1,71 @@
 # Changelog
 
+## V4.49: CI green again
+- The ShellCheck step of CI failed on two notes in the new `install/lib/secure.sh` (V4.48). Both are intended code, now marked as such. Nothing changes for you
+
+## V4.48: security and privacy: verified downloads, guarded updates, opt-in permissions and lookups
+Thanks to notwafel, who reviewed the shell and sent all of this (pull request #15).
+- Downloads: matugen and the Bibata cursor are pinned to a release tag and checked against `install/checksums.txt` (SHA-256) before they are unpacked or installed. An archive with `../`, absolute paths or links pointing out of its folder is refused (`install/lib/secure.sh`)
+- Updates come only from this project (or a fork of it). An update that changes `install.sh` shows what changes and asks before anything is pulled; from Settings > Update Center a terminal opens with that question
+- The `input` group (Infinite Desktop, SUPER + ALT + mouse) is no longer granted by the installer: `./install.sh --input-group`, or Settings > Desktop > Infinite Desktop > Allow, which says that any program you run can then read every keyboard. NixOS: `programs.shadows-shell.inputGroup = true`
+- Settings > Language & region > Online lookups: what the shell asks other websites, each with its own switch
+  - Weather place: weather is asked for that place only (without one, wttr.in looked up where your IP is). If the weather already worked for you, the place it found is kept
+  - Song lyrics (lrclib.net learns the artist and the title): off for new installs; on if you already had lyrics. The lyrics cards say when it is off
+  - Check for updates: once a day instead of every 15 minutes; off stops the checks at once
+- `sync.sh` looks for real key shapes before publishing a config, and stops instead of only warning
+- Animations stop while what they draw is hidden (the island's equalizer, the logos, the lock screen's shape, the music popover)
+- `SECURITY.md` and `tests/security.sh` (26 checks, in CI)
+
+## V4.47: the bar's shadow no longer costs frames; Settings need not wait in memory
+- Performance (thanks to R31tr0, issue #14): the notch's shadow was drawn with a canvas blur that the CPU computes, 70-140 ms every time the notch changed width, and it changes all the time (the island, the music, the clock). The bar dropped to 2-3 fps while moving and games lost frames to it. The shadow is now a few soft outlines: about 1 ms, and it looks the same
+- The second `qs` process (about 300 MB) was Settings waiting hidden, so it opens at once. New switch: Settings > Desktop > Performance > "Keep Settings ready in the background". Off: it starts when you open it and quits three minutes after you close it
+- (Turning shell shadows off is still Settings > Desktop > Windows > Shell shadows; editing Look.qml by hand is not seen by the switch)
+
+## V4.46: pick your file manager, in the wallpaper's colors; your picture on the login screen
+- Settings > Desktop > Look & Feel > File manager: Files (Nautilus), Thunar, Nemo, Dolphin or PCManFM, with an Install button for the ones you do not have. The one you pick opens with SUPER + E (Hyprland and niri) and for every "open folder" from your other apps (xdg-mime)
+- Colors from the wallpaper (on by default, a switch turns it off): the file manager and your other GTK apps get the wallpaper's Material colors through ~/.config/gtk-3.0 and gtk-4.0/darkshadow.css (your gtk.css keeps your own CSS and only gets one import line, with a backup), Dolphin and the other KDE apps through a DarkShadow color scheme. It follows every wallpaper change; open the app again to see it
+- Login screen: the picture you choose in Settings now shows there too (it used to change only with the next wallpaper change)
+
+## V4.45: smooth CPU / RAM rings, one workspace color from the wallpaper, the RAM icon
+- The CPU, RAM and disk rings in the bar blinked out for a moment at every reading (every 3 seconds, very visible while playing): they were made again each time. They now stay, and glide to the new value. The same for the System card of the bar (its bars now slide instead of jumping)
+- Workspaces in the bar and in the dynamic island: the one you are on is in your wallpaper's color. It used to turn a little around the color wheel for every workspace, so each had its own color
+- Settings > About: Memory had an empty box for its icon (that icon is not in the shell's icon font); it now has the memory chip
+
+## V4.44: window rules put apps on their workspace (Hyprland and niri)
+- "Assigning apps to workspaces doesn't work, the gaming workspace neither": on niri a number made a separate named workspace at the top instead of using the workspace at that place, and on Hyprland a rule acts only at the moment a window opens, which misses the many apps that get their name a moment later (Discord, Spotify, games through Proton or Wine). A small watcher (rice-rules watch, started with the shell) now looks at each new window for a few seconds and moves it to its workspace when the rule did not; a window already in place is left alone, and windows that were open before are never moved
+- niri: a workspace number is the workspace at that place; a name is still a named workspace
+- Task view: moving a window to another workspace focuses it first on a Lua-config Hyprland (its move has no window to name)
+
+## V4.43: Alt + Tab focuses the window on Hyprland 0.55+ (issue #11)
+- The Alt + Tab switcher and the Task view moved, closed and focused windows with the old dispatcher names (focuswindow, closewindow, movetoworkspacesilent, workspace), which a Lua-config Hyprland (0.55 and newer) refuses: you could cycle through windows, but letting go of Alt did not focus the one picked. They now use the Lua calls (hl.dsp.focus, hl.dsp.window.close / move) and fall back to the old names on an older Hyprland. Window addresses are checked before they go into a command. Thanks, Fedora 44 reporter, for finding the exact line
+
+## V4.42: foot 1.26 and newer (issue #13)
+- foot 1.28 refused ~/.config/foot/darkshadow.ini ("invalid section name"): the shell wrote the old [colors] and [cursor] sections, which foot 1.26 renamed to [colors-dark] (the cursor colors moved into it). rice-look now asks foot for its version and writes the right ones for it (an older foot keeps the old ones). Thanks, Kikurory, for the exact report
+
+## V4.41: the login screen puts the on-screen keyboard away by itself
+- The big on-screen keyboard still came back after a reboot for some (SDDM's own config can start it, and a config line is easy to miss). The login screen now hides it as soon as it opens, whatever SDDM's config says. For a touch screen: virtualKeyboard=true in the theme's theme.conf. Put the new theme in with Settings > Idle & Lockscreen > Login screen > Update it, or rice-sddm install
+
+## V4.40: the installer shows the long steps, and can skip the system update
+- "It spins for ever": the system update (Arch: pacman -Syu) and the package install ran behind a spinner with their output hidden, so a slow download, a full system update on an old install or another pacman holding the lock looked like a hang (one report: 1100 s). They now print what they do, line by line, with the time at the end (the same for dnf on Fedora)
+- ./install.sh --no-upgrade (Arch): skip the full system update and only install what the shell needs
+- It says so before it starts when another pacman is running or pacman's lock file (db.lck) was left behind by a stopped update
+
+## V4.39: no big on-screen keyboard on the login screen
+- The login screen showed Qt's on-screen keyboard when the password field was clicked (a theme installed before sets InputMethod=qtvirtualkeyboard in /etc/sddm.conf). Use it now turns that off too (the line is kept and Back to SDDM's theme puts it back)
+
+## V4.38: the login screen wins over another SDDM theme
+- A theme installed before (sddm-astronaut and others) often sets itself in /etc/sddm.conf, which SDDM reads last, so the shell's login screen never showed. Use it now switches that line off (and keeps it: Back to SDDM's theme puts it back), and Settings shows which theme SDDM really uses
+
+## V4.37: your own window rules, a gaming workspace, the shell's own login screen (SDDM)
+- Settings > Desktop > Window rules: rules of your own for any app (where it opens and whether in the background, floating, centered, a size, on every workspace, fullscreen or maximized, see-through). Pick a window that is open now, or type its app id or title. They are kept in ~/.config/rice/rules.json, which no update touches (editing hyprland.lua by hand is lost on update; this is not). Hyprland and niri
+- Gaming workspace (Window rules, or Gaming > Gaming workspace): Steam, Proton, Wine, gamescope and Minecraft games open on a workspace of their own (9 by default, or any number or name). Options: go there when a game starts, the launchers (Steam, Heroic, Lutris, Bottles, Prism, RetroArch) there too, games fullscreen, no gaps there
+- The shell's own login screen for SDDM, in Material 3: your wallpaper and a big clock; press a key and it blurs, the clock moves up and the login card rises, with your picture in a slowly turning shape, the session and keyboard layout, sleep, restart and shut down. It follows your wallpaper, its colors, the shell's font and language by itself. Settings > Desktop > Idle & Lockscreen > Login screen: Use it (asks for your password once), Preview, Make SDDM start at boot, Back to SDDM's theme. A fresh install asks. NixOS: programs.shadows-shell.sddm = true;
+
+## V4.36: Settings follows the wallpaper's colors, real blur on niri, Settings always opens at once
+- Settings took its colors only when it started: change the wallpaper while it was open (or waiting in the background) and it kept the old ones, green on a black wallpaper. It now reads the theme's colors again whenever they change
+- niri: Settings blurred only the wallpaper (xray), not the windows behind it (a browser did not show through). Its blur now shows what is really behind it
+- Settings opens at once every time: it starts hidden a few seconds after login and waits, and after you close it it waits again instead of quitting (before, it waited three minutes, so most openings were a cold start). While it waits it does nothing (no checks every few seconds). Light mode keeps the old way, to save memory. How each opening went is in ~/.cache/rice/settings-open.log
+
 ## V4.35: the whole shell in your language, blur stays, Japanese / Korean / Chinese letters
 - Languages for the whole shell, not only Settings: the bar, its cards, the control center, the menus (Wi-Fi, Bluetooth, power, volume), notifications, the launcher, the clipboard, the wallpaper picker, the widgets and the lock screen now come in all 20 languages of Settings > System > Languages (they were only English and Polish). The lock screen's dates, days and months follow the language too
 - Settings lost its blur in Polish (and other languages): the window's title was translated, and Hyprland and niri find the Settings window by its title (blur, size, floating). The title now stays the same in every language

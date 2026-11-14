@@ -96,12 +96,15 @@ for _ in 1 2 3; do   # a few rounds: found scripts can call other scripts
 done
 
 echo "--- checking for secrets"
-hits="$(grep -rIniE '(ghp_[A-Za-z0-9]{20,}|api[_-]?key|secret|passw(or)?d|bearer |token)' \
-        "$HERE/bin" "$HERE/config" "$HERE/quickshell" "$HERE/settings" 2>/dev/null | head -20 || true)"
+# what a key actually looks like, not the word "token" in a comment: this copy goes to a public repo
+SECRETS='-----BEGIN [A-Z ]*PRIVATE KEY-----|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|xox[abposr]-[A-Za-z0-9-]{10,}|sk-[A-Za-z0-9_-]{20,}|AIza[0-9A-Za-z_-]{30,}|https://hooks\.slack\.com/services/[A-Za-z0-9/]+|https://(discord|discordapp)\.com/api/webhooks/[0-9]+/[A-Za-z0-9_-]+|Bearer [A-Za-z0-9._~+/-]{20,}|(api[_-]?key|secret|passw(or)?d|token)[[:space:]]*[:=][[:space:]]*["'"'"']?[^"'"'"'[:space:]]{8,}'
+hits="$(grep -rInE -e "$SECRETS" "$HERE/bin" "$HERE/config" "$HERE/quickshell" "$HERE/settings" 2>/dev/null | head -20 || true)"
 if [ -n "$hits" ]; then
-  echo "WARNING: these lines look like secrets. Check them before you commit:"
+  echo "WARNING: these lines look like a key or a password. Do not commit them:"
   echo "$hits"
-else
-  echo "none found"
+  echo "Take them out (git restore FILE), keep the value in a file the shell reads at runtime."
+  echo "Done. Review with:  git status && git diff --stat"
+  exit 1
 fi
+echo "none found"
 echo "Done. Review with:  git status && git diff --stat"

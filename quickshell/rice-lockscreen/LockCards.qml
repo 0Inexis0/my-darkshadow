@@ -112,7 +112,7 @@ Item {
                 anchors.bottom: parent.bottom; anchors.bottomMargin: Math.round(28 * lc.k)
                 width: Math.round(120 * lc.k); height: width
                 Blob { anchors.fill: parent; kind: Look.shape; color: Qt.rgba(lc.acc.r, lc.acc.g, lc.acc.b, 0.16)
-                    RotationAnimator on rotation { from: 0; to: 360; duration: 60000; loops: Animation.Infinite; running: true } }
+                    RotationAnimator on rotation { from: 0; to: 360; duration: 60000; loops: Animation.Infinite; running: lc.visible } }
                 WavyArc { anchors.fill: parent; anchors.margins: 10; value: Math.max(0.01, lc.now.getSeconds() / 60); thick: 4; wavy: true
                     color: lc.acc; track: Qt.rgba(1, 1, 1, 0.08) }
                 Column { anchors.centerIn: parent; spacing: 0

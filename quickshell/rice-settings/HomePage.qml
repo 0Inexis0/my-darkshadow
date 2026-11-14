@@ -100,7 +100,7 @@ Item {
         }
     }
 
-    Timer { interval: 15000; running: true; repeat: true; onTriggered: page.now = new Date() }
+    Timer { interval: 15000; running: Prefs.shown; repeat: true; onTriggered: page.now = new Date() }
     Process {
         id: upProc
         command: ["bash", "-c", "cut -d. -f1 /proc/uptime"]
@@ -114,7 +114,7 @@ Item {
             }
         }
     }
-    Timer { interval: 60000; running: true; repeat: true; onTriggered: upProc.running = true }
+    Timer { interval: 60000; running: Prefs.shown; repeat: true; onTriggered: upProc.running = true }
 
     Flickable {
         id: flick

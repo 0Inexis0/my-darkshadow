@@ -6,6 +6,8 @@
 #   rice-fonts status    show what is installed
 set -euo pipefail
 dir="$HOME/.local/share/fonts/shadows-shell"
+# shortcut: fonts come from main/latest over HTTPS and are not hash-pinned (their URLs move with upstream)
+# upgrade path: pin the URLs to commits/tags, add their SHA-256 to install/checksums.txt, check before unpacking
 INTER_URL="https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip"
 RUBIK_URL="https://raw.githubusercontent.com/google/fonts/main/ofl/rubik/Rubik%5Bwght%5D.ttf"
 # icons of the dashboard (the same set Caelestia and end4 use)

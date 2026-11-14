@@ -134,6 +134,22 @@ Item {
                 onClicked: Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-gamebar\" open"]) }
         }
 
+        // the gaming workspace (it lives with the window rules)
+        Rectangle {
+            width: parent.width; height: 84; radius: M3.rL; color: M3.surfaceC
+            Rectangle { x: 18; anchors.verticalCenter: parent.verticalCenter; width: 48; height: 48; radius: 16; color: M3.tertiaryContainer
+                Icon { anchors.centerIn: parent; name: "view_carousel"; glyph: "\uf2d2"; size: 22; color: M3.inkTertiaryC } }
+            Column {
+                x: 80; anchors.verticalCenter: parent.verticalCenter; width: parent.width - 80 - 170; spacing: 3
+                T { text: I18n.t("Gaming workspace"); font.pixelSize: 14; font.weight: Font.Medium }
+                T { kind: "reading"; width: parent.width; elide: Text.ElideRight; font.pixelSize: 12; color: M3.inkDim
+                    text: I18n.t("Games open on their own workspace, apart from your windows") }
+            }
+            Btn { anchors.right: parent.right; anchors.rightMargin: 18; anchors.verticalCenter: parent.verticalCenter
+                text: I18n.t("Set up"); sym: "arrow_forward"; icon: ""
+                onClicked: page.ctl.page = 37 }
+        }
+
         SectionTitle { text: I18n.t("While you play"); sub: I18n.t("What stays on in gaming mode.") }
         ToggleRow { label: I18n.t("Keep blur & transparency"); desc: I18n.t("Off: everything is solid while you play (faster)"); checked: page.fxOpt("keep_blur"); onToggled: function(v) { page.setOpt("keep_blur", v) } }
         ToggleRow { label: I18n.t("Keep animations"); desc: I18n.t("Windows and workspaces still animate"); checked: page.fxOpt("keep_anim"); onToggled: function(v) { page.setOpt("keep_anim", v) } }

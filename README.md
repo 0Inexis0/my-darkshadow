@@ -15,7 +15,7 @@ My personal fork of [DarkShadow's Shell](https://github.com/shadowww-dev/DarkSha
 
 ## What this fork adds
 
-These are changes relative to the imported **DarkShadowShell V4.35** baseline, recorded in [personal/UPSTREAM_REVISION](personal/UPSTREAM_REVISION). The original shell already provides the Dynamic Island, music player, widgets, settings and themes; the additions and changed behavior below belong to this fork.
+Originally based on **DarkShadowShell V4.35**, this fork now includes **V4.49**. The latest merged upstream revision is recorded in [personal/UPSTREAM_REVISION](personal/UPSTREAM_REVISION). The original shell already provides the Dynamic Island, music player, widgets, settings and themes; the additions and changed behavior below belong to this fork.
 
 | Area | Fork additions and changes |
 | --- | --- |
@@ -91,4 +91,4 @@ The AI regression suite uses synthetic logs to check simultaneous sessions, life
 
 ## Credits
 
-Built on [DarkShadow's Shell](https://github.com/shadowww-dev/DarkShadowShell), based on upstream V4.35. Upstream credits and licensing remain in the [original README](docs/UPSTREAM-README.md) and [LICENSE](LICENSE).
+Built on [DarkShadow's Shell](https://github.com/shadowww-dev/DarkShadowShell), originally based on V4.35 and synchronized through V4.49. Upstream credits and licensing remain in the [original README](docs/UPSTREAM-README.md) and [LICENSE](LICENSE).

@@ -32,6 +32,10 @@ def inventory(source, profile="generic", extras=False):
             result[Path(target)] = source / "personal/profiles/legion" / name
     if not extras:
         result[Path(".local/share/rice/icon.png")] = source / "assets/icon.png"
+        # Runtime cursor downloads use the same pinned list as the standalone installer.
+        checksums = source / "install/checksums.txt"
+        if checksums.is_file():
+            result[Path(".local/share/rice/checksums.txt")] = checksums
     return result
 
 
