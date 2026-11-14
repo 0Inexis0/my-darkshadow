@@ -132,6 +132,19 @@ def git(r, *a, timeout=25):
 NEW_URL = "https://github.com/shadowww-dev/DarkShadowShell.git"
 
 
+# the installer's rule (install/lib/secure.sh update_remote_ok): an update may only come from this project, or a
+# fork of it, never from an address edited into the repo
+REPO_ORIGIN = re.compile(r"github\.com[:/][A-Za-z0-9_.-]+/DarkShadowShell(\.git)?/?$")
+
+
+def origin_ok(r):
+    try:
+        u = git(r, "remote", "get-url", "origin", timeout=5).stdout.strip()
+    except Exception:
+        return False
+    return bool(REPO_ORIGIN.search(u))
+
+
 def fix_remote(r):
     """the project moved (shadows-shell -> DarkShadowShell): an old address goes to the new one, before GitHub's
     redirect is the thing that asks for a login"""
@@ -168,9 +181,12 @@ def latest(offline=False):
         try:
             if not offline:
                 fix_remote(r)
+            if not offline and origin_ok(r):
                 f = git(r, "fetch", "--quiet")
                 if f.returncode != 0:
                     err = (f.stderr.strip().splitlines() or ["git fetch failed"])[-1]
+            elif not offline:
+                err = "the update remote is not this project"
             refs = []
             u = git(r, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}", timeout=5)
             if u.returncode == 0 and u.stdout.strip():
@@ -262,6 +278,9 @@ def installer_changes(r):
     q = dict(cwd=r, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
              env=dict(os.environ, GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="never"))
     try:
+        fix_remote(r)
+        if not origin_ok(r):
+            return False
         if subprocess.call(["git", "-c", "credential.helper=", "fetch", "--quiet", "origin"], timeout=60, **q) != 0:
             return False
         up = subprocess.run(["git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"], cwd=r,

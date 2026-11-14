@@ -965,27 +965,75 @@ def cmd_kbd_set(layouts):
     print("Keyboard: " + ", ".join(lays))
 
 
+def kbd_from_files():
+    """the layout written in your Hyprland config files (hyprland.lua and the files next to it, before the update
+    replaces them), and in niri's config: kb_layout = "pl" / layout "pl" """
+    found = {}
+    hd = HOME + "/.config/hypr"
+    files = [hd + "/hyprland.lua"]
+    try:
+        files += sorted(hd + "/" + f for f in os.listdir(hd) if f.endswith((".lua", ".conf")) and f != "hyprland.lua")
+    except OSError:
+        pass
+    files.append(HOME + "/.config/niri/config.kdl")
+    pats = {"layouts": (r'kb_layout\s*=\s*"([^"]*)"', r'^\s*kb_layout\s*=\s*([^\s#]+)', r'^\s*layout\s+"([^"]*)"'),
+            "variants": (r'kb_variant\s*=\s*"([^"]*)"', r'^\s*kb_variant\s*=\s*([^\s#]+)', r'^\s*variant\s+"([^"]*)"'),
+            "options": (r'kb_options\s*=\s*"([^"]*)"', r'^\s*kb_options\s*=\s*([^\s#]+)', r'^\s*options\s+"([^"]*)"')}
+    for f in files:
+        try:
+            txt = "\n".join(ln for ln in open(f, errors="replace").read().splitlines() if not ln.lstrip().startswith(("--", "#", "//")))
+        except OSError:
+            continue
+        lay = ""
+        for pat in pats["layouts"]:
+            m = re.search(pat, txt, re.M)
+            if m and m.group(1).strip() and m.group(1).strip() != "us":
+                lay = m.group(1).strip()
+                break
+        if lay:
+            found["layouts"] = lay
+            for k in ("variants", "options"):
+                for pat in pats[k]:
+                    m = re.search(pat, txt, re.M)
+                    if m:
+                        found[k] = m.group(1).strip()
+                        break
+            return found
+    return found
+
+
 def cmd_kbd_remember():
-    """Before an update: the keyboard layout Hyprland uses now (set by hand in hyprland.lua, or by another tool) is
-    kept in hypr.json when the Settings app has none, so the update does not put the keyboard back to US."""
-    if NIRI or not shutil.which("hyprctl"):
-        return
+    """Before an update: the keyboard layout in use now (set by hand in hyprland.lua or niri's config, or by another
+    tool) is kept in hypr.json when the Settings app has none, so the update does not put the keyboard back to US.
+    Hyprland is asked first; when it cannot answer (niri, a terminal without Hyprland, a getoption that answers in
+    another shape), the config files are read."""
     s = load()
     if s["kbd"].get("layouts"):
         return
-    def opt(k):
-        try:
-            return (json.loads(sh(["hyprctl", "-j", "getoption", "input:" + k])) or {}).get("str", "") or ""
-        except Exception:
+    k = {}
+    if not NIRI and shutil.which("hyprctl"):
+        def opt(n):
+            try:
+                j = json.loads(sh(["hyprctl", "-j", "getoption", "input:" + n])) or {}
+            except Exception:
+                return ""
+            for key in ("str", "value", "data"):
+                v = j.get(key)
+                if isinstance(v, str) and v.strip() and v.strip() != "[[EMPTY]]":
+                    return v.strip()
             return ""
-    lay = opt("kb_layout").strip()
-    if not lay or lay == "us":
+        lay = opt("kb_layout")
+        if lay and lay != "us":
+            k = {"layouts": lay, "variants": opt("kb_variant"), "options": opt("kb_options")}
+    if not k:
+        k = kbd_from_files()
+    if not k.get("layouts"):
         return
-    s["kbd"]["layouts"] = lay
-    s["kbd"]["variants"] = opt("kb_variant").strip()
-    s["kbd"]["options"] = opt("kb_options").strip()
+    s["kbd"]["layouts"] = k["layouts"]
+    s["kbd"]["variants"] = k.get("variants", "")
+    s["kbd"]["options"] = k.get("options", "")
     save(s)
-    print("Keyboard layout kept: " + lay)
+    print("Keyboard layout kept: " + k["layouts"])
 
 
 def cmd_regen():

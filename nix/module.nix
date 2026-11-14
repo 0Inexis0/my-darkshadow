@@ -63,7 +63,7 @@ in
         "quickshell" "matugen" "imagemagick" "kitty" "fish" "fastfetch"
         "cava" "curl" "jq" "python3" "playerctl" "brightnessctl" "pamixer" "zenity"
         "wf-recorder" "grim" "slurp" "wl-clipboard" "libnotify" "xdg-user-dirs"
-        "pavucontrol" "gnome-calendar" "upower" "nautilus" "btop" "cmatrix" "peaclock"
+        "pavucontrol" "gnome-calendar" "upower" "nautilus" "btop" "peaclock"
         "papirus-icon-theme" "bibata-cursors"
       ] ++ lib.optionals cfg.extras (have [ "ffmpeg" "mpvpaper" ]);
 

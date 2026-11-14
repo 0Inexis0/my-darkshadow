@@ -22,6 +22,10 @@ PanelWindow {
     property var scr: null
     readonly property bool extra: scr !== null
     screen: scr ? scr : Mon.screen
+    // one rice-services and one rice-weather for every bar (BarSvc.qml): a copy for another screen only reads them
+    onOnChanged: if (!bar.extra) BarSvc.shown = bar.on || bar.ghostOnly
+    onGhostOnlyChanged: if (!bar.extra) BarSvc.shown = bar.on || bar.ghostOnly
+    Component.onCompleted: if (!bar.extra) BarSvc.shown = bar.on || bar.ghostOnly
 
     // ---------- settings (~/.config/rice/bar.json) ----------
     property var bc: ({})
@@ -285,14 +289,7 @@ PanelWindow {
     readonly property bool charging: batt && (batt.state === UPowerDeviceState.Charging || batt.state === UPowerDeviceState.FullyCharged)
     readonly property bool plugged: hasBatt && !UPower.onBattery
 
-    property var svc: ({})
-    Process {
-        id: svcProc
-        command: ["bash", "-c", "\"$HOME/.local/bin/rice-services\" state 2>/dev/null"]
-        stdout: StdioCollector { onStreamFinished: { try { bar.svc = JSON.parse(text) } catch (e) { } } }
-    }
-    Timer { interval: 8000; running: bar.on; repeat: true; triggeredOnStart: true; onTriggered: if (!svcProc.running) svcProc.running = true }
-    Timer { id: svcAgain; interval: 700; onTriggered: if (!svcProc.running) svcProc.running = true }
+    readonly property var svc: BarSvc.state
 
     property var now: new Date()
     Timer { interval: bc.seconds === true ? 1000 : 15000; running: bar.on || bar.ghostOnly; repeat: true; triggeredOnStart: true; onTriggered: bar.now = new Date() }
@@ -662,7 +659,7 @@ PanelWindow {
                 name: bar.svc.dnd ? "notifications_off" : "notifications"
                 glyph: String.fromCodePoint(bar.svc.dnd ? 0xF009B : 0xF009A) }
             MouseArea { id: dm; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton; cursorShape: Qt.PointingHandCursor
-                onClicked: function(m) { bar.run(m.button === Qt.RightButton ? "\"$HOME/.local/bin/rice-cc\" dnd toggle" : "\"$HOME/.local/bin/rice-cc\" toggle"); svcAgain.restart() } }
+                onClicked: function(m) { bar.run(m.button === Qt.RightButton ? "\"$HOME/.local/bin/rice-cc\" dnd toggle" : "\"$HOME/.local/bin/rice-cc\" toggle"); BarSvc.refreshSoon() } }
             HoverLine { on: dm.containsMouse; color: bar.fg }
         }
     }
@@ -695,13 +692,9 @@ PanelWindow {
     }
 
     // ---------- Weather, System, Date: small modules that open a card under them (BarPop.qml) ----------
-    property var wx: null
-    Process {
-        id: wxProc
-        command: [bar.home + "/.local/bin/rice-weather", "json"]
-        stdout: StdioCollector { onStreamFinished: { try { const j = JSON.parse(text.trim().split("\n").pop()); if (j && j.temp !== undefined) bar.wx = j } catch (e) { } } }
-    }
-    Timer { interval: 1800000; running: (bar.on || bar.ghostOnly) && (bar.hasMod("weather") || barPop.open); repeat: true; triggeredOnStart: true; onTriggered: if (!wxProc.running) wxProc.running = true }
+    readonly property var wx: BarSvc.wx
+    // every 30 minutes, as before; the process itself is shared (BarSvc.qml) and refuses to run twice
+    Timer { interval: 1800000; running: (bar.on || bar.ghostOnly) && (bar.hasMod("weather") || barPop.open); repeat: true; triggeredOnStart: true; onTriggered: BarSvc.refreshWx() }
     // one rice-stats for the whole shell (Stats.qml)
     readonly property var st: Stats.st
     StatsHold { on: (bar.on || bar.ghostOnly) && (bar.hasMod("sysmon") || (barPop.open && barPop.kind === "system")) }

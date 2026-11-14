@@ -16,6 +16,7 @@ niri (rice-infinite runs these): rice-canvasd --niri on|off|toggle|pan DX DY|go 
   rice-canvasd --tell               a notification with the one step, when it cannot read them (Infinite Desktop on)
 """
 # Infinite Desktop is based on the idea of Sarods2D: https://github.com/sarodscommits/hyprland-infinitie-desktop-v2 (MIT)
+import fcntl
 import json
 import os
 import re
@@ -382,14 +383,17 @@ def main():
         return
     if not os.environ.get("HYPRLAND_INSTANCE_SIGNATURE") and not NIRI:
         return      # too early, or no Hyprland / niri: the window manager starts it again when it is up
-    # one at a time
+    # one at a time. The pid file alone lost a race: two starts read "no pid" together and both ran, each reading the
+    # same mouse. The lock is held for the life of this process (the kernel drops it when we exit, even on a crash).
+    # "a" and not "w": a second start must not empty the running one's pid file (rice-infinite daemon-stop reads it)
     try:
-        old = int(open(PID).read().strip())
-        if old != os.getpid() and os.path.exists("/proc/%d" % old) and "rice-canvasd" in open("/proc/%d/cmdline" % old).read():
-            return
-    except (OSError, ValueError):
-        pass
-    open(PID, "w").write(str(os.getpid()))
+        lockf = open(PID, "a")
+        fcntl.flock(lockf, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        return
+    lockf.truncate(0)
+    lockf.write(str(os.getpid()))
+    lockf.flush()
     signal.signal(signal.SIGTERM, lambda *a: sys.exit(0))
 
     fds = {}             # fd -> (path, kind)

@@ -1,5 +1,14 @@
 # Changelog
 
+## V4.58: fixes from the V4.55 audit, and the keyboard layout stays after an update
+Thanks to notwafel (pull request #18).
+- Bar on every screen: the bars share one `rice-services` and one `rice-weather` (BarSvc.qml) instead of each starting its own; the side bar uses it too
+- `rice-canvasd` (Infinite Desktop) can no longer run twice at once (a lock instead of only the pid file)
+- `rice-update` only fetches from this project (or a fork of it), like the installer
+- The unused lock screen engine switch, the example "epic-mouse-v1" device and cmatrix (Nix) are gone; two Polish lock screen texts added
+- Fix: an update could put the keyboard back to US. The layout you use is now also found in your config files (hyprland.lua, niri's config) when Hyprland cannot be asked, and niri keeps a layout from a hand-written config too
+- The installer itself is not changed in this version (an installer change from Settings sets off the old terminal loop for anyone still on V4.55); its two small fixes from #18 come later
+
 ## V4.57: no terminal storm when updating from an older version
 - Fix: updating to V4.56 from Settings > Update Center opened terminal after terminal until the computer froze. The installer from before V4.56 runs during that update, and it still had the bug V4.56 fixed; V4.56 itself changed the installer, which set it off. V4.57 leaves the installer files as they were in V4.55, so updating from V4.55 runs on its own again
 - The Update Center checks first whether an update changes the installer. If it does, it opens one terminal (at most one a minute, without the background settings) where you answer y, and never starts the old installer for it

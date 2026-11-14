@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""rice-lock: idle timers (hypridle) and the lock screen (hyprlock). Settings > Idle & Lockscreen.
+"""rice-lock: idle timers (hypridle) and the lock screen. Settings > Idle & Lockscreen.
 
   rice-lock state | set KEY VALUE | apply | reset | restore
   rice-lock now                                 lock the screen (hypridle, SUPER + L, the power menu ...)
@@ -10,8 +10,7 @@
 
 V3.45: the lock screen is the shell's own (Quickshell, ~/.config/quickshell/rice-lockscreen), in Material 3.
 It locks with the Wayland session-lock protocol and checks the password with PAM. If it does not lock within a
-few seconds or quits without unlocking, hyprlock takes over, so you are never locked out. engine = hyprlock keeps
-the old hyprlock screen.
+few seconds or quits without unlocking, hyprlock takes over, so you are never locked out.
 """
 import fcntl
 import json
@@ -43,14 +42,13 @@ DEFAULTS = {
     "date": True, "greeting": True, "avatar": True, "input": "pill", "power": True,
     "background": "screenshot", "blur": 3, "dim": 0.5,
     "media": True, "resources": False, "notifications": True, "weather": False,
-    "engine": "shell",
 }
 INTS = {"lock_after": (0, 120), "screen_off_after": (0, 120), "suspend_after": (0, 240), "blur": (0, 4)}
 FLOATS = {"dim": (0.2, 1.0)}
 # clock fonts (rice-fonts downloads them; "default" is your Numbers font from Settings > Services)
 CLOCK_FONTS = {"default": "", "bebas": "Bebas Neue", "orbitron": "Orbitron", "outfit": "Outfit",
                "grotesk": "Space Grotesk", "unbounded": "Unbounded", "shoulders": "Big Shoulders Display"}
-CHOICES = {"engine": ["shell", "hyprlock"], "style": ["cards", "classic"], "layout": ["center", "left"], "clock": ["big", "stacked", "minimal", "shape"], "clock_font": list(CLOCK_FONTS),
+CHOICES = {"style": ["cards", "classic"], "layout": ["center", "left"], "clock": ["big", "stacked", "minimal", "shape"], "clock_font": list(CLOCK_FONTS),
            "input": ["pill", "box", "line"], "background": ["screenshot", "wallpaper", "color"]}
 
 
@@ -92,8 +90,6 @@ def load():
                 c[k] = int(clamp(float(v), *INTS[k]))
             except Exception:
                 c[k] = d
-    # V4.54: the shell's lock screen is the only one you pick; hyprlock only steps in when it fails
-    c["engine"] = "shell"
     return c
 
 
@@ -466,7 +462,7 @@ def lock_now(preview=False, test=False):
             return
         if running("hyprlock") or our_lock_running():
             return
-    if c["engine"] == "hyprlock" or not qs or not os.path.exists(LOCKQS + "/shell.qml"):
+    if not qs or not os.path.exists(LOCKQS + "/shell.qml"):
         if not preview:
             hyprlock()
         return
