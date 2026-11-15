@@ -1,5 +1,8 @@
 # Changelog
 
+## V4.72: no crash when Infinite Desktop turns on
+- Fix: Quickshell crashed right after turning Infinite Desktop on (V4.71, seen on Artix with NVIDIA: QWaylandWindow::calculateExposure). The moving wallpaper's surface was mapped and unmapped together with its picture's loading state, a binding loop that made Qt's Wayland client trip over a window being taken away. The surface now stays (see-through) while the feature is on and only the picture inside it comes and goes
+
 ## V4.71: Infinite Desktop: the wallpaper travels with you, the bar steps aside
 - Infinite Desktop (Hyprland): the wallpaper moves with the canvas, slower than the windows, as if you travelled over a big picture. Turning Infinite Desktop on grows the wallpaper a little from exactly where it is (room to move), and turning it off brings it back the same way. Live while you hold SUPER + ALT and move the mouse, a smooth glide with the keys, the wheel and SUPER + CTRL + arrows. At the end of the picture it slows down softly instead of stopping
 - While you move the canvas with SUPER + ALT + mouse, the bar (with the island) and the dock slide away and come back a moment after you let go

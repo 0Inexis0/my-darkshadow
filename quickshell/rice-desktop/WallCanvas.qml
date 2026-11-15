@@ -17,7 +17,10 @@ PanelWindow {
     property real k: want ? 1 : 0
     Behavior on k { NumberAnimation { duration: 650; easing.type: Easing.OutCubic } }
 
-    visible: picture && (want || k > 0.001) && img.status === Image.Ready
+    // the surface stays (see-through) while the feature is on, and only the picture in it comes and goes. Mapping and
+    // unmapping the surface every time (and on the picture's loading state, which changed with it: a binding loop)
+    // crashed Qt's Wayland client (QWaylandWindow::calculateExposure, seen on Artix with NVIDIA)
+    visible: picture && Wm.hypr && Infinite.wallOn && !Look.lite
     color: "transparent"
     anchors { top: true; bottom: true; left: true; right: true }
     exclusionMode: ExclusionMode.Ignore
@@ -48,12 +51,12 @@ PanelWindow {
         height: wc.height * wc.grow
         x: Math.round((wc.width - width) / 2 + wc.px)
         y: Math.round((wc.height - height) / 2 + wc.py)
+        visible: wc.k > 0.001 && status === Image.Ready
         source: wc.path !== "" && wc.picture ? "file://" + wc.path : ""
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         cache: false
         smooth: true
-        mipmap: true
         // decoded once, big enough for the largest size it is drawn at
         sourceSize.width: Math.round(wc.width * 1.45)
     }
