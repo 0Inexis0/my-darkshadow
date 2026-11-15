@@ -44,8 +44,16 @@ case "$1" in
     elif niri; then "$HOME/.local/bin/rice-niri" apply >/dev/null 2>&1; fi ;;
   daemon)
     # SUPER + ALT + mouse (Hyprland starts it when Infinite Desktop turns on)
-    command -v setsid >/dev/null 2>&1 && setsid -f "$HOME/.local/bin/rice-canvasd" >/dev/null 2>&1 </dev/null \
-      || { nohup "$HOME/.local/bin/rice-canvasd" >/dev/null 2>&1 </dev/null & } ;;
+    # you joined the input group (it is in /etc/group) but this login started before: the groups of a login are
+    # fixed when it starts, so without logging out the daemon is started with the group by sg (no password: you are
+    # a member). Then SUPER + ALT works right away.
+    cmd="$HOME/.local/bin/rice-canvasd"
+    if ! id -nG | tr ' ' '\n' | grep -qx input && getent group input 2>/dev/null | cut -d: -f4 | tr ',' '\n' | grep -qx "$USER" \
+       && command -v sg >/dev/null 2>&1; then
+      setsid -f sg input -c "exec $cmd" >/dev/null 2>&1 </dev/null && exit 0
+    fi
+    command -v setsid >/dev/null 2>&1 && setsid -f "$cmd" >/dev/null 2>&1 </dev/null \
+      || { nohup "$cmd" >/dev/null 2>&1 </dev/null & } ;;
   daemon-stop)
     p="${XDG_RUNTIME_DIR:-/tmp}/rice-canvasd.pid"
     [ -f "$p" ] && kill "$(cat "$p")" 2>/dev/null; rm -f "$p" ;;

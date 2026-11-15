@@ -1,5 +1,8 @@
 # Changelog
 
+## V4.69: Infinite Desktop works right after "Allow", without logging out
+- Fix: you join the input group, but the login you are in keeps the groups it started with, so SUPER + ALT + mouse stayed dead until you logged out and in. `rice-infinite daemon` (and Hyprland's start of it) now starts the daemon through `sg input` when you are in the group in /etc/group but this login is not, and a new daemon replaces the old one that cannot read the input devices. Run `rice-infinite daemon` once after updating and it works
+
 ## V4.68: Infinite Desktop on Artix, Artix on the README
 - Fix: SUPER + ALT + mouse did nothing after joining the input group (seen on Artix). A copy of rice-canvasd from the session before (started without the input group) kept running and held the lock, so the new one never started; whether Hyprland was still there was judged by its folder, which can stay after a logout. Now Hyprland must answer on its socket, and a new copy stops an old one that belongs to another session or cannot read the input devices
 - `rice-infinite check` tells more: whether you are in the input group in /etc/group and in this login, and whether the running daemon belongs to this Hyprland and can read the input devices

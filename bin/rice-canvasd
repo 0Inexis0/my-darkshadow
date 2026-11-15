@@ -206,7 +206,7 @@ def check():
     except (OSError, IndexError):
         pass
     print("input group:", "in /etc/group" if listed else "not in /etc/group",
-          "| this login:", "yes" if (gid in os.getgroups() or "input" in names) else "no (log out and in)")
+          "| this login:", "yes" if (gid in os.getgroups() or "input" in names) else "no (log out and in, or: rice-infinite daemon)")
     pid = running_pid()
     if not pid:
         print("daemon:     not running (Hyprland starts it; or: rice-infinite daemon)")
