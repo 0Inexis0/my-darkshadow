@@ -1,5 +1,9 @@
 # Changelog
 
+## V4.61: rice-update starts again
+- Fix: `rice-update` crashed on start (`name 're' is not defined`) since V4.58. The import was missing. All Python tools were checked for the same kind of mistake
+- The installer is not changed in this version
+
 ## V4.60: Infinite Desktop leaves app pop-ups alone (Steam notifications)
 Reported by R31tr0 (issue #19).
 - Steam's notification toasts (`notificationtoasts_*`) no longer move the canvas, get repositioned, or take focus: they stay where Steam puts them, like a pinned window. Before, a toast was taken as a canvas window, so it shifted the screen and the other windows
