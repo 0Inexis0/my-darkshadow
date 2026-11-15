@@ -1,5 +1,10 @@
 # Changelog
 
+## V4.64: date in the island, removing the island keeps your bar
+- The Dynamic island now shows the date like the bar's Date module: `niedz., 15/11` and the time in a pill in your key color. It appears when "Date" is on in Settings > Dynamic island, or when the Date module is in your bar layout (the separate Date module is then hidden, so it is not shown twice)
+- Fix: removing the island (clock) from Bar layout also removed the launcher and everything else in the middle. Now only the island goes; the rest stays. Older layouts that have no island keep working
+- Infinite Desktop on Artix and other systems without systemd: SUPER+ALT needs your user in the `input` group (`sudo usermod -aG input $USER`, then log out and in). Settings > Desktop > Infinite Desktop > Allow does it for you
+
 ## V4.63: no more "Invalid keyboard layout passed"
 - Fix: with a plain US keyboard, an update could save the layout with its quotes and comma (`"us",`, read from the line `kb_layout = "us",` in hyprland.lua) and Hyprland showed "Invalid keyboard layout passed". Values read from config files and from Hyprland are cleaned now, and a broken value saved before is mended by itself
 - The installer is not changed in this version

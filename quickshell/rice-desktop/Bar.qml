@@ -82,11 +82,18 @@ PanelWindow {
     function noClock(l) { return (l || []).map(function(m) { return m === "clock" ? "island" : m }) }
     readonly property var layRaw: bc.layout ? ({ left: noClock(bc.layout.left), center: noClock(bc.layout.center), right: noClock(bc.layout.right) })
         : ({ left: ["launcher", "workspaces", "title"], center: ["island"], right: ["music", "tray", "volume", "bluetooth", "network", "battery", "notifications", "power"] })
+    // the date module lives in the island (date + time pill) whenever the island is on the bar
+    readonly property bool hasIsl: lay && laid(lay, "island")
+    readonly property bool dateInIsl: dyn && hasIsl
+    readonly property bool wantDate: laid(layRaw, "date")
     function laid(l, k) { return (l.left || []).indexOf(k) >= 0 || (l.center || []).indexOf(k) >= 0 || (l.right || []).indexOf(k) >= 0 }
-    // the island is a module of the layout ("island", any zone, any style, with modules beside it). Dynamic without
-    // it in the layout puts it in the middle, as before
-    readonly property var lay: dyn && !laid(layRaw, "island")
-        ? ({ left: layRaw.left || [], center: ["island"], right: layRaw.right || [] }) : layRaw
+    // the island is a module of the layout ("island", any zone, any style, with modules beside it). Taken out in
+    // Bar layout (island_off) the bar has no island, only its cards (clock card, volume, notifications) stay.
+    // A layout from before that (no island in it, no island_off) still gets the island in the middle of the
+    // middle zone, and the modules that were in the middle stay (they were lost: the zone became just the island)
+    function withIsland(c) { const a = (c || []).slice(); a.splice(Math.floor(a.length / 2), 0, "island"); return a }
+    readonly property var lay: dyn && bc.island_off !== true && !laid(layRaw, "island")
+        ? ({ left: layRaw.left || [], center: withIsland(layRaw.center), right: layRaw.right || [] }) : layRaw
     readonly property bool hasIsland: on && laid(lay, "island")
     property Item islSlot: null                 // where the island sits in its zone
     readonly property bool islAlone: ["left", "center", "right"].some(function(z) { const m = lay[z] || []; return m.length === 1 && m[0] === "island" })
@@ -777,7 +784,7 @@ PanelWindow {
         }
     }
     Component { id: mDate
-        Item { property bool shown: true; width: dr.implicitWidth + 4; height: bar.barH
+        Item { property bool shown: !bar.dateInIsl; width: bar.dateInIsl ? 0 : dr.implicitWidth + 4; height: bar.barH
             Row { id: dr; anchors.centerIn: parent; spacing: 8
                 Text { anchors.verticalCenter: parent.verticalCenter; color: bar.fg; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium
                     text: Qt.locale().dayName(bar.now.getDay(), Locale.ShortFormat) + ", " + bar.two(bar.now.getDate()) + "/" + bar.two(bar.now.getMonth() + 1) }

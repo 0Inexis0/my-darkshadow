@@ -1309,7 +1309,7 @@ Singleton {
             "The card": "Karta",
             "The clock stays white and grey. Fonts that are not here yet download when you pick them.": "Zegar zostaje biało-szary. Brakujące czcionki pobierają się po wybraniu.",
             "The control center, the game bar and the menus of the bar": "Centrum sterowania, pasek gry i menu paska",
-            "The day and date beside the time": "Dzień i data obok godziny",
+            "The day and date, with the time in a pill (like the bar date)": "Dzień i data, a godzina w pigułce (jak data na pasku)",
             "The default folder": "Folder domyślny",
             "The font comes from Services > Fonts (monospace)": "Czcionka pochodzi z Usługi > Czcionki (stałej szerokości)",
             "The island is your clock. Click it for Today, right-click for System, scroll on it for the volume.": "Wyspa to twój zegar. Kliknij, by zobaczyć Dziś, prawym — System, przewijaj na niej, by zmienić głośność.",

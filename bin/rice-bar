@@ -26,7 +26,7 @@ CFG = DIR + "/bar.json"
 DEFAULTS = {"enabled": True, "style": "dynamic", "position": "top", "height": 38, "workspaces": 5,
             "seconds": False, "opacity": 0.72, "ws_style": "dots", "logo": "auto", "autohide": False, "shadow": True,
             "island_dynamic": True, "island_hover": True, "island_volume": True, "island_ws": True, "island_notifs": True, "tray_size": 18,
-            "island_date": False, "island_weather": True, "island_charge": True, "island_tab": "today", "island_close": 4,
+            "island_date": False, "island_weather": True, "island_charge": True, "island_off": False, "island_tab": "today", "island_close": 4,
             "logo_color": "default", "title_icon": "right"}
 CHOICES = {"style": ("flat", "island", "islands", "pills", "notch", "dynamic"), "position": ("top", "bottom", "left", "right"),
            "ws_style": ("dots", "pacman", "letters", "numbers"), "title_icon": ("left", "right", "off"),
@@ -35,7 +35,7 @@ CHOICES = {"style": ("flat", "island", "islands", "pills", "notch", "dynamic"), 
                     "manjaro", "linuxmint", "opensuse", "void", "alpine", "pop", "kali", "centos", "raspbian",
                     "elementary", "zorin", "nobara", "artix", "slackware", "mageia", "rocky")}
 BOOLS = ("enabled", "seconds", "autohide", "shadow", "island_dynamic", "island_hover", "island_volume", "island_ws", "island_notifs",
-         "island_date", "island_weather", "island_charge")
+         "island_date", "island_weather", "island_charge", "island_off")
 RANGES = {"height": (28, 56), "workspaces": (3, 10), "opacity": (0.3, 1.0), "tray_size": (12, 28), "island_close": (2, 10)}
 # V3.36: the island is the clock (the old "clock" module becomes the island)
 MODULES = ["launcher", "workspaces", "title", "media", "island", "tray", "volume", "network", "bluetooth", "battery",
@@ -104,6 +104,12 @@ def load():
     return c
 
 
+def island_flag(c):
+    """the island taken out of every zone (Bar layout: dragged to "Not on the bar") means: no island. Put back, it is on again"""
+    lay = c.get("layout") or {}
+    c["island_off"] = not any("island" in (lay.get(z) or []) for z in ("left", "center", "right"))
+
+
 def save(c):
     os.makedirs(DIR, exist_ok=True)
     tmp = CFG + ".tmp"
@@ -133,6 +139,7 @@ def main(a):
             c["layout"] = clean_layout(json.loads(a[1]))
         except ValueError:
             sys.exit("layout-set: JSON like {\"left\": [...], \"center\": [...], \"right\": [...]}")
+        island_flag(c)
         save(c)
     elif cmd == "layout-add" and len(a) >= 3 and a[1] in ("left", "center", "right") and a[2] in MODULES:
         lay = c["layout"]
@@ -142,9 +149,11 @@ def main(a):
         i = lay[a[1]].index(before) if before in lay[a[1]] else len(lay[a[1]])
         lay[a[1]].insert(i, a[2])
         c["layout"] = clean_layout(lay)
+        island_flag(c)
         save(c)
     elif cmd == "layout-reset":
         c["layout"] = clean_layout(DEFAULT_LAYOUT)
+        island_flag(c)
         save(c)
     elif cmd == "on":
         c["enabled"] = True
