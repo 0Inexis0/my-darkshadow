@@ -74,7 +74,8 @@ PanelWindow {
     readonly property bool shadowOn: bc.shadow !== false && Look.shadows && Look.shadowBar
     // auto-hide: shown while the pointer is on it (and a moment after it leaves)
     property bool peek: false
-    readonly property bool shownBar: !hideOn || peek || !on
+    // Infinite Desktop: it gets out of the way while you move the canvas (SUPER + ALT + mouse)
+    readonly property bool shownBar: (!hideOn || peek || !on) && !(on && Infinite.hideUi)
     Timer { id: leaveT; interval: 700; onTriggered: bar.peek = false }
     readonly property bool island: sty === "island"
     readonly property bool floating: sty !== "flat"

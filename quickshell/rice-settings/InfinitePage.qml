@@ -222,6 +222,20 @@ Item {
         }
         ToggleRow {
             visible: !page.niri
+            label: I18n.t("The wallpaper moves with it")
+            desc: I18n.t("Moving around the canvas also moves the wallpaper, slower than the windows, as if you travelled over a big picture")
+            checked: page.st.wall !== 0
+            onToggled: function(v) { page.sh(["set", "wall", v ? "1" : "0"]); const n = Object.assign({}, page.st); n.wall = v ? 1 : 0; page.st = n }
+        }
+        ToggleRow {
+            visible: !page.niri
+            label: I18n.t("The bar and the dock step aside while you move")
+            desc: I18n.t("Holding the keys and moving the mouse slides the bar and the dock away; they come back when you let go")
+            checked: page.st.hidebar !== 0
+            onToggled: function(v) { page.sh(["set", "hidebar", v ? "1" : "0"]); const n = Object.assign({}, page.st); n.hidebar = v ? 1 : 0; page.st = n }
+        }
+        ToggleRow {
+            visible: !page.niri
             label: I18n.t("SUPER + drag a window to the edge pushes the others")
             desc: I18n.t("Take a window to the edge of the screen and keep going: the other windows come towards it")
             checked: page.st.push === 1

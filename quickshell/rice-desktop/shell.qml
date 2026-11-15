@@ -566,6 +566,8 @@ ShellRoot {
     WallLum { path: root.wallpaper; sw: root.sw; sh: root.sh }
     // niri: the blurred wallpaper behind the workspaces in the overview (SUPER + Tab)
     NiriBackdrop { path: root.wallpaper }
+    // Infinite Desktop: the wallpaper moves with the canvas (Hyprland)
+    WallCanvas { path: root.wallpaper }
 
     EditorWindow { root: root }
 

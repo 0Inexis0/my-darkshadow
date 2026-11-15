@@ -236,6 +236,42 @@ def tell():
         pass
 
 
+# the shell listens here (Infinite.qml): "hold 1", "pan DX DY", "hold 0", so the wallpaper moves with the canvas and
+# the bar gets out of the way. Best effort: no shell, an old shell or a full socket never slows the canvas down.
+SHELL_SOCK = os.path.join(RUN, "rice-canvas.sock")
+_shell = {"s": None, "t": 0.0}
+
+
+def shell_say(line):
+    s = _shell["s"]
+    if s is None:
+        if time.time() - _shell["t"] < 2 or not os.path.exists(SHELL_SOCK):
+            return
+        _shell["t"] = time.time()
+        try:
+            s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            s.setblocking(False)
+            s.connect(SHELL_SOCK)
+            _shell["s"] = s
+        except OSError:
+            try:
+                s.close()
+            except OSError:
+                pass
+            return
+    try:
+        s.send((line + "\n").encode())
+    except BlockingIOError:
+        pass
+    except OSError:
+        try:
+            s.close()
+        except OSError:
+            pass
+        _shell["s"] = None
+        _shell["t"] = time.time()
+
+
 def hypr_eval(code):
     return subprocess.Popen(["hyprctl", "eval", code], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -590,6 +626,9 @@ def main():
         if mode != was_on:
             if was_on == "canvas" and not NIRI:
                 hypr_eval("if RiceInfinite then RiceInfinite.save() end")
+                shell_say("hold 0")
+            if mode == "canvas" and not NIRI:
+                shell_say("hold 1")
             acc = [0.0, 0.0]
             moved_rel = False
             rel_hold = False
@@ -632,6 +671,7 @@ def main():
             proc = None
         elif mode == "canvas":
             proc = hypr_eval("if RiceInfinite then RiceInfinite.slide(%d, %d) end" % (idx * sign, idy * sign))
+            shell_say("pan %d %d" % (idx * sign, idy * sign))
         else:
             proc = hypr_eval("if RiceInfinite then RiceInfinite.edge_push(%d, %d) end" % (idx, idy))
         last_send = time.time()

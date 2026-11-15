@@ -1,5 +1,11 @@
 # Changelog
 
+## V4.71: Infinite Desktop: the wallpaper travels with you, the bar steps aside
+- Infinite Desktop (Hyprland): the wallpaper moves with the canvas, slower than the windows, as if you travelled over a big picture. Turning Infinite Desktop on grows the wallpaper a little from exactly where it is (room to move), and turning it off brings it back the same way. Live while you hold SUPER + ALT and move the mouse, a smooth glide with the keys, the wheel and SUPER + CTRL + arrows. At the end of the picture it slows down softly instead of stopping
+- While you move the canvas with SUPER + ALT + mouse, the bar (with the island) and the dock slide away and come back a moment after you let go
+- Both can be turned off: Settings > Desktop > Infinite Desktop ("The wallpaper moves with it", "The bar and the dock step aside while you move"), or `rice-infinite set wall 0`, `rice-infinite set hidebar 0`
+- The moving wallpaper and the bar hiding while you pan are inspired by Sarods2D's Iridium Shell
+
 ## V4.70: Flatpak on Artix (and other systems without systemd)
 - Fix: Flatpak apps (Spotify, Discord ...) did not start or had no tray / portals on Artix: "Unknown or unsupported transport 'disabled'". `dbus-run-session` makes a D-Bus bus with an abstract address, which Flatpak cannot use; systemd would put the bus at `$XDG_RUNTIME_DIR/bus`. The "Hyprland (DarkShadow)" and "niri (DarkShadow)" login sessions now start through `rice-session` (installed in /usr/local/bin), which starts the bus there and stops it with the session. Log out and pick the session again after updating. From a console: `rice-session Hyprland`
 

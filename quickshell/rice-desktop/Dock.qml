@@ -15,7 +15,7 @@ Scope {
     property bool hovering: false
     readonly property bool on: dc.enabled === true
     readonly property bool autoHide: dc.hover !== false
-    readonly property bool reveal: on && (!autoHide || pinned || hovering || apps.open)
+    readonly property bool reveal: on && !Infinite.hideUi && (!autoHide || pinned || hovering || apps.open)
     // Settings > Dock > Keep room for it: while the dock stays out (no hover-to-reveal, or held open with its pin),
     // windows keep away from it, like they do from the bar (an open browser ends above it, not under it)
     readonly property bool reserve: on && dc.reserve !== false && (!autoHide || pinned)
