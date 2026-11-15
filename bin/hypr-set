@@ -248,6 +248,14 @@ def anim_lines(pct, style="calm"):
     return out
 
 
+def kbd_clean(v):
+    """a layout / variant / options value as XKB wants it: 'pl,us', 'grp:alt_shift_toggle'. A value read from a
+    config line can carry its quotes and the comma after it ('"us",' broke the keyboard in V4.58-V4.62)"""
+    v = str(v or "").strip().strip(",;").strip().strip("\"'").strip()
+    v = ",".join(p.strip().strip("\"'") for p in v.split(","))
+    return v if re.fullmatch(r"[A-Za-z0-9_:()+\-]*(,[A-Za-z0-9_:()+\-]*)*", v) else ""
+
+
 def load():
     try:
         s = json.load(open(ST))
@@ -255,6 +263,14 @@ def load():
         s = {}
     for k, d in (("opts", {}), ("borders", {}), ("anim", {}), ("monitors", {}), ("binds", []), ("autostart", []), ("kbd", {})):
         s.setdefault(k, d)
+    if not isinstance(s["kbd"], dict):
+        s["kbd"] = {}
+    # a broken value saved by an older version is mended here; a plain "us" is the default, so nothing is set
+    for k in ("layouts", "variants", "options"):
+        if k in s["kbd"]:
+            s["kbd"][k] = kbd_clean(s["kbd"][k])
+    if s["kbd"].get("layouts", "") in ("", "us"):
+        s["kbd"].pop("layouts", None)
     return s
 
 
@@ -987,8 +1003,9 @@ def kbd_from_files():
         lay = ""
         for pat in pats["layouts"]:
             m = re.search(pat, txt, re.M)
-            if m and m.group(1).strip() and m.group(1).strip() != "us":
-                lay = m.group(1).strip()
+            v = kbd_clean(m.group(1)) if m else ""
+            if v and v != "us":
+                lay = v
                 break
         if lay:
             found["layouts"] = lay
@@ -996,7 +1013,7 @@ def kbd_from_files():
                 for pat in pats[k]:
                     m = re.search(pat, txt, re.M)
                     if m:
-                        found[k] = m.group(1).strip()
+                        found[k] = kbd_clean(m.group(1))
                         break
             return found
     return found
@@ -1022,9 +1039,9 @@ def cmd_kbd_remember():
                 if isinstance(v, str) and v.strip() and v.strip() != "[[EMPTY]]":
                     return v.strip()
             return ""
-        lay = opt("kb_layout")
+        lay = kbd_clean(opt("kb_layout"))
         if lay and lay != "us":
-            k = {"layouts": lay, "variants": opt("kb_variant"), "options": opt("kb_options")}
+            k = {"layouts": lay, "variants": kbd_clean(opt("kb_variant")), "options": kbd_clean(opt("kb_options"))}
     if not k:
         k = kbd_from_files()
     if not k.get("layouts"):

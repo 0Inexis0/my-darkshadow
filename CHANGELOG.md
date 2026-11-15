@@ -1,5 +1,9 @@
 # Changelog
 
+## V4.63: no more "Invalid keyboard layout passed"
+- Fix: with a plain US keyboard, an update could save the layout with its quotes and comma (`"us",`, read from the line `kb_layout = "us",` in hyprland.lua) and Hyprland showed "Invalid keyboard layout passed". Values read from config files and from Hyprland are cleaned now, and a broken value saved before is mended by itself
+- The installer is not changed in this version
+
 ## V4.62: Artix Linux
 - The installer supports Artix (OpenRC, runit, s6 and dinit). It is treated as Arch, and what systemd would do is done with your init:
   - Arch's `[extra]` repository is turned on (`artix-archlinux-support`, as the Artix wiki says) when Hyprland is not in Artix's own repositories; a copy of pacman.conf stays as `pacman.conf.bak-darkshadow`
