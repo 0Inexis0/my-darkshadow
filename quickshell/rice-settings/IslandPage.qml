@@ -149,7 +149,7 @@ Item {
         ToggleRow { label: I18n.t("Weather"); desc: I18n.t("The weather icon and temperature beside the time")
             checked: page.v("island_weather", true) !== false; onToggled: function(x) { page.setv("island_weather", x ? "on" : "off") } }
         ToggleRow { label: I18n.t("Date"); desc: I18n.t("The day and date, with the time in a pill (like the bar date)")
-            checked: page.v("island_date", false) === true; onToggled: function(x) { page.setv("island_date", x ? "on" : "off") } }
+            checked: page.v("island_date", true) !== false; onToggled: function(x) { page.setv("island_date", x ? "on" : "off") } }
         ToggleRow { label: I18n.t("Seconds"); desc: I18n.t("Show seconds in the time")
             checked: page.v("seconds", false) === true; onToggled: function(x) { page.setv("seconds", x ? "on" : "off") } }
 

@@ -10,6 +10,8 @@ Singleton {
             "File manager": "Menedżer plików",
             "The app Super + E opens, and every \"open folder\" from your other apps.": "Aplikacja, którą otwiera Super + E, i każde „otwórz folder” z innych aplikacji.",
             "Colors from the wallpaper": "Kolory z tapety",
+            "Glass and Material 3 shapes": "Szkło i kształty Material 3",
+            "Files is see-through with the blur behind it, with round pill rows and buttons. Open it again to see it": "Pliki są półprzezroczyste z rozmyciem pod spodem, z zaokrąglonymi wierszami i przyciskami. Otwórz je ponownie, żeby zobaczyć",
             "The file manager and your other apps (GTK and KDE) follow the wallpaper. Open them again to see it": "Menedżer plików i inne aplikacje (GTK i KDE) biorą kolory z tapety. Otwórz je ponownie, żeby to zobaczyć",
             "GNOME's: clean, tabs, quick search": "Z GNOME: przejrzysty, karty, szybkie szukanie",
             "Xfce's: light, fast, your own actions": "Z Xfce: lekki, szybki, własne akcje",

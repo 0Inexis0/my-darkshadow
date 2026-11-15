@@ -196,7 +196,7 @@ Item {
     }
 
     // ---------- its size ----------
-    readonly property bool showDate: cfg.island_date === true || (bar && bar.wantDate)
+    readonly property bool showDate: cfg.island_date !== false
     readonly property real tw: {
         switch (mode) {
         case "volume": case "mic": return 300

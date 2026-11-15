@@ -1,5 +1,13 @@
 # Changelog
 
+## V4.65: Files glass, no more date module, steadier dock and weather
+- Files (Nautilus) in a Material 3 look: pill rows in the sidebar, round buttons and search, the selected item in the wallpaper's secondary-container color, and see-through surfaces so the compositor's blur shows behind it (works the same on Arch and Artix). The old window-wide opacity rule is gone, so the text stays sharp. Settings > Desktop > Look & Feel > "Glass and Material 3 shapes" turns it off (`rice-look files-glass off`). Icons stay Papirus
+- The date is part of the Dynamic island now (the island shows the day, the date and the time in a pill); the separate Date module is gone from Bar layout. "Date" in Settings > Dynamic island is on by default
+- Fix: a lighter square of blur past the rounded corners of widgets (the soft shadow was just opaque enough for Hyprland to blur it). With blur on, the shadow is kept below that
+- Fix: the dock appearing and disappearing again and again while the pointer rests on it (an "entered" event from a dock that is sliding away brought it back). It returns on real pointer movement only, and hides only when the pointer is really away
+- Fix: the weather popup and the Forecast widget stayed empty ("Looking outside...", "--") while the island showed the temperature: the long answer of wttr.in is slower and fails more often, so it is tried twice and, if it still fails, the short answer is used
+- Weather needs a place (it is not asked from your IP, on purpose): `rice-weather place "Warsaw"` or Settings > Language & region > Online lookups
+
 ## V4.64: date in the island, removing the island keeps your bar
 - The Dynamic island now shows the date like the bar's Date module: `niedz., 15/11` and the time in a pill in your key color. It appears when "Date" is on in Settings > Dynamic island, or when the Date module is in your bar layout (the separate Date module is then hidden, so it is not shown twice)
 - Fix: removing the island (clock) from Bar layout also removed the launcher and everything else in the middle. Now only the island goes; the rest stays. Older layouts that have no island keep working

@@ -82,10 +82,6 @@ PanelWindow {
     function noClock(l) { return (l || []).map(function(m) { return m === "clock" ? "island" : m }) }
     readonly property var layRaw: bc.layout ? ({ left: noClock(bc.layout.left), center: noClock(bc.layout.center), right: noClock(bc.layout.right) })
         : ({ left: ["launcher", "workspaces", "title"], center: ["island"], right: ["music", "tray", "volume", "bluetooth", "network", "battery", "notifications", "power"] })
-    // the date module lives in the island (date + time pill) whenever the island is on the bar
-    readonly property bool hasIsl: lay && laid(lay, "island")
-    readonly property bool dateInIsl: dyn && hasIsl
-    readonly property bool wantDate: laid(layRaw, "date")
     function laid(l, k) { return (l.left || []).indexOf(k) >= 0 || (l.center || []).indexOf(k) >= 0 || (l.right || []).indexOf(k) >= 0 }
     // the island is a module of the layout ("island", any zone, any style, with modules beside it). Taken out in
     // Bar layout (island_off) the bar has no island, only its cards (clock card, volume, notifications) stay.
@@ -333,7 +329,6 @@ PanelWindow {
         case "visualizer": return mViz
         case "weather": return mWeather
         case "sysmon": return mSysmon
-        case "date": return mDate
         case "music": return mMusic
         }
         return null
@@ -783,23 +778,6 @@ PanelWindow {
             MouseArea { id: mum; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("click"); bar.popAt(parent, "music") } }
         }
     }
-    Component { id: mDate
-        Item { property bool shown: !bar.dateInIsl; width: bar.dateInIsl ? 0 : dr.implicitWidth + 4; height: bar.barH
-            Row { id: dr; anchors.centerIn: parent; spacing: 8
-                Text { anchors.verticalCenter: parent.verticalCenter; color: bar.fg; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium
-                    text: Qt.locale().dayName(bar.now.getDay(), Locale.ShortFormat) + ", " + bar.two(bar.now.getDate()) + "/" + bar.two(bar.now.getMonth() + 1) }
-                Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: dt.implicitWidth + 18; height: bar.barH - 14; radius: height / 2
-                    color: gp.primary
-                    Text { id: dt; anchors.centerIn: parent; color: gp.inkPrimary; font.family: Fonts.numbers; font.pixelSize: 12; font.weight: Font.DemiBold
-                        text: bar.h12 ? ((bar.now.getHours() + 11) % 12 + 1) + ":" + bar.two(bar.now.getMinutes()) : bar.two(bar.now.getHours()) + ":" + bar.two(bar.now.getMinutes()) }
-                }
-            }
-            MouseArea { id: dm2; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("click"); bar.popAt(parent, "calendar") } }
-        }
-    }
-
     Component { id: mPower
         Item { property bool shown: true; width: 22; height: bar.barH
             MIcon { anchors.centerIn: parent; name: "power_settings_new"; glyph: String.fromCodePoint(0xF0425); size: 18; color: pm.containsMouse ? "#ff6b6b" : bar.dim
