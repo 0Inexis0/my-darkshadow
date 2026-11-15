@@ -1,5 +1,18 @@
 # Changelog
 
+## V4.60: Infinite Desktop leaves app pop-ups alone (Steam notifications)
+Reported by R31tr0 (issue #19).
+- Steam's notification toasts (`notificationtoasts_*`) no longer move the canvas, get repositioned, or take focus: they stay where Steam puts them, like a pinned window. Before, a toast was taken as a canvas window, so it shifted the screen and the other windows
+- The installer is not changed in this version
+
+## V4.59: the Wi-Fi list no longer goes blank, and connecting always works
+Reported by a user: the networks sometimes vanish from the Wi-Fi menu and connecting sometimes does nothing, while the internet itself works.
+- The list keeps the last networks while NetworkManager is scanning or busy (it answers with an empty list for a moment), instead of showing nothing
+- A stuck `nmcli` can no longer freeze the list: every read and every connect has a time limit, and a connect that hangs is stopped, so the next click works
+- A saved network whose profile is named differently than the network ("Home 1") now connects by its SSID instead of failing
+- A timed-out connect says so
+- The installer is not changed in this version
+
 ## V4.58: fixes from the V4.55 audit, and the keyboard layout stays after an update
 Thanks to notwafel (pull request #18).
 - Bar on every screen: the bars share one `rice-services` and one `rice-weather` (BarSvc.qml) instead of each starting its own; the side bar uses it too
