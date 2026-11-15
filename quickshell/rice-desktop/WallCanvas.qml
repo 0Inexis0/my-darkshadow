@@ -32,13 +32,30 @@ PanelWindow {
     // how much bigger than the screen (room to move), a little less when you zoom out
     readonly property real grow: 1 + 0.42 * k * (0.75 + 0.25 * Math.max(0.2, Math.min(1, Infinite.zoom)))
     // how far the picture goes for one pixel the windows go
-    readonly property real depth: 0.22
-    // soft edge: free in the middle, slower and slower near the end of the room
-    function soft(v, room) { return room <= 1 ? 0 : room * Math.tanh(v / room) }
+    readonly property real depth: 0.3
     readonly property real roomX: (grow - 1) * width / 2
     readonly property real roomY: (grow - 1) * height / 2
-    readonly property real tx: k * soft(Infinite.ox * depth, roomX)
-    readonly property real ty: k * soft(Infinite.oy * depth, roomY)
+    // where the picture is, counted from the moves themselves (not from where the canvas is overall): it never sticks
+    // at the end after a long trip, every move the other way moves it back at once. It is held inside the room
+    // (V4.73: it used the canvas's whole offset, so after a long trip it sat at the edge until you came all the way back)
+    property real wx: 0
+    property real wy: 0
+    property real lastOx: Infinite.ox
+    property real lastOy: Infinite.oy
+    readonly property real fullX: 0.42 * width / 2
+    readonly property real fullY: 0.42 * height / 2
+    function clampTo(v, m) { return Math.max(-m, Math.min(m, v)) }
+    Connections {
+        target: Infinite
+        function onOxChanged() { const d = Infinite.ox - wc.lastOx; wc.lastOx = Infinite.ox; if (wc.want) wc.wx = wc.clampTo(wc.wx + d * wc.depth, wc.fullX) }
+        function onOyChanged() { const d = Infinite.oy - wc.lastOy; wc.lastOy = Infinite.oy; if (wc.want) wc.wy = wc.clampTo(wc.wy + d * wc.depth, wc.fullY) }
+    }
+    // turned off (or another workspace): it goes back to the plain wallpaper and starts from the middle next time
+    onWantChanged: if (!want) { wx = 0; wy = 0 }
+    // the last bit before the edge is a little softer
+    function soft(v, room) { return room <= 1 ? 0 : room * Math.tanh(1.3 * v / room) / Math.tanh(1.3) }
+    readonly property real tx: k * soft(clampTo(wx, fullX) * (roomX / Math.max(1, fullX)), roomX)
+    readonly property real ty: k * soft(clampTo(wy, fullY) * (roomY / Math.max(1, fullY)), roomY)
     // live (SUPER + ALT + mouse): it follows closely; a glide (keys, the next window) or a zoom: a slower glide
     property real px: tx
     property real py: ty

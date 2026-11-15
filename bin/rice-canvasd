@@ -245,7 +245,8 @@ _shell = {"s": None, "t": 0.0}
 def shell_say(line):
     s = _shell["s"]
     if s is None:
-        if time.time() - _shell["t"] < 2 or not os.path.exists(SHELL_SOCK):
+        # a new hold may always try (the shell may have started since); the moves in between only every 2 s
+        if (time.time() - _shell["t"] < 2 and line != "hold 1") or not os.path.exists(SHELL_SOCK):
             return
         _shell["t"] = time.time()
         try:

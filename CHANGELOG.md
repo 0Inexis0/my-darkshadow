@@ -1,5 +1,9 @@
 # Changelog
 
+## V4.73: the wallpaper follows every move at once
+- Fix: after a long trip over the canvas the moving wallpaper stayed at the end of its room, and moving back did nothing until you had come a long way back. It is now counted from the moves themselves: every move the other way moves it back at once, and it moves a little more per pixel (0.3)
+- rice-canvasd connects to the shell at the start of every hold, so the first move of a hold already moves the wallpaper
+
 ## V4.72: no crash when Infinite Desktop turns on
 - Fix: Quickshell crashed right after turning Infinite Desktop on (V4.71, seen on Artix with NVIDIA: QWaylandWindow::calculateExposure). The moving wallpaper's surface was mapped and unmapped together with its picture's loading state, a binding loop that made Qt's Wayland client trip over a window being taken away. The surface now stays (see-through) while the feature is on and only the picture inside it comes and goes
 
