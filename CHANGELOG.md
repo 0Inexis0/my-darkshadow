@@ -1,5 +1,8 @@
 # Changelog
 
+## V4.76: SUPER + SHIFT + S opens the new screenshot tool
+- SUPER + SHIFT + S still opened the old selection (slurp). It opens the new screenshot tool now, the same one as Print (Hyprland and niri). Good for keyboards without a Print key
+
 ## V4.75: a new screenshot tool, wallpaper zoom
 - Screenshots, redesigned (Print, and the dashboard's screenshot button): the screen freezes the moment you press the key, then a Material 3 toolbar at the bottom lets you pick:
   - **Region**: drag a box, move it by dragging inside, resize it by its corners; its size in real pixels sits above it, and a rounded loupe shows the pixels under the pointer while you drag

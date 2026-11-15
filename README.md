@@ -180,7 +180,7 @@ The installer asks which window manager you want (Hyprland, niri or both), insta
 | `SUPER + 1 … 0` | go to workspace |
 | `SUPER + SHIFT + 1 … 0` | move window to workspace |
 | `SUPER + S` | show/hide scratchpad |
-| `SUPER + SHIFT + S` | move window to scratchpad |
+| `SUPER + SHIFT + S` | screenshot tool (same as `Print`) |
 | `SUPER + scroll` | next/previous workspace |
 | `SUPER + left mouse` | drag window |
 | `SUPER + right mouse` | resize window |
