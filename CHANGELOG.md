@@ -1,5 +1,8 @@
 # Changelog
 
+## V4.66: Files glass really shows up
+- Fix: Files did not get the glass look and the blur (Artix, and anywhere Files was already running): Files stays running in the background after its window is closed and keeps the CSS it started with. It is now quit once when the glass / Material 3 look is written, so the next window opens with it
+
 ## V4.65: Files glass, no more date module, steadier dock and weather
 - Files (Nautilus) in a Material 3 look: pill rows in the sidebar, round buttons and search, the selected item in the wallpaper's secondary-container color, and see-through surfaces so the compositor's blur shows behind it (works the same on Arch and Artix). The old window-wide opacity rule is gone, so the text stays sharp. Settings > Desktop > Look & Feel > "Glass and Material 3 shapes" turns it off (`rice-look files-glass off`). Icons stay Papirus
 - The date is part of the Dynamic island now (the island shows the day, the date and the time in a pill); the separate Date module is gone from Bar layout. "Date" in Settings > Dynamic island is on by default

@@ -862,9 +862,17 @@ def ini_set(path, groups):
 
 def apply_files_theme(c):
     res = {}
+    restart = False
     for d, g3 in ((CFG + "/gtk-4.0", False), (CFG + "/gtk-3.0", True)):
-        write(d + "/darkshadow.css", gtk_css(c, g3))
+        old, new = read(d + "/darkshadow.css"), gtk_css(c, g3)
+        # a Files that is already running (it stays in the background after you close its window) keeps the CSS it
+        # started with: it has to be quit once when the look itself (glass, shapes) changes, not for every new color
+        if not g3 and old != new and (("Material 3 look" in old) != ("Material 3 look" in new) or ("rgba(" in old) != ("rgba(" in new)):
+            restart = True
+        write(d + "/darkshadow.css", new)
         res["gtk4" if not g3 else "gtk3"] = link_gtk(d)
+    if restart and shutil.which("nautilus"):
+        run(["nautilus", "-q"], 5)
     # KDE apps (Dolphin): a color scheme, used by Dolphin and written into kdeglobals for the others
     if c["files_colors"] and (shutil.which("dolphin") or os.path.exists(CFG + "/kdeglobals")):
         m = m3()
