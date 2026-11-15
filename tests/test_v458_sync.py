@@ -102,10 +102,12 @@ class SharedServiceCompositionTests(unittest.TestCase):
         self.assertIn('Player.hold()', island)
         self.assertIn('Player.release()', island)
         for file in (ROOT / 'quickshell/rice-desktop').glob('*.qml'):
-            for line in file.read_text().splitlines():
-                if 'Instantiator {' in line and 'Player.hold()' in line:
-                    self.assertIn('active:', line, file.name)
-                    self.assertIn('model: 1;', line, file.name)
+            text = file.read_text()
+            blocks = re.findall(r'Instantiator\s*\{([^{}]*delegate:\s*QtObject\s*\{[^{}]*Player\.hold\(\)[^{}]*\}\s*)\}', text)
+            self.assertEqual(len(blocks), text.count('Player.hold()'), file.name)
+            for block in blocks:
+                self.assertIn('active:', block, file.name)
+                self.assertRegex(block, r'model:\s*1(?:;|\s)', file.name)
         self.assertNotRegex(island, r'\bpl\.|\bPlayer\s*\{')
         self.assertIn('hoverOpen && hoverAi && !pinned && !ghost ? "ai"', island)
         self.assertIn('isl.aiActive || Player.has', island)

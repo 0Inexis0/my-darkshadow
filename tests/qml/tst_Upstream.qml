@@ -42,6 +42,7 @@ TestCase {
             }
         }
     }
+    Component { id: controlHolder; ControlPlayerHold { } }
     Component { id: statsHolder; StatsHold { } }
     Component { id: lockFactory; LockPlayer { } }
     Component { id: islandFactory; IslandLogic { } }
@@ -72,6 +73,20 @@ TestCase {
         tryCompare(Player, "users", 0)
         verify(!Player.running)
         a.destroy(); b.destroy()
+    }
+    function test_control_center_tab_and_close_release_player() {
+        compare(Player.users, 0)
+        const center = controlHolder.createObject(test)
+        compare(Player.users, 0)
+        center.open = true
+        tryCompare(Player, "users", 1)
+        center.tab = "other"
+        tryCompare(Player, "users", 0)
+        center.tab = "control"
+        tryCompare(Player, "users", 1)
+        center.open = false
+        tryCompare(Player, "users", 0)
+        center.destroy()
     }
     function test_stats_stops_after_last_surface_hides() {
         compare(Stats.users, 0)

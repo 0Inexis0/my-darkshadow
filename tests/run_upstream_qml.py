@@ -46,9 +46,13 @@ QtObject {
         put('Fixture/' + name + '.qml', (ROOT / ('quickshell/rice-desktop/' + name + '.qml')).read_text())
         entries.append(('singleton ' if name != 'StatsHold' else '') + name + ' 1.0 ' + name + '.qml')
     put('Fixture/LockPlayer.qml', (ROOT / 'quickshell/rice-lockscreen/LockPlayer.qml').read_text())
-    entries += ['LockPlayer 1.0 LockPlayer.qml', 'singleton Tr 1.0 Tr.qml', 'IslandLogic 1.0 IslandLogic.qml']
+    entries += ['LockPlayer 1.0 LockPlayer.qml', 'singleton Tr 1.0 Tr.qml', 'IslandLogic 1.0 IslandLogic.qml', 'ControlPlayerHold 1.0 ControlPlayerHold.qml']
     put('Fixture/Tr.qml', 'pragma Singleton\nimport QtQuick\nQtObject { function t(s) { return s } }\n')
     put('Fixture/qmldir', 'module Fixture\n' + '\n'.join(entries) + '\n')
+    control = (ROOT / 'quickshell/rice-desktop/ControlCenter.qml').read_text()
+    holder = re.search(r'Instantiator\s*\{[^{}]*delegate:\s*QtObject\s*\{[^{}]*Player\.hold\(\)[^{}]*\}\s*\}', control).group()
+    put('Fixture/ControlPlayerHold.qml', 'import QtQuick\nItem { id: cc; property bool open: false; property string tab: "control"\n'
+        + holder + '\n}\n')
     src = (ROOT / 'quickshell/rice-desktop/DynIsland.qml').read_text()
     fields = []
     for name in ['aiActive', 'mode', 'cardWant']:

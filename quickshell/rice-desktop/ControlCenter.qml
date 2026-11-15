@@ -375,7 +375,7 @@ PanelWindow {
                     visible: Player.has
                     opacity: cc.stg(5); transform: Translate { y: (1 - cc.stg(5)) * 22 }
                     // the one Player ticks while this card is out
-                    Instantiator { model: cc.open && cc.tab === "control" ? 1 : 0
+                    Instantiator { active: cc.open && cc.tab === "control"; model: 1
                                    delegate: QtObject { Component.onCompleted: Player.hold(); Component.onDestruction: Player.release() } }
                     Item {
                         id: art
