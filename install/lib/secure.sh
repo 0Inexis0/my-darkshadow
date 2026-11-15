@@ -85,9 +85,15 @@ update_guard() {
   git -C "$ROOT" diff --stat "$old" "$new" -- install.sh 2>/dev/null | sed 's/^/      /'
   if [ ! -t 0 ] || [ -n "${RICE_GUI:-}" ]; then
     # from Settings > Update Center: a terminal opens with rice-update, which shows this and asks (nothing moves here)
-    if [ -n "${RICE_GUI:-}" ] && [ -n "${WAYLAND_DISPLAY:-}" ] && [ -x "$HOME/.local/bin/rice-term" ]; then
+    local mark="$HOME/.cache/rice/update-terminal" now last=0
+    now="$(date +%s)"; last="$(cat "$mark" 2>/dev/null || echo 0)"
+    case "$last" in '' | *[!0-9]*) last=0 ;; esac
+    if [ -n "${RICE_GUI:-}" ] && [ -n "${WAYLAND_DISPLAY:-}" ] && [ -x "$HOME/.local/bin/rice-term" ] && [ $((now - last)) -ge 60 ]; then
+      mkdir -p "${mark%/*}"; echo "$now" >"$mark"
+      # one terminal, at most once a minute, and without RICE_GUI: the installer it runs asks there instead of
+      # opening yet another terminal (an endless chain of them was possible before)
       # shellcheck disable=SC2016  # the single quotes are meant: the terminal's own shell expands $HOME
-      setsid -f "$HOME/.local/bin/rice-term" -e bash -c '"$HOME/.local/bin/rice-update"; echo; read -n1 -rsp "Press a key to close"' >/dev/null 2>&1
+      setsid -f env -u RICE_GUI -u NO_COLOR -u GIT_TERMINAL_PROMPT -u GCM_INTERACTIVE "$HOME/.local/bin/rice-term" -e bash -c '"$HOME/.local/bin/rice-update"; echo; read -n1 -rsp "Press a key to close"' >/dev/null 2>&1
       fail "This update changes the installer: a terminal opened to show what changes and ask you. Nothing was changed yet."
     else
       fail "Not starting it on its own. Run  rice-update  in a terminal to see what changed and apply it."

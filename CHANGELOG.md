@@ -1,5 +1,14 @@
 # Changelog
 
+## V4.62: Artix Linux
+- The installer supports Artix (OpenRC, runit, s6 and dinit). It is treated as Arch, and what systemd would do is done with your init:
+  - Arch's `[extra]` repository is turned on (`artix-archlinux-support`, as the Artix wiki says) when Hyprland is not in Artix's own repositories; a copy of pacman.conf stays as `pacman.conf.bak-darkshadow`
+  - Artix's service scripts for your init are installed (`networkmanager-openrc`, `bluez-openrc`, `power-profiles-daemon-openrc`, `sddm-openrc` ...) and D-Bus, elogind, NetworkManager, Bluetooth and power modes are turned on at boot
+  - new login sessions "Hyprland (DarkShadow)" and "niri (DarkShadow)" start with their own D-Bus (without it notifications, the tray, portals and Bluetooth do not work); from a console: `dbus-run-session Hyprland`
+  - a warning when ConnMan runs the network (NetworkManager is then left off) or when neither elogind nor seatd runs
+- `rice-sys service-enable` / `service-has`: turning a system service on with any init. The SDDM login screen and Settings > Home (power modes) use it without systemd
+- Fix: an update from Settings that changes the installer opens one terminal at most (once a minute) and that terminal no longer opens another one (the endless terminals of V4.56)
+
 ## V4.61: rice-update starts again
 - Fix: `rice-update` crashed on start (`name 're' is not defined`) since V4.58. The import was missing. All Python tools were checked for the same kind of mistake
 - The installer is not changed in this version

@@ -48,6 +48,7 @@ sudo_run() {
 pkg_cmd() {
   . /etc/os-release 2>/dev/null
   case " ${ID:-} ${ID_LIKE:-} " in
+    *" artix "*) echo "sudo pacman -S --needed sddm sddm-\$(rice-sys init) qt6-svg qt6-declarative" ;;
     *" arch "*|*" cachyos "*|*" endeavouros "*|*" manjaro "*) echo "sudo pacman -S --needed sddm qt6-svg qt6-declarative" ;;
     *" fedora "*) echo "sudo dnf install sddm" ;;
     *" debian "*|*" ubuntu "*) echo "sudo apt install sddm" ;;
@@ -101,8 +102,11 @@ root_install() {   # root-install SRC USER [use-sddm]
   fi
   printf '# DarkShadow'"'"'s Shell: its login screen (rice-sddm remove takes this away)\n[General]\nInputMethod=\n\n[Theme]\nCurrent=%s\n' "$NAME" >"$CONF"
   if [ "${3:-}" = use-sddm ]; then
-    if command -v systemctl >/dev/null 2>&1; then
+    if [ -d /run/systemd/system ] && command -v systemctl >/dev/null 2>&1; then
       systemctl enable --force sddm.service && echo "SDDM starts at the next boot"
+    elif [ -x "$(dirname "$0")/rice-sys" ]; then
+      # no systemd (Artix: OpenRC, runit, s6, dinit): needs Artix's sddm-<init> package, the installer puts it in
+      "$(dirname "$0")/rice-sys" service-enable "sddm|display-manager|xdm" && echo "SDDM starts at the next boot"
     fi
   fi
   echo "installed"

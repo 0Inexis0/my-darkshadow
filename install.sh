@@ -334,6 +334,7 @@ flavor_notes() {
     garuda)      note "Garuda: Arch based, paru is used for the AUR packages." ;;
     manjaro)     warn "Manjaro holds packages back for weeks. Hyprland may be older than 0.55 (the Lua config needs 0.55): CachyOS or EndeavourOS work better." ;;
     nobara)      note "Nobara: Fedora based, the Fedora steps below are used." ;;
+    artix)       note "Artix ($INIT_SYS, no systemd): Arch's repositories are turned on when Hyprland is not in Artix's own, services are turned on with $INIT_SYS, and a login session with its own D-Bus is added." ;;
   esac
 }
 
@@ -364,6 +365,80 @@ install_yay() {
   return $rc
 }
 
+# ---- without systemd (Artix: OpenRC, runit, s6, dinit) ----
+# svc_on LABEL SYSTEMD_NAME OTHER_NAMES: turn a service on now and at boot, with this computer's init
+svc_on() {
+  if [ "$INIT_SYS" = systemd ]; then task "$1" sudo systemctl enable --now "$2.service"
+  else task "$1" sudo "$ROOT/bin/rice-sys" service-enable "$3"; fi
+}
+# Artix: Hyprland and most of the desktop are in Arch's repositories ([extra]). Artix's way to use them is
+# artix-archlinux-support plus an [extra] section in pacman.conf (Artix wiki: "Repositories")
+artix_repos() {
+  [ "$DISTRO_ID" = artix ] || return 0
+  grep -qE '^[[:space:]]*\[extra\]' /etc/pacman.conf 2>/dev/null && return 0
+  pacman -Si hyprland >/dev/null 2>&1 && return 0
+  note "Hyprland is not in Artix's own repositories: turning on Arch's [extra] repository (artix-archlinux-support)"
+  task "Arch repository support (artix-archlinux-support)" sudo pacman -Sy --needed --noconfirm artix-archlinux-support || {
+    warn "artix-archlinux-support could not be installed: Hyprland may be missing. See the Artix wiki, \"Repositories\""; return 0; }
+  task "Adding [extra] to /etc/pacman.conf (a copy stays as pacman.conf.bak-darkshadow)" sudo sh -c '
+    [ -e /etc/pacman.conf.bak-darkshadow ] || cp /etc/pacman.conf /etc/pacman.conf.bak-darkshadow
+    grep -qE "^[[:space:]]*\[extra\]" /etc/pacman.conf ||
+      printf "\n# Arch Linux repositories, after the Artix ones (added by DarkShadow'"'"'s Shell)\n[extra]\nInclude = /etc/pacman.d/mirrorlist-arch\n" >>/etc/pacman.conf'
+  task "Arch's signing keys" sudo pacman-key --populate archlinux
+  task "Reading the package lists" sudo pacman -Sy
+}
+# what systemd would do, done with the init this computer has: Artix's service scripts (NAME-openrc ...),
+# D-Bus, elogind (the seat Hyprland and niri need) and NetworkManager turned on, and a login session with D-Bus
+nosystemd_setup() {
+  [ "$INIT_SYS" = systemd ] && return 0
+  [ "$FAMILY" = arch ] || return 0
+  if [ "$DISTRO_ID" = artix ] && [ "$INIT_SYS" != other ]; then
+    local svcp=() p
+    for p in "${ARTIX_SVC_PKGS[@]}" sddm; do
+      case "$p" in elogind|dbus) : ;; *) pacman -Qi "$p" >/dev/null 2>&1 || continue ;; esac
+      pacman -Qi "$p-$INIT_SYS" >/dev/null 2>&1 && continue
+      pacman -Si "$p-$INIT_SYS" >/dev/null 2>&1 && svcp+=("$p-$INIT_SYS")
+    done
+    if [ "${#svcp[@]}" -gt 0 ]; then
+      task "Service scripts for $INIT_SYS: ${svcp[*]}" sudo pacman -S --needed --noconfirm "${svcp[@]}" ||
+        warn "Some service scripts could not be installed: ${svcp[*]}"
+    fi
+  fi
+  local s
+  for s in "${ARTIX_SERVICES[@]}"; do
+    if [ "$s" = NetworkManager ] && pgrep -x connmand >/dev/null 2>&1; then
+      warn "ConnMan runs your network: NetworkManager is not turned on (two of them fight). The Wi-Fi menu needs NetworkManager:"
+      note "  turn ConnMan off and NetworkManager on with $INIT_SYS, then reboot"
+      continue
+    fi
+    [ -n "$("$ROOT/bin/rice-sys" service-has "$s")" ] || continue
+    svc_on "Turning on ${s%%|*} ($INIT_SYS)" "${s%%|*}" "$s"
+  done
+  if ! pgrep -x elogind-daemon >/dev/null 2>&1 && ! pgrep -x elogind >/dev/null 2>&1 && ! pgrep -x seatd >/dev/null 2>&1; then
+    warn "Neither elogind nor seatd is running: Hyprland and niri need one of them to start. Reboot once; if it stays, turn elogind on with $INIT_SYS"
+  fi
+  task "Login sessions with their own D-Bus (no systemd)" nosystemd_sessions
+}
+# a display manager starts Hyprland without a D-Bus session when there is no systemd: notifications, the tray,
+# portals and the Bluetooth menu then do not work. These sessions start it inside dbus-run-session
+nosystemd_sessions() {
+  command -v dbus-run-session >/dev/null 2>&1 || { echo "dbus-run-session not found (the dbus package)"; return 0; }
+  local d=/usr/share/wayland-sessions h
+  sudo mkdir -p "$d" || return 1
+  if command -v Hyprland >/dev/null 2>&1; then
+    h=Hyprland; command -v start-hyprland >/dev/null 2>&1 && h=start-hyprland
+    printf '[Desktop Entry]\nName=Hyprland (DarkShadow)\nComment=Hyprland with its own D-Bus session, for systems without systemd\nExec=dbus-run-session %s\nType=Application\nDesktopNames=Hyprland\n' "$h" |
+      sudo tee "$d/darkshadow-hyprland.desktop" >/dev/null || return 1
+    echo "Hyprland (DarkShadow)"
+  fi
+  if command -v niri >/dev/null 2>&1; then
+    printf '[Desktop Entry]\nName=niri (DarkShadow)\nComment=niri with its own D-Bus session, for systems without systemd\nExec=dbus-run-session niri --session\nType=Application\nDesktopNames=niri\n' |
+      sudo tee "$d/darkshadow-niri.desktop" >/dev/null || return 1
+    echo "niri (DarkShadow)"
+  fi
+  return 0
+}
+
 step_packages() {
   case "$FAMILY" in
     arch)
@@ -377,6 +452,7 @@ step_packages() {
       elif [ -e /var/lib/pacman/db.lck ]; then
         warn "pacman's lock file is left behind from an update that was stopped: sudo rm /var/lib/pacman/db.lck"
       fi
+      artix_repos
       if [ "${NO_UPGRADE:-0}" = 1 ]; then
         note "Skipping the system update (--no-upgrade): if a package then fails to download, run: sudo pacman -Syu"
       else
@@ -429,11 +505,13 @@ step_packages() {
         fi
       fi
       # power modes in the notification center (not when TLP or auto-cpufreq already manage power)
+      # without systemd: service scripts, D-Bus, elogind, NetworkManager, the login sessions (first: the two below need them)
+      nosystemd_setup
       if pacman -Qi power-profiles-daemon >/dev/null 2>&1 && ! pacman -Qi tlp >/dev/null 2>&1 && ! pacman -Qi auto-cpufreq >/dev/null 2>&1; then
-        task "Turning on power modes (power-profiles-daemon)" sudo systemctl enable --now power-profiles-daemon.service
+        svc_on "Turning on power modes (power-profiles-daemon)" power-profiles-daemon power-profiles-daemon
       fi
       if pacman -Qi bluez >/dev/null 2>&1; then
-        task "Turning on the Bluetooth service" sudo systemctl enable --now bluetooth.service
+        svc_on "Turning on the Bluetooth service" bluetooth "bluetoothd|bluetooth"
       fi
       ;;
     fedora)
@@ -810,9 +888,16 @@ ensure_power_modes() {
       *) echo "power-profiles-daemon: install it with your package manager"; return 0 ;;
     esac
   fi
-  if systemctl list-unit-files power-profiles-daemon.service >/dev/null 2>&1 &&
-     ! systemctl is-enabled power-profiles-daemon.service >/dev/null 2>&1; then
-    sudo -n systemctl enable --now power-profiles-daemon.service || true
+  if [ "$INIT_SYS" = systemd ]; then
+    if systemctl list-unit-files power-profiles-daemon.service >/dev/null 2>&1 &&
+       ! systemctl is-enabled power-profiles-daemon.service >/dev/null 2>&1; then
+      sudo -n systemctl enable --now power-profiles-daemon.service || true
+    fi
+  elif sudo -n true 2>/dev/null; then
+    # Artix: the service script for this init, then on with it
+    [ "$DISTRO_ID" = artix ] && ! pacman -Qi "power-profiles-daemon-$INIT_SYS" >/dev/null 2>&1 &&
+      sudo -n pacman -S --needed --noconfirm "power-profiles-daemon-$INIT_SYS" >/dev/null 2>&1
+    sudo -n "$ROOT/bin/rice-sys" service-enable power-profiles-daemon >/dev/null 2>&1 || true
   fi
   echo "power modes: on"
 }
@@ -952,6 +1037,10 @@ step_finish() {
     task "Restarting the bar and the desktop widgets" restart_shell
   else
     note "$(wm_name) is not running here, so nothing was reloaded. Everything starts on your next login."
+  fi
+  if [ "$INIT_SYS" != systemd ] && [ "$FAMILY" = arch ]; then
+    note "No systemd ($INIT_SYS): on the login screen pick \"Hyprland (DarkShadow)\" or \"niri (DarkShadow)\" (they bring D-Bus)."
+    note "From a text console:  dbus-run-session Hyprland   (or: dbus-run-session niri --session)"
   fi
 }
 restart_shell() {

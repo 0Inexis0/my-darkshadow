@@ -62,6 +62,7 @@ The bar, the welcome window and Settings show **your distro's logo** automatical
 | **Arch Linux** | supported | `./install.sh` |
 | **CachyOS** | new in V2.70 | `./install.sh` (Arch based: its repositories and `paru` are used) |
 | **EndeavourOS, Garuda** | Arch route | `./install.sh` |
+| **Artix Linux** | new in V4.62 | `./install.sh` (OpenRC, runit, s6 or dinit: Arch's repos turned on, services with your init, a login session with D-Bus) |
 | **Fedora, Nobara** | new in V2.60 | `./install.sh` (COPR for Hyprland and Quickshell) |
 | **Bazzite, Silverblue** | commands only | the installer prints the `rpm-ostree` steps |
 | **Manjaro** | may not work | its packages are held back, Hyprland can be older than 0.55 |
