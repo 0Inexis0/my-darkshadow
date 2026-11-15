@@ -1,5 +1,8 @@
 # Changelog
 
+## V4.70: Flatpak on Artix (and other systems without systemd)
+- Fix: Flatpak apps (Spotify, Discord ...) did not start or had no tray / portals on Artix: "Unknown or unsupported transport 'disabled'". `dbus-run-session` makes a D-Bus bus with an abstract address, which Flatpak cannot use; systemd would put the bus at `$XDG_RUNTIME_DIR/bus`. The "Hyprland (DarkShadow)" and "niri (DarkShadow)" login sessions now start through `rice-session` (installed in /usr/local/bin), which starts the bus there and stops it with the session. Log out and pick the session again after updating. From a console: `rice-session Hyprland`
+
 ## V4.69: Infinite Desktop works right after "Allow", without logging out
 - Fix: you join the input group, but the login you are in keeps the groups it started with, so SUPER + ALT + mouse stayed dead until you logged out and in. `rice-infinite daemon` (and Hyprland's start of it) now starts the daemon through `sg input` when you are in the group in /etc/group but this login is not, and a new daemon replaces the old one that cannot read the input devices. Run `rice-infinite daemon` once after updating and it works
 

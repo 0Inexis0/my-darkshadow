@@ -422,17 +422,39 @@ nosystemd_setup() {
 # a display manager starts Hyprland without a D-Bus session when there is no systemd: notifications, the tray,
 # portals and the Bluetooth menu then do not work. These sessions start it inside dbus-run-session
 nosystemd_sessions() {
-  command -v dbus-run-session >/dev/null 2>&1 || { echo "dbus-run-session not found (the dbus package)"; return 0; }
-  local d=/usr/share/wayland-sessions h
-  sudo mkdir -p "$d" || return 1
+  command -v dbus-daemon >/dev/null 2>&1 || { echo "dbus-daemon not found (the dbus package)"; return 0; }
+  # dbus-run-session makes a bus with an "abstract" address; Flatpak (Spotify, Discord ...) and the portals cannot use
+  # that ("Unknown or unsupported transport disabled"). This starts the bus at $XDG_RUNTIME_DIR/bus, where systemd
+  # would have put it, and stops it with the session
+  local w=/usr/local/bin/rice-session d=/usr/share/wayland-sessions h
+  sudo mkdir -p "$d" /usr/local/bin || return 1
+  sudo tee "$w" >/dev/null <<'SESSION' || return 1
+#!/bin/sh
+# rice-session CMD...: runs CMD (Hyprland, niri) with a D-Bus session bus at $XDG_RUNTIME_DIR/bus (DarkShadow's Shell, no systemd)
+rt="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+sock="$rt/bus"
+[ -d "$rt" ] && [ -w "$rt" ] || exec dbus-run-session "$@"
+alive() { [ -S "$sock" ] && dbus-send --bus="unix:path=$sock" --dest=org.freedesktop.DBus --print-reply /org/freedesktop/DBus org.freedesktop.DBus.GetId >/dev/null 2>&1; }
+if alive; then
+  export DBUS_SESSION_BUS_ADDRESS="unix:path=$sock"
+  exec "$@"
+fi
+rm -f "$sock"
+pid="$(dbus-daemon --session --address="unix:path=$sock" --fork --print-pid)" || exec dbus-run-session "$@"
+export DBUS_SESSION_BUS_ADDRESS="unix:path=$sock"
+"$@"; rc=$?
+kill "$pid" 2>/dev/null
+exit "$rc"
+SESSION
+  sudo chmod 755 "$w" || return 1
   if command -v Hyprland >/dev/null 2>&1; then
     h=Hyprland; command -v start-hyprland >/dev/null 2>&1 && h=start-hyprland
-    printf '[Desktop Entry]\nName=Hyprland (DarkShadow)\nComment=Hyprland with its own D-Bus session, for systems without systemd\nExec=dbus-run-session %s\nType=Application\nDesktopNames=Hyprland\n' "$h" |
+    printf '[Desktop Entry]\nName=Hyprland (DarkShadow)\nComment=Hyprland with its own D-Bus session, for systems without systemd\nExec=%s %s\nType=Application\nDesktopNames=Hyprland\n' "$w" "$h" |
       sudo tee "$d/darkshadow-hyprland.desktop" >/dev/null || return 1
     echo "Hyprland (DarkShadow)"
   fi
   if command -v niri >/dev/null 2>&1; then
-    printf '[Desktop Entry]\nName=niri (DarkShadow)\nComment=niri with its own D-Bus session, for systems without systemd\nExec=dbus-run-session niri --session\nType=Application\nDesktopNames=niri\n' |
+    printf '[Desktop Entry]\nName=niri (DarkShadow)\nComment=niri with its own D-Bus session, for systems without systemd\nExec=%s niri --session\nType=Application\nDesktopNames=niri\n' "$w" |
       sudo tee "$d/darkshadow-niri.desktop" >/dev/null || return 1
     echo "niri (DarkShadow)"
   fi
@@ -1045,7 +1067,7 @@ step_finish() {
   fi
   if [ "$INIT_SYS" != systemd ] && [ "$FAMILY" = arch ]; then
     note "No systemd ($INIT_SYS): on the login screen pick \"Hyprland (DarkShadow)\" or \"niri (DarkShadow)\" (they bring D-Bus)."
-    note "From a text console:  dbus-run-session Hyprland   (or: dbus-run-session niri --session)"
+    note "From a text console:  rice-session Hyprland   (or: rice-session niri --session)"
   fi
 }
 restart_shell() {
