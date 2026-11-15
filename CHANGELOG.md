@@ -1,5 +1,8 @@
 # Changelog
 
+## V4.67: Artix system update no longer stops on a package clash
+- Fix (installer, Artix): the system update stopped with "geocode-glib-3.26.4-6 and geocode-glib-common-3.26.4-5 are in conflict". With Arch's `[extra]` on, Artix's own build of a package replaces Arch's and the old split-off part has to be removed; `--noconfirm` said no to that. On Artix the update now says yes to removing the conflicting package (`--ask=4`), and if it still fails it tells you what to answer by hand
+
 ## V4.66: Files glass really shows up
 - Fix: Files did not get the glass look and the blur (Artix, and anywhere Files was already running): Files stays running in the background after its window is closed and keeps the CSS it started with. It is now quit once when the glass / Material 3 look is written, so the next window opens with it
 

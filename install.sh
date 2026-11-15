@@ -457,7 +457,12 @@ step_packages() {
         note "Skipping the system update (--no-upgrade): if a package then fails to download, run: sudo pacman -Syu"
       else
         note "A full system update can take long on a slow connection or an old system. Skip it with ./install.sh --no-upgrade"
-        live "Updating your system first (Arch needs this before new packages)" sudo pacman -Syu --noconfirm
+        # Artix with Arch's [extra]: Artix's own build of a package replaces Arch's, and the old one's split-off part
+        # has to go ("geocode-glib-2 -> world/geocode-glib: remove geocode-glib-common?"). --noconfirm says no to
+        # that and the update fails; --ask=4 says yes to removing the conflicting package (Artix's wiki does the same)
+        ask=(); [ "$DISTRO_ID" = artix ] && ask=(--ask=4)
+        live "Updating your system first (Arch needs this before new packages)" sudo pacman -Syu --noconfirm "${ask[@]}" ||
+          { [ "$DISTRO_ID" = artix ] && warn "On Artix a package from Arch can clash with Artix's own one: run  sudo pacman -Syu  and answer Y to replacing it and y to removing the old part, then run the installer again."; }
       fi
       task "Checking where each package comes from" pkg_check
       pkg_load
