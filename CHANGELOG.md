@@ -1,5 +1,14 @@
 # Changelog
 
+## V4.75: a new screenshot tool, wallpaper zoom
+- Screenshots, redesigned (Print, and the dashboard's screenshot button): the screen freezes the moment you press the key, then a Material 3 toolbar at the bottom lets you pick:
+  - **Region**: drag a box, move it by dragging inside, resize it by its corners; its size in real pixels sits above it, and a rounded loupe shows the pixels under the pointer while you drag
+  - **Window**: point at a window (it is outlined, with its app name), click to save it (Hyprland)
+  - **Screen**: the whole screen
+  - Save (Enter, or double-click the box) keeps it in Pictures/Screenshots and copies it (as set in Settings), Copy (Ctrl+C) only copies, Edit (E) opens it in satty or swappy when you have one, Esc or a right click cancels; 1 / 2 / 3 (R / W / S) switch the mode
+  - The crop is taken from the frozen picture at full resolution, so menus and hover states are kept. Without the shell it falls back to the old selection (slurp). SHIFT + Print still saves the whole screen at once
+- Infinite Desktop: "Wallpaper zoom" in Settings > Desktop > Infinite Desktop (1.05x to 1.5x, `rice-infinite set wallzoom 1.1`). The default is smaller now (1.15x instead of 1.42x), so the moving wallpaper looks much closer to your wallpaper
+
 ## V4.74: the wallpaper moves while you hold SUPER + ALT, not only after
 - Fix: with SUPER + ALT + mouse the wallpaper (and the bar stepping aside) only reacted after you let go. The live moves went over Quickshell's SocketServer, which delivered nothing on some systems. rice-canvasd now sends them as datagrams to a small listener the shell runs (the way Sarods2D's Iridium Shell feeds its parallax), so the wallpaper moves with the windows while you hold the keys. Moves that arrive together are added up, and the wallpaper glides with an animation made for a target that changes many times a second (smoother)
 - An updated rice-canvasd replaces the one still running from before the update, as soon as Infinite Desktop turns on (no logout needed)

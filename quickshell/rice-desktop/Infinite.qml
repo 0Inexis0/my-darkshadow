@@ -18,6 +18,8 @@ Singleton {
     // infinite.conf: the wallpaper moves with the canvas (wall=1), the bar and the dock hide while it moves (hidebar=1)
     property bool wallOn: true
     property bool hideBarOn: true
+    // how much bigger than the screen the moving wallpaper is (wallzoom=1.05 ... 1.5): room to move, but also zoom
+    property real wallZoom: 1.15
     // live
     property bool held: false
     property bool moved: false           // this hold moved the canvas
@@ -69,8 +71,10 @@ Singleton {
             const g = (k, d) => { const m = t.match(new RegExp("^\\s*" + k + "\\s*=\\s*(\\S+)", "m")); return m ? m[1] : d }
             cv.wallOn = g("wall", "1") !== "0"
             cv.hideBarOn = g("hidebar", "1") !== "0"
+            const wz = parseFloat(g("wallzoom", "1.15"))
+            cv.wallZoom = isNaN(wz) ? 1.15 : Math.max(1.05, Math.min(1.5, wz))
         }
-        onLoadFailed: { cv.wallOn = true; cv.hideBarOn = true }
+        onLoadFailed: { cv.wallOn = true; cv.hideBarOn = true; cv.wallZoom = 1.15 }
     }
 
     // rice-canvasd's messages: a small listener (python3) on a datagram socket, one line per message on its output.

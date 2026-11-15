@@ -11,6 +11,8 @@ Singleton {
             "The app Super + E opens, and every \"open folder\" from your other apps.": "Aplikacja, którą otwiera Super + E, i każde „otwórz folder” z innych aplikacji.",
             "Colors from the wallpaper": "Kolory z tapety",
             "The wallpaper moves with it": "Tapeta rusza się razem z nim",
+            "Wallpaper zoom": "Powiększenie tapety",
+            "How much bigger the moving wallpaper is: lower looks closer to your wallpaper, higher gives it more room to move": "Ile większa jest ruchoma tapeta: mniej wygląda jak Twoja tapeta, więcej daje więcej miejsca na ruch",
             "Moving around the canvas also moves the wallpaper, slower than the windows, as if you travelled over a big picture": "Przesuwanie płótna przesuwa też tapetę, wolniej niż okna, jakbyś podróżował po dużym obrazie",
             "The bar and the dock step aside while you move": "Pasek i dock chowają się, gdy przesuwasz",
             "Holding the keys and moving the mouse slides the bar and the dock away; they come back when you let go": "Gdy trzymasz klawisze i ruszasz myszką, pasek i dock odjeżdżają; wracają, gdy puścisz",

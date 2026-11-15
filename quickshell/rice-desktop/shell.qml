@@ -600,6 +600,8 @@ ShellRoot {
     LazyPanel { name: "wifi-open"; WifiMenu { } }
     LazyPanel { name: "bluetooth-open"; BluetoothMenu { } }
     LazyPanel { name: "power-open"; PowerMenu { } }
+    // Print: the screenshot tool (the screen frozen, then Region / Window / Screen)
+    LazyPanel { name: "snip-open"; Snip { } }
     LazyPanel { name: "volume-open"; VolumeMenu { } }
     VolumeOsd { islandTakes: mainBar.islandVolume }
     LazyPanel { name: "gamebar-open"; GamePanel { gb: root.cfg.gamebar ? root.cfg.gamebar : ({}) } }

@@ -30,7 +30,7 @@ PanelWindow {
     mask: Region { }
 
     // how much bigger than the screen (room to move), a little less when you zoom out
-    readonly property real grow: 1 + 0.42 * k * (0.75 + 0.25 * Math.max(0.2, Math.min(1, Infinite.zoom)))
+    readonly property real grow: 1 + (Infinite.wallZoom - 1) * k * (0.75 + 0.25 * Math.max(0.2, Math.min(1, Infinite.zoom)))
     // how far the picture goes for one pixel the windows go
     readonly property real depth: 0.3
     readonly property real roomX: (grow - 1) * width / 2
@@ -42,8 +42,8 @@ PanelWindow {
     property real wy: 0
     property real lastOx: Infinite.ox
     property real lastOy: Infinite.oy
-    readonly property real fullX: 0.42 * width / 2
-    readonly property real fullY: 0.42 * height / 2
+    readonly property real fullX: (Infinite.wallZoom - 1) * width / 2
+    readonly property real fullY: (Infinite.wallZoom - 1) * height / 2
     function clampTo(v, m) { return Math.max(-m, Math.min(m, v)) }
     Connections {
         target: Infinite
@@ -77,6 +77,6 @@ PanelWindow {
         cache: false
         smooth: true
         // decoded once, big enough for the largest size it is drawn at
-        sourceSize.width: Math.round(wc.width * 1.45)
+        sourceSize.width: Math.round(wc.width * Math.max(1.1, Infinite.wallZoom))
     }
 }

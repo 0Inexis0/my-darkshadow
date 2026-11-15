@@ -227,6 +227,14 @@ Item {
             checked: page.st.wall !== 0
             onToggled: function(v) { page.sh(["set", "wall", v ? "1" : "0"]); const n = Object.assign({}, page.st); n.wall = v ? 1 : 0; page.st = n }
         }
+        SliderRow {
+            visible: !page.niri && page.st.wall !== 0
+            label: I18n.t("Wallpaper zoom")
+            desc: I18n.t("How much bigger the moving wallpaper is: lower looks closer to your wallpaper, higher gives it more room to move")
+            from: 1.05; to: 1.5; step: 0.01; decimals: 2; unit: "x"
+            value: page.st.wallzoom || 1.15
+            onCommitted: function(v) { page.sh(["set", "wallzoom", String(Math.round(v * 100) / 100)]); const n = Object.assign({}, page.st); n.wallzoom = v; page.st = n }
+        }
         ToggleRow {
             visible: !page.niri
             label: I18n.t("The bar and the dock step aside while you move")
