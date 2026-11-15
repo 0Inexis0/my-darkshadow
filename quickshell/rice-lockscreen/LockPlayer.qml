@@ -1,8 +1,8 @@
 import Quickshell.Services.Mpris
 import QtQuick
 
-// The music player the widgets follow: the one that plays, else the first one. Its position is asked for
-// once a second while it plays (Mpris does not send it by itself).
+// The lock screen's own music player: the one that plays, else the first one; its position is asked for once a
+// second while it plays. (The desktop's Player is a shared singleton since V4.51 and cannot be created here.)
 QtObject {
     id: pl
     property bool running: true

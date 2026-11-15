@@ -7,7 +7,7 @@ Item {
     property var pal: null
     property real bg: 1
     property bool running: true
-    Player { id: pl; running: nr.running }
+    Instantiator { active: nr.running; model: 1; delegate: QtObject { Component.onCompleted: Player.hold(); Component.onDestruction: Player.release() } }
     readonly property color ink: pal ? pal.fg : "#F6F5F4"
     Blob {
         id: disc
@@ -23,13 +23,13 @@ Item {
         color: "transparent"
         line: nr.pal ? nr.pal.track : Qt.rgba(1, 1, 1, 0.14)
         lineWidth: 2
-        SlowSpin { turn: 360; period: 30000; running: (nr.running && pl.playing && !Look.lite) && !Look.covered }
+        SlowSpin { turn: 360; period: 30000; running: (nr.running && Player.playing && !Look.lite) && !Look.covered }
     }
     // the time: a dot on the outer edge
     Item {
         anchors.fill: parent
-        rotation: pl.frac * 360
-        Behavior on rotation { enabled: pl.playing; NumberAnimation { duration: 900 } }
+        rotation: Player.frac * 360
+        Behavior on rotation { enabled: Player.playing; NumberAnimation { duration: 900 } }
         Rectangle { anchors.horizontalCenter: parent.horizontalCenter; y: 4; width: 16; height: 6; radius: 3; color: nr.pal ? nr.pal.primary : "#9ec9bd" }
     }
     T {
@@ -39,10 +39,10 @@ Item {
         wrapMode: Text.WordWrap
         maximumLineCount: 4
         elide: Text.ElideRight
-        text: pl.title
+        text: Player.title
         font.pixelSize: Math.round(nr.width * 0.075)
         font.weight: Font.DemiBold
         color: nr.ink
     }
-    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: pl.toggle() }
+    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Player.toggle() }
 }

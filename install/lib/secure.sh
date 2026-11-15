@@ -83,7 +83,7 @@ update_precheck() {
 update_guard() {
   local old="$1" new="$2" a=""
   [ -n "$old" ] && [ -n "$new" ] && [ "$old" != "$new" ] || return 0
-  git -C "$ROOT" diff --quiet "$old" "$new" -- install.sh install/lib/ 2>/dev/null && return 0
+  git -C "$ROOT" diff --quiet "$old" "$new" -- install.sh install/lib 2>/dev/null && return 0
   if [ "${RICE_TRUST_UPDATE:-0}" = 1 ]; then
     warn "new installer started because RICE_TRUST_UPDATE=1"
     return 0

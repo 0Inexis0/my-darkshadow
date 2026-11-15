@@ -378,7 +378,7 @@ FloatingWindow {
         { name: "Notifications", icon: "\uf0f3" },
         { name: "Idle & Lockscreen", icon: "\uf023" },
         { name: "Widgets", icon: "\uf26c" },
-        { name: "Hot corners", icon: "\udb82\ude0b" },
+        { name: "(removed)", icon: "" },   // index 13 stays so the page numbers after it do not move
         { name: "Dock", icon: "\uf2d0" },
         { name: "Services", icon: "" },
         { name: "Gaming hub", icon: "\uf11b" },
@@ -962,6 +962,7 @@ FloatingWindow {
             PageSlot { nav: win; idx: 29; cur: win.page; page: Component { LookFeelPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 30; cur: win.page; page: Component { KeybindsPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 31; cur: win.page; page: Component { LanguagesPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 32; cur: win.page; page: Component { SecurityPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 33; cur: win.page; page: Component { InfinitePage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 34; cur: win.page; page: Component { ThemesPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 35; cur: win.page; page: Component { UpdatePage { anchors.fill: parent; ctl: win } } }

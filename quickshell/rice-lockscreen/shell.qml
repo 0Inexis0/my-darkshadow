@@ -75,7 +75,7 @@ ShellRoot {
     }
     property int secureTick: 0
     function submit() {
-        if (phase === "checking" || phase === "done" || pass === "") return
+        if (phase === "checking" || phase === "done" || pass === "" || waitT.running) return
         pending = pass
         phase = "checking"; msg = ""
         if (pam.active && pam.responseRequired) { pam.respond(pending); pending = ""; return }
@@ -88,6 +88,9 @@ ShellRoot {
     }
     function fail(text) {
         tries++
+        // 1, 2, 4 ... 30 s between tries: a keyboard cannot guess passwords quickly through PAM
+        wait = Math.min(30, Math.pow(2, Math.min(tries - 1, 5)))
+        waitT.restart()
         phase = "wrong"
         msg = text
         pass = ""; pending = ""
@@ -105,11 +108,24 @@ ShellRoot {
         onError: function(e) { console.warn("[lock] PAM error", e); lockShell.msg = Tr.t("Could not check the password") }
         onCompleted: function(result) {
             console.log("[lock] PAM finished:", result === PamResult.Success ? "right password" : "result " + result)
+            if (lockShell.phase !== "checking") return      // the attempt was given up (checkT): its result is old
             if (result === PamResult.Success) { lockShell.phase = "done"; lockShell.pending = ""; lockShell.unlock(); return }
             lockShell.fail(lockShell.msg !== "" ? lockShell.msg : (result === PamResult.MaxTries ? Tr.t("Too many tries, wait a moment") : Tr.t("That is not the password")))
         }
     }
-    Timer { id: wrongT; interval: 2600; onTriggered: if (lockShell.phase === "wrong") { lockShell.phase = "idle"; lockShell.msg = "" } }
+    property int wait: 0                     // seconds left before the next try
+    Timer { id: waitT; interval: 1000; repeat: true
+            onTriggered: { lockShell.wait--; if (lockShell.wait <= 0) stop() } }
+    // a PAM stack that never asks and never finishes (a hung module, a second factor this screen cannot answer)
+    // would leave the field read-only forever: give up after 20 s and take the keyboard back
+    Timer { id: checkT; interval: 20000; running: lockShell.phase === "checking"
+            onTriggered: {
+                console.warn("[lock] PAM did not answer; the attempt was dropped")
+                if (pam.active) pam.abort()
+                lockShell.phase = "idle"; lockShell.pending = ""; lockShell.pass = ""
+                lockShell.msg = Tr.t("Could not check the password (PAM did not answer)")
+            } }
+    Timer { id: wrongT; interval: 2600; onTriggered: if (lockShell.phase === "wrong") { lockShell.phase = "idle"; lockShell.msg = lockShell.wait > 0 ? Tr.t("Wait") + " " + lockShell.wait + " s" : "" } }
 
     // ---------- locking and unlocking ----------
     property real out: 0                     // 0 shown .. 1 gone (the way out after the right password)

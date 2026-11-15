@@ -9,13 +9,10 @@ Item {
     property var pal: null
     property real bg: 1
     property bool running: true
-    property var st: ({ cpu: 0, ram: 0, gpu: 0 })
-    property bool haveGpu: false
-    Process {
-        command: [Quickshell.env("HOME") + "/.local/bin/rice-stats"]
-        running: tw.running
-        stdout: SplitParser { onRead: function(l) { try { const j = JSON.parse(l); tw.st = j; if (j.gpu > 0 || j.gtemp > 0) tw.haveGpu = true } catch (e) { } } }
-    }
+    // one rice-stats for the whole shell (Stats.qml)
+    readonly property var st: Stats.st
+    StatsHold { on: tw.running }
+    readonly property bool haveGpu: Stats.haveGpu
     Row {
         anchors.centerIn: parent
         spacing: Math.round(tw.width * 0.025)

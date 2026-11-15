@@ -15,6 +15,7 @@ Item {
     property int countdown: 0
     property string mainName: ""            // the shell lives here (rice-screens main)
     property string widgetsName: ""         // the desktop widgets live here ("" = with the shell; rice-screens widgets)
+    property bool barAll: false              // the bar on every screen (rice-screens bar-all)
     property var names: ({})                // your names for the screens
     property var moved: ({})                // Arrange: name -> {x, y} not applied yet
     function label(n) { return names[n] ? names[n] : n }
@@ -106,6 +107,7 @@ Item {
                 page.mons = j.screens || []
                 page.mainName = j.main || ""
                 page.widgetsName = j.widgets || ""
+                page.barAll = j.bar_all === true
                 page.names = j.names || ({})
                 if (page.sel === "" && page.mons.length) page.sel = page.mons[0].name
             }
@@ -312,6 +314,13 @@ Item {
                             page.rs(["widgets", w], I18n.t("The widgets move to ") + page.label(page.m.name))
                         }
                     }
+                }
+                ToggleRow {
+                    visible: page.mons.length > 1
+                    label: I18n.t("Bar on every screen")
+                    desc: I18n.t("The bar on all your screens. Off: only on the main screen")
+                    checked: page.barAll
+                    onToggled: function(v) { page.barAll = v; page.rs(["bar-all", v ? "on" : "off"], v ? I18n.t("The bar is on every screen") : I18n.t("The bar is on the main screen only")) }
                 }
                 SegRow {
                     visible: page.m && !page.m.disabled

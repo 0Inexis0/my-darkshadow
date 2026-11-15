@@ -57,14 +57,17 @@ Singleton {
         } catch (e) { }
         loaded = true
     }
-    function reload() { if (!cfgProc.running) cfgProc.running = true }
-    Process {
-        id: cfgProc
-        running: true
-        command: ["bash", "-c", "cat \"$HOME/.config/rice/sfx.json\" 2>/dev/null || echo '{}'"]
-        stdout: StdioCollector { onStreamFinished: sfx.applyCfg(text) }
+    // the file is watched (inotify), not read by a bash process every 1.5 s; the slow re-read catches a late create
+    FileView {
+        id: cfgFile
+        path: Quickshell.env("HOME") + "/.config/rice/sfx.json"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: sfx.applyCfg(text())
+        onLoadFailed: sfx.applyCfg("{}")
     }
-    Timer { interval: 1500; running: true; repeat: true; onTriggered: sfx.reload() }
+    Timer { interval: 30000; running: true; repeat: true; onTriggered: cfgFile.reload() }
 
     Component.onCompleted: {
         // QtMultimedia is optional: without it the sounds still play (a little later) through pw-play

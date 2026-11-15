@@ -160,14 +160,8 @@ PanelWindow {
     readonly property real battPct: batt ? Math.round(batt.percentage * 100) : 0
     readonly property bool charging: batt && (batt.state === UPowerDeviceState.Charging || batt.state === UPowerDeviceState.FullyCharged)
     readonly property bool plugged: hasBatt && !UPower.onBattery
-    property var svc: ({})
-    Process {
-        id: svcProc
-        command: ["bash", "-c", "\"$HOME/.local/bin/rice-services\" state 2>/dev/null"]
-        stdout: StdioCollector { onStreamFinished: { try { vb.svc = JSON.parse(text) } catch (e) { } } }
-    }
-    Timer { interval: 8000; running: vb.on; repeat: true; triggeredOnStart: true; onTriggered: if (!svcProc.running) svcProc.running = true }
-    Timer { id: svcAgain; interval: 700; onTriggered: if (!svcProc.running) svcProc.running = true }
+    readonly property var svc: BarSvc.state
+    Binding { target: BarSvc; property: "sideShown"; value: vb.on }
     property var now: new Date()
     Timer { interval: 15000; running: vb.on; repeat: true; triggeredOnStart: true; onTriggered: vb.now = new Date() }
     property bool h12: false
@@ -414,7 +408,7 @@ PanelWindow {
     }
     Component { id: cNotif
         Btn { icon: vb.svc.dnd ? "notifications_off" : "notifications"; glyph: String.fromCodePoint(vb.svc.dnd ? 0xF009B : 0xF009A); tint: vb.svc.dnd ? vb.dim : vb.fg
-            onHit: function(m) { vb.run(m.button === Qt.RightButton ? "\"$HOME/.local/bin/rice-cc\" dnd toggle" : "\"$HOME/.local/bin/rice-cc\" toggle"); svcAgain.restart() } }
+            onHit: function(m) { vb.run(m.button === Qt.RightButton ? "\"$HOME/.local/bin/rice-cc\" dnd toggle" : "\"$HOME/.local/bin/rice-cc\" toggle"); BarSvc.refreshSoon() } }
     }
     Component { id: cPower
         Btn { id: pbtn; icon: "power_settings_new"; glyph: String.fromCodePoint(0xF0425); tint: "#ff8a80"

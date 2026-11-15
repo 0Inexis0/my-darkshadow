@@ -3,6 +3,7 @@ import contextlib
 import importlib.util
 from importlib.machinery import SourceFileLoader
 import io
+import os
 import json
 from pathlib import Path
 import subprocess
@@ -115,6 +116,82 @@ class CheckoutTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
 
 
+    def test_managed_dirty_checkout_is_refused_without_touching_edits(self):
+        checkout = Path(updater.managed_checkout())
+        (checkout / "file").write_text("local edits")
+        before = self.git(checkout, "rev-parse", "HEAD")
+        self.commit("new remote commit")
+        with self.assertRaisesRegex(RuntimeError, "Local edits"):
+            updater.managed_checkout()
+        self.assertEqual((checkout / "file").read_text(), "local edits")
+        self.assertEqual(self.git(checkout, "rev-parse", "HEAD"), before)
+
+    def test_managed_uses_resolved_commit_even_if_fetch_head_changes(self):
+        checkout = updater.managed_checkout()
+        old = self.git(checkout, "rev-parse", "HEAD")
+        expected = self.commit("reviewed version")
+        real_git = updater.git
+
+        def interleaved(repo, *args, **kwargs):
+            result = real_git(repo, *args, **kwargs)
+            if args == ("rev-parse", "--verify", "FETCH_HEAD^{commit}"):
+                # Simulate an unrelated fetch finishing after we resolved this update.
+                (Path(checkout) / ".git/FETCH_HEAD").write_text(old + "\n")
+            return result
+
+        with patch.object(updater, "git", side_effect=interleaved) as calls:
+            updater.managed_checkout()
+        self.assertEqual(self.git(checkout, "rev-parse", "HEAD"), expected)
+        self.assertIn(((checkout, "merge", "--ff-only", expected), {"timeout": 120}),
+                      [(call.args, call.kwargs) for call in calls.call_args_list])
+
+    def test_worktree_is_not_mistaken_for_zip_and_updates_fast_forward(self):
+        checkout = Path(updater.managed_checkout())
+        main_repo = self.home / "common-repo"
+        checkout.rename(main_repo)
+        self.git(main_repo, "switch", "-c", "holding")
+        self.git(main_repo, "worktree", "add", str(checkout), "main")
+        self.assertTrue((checkout / ".git").is_file())
+        self.assertFalse(updater.is_zip(str(checkout)))
+        expected = self.commit("worktree update")
+        updater.managed_checkout()
+        self.assertEqual(self.git(checkout, "rev-parse", "HEAD"), expected)
+        preflight = (ROOT / "install.sh").read_text().split('\nif [ "$MODE" = update ]; then', 1)[1]
+        preflight = 'if [ "$MODE" = update ]; then' + preflight.split('# the version you have, as the repo had it', 1)[0]
+        result = self.precheck(checkout, 'title() { :; }; info() { echo "$*"; }; '
+                               'MODE=update; PULLED=0; DRY_RUN=1; ' + preflight)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("would fetch and review", result.stdout)
+
+    def test_installer_change_check_uses_fork_source_not_configured_origin(self):
+        checkout = updater.managed_checkout()
+        self.git(checkout, "remote", "set-url", "origin", "/nonexistent/remote")
+        self.assertFalse(updater.installer_changes(checkout))
+        (self.source / "install").mkdir()
+        (self.source / "install/lib").mkdir()
+        (self.source / "install/lib/step.sh").write_text("echo changed\n")
+        self.git(self.source, "add", "install")
+        self.commit("changed library")
+        self.assertTrue(updater.installer_changes(checkout))
+
+    def test_zip_conversion_keeps_original_and_clones_fork_main_in_same_place(self):
+        archive = self.home / "downloaded-shell"
+        archive.mkdir()
+        (archive / "local-note").write_text("keep this")
+        (self.source / "install.sh").write_text("echo installer\n")
+        self.git(self.source, "add", "install.sh")
+        self.commit("installable source")
+        config = self.home / ".config/rice"
+        with patch.object(updater, "DIR", str(config)), contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(updater.make_git(str(archive)), str(archive))
+        self.assertFalse(updater.is_zip(str(archive)))
+        self.assertEqual(self.git(archive, "branch", "--show-current"), "main")
+        backups = list(self.home.glob("downloaded-shell.zip-*"))
+        self.assertEqual(len(backups), 1)
+        self.assertEqual((backups[0] / "local-note").read_text(), "keep this")
+        self.assertEqual((config / "repo").read_text().strip(), str(archive))
+
+
 class RoutingAndPrivacyTests(unittest.TestCase):
     def test_production_urls_remain_fork_main(self):
         self.assertEqual(updater.NEW_URL, "https://github.com/0Inexis0/my-darkshadow.git")
@@ -139,12 +216,42 @@ class RoutingAndPrivacyTests(unittest.TestCase):
 
     def test_standalone_run_keeps_guarded_installer_update_entrypoint(self):
         with patch.object(updater, "repo", return_value="/temporary/repo"), \
+             patch.object(updater, "is_zip", return_value=False), \
              patch.object(updater.os, "chdir"), patch.object(updater.subprocess, "call", return_value=0) as run, \
              patch("builtins.input", return_value=""), contextlib.redirect_stdout(io.StringIO()):
             with self.assertRaises(SystemExit) as result:
                 updater.run(["--no-packages"])
             self.assertEqual(result.exception.code, 0)
-            run.assert_called_once_with(["./install.sh", "--update", "--no-packages"])
+            self.assertEqual(run.call_args.args[0], ["./install.sh", "--update", "--no-packages"])
+            self.assertNotIn("RICE_GUI", run.call_args.kwargs["env"])
+
+    def test_terminal_launch_is_single_and_drops_gui_environment(self):
+        with tempfile.TemporaryDirectory() as directory, \
+             patch.object(updater, "CACHE", directory), \
+             patch.object(updater.subprocess, "Popen") as launch, \
+             patch.dict(os.environ, RICE_GUI="1", NO_COLOR="1", GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="never"):
+            updater.terminal_update()
+            updater.terminal_update()
+            launch.assert_called_once()
+            for name in ("RICE_GUI", "NO_COLOR", "GIT_TERMINAL_PROMPT", "GCM_INTERACTIVE"):
+                self.assertNotIn(name, launch.call_args.kwargs["env"])
+
+    def test_overlapping_terminal_request_does_not_launch_another(self):
+        with tempfile.TemporaryDirectory() as directory, patch.object(updater, "CACHE", directory):
+            with open(Path(directory) / "update-terminal", "a+") as mark:
+                updater.fcntl.flock(mark, updater.fcntl.LOCK_EX | updater.fcntl.LOCK_NB)
+                with patch.object(updater.subprocess, "Popen") as launch:
+                    updater.terminal_update()
+                    launch.assert_not_called()
+
+    def test_failed_terminal_launch_can_be_retried(self):
+        with tempfile.TemporaryDirectory() as directory, patch.object(updater, "CACHE", directory):
+            with patch.object(updater.subprocess, "Popen", side_effect=OSError("no terminal")):
+                with self.assertRaises(OSError):
+                    updater.terminal_update()
+            with patch.object(updater.subprocess, "Popen") as launch:
+                updater.terminal_update()
+                launch.assert_called_once()
 
     def test_managed_build_preserves_generic_and_legion_profiles(self):
         for profile in ("generic", "legion"):

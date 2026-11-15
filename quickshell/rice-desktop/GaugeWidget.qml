@@ -25,11 +25,9 @@ Item {
         else if (metric === "temp") { val = Math.min(100, j.temp); big = j.temp ? String(j.temp) : "–"; unit = "°C"; label = "CPU heat"; sym = "\uf2c9" }
         else { val = j.cpu; big = String(j.cpu); unit = "%"; label = j.temp ? "CPU · " + j.temp + "°" : "CPU"; sym = "\uf4bc" }
     }
-    Process {
-        command: [Quickshell.env("HOME") + "/.local/bin/rice-stats"]
-        running: gw.running && gw.metric !== "battery"
-        stdout: SplitParser { onRead: function(line) { try { gw.take(JSON.parse(line)) } catch (e) { } } }
-    }
+    // one rice-stats for the whole shell (Stats.qml)
+    StatsHold { on: gw.running && gw.metric !== "battery" }
+    Connections { target: Stats; function onStChanged() { if (gw.running && gw.metric !== "battery") gw.take(Stats.st) } }
     // battery from sysfs, no extra program
     Timer {
         interval: 20000; repeat: true; triggeredOnStart: true

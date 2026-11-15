@@ -269,14 +269,6 @@ hl.gesture({
     action = "workspace"
 })
 
--- Example per-device config
--- See https://wiki.hypr.land/Configuring/Advanced-and-Cool/Devices/ for more
-hl.device({
-    name        = "epic-mouse-v1",
-    sensitivity = -0.5,
-})
-
-
 ---------------------
 ---- KEYBINDINGS ----
 ---------------------
@@ -481,7 +473,6 @@ hl.layer_rule({
 require("hyprland-gui")
 require("rice-settings")
 require("rice-dock")
-require("rice-hotcorner")
 require("rice-notify")
 require("rice-rofi")
 require("rice-desktop")

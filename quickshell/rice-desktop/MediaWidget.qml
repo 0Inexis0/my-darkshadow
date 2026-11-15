@@ -13,7 +13,7 @@ Item {
     readonly property var player: pick()
     property bool running: true
     // where the song is (asked for once a second while it plays)
-    Player { id: pl; running: me.running && me.visible }
+    Instantiator { active: me.running && me.visible; model: 1; delegate: QtObject { Component.onCompleted: Player.hold(); Component.onDestruction: Player.release() } }
 
     Card { anchors.fill: parent; k: me.bg; pal: me.pal }
 
@@ -58,10 +58,10 @@ Item {
         anchors.left: art.right; anchors.leftMargin: 14
         anchors.right: ctrls.left; anchors.rightMargin: 10
         anchors.verticalCenter: ctrls.verticalCenter; height: 18
-        visible: pl.has && pl.length > 0
-        value: pl.frac; moving: pl.playing && !Look.covered; seekable: true
+        visible: Player.has && Player.length > 0
+        value: Player.frac; moving: Player.playing && !Look.covered; seekable: true
         color: me.pal ? me.pal.primary : "#9ec9bd"; track: me.pal ? me.pal.track : Qt.rgba(1, 1, 1, 0.14)
-        onMoved: function(v) { pl.seekTo(v) }
+        onMoved: function(v) { Player.seekTo(v) }
     }
 
     Row {

@@ -19,6 +19,7 @@ Item {
         page.ctl.status = I18n.t("Applied")
         refresh.restart()
     }
+    readonly property bool classic: v("style", "cards") === "classic"
     function mins(x) { return x <= 0 ? "Never" : (x + " min") }
     // lock screen clock fonts (rice-fonts downloads them)
     readonly property var clockFonts: [
@@ -30,8 +31,24 @@ Item {
         { k: "unbounded", n: "Unbounded", f: "Unbounded" },
         { k: "shoulders", n: "Big Shoulders", f: "Big Shoulders Display" }
     ]
-    readonly property var famList: Qt.fontFamilies()
+    // the fonts on this computer: Qt's list from the start, plus fc-list again after a clock font is downloaded
+    property var famList: Qt.fontFamilies()
     function hasFam(f) { return f === "" || famList.indexOf(f) >= 0 }
+    Process {
+        id: famProc
+        command: ["bash", "-c", "fc-list : family 2>/dev/null | tr ',' '\\n' | sort -u"]
+        stdout: StdioCollector { onStreamFinished: {
+            const l = text.split("\n").map(function(x) { return x.trim() }).filter(function(x) { return x !== "" })
+            if (l.length > 0) page.famList = Qt.fontFamilies().concat(l)
+        } }
+    }
+    // a font that is downloading: look again every 3 s for half a minute
+    property int famTries: 0
+    Timer { id: famT; interval: 3000; repeat: true; onTriggered: { famProc.running = true; if (++page.famTries >= 10) stop() } }
+    function watchFont() { famTries = 0; famT.restart() }
+    function two(n) { return n < 10 ? "0" + n : "" + n }
+    function hh() { const h = now.getHours(); return v("clock_24h", true) ? two(h) : String((h + 11) % 12 + 1) }
+    function mm() { return two(now.getMinutes()) }
     function clockFam() {
         const k = v("clock_font", "default")
         for (let i = 0; i < clockFonts.length; i++) if (clockFonts[i].k === k && clockFonts[i].f !== "") return clockFonts[i].f
@@ -60,232 +77,143 @@ Item {
     PageScroll {
         anchors.fill: parent
 
-        // ---------- lock screen preview (scaled from a 1920x1080 screen) ----------
+        // ---------- the lock screen in small (Preview and Test show the real one) ----------
         Item {
             width: parent.width
-            height: pv.height
+            height: frame.height
 
-            // the DarkShadow lock screen, in small (Preview shows the real one)
             Rectangle {
-                id: npv
-                visible: page.v("engine", "shell") === "shell"
+                id: frame
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: pv.width; height: pv.height; radius: M3.rL; clip: true
-                gradient: Gradient { GradientStop { position: 0; color: M3.stageTop } GradientStop { position: 1; color: M3.stageBottom } }
-                readonly property real s: height / 1080
-                readonly property bool isLeft: page.v("layout", "center") === "left"
-                readonly property string st: page.v("clock", "big")
-                Column {
-                    x: npv.isLeft ? npv.width * 0.08 : (npv.width - width) / 2
-                    y: npv.height * 0.12
-                    width: npv.width * 0.5
-                    spacing: 10 * npv.s
-                    T { anchors.horizontalCenter: npv.isLeft ? undefined : parent.horizontalCenter; visible: page.v("date", true) === true
-                        text: I18n.t("Wednesday, 4 November"); font.pixelSize: 26 * npv.s; color: M3.ink }
-                    Item {
-                        width: parent.width; height: npv.st === "shape" ? 300 * npv.s : (npv.st === "stacked" ? 300 * npv.s : (npv.st === "minimal" ? 96 * npv.s : 190 * npv.s))
-                        T { visible: npv.st !== "shape" && npv.st !== "stacked"; anchors.horizontalCenter: npv.isLeft ? undefined : parent.horizontalCenter
-                            anchors.verticalCenter: parent.verticalCenter; text: "20:56"; font.family: page.clockFam()
-                            font.pixelSize: (npv.st === "minimal" ? 80 : 168) * npv.s; font.bold: npv.st !== "minimal"; color: M3.ink }
-                        Column { visible: npv.st === "stacked"; anchors.horizontalCenter: npv.isLeft ? undefined : parent.horizontalCenter; spacing: -36 * npv.s
-                            T { text: "20"; font.family: page.clockFam(); font.pixelSize: 160 * npv.s; font.bold: true; color: M3.ink }
-                            T { text: "56"; font.family: page.clockFam(); font.pixelSize: 160 * npv.s; font.bold: true; color: page.v("accent_clock", false) ? M3.primary : M3.inkDim } }
-                        Item { visible: npv.st === "shape"; width: 300 * npv.s; height: width; anchors.horizontalCenter: npv.isLeft ? undefined : parent.horizontalCenter
-                            Blob { anchors.fill: parent; kind: Prefs.accentShape; color: M3.primary }
-                            Column { anchors.centerIn: parent; spacing: -22 * npv.s
-                                T { anchors.horizontalCenter: parent.horizontalCenter; text: "20"; font.family: page.clockFam(); font.pixelSize: 104 * npv.s; font.bold: true; color: M3.inkPrimary }
-                                T { anchors.horizontalCenter: parent.horizontalCenter; text: "56"; font.family: page.clockFam(); font.pixelSize: 104 * npv.s; font.bold: true; color: M3.inkPrimary } } }
-                    }
-                    Row { anchors.horizontalCenter: npv.isLeft ? undefined : parent.horizontalCenter; spacing: 12 * npv.s
-                        Blob { visible: page.v("avatar", true) === true; width: 52 * npv.s; height: width; kind: Prefs.accentShape; color: M3.primaryContainer; anchors.verticalCenter: parent.verticalCenter }
-                        T { visible: page.v("greeting", true) === true; text: I18n.t("Good evening"); font.pixelSize: 20 * npv.s; color: M3.ink; anchors.verticalCenter: parent.verticalCenter } }
-                    Row { anchors.horizontalCenter: npv.isLeft ? undefined : parent.horizontalCenter; spacing: 10 * npv.s
-                        Repeater { model: [page.v("weather", false) === true, page.v("notifications", true) === true, page.v("resources", false) === true]
-                            delegate: Rectangle { visible: modelData; width: 120 * npv.s; height: 40 * npv.s; radius: height / 2; color: M3.surfaceHigh } } }
-                }
-                // the password: your shape and the dots
-                Rectangle {
-                    readonly property string kind: page.v("input", "pill")
-                    width: 380 * npv.s; height: 56 * npv.s
-                    x: npv.isLeft ? npv.width * 0.08 : (npv.width - width) / 2
-                    y: npv.height * 0.66
-                    radius: kind === "pill" ? height / 2 : (kind === "box" ? 18 * npv.s : 0)
-                    color: kind === "line" ? "transparent" : M3.surfaceHigh
-                    border.width: kind === "line" ? 0 : 2; border.color: M3.primary
-                    Rectangle { visible: parent.kind === "line"; anchors.bottom: parent.bottom; width: parent.width; height: 2; color: M3.primary }
-                    Blob { x: 8 * npv.s; anchors.verticalCenter: parent.verticalCenter; width: 40 * npv.s; height: width; kind: Prefs.accentShape; color: M3.primary }
-                    Row { x: 62 * npv.s; anchors.verticalCenter: parent.verticalCenter; spacing: 6 * npv.s
-                        Repeater { model: 6; delegate: Blob { width: 12 * npv.s; height: width; kind: Prefs.accentShape; color: M3.ink } } }
-                }
-                Row { visible: page.v("power", true) === true; anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 36 * npv.s; spacing: 12 * npv.s
-                    Repeater { model: 3; delegate: Rectangle { width: 52 * npv.s; height: width; radius: width / 2; color: index === 2 ? Qt.rgba(1, 0.42, 0.42, 0.3) : M3.surfaceHigh } } }
-            }
-            Rectangle {
-                id: pv
-                visible: page.v("engine", "shell") !== "shell"
-                readonly property real s: height / 1080
-                readonly property bool isLeft: page.v("layout", "center") === "left"
-                readonly property string st: page.v("clock", "big")
-                readonly property string acc: page.v("accent", "#d4d4d4")
-                readonly property var ys: st === "stacked" ? ({ avatar: 400, date: 30, greet: -6, input: -96, power: -190 })
-                                        : st === "minimal" ? ({ avatar: 150, date: 0, greet: 50, input: -40, power: -140 })
-                                        : ({ avatar: 310, date: 66, greet: 30, input: -50, power: -146 })
-                function px(w) { return isLeft ? 110 * s : (width - w) / 2 }
-                function py(yoff, h) { return height / 2 - yoff * s - h / 2 }
-                function hhmm() {
-                    const d = page.now
-                    let h = d.getHours()
-                    if (!page.v("clock_24h", true)) h = h % 12 === 0 ? 12 : h % 12
-                    return { h: String(h).padStart(2, "0"), m: String(d.getMinutes()).padStart(2, "0") }
-                }
-
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: Math.min(parent.width, 560)
+                width: Math.min(parent.width, 620)
                 height: Math.round(width * 9 / 16)
-                radius: 14
-                clip: true
+                radius: M3.rL; clip: true
                 color: "#0c0c0e"
-                border.width: 1
-                border.color: M3.surfaceHighest
+                border.width: 1; border.color: M3.surfaceHighest
+                readonly property real s: height / 1080
+                readonly property color acc: M3.primary
+                readonly property bool cards: page.v("style", "cards") !== "classic"
+                readonly property string bg: page.v("background", "screenshot")
 
+                // the background: your wallpaper, the screen (a stand-in here) or a plain color; blurred and dimmed
                 Image {
+                    id: wallImg
                     anchors.fill: parent
-                    visible: page.v("background", "screenshot") === "wallpaper" && page.wall.length > 0
+                    visible: frame.bg === "wallpaper" && page.wall.length > 0
                     source: visible ? "file://" + page.wall : ""
-                    fillMode: Image.PreserveAspectCrop
-                    sourceSize.width: 640
-                    asynchronous: true
+                    fillMode: Image.PreserveAspectCrop; sourceSize.width: 640; asynchronous: true
                 }
                 Rectangle {
                     anchors.fill: parent
-                    visible: page.v("background", "screenshot") === "screenshot"
-                    gradient: Gradient {
-                        GradientStop { position: 0; color: M3.stageTop }
-                        GradientStop { position: 1; color: M3.stageBottom }
-                    }
+                    visible: frame.bg !== "wallpaper" || page.wall.length === 0
+                    gradient: Gradient { GradientStop { position: 0; color: frame.bg === "color" ? M3.surface : M3.stageTop } GradientStop { position: 1; color: frame.bg === "color" ? M3.surface : M3.stageBottom } }
                 }
-                Rectangle {
-                    anchors.fill: parent
-                    color: "black"
-                    opacity: page.v("background", "screenshot") === "color" ? 0 : (1 - page.v("dim", 0.5)) * 0.9
-                }
+                Rectangle { anchors.fill: parent; color: "black"; opacity: frame.bg === "color" ? 0 : Math.max(0, Math.min(0.85, 1 - page.v("dim", 0.5))) * 0.9 }
 
-                // avatar
-                Rectangle {
-                    visible: page.v("avatar", true) && page.v("has_face", false)
-                    width: 96 * pv.s; height: width; radius: width / 2
-                    x: pv.px(width); y: pv.py(pv.ys.avatar, height)
-                    color: M3.surfaceHighest
-                    border.width: 1
-                    border.color: pv.acc
-                    RoundImage { anchors.fill: parent; anchors.margins: 1; source: "file://" + Quickshell.env("HOME") + "/.face" }
-                }
-                // clock
-                T {
-                    visible: pv.st === "big"
-                    kind: "number"
-                    font.family: page.clockFam()
-                    textFormat: Text.StyledText
-                    // white hours, grey minutes
-                    text: "<b>" + pv.hhmm().h + I18n.t("</b><font color='") + (page.v("accent_clock", false) ? Qt.darker(pv.acc, 1.6) : "#8c8c8c") + "'>:" + pv.hhmm().m + I18n.t("</font>")
-                    font.pixelSize: 96 * 1.33 * pv.s
-                    color: page.v("accent_clock", false) ? pv.acc : "#F6F5F4"
-                    x: pv.px(implicitWidth); y: pv.py(160, implicitHeight)
-                }
-                T {
-                    visible: pv.st === "stacked"
-                    kind: "number"
-                    font.family: page.clockFam()
-                    text: pv.hhmm().h
-                    font.pixelSize: 120 * 1.33 * pv.s; font.bold: true
-                    color: page.v("accent_clock", false) ? pv.acc : "#F6F5F4"
-                    x: pv.px(implicitWidth); y: pv.py(250, implicitHeight)
-                }
-                T {
-                    visible: pv.st === "stacked"
-                    kind: "number"
-                    font.family: page.clockFam()
-                    text: pv.hhmm().m
-                    font.pixelSize: 120 * 1.33 * pv.s
-                    color: page.v("accent_clock", false) ? pv.acc : "#F6F5F4"
-                    opacity: 0.55
-                    x: pv.px(implicitWidth); y: pv.py(118, implicitHeight)
-                }
-                T {
-                    visible: pv.st === "minimal"
-                    kind: "number"
-                    font.family: page.clockFam()
-                    text: pv.hhmm().h + ":" + pv.hhmm().m
-                    font.pixelSize: 30 * 1.33 * pv.s
-                    color: page.v("accent_clock", false) ? pv.acc : "#F6F5F4"
-                    x: pv.px(implicitWidth); y: 48 * pv.s - implicitHeight / 2
-                }
-                T { scaled: false
-                    visible: page.v("date", true)
-                    text: page.now.toLocaleDateString(I18n.loc, "dddd, d MMMM")
-                    font.pixelSize: (pv.st === "minimal" ? 14 : 18) * 1.33 * pv.s
-                    color: "#F6F5F4"; opacity: 0.55
-                    x: pv.px(implicitWidth)
-                    y: pv.st === "minimal" ? 96 * pv.s - implicitHeight / 2 : pv.py(pv.ys.date, implicitHeight)
-                }
-                T {
-                    visible: page.v("greeting", true)
-                    text: page.greeting()
-                    font.pixelSize: 15 * 1.33 * pv.s
-                    color: "#F6F5F4"; opacity: 0.9
-                    x: pv.px(implicitWidth)
-                    y: pv.py((page.v("date", true) || pv.st === "minimal") ? pv.ys.greet : pv.ys.date, implicitHeight)
-                }
-                // password field
-                Rectangle {
-                    readonly property string kind: page.v("input", "pill")
-                    width: 300 * pv.s; height: 52 * pv.s
-                    x: pv.px(width); y: pv.py(pv.ys.input, height)
-                    radius: kind === "pill" ? height / 2 : (kind === "box" ? 12 * pv.s : 0)
-                    color: kind === "pill" ? Qt.rgba(1, 1, 1, 0.08) : (kind === "box" ? Qt.rgba(0, 0, 0, 0.35) : "transparent")
-                    border.width: kind === "box" ? 1 : 0
-                    border.color: pv.acc
-                    T { anchors.centerIn: parent; text: I18n.t("Enter password"); font.pixelSize: 15 * 1.33 * pv.s; color: "#F6F5F4"; opacity: 0.45 }
-                    Rectangle { visible: parent.kind === "line"; anchors.bottom: parent.bottom; width: parent.width; height: 2; color: pv.acc }
-                }
-                // power buttons
+                // ---- Cards: the month, the time, the music, and the bar at the bottom
                 Row {
-                    visible: page.v("power", true)
-                    spacing: 90 * pv.s - 30 * 1.33 * pv.s
-                    x: pv.isLeft ? 110 * pv.s : (pv.width - width) / 2
-                    y: pv.py(pv.ys.power, height)
-                    Repeater {
-                        model: ["󰍃", "󰐥", "󰤄", "󰜉"]
-                        delegate: T { kind: "icon"; text: modelData; font.pixelSize: 30 * 1.33 * pv.s; color: "#F6F5F4"; opacity: 0.6 }
-                    }
-                }
-                // bottom lines
-                Column {
-                    x: pv.isLeft ? 110 * pv.s : (pv.width - width) / 2
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 24 * pv.s
-                    spacing: 6 * pv.s
-                    Repeater {
-                        model: [
-                            { k: "notifications", t: "󰂚  2 notifications" },
-                            { k: "weather", t: "Partly cloudy  +7°C" },
-                            { k: "resources", t: "CPU 8%  ·  RAM 17%  ·  GPU 16%" },
-                            { k: "media", t: "󰎈  Artist - Song" }
-                        ]
-                        delegate: T {
-                            visible: page.v(modelData.k, false)
-                            anchors.horizontalCenter: pv.isLeft ? undefined : parent.horizontalCenter
-                            text: modelData.t
-                            font.pixelSize: 14 * 1.33 * pv.s
-                            color: "#F6F5F4"; opacity: 0.75
+                    visible: frame.cards
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    y: Math.round((frame.height - 540 * frame.s) / 2 - frame.height * 0.04)
+                    spacing: 19 * frame.s
+                    // the month
+                    Rectangle {
+                        width: 270 * frame.s; height: 540 * frame.s; radius: 32 * frame.s; clip: true
+                        gradient: Gradient { GradientStop { position: 0; color: Qt.rgba(frame.acc.r * 0.45, frame.acc.g * 0.45, frame.acc.b * 0.45, 0.85) } GradientStop { position: 1; color: Qt.rgba(0.06, 0.06, 0.07, 0.8) } }
+                        Text { x: 24 * frame.s; y: 10 * frame.s; text: page.now.toLocaleDateString(I18n.loc, "MMM").replace(".", "").toUpperCase(); color: frame.acc
+                            font.family: page.clockFam(); font.pixelSize: 104 * frame.s; font.weight: Font.Black }
+                        Text { x: 26 * frame.s; y: 140 * frame.s; text: page.now.toLocaleDateString(I18n.loc, "dddd d"); color: "#F6F5F4"
+                            font.family: Fonts.family("main"); font.pixelSize: 22 * frame.s; font.weight: Font.DemiBold; font.capitalization: Font.Capitalize }
+                        Grid {
+                            x: 18 * frame.s; anchors.bottom: parent.bottom; anchors.bottomMargin: 20 * frame.s
+                            columns: 7; rowSpacing: 10 * frame.s
+                            Repeater { model: 35
+                                delegate: Item { width: (270 - 36) / 7 * frame.s; height: 18 * frame.s
+                                    readonly property bool today: index === page.now.getDate() + 2
+                                    Blob { anchors.centerIn: parent; visible: parent.today; width: 24 * frame.s; height: width; kind: "cookie"; color: frame.acc }
+                                    Rectangle { anchors.centerIn: parent; visible: !parent.today && index > 2 && index < 33; width: 8 * frame.s; height: 3 * frame.s; radius: height / 2; color: "#F6F5F4"; opacity: 0.5 } } }
                         }
                     }
+                    // the time
+                    Rectangle {
+                        width: 270 * frame.s; height: 540 * frame.s; radius: 32 * frame.s; clip: true
+                        gradient: Gradient { GradientStop { position: 0; color: Qt.rgba(frame.acc.r * 0.45, frame.acc.g * 0.45, frame.acc.b * 0.45, 0.85) } GradientStop { position: 1; color: Qt.rgba(0.06, 0.06, 0.07, 0.8) } }
+                        Column {
+                            anchors.horizontalCenter: parent.horizontalCenter; y: 40 * frame.s; spacing: -66 * frame.s
+                            Text { anchors.horizontalCenter: parent.horizontalCenter; text: page.hh(); color: "#F6F5F4"
+                                font.family: page.clockFam(); font.pixelSize: 162 * frame.s; font.weight: Font.Bold }
+                            Text { anchors.horizontalCenter: parent.horizontalCenter; text: page.mm(); color: frame.acc
+                                font.family: page.clockFam(); font.pixelSize: 162 * frame.s; font.weight: Font.Bold }
+                        }
+                        Blob { anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.bottom; anchors.bottomMargin: 30 * frame.s
+                            width: 130 * frame.s; height: width; kind: Prefs.accentShape; color: Qt.rgba(frame.acc.r, frame.acc.g, frame.acc.b, 0.18) }
+                    }
+                    // the music
+                    Rectangle {
+                        visible: page.v("media", true) === true
+                        width: 270 * frame.s; height: 540 * frame.s; radius: 32 * frame.s; clip: true
+                        gradient: Gradient { GradientStop { position: 0; color: Qt.rgba(frame.acc.r * 0.45, frame.acc.g * 0.45, frame.acc.b * 0.45, 0.85) } GradientStop { position: 1; color: Qt.rgba(0.06, 0.06, 0.07, 0.8) } }
+                        Text { x: 24 * frame.s; y: 18 * frame.s; text: I18n.t("Song"); color: "#F6F5F4"; font.family: Fonts.family("main"); font.pixelSize: 32 * frame.s; font.weight: Font.Black }
+                        Rectangle { x: 22 * frame.s; y: 150 * frame.s; width: 110 * frame.s; height: 28 * frame.s; radius: height / 2; color: frame.acc }
+                        Rectangle { x: 11 * frame.s; y: 195 * frame.s; width: parent.width - 22 * frame.s; height: parent.height - 195 * frame.s - 90 * frame.s; radius: 20 * frame.s; color: Qt.rgba(1, 1, 1, 0.08) }
+                        Row { anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.bottom; anchors.bottomMargin: 16 * frame.s; spacing: 9 * frame.s
+                            Repeater { model: [58, 76, 58]
+                                delegate: Rectangle { width: modelData * frame.s; height: 50 * frame.s; radius: height / 2; color: index === 1 ? frame.acc : Qt.rgba(frame.acc.r, frame.acc.g, frame.acc.b, 0.28) } } }
+                    }
                 }
-                T {
-                    anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 8
-                    visible: page.v("managed", true) === false
-                    text: I18n.t("Using your own hyprlock.conf")
-                    font.pixelSize: 10; color: "#e0a050"
+                Row {
+                    visible: frame.cards
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.bottom; anchors.bottomMargin: 36 * frame.s
+                    spacing: 11 * frame.s
+                    Rectangle { width: 120 * frame.s; height: 56 * frame.s; radius: height / 2; color: M3.surfaceC }
+                    Rectangle { width: 430 * frame.s; height: 56 * frame.s; radius: height / 2; color: M3.surfaceC; border.width: 2; border.color: frame.acc
+                        Blob { x: 8 * frame.s; anchors.verticalCenter: parent.verticalCenter; width: 40 * frame.s; height: width; kind: Prefs.accentShape; color: frame.acc } }
+                    Rectangle { visible: page.v("power", true) === true; width: 150 * frame.s; height: 56 * frame.s; radius: height / 2; color: M3.surfaceC
+                        Rectangle { anchors.right: parent.right; anchors.rightMargin: 9 * frame.s; anchors.verticalCenter: parent.verticalCenter; width: 40 * frame.s; height: width; radius: width / 2; color: Qt.rgba(1, 0.42, 0.42, 0.3) } }
+                }
+
+                // ---- Classic: one column (the clock in your style, the greeting, the password)
+                Column {
+                    visible: !frame.cards
+                    readonly property bool isLeft: page.v("layout", "center") === "left"
+                    readonly property string st: page.v("clock", "big")
+                    x: isLeft ? frame.width * 0.08 : (frame.width - width) / 2
+                    y: frame.height * 0.12
+                    width: frame.width * 0.5
+                    spacing: 10 * frame.s
+                    T { anchors.horizontalCenter: parent.isLeft ? undefined : parent.horizontalCenter; visible: page.v("date", true) === true
+                        text: page.now.toLocaleDateString(I18n.loc, "dddd, d MMMM"); font.pixelSize: 26 * frame.s; color: "#F6F5F4" }
+                    Item {
+                        width: parent.width; height: parent.st === "minimal" ? 96 * frame.s : (parent.st === "big" ? 190 * frame.s : 300 * frame.s)
+                        T { visible: parent.parent.st === "big" || parent.parent.st === "minimal"; anchors.horizontalCenter: parent.parent.isLeft ? undefined : parent.horizontalCenter
+                            anchors.verticalCenter: parent.verticalCenter; text: page.hh() + ":" + page.mm(); font.family: page.clockFam()
+                            font.pixelSize: (parent.parent.st === "minimal" ? 80 : 168) * frame.s; font.bold: parent.parent.st !== "minimal"; color: page.v("accent_clock", false) ? frame.acc : "#F6F5F4" }
+                        Column { visible: parent.parent.st === "stacked"; anchors.horizontalCenter: parent.parent.isLeft ? undefined : parent.horizontalCenter; spacing: -36 * frame.s
+                            T { text: page.hh(); font.family: page.clockFam(); font.pixelSize: 160 * frame.s; font.bold: true; color: "#F6F5F4" }
+                            T { text: page.mm(); font.family: page.clockFam(); font.pixelSize: 160 * frame.s; font.bold: true; color: page.v("accent_clock", false) ? frame.acc : "#9a9a9a" } }
+                        Item { visible: parent.parent.st === "shape"; width: 300 * frame.s; height: width; anchors.horizontalCenter: parent.parent.isLeft ? undefined : parent.horizontalCenter
+                            Blob { anchors.fill: parent; kind: Prefs.accentShape; color: frame.acc }
+                            Column { anchors.centerIn: parent; spacing: -22 * frame.s
+                                T { anchors.horizontalCenter: parent.horizontalCenter; text: page.hh(); font.family: page.clockFam(); font.pixelSize: 104 * frame.s; font.bold: true; color: M3.inkPrimary }
+                                T { anchors.horizontalCenter: parent.horizontalCenter; text: page.mm(); font.family: page.clockFam(); font.pixelSize: 104 * frame.s; font.bold: true; color: M3.inkPrimary } } }
+                    }
+                    Row { anchors.horizontalCenter: parent.isLeft ? undefined : parent.horizontalCenter; spacing: 12 * frame.s
+                        Blob { visible: page.v("avatar", true) === true; width: 52 * frame.s; height: width; kind: Prefs.accentShape; color: M3.primaryContainer; anchors.verticalCenter: parent.verticalCenter }
+                        T { visible: page.v("greeting", true) === true; text: page.greeting(); font.pixelSize: 20 * frame.s; color: "#F6F5F4"; anchors.verticalCenter: parent.verticalCenter } }
+                }
+                Rectangle {
+                    visible: !frame.cards
+                    readonly property string kind: page.v("input", "pill")
+                    readonly property bool isLeft: page.v("layout", "center") === "left"
+                    width: 380 * frame.s; height: 56 * frame.s
+                    x: isLeft ? frame.width * 0.08 : (frame.width - width) / 2
+                    y: frame.height * 0.66
+                    radius: kind === "pill" ? height / 2 : (kind === "box" ? 18 * frame.s : 0)
+                    color: kind === "line" ? "transparent" : M3.surfaceHigh
+                    border.width: kind === "line" ? 0 : 2; border.color: frame.acc
+                    Rectangle { visible: parent.kind === "line"; anchors.bottom: parent.bottom; width: parent.width; height: 2; color: frame.acc }
+                    Blob { x: 8 * frame.s; anchors.verticalCenter: parent.verticalCenter; width: 40 * frame.s; height: width; kind: Prefs.accentShape; color: frame.acc }
                 }
             }
         }
@@ -293,9 +221,12 @@ Item {
         Row {
             spacing: 10
             Btn { primary: true; icon: ""; text: I18n.t("Lock now"); onClicked: Quickshell.execDetached(["bash", "-c", "setsid -f \"$HOME/.local/bin/rice-lock\" now >/dev/null 2>&1"]) }
-            // the new lock screen in a window: try it without locking (Esc closes it)
-            Btn { visible: page.v("engine", "shell") === "shell"; sym: "visibility"; text: I18n.t("Preview")
+            // the real lock screen in a window: try it without locking (Esc closes it)
+            Btn { sym: "visibility"; text: I18n.t("Preview")
                 onClicked: Quickshell.execDetached(["bash", "-c", "setsid -f \"$HOME/.local/bin/rice-lock\" preview >/dev/null 2>&1"]) }
+            // a real lock that unlocks itself after 30 seconds: try the keyboard without risk
+            Btn { sym: "timer"; text: I18n.t("Test (30 s)")
+                onClicked: Quickshell.execDetached(["bash", "-c", "setsid -f \"$HOME/.local/bin/rice-lock\" test >/dev/null 2>&1"]) }
             Btn { text: I18n.t("Reset"); onClicked: { Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-lock\" reset"]); page.ctl.status = I18n.t("Lock screen reset"); refresh.restart() } }
         }
 
@@ -327,17 +258,6 @@ Item {
         // ---------- lock screen ----------
         SectionTitle { text: I18n.t("Lock screen"); sub: I18n.t("Changes show up the next time you lock. Preview shows it without locking.") }
         SegRow {
-            label: I18n.t("Lock screen")
-            desc: page.v("engine", "shell") === "shell"
-                  ? "DarkShadow: Material 3, your shape and wavy progress (hyprlock steps in if it ever fails)"
-                  : "hyprlock: the classic lock screen"
-            options: [{ label: I18n.t("DarkShadow"), value: "shell" }, { label: "hyprlock", value: "hyprlock" }]
-            current: page.v("engine", "shell")
-            onChosen: function(x) { page.setv("engine", x) }
-        }
-        ToggleRow { visible: page.v("engine", "shell") === "hyprlock"; label: I18n.t("Manage lock screen"); desc: I18n.t("Off keeps your own hyprlock.conf untouched"); checked: page.v("managed", true) === true; onToggled: function(x) { page.setv("managed", x ? "on" : "off") } }
-        SegRow {
-            visible: page.v("engine", "shell") === "shell"
             label: I18n.t("Style")
             desc: I18n.t("Cards: the month, the time and your music on tall cards. Classic: one column")
             options: [{ label: I18n.t("Cards"), value: "cards" }, { label: I18n.t("Classic"), value: "classic" }]
@@ -366,7 +286,7 @@ Item {
             spacing: 8
             topPadding: 4
             T { text: I18n.t("Clock font"); font.pixelSize: 14 }
-            T { kind: "reading"; text: I18n.t("The clock stays white and grey. Fonts that are not here yet download when you pick them."); color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
+            T { kind: "reading"; text: I18n.t("For the month and the time (Cards) or the clock (Classic). Fonts that are not here yet download when you pick them."); color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
             Grid {
                 id: cfGrid
                 width: parent.width
@@ -406,17 +326,18 @@ Item {
                             color: ft.on ? M3.primary : M3.inkDim
                         }
                         MouseArea { id: fm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                            onClicked: { page.setv("clock_font", modelData.k); if (!ft.here) page.ctl.status = I18n.t("Downloading ") + modelData.n + "..." } }
+                            onClicked: { page.setv("clock_font", modelData.k); if (!ft.here) { page.ctl.status = I18n.t("Downloading ") + modelData.n + "..."; page.watchFont() } } }
                     }
                 }
             }
         }
         ToggleRow { label: I18n.t("24-hour clock"); checked: page.v("clock_24h", true) === true; onToggled: function(x) { page.setv("clock_24h", x ? "on" : "off") } }
-        ToggleRow { label: I18n.t("Accent clock"); desc: I18n.t("Color the clock with your Theme"); checked: page.v("accent_clock", false) === true; onToggled: function(x) { page.setv("accent_clock", x ? "on" : "off") } }
-        ToggleRow { label: I18n.t("Date"); checked: page.v("date", true) === true; onToggled: function(x) { page.setv("date", x ? "on" : "off") } }
-        ToggleRow { label: I18n.t("Greeting"); desc: I18n.t("Good morning / evening with your name"); checked: page.v("greeting", true) === true; onToggled: function(x) { page.setv("greeting", x ? "on" : "off") } }
-        ToggleRow { label: I18n.t("Profile picture"); desc: I18n.t("Your avatar from Home"); checked: page.v("avatar", true) === true; onToggled: function(x) { page.setv("avatar", x ? "on" : "off") } }
+        ToggleRow { visible: page.classic; label: I18n.t("Accent clock"); desc: I18n.t("Color the clock with your Theme"); checked: page.v("accent_clock", false) === true; onToggled: function(x) { page.setv("accent_clock", x ? "on" : "off") } }
+        ToggleRow { visible: page.classic; label: I18n.t("Date"); checked: page.v("date", true) === true; onToggled: function(x) { page.setv("date", x ? "on" : "off") } }
+        ToggleRow { visible: page.classic; label: I18n.t("Greeting"); desc: I18n.t("Good morning / evening with your name"); checked: page.v("greeting", true) === true; onToggled: function(x) { page.setv("greeting", x ? "on" : "off") } }
+        ToggleRow { visible: page.classic; label: I18n.t("Profile picture"); desc: I18n.t("Your avatar from Home"); checked: page.v("avatar", true) === true; onToggled: function(x) { page.setv("avatar", x ? "on" : "off") } }
         SegRow {
+            visible: page.classic
             label: I18n.t("Password field")
             options: [{ label: I18n.t("Pill"), value: "pill" }, { label: I18n.t("Box"), value: "box" }, { label: I18n.t("Line"), value: "line" }]
             current: page.v("input", "pill")
@@ -446,11 +367,11 @@ Item {
             onCommitted: function(x) { page.setv("dim", x.toFixed(2)) }
         }
 
-        SectionTitle { text: I18n.t("Widgets"); sub: I18n.t("Small lines at the bottom of the lock screen.") }
+        SectionTitle { text: I18n.t("Widgets"); sub: page.classic ? I18n.t("Small lines at the bottom of the lock screen.") : I18n.t("Cards shows your music on its own card.") }
         ToggleRow { label: I18n.t("Media"); desc: I18n.t("What is playing right now"); checked: page.v("media", true) === true; onToggled: function(x) { page.setv("media", x ? "on" : "off") } }
-        ToggleRow { label: I18n.t("Resources"); desc: I18n.t("CPU, RAM and GPU usage"); checked: page.v("resources", false) === true; onToggled: function(x) { page.setv("resources", x ? "on" : "off") } }
-        ToggleRow { label: I18n.t("Notifications"); desc: I18n.t("How many notifications are waiting"); checked: page.v("notifications", true) === true; onToggled: function(x) { page.setv("notifications", x ? "on" : "off") } }
-        ToggleRow { label: I18n.t("Weather"); desc: I18n.t("Current weather from wttr.in"); checked: page.v("weather", false) === true; onToggled: function(x) { page.setv("weather", x ? "on" : "off") } }
+        ToggleRow { visible: page.classic; label: I18n.t("Resources"); desc: I18n.t("CPU, RAM and GPU usage"); checked: page.v("resources", false) === true; onToggled: function(x) { page.setv("resources", x ? "on" : "off") } }
+        ToggleRow { visible: page.classic; label: I18n.t("Notifications"); desc: I18n.t("How many notifications are waiting"); checked: page.v("notifications", true) === true; onToggled: function(x) { page.setv("notifications", x ? "on" : "off") } }
+        ToggleRow { visible: page.classic; label: I18n.t("Weather"); desc: I18n.t("Current weather from wttr.in"); checked: page.v("weather", false) === true; onToggled: function(x) { page.setv("weather", x ? "on" : "off") } }
 
         LoginScreenCard { ctl: page.ctl }
 

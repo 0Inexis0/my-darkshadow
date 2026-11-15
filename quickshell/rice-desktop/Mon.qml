@@ -11,6 +11,13 @@ Singleton {
     id: mon
     property string want: ""
     property string wantWidgets: ""
+    // Settings > System > Monitors > Bar on every screen (screens.json "bar_all"): a copy of the bar on each other screen
+    property bool everywhere: false
+    readonly property var others: {
+        const o = [], l = Quickshell.screens
+        for (let i = 0; i < l.length; i++) if (l[i] !== screen) o.push(l[i])
+        return o
+    }
     readonly property var screen: pick(Quickshell.screens, want)
     readonly property var widgetScreen: wantWidgets !== "" ? pick(Quickshell.screens, wantWidgets) : screen
     function pick(l, n) {
@@ -24,7 +31,7 @@ Singleton {
         path: Quickshell.env("HOME") + "/.config/rice/screens.json"
         watchChanges: true
         onFileChanged: reload()
-        onLoaded: { try { const j = JSON.parse(text()); mon.want = j.main || ""; mon.wantWidgets = j.widgets || "" } catch (e) { mon.want = ""; mon.wantWidgets = "" } }
-        onLoadFailed: { mon.want = ""; mon.wantWidgets = "" }
+        onLoaded: { try { const j = JSON.parse(text()); mon.want = j.main || ""; mon.wantWidgets = j.widgets || ""; mon.everywhere = j.bar_all === true } catch (e) { mon.want = ""; mon.wantWidgets = ""; mon.everywhere = false } }
+        onLoadFailed: { mon.want = ""; mon.wantWidgets = ""; mon.everywhere = false }
     }
 }

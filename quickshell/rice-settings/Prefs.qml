@@ -59,9 +59,10 @@ Singleton {
 
     function save(key, value) {
         Quickshell.execDetached(["python3", "-c",
-            "import json,os,sys\np=os.path.expanduser('~/.config/rice/settings-app.json')\n" +
+            "import fcntl,json,os,sys\np=os.path.expanduser('~/.config/rice/settings-app.json')\n" +
+            "os.makedirs(os.path.dirname(p),exist_ok=True)\nl=open(p+'.lock','w');fcntl.flock(l,fcntl.LOCK_EX)\n" +
             "try: d=json.load(open(p))\nexcept Exception: d={}\nd[sys.argv[1]]=json.loads(sys.argv[2])\n" +
-            "os.makedirs(os.path.dirname(p),exist_ok=True)\njson.dump(d,open(p,'w'))",
+            "json.dump(d,open(p+'.tmp','w'))\nos.replace(p+'.tmp',p)",
             key, JSON.stringify(value)])
     }
     function setScroll(v) {

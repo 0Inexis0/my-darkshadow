@@ -75,6 +75,7 @@ On niri everything works the same: the bar, the island, workspaces, widgets, doc
 
 ## Install in one minute
 Pick your system, paste the three lines, then log out, choose **Hyprland** or **niri** on the login screen and press `SUPER + U`.
+Use `git clone` as below, not the ZIP from Releases: a ZIP copy cannot update itself (`rice-update` turns one into a git copy).
 
 **Arch Linux / CachyOS / EndeavourOS / Garuda**
 ```bash

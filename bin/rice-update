@@ -68,6 +68,40 @@ def repo():
     return r if os.path.exists(r + "/install.sh") else None
 
 
+ZIP_MSG = ("This copy of the shell was downloaded as a ZIP (from a GitHub release), not with git, so it cannot get new "
+           "versions. Run rice-update in a terminal: it turns it into a git copy and updates.")
+
+
+def is_zip(r):
+    """a copy without .git (the ZIP of a GitHub release): nothing to pull from, it reinstalled the same old version"""
+    return bool(r) and not os.path.exists(r + "/.git")
+
+
+def make_git(r):
+    """clone the project next to the ZIP copy and put the clone in its place (the ZIP copy is kept, renamed)"""
+    if not shutil.which("git"):
+        print("git is not installed. Install it (sudo pacman -S git, sudo apt install git ...) and run rice-update again.")
+        return None
+    target = os.path.abspath(r)
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    tmp = target + ".new-" + stamp
+    print("Downloading the project with git ...")
+    c = subprocess.call(["git", "-c", "credential.helper=", "clone", "--quiet", "--single-branch", "--branch", "main", NEW_URL, tmp],
+                        env=dict(os.environ, GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="never"))
+    if c != 0 or not os.path.exists(tmp + "/install.sh"):
+        shutil.rmtree(tmp, ignore_errors=True)
+        print("git clone did not work (offline?). Nothing was changed.")
+        return None
+    if os.path.exists(target):
+        os.rename(target, target + ".zip-" + stamp)
+        print("Your old copy is kept as " + target + ".zip-" + stamp)
+    os.rename(tmp, target)
+    os.makedirs(DIR, exist_ok=True)
+    open(DIR + "/repo", "w").write(target + "\n")
+    print("Done: " + target + " is a git copy now, so updates work from here on.")
+    return target
+
+
 def key(v):
     """'2.02' < '2.1' == '2.10' < '3.0' (the part after the dot reads like decimals)"""
     try:
@@ -121,7 +155,7 @@ def latest(offline=False):
     r = repo()
     found, err = [], ""
     latest.ahead, latest.sha, latest.log = 0, "", ""
-    if r and os.path.isdir(r + "/.git") and shutil.which("git"):
+    if r and os.path.exists(r + "/.git") and shutil.which("git"):
         try:
             if not offline:
                 f = git(r, "fetch", "--quiet", "--no-tags", NEW_URL, "main")
@@ -201,6 +235,9 @@ def check(offline=False):
            "checked": int(time.time()), "error": err if not new else ""}
     if managed():
         out = managed_latest(offline)
+    elif is_zip(repo()):
+        out["update"] = True
+        out["error"] = ZIP_MSG
     os.makedirs(CACHE, exist_ok=True)
     try:
         with open(STATE, "w") as stream:
@@ -211,14 +248,45 @@ def check(offline=False):
 
 
 def terminal_update():
-    t = os.environ.get("TERMINAL") or "kitty"
-    if not shutil.which(t):
-        t = next((x for x in ("kitty", "foot", "alacritty", "wezterm", "konsole", "gnome-terminal") if shutil.which(x)), t)
-    cmd = [t, "-e", HOME + "/.local/bin/rice-update"]
-    if os.access(HOME + "/.local/bin/rice-term", os.X_OK):        # your terminal (Settings > Look & Feel)
-        cmd = [HOME + "/.local/bin/rice-term", "-e", HOME + "/.local/bin/rice-update"]
-    subprocess.Popen(cmd, start_new_session=True,
-                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    """Open one clean update terminal per minute, even when two launch requests arrive together."""
+    os.makedirs(CACHE, exist_ok=True)
+    with open(CACHE + "/update-terminal", "a+") as mark:
+        try:
+            fcntl.flock(mark, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            return
+        st = os.fstat(mark.fileno())
+        if st.st_size and time.time() - st.st_mtime < 60:
+            return
+        env = dict(os.environ)
+        for k in ("RICE_GUI", "NO_COLOR", "GIT_TERMINAL_PROMPT", "GCM_INTERACTIVE"):
+            env.pop(k, None)
+        t = os.environ.get("TERMINAL") or "kitty"
+        if not shutil.which(t):
+            t = next((x for x in ("kitty", "foot", "alacritty", "wezterm", "konsole", "gnome-terminal") if shutil.which(x)), t)
+        cmd = [t, "-e", HOME + "/.local/bin/rice-update"]
+        if os.access(HOME + "/.local/bin/rice-term", os.X_OK):
+            cmd = [HOME + "/.local/bin/rice-term", "-e", HOME + "/.local/bin/rice-update"]
+        subprocess.Popen(cmd, start_new_session=True, env=env,
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        mark.seek(0)
+        mark.truncate()
+        mark.write(str(int(time.time())))
+
+
+def installer_changes(r):
+    """Check fork main before starting the background installer; changed installer code needs a terminal."""
+    try:
+        fetched = git(r, "fetch", "--quiet", "--no-tags", NEW_URL, "main", timeout=60)
+        if fetched.returncode:
+            return False  # install.sh independently refuses a failed fetch before changing files
+        checked = git(r, "rev-parse", "--verify", "FETCH_HEAD^{commit}")
+        sha = checked.stdout.strip()
+        if checked.returncode or not re.fullmatch(r"[0-9a-f]{40}", sha):
+            return False
+        return git(r, "diff", "--quiet", "HEAD", sha, "--", "install.sh", "install/lib").returncode == 1
+    except Exception:
+        return False
 
 
 def open_center():
@@ -256,16 +324,28 @@ def put_live(**kw):
 def gui(args):
     """the update without a terminal: install.sh --update --yes --no-packages, detached from Settings (the update
     puts new Settings files in place, so Settings reloads in the middle; this keeps running and Settings reads on)"""
+    os.makedirs(CACHE, exist_ok=True)
+    # two clicks (Settings and the Update Center at once) started two installers: one at a time
+    lk = open(CACHE + "/update.lock", "w")
+    try:
+        fcntl.flock(lk, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        print("already updating")
+        return 0
     st = live()
     if st.get("state") == "running" and alive(st.get("pid")):
         print("already updating")
         return 0
     r = repo()
-    os.makedirs(CACHE, exist_ok=True)
     if not r:
         open(LIVE_LOG, "w").write("    \u2718 Could not find your copy of the repo (~/my-darkshadow). Clone it again:\n"
                                   "      git clone https://github.com/0Inexis0/my-darkshadow ~/my-darkshadow\n")
         put_live(state="failed", code=1, started=int(time.time()), ended=int(time.time()), pid=0)
+        return 1
+    if is_zip(r):
+        open(LIVE_LOG, "w").write("    \u2718 " + ZIP_MSG + "\n")
+        put_live(state="failed", code=1, started=int(time.time()), ended=int(time.time()), pid=0)
+        terminal_update()
         return 1
     if os.fork() != 0:
         return 0
@@ -274,6 +354,12 @@ def gui(args):
         os._exit(0)
     log = open(LIVE_LOG, "w", buffering=1)
     t0 = int(time.time())
+    if installer_changes(r):
+        log.write("    \u2139 This update changes the installer, so it is asked about in a terminal: one opened now.\n"
+                  "      Answer y there (it may ask for your password). Nothing was changed yet.\n")
+        put_live(state="failed", code=1, started=t0, ended=int(time.time()), pid=0, was=installed())
+        terminal_update()
+        os._exit(0)
     put_live(state="running", code=-1, started=t0, ended=0, pid=os.getpid(), was=installed())
     env = dict(os.environ, RICE_GUI="1", NO_COLOR="1", GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="never")
     env.pop("SUDO_ASKPASS", None)
@@ -394,8 +480,24 @@ def run(args):
         print("  git clone https://github.com/0Inexis0/my-darkshadow ~/my-darkshadow")
         input("Press Enter to close")
         sys.exit(1)
+    if is_zip(r):
+        print(ZIP_MSG.replace(" Run rice-update in a terminal: it turns", " This turns"))
+        try:
+            a = input("Make it a git copy now? [Y/n] ").strip().lower()
+        except EOFError:
+            a = "n"
+        r = make_git(r) if a in ("", "y", "yes") else None
+        if not r:
+            try:
+                input("Press Enter to close")
+            except EOFError:
+                pass
+            sys.exit(1)
     os.chdir(r)
-    code = subprocess.call(["./install.sh", "--update"] + args)
+    env = dict(os.environ)
+    for k in ("RICE_GUI", "NO_COLOR", "GIT_TERMINAL_PROMPT", "GCM_INTERACTIVE"):
+        env.pop(k, None)   # a terminal the Update Center opened must ask, not act like the background update
+    code = subprocess.call(["./install.sh", "--update"] + args, env=env)
     print()
     try:
         input("Press Enter to close")
@@ -412,7 +514,7 @@ def managed_checkout():
         result = git(HOME, "clone", "--single-branch", "--branch", "main", NEW_URL, target, timeout=120)
         if result.returncode:
             raise RuntimeError(result.stderr.strip())
-    if not os.path.isdir(target + "/.git"):
+    if not os.path.exists(target + "/.git"):
         raise RuntimeError("Update folder is not a Git checkout: " + target)
     status = git(target, "status", "--porcelain", timeout=10)
     if status.returncode:
@@ -422,10 +524,16 @@ def managed_checkout():
     branch = git(target, "branch", "--show-current").stdout.strip()
     if branch != "main":
         raise RuntimeError("Update checkout must be on main; leaving it unchanged.")
-    for args in [("fetch", "--no-tags", NEW_URL, "main"), ("merge", "--ff-only", "FETCH_HEAD")]:
-        result = git(target, *args, timeout=120)
-        if result.returncode:
-            raise RuntimeError(result.stderr.strip() or result.stdout.strip())
+    fetched = git(target, "fetch", "--no-tags", NEW_URL, "main", timeout=120)
+    if fetched.returncode:
+        raise RuntimeError(fetched.stderr.strip() or "Could not fetch fork main")
+    checked = git(target, "rev-parse", "--verify", "FETCH_HEAD^{commit}")
+    sha = checked.stdout.strip()
+    if checked.returncode or not re.fullmatch(r"[0-9a-f]{40}", sha):
+        raise RuntimeError("Could not resolve the fetched fork commit")
+    result = git(target, "merge", "--ff-only", sha, timeout=120)
+    if result.returncode:
+        raise RuntimeError(result.stderr.strip() or result.stdout.strip())
     return target
 
 
