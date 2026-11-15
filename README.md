@@ -10,6 +10,7 @@
 
 <p align="center">
   <a href="#supported-systems"><img src="https://img.shields.io/badge/Arch_Linux-1793D1?style=for-the-badge&labelColor=11111b&logo=archlinux&logoColor=1793D1&color=1a1b26" alt="Arch Linux"></a>
+  <a href="#supported-systems"><img src="https://img.shields.io/badge/Artix_Linux-10A0CC?style=for-the-badge&labelColor=11111b&logo=artixlinux&logoColor=10A0CC&color=1a1b26" alt="Artix Linux"></a>
   <a href="#supported-systems"><img src="https://img.shields.io/badge/CachyOS-08A283?style=for-the-badge&labelColor=11111b&logo=cachyos&logoColor=08A283&color=1a1b26" alt="CachyOS"></a>
   <a href="#supported-systems"><img src="https://img.shields.io/badge/Fedora-51A2DA?style=for-the-badge&labelColor=11111b&logo=fedora&logoColor=51A2DA&color=1a1b26" alt="Fedora"></a>
   <a href="#supported-systems"><img src="https://img.shields.io/badge/NixOS-5277C3?style=for-the-badge&labelColor=11111b&logo=nixos&logoColor=7EBAE4&color=1a1b26" alt="NixOS"></a>
@@ -62,7 +63,7 @@ The bar, the welcome window and Settings show **your distro's logo** automatical
 | **Arch Linux** | supported | `./install.sh` |
 | **CachyOS** | new in V2.70 | `./install.sh` (Arch based: its repositories and `paru` are used) |
 | **EndeavourOS, Garuda** | Arch route | `./install.sh` |
-| **Artix Linux** | new in V4.62 | `./install.sh` (OpenRC, runit, s6 or dinit: Arch's repos turned on, services with your init, a login session with D-Bus) |
+| **Artix Linux** | supported | `./install.sh` (OpenRC, runit, s6 or dinit: Arch's repos turned on, services with your init, a login session with D-Bus) |
 | **Fedora, Nobara** | new in V2.60 | `./install.sh` (COPR for Hyprland and Quickshell) |
 | **Bazzite, Silverblue** | commands only | the installer prints the `rpm-ostree` steps |
 | **Manjaro** | may not work | its packages are held back, Hyprland can be older than 0.55 |

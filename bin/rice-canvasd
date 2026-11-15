@@ -22,6 +22,7 @@ import os
 import re
 import select
 import signal
+import socket
 import struct
 import subprocess
 import sys
@@ -125,8 +126,60 @@ def status(**kw):
 
 
 def hypr_alive():
+    """Hyprland still answers on its socket. Its folder alone is not enough: after a logout that killed Hyprland the
+    folder can stay, and a copy of this from the old session (without the input group) kept running and held the
+    lock, so the new one never started (seen on Artix)"""
     sig = os.environ.get("HYPRLAND_INSTANCE_SIGNATURE", "")
-    return bool(sig) and os.path.isdir(os.path.join(RUN, "hypr", sig))
+    d = os.path.join(RUN, "hypr", sig)
+    if not sig or not os.path.isdir(d):
+        return False
+    sock = os.path.join(d, ".socket.sock")
+    if not os.path.exists(sock):
+        return True
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    s.settimeout(1)
+    try:
+        s.connect(sock)
+        return True
+    except OSError:
+        return False
+    finally:
+        s.close()
+
+
+def input_gid():
+    try:
+        for line in open("/etc/group"):
+            f = line.split(":")
+            if f[0] == "input":
+                return int(f[2])
+    except (OSError, ValueError, IndexError):
+        pass
+    return None
+
+
+def proc_info(pid):
+    """(the Hyprland it belongs to, may it read /dev/input by the input group) of a running copy"""
+    sig, grp = None, None
+    try:
+        for kv in open("/proc/%d/environ" % pid, "rb").read().split(b"\0"):
+            if kv.startswith(b"HYPRLAND_INSTANCE_SIGNATURE="):
+                sig = kv.split(b"=", 1)[1].decode(errors="replace")
+        gid = input_gid()
+        for line in open("/proc/%d/status" % pid):
+            if line.startswith("Groups:"):
+                grp = gid is not None and str(gid) in line.split()[1:]
+    except OSError:
+        pass
+    return sig, grp
+
+
+def running_pid():
+    try:
+        pid = int(open(PID).read().strip() or 0)
+        return pid if pid > 0 and os.path.exists("/proc/%d" % pid) else 0
+    except (OSError, ValueError):
+        return 0
 
 
 def check():
@@ -141,6 +194,27 @@ def check():
         print("ok: it can read them")
     print("Hyprland:  ", "yes" if hypr_alive() else "no")
     print("niri:      ", "yes" if NIRI else "no")
+    gid = input_gid()
+    try:
+        names = subprocess.run(["id", "-nG"], capture_output=True, text=True, timeout=2).stdout.split()
+    except Exception:
+        names = []
+    listed = False
+    try:
+        listed = any(l.split(":")[0] == "input" and os.environ.get("USER", "") in l.strip().split(":")[3].split(",")
+                     for l in open("/etc/group"))
+    except (OSError, IndexError):
+        pass
+    print("input group:", "in /etc/group" if listed else "not in /etc/group",
+          "| this login:", "yes" if (gid in os.getgroups() or "input" in names) else "no (log out and in)")
+    pid = running_pid()
+    if not pid:
+        print("daemon:     not running (Hyprland starts it; or: rice-infinite daemon)")
+    else:
+        sig, grp = proc_info(pid)
+        mine = os.environ.get("HYPRLAND_INSTANCE_SIGNATURE", "")
+        print("daemon:     pid %d, %s, %s" % (pid, "this Hyprland" if sig == mine else "an OLD session's (restart it: rice-infinite daemon)",
+                                               "can read input" if grp else "WITHOUT the input group (restart it: rice-infinite daemon)"))
 
 
 def tell():
@@ -386,10 +460,32 @@ def main():
     # one at a time. The pid file alone lost a race: two starts read "no pid" together and both ran, each reading the
     # same mouse. The lock is held for the life of this process (the kernel drops it when we exit, even on a crash).
     # "a" and not "w": a second start must not empty the running one's pid file (rice-infinite daemon-stop reads it)
-    try:
-        lockf = open(PID, "a")
-        fcntl.flock(lockf, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except OSError:
+    lockf = None
+    for _try in range(2):
+        try:
+            lockf = open(PID, "a")
+            fcntl.flock(lockf, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            break
+        except OSError:
+            lockf = None
+        # the copy that holds it: one from an old session (another Hyprland) or one started before you joined the
+        # input group is stopped, so this one (with the input group) takes over. A good running one stays.
+        pid = running_pid()
+        if not pid or pid == os.getpid():
+            return
+        sig, grp = proc_info(pid)
+        mine = os.environ.get("HYPRLAND_INSTANCE_SIGNATURE", "")
+        if sig == mine and (grp or input_gid() not in os.getgroups()):
+            return
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except OSError:
+            return
+        for _ in range(20):
+            if not os.path.exists("/proc/%d" % pid):
+                break
+            time.sleep(0.1)
+    if lockf is None:
         return
     lockf.truncate(0)
     lockf.write(str(os.getpid()))

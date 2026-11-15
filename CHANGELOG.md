@@ -1,5 +1,10 @@
 # Changelog
 
+## V4.68: Infinite Desktop on Artix, Artix on the README
+- Fix: SUPER + ALT + mouse did nothing after joining the input group (seen on Artix). A copy of rice-canvasd from the session before (started without the input group) kept running and held the lock, so the new one never started; whether Hyprland was still there was judged by its folder, which can stay after a logout. Now Hyprland must answer on its socket, and a new copy stops an old one that belongs to another session or cannot read the input devices
+- `rice-infinite check` tells more: whether you are in the input group in /etc/group and in this login, and whether the running daemon belongs to this Hyprland and can read the input devices
+- README: Artix Linux is listed as supported (badge and table)
+
 ## V4.67: Artix system update no longer stops on a package clash
 - Fix (installer, Artix): the system update stopped with "geocode-glib-3.26.4-6 and geocode-glib-common-3.26.4-5 are in conflict". With Arch's `[extra]` on, Artix's own build of a package replaces Arch's and the old split-off part has to be removed; `--noconfirm` said no to that. On Artix the update now says yes to removing the conflicting package (`--ask=4`), and if it still fails it tells you what to answer by hand
 
