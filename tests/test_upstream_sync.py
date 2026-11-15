@@ -79,8 +79,8 @@ class CompositionTests(unittest.TestCase):
         slots = re.findall(r'PageSlot\s*\{[^\n]*?idx:\s*(\d+);[^\n]*?Component\s*\{\s*(\w+)', qml)
         indices = [int(index) for index in re.findall(r'PageSlot\s*\{[^\n]*?idx:\s*(\d+);', qml)]
         self.assertEqual(len(indices), len(set(indices)))
-        # Legacy Hot corners (13) and Security (32) have no PageSlot in the fork baseline.
-        self.assertEqual(sorted(indices), [i for i in range(len(names)) if i not in (13, 32)])
+        # Hot corners (13) was removed upstream; Security (32) is now wired.
+        self.assertEqual(sorted(indices), [i for i in range(len(names)) if i != 13])
         self.assertEqual(names[36], '"VPN"')
         self.assertEqual(names[37], '"Window rules"')
         self.assertEqual(dict(slots)["36"], "VpnPage")

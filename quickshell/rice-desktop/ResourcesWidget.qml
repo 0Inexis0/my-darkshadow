@@ -7,24 +7,11 @@ Item {
     property real bg: 1   // card background opacity (widget editor)
     property var pal: null
     property bool running: true
-    property int cpu: 0
-    property int ram: 0
-    property int gpu: 0
-
-    Process {
-        command: [Quickshell.env("HOME") + "/.local/bin/rice-stats"]
-        running: rs.running
-        stdout: SplitParser {
-            onRead: function(line) {
-                try {
-                    const j = JSON.parse(line)
-                    rs.cpu = j.cpu
-                    rs.ram = j.ram
-                    rs.gpu = j.gpu
-                } catch (e) { }
-            }
-        }
-    }
+    // one rice-stats for the whole shell (Stats.qml)
+    StatsHold { on: rs.running }
+    readonly property int cpu: Math.round(Stats.st.cpu || 0)
+    readonly property int ram: Math.round(Stats.st.ram || 0)
+    readonly property int gpu: Math.round(Stats.st.gpu || 0)
 
     Column {
         anchors.fill: parent

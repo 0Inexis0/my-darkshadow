@@ -11,6 +11,7 @@ Equicord, BetterDiscord), every time the colors change (a new wallpaper, another
   rice-theme app vscode|discord on|off
   rice-theme sync              color the apps again from your colors now (matugen calls it)
 """
+import fcntl
 import json
 import os
 import re
@@ -368,12 +369,14 @@ def discord(on, p):
 
 # ---------------- the theme ----------------
 def set_prefs(kv):
+    os.makedirs(DIR, exist_ok=True)
+    lk = open(APPPREFS + ".lock", "w")      # the same lock Settings uses (Prefs.qml): one read-write at a time
+    fcntl.flock(lk, fcntl.LOCK_EX)
     try:
         d = json.load(open(APPPREFS))
     except Exception:
         d = {}
     d.update(kv)
-    os.makedirs(DIR, exist_ok=True)
     tmp = APPPREFS + ".tmp"
     json.dump(d, open(tmp, "w"))
     os.replace(tmp, APPPREFS)
@@ -436,6 +439,10 @@ def state():
 
 
 def main(a):
+    # matugen starts a sync per wallpaper change: one at a time, so two cannot overwrite each other's read
+    os.makedirs(DIR, exist_ok=True)
+    lk = open(DIR + "/.theme.lock", "w")
+    fcntl.flock(lk, fcntl.LOCK_EX)
     cmd = a[1] if len(a) > 1 else ""
     arg = a[2] if len(a) > 2 else ""
     if cmd == "list":

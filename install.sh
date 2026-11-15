@@ -110,6 +110,8 @@ PY
 # since then is kept as it is on an update: the new version lands next to it as FILE.rice-update and the summary
 # lists it. Before there was a list, the version the repo had before this update (git) tells if it was changed.
 SUMS="$HOME/.config/rice/installed.sums"
+# one line per file: appending on every update made this grow without end (and every check below slower)
+[ "$DRY_RUN" != 1 ] && [ -f "$SUMS" ] && awk 'NF >= 2 { h = $1; sub(/^[^ ]+  */, ""); s[$0] = h } END { for (k in s) print s[k] "  " k }' "$SUMS" >"$SUMS.tmp" && mv "$SUMS.tmp" "$SUMS"
 KEPTF="$HOME/.cache/rice/kept-edits"
 PREV_REV=""
 sum_of() { sha256sum 2>/dev/null | cut -c1-64; }
@@ -144,7 +146,7 @@ put() {
   if [ -e "$dst" ] || [ -L "$dst" ]; then
     rel="${dst#"$HOME"/}"
     mkdir -p "$BK/$(dirname "$rel")"
-    cp -aL "$dst" "$BK/$rel" 2>/dev/null || true
+    cp -aL "$dst" "$BK/$rel" 2>/dev/null || warn "could not back up ~/$rel (it is replaced anyway)"
     [ -L "$dst" ] && rm -f "$dst"
   fi
   mkdir -p "$(dirname "$dst")"
@@ -180,7 +182,7 @@ copy_tree() { # copy_tree SRC_DIR DST_DIR
     if user_edited "$f" "$d"; then rm -f "$d.rice-new"; keep_edit "$f" "$d"; continue; fi
     rel2="${d#"$HOME"/}"
     mkdir -p "$BK/$(dirname "$rel2")"
-    cp -aL "$d" "$BK/$rel2" 2>/dev/null || true
+    cp -aL "$d" "$BK/$rel2" 2>/dev/null || warn "could not back up ~/$rel2 (it is replaced anyway)"
     [ -L "$d" ] && rm -f "$d"
     staged+=("$d")
   done
@@ -193,7 +195,7 @@ copy_tree() { # copy_tree SRC_DIR DST_DIR
       if cmp -s "$d.rice-new" "$d"; then rm -f "$d.rice-new"; rec_sum "$d"
       elif user_edited "$src/shell.qml" "$d"; then rm -f "$d.rice-new"; keep_edit "$src/shell.qml" "$d"
       else
-        rel2="${d#"$HOME"/}"; mkdir -p "$BK/$(dirname "$rel2")"; cp -aL "$d" "$BK/$rel2" 2>/dev/null || true
+        rel2="${d#"$HOME"/}"; mkdir -p "$BK/$(dirname "$rel2")"; cp -aL "$d" "$BK/$rel2" 2>/dev/null || warn "could not back up ~/$rel2 (it is replaced anyway)"
         [ -L "$d" ] && rm -f "$d"
         mv -f "$d.rice-new" "$d"; rec_sum "$d"
       fi
@@ -636,7 +638,7 @@ copy_lua() { local f; for f in "$ROOT"/lua/*.lua; do [ -f "$f" ] && put "$f" "$H
 
 # ------------------------------------------------------------------ your saved settings
 # settings/ holds what you chose in Settings on the computer that ran ./sync.sh: the Waybar look
-# (ui.json), dashboard, widgets, hot corner, notifications, lock screen, rofi, fonts, cursor, effects.
+# (ui.json), dashboard, widgets, notifications, lock screen, rofi, fonts, cursor, effects.
 # A file is put in place when you do not have it yet, or when you did not change it since the
 # installer put it there last time. Files you changed on this computer are kept, unless you said
 # "use the saved settings" (then yours are backed up first, like every other file).
@@ -858,6 +860,13 @@ prune_backups() {
   done <<<"$old"
   return 0
 }
+# V4.52 removed the hot corner panel: take its files out
+remove_old_parts() {
+  [ "$DRY_RUN" = 1 ] && return 0
+  rm -f "$HOME/.config/hypr/rice-hotcorner.lua" "$HOME/.config/quickshell/rice-desktop/HotCorner.qml" "$HOME/.config/quickshell/rice-desktop/HotCornerPanel.qml" \
+    "$HOME/.config/quickshell/rice-settings/HotCornersPage.qml" "$HOME/.config/quickshell/rice-settings/HotCornerPanel.qml"
+  return 0
+}
 # the quiet version of those tasks, for updates
 refresh_look() {
   [ -f "$HOME/.config/waybar/config.jsonc" ] && t "$BIN/waybar-set" distro-icon on
@@ -867,7 +876,8 @@ refresh_look() {
   command -v hyprlock >/dev/null 2>&1 && t "$BIN/rice-lock" apply
   t "$BIN/rice-rofi" apply
   [ -x "$BIN/rice-bar" ] && t bash -c "\"$BIN/rice-bar\" migrate && \"$BIN/rice-bar\" start"
-  t "$BIN/rice-hotcorner" apply
+  t "$BIN/rice-hotcorner" apply     # takes the old hot corner blur rule out of your Hyprland config
+  remove_old_parts
   [ -x "$BIN/desktop-set" ] && t "$BIN/desktop-set" dock-blur
   [ -x "$BIN/rice-dashboard" ] && t "$BIN/rice-dashboard" blur
   return 0
@@ -899,7 +909,8 @@ step_finish() {
     command -v hyprlock >/dev/null 2>&1 && task "Lock screen and idle timers" t "$BIN/rice-lock" apply
     task "Launcher and bar blur" t "$BIN/rice-rofi" apply
     [ -x "$BIN/rice-bar" ] && task "DarkShadow bar (Waybar stays off)" t bash -c "\"$BIN/rice-bar\" migrate && \"$BIN/rice-bar\" start"
-    task "Panel settings" t "$BIN/rice-hotcorner" apply
+    task "Remove the old hot corner rule" t "$BIN/rice-hotcorner" apply
+    remove_old_parts
     [ -x "$BIN/desktop-set" ] && task "Dock and widget blur" t "$BIN/desktop-set" dock-blur
     [ -x "$BIN/rice-dashboard" ] && task "Panel blur" t "$BIN/rice-dashboard" blur
   fi
@@ -991,7 +1002,7 @@ fi
 if [ "$MODE" = update ]; then
   title "Update"
   if [ "$PULLED" = 1 ]; then ok "Got the newest version"
-  elif [ -d "$ROOT/.git" ] && command -v git >/dev/null 2>&1; then
+  elif [ -e "$ROOT/.git" ] && command -v git >/dev/null 2>&1; then
     old="$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo ?)"
     export RICE_PREV_REV="${RICE_PREV_REV:-$(git -C "$ROOT" rev-parse HEAD 2>/dev/null)}"
     if [ "$(git -C "$ROOT" branch --show-current)" != main ]; then
@@ -1016,11 +1027,14 @@ if [ "$MODE" = update ]; then
       exit 1
 
     fi
+  else
+    # a ZIP from a GitHub release: no .git, so nothing to pull; it reinstalled the same old version again and again
+    warn "This folder is not a git copy (a ZIP download?), so it cannot get new versions. Run  rice-update  in a terminal: it turns it into one."
   fi
 fi
 
 # the version you have, as the repo had it (its tag, or the commit before the pull): your edits are told apart from it
-if [ "$MODE" = update ] && [ -d "$ROOT/.git" ] && command -v git >/dev/null 2>&1; then
+if [ "$MODE" = update ] && [ -e "$ROOT/.git" ] && command -v git >/dev/null 2>&1; then
   PREV_REV="$(git -C "$ROOT" rev-parse -q --verify "v${HAVE_VERSION:-0}^{commit}" 2>/dev/null || true)"
   [ -n "$PREV_REV" ] || PREV_REV="${RICE_PREV_REV:-}"
 fi

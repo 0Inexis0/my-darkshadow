@@ -459,7 +459,9 @@ def safe_extract(arch, kind, dst):
     else:
         with tarfile.open(arch) as t:
             for m in t.getmembers():
-                if m.name.startswith("/") or ".." in m.name.split("/") or m.issym() and os.path.isabs(m.linkname):
+                link = m.linkname if m.issym() or m.islnk() else ""
+                if (m.name.startswith("/") or ".." in m.name.split("/")
+                        or link.startswith("/") or ".." in link.split("/")):
                     raise ValueError("bad path in archive")
             if hasattr(tarfile, "tar_filter"):
                 t.extractall(dst, filter="tar")

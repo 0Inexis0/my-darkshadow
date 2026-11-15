@@ -308,7 +308,8 @@ def cmd_scan(what, notify=False):
 def cmd_stop():
     try:
         pid = json.load(open(PROG)).get("pid")
-        if pid:
+        # a scan that ended leaves its pid behind; that number may belong to something else by now
+        if pid and "rice-security" in open("/proc/%d/cmdline" % pid).read():
             os.kill(pid, signal.SIGTERM)
     except Exception:
         pass

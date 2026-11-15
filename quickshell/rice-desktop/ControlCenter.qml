@@ -49,7 +49,9 @@ PanelWindow {
     property bool recording: false
     property real recStart: 0
     property var now: new Date()
-    property var st: ({ cpu: 0, ram: 0, gpu: 0, temp: 0, ramu: 0, ramt: 0 })
+    // one rice-stats for the whole shell (Stats.qml)
+    readonly property var st: Stats.st
+    StatsHold { on: cc.open && cc.tab === "overview" }
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property var source: Pipewire.defaultAudioSource
     PwObjectTracker { objects: [cc.sink, cc.source] }
@@ -81,11 +83,6 @@ PanelWindow {
                 })
             }
         }
-    }
-    Process {
-        command: [Quickshell.env("HOME") + "/.local/bin/rice-stats", "2"]
-        running: cc.open && cc.tab === "overview"
-        stdout: SplitParser { onRead: function(l) { try { cc.st = JSON.parse(l) } catch (e) { } } }
     }
     Trigger {
         path: Quickshell.env("HOME") + "/.cache/rice/record.json"
@@ -375,39 +372,41 @@ PanelWindow {
                 // ---- the music: the cover as a cookie in a wavy ring, a wavy seek line, five buttons
                 Rectangle {
                     width: parent.width; height: 176; radius: 28; color: cc.card
-                    visible: mp.has
+                    visible: Player.has
                     opacity: cc.stg(5); transform: Translate { y: (1 - cc.stg(5)) * 22 }
-                    Player { id: mp; running: cc.open && cc.tab === "control" }
+                    // the one Player ticks while this card is out
+                    Instantiator { model: cc.open && cc.tab === "control" ? 1 : 0
+                                   delegate: QtObject { Component.onCompleted: Player.hold(); Component.onDestruction: Player.release() } }
                     Item {
                         id: art
                         x: 12; anchors.verticalCenter: parent.verticalCenter
                         width: 152; height: 152
                         WavyArc {
                             anchors.fill: parent
-                            value: mp.frac
-                            moving: mp.playing && cc.open
+                            value: Player.frac
+                            moving: Player.playing && cc.open
                             color: cc.primary
                             track: pal.track
                         }
-                        ShapeImage { anchors.centerIn: parent; width: 118; height: 118; kind: "cookie"; source: mp.art; empty: cc.cardHi
-                            SlowSpin { turn: 360; period: 24000; running: cc.open && mp.playing && !Look.lite } }
+                        ShapeImage { anchors.centerIn: parent; width: 118; height: 118; kind: "cookie"; source: Player.art; empty: cc.cardHi
+                            SlowSpin { turn: 360; period: 24000; running: cc.open && Player.playing && !Look.lite } }
                     }
                     Column {
                         x: art.x + art.width + 12; anchors.verticalCenter: parent.verticalCenter
                         width: parent.width - x - 14
                         spacing: 4
-                        Text { width: parent.width; elide: Text.ElideRight; text: mp.title; color: cc.fg; font.family: Fonts.main; font.pixelSize: 15; font.weight: Font.DemiBold }
-                        Text { width: parent.width; elide: Text.ElideRight; text: mp.artist; color: cc.dim; font.family: Fonts.main; font.pixelSize: 12; visible: text !== "" }
+                        Text { width: parent.width; elide: Text.ElideRight; text: Player.title; color: cc.fg; font.family: Fonts.main; font.pixelSize: 15; font.weight: Font.DemiBold }
+                        Text { width: parent.width; elide: Text.ElideRight; text: Player.artist; color: cc.dim; font.family: Fonts.main; font.pixelSize: 12; visible: text !== "" }
                         WavyLine {
                             width: parent.width; height: 22
-                            value: mp.frac
-                            moving: mp.playing && cc.open
+                            value: Player.frac
+                            moving: Player.playing && cc.open
                             seekable: true
                             color: cc.primary
                             track: pal.track
-                            onMoved: function(v) { mp.seekTo(v) }
+                            onMoved: function(v) { Player.seekTo(v) }
                         }
-                        Text { text: mp.clock(mp.pos) + "  /  " + mp.clock(mp.length); color: cc.dim; font.family: Fonts.numbers; font.pixelSize: 11; visible: mp.length > 0 }
+                        Text { text: Player.clock(Player.pos) + "  /  " + Player.clock(Player.length); color: cc.dim; font.family: Fonts.numbers; font.pixelSize: 11; visible: Player.length > 0 }
                         Row {
                             spacing: 4
                             topPadding: 2
@@ -421,15 +420,15 @@ PanelWindow {
                                     color: big ? cc.primary : (pm.containsMouse ? cc.cardHi : Qt.rgba(1, 1, 1, 0.06))
                                     Behavior on radius { NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 1.6 } }
                                     MIcon { anchors.centerIn: parent; size: parent.big ? 21 : 16; filled: true
-                                        name: parent.big ? (mp.playing ? "pause" : "play_arrow") : modelData.i
-                                        glyph: parent.big ? (mp.playing ? "\uf04c" : "\uf04b") : modelData.g
+                                        name: parent.big ? (Player.playing ? "pause" : "play_arrow") : modelData.i
+                                        glyph: parent.big ? (Player.playing ? "\uf04c" : "\uf04b") : modelData.g
                                         color: parent.big ? cc.inkPrimary : cc.fg }
                                     MouseArea { id: pm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                                         onClicked: {
-                                            if (modelData.a === "toggle") mp.toggle()
-                                            else if (modelData.a === "next") mp.next()
-                                            else if (modelData.a === "prev") mp.prev()
-                                            else mp.seekBy(modelData.a === "back" ? -10 : 10)
+                                            if (modelData.a === "toggle") Player.toggle()
+                                            else if (modelData.a === "next") Player.next()
+                                            else if (modelData.a === "prev") Player.prev()
+                                            else Player.seekBy(modelData.a === "back" ? -10 : 10)
                                         } }
                                 }
                             }

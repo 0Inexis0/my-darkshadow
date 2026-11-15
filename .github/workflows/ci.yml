@@ -40,7 +40,9 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
           QT_QUICK_BACKEND: software
-        run: /usr/lib/qt6/bin/qmltestrunner -input personal/login/tests
+        run: |
+          /usr/lib/qt6/bin/qmltestrunner -input personal/login/tests
+          python3 tests/run_upstream_qml.py /usr/lib/qt6/bin/qmltestrunner
 
   nix-evaluation:
     runs-on: ubuntu-latest

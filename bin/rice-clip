@@ -80,14 +80,14 @@ def entry_line(cid):
     return ""
 
 
-def thumb(cid, preview):
+def thumb(cid, preview, line=""):
     """a small picture for an image entry (made once, kept in ~/.cache/rice/clip)"""
     os.makedirs(THUMBS, exist_ok=True)
     key = hashlib.sha1(("%s|%s" % (cid, preview)).encode()).hexdigest()[:16]
     p = THUMBS + "/" + key + ".png"
     if os.path.exists(p):
         return p
-    code, data = cliphist("decode", inp=entry_line(cid) + "\n", text=False)
+    code, data = cliphist("decode", inp=(line or entry_line(cid)) + "\n", text=False)
     if code != 0 or not data:
         return ""
     raw = THUMBS + "/" + key + ".raw"
@@ -120,7 +120,7 @@ def cmd_list(n=60):
                 continue
             e = {"id": int(cid), "kind": "image", "text": prev.strip("[] ").replace("binary data ", "")}
             if imgs < 24:
-                e["img"] = thumb(cid, prev)
+                e["img"] = thumb(cid, prev, line)
                 imgs += 1
             out["items"].append(e)
         else:

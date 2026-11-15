@@ -7,7 +7,7 @@ Item {
     property var pal: null
     property real bg: 1
     property bool running: true
-    Player { id: pl; running: pw.running }
+    Instantiator { active: pw.running; model: 1; delegate: QtObject { Component.onCompleted: Player.hold(); Component.onDestruction: Player.release() } }
     readonly property color ink: pal ? pal.fg : "#F6F5F4"
     Card { anchors.fill: parent; k: pw.bg; pal: pw.pal }
     // the art and the ring
@@ -18,8 +18,8 @@ Item {
         y: 22
         WavyArc {
             anchors.fill: parent
-            value: pl.frac
-            moving: pl.playing && pw.running && !Look.covered
+            value: Player.frac
+            moving: Player.playing && pw.running && !Look.covered
             color: pw.pal ? pw.pal.primary : "#9ec9bd"
             track: pw.pal ? pw.pal.track : Qt.rgba(1, 1, 1, 0.14)
         }
@@ -27,10 +27,10 @@ Item {
             anchors.centerIn: parent
             width: parent.width - 26; height: width
             kind: "cookie"
-            source: pl.art
+            source: Player.art
             empty: pw.pal ? pw.pal.chip : "#2a2c30"
             fallbackColor: pw.pal ? pw.pal.fg3 : "#8a8a8f"
-            SlowSpin { turn: 360; period: 24000; running: (pw.running && pl.playing && !Look.lite) && !Look.covered }
+            SlowSpin { turn: 360; period: 24000; running: (pw.running && Player.playing && !Look.lite) && !Look.covered }
         }
     }
     T {
@@ -38,7 +38,7 @@ Item {
         anchors.top: artBox.bottom; anchors.topMargin: 16
         x: 20; width: parent.width - 40
         elide: Text.ElideRight
-        text: pl.artist !== "" ? pl.title + " – " + pl.artist : pl.title
+        text: Player.artist !== "" ? Player.title + " – " + Player.artist : Player.title
         font.pixelSize: 14; font.weight: Font.Medium; color: pw.ink
     }
     // seek line (drag it)
@@ -46,12 +46,12 @@ Item {
         id: seek
         anchors.top: tt.bottom; anchors.topMargin: 10
         x: 20; width: parent.width - 40; height: 20
-        value: pl.frac
-        moving: pl.playing && pw.running && !Look.covered
+        value: Player.frac
+        moving: Player.playing && pw.running && !Look.covered
         seekable: true
         color: pw.pal ? pw.pal.primary : "#9ec9bd"
         track: pw.pal ? pw.pal.track : Qt.rgba(1, 1, 1, 0.14)
-        onMoved: function(v) { pl.seekTo(v) }
+        onMoved: function(v) { Player.seekTo(v) }
     }
     Row {
         anchors.top: seek.bottom; anchors.topMargin: 14
@@ -71,17 +71,17 @@ Item {
                 Behavior on radius { NumberAnimation { duration: 200; easing.type: Easing.OutBack; easing.overshoot: 2 } }
                 MIcon {
                     anchors.centerIn: parent; size: parent.big ? 22 : 17
-                    name: parent.big ? (pl.playing ? "pause" : "play_arrow") : modelData.i
-                    glyph: parent.big ? (pl.playing ? "" : "") : modelData.g
+                    name: parent.big ? (Player.playing ? "pause" : "play_arrow") : modelData.i
+                    glyph: parent.big ? (Player.playing ? "" : "") : modelData.g
                     color: parent.big ? (pw.pal ? pw.pal.inkOn : "#111") : pw.ink
                     filled: true
                 }
                 MouseArea { id: bm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                     onClicked: {
-                        if (modelData.a === "toggle") pl.toggle()
-                        else if (modelData.a === "prev") pl.prev()
-                        else if (modelData.a === "next") pl.next()
-                        else pl.seekBy(modelData.a === "back" ? -10 : 10)
+                        if (modelData.a === "toggle") Player.toggle()
+                        else if (modelData.a === "prev") Player.prev()
+                        else if (modelData.a === "next") Player.next()
+                        else Player.seekBy(modelData.a === "back" ? -10 : 10)
                     } }
             }
         }

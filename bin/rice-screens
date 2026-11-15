@@ -4,6 +4,7 @@
   rice-screens state            JSON: the screens (hypr-set monitors), the main screen, your names
   rice-screens main NAME        the bar, the island, the dock and the menus go to this screen
   rice-screens widgets NAME     the desktop widgets go to this screen ("main": with the shell)
+  rice-screens bar-all on|off   the bar on every screen (off: only on the main screen)
   rice-screens keep             at login: two screens or more and their places never saved yet: save them now, so
                                 they stay where they are after the next boot (they were placed in a new order)
   rice-screens name NAME LABEL  your name for a screen ("" takes it away)
@@ -64,7 +65,11 @@ def main():
     a = sys.argv[1:]
     d = load()
     if not a or a[0] == "state":
-        print(json.dumps({"main": d.get("main", ""), "widgets": d.get("widgets", ""), "names": d.get("names", {}), "screens": screens()}))
+        print(json.dumps({"main": d.get("main", ""), "widgets": d.get("widgets", ""), "bar_all": d.get("bar_all") is True,
+                          "names": d.get("names", {}), "screens": screens()}))
+    elif a[0] == "bar-all" and len(a) == 2 and a[1] in ("on", "off"):
+        d["bar_all"] = a[1] == "on"
+        save(d)
     elif a[0] == "main" and len(a) == 2 and re.fullmatch(r"[A-Za-z0-9_.:-]{1,40}", a[1]):
         d["main"] = a[1]
         save(d)

@@ -1,5 +1,52 @@
 # Changelog
 
+## V4.58: fixes from the V4.55 audit, and the keyboard layout stays after an update
+Thanks to notwafel (pull request #18).
+- Bar on every screen: the bars share one `rice-services` and one `rice-weather` (BarSvc.qml) instead of each starting its own; the side bar uses it too
+- `rice-canvasd` (Infinite Desktop) can no longer run twice at once (a lock instead of only the pid file)
+- `rice-update` only fetches from this project (or a fork of it), like the installer
+- The unused lock screen engine switch, the example "epic-mouse-v1" device and cmatrix (Nix) are gone; two Polish lock screen texts added
+- Fix: an update could put the keyboard back to US. The layout you use is now also found in your config files (hyprland.lua, niri's config) when Hyprland cannot be asked, and niri keeps a layout from a hand-written config too
+- The installer itself is not changed in this version (an installer change from Settings sets off the old terminal loop for anyone still on V4.55); its two small fixes from #18 come later
+
+## V4.57: no terminal storm when updating from an older version
+- Fix: updating to V4.56 from Settings > Update Center opened terminal after terminal until the computer froze. The installer from before V4.56 runs during that update, and it still had the bug V4.56 fixed; V4.56 itself changed the installer, which set it off. V4.57 leaves the installer files as they were in V4.55, so updating from V4.55 runs on its own again
+- The Update Center checks first whether an update changes the installer. If it does, it opens one terminal (at most one a minute, without the background settings) where you answer y, and never starts the old installer for it
+
+## V4.56: Update Center: no more endless terminals
+- Fix: an update that changes the installer, started from Settings > Update Center, said "update failed" and opened terminals again and again, each ending in "Press Enter to close". The terminal it opens got the Update Center's "no terminal here" setting, so it opened another one instead of asking. Now that terminal asks "Apply this update? [y/N]" (and for sudo) as it should, and at most one opens per minute
+- Thanks to the user who found the cause
+
+## V4.55: the bar on every screen, and ZIP copies that can update
+- New: Settings > System > Monitors > **Bar on every screen** (`rice-screens bar-all on`). The same bar on all your screens, with its island, clock, workspaces and tray. The menus it opens and commands from scripts (SUPER + ALT + D, the calendar) still open on the main screen. The desktop widgets stay on one screen (Desktop widgets: Put the widgets here)
+- Fix: "it does not update any more, and it went back to V3.60". The newest Release on GitHub was still V3.60, and its ZIP has no git history, so `rice-update` had nothing to pull and installed that old copy again. `rice-update` now sees a ZIP copy, clones the project with git in its place (the old folder is kept, renamed) and updates. Settings > Update Center opens a terminal for it, and the installer says so too. Each new version is now also published as the Latest release on GitHub
+
+## V4.54: the Material 3 lock screen works again, and its Settings page shows it
+- Fix: since V4.51 the shell's lock screen did not start and hyprlock (the old one) showed instead. The desktop's music player became a shared singleton, and the lock screen copied it and could not create it. The lock screen has its own player now (`LockPlayer.qml`), and an old copy is removed when you lock
+- Settings > Desktop > Idle & Lockscreen: the small picture at the top is the real layout now (Cards: the month, the time, the music and the bar; Classic: one column), in your clock font, 12/24 h and theme. The old hyprlock picture and the DarkShadow/hyprlock switch are gone (hyprlock only steps in if the lock screen ever fails)
+- Only the options the chosen style uses are shown. Cards: clock font, 24-hour clock, power buttons, background, music. Classic adds layout, clock style, accent clock, date, greeting, picture, password field and the small lines
+- Clock fonts: one you pick that is not installed yet downloads and shows up in Settings within seconds, no restart needed. New Test (30 s) button: a real lock that opens itself after 30 seconds
+
+## V4.53: the lock screen is back
+- V4.52 removed the shell's own Material 3 lock screen by mistake. It is back exactly as it was (SUPER + L, power menu, Settings > Desktop > Idle & Lockscreen). Only the hot corners stay removed
+
+## V4.52: hot corners are gone
+- The hot corner panel is removed (panel, Settings page, blur rule). `rice-hotcorner` stays as the tool behind Print, SUPER + SHIFT + R and the recording buttons, and an update takes the old hot corner rule out of your Hyprland config
+
+## V4.51: 23 small fixes from a full read of the inherited code
+Thanks to notwafel again (pull request #16).
+- The hot corner panel finally opens, and the Settings pages for Hot corners and Security are linked again
+- Lock screen: waits and retries if the lock is not ready, with a timeout, instead of hanging; `rice-lock` no longer blocks on a second press
+- Stats and Player are now single shared services: widgets use one reader each, and Stats only runs while something on screen shows it
+- Config files are written atomically with locks (`hypr-set`, `rice-theme`, prefs), so two writers cannot corrupt them
+- Polling removed from the wallpaper and hot corners (file watching instead); sounds read through a FileView; `rice-clip` makes each thumbnail once per open
+- pid checks compare the command line before killing; `rice-cursor` refuses archive links pointing outside; `secure.sh` guards its own install and library path
+- Install: `install.sh` stashes/resets cleanly on update, checksums with spaces in paths work, the install guide uses the right name
+
+## V4.50: 75 Hz (and every other refresh rate) now sticks on niri
+- Issue #17 (thanks JapanisuGoburin): niri wants the refresh rate exactly as `niri msg outputs` shows it, down to the third decimal (74.973), and drops a mode that does not match. Settings rounded it to 74.97, so the screen stayed at 60 Hz or went back to it. The rate is now kept exact everywhere (the buttons still say 75 Hz), and a mode saved before this is matched to the nearest real one when niri's config is written
+- A screen that your own `user.kdl` sets up (`output "HDMI-A-1" { ... }`) is left alone by Settings, so the two blocks no longer fight over it
+
 ## V4.49: CI green again
 - The ShellCheck step of CI failed on two notes in the new `install/lib/secure.sh` (V4.48). Both are intended code, now marked as such. Nothing changes for you
 

@@ -41,8 +41,10 @@ PanelWindow {
     readonly property color track: Qt.rgba(1, 1, 1, 0.1)
 
     // ---------- data ----------
-    property var st: ({ cpu: 0, ram: 0, gpu: 0, temp: 0, gtemp: 0, ramu: 0, ramt: 0 })
-    property bool haveGpu: false
+    // one rice-stats for the whole shell (Stats.qml)
+    readonly property var st: Stats.st
+    readonly property bool haveGpu: Stats.haveGpu
+    StatsHold { on: gp.open }
     property int ping: -1
     property int fps: -1
     property bool fpsOn: false
@@ -66,11 +68,6 @@ PanelWindow {
         return two(Math.floor(t / 3600)) + ":" + two(Math.floor(t / 60) % 60) + ":" + two(t % 60)
     }
 
-    Process {
-        command: [Quickshell.env("HOME") + "/.local/bin/rice-stats", "1"]
-        running: gp.open
-        stdout: SplitParser { onRead: function(l) { try { const j = JSON.parse(l); gp.st = j; if (j.gpu > 0 || j.gtemp > 0) gp.haveGpu = true } catch (e) { } } }
-    }
     Process {
         id: pingProc
         command: ["bash", "-c", "ping -c1 -W1 1.1.1.1 2>/dev/null | sed -n 's/.*time=\\([0-9.]*\\).*/\\1/p'"]

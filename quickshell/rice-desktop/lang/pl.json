@@ -264,5 +264,7 @@
  "That is not the password": "To nie jest hasło",
  "Too many tries, wait a moment": "Za dużo prób, poczekaj chwilę",
  "week ": "tydzień ",
- "Lyrics are off: Settings > Language & region": "Teksty są wyłączone: Ustawienia > Język i region"
+ "Lyrics are off: Settings > Language & region": "Teksty są wyłączone: Ustawienia > Język i region",
+ "Wait": "Poczekaj",
+ "Could not check the password (PAM did not answer)": "Nie udało się sprawdzić hasła (PAM nie odpowiedział)"
 }

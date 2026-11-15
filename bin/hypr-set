@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import fcntl
 import json
 import os
 import re
@@ -13,6 +14,7 @@ ST = DIR + "/hypr.json"
 OUT = HOME + "/.config/hypr/rice-settings.lua"
 MAIN = HOME + "/.config/hypr/hyprland.lua"
 PREV = DIR + "/monitor-prev.json"
+LOCK = DIR + "/.hypr.lock"
 FLAG = DIR + "/border-custom"
 BIN = HOME + "/.local/bin"
 # niri runs the shell: the same settings are written into niri's config (rice-niri) instead of sent to Hyprland
@@ -30,8 +32,11 @@ NIRI_DEFAULTS = {
 
 
 def niri_apply():
+    # Remember in this process while we own .hypr.lock, without another apply.
+    # The child must not call hypr-set back and wait on its parent's lock.
+    cmd_kbd_remember(apply_niri=False)
     try:
-        subprocess.run([BIN + "/rice-niri", "apply"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=20)
+        subprocess.run([BIN + "/rice-niri", "apply", "--skip-keyboard-remember"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=20)
     except Exception:
         pass
 
@@ -150,7 +155,9 @@ def rgba(h):
 
 
 def mon_rate(x):
-    return ("%.2f" % float(x)).rstrip("0").rstrip(".")
+    # niri wants the refresh rate exactly as `niri msg outputs` shows it, down to the third decimal (74.973, not
+    # 74.97: a mode that does not match is dropped and the screen stays at 60 Hz). Hyprland takes two.
+    return (("%.3f" if NIRI else "%.2f") % float(x)).rstrip("0").rstrip(".")
 
 
 # Motion styles (Settings > Motion). calm = the curves of hyprland.lua; the spring ones use Hyprland's spring curves.
@@ -288,12 +295,19 @@ def generate(s):
     return "\n".join(L) + "\n"
 
 
-def save(s):
+def write_atomic(path, text):
+    tmp = path + ".tmp"
+    with open(tmp, "w") as f:
+        f.write(text)
+    os.replace(tmp, path)
+
+
+def save(s, apply_niri=True):
     os.makedirs(DIR, exist_ok=True)
-    json.dump(s, open(ST, "w"), indent=2)
+    write_atomic(ST, json.dumps(s, indent=2))
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    open(OUT, "w").write(generate(s))
-    if NIRI:
+    write_atomic(OUT, generate(s))
+    if NIRI and apply_niri:
         niri_apply()
 
 
@@ -954,27 +968,75 @@ def cmd_kbd_set(layouts):
     print("Keyboard: " + ", ".join(lays))
 
 
-def cmd_kbd_remember():
-    """Before an update: the keyboard layout Hyprland uses now (set by hand in hyprland.lua, or by another tool) is
-    kept in hypr.json when the Settings app has none, so the update does not put the keyboard back to US."""
-    if NIRI or not shutil.which("hyprctl"):
-        return
+def kbd_from_files():
+    """the layout written in your Hyprland config files (hyprland.lua and the files next to it, before the update
+    replaces them), and in niri's config: kb_layout = "pl" / layout "pl" """
+    found = {}
+    hd = HOME + "/.config/hypr"
+    files = [hd + "/hyprland.lua"]
+    try:
+        files += sorted(hd + "/" + f for f in os.listdir(hd) if f.endswith((".lua", ".conf")) and f != "hyprland.lua")
+    except OSError:
+        pass
+    files.append(HOME + "/.config/niri/config.kdl")
+    pats = {"layouts": (r'kb_layout\s*=\s*"([^"]*)"', r'^\s*kb_layout\s*=\s*([^\s#]+)', r'^\s*layout\s+"([^"]*)"'),
+            "variants": (r'kb_variant\s*=\s*"([^"]*)"', r'^\s*kb_variant\s*=\s*([^\s#]+)', r'^\s*variant\s+"([^"]*)"'),
+            "options": (r'kb_options\s*=\s*"([^"]*)"', r'^\s*kb_options\s*=\s*([^\s#]+)', r'^\s*options\s+"([^"]*)"')}
+    for f in files:
+        try:
+            txt = "\n".join(ln for ln in open(f, errors="replace").read().splitlines() if not ln.lstrip().startswith(("--", "#", "//")))
+        except OSError:
+            continue
+        lay = ""
+        for pat in pats["layouts"]:
+            m = re.search(pat, txt, re.M)
+            if m and m.group(1).strip() and m.group(1).strip() != "us":
+                lay = m.group(1).strip()
+                break
+        if lay:
+            found["layouts"] = lay
+            for k in ("variants", "options"):
+                for pat in pats[k]:
+                    m = re.search(pat, txt, re.M)
+                    if m:
+                        found[k] = m.group(1).strip()
+                        break
+            return found
+    return found
+
+
+def cmd_kbd_remember(apply_niri=True):
+    """Before an update: the keyboard layout in use now (set by hand in hyprland.lua or niri's config, or by another
+    tool) is kept in hypr.json when the Settings app has none, so the update does not put the keyboard back to US.
+    Hyprland is asked first; when it cannot answer (niri, a terminal without Hyprland, a getoption that answers in
+    another shape), the config files are read."""
     s = load()
     if s["kbd"].get("layouts"):
         return
-    def opt(k):
-        try:
-            return (json.loads(sh(["hyprctl", "-j", "getoption", "input:" + k])) or {}).get("str", "") or ""
-        except Exception:
+    k = {}
+    if not NIRI and shutil.which("hyprctl"):
+        def opt(n):
+            try:
+                j = json.loads(sh(["hyprctl", "-j", "getoption", "input:" + n])) or {}
+            except Exception:
+                return ""
+            for key in ("str", "value", "data"):
+                v = j.get(key)
+                if isinstance(v, str) and v.strip() and v.strip() != "[[EMPTY]]":
+                    return v.strip()
             return ""
-    lay = opt("kb_layout").strip()
-    if not lay or lay == "us":
+        lay = opt("kb_layout")
+        if lay and lay != "us":
+            k = {"layouts": lay, "variants": opt("kb_variant"), "options": opt("kb_options")}
+    if not k:
+        k = kbd_from_files()
+    if not k.get("layouts"):
         return
-    s["kbd"]["layouts"] = lay
-    s["kbd"]["variants"] = opt("kb_variant").strip()
-    s["kbd"]["options"] = opt("kb_options").strip()
-    save(s)
-    print("Keyboard layout kept: " + lay)
+    s["kbd"]["layouts"] = k["layouts"]
+    s["kbd"]["variants"] = k.get("variants", "")
+    s["kbd"]["options"] = k.get("options", "")
+    save(s, apply_niri=apply_niri)
+    print("Keyboard layout kept: " + k["layouts"])
 
 
 def cmd_regen():
@@ -1004,7 +1066,7 @@ def cmd_reset_all():
     for f in (ST, PREV, FLAG):
         if os.path.exists(f):
             os.remove(f)
-    open(OUT, "w").write("-- generated by rice-settings (hypr-set)\n")
+    write_atomic(OUT, "-- generated by rice-settings (hypr-set)\n")
     cmd_reload()
 
 
@@ -1031,7 +1093,12 @@ def main(a):
     }
     if c not in table or len(r) != table[c][0]:
         die("bad command or arguments: " + c)
+    # one writer at a time (theme apply + a Settings slider): a half-written file would reset every setting
+    os.makedirs(DIR, exist_ok=True)
+    lk = open(LOCK, "w")
+    fcntl.flock(lk, fcntl.LOCK_EX)
     table[c][1](*r)
 
 
-main(sys.argv)
+if __name__ == "__main__":
+    main(sys.argv)

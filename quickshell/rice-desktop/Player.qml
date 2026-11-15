@@ -1,11 +1,17 @@
+pragma Singleton
+import Quickshell
 import Quickshell.Services.Mpris
 import QtQuick
 
 // The music player the widgets follow: the one that plays, else the first one. Its position is asked for
-// once a second while it plays (Mpris does not send it by itself).
-QtObject {
+// once a second while a widget that shows it is out (hold() on the way in, release() on the way out).
+Singleton {
     id: pl
-    property bool running: true
+    // how many places show the player right now (0: nothing ticks)
+    property int users: 0
+    function hold() { users++ }
+    function release() { users = Math.max(0, users - 1) }
+    readonly property bool running: users > 0
     function pick() {
         const l = Mpris.players.values
         for (let i = 0; i < l.length; i++) if (l[i].isPlaying) return l[i]
