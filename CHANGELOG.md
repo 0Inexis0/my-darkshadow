@@ -1,5 +1,10 @@
 # Changelog
 
+## V4.74: the wallpaper moves while you hold SUPER + ALT, not only after
+- Fix: with SUPER + ALT + mouse the wallpaper (and the bar stepping aside) only reacted after you let go. The live moves went over Quickshell's SocketServer, which delivered nothing on some systems. rice-canvasd now sends them as datagrams to a small listener the shell runs (the way Sarods2D's Iridium Shell feeds its parallax), so the wallpaper moves with the windows while you hold the keys. Moves that arrive together are added up, and the wallpaper glides with an animation made for a target that changes many times a second (smoother)
+- An updated rice-canvasd replaces the one still running from before the update, as soon as Infinite Desktop turns on (no logout needed)
+- The switch is in Settings > Desktop > Infinite Desktop: "The wallpaper moves with it" (`rice-infinite set wall 0|1`)
+
 ## V4.73: the wallpaper follows every move at once
 - Fix: after a long trip over the canvas the moving wallpaper stayed at the end of its room, and moving back did nothing until you had come a long way back. It is now counted from the moves themselves: every move the other way moves it back at once, and it moves a little more per pixel (0.3)
 - rice-canvasd connects to the shell at the start of every hold, so the first move of a hold already moves the wallpaper

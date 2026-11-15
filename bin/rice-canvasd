@@ -237,40 +237,18 @@ def tell():
 
 
 # the shell listens here (Infinite.qml): "hold 1", "pan DX DY", "hold 0", so the wallpaper moves with the canvas and
-# the bar gets out of the way. Best effort: no shell, an old shell or a full socket never slows the canvas down.
+# the bar gets out of the way. Datagrams, sent and forgotten (the way Sarods2D's Iridium Shell feeds its parallax):
+# no connection to keep, no shell or an old shell never slows the canvas down, a shell that restarts just hears again
 SHELL_SOCK = os.path.join(RUN, "rice-canvas.sock")
-_shell = {"s": None, "t": 0.0}
+_shell = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+_shell.setblocking(False)
 
 
 def shell_say(line):
-    s = _shell["s"]
-    if s is None:
-        # a new hold may always try (the shell may have started since); the moves in between only every 2 s
-        if (time.time() - _shell["t"] < 2 and line != "hold 1") or not os.path.exists(SHELL_SOCK):
-            return
-        _shell["t"] = time.time()
-        try:
-            s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            s.setblocking(False)
-            s.connect(SHELL_SOCK)
-            _shell["s"] = s
-        except OSError:
-            try:
-                s.close()
-            except OSError:
-                pass
-            return
     try:
-        s.send((line + "\n").encode())
-    except BlockingIOError:
-        pass
+        _shell.sendto(line.encode(), SHELL_SOCK)
     except OSError:
-        try:
-            s.close()
-        except OSError:
-            pass
-        _shell["s"] = None
-        _shell["t"] = time.time()
+        pass
 
 
 def hypr_eval(code):
@@ -512,7 +490,12 @@ def main():
             return
         sig, grp = proc_info(pid)
         mine = os.environ.get("HYPRLAND_INSTANCE_SIGNATURE", "")
-        if sig == mine and (grp or input_gid() not in os.getgroups()):
+        # an older copy (this file was updated after it started) is replaced too, so an update takes effect at once
+        try:
+            stale = os.stat(os.path.abspath(__file__)).st_mtime > os.stat("/proc/%d" % pid).st_mtime + 1
+        except OSError:
+            stale = False
+        if sig == mine and (grp or input_gid() not in os.getgroups()) and not stale:
             return
         try:
             os.kill(pid, signal.SIGTERM)

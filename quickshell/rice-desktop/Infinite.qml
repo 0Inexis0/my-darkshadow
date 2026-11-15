@@ -73,21 +73,34 @@ Singleton {
         onLoadFailed: { cv.wallOn = true; cv.hideBarOn = true }
     }
 
-    // the socket rice-canvasd writes to. Made on the fly: a Quickshell without SocketServer only loses the live
-    // part (the wallpaper then moves when you let go, and the bar stays)
+    // rice-canvasd's messages: a small listener (python3) on a datagram socket, one line per message on its output.
+    // (V4.74: Quickshell's SocketServer delivered nothing on some systems, so the wallpaper only moved after you let
+    // go. Iridium Shell by Sarods2D feeds its parallax this way.) Moves that come in together are added up.
     readonly property string sock: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/rice-canvas.sock"
-    property var server: null
     Process {
-        id: clean
-        // a socket file left from the last start would keep the new one from listening
-        command: ["rm", "-f", cv.sock]
+        id: listen
         running: Wm.hypr
-        onExited: {
-            try {
-                cv.server = Qt.createQmlObject('import Quickshell.Io\nSocketServer { id: srv; property var target; active: true; path: "' + cv.sock
-                    + '"; handler: Socket { parser: SplitParser { onRead: function(l) { srv.target.msg(l) } } } }', cv, "canvassock")
-                cv.server.target = cv
-            } catch (e) { cv.server = null }
-        }
+        command: ["python3", "-u", "-c", "import os, select, socket, sys\n"
+            + "p = sys.argv[1]\n"
+            + "try: os.unlink(p)\nexcept OSError: pass\n"
+            + "s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM); s.bind(p); s.setblocking(False)\n"
+            + "while True:\n"
+            + "    select.select([s], [], [])\n"
+            + "    dx = dy = 0\n"
+            + "    while True:\n"
+            + "        try: d = s.recv(256).decode(errors='replace').split()\n"
+            + "        except (BlockingIOError, InterruptedError): break\n"
+            + "        if len(d) == 3 and d[0] == 'pan':\n"
+            + "            try: dx += float(d[1]); dy += float(d[2])\n"
+            + "            except ValueError: pass\n"
+            + "        elif len(d) == 2 and d[0] == 'hold':\n"
+            + "            if dx or dy: print('pan %g %g' % (dx, dy)); dx = dy = 0\n"
+            + "            print('hold ' + ('1' if d[1] == '1' else '0'))\n"
+            + "    if dx or dy: print('pan %g %g' % (dx, dy))\n"
+            + "    sys.stdout.flush()\n", cv.sock]
+        stdout: SplitParser { onRead: function(l) { cv.msg(l) } }
+        // it stopped (python3 missing, a crash): try again in a while
+        onExited: restartT.restart()
     }
+    Timer { id: restartT; interval: 5000; onTriggered: if (Wm.hypr) listen.running = true }
 }

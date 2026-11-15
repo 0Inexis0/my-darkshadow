@@ -59,8 +59,10 @@ PanelWindow {
     // live (SUPER + ALT + mouse): it follows closely; a glide (keys, the next window) or a zoom: a slower glide
     property real px: tx
     property real py: ty
-    Behavior on px { NumberAnimation { duration: Infinite.live ? 120 : 520; easing.type: Easing.OutCubic } }
-    Behavior on py { NumberAnimation { duration: Infinite.live ? 120 : 520; easing.type: Easing.OutCubic } }
+    // SmoothedAnimation: made for a target that changes many times a second (it keeps its speed instead of
+    // starting over at every step, which made the live move stutter)
+    Behavior on px { SmoothedAnimation { duration: Infinite.live ? 110 : 500; velocity: -1 } }
+    Behavior on py { SmoothedAnimation { duration: Infinite.live ? 110 : 500; velocity: -1 } }
 
     Image {
         id: img
