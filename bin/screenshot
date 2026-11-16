@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# SUPER + SHIFT + S: the screenshot tool (the same one as Print: the screen frozen, then Region / Window / Screen).
+# Without rice-hotcorner: the plain way (slurp, saved and copied)
+hc="$HOME/.local/bin/rice-hotcorner"
+[ -x "$hc" ] && exec "$hc" shot "${1:-region}"
 mkdir -p "$HOME/Pictures/Screenshots"
 f="$HOME/Pictures/Screenshots/$(date +%Y-%m-%d_%H-%M-%S).png"
 geom=$(slurp) || exit 0

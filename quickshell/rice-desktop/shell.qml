@@ -573,6 +573,8 @@ ShellRoot {
     WallLum { path: root.wallpaper; sw: root.sw; sh: root.sh }
     // niri: the blurred wallpaper behind the workspaces in the overview (SUPER + Tab)
     NiriBackdrop { path: root.wallpaper }
+    // Infinite Desktop: the wallpaper moves with the canvas (Hyprland)
+    WallCanvas { path: root.wallpaper }
 
     EditorWindow { root: root }
 
@@ -605,6 +607,8 @@ ShellRoot {
     LazyPanel { name: "wifi-open"; WifiMenu { } }
     LazyPanel { name: "bluetooth-open"; BluetoothMenu { } }
     LazyPanel { name: "power-open"; PowerMenu { } }
+    // Print: the screenshot tool (the screen frozen, then Region / Window / Screen)
+    LazyPanel { name: "snip-open"; Snip { } }
     LazyPanel { name: "volume-open"; VolumeMenu { } }
     VolumeOsd { islandTakes: mainBar.islandVolume }
     LazyPanel { name: "gamebar-open"; GamePanel { gb: root.cfg.gamebar ? root.cfg.gamebar : ({}) } }

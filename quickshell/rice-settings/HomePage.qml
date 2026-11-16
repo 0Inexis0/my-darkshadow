@@ -81,7 +81,7 @@ Item {
     // power-profiles-daemon is installed but not running: start it (asks for your password)
     Process {
         id: startPP
-        command: ["bash", "-c", "systemctl start power-profiles-daemon.service 2>&1 || pkexec systemctl enable --now power-profiles-daemon.service 2>&1"]
+        command: ["bash", "-c", "if [ -d /run/systemd/system ]; then systemctl start power-profiles-daemon.service 2>&1 || pkexec systemctl enable --now power-profiles-daemon.service 2>&1; else pkexec \"$HOME/.local/bin/rice-sys\" service-enable power-profiles-daemon 2>&1; fi"]
         onExited: function(code) { page.ctl.status = code === 0 ? I18n.t("Power modes are on") : I18n.t("Could not start power-profiles-daemon"); page.readProfile() }
     }
     property bool ppInstalled: false

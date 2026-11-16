@@ -74,7 +74,8 @@ PanelWindow {
     readonly property bool shadowOn: bc.shadow !== false && Look.shadows && Look.shadowBar
     // auto-hide: shown while the pointer is on it (and a moment after it leaves)
     property bool peek: false
-    readonly property bool shownBar: !hideOn || peek || !on
+    // Infinite Desktop: it gets out of the way while you move the canvas (SUPER + ALT + mouse)
+    readonly property bool shownBar: (!hideOn || peek || !on) && !(on && Infinite.hideUi)
     Timer { id: leaveT; interval: 700; onTriggered: bar.peek = false }
     readonly property bool island: sty === "island"
     readonly property bool floating: sty !== "flat"
@@ -83,10 +84,13 @@ PanelWindow {
     readonly property var layRaw: bc.layout ? ({ left: noClock(bc.layout.left), center: noClock(bc.layout.center), right: noClock(bc.layout.right) })
         : ({ left: ["launcher", "workspaces", "title"], center: ["island"], right: ["music", "tray", "volume", "bluetooth", "network", "battery", "notifications", "power"] })
     function laid(l, k) { return (l.left || []).indexOf(k) >= 0 || (l.center || []).indexOf(k) >= 0 || (l.right || []).indexOf(k) >= 0 }
-    // the island is a module of the layout ("island", any zone, any style, with modules beside it). Dynamic without
-    // it in the layout puts it in the middle, as before
-    readonly property var lay: dyn && !laid(layRaw, "island")
-        ? ({ left: layRaw.left || [], center: ["island"], right: layRaw.right || [] }) : layRaw
+    // the island is a module of the layout ("island", any zone, any style, with modules beside it). Taken out in
+    // Bar layout (island_off) the bar has no island, only its cards (clock card, volume, notifications) stay.
+    // A layout from before that (no island in it, no island_off) still gets the island in the middle of the
+    // middle zone, and the modules that were in the middle stay (they were lost: the zone became just the island)
+    function withIsland(c) { const a = (c || []).slice(); a.splice(Math.floor(a.length / 2), 0, "island"); return a }
+    readonly property var lay: dyn && bc.island_off !== true && !laid(layRaw, "island")
+        ? ({ left: layRaw.left || [], center: withIsland(layRaw.center), right: layRaw.right || [] }) : layRaw
     readonly property bool hasIsland: on && laid(lay, "island")
     property Item islSlot: null                 // where the island sits in its zone
     readonly property bool islAlone: ["left", "center", "right"].some(function(z) { const m = lay[z] || []; return m.length === 1 && m[0] === "island" })

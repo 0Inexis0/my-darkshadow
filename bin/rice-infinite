@@ -28,7 +28,7 @@ case "$1" in
     case "$1" in on) f='RiceInfinite.set(true)' ;; off) f='RiceInfinite.set(false)' ;; *) f='RiceInfinite.toggle()' ;; esac
     hyprctl eval "if RiceInfinite then $f end" >/dev/null ;;
   set)
-    case "$2" in step|min|pan|speed|dir|push) ;; *) echo "set step|min|pan|speed|dir|push N" >&2; exit 2 ;; esac
+    case "$2" in step|min|pan|speed|dir|push|wall|hidebar|wallzoom) ;; *) echo "set step|min|pan|speed|dir|push|wall|hidebar|wallzoom N" >&2; exit 2 ;; esac
     case "$3" in ''|*[!0-9.]*) echo "a number" >&2; exit 2 ;; esac
     touch "$conf"
     if grep -q "^$2=" "$conf"; then sed -i "s/^$2=.*/$2=$3/" "$conf"; else echo "$2=$3" >>"$conf"; fi
@@ -44,8 +44,16 @@ case "$1" in
     elif niri; then "$HOME/.local/bin/rice-niri" apply >/dev/null 2>&1; fi ;;
   daemon)
     # SUPER + ALT + mouse (Hyprland starts it when Infinite Desktop turns on)
-    command -v setsid >/dev/null 2>&1 && setsid -f "$HOME/.local/bin/rice-canvasd" >/dev/null 2>&1 </dev/null \
-      || { nohup "$HOME/.local/bin/rice-canvasd" >/dev/null 2>&1 </dev/null & } ;;
+    # you joined the input group (it is in /etc/group) but this login started before: the groups of a login are
+    # fixed when it starts, so without logging out the daemon is started with the group by sg (no password: you are
+    # a member). Then SUPER + ALT works right away.
+    cmd="$HOME/.local/bin/rice-canvasd"
+    if ! id -nG | tr ' ' '\n' | grep -qx input && getent group input 2>/dev/null | cut -d: -f4 | tr ',' '\n' | grep -qx "$USER" \
+       && command -v sg >/dev/null 2>&1; then
+      setsid -f sg input -c "exec $cmd" >/dev/null 2>&1 </dev/null && exit 0
+    fi
+    command -v setsid >/dev/null 2>&1 && setsid -f "$cmd" >/dev/null 2>&1 </dev/null \
+      || { nohup "$cmd" >/dev/null 2>&1 </dev/null & } ;;
   daemon-stop)
     p="${XDG_RUNTIME_DIR:-/tmp}/rice-canvasd.pid"
     [ -f "$p" ] && kill "$(cat "$p")" 2>/dev/null; rm -f "$p" ;;
@@ -80,8 +88,9 @@ case "$1" in
     if niri; then grep -qs '"on": *true' "$c/infinite-niri.json" && on=1 || on=0; z=1; fi
     if niri; then dt="SUPER + ALT + F"; dg="SUPER + ALT + SHIFT"; else dt="SUPER + F"; dg="SUPER + CTRL"; fi
     kt=$(val key_toggle "$conf"); kh=$(val mod_hold "$conf"); kg=$(val mod_go "$conf"); kz=$(val mod_zoom "$conf")
-    keys=$(printf '"keys":{"key_toggle":"%s","mod_hold":"%s","mod_go":"%s","mod_zoom":"%s"},"niri":%s,' \
-      "${kt:-$dt}" "${kh:-SUPER + ALT}" "${kg:-$dg}" "${kz:-CTRL}" "$(niri && echo true || echo false)")
+    keys=$(printf '"keys":{"key_toggle":"%s","mod_hold":"%s","mod_go":"%s","mod_zoom":"%s"},"niri":%s,"wall":%s,"hidebar":%s,"wallzoom":%s,' \
+      "${kt:-$dt}" "${kh:-SUPER + ALT}" "${kg:-$dg}" "${kz:-CTRL}" "$(niri && echo true || echo false)" \
+      "$([ "$(val wall "$conf")" = 0 ] && echo 0 || echo 1)" "$([ "$(val hidebar "$conf")" = 0 ] && echo 0 || echo 1)" "$(val wallzoom "$conf" | grep . || echo 1.15)")
         d="${XDG_RUNTIME_DIR:-/tmp}/rice-canvasd"
     run=false; [ -f "$d.pid" ] && kill -0 "$(cat "$d.pid")" 2>/dev/null && run=true
     printf '{'"$keys"'"hypr":%s,"on":%s,"zoom":%s,"step":%s,"min":%s,"pan":%s,"speed":%s,"dir":%s,"push":%s,"input":%s,"group":%s,"loaded":%s,"nixos":%s,"daemon":%s,"devices":%s}\n' \

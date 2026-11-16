@@ -1,5 +1,95 @@
 # Changelog
 
+## V4.76: SUPER + SHIFT + S opens the new screenshot tool
+- SUPER + SHIFT + S still opened the old selection (slurp). It opens the new screenshot tool now, the same one as Print (Hyprland and niri). Good for keyboards without a Print key
+
+## V4.75: a new screenshot tool, wallpaper zoom
+- Screenshots, redesigned (Print, and the dashboard's screenshot button): the screen freezes the moment you press the key, then a Material 3 toolbar at the bottom lets you pick:
+  - **Region**: drag a box, move it by dragging inside, resize it by its corners; its size in real pixels sits above it, and a rounded loupe shows the pixels under the pointer while you drag
+  - **Window**: point at a window (it is outlined, with its app name), click to save it (Hyprland)
+  - **Screen**: the whole screen
+  - Save (Enter, or double-click the box) keeps it in Pictures/Screenshots and copies it (as set in Settings), Copy (Ctrl+C) only copies, Edit (E) opens it in satty or swappy when you have one, Esc or a right click cancels; 1 / 2 / 3 (R / W / S) switch the mode
+  - The crop is taken from the frozen picture at full resolution, so menus and hover states are kept. Without the shell it falls back to the old selection (slurp). SHIFT + Print still saves the whole screen at once
+- Infinite Desktop: "Wallpaper zoom" in Settings > Desktop > Infinite Desktop (1.05x to 1.5x, `rice-infinite set wallzoom 1.1`). The default is smaller now (1.15x instead of 1.42x), so the moving wallpaper looks much closer to your wallpaper
+
+## V4.74: the wallpaper moves while you hold SUPER + ALT, not only after
+- Fix: with SUPER + ALT + mouse the wallpaper (and the bar stepping aside) only reacted after you let go. The live moves went over Quickshell's SocketServer, which delivered nothing on some systems. rice-canvasd now sends them as datagrams to a small listener the shell runs (the way Sarods2D's Iridium Shell feeds its parallax), so the wallpaper moves with the windows while you hold the keys. Moves that arrive together are added up, and the wallpaper glides with an animation made for a target that changes many times a second (smoother)
+- An updated rice-canvasd replaces the one still running from before the update, as soon as Infinite Desktop turns on (no logout needed)
+- The switch is in Settings > Desktop > Infinite Desktop: "The wallpaper moves with it" (`rice-infinite set wall 0|1`)
+
+## V4.73: the wallpaper follows every move at once
+- Fix: after a long trip over the canvas the moving wallpaper stayed at the end of its room, and moving back did nothing until you had come a long way back. It is now counted from the moves themselves: every move the other way moves it back at once, and it moves a little more per pixel (0.3)
+- rice-canvasd connects to the shell at the start of every hold, so the first move of a hold already moves the wallpaper
+
+## V4.72: no crash when Infinite Desktop turns on
+- Fix: Quickshell crashed right after turning Infinite Desktop on (V4.71, seen on Artix with NVIDIA: QWaylandWindow::calculateExposure). The moving wallpaper's surface was mapped and unmapped together with its picture's loading state, a binding loop that made Qt's Wayland client trip over a window being taken away. The surface now stays (see-through) while the feature is on and only the picture inside it comes and goes
+
+## V4.71: Infinite Desktop: the wallpaper travels with you, the bar steps aside
+- Infinite Desktop (Hyprland): the wallpaper moves with the canvas, slower than the windows, as if you travelled over a big picture. Turning Infinite Desktop on grows the wallpaper a little from exactly where it is (room to move), and turning it off brings it back the same way. Live while you hold SUPER + ALT and move the mouse, a smooth glide with the keys, the wheel and SUPER + CTRL + arrows. At the end of the picture it slows down softly instead of stopping
+- While you move the canvas with SUPER + ALT + mouse, the bar (with the island) and the dock slide away and come back a moment after you let go
+- Both can be turned off: Settings > Desktop > Infinite Desktop ("The wallpaper moves with it", "The bar and the dock step aside while you move"), or `rice-infinite set wall 0`, `rice-infinite set hidebar 0`
+- The moving wallpaper and the bar hiding while you pan are inspired by Sarods2D's Iridium Shell
+
+## V4.70: Flatpak on Artix (and other systems without systemd)
+- Fix: Flatpak apps (Spotify, Discord ...) did not start or had no tray / portals on Artix: "Unknown or unsupported transport 'disabled'". `dbus-run-session` makes a D-Bus bus with an abstract address, which Flatpak cannot use; systemd would put the bus at `$XDG_RUNTIME_DIR/bus`. The "Hyprland (DarkShadow)" and "niri (DarkShadow)" login sessions now start through `rice-session` (installed in /usr/local/bin), which starts the bus there and stops it with the session. Log out and pick the session again after updating. From a console: `rice-session Hyprland`
+
+## V4.69: Infinite Desktop works right after "Allow", without logging out
+- Fix: you join the input group, but the login you are in keeps the groups it started with, so SUPER + ALT + mouse stayed dead until you logged out and in. `rice-infinite daemon` (and Hyprland's start of it) now starts the daemon through `sg input` when you are in the group in /etc/group but this login is not, and a new daemon replaces the old one that cannot read the input devices. Run `rice-infinite daemon` once after updating and it works
+
+## V4.68: Infinite Desktop on Artix, Artix on the README
+- Fix: SUPER + ALT + mouse did nothing after joining the input group (seen on Artix). A copy of rice-canvasd from the session before (started without the input group) kept running and held the lock, so the new one never started; whether Hyprland was still there was judged by its folder, which can stay after a logout. Now Hyprland must answer on its socket, and a new copy stops an old one that belongs to another session or cannot read the input devices
+- `rice-infinite check` tells more: whether you are in the input group in /etc/group and in this login, and whether the running daemon belongs to this Hyprland and can read the input devices
+- README: Artix Linux is listed as supported (badge and table)
+
+## V4.67: Artix system update no longer stops on a package clash
+- Fix (installer, Artix): the system update stopped with "geocode-glib-3.26.4-6 and geocode-glib-common-3.26.4-5 are in conflict". With Arch's `[extra]` on, Artix's own build of a package replaces Arch's and the old split-off part has to be removed; `--noconfirm` said no to that. On Artix the update now says yes to removing the conflicting package (`--ask=4`), and if it still fails it tells you what to answer by hand
+
+## V4.66: Files glass really shows up
+- Fix: Files did not get the glass look and the blur (Artix, and anywhere Files was already running): Files stays running in the background after its window is closed and keeps the CSS it started with. It is now quit once when the glass / Material 3 look is written, so the next window opens with it
+
+## V4.65: Files glass, no more date module, steadier dock and weather
+- Files (Nautilus) in a Material 3 look: pill rows in the sidebar, round buttons and search, the selected item in the wallpaper's secondary-container color, and see-through surfaces so the compositor's blur shows behind it (works the same on Arch and Artix). The old window-wide opacity rule is gone, so the text stays sharp. Settings > Desktop > Look & Feel > "Glass and Material 3 shapes" turns it off (`rice-look files-glass off`). Icons stay Papirus
+- The date is part of the Dynamic island now (the island shows the day, the date and the time in a pill); the separate Date module is gone from Bar layout. "Date" in Settings > Dynamic island is on by default
+- Fix: a lighter square of blur past the rounded corners of widgets (the soft shadow was just opaque enough for Hyprland to blur it). With blur on, the shadow is kept below that
+- Fix: the dock appearing and disappearing again and again while the pointer rests on it (an "entered" event from a dock that is sliding away brought it back). It returns on real pointer movement only, and hides only when the pointer is really away
+- Fix: the weather popup and the Forecast widget stayed empty ("Looking outside...", "--") while the island showed the temperature: the long answer of wttr.in is slower and fails more often, so it is tried twice and, if it still fails, the short answer is used
+- Weather needs a place (it is not asked from your IP, on purpose): `rice-weather place "Warsaw"` or Settings > Language & region > Online lookups
+
+## V4.64: date in the island, removing the island keeps your bar
+- The Dynamic island now shows the date like the bar's Date module: `niedz., 15/11` and the time in a pill in your key color. It appears when "Date" is on in Settings > Dynamic island, or when the Date module is in your bar layout (the separate Date module is then hidden, so it is not shown twice)
+- Fix: removing the island (clock) from Bar layout also removed the launcher and everything else in the middle. Now only the island goes; the rest stays. Older layouts that have no island keep working
+- Infinite Desktop on Artix and other systems without systemd: SUPER+ALT needs your user in the `input` group (`sudo usermod -aG input $USER`, then log out and in). Settings > Desktop > Infinite Desktop > Allow does it for you
+
+## V4.63: no more "Invalid keyboard layout passed"
+- Fix: with a plain US keyboard, an update could save the layout with its quotes and comma (`"us",`, read from the line `kb_layout = "us",` in hyprland.lua) and Hyprland showed "Invalid keyboard layout passed". Values read from config files and from Hyprland are cleaned now, and a broken value saved before is mended by itself
+- The installer is not changed in this version
+
+## V4.62: Artix Linux
+- The installer supports Artix (OpenRC, runit, s6 and dinit). It is treated as Arch, and what systemd would do is done with your init:
+  - Arch's `[extra]` repository is turned on (`artix-archlinux-support`, as the Artix wiki says) when Hyprland is not in Artix's own repositories; a copy of pacman.conf stays as `pacman.conf.bak-darkshadow`
+  - Artix's service scripts for your init are installed (`networkmanager-openrc`, `bluez-openrc`, `power-profiles-daemon-openrc`, `sddm-openrc` ...) and D-Bus, elogind, NetworkManager, Bluetooth and power modes are turned on at boot
+  - new login sessions "Hyprland (DarkShadow)" and "niri (DarkShadow)" start with their own D-Bus (without it notifications, the tray, portals and Bluetooth do not work); from a console: `dbus-run-session Hyprland`
+  - a warning when ConnMan runs the network (NetworkManager is then left off) or when neither elogind nor seatd runs
+- `rice-sys service-enable` / `service-has`: turning a system service on with any init. The SDDM login screen and Settings > Home (power modes) use it without systemd
+- Fix: an update from Settings that changes the installer opens one terminal at most (once a minute) and that terminal no longer opens another one (the endless terminals of V4.56)
+
+## V4.61: rice-update starts again
+- Fix: `rice-update` crashed on start (`name 're' is not defined`) since V4.58. The import was missing. All Python tools were checked for the same kind of mistake
+- The installer is not changed in this version
+
+## V4.60: Infinite Desktop leaves app pop-ups alone (Steam notifications)
+Reported by R31tr0 (issue #19).
+- Steam's notification toasts (`notificationtoasts_*`) no longer move the canvas, get repositioned, or take focus: they stay where Steam puts them, like a pinned window. Before, a toast was taken as a canvas window, so it shifted the screen and the other windows
+- The installer is not changed in this version
+
+## V4.59: the Wi-Fi list no longer goes blank, and connecting always works
+Reported by a user: the networks sometimes vanish from the Wi-Fi menu and connecting sometimes does nothing, while the internet itself works.
+- The list keeps the last networks while NetworkManager is scanning or busy (it answers with an empty list for a moment), instead of showing nothing
+- A stuck `nmcli` can no longer freeze the list: every read and every connect has a time limit, and a connect that hangs is stopped, so the next click works
+- A saved network whose profile is named differently than the network ("Home 1") now connects by its SSID instead of failing
+- A timed-out connect says so
+- The installer is not changed in this version
+
 ## V4.58: fixes from the V4.55 audit, and the keyboard layout stays after an update
 Thanks to notwafel (pull request #18).
 - Bar on every screen: the bars share one `rice-services` and one `rice-weather` (BarSvc.qml) instead of each starting its own; the side bar uses it too

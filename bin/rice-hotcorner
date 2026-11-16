@@ -11,7 +11,9 @@ it also ran the hot corner panel, which was removed in V4.52; the name stays so 
   rice-hotcorner scheme KEY                                 color scheme (rice-colors)
   rice-hotcorner record full|region|stop
   rice-hotcorner rec-info                   recorder status + recent recordings (with thumbnails) as JSON
-  rice-hotcorner shot full|region
+  rice-hotcorner shot full|region|window     region and window: the screen is frozen and the shell's screenshot
+                                            tool opens (Snip.qml); without the shell: slurp
+  rice-hotcorner shot-done FILE save|copy|edit   what the shell's tool hands back (keeps, copies or edits the crop)
   rice-hotcorner show PATH | folder recordings|screenshots
 """
 import fcntl
@@ -543,7 +545,92 @@ def shot(mode):
             pass
 
 
+def focused_output():
+    """(name, scale) of the screen you are on (Hyprland or niri), or (None, 1)"""
+    try:
+        if os.environ.get("NIRI_SOCKET"):
+            code, out = q(["niri", "msg", "-j", "focused-output"], timeout=3)
+            j = json.loads(out) if code == 0 else {}
+            return j.get("name"), float((j.get("logical") or {}).get("scale", 1) or 1)
+        code, out = q(["hyprctl", "-j", "monitors"], timeout=3)
+        for m in json.loads(out) if code == 0 else []:
+            if m.get("focused"):
+                return m.get("name"), float(m.get("scale", 1) or 1)
+    except (ValueError, TypeError):
+        pass
+    return None, 1
+
+
+def snip(mode):
+    """the shell's screenshot tool: the screen is frozen first (grim), then the shell lets you choose. True when the
+    shell took it; False (no shell, an old shell, no grim output) and the plain selection tool runs instead"""
+    name, scale = focused_output()
+    if not name:
+        return False
+    run = os.environ.get("XDG_RUNTIME_DIR") or "/tmp"
+    # a new name every time: the shell can cache the picture (it draws it three times) without ever showing an old one
+    for old in glob.glob(run + "/rice-snip-*.png"):
+        try:
+            if time.time() - os.path.getmtime(old) > 60:
+                os.remove(old)
+        except OSError:
+            pass
+    pic = "%s/rice-snip-%d.png" % (run, int(time.time() * 1000))
+    code, _ = q(["grim", "-l", "0", "-o", name, pic], timeout=10)
+    if code != 0 or not os.path.exists(pic):
+        return False
+    ack = CACHE + "/snip-ack"
+    try:
+        os.remove(ack)
+    except OSError:
+        pass
+    t0 = time.time()
+    with open(CACHE + "/snip-open", "w") as f:
+        f.write("%.3f %s %s %s %s\n" % (t0, pic, name, scale, mode))
+    while time.time() - t0 < 2.5:
+        if os.path.exists(ack):
+            return True
+        time.sleep(0.05)
+    try:
+        os.remove(pic)
+    except OSError:
+        pass
+    return False
+
+
+def shot_done(src, what):
+    """the crop from the shell's tool: save (and copy, Settings > Dashboard), copy only, or open it in an editor"""
+    if not os.path.isfile(src):
+        return
+    c = load()
+    if what == "copy":
+        if shutil.which("wl-copy"):
+            with open(src, "rb") as fh:
+                subprocess.run(["wl-copy", "--type", "image/png"], stdin=fh, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        notify("Screenshot copied", "It is on the clipboard", src)
+        return
+    os.makedirs(SHOT_DIR, exist_ok=True)
+    f = time.strftime(SHOT_DIR + "/Screenshot_%Y-%m-%d_%H-%M-%S.png")
+    shutil.move(src, f)
+    if what == "edit":
+        for ed, args in (("satty", ["--filename", f, "--output-filename", f]), ("swappy", ["-f", f, "-o", f])):
+            if shutil.which(ed):
+                bg([ed] + args)
+                return
+    if c["clipboard"] and shutil.which("wl-copy"):
+        with open(f, "rb") as fh:
+            subprocess.run(["wl-copy", "--type", "image/png"], stdin=fh, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    notify("Screenshot saved", os.path.basename(f) + (" (copied)" if c["clipboard"] else ""), f)
+
+
 def shot_take(mode):
+    # Niri has no window rectangles in Snip; retain the region fallback.
+    if mode == "window" and os.environ.get("NIRI_SOCKET"):
+        mode = "region"
+    if mode in ("region", "window") and not os.environ.get("RICE_SNIP_OFF") and snip(mode):
+        return
+    if mode == "window":
+        mode = "region"
     c = load()
     os.makedirs(SHOT_DIR, exist_ok=True)
     f = time.strftime(SHOT_DIR + "/Screenshot_%Y-%m-%d_%H-%M-%S.png")
@@ -644,6 +731,8 @@ def main(argv):
         rec_info()
     elif cmd == "shot":
         shot(arg or "full")
+    elif cmd == "shot-done":
+        shot_done(arg, argv[3] if len(argv) > 3 else "save")
     elif cmd == "scheme":
         if arg:
             bg([HOME + "/.local/bin/rice-colors", "mode", arg])

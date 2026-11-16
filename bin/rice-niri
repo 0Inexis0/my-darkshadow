@@ -232,7 +232,7 @@ def default_binds(f, term, files):
         # screenshots and recording (niri's own screenshot tool is on Ctrl and Alt)
         ("Print", 'hotkey-overlay-title="Screenshot of an area"', run(b + "rice-hotcorner", "shot", "region")),
         ("Shift+Print", 'hotkey-overlay-title="Screenshot of the screen"', run(b + "rice-hotcorner", "shot", "full")),
-        ("Mod+Shift+S", 'hotkey-overlay-title=null', run(b + "screenshot")),
+        ("Mod+Shift+S", 'hotkey-overlay-title=null', run(b + "rice-hotcorner", "shot", "region")),
         ("Ctrl+Print", "", "screenshot-screen;"),
         ("Alt+Print", "", "screenshot-window;"),
         ("Mod+Shift+R", 'hotkey-overlay-title="Record the screen (again: stop)"', run(b + "rice-hotcorner", "record", "region")),

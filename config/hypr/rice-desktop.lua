@@ -7,10 +7,10 @@ hl.on("hyprland.start", function()
     hl.exec_cmd(os.getenv("HOME") .. "/.local/bin/rice-cursor restore")
 end)
 
--- see-through, blurred Nautilus (like Overskride) and floating pop-up apps.
+-- blurred Files (see rice-look) and floating pop-up apps.
 -- pcall: if your Hyprland does not know a key, it is skipped instead of breaking the config.
 local function rule(r) pcall(hl.window_rule, r) end
-rule({ name = "rice-nautilus-glass", match = { class = "org.gnome.Nautilus" }, opacity = "0.90 0.84" })
+-- Files is see-through through its own colors (rice-look: darkshadow.css), so its text stays sharp and the blur shows
 rule({ name = "rice-calendar-float", match = { class = "org.gnome.Calendar" }, float = true, center = true, size = "900 650" })
 
 -- full-screen layers that animate themselves: no extra pop-in from Hyprland
