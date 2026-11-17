@@ -600,8 +600,14 @@ ShellRoot {
     LazyPanel { name: "wifi-open"; WifiMenu { } }
     LazyPanel { name: "bluetooth-open"; BluetoothMenu { } }
     LazyPanel { name: "power-open"; PowerMenu { } }
-    // Print: the screenshot tool (the screen frozen, then Region / Window / Screen)
+    // Print: the screenshot tool (the screen frozen, then Region / Window / Screen / Color), and the record menu
     LazyPanel { name: "snip-open"; Snip { } }
+    // what the screenshot tool read (text, a translation, a color)
+    LazyPanel { name: "snip-result"; SnipResult { } }
+    // SUPER + /: every key on one sheet
+    LazyPanel { name: "keys-open"; Cheatsheet { } }
+    // SUPER + X: the toolbox (tasks, a note, a focus timer, a converter, the system, a chat)
+    LazyPanel { name: "tools-open"; Tools { } }
     LazyPanel { name: "volume-open"; VolumeMenu { } }
     VolumeOsd { islandTakes: mainBar.islandVolume }
     LazyPanel { name: "gamebar-open"; GamePanel { gb: root.cfg.gamebar ? root.cfg.gamebar : ({}) } }

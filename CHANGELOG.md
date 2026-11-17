@@ -1,5 +1,55 @@
 # Changelog
 
+## V4.83: smoother Edge bar, a see-through toolbox, a launcher in your wallpaper's colors
+- Edge bar: its parts no longer lag and swing when something changes (another workspace, the island growing for a notification or a recording): they follow the zones and the island in the same frame. New: Settings > Bar > "Frame along the edge" (off: only the pills stay, without the dark parts behind them)
+- Blur: the bar and the island are blurred on every install now (the rule only came with Settings > Launcher before), and the bar's Transparency is its own (it was made more solid on top, so the blur could hardly be seen)
+- Toolbox: Transparency and blur work (its cards were solid and covered most of the sheet; the default is 80% now). It opens like the control center: the title, then every part of the page one after another, then the tabs pop in; a tab you go to plays its parts in again
+- Launcher: a new "Wallpaper" look, the default: the wallpaper's colors instead of black with a white selection (it was "Shadow"; you can still pick that one in Settings > Launcher)
+- Also in this release: everything from V4.77 to V4.82 below (screenshot text / translate / color, the record menu, the key sheet, the toolbox, conversions, the Edge bar, files in the launcher, your own themes, live wallpapers on the login screen)
+
+## V4.82: the Edge bar, files in the launcher, your own themes
+- **Edge** (Settings > Bar > Bar style, `rice-bar set style edge`): a new bar style. It has the Dynamic style's look and island, but every part is one piece with the screen edge: the left part reaches the screen's left side, the right part its right side, the middle hangs from the edge, each with soft curves where it meets the edge. The modules sit on tonal pills inside. Also in the desktop's edit panel
+- **Launcher**: files and folders in your home show after three letters (fd, else locate, else a short search); Enter opens one. A "/" in front shows only files. `rice-tools files TEXT`
+- **Your own theme** (Settings > Appearance > Themes): "Save the look I have now" keeps the colors, the wallpaper, corners and shapes, the bar, widgets, notifications, window corners and gaps, motion and the font under a name. It shows with the other themes (marked "Yours"), one click brings all of it back, and the bin on its card takes it away. `rice-theme save NAME`, `rice-theme delete KEY`
+
+## V4.81: the toolbox's blur is on the toolbox only; the island is gone
+- Toolbox: with blur on, the whole screen behind the toolbox was blurred and a lighter square showed around the sheet. Now only the sheet itself is blurred (the dim behind it and its shadow stay under the blur rule's threshold)
+- Toolbox: the island (folding the sheet into a pill) is taken out again
+- Settings > Desktop > Toolbox: the little screen in the preview has round corners all the way (the dim in it was square)
+
+## V4.80: the toolbox as an island, its transparency and blur; live wallpapers on the login screen
+- Toolbox: the button next to the X folds it into an **island**, a small pill at its edge with the tab you were on and its one line (the timer's time, what is left to do ...); the windows under the rest of the screen stay usable, a click or SUPER + X opens it again. Settings > Desktop > Toolbox > "Open as an island" makes it start that way
+- Toolbox: **Transparency** (0 to 70%) and **Blur behind it** in Settings > Desktop > Toolbox (`rice-tools set opacity 0.7`, `rice-tools set blur off`)
+- Toolbox: new tabs at the bottom: the one you are on opens into a pill with its name, the others are round icons; the icon you go to tips over and back
+- Infinite Desktop: a new wallpaper fades in over the old one while the canvas is on (before, it changed with no animation at all, because the moving wallpaper covers the real one)
+- Login screen (SDDM): a **live wallpaper plays there too**. `rice-sddm sync` brings the video and a frame of that very video (before, the picture could stay the one of the wallpaper before). It needs QtMultimedia for SDDM's Qt (Arch / Artix: `qt6-multimedia qt6-multimedia-ffmpeg`); without it the picture stays. Run `rice-sddm install` once after this update, so the login screen gets its new files
+
+## V4.79: the toolbox opens like the control center, shows temperatures, and has its own settings page
+- Toolbox (SUPER + X): it opens the way the control center does: it comes out of its edge and grows the last bit, and the title, the page and the tabs follow one after the other; a soft light in your key color sits behind the title, and every tab says one line about itself under its name (tasks left, the timer's time, the processor's load and temperature ...)
+- Toolbox > System, made again: the processor and the graphics card each have a ring and a temperature pill that turns amber and red with the heat (and the processor's speed in GHz); memory, swap and disk show their percent; below them download and upload speed, how long the computer has been on, the load, and the fan and battery when the machine has them
+- The processor's temperature is found on more boards (sensors that only name the processor on one of their lines: Tctl, Package id 0, CPUTIN ...)
+- **Settings > Desktop > Toolbox** (new): the left or the right edge, the width, dim the screen behind it, close on a click outside, open on the tab you used last, which tabs it has and in what order, and its key (SUPER + X, SUPER + B, SUPER + ALT + T, or any other in Keybinds). `rice-tools state`, `rice-tools set side left`
+
+## V4.78: the toolbox, conversions in the launcher, a livelier key sheet
+- **Toolbox** (SUPER + X, `rice-tools toggle [tab]`): a sheet on the right edge with six tabs. Ctrl + 1 ... 6 or Ctrl + Tab changes the tab, Esc closes it
+  - **Tasks** and **Note**: the same list and note as the desktop widgets, so they are always in step
+  - **Timer**: a focus timer (15 to 60 minutes, then a break) with a wavy ring; it keeps counting while the toolbox is closed and tells you when the time is up
+  - **Convert**: length, mass, temperature, volume, speed, data, time and money; or type it whole ("10 km in mi"). A click on the answer copies it. Currency rates are the European Central Bank's, fetched at most twice a day and only when you use money
+  - **System**: processor, graphics, memory, swap and disk, measured only while the tab is on the screen
+  - **Chat**: talk to an AI model of your choice. By default Ollama on your own computer (nothing leaves it); the gear sets a service with an OpenAI-style API instead (address, model, your key, kept in ~/.config/rice/ai.json, readable only by you). The answer arrives word by word
+- Launcher: "10 km in mi", "72 f c", "100 usd pln" convert, like "2+2" calculates (Enter copies)
+- The key sheet (SUPER + /): typing folds away what does not match and the rest glides into place, what you typed is marked in your key color, matching keys pop, the groups count their matches, and the groups come up one after the other when it opens
+
+## V4.77: the screenshot tool reads text, translates, finds colors; a record menu; every key on one sheet
+- Screenshot tool (Print, SUPER + SHIFT + S), new in the toolbar:
+  - **Copy the text** (T): reads the text in the box and copies it (needs `tesseract` and a language, Arch: `sudo pacman -S tesseract tesseract-data-eng tesseract-data-pol`)
+  - **Translate** (L): that text in your language, on a small card in the corner (with `trans` from translate-shell when you have it, else Google's translator: the text is sent there, only when you press it)
+  - **Search with the picture** (G): copies the crop and opens Google Lens, Ctrl+V there pastes it (nothing is uploaded until you paste)
+  - **Color** (4 or C): a loupe follows the pointer, a click copies the color of that pixel (#RRGGBB, the card has rgb() too)
+  - The loupe is drawn in a plainer way now (V4.75's could come out empty on some graphics drivers)
+- Record menu (SUPER + SHIFT + R): the same toolbar over the live screen. Region, Window or Screen, computer sound and microphone on or off, then Record. Pressing the keys again stops it, as before. Without the shell it is the old selection (slurp)
+- Every key on one sheet (SUPER + /): all the shell's keys in groups, the ones you changed in your key color, type to find one. `rice-keymap show`; the key itself can be changed in Settings > System > Keybinds
+
 ## V4.76: SUPER + SHIFT + S opens the new screenshot tool
 - SUPER + SHIFT + S still opened the old selection (slurp). It opens the new screenshot tool now, the same one as Print (Hyprland and niri). Good for keyboards without a Print key
 

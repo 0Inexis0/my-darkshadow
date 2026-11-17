@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # prints one JSON line every 2 seconds (or every N seconds: rice-stats N):
+# (also: up = seconds since start, load, rx / tx = bytes a second, freq GHz, fan rpm, bat %, charging, cores)
 # {"cpu":N,"ram":N,"gpu":N,"temp":C,"gtemp":C,"ramu":GB,"ramt":GB,"swap":N,"swapu":GB,"swapt":GB,"disk":N,"disku":GB,"diskt":GB}
 # cpu/ram/gpu in %, temp = CPU temperature, gtemp = GPU temperature (0 when unknown)
 import glob
@@ -61,16 +62,79 @@ def hwmon(names):
     return 0
 
 
+CPU_LABELS = ("tctl", "tdie", "package id 0", "cpu", "cpu temperature", "cputin", "core 0", "tccd1")
+
+
 def cpu_temp():
-    t = hwmon(("k10temp", "coretemp", "zenpower", "cpu_thermal", "acpitz"))
+    t = hwmon(("k10temp", "coretemp", "zenpower", "zenpower3", "k8temp", "fam15h_power", "via_cputemp", "cpu_thermal"))
     if t:
         return t
-    for z in glob.glob("/sys/class/thermal/thermal_zone*"):
-        if read(z + "/type") in ("x86_pkg_temp", "cpu-thermal", "TCPU", "acpitz"):
-            v = read(z + "/temp")
-            if v.isdigit():
+    # a sensor that names the processor on one of its lines (boards with their own chip: asus-ec, nct67xx, it87 ...)
+    for f in sorted(glob.glob("/sys/class/hwmon/hwmon*/temp*_label")):
+        if read(f).lower() in CPU_LABELS:
+            v = read(f.replace("_label", "_input"))
+            if v.isdigit() and 0 < int(v) < 130000:
                 return round(int(v) / 1000)
-    return 0
+    for z in glob.glob("/sys/class/thermal/thermal_zone*"):
+        if read(z + "/type") in ("x86_pkg_temp", "cpu-thermal", "TCPU", "acpitz", "soc_thermal", "cpu_thermal"):
+            v = read(z + "/temp")
+            if v.isdigit() and int(v) > 0:
+                return round(int(v) / 1000)
+    return hwmon(("acpitz", "thinkpad"))
+
+
+def fan():
+    """the fastest fan that turns, in turns a minute (0 when the board does not tell)"""
+    best = 0
+    for f in glob.glob("/sys/class/hwmon/hwmon*/fan*_input"):
+        v = read(f)
+        if v.isdigit():
+            best = max(best, int(v))
+    return best
+
+
+def battery():
+    """(percent, charging) of the first battery, or (-1, False)"""
+    for d in sorted(glob.glob("/sys/class/power_supply/BAT*")):
+        v = read(d + "/capacity")
+        if v.isdigit():
+            return int(v), read(d + "/status") in ("Charging", "Full")
+    return -1, False
+
+
+def net_bytes():
+    rx = tx = 0
+    try:
+        for ln in open("/proc/net/dev").readlines()[2:]:
+            name, rest = ln.split(":", 1)
+            if name.strip() == "lo":
+                continue
+            f = rest.split()
+            rx += int(f[0])
+            tx += int(f[8])
+    except Exception:
+        pass
+    return rx, tx
+
+
+def uptime():
+    try:
+        return int(float(open("/proc/uptime").read().split()[0]))
+    except Exception:
+        return 0
+
+
+def load1():
+    try:
+        return round(float(open("/proc/loadavg").read().split()[0]), 2)
+    except Exception:
+        return 0
+
+
+def freq():
+    """how fast the cores run right now, in GHz (their average)"""
+    v = [int(read(f)) for f in glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq/scaling_cur_freq") if read(f).isdigit()]
+    return round(sum(v) / len(v) / 1e6, 1) if v else 0
 
 
 NV = shutil.which("nvidia-smi")
@@ -99,6 +163,10 @@ if len(sys.argv) > 1:
         every = max(0.5, min(10.0, float(sys.argv[1])))
     except ValueError:
         pass
+import os
+CORES = os.cpu_count() or 1
+rx0, tx0 = net_bytes()
+t0 = time.time()
 idle0, tot0 = cpu_times()
 while True:
     time.sleep(every)
@@ -110,7 +178,15 @@ while True:
     g, gt = gpu()
     s, su, stt = swap()
     dk, du, dt2 = disk()
+    rx1, tx1 = net_bytes()
+    t1 = time.time()
+    span = max(0.2, t1 - t0)
+    rx, tx = max(0, int((rx1 - rx0) / span)), max(0, int((tx1 - tx0) / span))
+    rx0, tx0, t0 = rx1, tx1, t1
+    bat, chg = battery()
     sys.stdout.write(json.dumps({"cpu": max(0, min(100, c)), "ram": r, "gpu": max(0, min(100, g)),
                                  "temp": cpu_temp(), "gtemp": gt, "ramu": ru, "ramt": rt,
-                                 "swap": s, "swapu": su, "swapt": stt, "disk": dk, "disku": du, "diskt": dt2}) + "\n")
+                                 "swap": s, "swapu": su, "swapt": stt, "disk": dk, "disku": du, "diskt": dt2,
+                                 "up": uptime(), "load": load1(), "rx": rx, "tx": tx, "freq": freq(), "fan": fan(),
+                                 "bat": bat, "charging": chg, "cores": CORES}) + "\n")
     sys.stdout.flush()

@@ -8,6 +8,8 @@ Equicord, BetterDiscord), every time the colors change (a new wallpaper, another
   rice-theme list              the themes (JSON)
   rice-theme state             the theme you have and the apps it colors (JSON)
   rice-theme apply KEY         use a theme
+  rice-theme save NAME         your own theme: how the desktop looks right now, kept under a name (presets.json)
+  rice-theme delete KEY        take one of your own themes away again
   rice-theme app vscode|discord on|off
   rice-theme sync              color the apps again from your colors now (matugen calls it)
 """
@@ -70,6 +72,122 @@ THEMES = {
         "preview": ["#101518", "#8fa8b8", "#e2eaf0"]},
 }
 ORDER = ["darkshadow", "terminal", "glass", "neon", "ember", "frost"]
+PRESETS = DIR + "/presets.json"
+
+
+def jread(path):
+    try:
+        return json.load(open(path))
+    except Exception:
+        return {}
+
+
+# ---------------- your own themes ----------------
+def user_themes():
+    """your saved themes, checked: a broken entry is left out (key "user-...")"""
+    out = {}
+    for k, t in (jread(PRESETS).get("themes") or {}).items():
+        if not (isinstance(k, str) and k.startswith("user-") and isinstance(t, dict)):
+            continue
+        base = dict(THEMES["darkshadow"])
+        base.update({x: t[x] for x in base if x in t and type(t[x]) in (type(base[x]), int, float)})
+        base["name"] = str(t.get("name", k[5:]))[:40]
+        base["desc"] = str(t.get("desc", ""))[:120]
+        base["user"] = True
+        if isinstance(t.get("wallpaper"), str):
+            base["wallpaper"] = t["wallpaper"]
+        out[k] = base
+    return out
+
+
+def all_themes():
+    t = dict(THEMES)
+    t.update(user_themes())
+    return t
+
+
+def capture(name):
+    """the theme of how things look right now"""
+    p = jread(APPPREFS)
+    bar = jread(DIR + "/bar.json")
+    nt = jread(DIR + "/notify.json")
+    dk = jread(DIR + "/desktop.json")
+    hy = {}
+    try:
+        r = subprocess.run([BIN + "hypr-set", "state"], capture_output=True, text=True, timeout=10)
+        hy = (json.loads(r.stdout) or {}).get("opts", {})
+    except Exception:
+        pass
+    try:
+        mode = open(DIR + "/color-mode").read().strip() or "auto"
+    except OSError:
+        mode = "auto"
+    try:
+        font = (jread(DIR + "/fonts.json").get("main") or UI_FONT)
+    except Exception:
+        font = UI_FONT
+    try:
+        wall = open(HOME + "/.cache/hyprquickpaper-current").read().strip()
+    except OSError:
+        wall = ""
+    d = THEMES["darkshadow"]
+    pal = palette()
+
+    def num(v, dflt):
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return dflt
+    t = {
+        "name": name, "desc": "Your own theme",
+        "colors": mode, "corners": num(p.get("cornerScale"), d["corners"]), "shape": p.get("accentShape") or d["shape"],
+        "wavy": p.get("wavy", d["wavy"]) is not False, "motion": p.get("motion") or d["motion"],
+        "bounce": num(p.get("bounce"), d["bounce"]),
+        "bar": bar.get("style") or d["bar"], "bar_opacity": num(bar.get("opacity"), d["bar_opacity"]),
+        "widgets": dk.get("widgetTheme") or d["widgets"], "notify": nt.get("style") or d["notify"],
+        "notify_radius": int(num(nt.get("radius"), d["notify_radius"])),
+        "rounding": int(num(hy.get("decoration.rounding"), d["rounding"])), "gaps_in": int(num(hy.get("general.gaps_in"), d["gaps_in"])),
+        "gaps_out": int(num(hy.get("general.gaps_out"), d["gaps_out"])), "border": int(num(hy.get("general.border_size"), d["border"])),
+        "font": font,
+        "preview": [pal.get("surface", "#101014"), pal.get("primary", "#c9b68a"), pal.get("on_surface", "#e8e4dc")],
+    }
+    if wall and os.path.isfile(wall):
+        t["wallpaper"] = wall
+    return t
+
+
+def save_user(name):
+    name = name.strip()[:40]
+    if not name:
+        sys.exit("rice-theme save NAME")
+    key = "user-" + (re.sub(r"[^\w]+", "-", name.lower()).strip("-_") or "theme")
+    j = jread(PRESETS)
+    th = j.get("themes") if isinstance(j.get("themes"), dict) else {}
+    th[key] = capture(name)
+    j["themes"] = th
+    os.makedirs(DIR, exist_ok=True)
+    tmp = PRESETS + ".tmp"
+    json.dump(j, open(tmp, "w"), indent=1)
+    os.replace(tmp, PRESETS)
+    c = load()
+    c["theme"] = key
+    save(c)
+    print(key)
+
+
+def delete_user(key):
+    j = jread(PRESETS)
+    th = j.get("themes") if isinstance(j.get("themes"), dict) else {}
+    if key in th:
+        th.pop(key)
+        j["themes"] = th
+        tmp = PRESETS + ".tmp"
+        json.dump(j, open(tmp, "w"), indent=1)
+        os.replace(tmp, PRESETS)
+        c = load()
+        if c["theme"] == key:
+            c["theme"] = "darkshadow"
+            save(c)
 
 
 def load():
@@ -383,7 +501,7 @@ def set_prefs(kv):
 
 
 def apply(key):
-    t = THEMES[key]
+    t = all_themes()[key]
     c = load()
     c["theme"] = key
     save(c)
@@ -417,6 +535,21 @@ def apply(key):
         c.pop("font_was")
     save(c)
     # the colors last: the wallpaper's colors are made again, and the apps follow (sync)
+    # your own theme: its wallpaper too (that makes the colors as well)
+    w = t.get("wallpaper", "")
+    if t.get("user") and w and os.path.isfile(w):
+        hp = HOME + "/.config/quickshell/hyprquickpaper/commands.sh"
+        # the color mode first without making colors (the wallpaper below makes them, once)
+        try:
+            open(DIR + "/color-mode", "w").write(t["colors"] + "\n")
+        except OSError:
+            pass
+        if os.access(hp, os.X_OK):
+            run([hp, w], 180)
+        else:
+            tool("rice-walls", "set", w, t=180)
+        sync()
+        return
     tool("rice-colors", "mode", t["colors"], t=180)
     sync()
 
@@ -446,12 +579,17 @@ def main(a):
     cmd = a[1] if len(a) > 1 else ""
     arg = a[2] if len(a) > 2 else ""
     if cmd == "list":
+        u = user_themes()
         print(json.dumps({"current": load()["theme"],
-                          "themes": [dict(THEMES[k], key=k) for k in ORDER]}))
+                          "themes": [dict(THEMES[k], key=k) for k in ORDER] + [dict(u[k], key=k) for k in sorted(u)]}))
     elif cmd == "state":
         state()
-    elif cmd == "apply" and arg in THEMES:
+    elif cmd == "apply" and arg in all_themes():
         apply(arg)
+    elif cmd == "save" and arg:
+        save_user(" ".join(a[2:]))
+    elif cmd == "delete" and arg.startswith("user-"):
+        delete_user(arg)
     elif cmd == "app" and arg in ("vscode", "discord") and len(a) > 3 and a[3] in ("on", "off"):
         c = load()
         c["apps"][arg] = a[3] == "on"

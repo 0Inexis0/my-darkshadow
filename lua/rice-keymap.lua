@@ -32,6 +32,8 @@ RK.actions = {
     widgets   = { "SUPER + ALT + W",   exec(BIN .. "desktop-set edit toggle") },
     taskview  = { "SUPER + TAB",       exec(BIN .. "rice-taskview overview") },
     switcher  = { "ALT + TAB",         exec(BIN .. "rice-taskview switch") },
+    keys      = { "SUPER + slash",     exec(BIN .. "rice-keymap show") },
+    tools     = { "SUPER + X",         exec(BIN .. "rice-tools toggle") },
     infinite  = { "SUPER + F",         function() return function() if RiceInfinite then RiceInfinite.toggle() end end end },
 }
 

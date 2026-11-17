@@ -272,7 +272,7 @@ Item {
                 icon: "toolbar"; glyph: ""; title: Tr.t("Bar")
                 sub: (ep.bc.style || "islands") + "  ·  " + (ep.bc.position || "top") + (ep.bc.autohide === true ? Tr.t("  ·  auto-hide") : "")
                 Label { text: Tr.t("Style") }
-                Pills { options: [["flat", "Flat"], ["island", "Island"], ["islands", "Islands"], ["pills", "Pills"], ["notch", "Notch"], ["dynamic", "Dynamic"]]; current: ep.bc.style === "google" ? "dynamic" : (ep.bc.style || "islands")
+                Pills { options: [["flat", "Flat"], ["island", "Island"], ["islands", "Islands"], ["pills", "Pills"], ["notch", "Notch"], ["dynamic", "Dynamic"], ["edge", "Edge"]]; current: ep.bc.style === "google" ? "dynamic" : (ep.bc.style || "islands")
                     onChosen: function(v) { ep.setBar("style", v) } }
                 Label { text: Tr.t("Edge") }
                 Pills { options: [["top", "Top"], ["bottom", "Bottom"], ["left", "Left"], ["right", "Right"]]; current: ep.bc.position || "top"; onChosen: function(v) { ep.setBar("position", v) } }

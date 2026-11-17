@@ -166,6 +166,31 @@ sync() {
   local w im="" out="$U/theme.conf.user.tmp" f face
   command -v magick >/dev/null 2>&1 && im=magick || { command -v convert >/dev/null 2>&1 && im=convert; }
   w="$(wallpaper)"
+  # a live wallpaper: the video itself goes to the login screen too (it plays there when SDDM's Qt has QtMultimedia;
+  # else its picture stays). The picture is one frame of this very video, so the two always belong together
+  local live="" lv=""
+  live="$(cat "$HOME/.cache/rice/live-wallpaper" 2>/dev/null)"
+  rm -f "$U"/live.*.tmp 2>/dev/null
+  if [ -n "$live" ] && [ -f "$live" ]; then
+    local ext="${live##*.}"; ext="${ext,,}"
+    case "$ext" in mp4|webm|mkv|mov|m4v) ;; *) ext=mp4 ;; esac
+    lv="$U/live.$ext"
+    # copied only when it is another video (size and time kept in a small note next to it)
+    local sig; sig="$(stat -c '%s %Y' "$live" 2>/dev/null) $live"
+    if [ ! -f "$lv" ] || [ "$(cat "$U/live.sig" 2>/dev/null)" != "$sig" ]; then
+      for f in "$U"/live.*; do case "$f" in *.sig) ;; *) rm -f "$f" ;; esac; done
+      if cp -f "$live" "$lv.tmp" 2>/dev/null && mv -f "$lv.tmp" "$lv"; then printf '%s' "$sig" >"$U/live.sig"; else rm -f "$lv.tmp"; lv=""; fi
+    fi
+    if command -v ffmpeg >/dev/null 2>&1; then
+      local fr="$U/frame.tmp.jpg" ss
+      for ss in 1 0; do
+        ffmpeg -y -loglevel error -ss "$ss" -i "$live" -frames:v 1 -q:v 2 "$fr" </dev/null 2>/dev/null && [ -s "$fr" ] && break
+      done
+      [ -s "$fr" ] && w="$fr"
+    fi
+  else
+    rm -f "$U"/live.* 2>/dev/null
+  fi
   if [ -n "$w" ]; then
     if [ -n "$im" ]; then
       # a sharp one at screen size, and a blurred one (made small first: fast)
@@ -183,6 +208,7 @@ sync() {
     echo "[General]"
     [ -f "$U/bg.jpg" ] && echo "background=$U/bg.jpg"
     [ -f "$U/blur.jpg" ] && echo "backgroundBlur=$U/blur.jpg"
+    [ -n "$lv" ] && [ -f "$lv" ] && echo "backgroundVideo=$lv"
     [ -f "$U/font.ttf" ] && echo "font=$U/font.ttf"
     echo "avatarDir=$U/faces"
     local k v
@@ -201,6 +227,7 @@ except Exception: print("en")' "$HOME/.config/rice/settings-app.json")"
     if grep -q '"clock"[^,}]*12' "$HOME/.config/rice/region.json" 2>/dev/null; then echo "clock24=false"; else echo "clock24=true"; fi
   } >"$out"
   mv -f "$out" "$U/theme.conf.user"
+  rm -f "$U/frame.tmp.jpg"
   find "$U" -type f -exec chmod 644 {} + 2>/dev/null; find "$U" -type d -exec chmod 755 {} + 2>/dev/null
   echo "synced"
 }
