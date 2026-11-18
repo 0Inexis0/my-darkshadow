@@ -2,7 +2,6 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import QtQuick
-import QtQuick.Effects
 
 // Screenshots (Print, the dashboard): the screen is frozen the moment you press the key, then you pick what to keep.
 //   Region   drag a box; move it by dragging inside, resize it by its corners; a loupe shows the pixels while you drag
@@ -10,7 +9,11 @@ import QtQuick.Effects
 //   Screen   the whole screen
 // Enter or the big button saves it (and copies it, Settings > Dashboard), Ctrl+C only copies, E opens it in an
 // editor (satty or swappy, when you have one), Esc cancels. 1 / 2 / 3 (or R / W / S) switch the mode.
-// rice-hotcorner takes the frozen picture with grim and writes "TIME PICTURE OUTPUT SCALE MODE" to
+// More than a picture: T reads the text in the box (tesseract) and copies it, L translates that text to your language,
+// G looks the picture up on the web, and the Color mode (4 or C) copies the color of the pixel you click.
+// The same tool is the record menu (SUPER + SHIFT + R, purpose "rec"): nothing is frozen, you choose a region, a
+// window or the screen, sound and microphone, and Record starts it (rice-hotcorner record geo).
+// rice-hotcorner takes the frozen picture with grim and writes "TIME PICTURE OUTPUT SCALE MODE PURPOSE X Y" to
 // ~/.cache/rice/snip-open; the crop is made here at full resolution and handed back to it (shot-done) to keep.
 PanelWindow {
     id: sn
@@ -18,7 +21,14 @@ PanelWindow {
     property string pic: ""
     property string outName: ""
     property real dpr: 1
-    property string mode: "region"           // region | window | screen
+    property string mode: "region"           // region | window | screen | color
+    property string purpose: "shot"          // shot | rec (the record menu)
+    readonly property bool rec: purpose === "rec"
+    // where this screen starts in the whole desktop (recording a part of it)
+    property real ox: 0
+    property real oy: 0
+    property bool recSound: true
+    property bool recMic: false
     property bool canEdit: false
     property bool busy: false
 
@@ -56,7 +66,7 @@ PanelWindow {
         return Mon.screen
     }
     visible: open || t > 0.01
-    color: "black"
+    color: rec ? "transparent" : "black"
     anchors { top: true; bottom: true; left: true; right: true }
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
@@ -77,6 +87,10 @@ PanelWindow {
             const d = parseFloat(p[3]); sn.dpr = isNaN(d) || d <= 0 ? 1 : d
             sn.mode = ["region", "window", "screen"].indexOf(p[4]) >= 0 ? p[4] : "region"
             if (sn.mode === "window" && !Wm.hypr) sn.mode = "region"
+            sn.purpose = p[5] === "rec" ? "rec" : "shot"
+            const px = parseFloat(p[6]), py = parseFloat(p[7])
+            sn.ox = isNaN(px) ? 0 : px; sn.oy = isNaN(py) ? 0 : py
+            if (sn.rec) recCfg.running = true
             sn.glide = false
             sn.sx = 0; sn.sy = 0; sn.sw = 0; sn.sh = 0
             sn.wins = []; sn.hoverWin = -1; sn.busy = false
@@ -95,6 +109,17 @@ PanelWindow {
         id: editProc
         command: ["bash", "-c", "command -v satty >/dev/null || command -v swappy >/dev/null"]
         onExited: function(code) { sn.canEdit = code === 0 }
+    }
+    // the record menu: sound and microphone as they are set (Settings > Dashboard > Recorder)
+    Process {
+        id: recCfg
+        command: ["bash", "-c", "\"$HOME/.local/bin/rice-hotcorner\" config"]
+        stdout: StdioCollector { onStreamFinished: { try { const j = JSON.parse(text); sn.recSound = j.rec_sound === true; sn.recMic = j.rec_mic === true } catch (e) { } } }
+    }
+    function recSet(key, on) {
+        Sfx.play("click")
+        if (key === "rec_sound") recSound = on; else recMic = on
+        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-hotcorner\" set \"$1\" \"$2\"", "rec", key, on ? "true" : "false"])
     }
     Process {
         id: winsProc
@@ -136,6 +161,7 @@ PanelWindow {
     }
     function setMode(m) {
         if (m === "window" && !Wm.hypr) return
+        if (m === "color" && rec) return
         mode = m
         Sfx.play("click")
         if (m === "screen") pickScreen()
@@ -144,10 +170,32 @@ PanelWindow {
     }
     function cancel() {
         open = false; t = 0; busy = false
-        Quickshell.execDetached(["rm", "-f", pic])
+        if (pic !== "-") Quickshell.execDetached(["rm", "-f", pic])
+    }
+    // the record menu: this part of the screen, in the whole desktop's pixels (the menu is gone before it starts)
+    function startRec() {
+        if (busy || !hasSel) return
+        busy = true
+        Sfx.play("select")
+        const g = Math.round(ox + sx) + "," + Math.round(oy + sy) + " " + Math.max(2, Math.round(sw)) + "x" + Math.max(2, Math.round(sh))
+        open = false; t = 0
+        Quickshell.execDetached(["bash", "-c", "sleep 0.35; exec \"$HOME/.local/bin/rice-hotcorner\" record geo \"$1\"", "rec", g])
+    }
+    // the color of the pixel under the pointer: a crop of that one pixel, rice-hotcorner reads and copies it
+    function pickColor() {
+        if (busy || rec || mx < 0) return
+        busy = true
+        Sfx.play("select")
+        crop.cx = Math.floor(mx); crop.cy = Math.floor(my); crop.width = 1; crop.height = 1
+        crop.grabToImage(function(r) {
+            const ok = r.saveToFile(sn.outFile)
+            sn.open = false; sn.t = 0
+            Quickshell.execDetached(["bash", "-c", "rm -f \"$1\"; " + (ok ? "\"$HOME/.local/bin/rice-hotcorner\" shot-done \"$2\" color" : "true"), "snip", sn.pic, sn.outFile])
+        }, Qt.size(1, 1))
     }
     // the crop at full resolution, handed to rice-hotcorner: save | copy | edit
     function finish(what) {
+        if (rec) { startRec(); return }
         if (busy || !hasSel) return
         busy = true
         Sfx.play("select")
@@ -180,7 +228,8 @@ PanelWindow {
     Image {
         id: frozen
         anchors.fill: parent
-        source: sn.pic !== "" ? "file://" + sn.pic : ""
+        source: sn.pic !== "" && sn.pic !== "-" ? "file://" + sn.pic : ""
+        visible: !sn.rec
         // the picture has a new name every time, so it can be cached and shared by the crop and the loupe
         asynchronous: false
         smooth: true
@@ -200,7 +249,7 @@ PanelWindow {
         anchors.fill: parent
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton
-        cursorShape: sn.mode === "region" ? (inside(mouseX, mouseY) && !sn.dragging ? Qt.SizeAllCursor : Qt.CrossCursor) : Qt.PointingHandCursor
+        cursorShape: sn.mode === "region" ? (inside(mouseX, mouseY) && !sn.dragging ? Qt.SizeAllCursor : Qt.CrossCursor) : (sn.mode === "color" ? Qt.CrossCursor : Qt.PointingHandCursor)
         property string op: ""          // new | move | tl | tr | bl | br
         property real px: 0
         property real py: 0
@@ -232,6 +281,8 @@ PanelWindow {
         }
         onPressed: function(m) {
             if (m.button === Qt.RightButton) { if (sn.hasSel && sn.mode === "region") { sn.glide = true; sn.setSel(0, 0, 0, 0) } else sn.cancel(); return }
+            sn.mx = m.x; sn.my = m.y
+            if (sn.mode === "color") { sn.pickColor(); return }
             if (sn.mode !== "region") return
             sn.glide = false
             px = m.x; py = m.y
@@ -298,32 +349,26 @@ PanelWindow {
         id: loupe
         readonly property real size: 132
         readonly property real zoom: 6
-        visible: sn.dragging && sn.mode === "region" && sn.mx >= 0
+        visible: !sn.rec && sn.mx >= 0 && (sn.mode === "color" || (sn.dragging && sn.mode === "region"))
         x: Math.min(sn.width - size - 16, sn.mx + 24)
         y: sn.my + 24 + size > sn.height ? sn.my - size - 24 : sn.my + 24
         width: size; height: size
-        // the few pixels around the pointer, straight from the frozen picture on the graphics card (a picture six
-        // times the screen's size would be bigger than a texture may be), cut round like RoundImage does
-        ShaderEffectSource {
-            id: lens
-            anchors.fill: parent
-            visible: false
-            sourceItem: frozen
-            readonly property real n: loupe.size / loupe.zoom
-            sourceRect: Qt.rect(sn.mx - n / 2, sn.my - n / 2, n, n)
-            textureSize: Qt.size(Math.max(1, Math.round(n * sn.dpr)), Math.max(1, Math.round(n * sn.dpr)))
-            smooth: false
-            live: loupe.visible
-        }
+        // the few pixels around the pointer: the frozen picture again (the same texture, nothing is loaded twice),
+        // drawn six times bigger and cut to the frame. Plain clipping, which every graphics driver does the same way
+        // (V4.75 used a shader mask here, which could come out empty)
+        Rectangle { anchors.fill: parent; radius: 12; color: "black" }
         Item {
-            id: lensMask
-            anchors.fill: parent
-            visible: false
-            layer.enabled: true
-            Rectangle { anchors.fill: parent; radius: 28 }
+            anchors.fill: parent; anchors.margins: 3
+            clip: true
+            Image {
+                source: frozen.source
+                smooth: false
+                width: sn.width * loupe.zoom; height: sn.height * loupe.zoom
+                x: parent.width / 2 - (sn.mx + 0.5) * loupe.zoom
+                y: parent.height / 2 - (sn.my + 0.5) * loupe.zoom
+            }
         }
-        MultiEffect { anchors.fill: parent; source: lens; maskEnabled: true; maskSource: lensMask }
-        Rectangle { anchors.fill: parent; radius: 28; color: "transparent"; border.width: 3; border.color: pal.primary }
+        Rectangle { anchors.fill: parent; radius: 12; color: "transparent"; border.width: 3; border.color: pal.primary }
         // the pixel under the pointer
         Rectangle { anchors.centerIn: parent; width: loupe.zoom + 4; height: loupe.zoom + 4; color: "transparent"; border.width: 2; border.color: "white" }
         Rectangle {
@@ -365,11 +410,13 @@ PanelWindow {
         property string icon: ""
         property string glyph: ""
         property string tip: ""
+        property bool on: false               // a switch that is on (sound, microphone)
         signal clicked()
-        width: 44; height: 44; radius: 22
-        color: ibM.containsMouse ? pal.cardHi : "transparent"
+        width: 44; height: 44; radius: on ? 14 : 22
+        Behavior on radius { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+        color: on ? (ibM.containsMouse ? Qt.lighter(pal.container, 1.15) : pal.container) : (ibM.containsMouse ? pal.cardHi : "transparent")
         Behavior on color { ColorAnimation { duration: 160 } }
-        MIcon { anchors.centerIn: parent; size: 20; name: ib.icon; glyph: ib.glyph; color: pal.fg }
+        MIcon { anchors.centerIn: parent; size: 20; name: ib.icon; glyph: ib.glyph; color: ib.on ? pal.inkContainer : pal.fg }
         MouseArea { id: ibM; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ib.clicked() }
         Rectangle {
             visible: ibM.containsMouse && ib.tip !== ""
@@ -401,10 +448,19 @@ PanelWindow {
                 ModeBtn { m: "region"; label: Tr.t("Region"); icon: "crop_free"; glyph: String.fromCodePoint(0xF0489) }
                 ModeBtn { m: "window"; label: Tr.t("Window"); icon: "select_window"; glyph: String.fromCodePoint(0xF05AF) }
                 ModeBtn { m: "screen"; label: Tr.t("Screen"); icon: "fullscreen"; glyph: String.fromCodePoint(0xF0379) }
+                ModeBtn { visible: !sn.rec; m: "color"; label: Tr.t("Color"); icon: "colorize"; glyph: String.fromCodePoint(0xF020A) }
             }
             Rectangle { width: 1; height: 28; color: pal.line; anchors.verticalCenter: parent.verticalCenter }
-            IconBtn { anchors.verticalCenter: parent.verticalCenter; icon: "content_copy"; glyph: String.fromCodePoint(0xF018F); tip: Tr.t("Copy") + "  Ctrl+C"; onClicked: sn.finish("copy") }
-            IconBtn { anchors.verticalCenter: parent.verticalCenter; visible: sn.canEdit; icon: "edit"; glyph: String.fromCodePoint(0xF03EB); tip: Tr.t("Edit") + "  E"; onClicked: sn.finish("edit") }
+            // the record menu: what is recorded with the picture
+            IconBtn { anchors.verticalCenter: parent.verticalCenter; visible: sn.rec; on: sn.recSound; icon: sn.recSound ? "volume_up" : "volume_off"; glyph: String.fromCodePoint(sn.recSound ? 0xF057E : 0xF0581)
+                tip: Tr.t("Computer sound"); onClicked: sn.recSet("rec_sound", !sn.recSound) }
+            IconBtn { anchors.verticalCenter: parent.verticalCenter; visible: sn.rec; on: sn.recMic; icon: sn.recMic ? "mic" : "mic_off"; glyph: String.fromCodePoint(sn.recMic ? 0xF036C : 0xF036D)
+                tip: Tr.t("Microphone"); onClicked: sn.recSet("rec_mic", !sn.recMic) }
+            IconBtn { anchors.verticalCenter: parent.verticalCenter; visible: !sn.rec && sn.mode !== "color"; icon: "content_copy"; glyph: String.fromCodePoint(0xF018F); tip: Tr.t("Copy") + "  Ctrl+C"; onClicked: sn.finish("copy") }
+            IconBtn { anchors.verticalCenter: parent.verticalCenter; visible: !sn.rec && sn.mode !== "color"; icon: "text_fields"; glyph: String.fromCodePoint(0xF0284); tip: Tr.t("Copy the text") + "  T"; onClicked: sn.finish("ocr") }
+            IconBtn { anchors.verticalCenter: parent.verticalCenter; visible: !sn.rec && sn.mode !== "color"; icon: "translate"; glyph: String.fromCodePoint(0xF05CA); tip: Tr.t("Translate") + "  L"; onClicked: sn.finish("translate") }
+            IconBtn { anchors.verticalCenter: parent.verticalCenter; visible: !sn.rec && sn.mode !== "color"; icon: "image_search"; glyph: String.fromCodePoint(0xF0349); tip: Tr.t("Search with the picture") + "  G"; onClicked: sn.finish("search") }
+            IconBtn { anchors.verticalCenter: parent.verticalCenter; visible: sn.canEdit && !sn.rec; icon: "edit"; glyph: String.fromCodePoint(0xF03EB); tip: Tr.t("Edit") + "  E"; onClicked: sn.finish("edit") }
             // the main action: a filled pill in your key color
             Rectangle {
                 id: shoot
@@ -412,15 +468,18 @@ PanelWindow {
                 height: 44; radius: 22
                 width: shootRow.implicitWidth + 36
                 opacity: sn.hasSel ? 1 : 0.4
-                color: shootM.pressed ? Qt.darker(pal.primary, 1.12) : (shootM.containsMouse ? Qt.lighter(pal.primary, 1.06) : pal.primary)
+                readonly property color base: sn.rec ? "#ff6b6b" : pal.primary
+                visible: sn.mode !== "color"
+                color: shootM.pressed ? Qt.darker(base, 1.12) : (shootM.containsMouse ? Qt.lighter(base, 1.06) : base)
                 scale: shootM.pressed ? 0.96 : 1
                 Behavior on scale { NumberAnimation { duration: 120 } }
                 Row {
                     id: shootRow
                     anchors.centerIn: parent
                     spacing: 8
-                    MIcon { anchors.verticalCenter: parent.verticalCenter; size: 20; name: "photo_camera"; glyph: String.fromCodePoint(0xF0100); color: pal.inkPrimary }
-                    Text { anchors.verticalCenter: parent.verticalCenter; text: Tr.t("Save"); color: pal.inkPrimary
+                    MIcon { anchors.verticalCenter: parent.verticalCenter; size: 20; name: sn.rec ? "radio_button_checked" : "photo_camera"
+                        glyph: String.fromCodePoint(sn.rec ? 0xF044A : 0xF0100); color: sn.rec ? "#2a0a0a" : pal.inkPrimary }
+                    Text { anchors.verticalCenter: parent.verticalCenter; text: sn.rec ? Tr.t("Record") : Tr.t("Save"); color: sn.rec ? "#2a0a0a" : pal.inkPrimary
                         font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.DemiBold }
                 }
                 MouseArea { id: shootM; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: sn.finish("save") }
@@ -432,8 +491,12 @@ PanelWindow {
         anchors.horizontalCenter: bar.horizontalCenter
         anchors.top: bar.bottom; anchors.topMargin: 8
         opacity: 0.85 * sn.t
-        text: sn.mode === "region" ? Tr.t("Drag to choose · Enter saves · Ctrl+C copies · Esc cancels")
+        text: sn.rec ? (sn.mode === "region" ? Tr.t("Drag to choose · Enter starts recording · Esc cancels")
+                : sn.mode === "window" ? Tr.t("Click a window to record it · Esc cancels")
+                : Tr.t("Click or Enter records the whole screen · Esc cancels"))
+            : sn.mode === "region" ? Tr.t("Drag to choose · Enter saves · Ctrl+C copies · Esc cancels")
             : sn.mode === "window" ? Tr.t("Click a window to save it · Esc cancels")
+            : sn.mode === "color" ? Tr.t("Click a pixel to copy its color · Esc cancels")
             : Tr.t("Click or Enter saves the whole screen · Esc cancels")
         color: "white"; style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.5)
         font.family: Fonts.main; font.pixelSize: 12
@@ -447,8 +510,12 @@ PanelWindow {
             const k = e.key
             if (k === Qt.Key_Escape) sn.cancel()
             else if (k === Qt.Key_Return || k === Qt.Key_Enter || k === Qt.Key_Space) sn.finish("save")
-            else if (k === Qt.Key_C && (e.modifiers & Qt.ControlModifier)) sn.finish("copy")
-            else if (k === Qt.Key_E && sn.canEdit) sn.finish("edit")
+            else if (k === Qt.Key_C && (e.modifiers & Qt.ControlModifier)) { if (!sn.rec) sn.finish("copy") }
+            else if (k === Qt.Key_E && sn.canEdit && !sn.rec) sn.finish("edit")
+            else if (k === Qt.Key_T && !sn.rec) sn.finish("ocr")
+            else if (k === Qt.Key_L && !sn.rec) sn.finish("translate")
+            else if (k === Qt.Key_G && !sn.rec) sn.finish("search")
+            else if (k === Qt.Key_4 || k === Qt.Key_C) sn.setMode("color")
             else if (k === Qt.Key_1 || k === Qt.Key_R) sn.setMode("region")
             else if (k === Qt.Key_2 || k === Qt.Key_W) sn.setMode("window")
             else if (k === Qt.Key_3 || k === Qt.Key_S || k === Qt.Key_F) sn.setMode("screen")

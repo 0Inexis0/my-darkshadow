@@ -107,6 +107,21 @@ Rectangle {
         scale: root.awake ? 1.06 : 1
         Behavior on scale { NumberAnimation { duration: 900; easing.type: Easing.OutCubic } }
     }
+    // a live wallpaper: the video plays over its picture once its first frames are there (rice-sddm sync brings
+    // it). Qt 6 first, then Qt 5; without QtMultimedia, or when it cannot be played, the picture simply stays
+    Loader {
+        id: live
+        anchors.fill: parent
+        readonly property string file: root.cfg("backgroundVideo", "")
+        property int tryNo: 0
+        active: file !== "" && tryNo < 2
+        source: tryNo === 0 ? "LiveBg6.qml" : "LiveBg5.qml"
+        onStatusChanged: if (status === Loader.Error) tryNo++
+        onLoaded: item.file = file
+        opacity: item && item.playing ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: 600 } }
+        scale: bg.scale
+    }
     // no wallpaper yet: a soft gradient in the theme colors
     Rectangle {
         anchors.fill: parent

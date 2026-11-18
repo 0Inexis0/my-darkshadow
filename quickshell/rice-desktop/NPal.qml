@@ -29,7 +29,10 @@ QtObject {
         default: return Qt.hsla(hue, 0.08, 0.085, a)
         }
     }
-    readonly property color card: light ? Qt.rgba(1, 1, 1, 1) : Qt.lighter(Qt.rgba(surface.r, surface.g, surface.b, 1), theme === "black" ? 2.6 : 1.75)
+    // how solid the cards are (1: solid, as everywhere; the toolbox lets its own Transparency through them too)
+    property real cardAlpha: 1
+    readonly property color cardBase: light ? Qt.rgba(1, 1, 1, 1) : Qt.lighter(Qt.rgba(surface.r, surface.g, surface.b, 1), theme === "black" ? 2.6 : 1.75)
+    readonly property color card: Qt.rgba(cardBase.r, cardBase.g, cardBase.b, Look.flat ? 1 : cardAlpha)
     readonly property color cardHi: light ? Qt.hsla(hue, sat * 0.3, 0.9, 1) : Qt.lighter(card, 1.3)
     readonly property color fg: light ? "#16171a" : "#ECEDEE"
     readonly property color dim: light ? "#5a5e66" : "#A9ADB2"

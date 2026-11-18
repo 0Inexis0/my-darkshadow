@@ -48,6 +48,12 @@ Item {
         theme(["apply", t.key], I18n.t("Theme: %1").replace("%1", t.name))
     }
     function places(l) { return (l || []).join(", ") }
+    function saveMine() {
+        const n = nameF.text.trim()
+        if (n === "") { nameF.forceActiveFocus(); return }
+        theme(["save", n], I18n.t("Saved: %1").replace("%1", n))
+        nameF.text = ""
+    }
 
     PageScroll {
         anchors.fill: parent
@@ -94,7 +100,7 @@ Item {
                             x: modelData.bar === "flat" ? 0 : 8; y: modelData.bar === "flat" ? 0 : 7
                             width: parent.width - 2 * x; height: 18
                             Rectangle {
-                                visible: modelData.bar === "flat" || modelData.bar === "dynamic" || modelData.bar === "island"
+                                visible: modelData.bar === "flat" || modelData.bar === "dynamic" || modelData.bar === "island" || modelData.bar === "edge"
                                 anchors.fill: parent
                                 radius: modelData.bar === "flat" ? 0 : (modelData.bar === "island" ? Math.min(9, card.r) : 9)
                                 color: Qt.rgba(card.bg.r, card.bg.g, card.bg.b, modelData.bar_opacity)
@@ -155,7 +161,35 @@ Item {
                     }
                     MouseArea { id: cm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                         onClicked: if (!card.on && page.busyKey === "") page.use(modelData) }
+                    // your own theme: a small badge, and a button that takes it away
+                    Rectangle {
+                        visible: modelData.user === true
+                        x: parent.width - width - 18; y: mock.y + mock.height - height - 8; height: 22; width: ub.implicitWidth + 16; radius: 11; color: M3.primaryContainer
+                        T { id: ub; anchors.centerIn: parent; text: I18n.t("Yours"); font.pixelSize: 11; font.weight: Font.DemiBold; color: M3.inkPrimaryC }
+                    }
+                    Rectangle {
+                        visible: modelData.user === true && (cm.containsMouse || dm.containsMouse)
+                        anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 18; anchors.topMargin: 36
+                        width: 32; height: 32; radius: 16
+                        color: dm.containsMouse ? M3.errorContainer : M3.surfaceHighest
+                        Icon { anchors.centerIn: parent; name: "delete"; glyph: ""; size: 16; color: M3.ink }
+                        MouseArea { id: dm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                            onClicked: page.theme(["delete", modelData.key], I18n.t("Theme removed")) }
+                    }
                 }
+            }
+        }
+
+        // ---------- your own themes ----------
+        SectionTitle { text: I18n.t("Your own theme"); sub: I18n.t("Keep how the desktop looks right now under a name: the colors, the wallpaper, corners and shapes, the bar, widgets, notifications, windows, motion and the font. It shows up above with the others.") }
+        SettingRow {
+            label: I18n.t("Save the look I have now")
+            desc: I18n.t("A name, then Enter or Save")
+            reserved: 420
+            Row {
+                anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter; spacing: 8
+                Field { id: nameF; width: 240; placeholder: I18n.t("My theme"); onAccepted: page.saveMine() }
+                Btn { anchors.verticalCenter: parent.verticalCenter; primary: true; text: I18n.t("Save"); sym: "bookmark_add"; icon: ""; onClicked: page.saveMine() }
             }
         }
 

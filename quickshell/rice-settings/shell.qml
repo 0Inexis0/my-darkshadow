@@ -402,7 +402,8 @@ FloatingWindow {
         { name: "Themes", icon: "\uf53f" },
         { name: "Update Center", icon: "\uf021" },
         { name: "VPN", icon: "\uf132" },
-        { name: "Window rules", icon: "\uf2d2" }
+        { name: "Window rules", icon: "\uf2d2" },
+        { name: "Toolbox", icon: "\uf0ad" }
     ]
 
 
@@ -413,7 +414,7 @@ FloatingWindow {
         { group: "wall", name: "Wallpaper", icon: "\uf03e", sym: "wallpaper", pages: [18], caption: I18n.t("Wallpaper and the colors it gives") },
         { group: "look", name: "Appearance", icon: "\udb80\udfd8", sym: "palette", pages: [34, 8, 21, 19, 24, 22, 9, 14], caption: I18n.t("Themes, colors, fonts, shapes, components, cursors and the dock") },
         { group: "motion", name: "Motion", icon: "\uf1e6", sym: "animation", pages: [20], caption: I18n.t("How windows and Settings move") },
-        { group: "desk", name: "Desktop", icon: "\uf108", sym: "desktop_windows", pages: niri ? [29, 12, 25, 37, 4, 11] : [29, 33, 12, 25, 37, 4, 11], caption: I18n.t("Look & feel, widgets, windows, window rules, %1 and the lock screen", wmLabel) },
+        { group: "desk", name: "Desktop", icon: "\uf108", sym: "desktop_windows", pages: niri ? [29, 38, 12, 25, 37, 4, 11] : [29, 33, 38, 12, 25, 37, 4, 11], caption: I18n.t("Look & feel, widgets, windows, window rules, %1 and the lock screen", wmLabel) },
         { group: "bar", name: "Bar & launcher", icon: "\uf0c9", sym: "toolbar", pages: [2, 3, 6, 7], caption: I18n.t("The bar, the dynamic island and the launcher") },
         { group: "snd", name: "Sound & language", icon: "\uf028", sym: "graphic_eq", pages: [1, 10, 26], caption: I18n.t("Sounds, notifications, language and region") },
         { group: "sys", name: "System", icon: "\uf013", sym: "settings", pages: [30, 31, 28, 5, 23, 15, 36], caption: I18n.t("Keybinds, languages, monitors, recording, keyboard and services") },
@@ -968,6 +969,7 @@ FloatingWindow {
             PageSlot { nav: win; idx: 35; cur: win.page; page: Component { UpdatePage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 36; cur: win.page; page: Component { VpnPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 37; cur: win.page; page: Component { WindowRulesPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 38; cur: win.page; page: Component { ToolboxPage { anchors.fill: parent; ctl: win } } }
         }
 
         // results: the setting, and where it is (page > section)

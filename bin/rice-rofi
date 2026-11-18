@@ -30,7 +30,7 @@ HLUA = HYPR + "/hyprland.lua"
 MARK = "/* rice-rofi */"
 
 DEFAULTS = {
-    "theme": "shadow", "layout": "list", "position": "center", "width": 620, "radius": 18,
+    "theme": "wallpaper", "layout": "list", "position": "center", "width": 620, "radius": 18,
     "transparency": True, "opacity": 0.82, "blur": True, "icons": True, "font_size": 13, "lines": 8,
 }
 RANGES = {"width": (360, 1200), "radius": (0, 32), "opacity": (0.3, 1.0), "font_size": (9, 20), "lines": (3, 14)}
@@ -39,12 +39,31 @@ BOOLS = ("transparency", "blur", "icons")
 
 # bg = window, alt = input/field, sel = selected row, fg = text, dim = secondary text
 THEMES = {
+    # the wallpaper's own colors (matugen's palette.json), made again every time it is read: wall_theme()
+    "wallpaper": {"name": "Wallpaper", "bg": "#121316", "alt": "#1e2024", "fg": "#e3e2e6", "dim": "#8e9099", "sel": "#a8c7fa", "selfg": "#062e6f", "bd": "#ffffff1a"},
     "shadow":   {"name": "Shadow",   "bg": "#0d0d0d", "alt": "#1a1a1a", "fg": "#F6F5F4", "dim": "#8a8a8a", "sel": "#F6F5F4", "selfg": "#0d0d0d", "bd": "#ffffff1a"},
     "graphite": {"name": "Graphite", "bg": "#18181c", "alt": "#24242a", "fg": "#ececf1", "dim": "#8e8e9a", "sel": "#3b3b48", "selfg": "#ffffff", "bd": "#ffffff1a"},
     "midnight": {"name": "Midnight", "bg": "#0b1020", "alt": "#151c33", "fg": "#e6e9f5", "dim": "#7f89ad", "sel": "#8b7bff", "selfg": "#0b1020", "bd": "#8b7bff33"},
     "rose":     {"name": "Rose",     "bg": "#1a1216", "alt": "#271a20", "fg": "#f7e9ee", "dim": "#a98a96", "sel": "#ff8fa3", "selfg": "#2a0f17", "bd": "#ff8fa333"},
     "paper":    {"name": "Paper",    "bg": "#f4f2ee", "alt": "#e6e3dc", "fg": "#1c1c1c", "dim": "#6f6c66", "sel": "#1c1c1c", "selfg": "#f4f2ee", "bd": "#0000001f"},
 }
+
+
+def wall_theme():
+    """the launcher in the wallpaper's colors: a dark surface tinted with them, the selection in the key color"""
+    t = dict(THEMES["wallpaper"])
+    try:
+        p = json.load(open(os.path.expanduser("~/.config/rice/palette.json")))
+    except Exception:
+        return t
+    ok = lambda v: isinstance(v, str) and len(v) == 7 and v.startswith("#")
+    for k, src in (("bg", "surface"), ("alt", "surface_high"), ("fg", "on_surface"), ("dim", "on_surface_variant"),
+                   ("sel", "primary"), ("selfg", "on_primary")):
+        if ok(p.get(src)):
+            t[k] = p[src]
+    if ok(p.get("primary")):
+        t["bd"] = p["primary"] + "33"
+    return t
 
 
 def die(m):
@@ -62,6 +81,9 @@ def load():
         raw = json.load(open(CFG))
     except Exception:
         raw = {}
+    # V4.83: the old default theme (Shadow: black with a white selection) becomes the wallpaper's colors, once
+    if raw.get("theme") == "shadow" and not raw.get("theme_kept"):
+        raw["theme"] = "wallpaper"
     for k, d in DEFAULTS.items():
         v = raw.get(k, d)
         if k in BOOLS:
@@ -80,6 +102,8 @@ def load():
                 c[k] = int(clamp(float(v), *RANGES[k]))
             except Exception:
                 c[k] = d
+    if raw.get("theme_kept"):
+        c["theme_kept"] = True
     return c
 
 
@@ -198,6 +222,7 @@ def state():
     c = load()
     out = dict(c)
     out["themes"] = {k: dict(v) for k, v in THEMES.items()}
+    out["themes"]["wallpaper"] = wall_theme()
     out["font"] = font_family()
     try:
         out["wallpaper"] = open(HOME + "/.cache/hyprquickpaper-current").read().strip()
@@ -216,6 +241,7 @@ def setkey(k, v):
         if v not in THEMES:
             die("theme: " + "|".join(THEMES))
         c[k] = v
+        c["theme_kept"] = True          # chosen by you: never changed for you again
     elif k in CHOICES:
         if v not in CHOICES[k]:
             die("%s: %s" % (k, "|".join(CHOICES[k])))

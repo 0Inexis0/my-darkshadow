@@ -6,8 +6,8 @@ import QtQuick.Effects
 
 // The DarkShadow Launcher: the app launcher of this shell (Settings > Rofi > Launcher). It looks like Rofi does and
 // uses the same settings (theme, style, position, width, corners, transparency, icons, font size, lines).
-// Type to search, arrows or Tab to move, Enter to open, Esc to close. "2+2" calculates (Enter copies the result),
-// anything else can be searched on the web. The apps you open most come first.
+// Type to search, arrows or Tab to move, Enter to open, Esc to close. "2+2" calculates and "10 km in mi" or "100 usd pln" converts (Enter copies the result),
+// files in your home show after three letters ("/" in front: only files), anything else can be searched on the web. The apps you open most come first.
 PanelWindow {
     screen: Mon.screen
     id: ln
@@ -86,19 +86,67 @@ PanelWindow {
         list.sort(function(a, b) { return b.s !== a.s ? b.s - a.s : (a.e.name || "").localeCompare(b.e.name || "") })
         const c = q !== "" ? calc(query) : null
         if (c !== null) out.push({ kind: "calc", name: "= " + c, sub: Tr.t("Press Enter to copy the result"), val: c })
+        // "10 km in mi", "100 usd pln": units and money (Conv.qml; the rates are fetched only when you type money)
+        if (q !== "" && /^\s*-?[\d.,]/.test(query)) {
+            if (Conv.looksLikeMoney(query)) Conv.ask()
+            const cvr = Conv.parse(query)
+            if (cvr) out.push({ kind: "calc", name: "= " + cvr.text, sub: cvr.from + "  ·  " + Tr.t("Press Enter to copy the result"), val: cvr.val })
+        }
         for (let i = 0; i < list.length && i < 80; i++)
             out.push({ kind: "app", name: list[i].e.name, sub: list[i].e.genericName || list[i].e.comment || "", entry: list[i].e, id: list[i].e.id })
+        // files in your home (rice-tools files), after a few letters; "/" in front: only files
+        const fq = query.trim().replace(/^\//, "").trim()
+        if (fq === filesFor) for (let i = 0; i < files.length; i++)
+            out.push({ kind: "file", name: files[i].name, sub: files[i].where, path: files[i].path, dir: files[i].dir })
         if (q !== "") out.push({ kind: "web", name: "Search the web for \"" + query.trim() + "\"", sub: Tr.t("DuckDuckGo"), q: query.trim() })
+        if (query.trim().indexOf("/") === 0) { for (let i = out.length - 1; i >= 0; i--) if (out[i].kind !== "file") out.splice(i, 1) }
         results = out
         resetScroll()
         cur = 0
     }
-    onQueryChanged: recompute()
+    onQueryChanged: { recompute(); fileT.restart() }
+    // ---------- files: asked a moment after you stop typing ----------
+    property var files: []
+    property string filesFor: ""
+    Timer {
+        id: fileT
+        interval: 260
+        onTriggered: {
+            const fq = ln.query.trim().replace(/^\//, "").trim()
+            if (fq.length < 3 && !(ln.query.trim().indexOf("/") === 0 && fq.length >= 2)) { ln.files = []; ln.filesFor = ""; return }
+            if (fq === ln.filesFor) return
+            if (fileP.running) { fileT.restart(); return }     // one at a time: asked again when this one is done
+            fileP.want = fq
+            fileP.running = true
+        }
+    }
+    Process {
+        id: fileP
+        property string want: ""
+        command: ["bash", "-c", "exec \"$HOME/.local/bin/rice-tools\" files \"$1\" 2>/dev/null", "_", want]
+        stdout: StdioCollector { onStreamFinished: {
+            let l = []
+            try { l = JSON.parse(text) } catch (e) { l = [] }
+            if (fileP.want !== ln.query.trim().replace(/^\//, "").trim()) { fileT.restart(); return }
+            ln.files = l; ln.filesFor = fileP.want
+            const keep = ln.cur; ln.recompute(); ln.cur = Math.min(keep, Math.max(0, ln.results.length - 1))
+        } }
+    }
+    Connections { target: Conv; function onRatesChanged() { if (ln.open && ln.query !== "") ln.recompute() } }
     onAppsChanged: if (open) recompute()
     onUsageChanged: if (open) recompute()
     function iconOf(r) {
         if (r.kind === "calc") return ""
         if (r.kind === "web") return Icons.get("web-browser", true)
+        if (r.kind === "file") {
+            if (r.dir) return Icons.get("folder", true)
+            const ext = (r.name.split(".").pop() || "").toLowerCase()
+            const m = { png: "image-x-generic", jpg: "image-x-generic", jpeg: "image-x-generic", webp: "image-x-generic", gif: "image-x-generic",
+                        mp4: "video-x-generic", mkv: "video-x-generic", webm: "video-x-generic", mp3: "audio-x-generic", flac: "audio-x-generic",
+                        pdf: "application-pdf", zip: "package-x-generic", gz: "package-x-generic", tar: "package-x-generic",
+                        sh: "text-x-script", py: "text-x-script", qml: "text-x-script" }
+            return Icons.get(m[ext] || "text-x-generic", true) || Icons.get("text-x-generic", true)
+        }
         const n = r.entry && r.entry.icon ? r.entry.icon : ""
         const p = n !== "" ? Icons.get(n, true) : ""
         return p !== "" ? p : Icons.get("application-x-executable", true)
@@ -130,6 +178,7 @@ PanelWindow {
             if (r.kind === "app") { r.entry.execute(); bump(r.id) }
             else if (r.kind === "calc") Quickshell.execDetached(["bash", "-c", "printf %s \"$1\" | wl-copy", "_", r.val])
             else if (r.kind === "web") Quickshell.execDetached(["xdg-open", "https://duckduckgo.com/?q=" + encodeURIComponent(r.q)])
+            else if (r.kind === "file") Quickshell.execDetached(["xdg-open", r.path])
         } catch (e) { console.warn("launcher: could not start " + r.name + ": " + e) }
     }
     function move(d) { if (results.length > 0) cur = Math.max(0, Math.min(results.length - 1, cur + d)) }

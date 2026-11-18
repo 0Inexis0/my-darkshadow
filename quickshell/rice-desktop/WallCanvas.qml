@@ -64,14 +64,25 @@ PanelWindow {
     Behavior on px { SmoothedAnimation { duration: Infinite.live ? 110 : 500; velocity: -1 } }
     Behavior on py { SmoothedAnimation { duration: Infinite.live ? 110 : 500; velocity: -1 } }
 
-    Image {
-        id: img
+    // a new wallpaper while the canvas is on: it fades in over the old one (the wallpaper's own animation plays
+    // under this picture, where it cannot be seen; V4.80)
+    property string shownPath: ""
+    property real mixT: 1
+    NumberAnimation { id: mixAnim; target: wc; property: "mixT"; from: 0; to: 1; duration: 700; easing.type: Easing.InOutCubic
+        onStopped: old.source = "" }
+    onPathChanged: {
+        if (!picture) return
+        if (shownPath !== "" && shownPath !== path && k > 0.5 && img.status === Image.Ready) {
+            old.source = img.source
+            mixT = 0
+        }
+        shownPath = path
+    }
+    component Pic: Image {
         width: wc.width * wc.grow
         height: wc.height * wc.grow
         x: Math.round((wc.width - width) / 2 + wc.px)
         y: Math.round((wc.height - height) / 2 + wc.py)
-        visible: wc.k > 0.001 && status === Image.Ready
-        source: wc.path !== "" && wc.picture ? "file://" + wc.path : ""
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         cache: false
@@ -79,4 +90,14 @@ PanelWindow {
         // decoded once, big enough for the largest size it is drawn at
         sourceSize.width: Math.round(wc.width * Math.max(1.1, Infinite.wallZoom))
     }
+    Pic { id: old; visible: wc.k > 0.001 && status === Image.Ready && wc.mixT < 1 }
+    Pic {
+        id: img
+        visible: wc.k > 0.001 && status === Image.Ready
+        source: wc.shownPath !== "" ? "file://" + wc.shownPath : ""
+        opacity: old.source != "" ? wc.mixT : 1
+        // the new picture is read: now it comes in
+        onStatusChanged: if (status === Image.Ready && wc.mixT === 0 && old.source != "") mixAnim.restart()
+    }
+    Component.onCompleted: if (picture) shownPath = path
 }

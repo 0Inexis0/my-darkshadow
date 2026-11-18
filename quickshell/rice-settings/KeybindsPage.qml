@@ -57,13 +57,13 @@ Item {
             ["Super + O", "niri's own overview"], ["Super + Shift + Arrows", "Focus another screen"] ] },
         { name: "Screenshots and recording", sym: "screenshot_monitor", keys: [
             ["Print", "Screenshot of an area", "shot"], ["Shift + Print", "Screenshot of the whole screen", "shotfull"],
-            ["Alt + Print", "Screenshot of the window"], ["Super + Shift + R", "Record the screen (again: stop)", "record"] ] },
+            ["Alt + Print", "Screenshot of the window"], ["Super + Shift + R", "Record menu: region, window or screen (again: stop)", "record"] ] },
         { name: "Sound, brightness, music", sym: "volume_up", keys: [
             ["Volume keys", "Louder, quieter, mute"], ["Super + F12 / F11 / F10", "Louder / quieter / mute"],
             ["Alt + ]  /  [", "Louder / quieter"], ["Brightness keys", "Screen brighter / darker"],
             ["Play / Next / Previous", "Music"] ] },
         { name: "Desktop", sym: "desktop_windows", keys: [
-            ["Super + Alt + W", "Edit the desktop widgets", "widgets"], ["Super + Shift + /", "niri's own list of keys"],
+            ["Super + Alt + W", "Edit the desktop widgets", "widgets"], ["Super + /", "Every key on one sheet", "keys"], ["Super + X", "Toolbox: tasks, note, timer, converter, system, chat", "tools"], ["Super + Shift + /", "niri's own list of keys"],
             ["Super + Shift + P", "Screens off"], ["Super + Shift + E", "Log out"] ] }
     ] : [
         { name: "Apps and menus", sym: "apps", keys: [
@@ -86,13 +86,13 @@ Item {
             ["Super + Mouse wheel", "Next / previous workspace"], ["Super + S", "The hidden scratch workspace"] ] },
         { name: "Screenshots and recording", sym: "screenshot_monitor", keys: [
             ["Print", "Screenshot of an area", "shot"], ["Shift + Print", "Screenshot of the whole screen", "shotfull"],
-            ["Super + Shift + S", "Screenshot of an area"], ["Super + Shift + R", "Record the screen (again: stop)", "record"] ] },
+            ["Super + Shift + S", "Screenshot of an area"], ["Super + Shift + R", "Record menu: region, window or screen (again: stop)", "record"] ] },
         { name: "Sound, brightness, music", sym: "volume_up", keys: [
             ["Volume keys", "Louder, quieter, mute"], ["Super + F12 / F11 / F10", "Louder / quieter / mute"],
             ["Alt + ]  /  [", "Louder / quieter"], ["Brightness keys", "Screen brighter / darker"],
             ["Play / Next / Previous", "Music"] ] },
         { name: "Desktop", sym: "desktop_windows", keys: [
-            ["Super + Alt + W", "Edit the desktop widgets", "widgets"], ["Super + M", "Log out"] ] }
+            ["Super + Alt + W", "Edit the desktop widgets", "widgets"], ["Super + /", "Every key on one sheet", "keys"], ["Super + X", "Toolbox: tasks, note, timer, converter, system, chat", "tools"], ["Super + M", "Log out"] ] }
     ]
     function match(k) {
         if (q === "") return true
