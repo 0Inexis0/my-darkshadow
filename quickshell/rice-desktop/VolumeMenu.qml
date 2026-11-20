@@ -47,7 +47,7 @@ PanelWindow {
         const p = n.properties || {}
         return p["application.name"] || n.nickname || n.description || n.name || "?"
     }
-    function setVol(n, v) { if (n && n.audio) { n.audio.muted = false; n.audio.volume = Math.max(0, Math.min(1, v)) } }
+    function setVol(n, v) { Vol.set(n, v) }
 
     Process {
         id: barProc
@@ -86,7 +86,7 @@ PanelWindow {
         property string iconName: "volume_up"
         property int glyph: 0xF057E
         property string iconSrc: ""
-        readonly property real v: node && node.audio ? node.audio.volume : 0
+        readonly property real v: Vol.of(node)
         readonly property bool muted: node && node.audio ? node.audio.muted : false
         width: parent ? parent.width : 300; height: text !== "" ? 58 : 40
         Text { visible: vr.text !== ""; x: 46; y: 2; width: parent.width - 100; elide: Text.ElideRight; text: vr.text

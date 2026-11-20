@@ -8,6 +8,7 @@
 #   rice-sddm sync           your wallpaper, colors, font and picture to the login screen (no password; it runs by
 #                            itself when the wallpaper changes)
 #   rice-sddm face           only your picture (Settings runs it when you pick one)
+#   rice-sddm clock STYLE    the clock: classic, stacked, center, pill or shapes
 #   rice-sddm preview        show the login screen in a window (sddm-greeter test mode)
 #
 # The theme lives in /usr/share/sddm/themes/darkshadow-shell. Its user/ folder belongs to you, so the shell can
@@ -225,6 +226,9 @@ except Exception: print("en")' "$HOME/.config/rice/settings-app.json")"
     [[ "$v" =~ ^[a-zA-Z_-]{2,8}$ ]] && echo "lang=$v"
     # 24 hours unless your region says 12
     if grep -q '"clock"[^,}]*12' "$HOME/.config/rice/region.json" 2>/dev/null; then echo "clock24=false"; else echo "clock24=true"; fi
+    # the clock's look (rice-sddm clock STYLE): ~/.config/rice/sddm-clock
+    v="$(cat "$HOME/.config/rice/sddm-clock" 2>/dev/null)"
+    case "$v" in classic|stacked|center|pill|shapes) echo "clockStyle=$v" ;; esac
   } >"$out"
   mv -f "$out" "$U/theme.conf.user"
   rm -f "$U/frame.tmp.jpg"
@@ -246,6 +250,12 @@ case "${1:-state}" in
   use-sddm) install use-sddm ;;
   remove) sudo_run "$(readlink -f "$0")" root-remove ;;
   sync) sync ;;
+  clock)   # clock STYLE: classic|stacked|center|pill|shapes
+    case "${2:-}" in
+      classic|stacked|center|pill|shapes) mkdir -p "$HOME/.config/rice"; printf '%s\n' "$2" >"$HOME/.config/rice/sddm-clock"
+        if [ -d "$U" ] && [ -w "$U" ]; then sync >/dev/null; echo "clock: $2"; else echo "clock: $2 (the login screen is not installed yet)"; fi ;;
+      *) cat "$HOME/.config/rice/sddm-clock" 2>/dev/null || echo classic ;;
+    esac ;;
   face) [ -d "$U" ] && [ -w "$U" ] && face_sync && echo "picture synced" || echo "the login screen is not installed" ;;
   preview) preview ;;
   root-install) shift; root_install "$@" ;;

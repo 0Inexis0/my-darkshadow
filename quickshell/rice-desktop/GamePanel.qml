@@ -169,7 +169,7 @@ PanelWindow {
             property real vv: g.na ? 0 : g.v
             property real ph: 0
             Behavior on vv { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
-            NumberAnimation on ph { from: 0; to: Math.PI * 2; duration: 2000; loops: Animation.Infinite; running: gp.open && !Look.lite && !g.na }
+            Timer { interval: 33; repeat: true; running: gp.open && !Look.lite && !g.na; onTriggered: rc.ph = (Date.now() % 2000) / 2000 * Math.PI * 2 }  // ~30 a second (V4.84)
             onVvChanged: requestPaint(); onPhChanged: requestPaint()
             renderStrategy: Canvas.Cooperative
             onPaint: {
@@ -444,8 +444,8 @@ PanelWindow {
                 Line {
                     opacity: gp.stg(7); transform: Translate { x: (1 - gp.stg(7)) * -26 }
                     icon: gp.sink && gp.sink.audio && gp.sink.audio.muted ? "volume_off" : "volume_up"; glyph: "󰕾"
-                    v: gp.sink && gp.sink.audio ? gp.sink.audio.volume : 0
-                    onMoved: function(x) { if (gp.sink && gp.sink.audio) { gp.sink.audio.muted = false; gp.sink.audio.volume = x } }
+                    v: Vol.of(gp.sink)
+                    onMoved: function(x) { Vol.set(gp.sink, x) }
                 }
                 Line {
                     opacity: gp.stg(8); transform: Translate { x: (1 - gp.stg(8)) * -26 }

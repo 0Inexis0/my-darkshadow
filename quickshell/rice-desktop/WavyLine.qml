@@ -17,7 +17,13 @@ Item {
     implicitHeight: 18
     property real phase: 0
     readonly property real shown: drag.pressed ? drag.v : value
-    NumberAnimation on phase { from: 0; to: Math.PI * 2; duration: 1600; loops: Animation.Infinite; running: wl.visible && wl.moving && wl.wavy && !Look.lite }
+    // the wave moves about 30 times a second, not once every frame of the screen (on a 144 or 240 Hz screen that
+    // was a picture drawn by the processor up to 240 times a second for every moving wave: V4.84)
+    Timer {
+        interval: 33; repeat: true
+        running: wl.visible && wl.moving && wl.wavy && !Look.lite
+        onTriggered: wl.phase = (Date.now() % 1600) / 1600 * Math.PI * 2
+    }
     onPhaseChanged: cv.requestPaint()
     onShownChanged: cv.requestPaint()
     onThickChanged: cv.requestPaint()

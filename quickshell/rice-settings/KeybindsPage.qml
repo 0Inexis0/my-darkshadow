@@ -78,6 +78,13 @@ Item {
             ["Super + J", "Split the other way"], ["Super + P", "Pseudo-tile (keep its own size)"],
             ["Super + F", "Infinite Desktop: windows on an endless canvas (Ctrl + wheel zooms)", "infinite"],
             ["Super + Arrows", "Focus the window next to it"],
+            ["Super + H", "Minimize the window", "minimize"],
+            ["Super + Shift + H", "Bring back the last minimized window", "restore"],
+            ["Super + T", "Stack windows: make a stack (tabs) of this window, or leave it", "stack"],
+            ["Super + Ctrl + Right", "The next window of the stack", "stack_next"],
+            ["Super + Ctrl + Left", "The previous window of the stack", "stack_prev"],
+            ["Super + Ctrl + Shift + Left", "Put the window into the stack on the left", "join_left"],
+            ["Super + Ctrl + Shift + Right", "Put the window into the stack on the right", "join_right"],
             ["Super + Left mouse", "Drag to move the window"], ["Super + Right mouse", "Drag to resize the window"] ] },
         { name: "Workspaces", sym: "view_carousel", keys: [
             ["Super + Tab", "Task view: every workspace and its windows", "taskview"],

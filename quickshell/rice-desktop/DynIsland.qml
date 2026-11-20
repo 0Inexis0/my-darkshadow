@@ -265,7 +265,7 @@ Item {
         MouseArea {
             anchors.fill: parent; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
             onClicked: function(m) { isl.openInfo(m.button === Qt.RightButton ? "system" : (isl.cfg.island_tab || "today"), true) }
-            onWheel: function(e) { if (isl.bar.sink && isl.bar.sink.audio) isl.bar.sink.audio.volume = Math.max(0, Math.min(1, isl.bar.sink.audio.volume + Look.notches(e) * 0.04)) }
+            onWheel: function(e) { Vol.nudge(isl.bar.sink, Look.notches(e) * 0.04) }
         }
 
         // ---------- idle: the time ----------
@@ -342,7 +342,7 @@ Item {
                     width: parent.width - isl.bh - 48; height: 18; anchors.verticalCenter: parent.verticalCenter
                     value: isl.muted ? 0 : Math.min(1, isl.vol); moving: !isl.muted; seekable: true
                     color: isl.pal ? isl.pal.primary : "white"; track: isl.pal ? isl.pal.track : "#444"
-                    onMoved: function(v) { if (isl.bar.sink && isl.bar.sink.audio) { isl.bar.sink.audio.muted = false; isl.bar.sink.audio.volume = v }; isl.show("volume", 1600) }
+                    onMoved: function(v) { Vol.set(isl.bar.sink, v); isl.show("volume", 1600) }
                 }
                 Text { visible: isl.mode === "mic"; width: parent.width - isl.bh - 48; anchors.verticalCenter: parent.verticalCenter
                     text: isl.micMuted ? Tr.t("Microphone off") : Tr.t("Microphone on"); color: isl.pal ? isl.pal.fg : "white"; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium }

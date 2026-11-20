@@ -56,8 +56,10 @@ PanelWindow {
         out.push(cur)
         return out
     }
+    property int emptyN: 0
     function parse(text) {
         const parts = text.split("@@\n")
+        if (parts.length < 3) return          // nmcli was cut off (timeout / hiccup): keep what is shown
         const best = {}
         const lines = (parts[0] || "").split("\n")
         for (let i = 0; i < lines.length; i++) {
@@ -76,12 +78,16 @@ PanelWindow {
         known = k
         const list = Object.keys(best).map(function(s) { const n = best[s]; n.known = k[s] === true; return n })
         list.sort(function(a, b) { return a.active !== b.active ? (a.active ? -1 : 1) : b.signal - a.signal })
+        // NetworkManager answers with an empty list for a moment while it scans or connects: keep the last list
+        // for a few reads instead of showing "no networks" (that was the list that sometimes went blank)
+        if (list.length === 0 && nets.length > 0 && radio && emptyN < 3) { emptyN++; return }
+        emptyN = 0
         nets = list
     }
 
     Process {
         id: stateProc
-        command: ["bash", "-c", "nmcli -t -f IN-USE,SSID,SIGNAL,SECURITY dev wifi list 2>/dev/null; echo '@@'; nmcli radio wifi 2>/dev/null; echo '@@'; nmcli -t -f NAME,TYPE connection show 2>/dev/null"]
+        command: ["bash", "-c", "timeout 8 nmcli -t -f IN-USE,SSID,SIGNAL,SECURITY dev wifi list 2>/dev/null; echo '@@'; timeout 4 nmcli radio wifi 2>/dev/null; echo '@@'; timeout 4 nmcli -t -f NAME,TYPE connection show 2>/dev/null"]
         stdout: StdioCollector { onStreamFinished: wm.parse(text) }
     }
     Process {
@@ -95,6 +101,7 @@ PanelWindow {
         onExited: function(code) {
             wm.busyFor = ""
             if (code === 0) { wm.msg = ""; wm.askFor = ""; Sfx.play("done") }
+            else if (code === 124) { wm.msg = "Timed out. Try again"; Sfx.play("remove") }
             else {
                 const e = (actErr.text || "").trim()
                 wm.msg = /secrets were required|password|802-1x|auth/i.test(e) ? "Wrong password, or the network needs a different login" : (e !== "" ? e.split("\n")[0].replace(/^Error: /, "") : "Could not connect")
@@ -103,14 +110,24 @@ PanelWindow {
             refreshTimer.restart()
         }
     }
-    function nm(args, label) { act.command = ["nmcli"].concat(args); busyFor = label || ""; act.running = true }
+    // one action at a time; a stuck one (nmcli waiting for a network) is stopped after 45 s so the next click always works
+    function nm(args, label) {
+        if (act.running) { act.signal(15); return }   // stop the stuck one; the next click goes through
+        act.command = ["timeout", "45", "nmcli"].concat(args); busyFor = label || ""; act.running = true
+    }
+    // a saved profile can be named differently than its network ("Home 1"): fall back to connecting by SSID
+    function nmKnown(ssid) {
+        if (act.running) { act.signal(15); return }
+        act.command = ["bash", "-c", "e=$(timeout 45 nmcli connection up id \"$1\" 2>&1); r=$?; if [ $r -ne 0 ] && echo \"$e\" | grep -qiE 'not (a )?(valid|found)|unknown connection|no such'; then timeout 45 nmcli dev wifi connect \"$1\"; exit $?; fi; [ $r -ne 0 ] && echo \"$e\" >&2; exit $r", "x", ssid]
+        busyFor = ssid; act.running = true
+    }
     function refresh() { if (!stateProc.running) stateProc.running = true }
     Timer { id: refreshTimer; interval: 700; onTriggered: wm.refresh() }
     Timer { interval: 5000; running: wm.open; repeat: true; onTriggered: wm.refresh() }
 
     function connect(n, pw) {
         msg = ""
-        if (n.known || !n.secure) nm(["connection", "up", "id", n.ssid], n.ssid)
+        if (n.known || !n.secure) nmKnown(n.ssid)
         else nm(["dev", "wifi", "connect", n.ssid, "password", pw], n.ssid)
     }
     function pick(n) {

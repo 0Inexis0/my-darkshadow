@@ -261,7 +261,7 @@ def load():
         s = json.load(open(ST))
     except Exception:
         s = {}
-    for k, d in (("opts", {}), ("borders", {}), ("anim", {}), ("monitors", {}), ("binds", []), ("autostart", []), ("kbd", {})):
+    for k, d in (("opts", {}), ("borders", {}), ("anim", {}), ("monitors", {}), ("binds", []), ("autostart", []), ("kbd", {}), ("off", [])):
         s.setdefault(k, d)
     if not isinstance(s["kbd"], dict):
         s["kbd"] = {}
@@ -300,6 +300,9 @@ def generate(s):
         extra = ", transform = %d" % int(m["transform"]) if int(m.get("transform", 0) or 0) else ""
         L.append("pcall(hl.monitor, { output = %s, mode = %s, position = %s, scale = %s%s })"
                  % (json.dumps(name), json.dumps(m["mode"]), json.dumps(m["position"]), lua(float(m["scale"])), extra))
+    # keys you turned off (Settings > System > Keybinds > Turn a key off): taken away, then free for your own
+    for k in s["off"]:
+        L.append("pcall(hl.unbind, %s)" % json.dumps(k))
     for bd in s["binds"]:
         L.append("pcall(function() hl.bind(%s, hl.dsp.exec_cmd(%s)) end)"
                  % (json.dumps(bd["keys"]), json.dumps(bd["cmd"])))
@@ -495,7 +498,7 @@ def cmd_binds():
         keys = (mods + " + " if mods else "") + str(key)
         d = (str(b.get("dispatcher", "")) + " " + str(b.get("arg", ""))).strip()
         act.append("%s  ->  %s" % (keys, b.get("description") or d))
-    print(json.dumps({"custom": s["binds"], "active": act[:120]}))
+    print(json.dumps({"custom": s["binds"], "active": act[:120], "off": s["off"]}))
 
 
 def cmd_keycheck(fix=""):
@@ -538,6 +541,33 @@ def cmd_bind_add(keys, cmd):
     s["binds"].append({"keys": keys, "cmd": cmd})
     save(s)
     ev("hl.bind(%s, hl.dsp.exec_cmd(%s))" % (json.dumps(keys), json.dumps(cmd)))
+
+
+def cmd_bind_off(keys):
+    """turn a key off: whatever it did, it does nothing now (and you can give it to something of your own)"""
+    keys = " + ".join(p.strip().upper() if len(p.strip()) > 1 and p.strip().upper() in ("SUPER", "CTRL", "ALT", "SHIFT") else p.strip()
+                      for p in keys.split("+") if p.strip())
+    parts = keys.split(" + ")
+    if parts and len(parts[-1]) == 1:
+        parts[-1] = parts[-1].upper()        # as the config writes letters (SUPER + J)
+    keys = " + ".join(parts)
+    if not re.match(r"^[A-Za-z0-9_+ .:-]+$", keys):
+        die("bad keys")
+    s = load()
+    if keys not in s["off"]:
+        s["off"].append(keys)
+        save(s)
+    ev("hl.unbind(%s)" % json.dumps(keys))
+
+
+def cmd_bind_on(idx):
+    """a key you turned off does what it did before again (Hyprland reads its config again)"""
+    s = load()
+    i = int(idx)
+    if 0 <= i < len(s["off"]):
+        s["off"].pop(i)
+        save(s)
+        sh(["hyprctl", "reload"])
 
 
 def cmd_bind_del(idx):
@@ -1093,7 +1123,7 @@ def main(a):
     table = {
         "state": (0, cmd_state), "set": (2, cmd_set), "border-mode": (1, cmd_border_mode),
         "border-color": (2, cmd_border_color), "anim-enabled": (1, cmd_anim_enabled),
-        "anim-speed": (1, cmd_anim_speed), "monitor-save-all": (0, cmd_monitor_save_all), "anim-style": (1, cmd_anim_style), "binds": (0, cmd_binds), "bind-add": (2, cmd_bind_add),
+        "anim-speed": (1, cmd_anim_speed), "monitor-save-all": (0, cmd_monitor_save_all), "anim-style": (1, cmd_anim_style), "binds": (0, cmd_binds), "bind-add": (2, cmd_bind_add), "bind-off": (1, cmd_bind_off), "bind-on": (1, cmd_bind_on),
         "kbd-remember": (0, cmd_kbd_remember), "regen": (0, cmd_regen),
         "bind-del": (1, cmd_bind_del), "keycheck": (0, cmd_keycheck), "keycheck-fix": (0, lambda: cmd_keycheck("fix")), "autostart": (0, cmd_autostart), "autostart-add": (1, cmd_autostart_add),
         "autostart-del": (1, cmd_autostart_del), "autostart-toggle": (1, cmd_autostart_toggle),

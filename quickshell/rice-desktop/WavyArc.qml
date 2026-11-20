@@ -12,7 +12,13 @@ Item {
     property color track: Qt.rgba(1, 1, 1, 0.12)
     property real waves: 14
     property real phase: 0
-    NumberAnimation on phase { from: 0; to: Math.PI * 2; duration: 2200; loops: Animation.Infinite; running: wa.visible && wa.moving && wa.wavy && !Look.lite }
+    // the wave moves about 30 times a second, not once every frame of the screen (on a 144 or 240 Hz screen that
+    // was a picture drawn by the processor up to 240 times a second for every moving wave: V4.84)
+    Timer {
+        interval: 33; repeat: true
+        running: wa.visible && wa.moving && wa.wavy && !Look.lite
+        onTriggered: wa.phase = (Date.now() % 2200) / 2200 * Math.PI * 2
+    }
     onPhaseChanged: cv.requestPaint()
     onValueChanged: cv.requestPaint()
     onThickChanged: cv.requestPaint()

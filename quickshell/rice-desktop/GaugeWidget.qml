@@ -60,7 +60,7 @@ Item {
             property real lv: gw.val
             property real ph: 0
             Behavior on lv { NumberAnimation { duration: 900; easing.type: Easing.OutCubic } }
-            NumberAnimation on ph { from: 0; to: Math.PI * 2; duration: 3000; loops: Animation.Infinite; running: gw.running && gw.water && !Look.lite && !Look.covered }
+            Timer { interval: 33; repeat: true; running: gw.running && gw.water && !Look.lite && !Look.covered; onTriggered: liquid.ph = (Date.now() % 3000) / 3000 * Math.PI * 2 }  // ~30 a second (V4.84)
             onLvChanged: requestPaint(); onPhChanged: requestPaint()
             renderStrategy: Canvas.Cooperative
             onPaint: {
@@ -99,7 +99,7 @@ Item {
         property real v: gw.val
         property real ph: 0
         Behavior on v { NumberAnimation { duration: 700; easing.type: Easing.OutCubic } }
-        NumberAnimation on ph { from: 0; to: Math.PI * 2; duration: 2400; loops: Animation.Infinite; running: gw.running && !Look.lite && !Look.covered }
+        Timer { interval: 33; repeat: true; running: gw.running && !Look.lite && !Look.covered; onTriggered: ring.ph = (Date.now() % 2400) / 2400 * Math.PI * 2 }  // ~30 a second (V4.84)
         onVChanged: requestPaint()
         onPhChanged: requestPaint()
         renderStrategy: Canvas.Cooperative

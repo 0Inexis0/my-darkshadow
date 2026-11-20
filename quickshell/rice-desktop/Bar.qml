@@ -67,6 +67,9 @@ PanelWindow {
     // edge: the Dynamic style's look and island, but every side of the bar is one piece with the screen edge
     // (HugShape.qml): the left part reaches the screen's left side, the right part its right side, the middle hangs
     // from the edge with soft curves; the modules sit on tonal pills inside them
+    // the black hole and the moon logo move while the pointer is on them (Settings > Bar > Logo moves all the time:
+    // on, as before; it redraws the bar every frame of the screen)
+    readonly property bool logoMove: bc.logo_move === true
     readonly property bool hug: sty === "edge"
     // edge: the dark frame along the edge can be turned off (Settings > Bar > Frame along the edge): then the pills
     // keep their places, without anything behind them
@@ -296,7 +299,7 @@ PanelWindow {
 
     readonly property var sink: Pipewire.defaultAudioSink
     PwObjectTracker { objects: [bar.sink] }
-    readonly property real vol: sink && sink.audio ? sink.audio.volume : 0
+    readonly property real vol: Vol.of(sink)
     readonly property bool muted: sink && sink.audio ? sink.audio.muted : false
 
     readonly property var batt: UPower.displayDevice
@@ -360,10 +363,10 @@ PanelWindow {
             // DarkShadow's own logos: the black hole (its disk turns) or the moon
             BlackHoleMark { visible: bar.logoKey === "blackhole"; anchors.centerIn: parent; size: bar.goo ? bar.barH - 2 : 36; extras: false
                 readonly property var pl: bar.logoPal("blackhole"); hot: pl[0]; warm: pl[1]; cool: pl[2]; glowColor: pl[3]
-                running: visible && !Look.lite; scale: lm.containsMouse ? 1.15 : 1; Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } } }
+                running: visible && !Look.lite && (lm.containsMouse || bar.logoMove); scale: lm.containsMouse ? 1.15 : 1; Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } } }
             MoonMark { visible: bar.logoKey === "moon"; anchors.centerIn: parent; size: bar.goo ? bar.barH - 8 : 28; extras: false
                 readonly property var pl: bar.logoPal("moon"); moonTop: pl[0]; moonBottom: pl[1]; glowColor: pl[3]
-                running: visible && !Look.lite; scale: lm.containsMouse ? 1.15 : 1; Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } } }
+                running: visible && !Look.lite && (lm.containsMouse || bar.logoMove); scale: lm.containsMouse ? 1.15 : 1; Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } } }
             Text { visible: bar.logoKey !== "apps" && bar.logoKey !== "blackhole" && bar.logoKey !== "moon"; anchors.centerIn: parent; anchors.horizontalCenterOffset: 1
                 text: bar.logos[bar.logoKey] !== undefined ? String.fromCodePoint(bar.logos[bar.logoKey]) : ""
                 font.family: Fonts.icons; font.pixelSize: bar.goo ? 17 : 18; color: bar.goo ? (gp.mono ? gp.inkContainer : gp.inkPrimary) : bar.fg
@@ -623,7 +626,7 @@ PanelWindow {
                     if (m.button === Qt.LeftButton) { const p = mapToItem(null, width / 2, 0); bar.run("\"$HOME/.local/bin/rice-volume\" menu " + Math.round(p.x)); return }
                     if (bar.sink && bar.sink.audio) bar.sink.audio.muted = !bar.sink.audio.muted
                 }
-                onWheel: function(e) { if (bar.sink && bar.sink.audio) bar.sink.audio.volume = Math.max(0, Math.min(1, bar.sink.audio.volume + Look.notches(e) * 0.04)) } }
+                onWheel: function(e) { Vol.nudge(bar.sink, Look.notches(e) * 0.04) } }
             HoverLine { on: vm.containsMouse; full: 16 * Math.min(1, bar.vol); color: bar.fg }   // how loud, as a line under the icon
         }
     }

@@ -61,9 +61,9 @@ FloatingWindow {
         }
     }
     // "Keep Settings ready" turned off (rice-settings lazy): it quits after three minutes, like in Light mode
-    Process { id: lazyP; command: ["bash", "-c", "[ -e \"$HOME/.config/rice/settings-lazy\" ]"]
+    Process { id: lazyP; command: ["bash", "-c", "[ ! -e \"$HOME/.config/rice/settings-keep\" ]"]
         onExited: function(code) { if (code === 0 && win.parked) parkT.restart() } }
-    Timer { id: parkT; interval: 180000; onTriggered: { Quickshell.execDetached(["bash", "-c", "rm -f \"$HOME/.cache/rice/settings-parked\""]); Qt.quit() } }
+    Timer { id: parkT; interval: 60000; onTriggered: { Quickshell.execDetached(["bash", "-c", "rm -f \"$HOME/.cache/rice/settings-parked\""]); Qt.quit() } }
     // "TIME PAGE" opens it (on that page; "-" keeps the page), "TIME hide" closes it
     property string lastShow: ""
     property bool showPrimed: false
@@ -280,6 +280,14 @@ FloatingWindow {
     readonly property int railW: 92
     // rice-effects: blur and transparency are off right now
     property bool flat: false
+    // Hyprland's blur off (its own setting, not the shell's): the window stays nearly solid, so the desktop's widgets
+    // do not show through it sharp (V4.84: a big clock and the weather could be read through the pages)
+    property bool noBlur: false
+    Process {
+        running: !!Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")
+        command: ["bash", "-c", "hyprctl -j getoption decoration:blur:enabled 2>/dev/null"]
+        stdout: StdioCollector { onStreamFinished: { try { const j = JSON.parse(text); win.noBlur = j.int === 0 || j.bool === false } catch (e) { } } }
+    }
     Process {
         id: flatProc
         command: ["bash", "-c", "[ -e \"$HOME/.cache/rice/flat\" ] && echo 1 || echo 0"]
@@ -639,7 +647,7 @@ FloatingWindow {
         anchors.fill: parent
         // solid while blur and transparency are off (Settings > Services, or gaming mode); the stars stay
         // see-through enough that the blur behind it shows (Hyprland: its window blur; niri: a window rule)
-        color: win.flat ? M3.surface : M3.alpha(M3.surface, 0.8)
+        color: win.flat ? M3.surface : M3.alpha(M3.surface, win.noBlur ? 0.96 : 0.8)
         Behavior on color { ColorAnimation { duration: 300 } }
         focus: true
         Keys.onEscapePressed: win.closeNow()
@@ -665,7 +673,7 @@ FloatingWindow {
             x: 0; y: 0
             width: win.railW
             height: parent.height
-            color: win.flat ? M3.surfaceLow : M3.alpha(M3.surfaceLow, 0.72)
+            color: win.flat ? M3.surfaceLow : M3.alpha(M3.surfaceLow, win.noBlur ? 0.96 : 0.72)
         }
 
         // you: your picture (click: Home, right click: change it)

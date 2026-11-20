@@ -259,12 +259,14 @@ def default_binds(f, term, files):
         ("Mod+Comma", "", "consume-window-into-column;"),
         ("Mod+Period", "", "expel-window-from-column;"),
         # focus and moving
-        ("Mod+Left", "", "focus-column-left;"),
-        ("Mod+Right", "", "focus-column-right;"),
+        # at the last column the focus (and with Ctrl the window) goes on to the next monitor: windows scroll from
+        # one screen to the other (V4.84; with one monitor it is the same as before)
+        ("Mod+Left", "", "focus-column-or-monitor-left;"),
+        ("Mod+Right", "", "focus-column-or-monitor-right;"),
         ("Mod+Up", "", "focus-window-or-workspace-up;"),
         ("Mod+Down", "", "focus-window-or-workspace-down;"),
-        ("Mod+Ctrl+Left", "", "move-column-left;"),
-        ("Mod+Ctrl+Right", "", "move-column-right;"),
+        ("Mod+Ctrl+Left", "", "move-column-left-or-to-monitor-left;"),
+        ("Mod+Ctrl+Right", "", "move-column-right-or-to-monitor-right;"),
         ("Mod+Ctrl+Up", "", "move-window-up-or-to-workspace-up;"),
         ("Mod+Ctrl+Down", "", "move-window-down-or-to-workspace-down;"),
         ("Mod+Shift+Left", "", "focus-monitor-left;"),
@@ -281,10 +283,10 @@ def default_binds(f, term, files):
         ("Mod+Ctrl+Page_Up", "", "move-column-to-workspace-up;"),
         ("Mod+WheelScrollDown", "cooldown-ms=150", "focus-workspace-down;"),
         ("Mod+WheelScrollUp", "cooldown-ms=150", "focus-workspace-up;"),
-        ("Mod+WheelScrollRight", "", "focus-column-right;"),
-        ("Mod+WheelScrollLeft", "", "focus-column-left;"),
-        ("Mod+Shift+WheelScrollDown", "", "focus-column-right;"),
-        ("Mod+Shift+WheelScrollUp", "", "focus-column-left;"),
+        ("Mod+WheelScrollRight", "", "focus-column-or-monitor-right;"),
+        ("Mod+WheelScrollLeft", "", "focus-column-or-monitor-left;"),
+        ("Mod+Shift+WheelScrollDown", "", "focus-column-or-monitor-right;"),
+        ("Mod+Shift+WheelScrollUp", "", "focus-column-or-monitor-left;"),
         # overview and help
         # the shell's Task view (every workspace and its windows) and window switcher (rice-taskview); niri's own
         # overview stays on Mod + O

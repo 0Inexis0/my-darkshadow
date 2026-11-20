@@ -164,7 +164,7 @@ ShellRoot {
     Trigger { path: root.home + "/.config/rice/desktop.json"; every: 1500
         onContent: function(t) { if (!cfgProc.running) cfgProc.running = true } }
     Timer {
-        interval: 3000
+        interval: 10000
         running: true
         repeat: true
         onTriggered: { if (!cfgProc.running) cfgProc.running = true }
@@ -572,7 +572,8 @@ ShellRoot {
     EditorWindow { root: root }
 
     // ---- dashboard (middle of the bar edge, SUPER + W for wallpapers)
-    Launcher { }
+    // made when it is first opened, let go after 10 minutes closed (V4.84: it held every app's icon from the start)
+    LazyPanel { name: "launcher-open"; keep: 600000; Launcher { } }
     // SUPER + Tab: every workspace with its windows; ALT + Tab: the window switcher (rice-taskview)
     TaskView { }
     // the clipboard history (SUPER + V)

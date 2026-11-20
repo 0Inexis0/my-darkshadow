@@ -1,5 +1,23 @@
 # Changelog
 
+## V4.84: much lighter and quicker; minimize and stack windows; your own keys; a gentler volume; login screen clocks
+- **Performance**
+  - Task view: closed, it lets every window picture go. Before, after the first SUPER + Tab every window was captured live, every frame, behind everything until the shell restarted: lag and a lot of memory
+  - Waves (progress lines, the timer, gauges, the game bar) are drawn about 30 times a second, not once every frame of the screen (240 times a second on a 240 Hz screen, by the processor)
+  - The black hole and moon logos on the bar move while the pointer is on them (Settings > Bar > "The logo moves all the time" for the old way)
+  - Infinite Desktop's moving wallpaper exists only while Infinite Desktop is on (a whole-screen surface and a big picture sat in memory all the time)
+  - The launcher is made when you first open it and let go after 10 minutes closed
+  - Settings no longer waits in the background by default (about 300 MB): it starts when you open it and quits a minute after you close it (Settings > Desktop > Performance > Keep Settings ready, for the old way)
+  - Fewer wake-ups: the files the shell watches are re-read every 5 seconds as a safety net (inotify does the real work), the desktop's settings every 10
+  - `rice-perf`: how much memory and processor each part of the shell uses right now, and what would make it lighter
+- **Windows**: minimize (SUPER + H) and bring back (SUPER + SHIFT + H); stack windows into tabs (SUPER + T), the next / previous one of the stack (SUPER + CTRL + Right / Left), put a window into the stack beside it (SUPER + CTRL + SHIFT + Left / Right). All of them can get other keys in Settings > System > Keybinds. `rice-win`
+- **Your own keys**: Settings > System > Keybinds > "Turn a key off" takes any key of the window manager away (then give it something of your own); ready-made actions for your own keys (minimize, fullscreen, close, float, pin, screenshot ...)
+- **Launcher favorites**: right click an app (or Ctrl + D) and it comes first, with a star
+- **Volume**: the sliders, keys and the bar's wheel use a gentler curve (below 35 % it was nearly silent) and the top can be louder than 100 % (Settings > Sound > Volume: Low volumes, Loudest; `rice-sound`)
+- **Login screen clocks**: classic, stacked, center, pill and shapes (Settings > Desktop > Idle & Lockscreen > Login screen; `rice-sddm clock STYLE`)
+- **niri**: at the last column, Super + Left / Right (and the wheel) go on to the next monitor, Super + Ctrl + Left / Right take the window with them
+- Settings: with Hyprland's blur off the window is nearly solid, so the desktop widgets no longer show through it
+
 ## V4.83: smoother Edge bar, a see-through toolbox, a launcher in your wallpaper's colors
 - Edge bar: its parts no longer lag and swing when something changes (another workspace, the island growing for a notification or a recording): they follow the zones and the island in the same frame. New: Settings > Bar > "Frame along the edge" (off: only the pills stay, without the dark parts behind them)
 - Blur: the bar and the island are blurred on every install now (the rule only came with Settings > Launcher before), and the bar's Transparency is its own (it was made more solid on top, so the blur could hardly be seen)

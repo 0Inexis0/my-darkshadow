@@ -116,4 +116,53 @@ Column {
             }
         }
     }
+
+    // the clock on it (rice-sddm clock STYLE): a little picture of each
+    property string clock: "classic"
+    Process { running: true; command: ["bash", "-c", "\"$HOME/.local/bin/rice-sddm\" clock 2>/dev/null"]
+        stdout: StdioCollector { onStreamFinished: { const v = text.trim(); if (v !== "") card.clock = v } } }
+    SettingRow {
+        label: I18n.t("Clock on the login screen")
+        desc: I18n.t("Classic, stacked, in the middle, a pill or two shapes. It changes the next time the login screen shows")
+    }
+    Flow {
+        width: parent.width; spacing: 10
+        Repeater {
+            model: [{ v: "classic", n: "Classic" }, { v: "stacked", n: "Stacked" }, { v: "center", n: "Center" }, { v: "pill", n: "Pill" }, { v: "shapes", n: "Shapes" }]
+            delegate: Rectangle {
+                id: ck
+                required property var modelData
+                readonly property bool on: card.clock === modelData.v
+                width: 150; height: 112; radius: 18
+                color: on ? M3.primaryContainer : (cm.containsMouse ? M3.surfaceHigh : M3.surfaceC)
+                border.width: on ? 2 : 0; border.color: M3.primary
+                Behavior on color { ColorAnimation { duration: 160 } }
+                // the little picture
+                Rectangle {
+                    x: 10; y: 10; width: parent.width - 20; height: 66; radius: 10; clip: true
+                    gradient: Gradient { GradientStop { position: 0; color: M3.alpha(M3.primary, 0.35) } GradientStop { position: 1; color: M3.surfaceLowest } }
+                    readonly property string hm: Qt.formatTime(new Date(), "HH:mm")
+                    T { visible: ck.modelData.v === "classic"; x: 8; anchors.bottom: parent.bottom; anchors.bottomMargin: 6; text: parent.hm; font.pixelSize: 22; font.weight: Font.DemiBold; color: M3.ink }
+                    Column { visible: ck.modelData.v === "stacked"; x: 10; anchors.verticalCenter: parent.verticalCenter; spacing: -8
+                        T { text: Qt.formatTime(new Date(), "HH"); font.pixelSize: 22; font.weight: Font.Black; color: M3.ink }
+                        T { text: Qt.formatTime(new Date(), "mm"); font.pixelSize: 22; font.weight: Font.Black; color: M3.primary } }
+                    T { visible: ck.modelData.v === "center"; anchors.centerIn: parent; text: parent.hm; font.pixelSize: 26; font.weight: Font.Light; color: M3.ink }
+                    Rectangle { visible: ck.modelData.v === "pill"; anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.bottom; anchors.bottomMargin: 8
+                        width: 76; height: 24; radius: 12; color: M3.primaryContainer
+                        T { anchors.centerIn: parent; text: parent.parent.hm; font.pixelSize: 13; font.weight: Font.DemiBold; color: M3.inkPrimaryC } }
+                    Row { visible: ck.modelData.v === "shapes"; anchors.centerIn: parent; spacing: 4
+                        Rectangle { width: 34; height: 34; radius: 10; color: M3.primaryContainer
+                            T { anchors.centerIn: parent; text: Qt.formatTime(new Date(), "HH"); font.pixelSize: 15; font.weight: Font.Bold; color: M3.inkPrimaryC } }
+                        Rectangle { width: 34; height: 34; radius: 17; color: M3.primary
+                            T { anchors.centerIn: parent; text: Qt.formatTime(new Date(), "mm"); font.pixelSize: 15; font.weight: Font.Bold; color: M3.inkPrimary } } }
+                }
+                T { anchors.horizontalCenter: parent.horizontalCenter; y: 84; text: I18n.t(ck.modelData.n); font.pixelSize: 13; font.weight: ck.on ? Font.DemiBold : Font.Normal
+                    color: ck.on ? M3.inkPrimaryC : M3.ink }
+                MouseArea { id: cm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                    onClicked: { card.clock = ck.modelData.v
+                        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-sddm\" clock \"$1\"", "_", ck.modelData.v])
+                        if (card.ctl) card.ctl.status = I18n.t("Applied") } }
+            }
+        }
+    }
 }

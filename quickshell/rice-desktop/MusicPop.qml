@@ -187,8 +187,8 @@ Item {
         spacing: 8
         opacity: mp.st(4)
         transform: Translate { y: (1 - mp.st(4)) * 18 }
-        readonly property real vol: mp.sink && mp.sink.audio ? mp.sink.audio.volume : 0
-        function setVol(d) { if (mp.sink && mp.sink.audio) { mp.sink.audio.muted = false; mp.sink.audio.volume = Math.max(0, Math.min(1, mp.sink.audio.volume + d)) } }
+        readonly property real vol: Vol.of(mp.sink)
+        function setVol(d) { Vol.nudge(mp.sink, d) }
         Btn { w: 46; icon: "volume_down"; g: 0xF075E; onHit: btns.setVol(-0.05) }
         Btn { w: 56; icon: "skip_previous"; g: 0xF04AE; onHit: Player.prev() }
         Btn { w: 84; icon: Player.playing ? "pause" : "play_arrow"; g: Player.playing ? 0xF03E4 : 0xF040A; strong: true; onHit: Player.toggle() }

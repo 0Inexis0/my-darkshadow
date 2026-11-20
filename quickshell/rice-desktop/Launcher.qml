@@ -43,6 +43,24 @@ PanelWindow {
     // ---------- the apps ----------
     property string query: ""
     property var usage: ({})
+    // your favorites: first in the list (and ahead in a search). Right click an app (or Ctrl + D) adds or takes it
+    // away; ~/.config/rice/launcher-favs.json
+    property var favs: []
+    function isFav(id) { return favs.indexOf(id) >= 0 }
+    function toggleFav(r) {
+        if (!r || r.kind !== "app" || !r.id) return
+        const l = favs.slice(), i = l.indexOf(r.id)
+        if (i >= 0) l.splice(i, 1); else l.unshift(r.id)
+        favs = l
+        Quickshell.execDetached(["bash", "-c", "mkdir -p \"$HOME/.config/rice\" && printf '%s\\n' \"$1\" > \"$HOME/.config/rice/launcher-favs.json\"", "_", JSON.stringify(l)])
+        Sfx.play("click")
+        const keep = cur; recompute(); cur = Math.min(keep, Math.max(0, results.length - 1))
+    }
+    FileView {
+        path: Quickshell.env("HOME") + "/.config/rice/launcher-favs.json"
+        printErrors: false
+        onLoaded: { try { const l = JSON.parse(text()); if (Array.isArray(l)) ln.favs = l.filter(x => typeof x === "string") } catch (e) { } }
+    }
     property int cur: 0
     readonly property var apps: DesktopEntries.applications.values.filter(function(e) { return !e.noDisplay })
     property var results: []
@@ -80,8 +98,10 @@ PanelWindow {
         for (let i = 0; i < apps.length; i++) {
             const e = apps[i]
             const u = Math.min(usage[e.id] || 0, 30)
-            if (q === "") list.push({ e: e, s: u * 10 })
-            else { const sc = score(e, q); if (sc >= 0) list.push({ e: e, s: sc + u * 4 }) }
+            const fv = favs.indexOf(e.id)
+            const fb = fv >= 0 ? 100000 - fv : 0
+            if (q === "") list.push({ e: e, s: u * 10 + fb })
+            else { const sc = score(e, q); if (sc >= 0) list.push({ e: e, s: sc + u * 4 + (fv >= 0 ? 150 : 0) }) }
         }
         list.sort(function(a, b) { return b.s !== a.s ? b.s - a.s : (a.e.name || "").localeCompare(b.e.name || "") })
         const c = q !== "" ? calc(query) : null
@@ -198,7 +218,7 @@ PanelWindow {
         stdout: StdioCollector { onStreamFinished: { try { ln.usage = JSON.parse(text) } catch (e) { } } }
     }
     // rice-launch writes a line into this file: open it, or close it when it is already open
-    Trigger { name: "launcher-open"; onFired: function(o) { if (ln.open) ln.hide(); else ln.show() } }
+    Trigger { name: "launcher-open"; fresh: true; onFired: function(o) { if (ln.open) ln.hide(); else ln.show() } }
 
     // ---------- window ----------
     visible: open || (t > 0.01 && !closeT.done)
@@ -301,6 +321,7 @@ PanelWindow {
                     const grid = ln.lay === "grid", bar = ln.lay === "bar"
                     if (e.key === Qt.Key_Escape) { ln.hide(); e.accepted = true }
                     else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) { ln.activate(ln.results[ln.cur]); e.accepted = true }
+                    else if (ctrl && e.key === Qt.Key_D) { ln.toggleFav(ln.results[ln.cur]); e.accepted = true }
                     else if (e.key === Qt.Key_Down || (e.key === Qt.Key_Tab && !(e.modifiers & Qt.ShiftModifier)) || (ctrl && (e.key === Qt.Key_J || e.key === Qt.Key_N))) { ln.move(grid ? ln.gcols : 1); e.accepted = true }
                     else if (e.key === Qt.Key_Up || e.key === Qt.Key_Backtab || (ctrl && (e.key === Qt.Key_K || e.key === Qt.Key_P))) { ln.move(grid ? -ln.gcols : -1); e.accepted = true }
                     else if ((grid || bar) && e.key === Qt.Key_Right && input.cursorPosition === input.text.length) { ln.move(1); e.accepted = true }
@@ -366,7 +387,12 @@ PanelWindow {
                     elide: Text.ElideRight; text: modelData.name; font.family: ln.ff; font.pixelSize: ln.px
                     color: parent.sel ? ln.col(ln.th.selfg) : ln.col(ln.th.fg)
                 }
-                MouseArea { anchors.fill: parent; hoverEnabled: true; onPositionChanged: { ln.noScroll = true; ln.cur = index; ln.noScroll = false } onClicked: ln.activate(modelData) }
+                // a favorite: a small star
+                DText { visible: modelData.kind === "app" && ln.isFav(modelData.id); anchors.right: parent.right; anchors.rightMargin: 14
+                    anchors.verticalCenter: parent.verticalCenter; text: "★"; font.pixelSize: ln.fs; color: parent.sel ? ln.col(ln.th.selfg) : ln.col(ln.th.sel) }
+                MouseArea { anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    onPositionChanged: { ln.noScroll = true; ln.cur = index; ln.noScroll = false }
+                    onClicked: function(m) { if (m.button === Qt.RightButton) ln.toggleFav(modelData); else ln.activate(modelData) } }
             }
         }
 
@@ -416,7 +442,9 @@ PanelWindow {
                     text: modelData.name; font.family: ln.ff; font.pixelSize: ln.px - 2
                     color: parent.sel ? ln.col(ln.th.selfg) : ln.col(ln.th.fg)
                 }
-                MouseArea { anchors.fill: parent; hoverEnabled: true; onPositionChanged: { ln.noScroll = true; ln.cur = index; ln.noScroll = false } onClicked: ln.activate(modelData) }
+                MouseArea { anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    onPositionChanged: { ln.noScroll = true; ln.cur = index; ln.noScroll = false }
+                    onClicked: function(m) { if (m.button === Qt.RightButton) ln.toggleFav(modelData); else ln.activate(modelData) } }
             }
         }
 
@@ -452,7 +480,9 @@ PanelWindow {
                     source: ln.icons ? ln.iconOf(modelData) : ""; sourceSize.width: 52; sourceSize.height: 52; asynchronous: true }
                 DText { id: bt; x: ln.icons ? 44 : 14; width: parent.width - x - 10; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
                     text: modelData.name; font.family: ln.ff; font.pixelSize: ln.px - 1; color: parent.sel ? ln.col(ln.th.selfg) : ln.col(ln.th.fg) }
-                MouseArea { anchors.fill: parent; hoverEnabled: true; onPositionChanged: { ln.noScroll = true; ln.cur = index; ln.noScroll = false } onClicked: ln.activate(modelData) }
+                MouseArea { anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    onPositionChanged: { ln.noScroll = true; ln.cur = index; ln.noScroll = false }
+                    onClicked: function(m) { if (m.button === Qt.RightButton) ln.toggleFav(modelData); else ln.activate(modelData) } }
             }
         }
 
