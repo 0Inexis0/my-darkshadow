@@ -11,8 +11,8 @@ n=0
 ok() { n=$((n + 1)); printf 'ok %d - %s\n' "$n" "$1"; }
 bad() { printf 'not ok %d - %s\n' "$n" "$1"; exit 1; }
 
-grep -q 'readonly property bool reserve: false' "$dock" \
-  && ok "the dock never reserves room" || bad "reserve still holds room while the dock hides"
+grep -q 'readonly property bool reserve: on && !autoHide' "$dock" \
+  && ok "a dock that hides on hover reserves no room" || bad "the dock still reserves room while it hides"
 grep -q 'pinButton\|pinnedStartup\|property bool pinned' "$dock" && bad "the dock still has its hold-open pin" \
   || ok "no hold-open pin: only the pointer keeps the dock out"
 grep -q 'hideTimer; interval: 700; onTriggered: if (!dockMouse.containsMouse && !apps.overPanel)' "$dock" \

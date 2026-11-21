@@ -15,9 +15,9 @@ Scope {
     readonly property bool on: dc.enabled === true
     readonly property bool autoHide: dc.hover !== false
     readonly property bool reveal: on && !Infinite.hideUi && (!autoHide || hovering || apps.open)
-    // "Keep room for it" never takes room from a dock that hides on hover: a saved space at the edge all the time
-    // is a strip of wallpaper the windows cannot use (that is the bar's job)
-    readonly property bool reserve: false
+    // "Keep room for it": only a dock that stays out keeps its room. One that hides on hover must not reserve a strip
+    // of the screen: the windows would end above nothing, a band of wallpaper the windows cannot use (that is the bar)
+    readonly property bool reserve: on && !autoHide && dc.reserve !== false
     readonly property string edge: dc.position === "left" || dc.position === "right" ? dc.position : "bottom"
     readonly property bool vert: edge === "left" || edge === "right"
     readonly property real alpha: Look.flat ? 1 : (dc.opacity !== undefined ? Number(dc.opacity) : 0.78)
