@@ -5,7 +5,7 @@ Language and region of the shell (Settings > Sound & language > Language & regio
   units c|f       temperatures: weather widgets and the lock screen
   week mon|sun    the first day of the week in calendars
   lang  CODE      the language of the shell and of your terminals (English, Polish, ...; "" = the system's)
-  kbd   LAYOUT    the keyboard layout (us, pl, ...; "" = the system's)
+  kbd             the keyboard layout (Settings > System > Keyboard; shown, not set here)
 
 The language and the keyboard also reach the programs you start: rice-region env prints them as KEY=VALUE lines
 (rice-desktop start passes them on, kitty.conf reads them), and writes ~/.config/environment.d/50-darkshadows-lang.conf
