@@ -66,7 +66,7 @@ Item {
                     GradientStop { position: 0; color: M3.stageTop }
                     GradientStop { position: 1; color: M3.stageBottom }
                 }
-                readonly property var th: (page.rs.themes && page.rs.themes[page.v("theme", "shadow")]) ? page.rs.themes[page.v("theme", "shadow")]
+                readonly property var th: (page.rs.themes && page.rs.themes[page.v("theme", "wallpaper")]) ? page.rs.themes[page.v("theme", "wallpaper")]
                                           : ({ bg: "#0d0d0d", alt: M3.surfaceHigh, sel: "#F6F5F4", fg: "#F6F5F4" })
                 readonly property real sc: width / 1920 * 1.35
                 readonly property string lay: page.v("layout", "list")
@@ -179,7 +179,7 @@ Item {
                     model: Object.keys(page.rs.themes || {})
                     delegate: Rectangle {
                         readonly property var th: page.rs.themes[modelData]
-                        readonly property bool on: page.v("theme", "shadow") === modelData
+                        readonly property bool on: page.v("theme", "wallpaper") === modelData
                         width: 124
                         height: 84
                         radius: 14

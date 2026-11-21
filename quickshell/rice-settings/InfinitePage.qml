@@ -222,6 +222,28 @@ Item {
         }
         ToggleRow {
             visible: !page.niri
+            label: I18n.t("The wallpaper moves with it")
+            desc: I18n.t("Moving around the canvas also moves the wallpaper, slower than the windows, as if you travelled over a big picture")
+            checked: page.st.wall !== 0
+            onToggled: function(v) { page.sh(["set", "wall", v ? "1" : "0"]); const n = Object.assign({}, page.st); n.wall = v ? 1 : 0; page.st = n }
+        }
+        SliderRow {
+            visible: !page.niri && page.st.wall !== 0
+            label: I18n.t("Wallpaper zoom")
+            desc: I18n.t("How much bigger the moving wallpaper is: lower looks closer to your wallpaper, higher gives it more room to move")
+            from: 1.05; to: 1.5; step: 0.01; decimals: 2; unit: "x"
+            value: page.st.wallzoom || 1.15
+            onCommitted: function(v) { page.sh(["set", "wallzoom", String(Math.round(v * 100) / 100)]); const n = Object.assign({}, page.st); n.wallzoom = v; page.st = n }
+        }
+        ToggleRow {
+            visible: !page.niri
+            label: I18n.t("The bar and the dock step aside while you move")
+            desc: I18n.t("Holding the keys and moving the mouse slides the bar and the dock away; they come back when you let go")
+            checked: page.st.hidebar !== 0
+            onToggled: function(v) { page.sh(["set", "hidebar", v ? "1" : "0"]); const n = Object.assign({}, page.st); n.hidebar = v ? 1 : 0; page.st = n }
+        }
+        ToggleRow {
+            visible: !page.niri
             label: I18n.t("SUPER + drag a window to the edge pushes the others")
             desc: I18n.t("Take a window to the edge of the screen and keep going: the other windows come towards it")
             checked: page.st.push === 1

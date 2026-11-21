@@ -153,7 +153,7 @@ PanelWindow {
     readonly property var player: { const l = Mpris.players.values; for (let i = 0; i < l.length; i++) if (l[i].isPlaying) return l[i]; return l.length ? l[0] : null }
     readonly property var sink: Pipewire.defaultAudioSink
     PwObjectTracker { objects: [vb.sink] }
-    readonly property real vol: sink && sink.audio ? sink.audio.volume : 0
+    readonly property real vol: Vol.of(sink)
     readonly property bool muted: sink && sink.audio ? sink.audio.muted : false
     readonly property var batt: UPower.displayDevice
     readonly property bool hasBatt: batt && batt.isPresent && batt.isLaptopBattery
@@ -292,10 +292,10 @@ PanelWindow {
                 Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutBack } } }
             BlackHoleMark { visible: vb.logoKey === "blackhole"; anchors.centerIn: parent; size: parent.width; extras: false
                 readonly property var pl: vb.logoPal("blackhole"); hot: pl[0]; warm: pl[1]; cool: pl[2]; glowColor: pl[3]
-                running: visible && !Look.lite }
+                running: visible && !Look.lite && (bc.logo_move === true) }
             MoonMark { visible: vb.logoKey === "moon"; anchors.centerIn: parent; size: parent.width - 8; extras: false
                 readonly property var pl: vb.logoPal("moon"); moonTop: pl[0]; moonBottom: pl[1]; glowColor: pl[3]
-                running: visible && !Look.lite }
+                running: visible && !Look.lite && (bc.logo_move === true) }
             MIcon { visible: vb.logoKey === "apps"; anchors.centerIn: parent; name: "apps"; glyph: String.fromCodePoint(0xF003B); size: 18
                 color: vb.goo ? (gp.mono ? gp.inkContainer : gp.inkPrimary) : vb.fg }
             // your distro's logo (Settings > DarkShadow bar > Launcher icon: auto)
@@ -389,7 +389,7 @@ PanelWindow {
                 if (m.button === Qt.LeftButton) vb.run("\"$HOME/.local/bin/rice-volume\" menu " + vb.menuAt(vbtn))
                 else if (vb.sink && vb.sink.audio) vb.sink.audio.muted = !vb.sink.audio.muted
             }
-            onWheel: function(e) { if (vb.sink && vb.sink.audio) vb.sink.audio.volume = Math.max(0, Math.min(1, vb.sink.audio.volume + Look.notches(e) * 0.04)) } }
+            onWheel: function(e) { Vol.nudge(vb.sink, Look.notches(e) * 0.04) } }
     }
     Component { id: cNet
         Btn { id: nbtn; icon: vb.svc.network ? "wifi" : "wifi_off"; glyph: String.fromCodePoint(vb.svc.network ? 0xF05A9 : 0xF05AA); tint: vb.svc.network ? vb.fg : vb.dim

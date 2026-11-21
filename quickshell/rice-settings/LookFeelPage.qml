@@ -338,5 +338,14 @@ Item {
                 page.look(["files-colors", v ? "on" : "off"])
             }
         }
+        ToggleRow {
+            label: I18n.t("Glass and Material 3 shapes")
+            desc: I18n.t("Files is see-through with the blur behind it, with round pill rows and buttons. Open it again to see it")
+            checked: !page.st.files || page.st.files.glass !== false
+            onToggled: function(v) {
+                const s2 = Object.assign({}, page.st); s2.files = Object.assign({}, page.st.files || {}); s2.files.glass = v; page.st = s2
+                page.look(["files-glass", v ? "on" : "off"])
+            }
+        }
     }
 }

@@ -72,6 +72,17 @@ local function active_ws()
 end
 
 -- the windows of the canvas workspace that can be moved
+-- pop-ups that belong to an app and are not windows of the canvas (Steam's notification toasts and the like): they
+-- stay where the app put them, like a pinned window. Moving or focusing them moved the whole canvas instead.
+local OVERLAY_TITLE = { "^notificationtoasts_" }
+local function overlay(w)
+    local t = tostring(w and w.title or "")
+    for _, pat in ipairs(OVERLAY_TITLE) do
+        if t:match(pat) then return true end
+    end
+    return false
+end
+
 local function wins()
     local out = {}
     local ok, list = pcall(hl.get_windows)
@@ -79,7 +90,7 @@ local function wins()
     for _, w in pairs(list) do
         local wsid = w.workspace and w.workspace.id
         if wsid ~= nil and wsid == RI.ws and w.mapped ~= false and not w.hidden and (tonumber(w.fullscreen) or 0) == 0
-            and not w.pinned and w.at and w.size then
+            and not w.pinned and not overlay(w) and w.at and w.size then
             out[#out + 1] = w
         end
     end
@@ -158,7 +169,7 @@ local function floats_here()
     if not ok or type(list) ~= "table" or ws == nil then return out end
     for _, w in pairs(list) do
         if w.floating and w.workspace and w.workspace.id == ws and w.mapped ~= false and not w.hidden
-            and (tonumber(w.fullscreen) or 0) == 0 and not w.pinned and w.at then
+            and (tonumber(w.fullscreen) or 0) == 0 and not w.pinned and not overlay(w) and w.at then
             out[#out + 1] = w
         end
     end
@@ -271,6 +282,7 @@ end
 -- a window that opened on the canvas: float it, give it its own room next to the last one, glide there
 function RI.opened(w)
     if not (RI.on and w and w.workspace and w.workspace.id == RI.ws) then return end
+    if overlay(w) then return end
     if not w.floating then
         -- it would have been tiled: it tiles again when Infinite Desktop is turned off
         RI.tiled[w.address] = true

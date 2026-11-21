@@ -8,6 +8,7 @@
 #   rice-sddm sync           your wallpaper, colors, font and picture to the login screen (no password; it runs by
 #                            itself when the wallpaper changes)
 #   rice-sddm face           only your picture (Settings runs it when you pick one)
+#   rice-sddm clock STYLE    the clock: classic, stacked, center, pill or shapes
 #   rice-sddm preview        show the login screen in a window (sddm-greeter test mode)
 #
 # The theme lives in /usr/share/sddm/themes/darkshadow-shell. Its user/ folder belongs to you, so the shell can
@@ -48,6 +49,7 @@ sudo_run() {
 pkg_cmd() {
   . /etc/os-release 2>/dev/null
   case " ${ID:-} ${ID_LIKE:-} " in
+    *" artix "*) echo "sudo pacman -S --needed sddm sddm-\$(rice-sys init) qt6-svg qt6-declarative" ;;
     *" arch "*|*" cachyos "*|*" endeavouros "*|*" manjaro "*) echo "sudo pacman -S --needed sddm qt6-svg qt6-declarative" ;;
     *" fedora "*) echo "sudo dnf install sddm" ;;
     *" debian "*|*" ubuntu "*) echo "sudo apt install sddm" ;;
@@ -101,8 +103,11 @@ root_install() {   # root-install SRC USER [use-sddm]
   fi
   printf '# DarkShadow'"'"'s Shell: its login screen (rice-sddm remove takes this away)\n[General]\nInputMethod=\n\n[Theme]\nCurrent=%s\n' "$NAME" >"$CONF"
   if [ "${3:-}" = use-sddm ]; then
-    if command -v systemctl >/dev/null 2>&1; then
+    if [ -d /run/systemd/system ] && command -v systemctl >/dev/null 2>&1; then
       systemctl enable --force sddm.service && echo "SDDM starts at the next boot"
+    elif [ -x "$(dirname "$0")/rice-sys" ]; then
+      # no systemd (Artix: OpenRC, runit, s6, dinit): needs Artix's sddm-<init> package, the installer puts it in
+      "$(dirname "$0")/rice-sys" service-enable "sddm|display-manager|xdm" && echo "SDDM starts at the next boot"
     fi
   fi
   echo "installed"
@@ -162,6 +167,31 @@ sync() {
   local w im="" out="$U/theme.conf.user.tmp" f face
   command -v magick >/dev/null 2>&1 && im=magick || { command -v convert >/dev/null 2>&1 && im=convert; }
   w="$(wallpaper)"
+  # a live wallpaper: the video itself goes to the login screen too (it plays there when SDDM's Qt has QtMultimedia;
+  # else its picture stays). The picture is one frame of this very video, so the two always belong together
+  local live="" lv=""
+  live="$(cat "$HOME/.cache/rice/live-wallpaper" 2>/dev/null)"
+  rm -f "$U"/live.*.tmp 2>/dev/null
+  if [ -n "$live" ] && [ -f "$live" ]; then
+    local ext="${live##*.}"; ext="${ext,,}"
+    case "$ext" in mp4|webm|mkv|mov|m4v) ;; *) ext=mp4 ;; esac
+    lv="$U/live.$ext"
+    # copied only when it is another video (size and time kept in a small note next to it)
+    local sig; sig="$(stat -c '%s %Y' "$live" 2>/dev/null) $live"
+    if [ ! -f "$lv" ] || [ "$(cat "$U/live.sig" 2>/dev/null)" != "$sig" ]; then
+      for f in "$U"/live.*; do case "$f" in *.sig) ;; *) rm -f "$f" ;; esac; done
+      if cp -f "$live" "$lv.tmp" 2>/dev/null && mv -f "$lv.tmp" "$lv"; then printf '%s' "$sig" >"$U/live.sig"; else rm -f "$lv.tmp"; lv=""; fi
+    fi
+    if command -v ffmpeg >/dev/null 2>&1; then
+      local fr="$U/frame.tmp.jpg" ss
+      for ss in 1 0; do
+        ffmpeg -y -loglevel error -ss "$ss" -i "$live" -frames:v 1 -q:v 2 "$fr" </dev/null 2>/dev/null && [ -s "$fr" ] && break
+      done
+      [ -s "$fr" ] && w="$fr"
+    fi
+  else
+    rm -f "$U"/live.* 2>/dev/null
+  fi
   if [ -n "$w" ]; then
     if [ -n "$im" ]; then
       # a sharp one at screen size, and a blurred one (made small first: fast)
@@ -179,6 +209,7 @@ sync() {
     echo "[General]"
     [ -f "$U/bg.jpg" ] && echo "background=$U/bg.jpg"
     [ -f "$U/blur.jpg" ] && echo "backgroundBlur=$U/blur.jpg"
+    [ -n "$lv" ] && [ -f "$lv" ] && echo "backgroundVideo=$lv"
     [ -f "$U/font.ttf" ] && echo "font=$U/font.ttf"
     echo "avatarDir=$U/faces"
     local k v
@@ -195,8 +226,12 @@ except Exception: print("en")' "$HOME/.config/rice/settings-app.json")"
     [[ "$v" =~ ^[a-zA-Z_-]{2,8}$ ]] && echo "lang=$v"
     # 24 hours unless your region says 12
     if grep -q '"clock"[^,}]*12' "$HOME/.config/rice/region.json" 2>/dev/null; then echo "clock24=false"; else echo "clock24=true"; fi
+    # the clock's look (rice-sddm clock STYLE): ~/.config/rice/sddm-clock
+    v="$(cat "$HOME/.config/rice/sddm-clock" 2>/dev/null)"
+    case "$v" in classic|stacked|center|pill|shapes) echo "clockStyle=$v" ;; esac
   } >"$out"
   mv -f "$out" "$U/theme.conf.user"
+  rm -f "$U/frame.tmp.jpg"
   find "$U" -type f -exec chmod 644 {} + 2>/dev/null; find "$U" -type d -exec chmod 755 {} + 2>/dev/null
   echo "synced"
 }
@@ -215,6 +250,12 @@ case "${1:-state}" in
   use-sddm) install use-sddm ;;
   remove) sudo_run "$(readlink -f "$0")" root-remove ;;
   sync) sync ;;
+  clock)   # clock STYLE: classic|stacked|center|pill|shapes
+    case "${2:-}" in
+      classic|stacked|center|pill|shapes) mkdir -p "$HOME/.config/rice"; printf '%s\n' "$2" >"$HOME/.config/rice/sddm-clock"
+        if [ -d "$U" ] && [ -w "$U" ]; then sync >/dev/null; echo "clock: $2"; else echo "clock: $2 (the login screen is not installed yet)"; fi ;;
+      *) cat "$HOME/.config/rice/sddm-clock" 2>/dev/null || echo classic ;;
+    esac ;;
   face) [ -d "$U" ] && [ -w "$U" ] && face_sync && echo "picture synced" || echo "the login screen is not installed" ;;
   preview) preview ;;
   root-install) shift; root_install "$@" ;;

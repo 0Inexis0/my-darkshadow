@@ -9,6 +9,14 @@ The installer runs `sudo pacman -S --needed` for packages found in the repos and
 
 CachyOS works the same way: its repositories are used and `paru`, which CachyOS ships, installs the AUR packages. Manjaro holds packages back, so its Hyprland can be older than 0.55 (the config needs 0.55); the installer tells you at the end.
 
+## Artix Linux (OpenRC, runit, s6, dinit)
+Same commands as Arch. Without systemd the installer also:
+- turns on Arch's `[extra]` repository (`artix-archlinux-support`) when Hyprland is not in Artix's own repositories
+- installs Artix's service scripts for your init (`networkmanager-openrc`, `bluez-openrc` ...) and turns on D-Bus, elogind, NetworkManager, Bluetooth and power modes
+- adds the login sessions **Hyprland (DarkShadow)** and **niri (DarkShadow)**, which start with their own D-Bus. Pick one of them on the login screen; from a text console run `dbus-run-session Hyprland`
+
+PipeWire and the password prompt agent are started by the shell itself at login (`rice-sys session`). With an NVIDIA card add `nvidia-drm.modeset=1` to the kernel command line first.
+
 ## Fedora (and Nobara)
 ```bash
 sudo dnf install -y git

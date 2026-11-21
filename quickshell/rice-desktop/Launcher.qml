@@ -6,8 +6,8 @@ import QtQuick.Effects
 
 // The DarkShadow Launcher: the app launcher of this shell (Settings > Rofi > Launcher). It looks like Rofi does and
 // uses the same settings (theme, style, position, width, corners, transparency, icons, font size, lines).
-// Type to search, arrows or Tab to move, Enter to open, Esc to close. "2+2" calculates (Enter copies the result),
-// anything else can be searched on the web. The apps you open most come first.
+// Type to search, arrows or Tab to move, Enter to open, Esc to close. "2+2" calculates and "10 km in mi" or "100 usd pln" converts (Enter copies the result),
+// files in your home show after three letters ("/" in front: only files), anything else can be searched on the web. The apps you open most come first.
 PanelWindow {
     screen: Mon.screen
     id: ln
@@ -43,6 +43,24 @@ PanelWindow {
     // ---------- the apps ----------
     property string query: ""
     property var usage: ({})
+    // your favorites: first in the list (and ahead in a search). Right click an app (or Ctrl + D) adds or takes it
+    // away; ~/.config/rice/launcher-favs.json
+    property var favs: []
+    function isFav(id) { return favs.indexOf(id) >= 0 }
+    function toggleFav(r) {
+        if (!r || r.kind !== "app" || !r.id) return
+        const l = favs.slice(), i = l.indexOf(r.id)
+        if (i >= 0) l.splice(i, 1); else l.unshift(r.id)
+        favs = l
+        Quickshell.execDetached(["bash", "-c", "mkdir -p \"$HOME/.config/rice\" && printf '%s\\n' \"$1\" > \"$HOME/.config/rice/launcher-favs.json\"", "_", JSON.stringify(l)])
+        Sfx.play("click")
+        const keep = cur; recompute(); cur = Math.min(keep, Math.max(0, results.length - 1))
+    }
+    FileView {
+        path: Quickshell.env("HOME") + "/.config/rice/launcher-favs.json"
+        printErrors: false
+        onLoaded: { try { const l = JSON.parse(text()); if (Array.isArray(l)) ln.favs = l.filter(x => typeof x === "string") } catch (e) { } }
+    }
     property int cur: 0
     readonly property var apps: DesktopEntries.applications.values.filter(function(e) { return !e.noDisplay })
     property var results: []
@@ -80,25 +98,75 @@ PanelWindow {
         for (let i = 0; i < apps.length; i++) {
             const e = apps[i]
             const u = Math.min(usage[e.id] || 0, 30)
-            if (q === "") list.push({ e: e, s: u * 10 })
-            else { const sc = score(e, q); if (sc >= 0) list.push({ e: e, s: sc + u * 4 }) }
+            const fv = favs.indexOf(e.id)
+            const fb = fv >= 0 ? 100000 - fv : 0
+            if (q === "") list.push({ e: e, s: u * 10 + fb })
+            else { const sc = score(e, q); if (sc >= 0) list.push({ e: e, s: sc + u * 4 + (fv >= 0 ? 150 : 0) }) }
         }
         list.sort(function(a, b) { return b.s !== a.s ? b.s - a.s : (a.e.name || "").localeCompare(b.e.name || "") })
         const c = q !== "" ? calc(query) : null
         if (c !== null) out.push({ kind: "calc", name: "= " + c, sub: Tr.t("Press Enter to copy the result"), val: c })
+        // "10 km in mi", "100 usd pln": units and money (Conv.qml; the rates are fetched only when you type money)
+        if (q !== "" && /^\s*-?[\d.,]/.test(query)) {
+            if (Conv.looksLikeMoney(query)) Conv.ask()
+            const cvr = Conv.parse(query)
+            if (cvr) out.push({ kind: "calc", name: "= " + cvr.text, sub: cvr.from + "  ·  " + Tr.t("Press Enter to copy the result"), val: cvr.val })
+        }
         for (let i = 0; i < list.length && i < 80; i++)
             out.push({ kind: "app", name: list[i].e.name, sub: list[i].e.genericName || list[i].e.comment || "", entry: list[i].e, id: list[i].e.id })
+        // files in your home (rice-tools files), after a few letters; "/" in front: only files
+        const fq = query.trim().replace(/^\//, "").trim()
+        if (fq === filesFor) for (let i = 0; i < files.length; i++)
+            out.push({ kind: "file", name: files[i].name, sub: files[i].where, path: files[i].path, dir: files[i].dir })
         if (q !== "") out.push({ kind: "web", name: "Search the web for \"" + query.trim() + "\"", sub: Tr.t("DuckDuckGo"), q: query.trim() })
+        if (query.trim().indexOf("/") === 0) { for (let i = out.length - 1; i >= 0; i--) if (out[i].kind !== "file") out.splice(i, 1) }
         results = out
         resetScroll()
         cur = 0
     }
-    onQueryChanged: recompute()
+    onQueryChanged: { recompute(); fileT.restart() }
+    // ---------- files: asked a moment after you stop typing ----------
+    property var files: []
+    property string filesFor: ""
+    Timer {
+        id: fileT
+        interval: 260
+        onTriggered: {
+            const fq = ln.query.trim().replace(/^\//, "").trim()
+            if (fq.length < 3 && !(ln.query.trim().indexOf("/") === 0 && fq.length >= 2)) { ln.files = []; ln.filesFor = ""; return }
+            if (fq === ln.filesFor) return
+            if (fileP.running) { fileT.restart(); return }     // one at a time: asked again when this one is done
+            fileP.want = fq
+            fileP.running = true
+        }
+    }
+    Process {
+        id: fileP
+        property string want: ""
+        command: ["bash", "-c", "exec \"$HOME/.local/bin/rice-tools\" files \"$1\" 2>/dev/null", "_", want]
+        stdout: StdioCollector { onStreamFinished: {
+            let l = []
+            try { l = JSON.parse(text) } catch (e) { l = [] }
+            if (fileP.want !== ln.query.trim().replace(/^\//, "").trim()) { fileT.restart(); return }
+            ln.files = l; ln.filesFor = fileP.want
+            const keep = ln.cur; ln.recompute(); ln.cur = Math.min(keep, Math.max(0, ln.results.length - 1))
+        } }
+    }
+    Connections { target: Conv; function onRatesChanged() { if (ln.open && ln.query !== "") ln.recompute() } }
     onAppsChanged: if (open) recompute()
     onUsageChanged: if (open) recompute()
     function iconOf(r) {
         if (r.kind === "calc") return ""
         if (r.kind === "web") return Icons.get("web-browser", true)
+        if (r.kind === "file") {
+            if (r.dir) return Icons.get("folder", true)
+            const ext = (r.name.split(".").pop() || "").toLowerCase()
+            const m = { png: "image-x-generic", jpg: "image-x-generic", jpeg: "image-x-generic", webp: "image-x-generic", gif: "image-x-generic",
+                        mp4: "video-x-generic", mkv: "video-x-generic", webm: "video-x-generic", mp3: "audio-x-generic", flac: "audio-x-generic",
+                        pdf: "application-pdf", zip: "package-x-generic", gz: "package-x-generic", tar: "package-x-generic",
+                        sh: "text-x-script", py: "text-x-script", qml: "text-x-script" }
+            return Icons.get(m[ext] || "text-x-generic", true) || Icons.get("text-x-generic", true)
+        }
         const n = r.entry && r.entry.icon ? r.entry.icon : ""
         const p = n !== "" ? Icons.get(n, true) : ""
         return p !== "" ? p : Icons.get("application-x-executable", true)
@@ -130,6 +198,7 @@ PanelWindow {
             if (r.kind === "app") { r.entry.execute(); bump(r.id) }
             else if (r.kind === "calc") Quickshell.execDetached(["bash", "-c", "printf %s \"$1\" | wl-copy", "_", r.val])
             else if (r.kind === "web") Quickshell.execDetached(["xdg-open", "https://duckduckgo.com/?q=" + encodeURIComponent(r.q)])
+            else if (r.kind === "file") Quickshell.execDetached(["xdg-open", r.path])
         } catch (e) { console.warn("launcher: could not start " + r.name + ": " + e) }
     }
     function move(d) { if (results.length > 0) cur = Math.max(0, Math.min(results.length - 1, cur + d)) }
@@ -149,7 +218,7 @@ PanelWindow {
         stdout: StdioCollector { onStreamFinished: { try { ln.usage = JSON.parse(text) } catch (e) { } } }
     }
     // rice-launch writes a line into this file: open it, or close it when it is already open
-    Trigger { name: "launcher-open"; onFired: function(o) { if (ln.open) ln.hide(); else ln.show() } }
+    Trigger { name: "launcher-open"; fresh: true; onFired: function(o) { if (ln.open) ln.hide(); else ln.show() } }
 
     // ---------- window ----------
     visible: open || (t > 0.01 && !closeT.done)
@@ -252,6 +321,7 @@ PanelWindow {
                     const grid = ln.lay === "grid", bar = ln.lay === "bar"
                     if (e.key === Qt.Key_Escape) { ln.hide(); e.accepted = true }
                     else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) { ln.activate(ln.results[ln.cur]); e.accepted = true }
+                    else if (ctrl && e.key === Qt.Key_D) { ln.toggleFav(ln.results[ln.cur]); e.accepted = true }
                     else if (e.key === Qt.Key_Down || (e.key === Qt.Key_Tab && !(e.modifiers & Qt.ShiftModifier)) || (ctrl && (e.key === Qt.Key_J || e.key === Qt.Key_N))) { ln.move(grid ? ln.gcols : 1); e.accepted = true }
                     else if (e.key === Qt.Key_Up || e.key === Qt.Key_Backtab || (ctrl && (e.key === Qt.Key_K || e.key === Qt.Key_P))) { ln.move(grid ? -ln.gcols : -1); e.accepted = true }
                     else if ((grid || bar) && e.key === Qt.Key_Right && input.cursorPosition === input.text.length) { ln.move(1); e.accepted = true }
@@ -317,7 +387,12 @@ PanelWindow {
                     elide: Text.ElideRight; text: modelData.name; font.family: ln.ff; font.pixelSize: ln.px
                     color: parent.sel ? ln.col(ln.th.selfg) : ln.col(ln.th.fg)
                 }
-                MouseArea { anchors.fill: parent; hoverEnabled: true; onPositionChanged: { ln.noScroll = true; ln.cur = index; ln.noScroll = false } onClicked: ln.activate(modelData) }
+                // a favorite: a small star
+                DText { visible: modelData.kind === "app" && ln.isFav(modelData.id); anchors.right: parent.right; anchors.rightMargin: 14
+                    anchors.verticalCenter: parent.verticalCenter; text: "★"; font.pixelSize: ln.fs; color: parent.sel ? ln.col(ln.th.selfg) : ln.col(ln.th.sel) }
+                MouseArea { anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    onPositionChanged: { ln.noScroll = true; ln.cur = index; ln.noScroll = false }
+                    onClicked: function(m) { if (m.button === Qt.RightButton) ln.toggleFav(modelData); else ln.activate(modelData) } }
             }
         }
 
@@ -367,7 +442,9 @@ PanelWindow {
                     text: modelData.name; font.family: ln.ff; font.pixelSize: ln.px - 2
                     color: parent.sel ? ln.col(ln.th.selfg) : ln.col(ln.th.fg)
                 }
-                MouseArea { anchors.fill: parent; hoverEnabled: true; onPositionChanged: { ln.noScroll = true; ln.cur = index; ln.noScroll = false } onClicked: ln.activate(modelData) }
+                MouseArea { anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    onPositionChanged: { ln.noScroll = true; ln.cur = index; ln.noScroll = false }
+                    onClicked: function(m) { if (m.button === Qt.RightButton) ln.toggleFav(modelData); else ln.activate(modelData) } }
             }
         }
 
@@ -403,7 +480,9 @@ PanelWindow {
                     source: ln.icons ? ln.iconOf(modelData) : ""; sourceSize.width: 52; sourceSize.height: 52; asynchronous: true }
                 DText { id: bt; x: ln.icons ? 44 : 14; width: parent.width - x - 10; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
                     text: modelData.name; font.family: ln.ff; font.pixelSize: ln.px - 1; color: parent.sel ? ln.col(ln.th.selfg) : ln.col(ln.th.fg) }
-                MouseArea { anchors.fill: parent; hoverEnabled: true; onPositionChanged: { ln.noScroll = true; ln.cur = index; ln.noScroll = false } onClicked: ln.activate(modelData) }
+                MouseArea { anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    onPositionChanged: { ln.noScroll = true; ln.cur = index; ln.noScroll = false }
+                    onClicked: function(m) { if (m.button === Qt.RightButton) ln.toggleFav(modelData); else ln.activate(modelData) } }
             }
         }
 

@@ -232,7 +232,7 @@ def default_binds(f, term, files):
         # screenshots and recording (niri's own screenshot tool is on Ctrl and Alt)
         ("Print", 'hotkey-overlay-title="Screenshot of an area"', run(b + "rice-hotcorner", "shot", "region")),
         ("Shift+Print", 'hotkey-overlay-title="Screenshot of the screen"', run(b + "rice-hotcorner", "shot", "full")),
-        ("Mod+Shift+S", 'hotkey-overlay-title=null', run(b + "screenshot")),
+        ("Mod+Shift+S", 'hotkey-overlay-title=null', run(b + "rice-hotcorner", "shot", "region")),
         ("Ctrl+Print", "", "screenshot-screen;"),
         ("Alt+Print", "", "screenshot-window;"),
         ("Mod+Shift+R", 'hotkey-overlay-title="Record the screen (again: stop)"', run(b + "rice-hotcorner", "record", "region")),
@@ -259,12 +259,14 @@ def default_binds(f, term, files):
         ("Mod+Comma", "", "consume-window-into-column;"),
         ("Mod+Period", "", "expel-window-from-column;"),
         # focus and moving
-        ("Mod+Left", "", "focus-column-left;"),
-        ("Mod+Right", "", "focus-column-right;"),
+        # at the last column the focus (and with Ctrl the window) goes on to the next monitor: windows scroll from
+        # one screen to the other (V4.84; with one monitor it is the same as before)
+        ("Mod+Left", "", "focus-column-or-monitor-left;"),
+        ("Mod+Right", "", "focus-column-or-monitor-right;"),
         ("Mod+Up", "", "focus-window-or-workspace-up;"),
         ("Mod+Down", "", "focus-window-or-workspace-down;"),
-        ("Mod+Ctrl+Left", "", "move-column-left;"),
-        ("Mod+Ctrl+Right", "", "move-column-right;"),
+        ("Mod+Ctrl+Left", "", "move-column-left-or-to-monitor-left;"),
+        ("Mod+Ctrl+Right", "", "move-column-right-or-to-monitor-right;"),
         ("Mod+Ctrl+Up", "", "move-window-up-or-to-workspace-up;"),
         ("Mod+Ctrl+Down", "", "move-window-down-or-to-workspace-down;"),
         ("Mod+Shift+Left", "", "focus-monitor-left;"),
@@ -281,10 +283,10 @@ def default_binds(f, term, files):
         ("Mod+Ctrl+Page_Up", "", "move-column-to-workspace-up;"),
         ("Mod+WheelScrollDown", "cooldown-ms=150", "focus-workspace-down;"),
         ("Mod+WheelScrollUp", "cooldown-ms=150", "focus-workspace-up;"),
-        ("Mod+WheelScrollRight", "", "focus-column-right;"),
-        ("Mod+WheelScrollLeft", "", "focus-column-left;"),
-        ("Mod+Shift+WheelScrollDown", "", "focus-column-right;"),
-        ("Mod+Shift+WheelScrollUp", "", "focus-column-left;"),
+        ("Mod+WheelScrollRight", "", "focus-column-or-monitor-right;"),
+        ("Mod+WheelScrollLeft", "", "focus-column-or-monitor-left;"),
+        ("Mod+Shift+WheelScrollDown", "", "focus-column-or-monitor-right;"),
+        ("Mod+Shift+WheelScrollUp", "", "focus-column-or-monitor-left;"),
         # overview and help
         # the shell's Task view (every workspace and its windows) and window switcher (rice-taskview); niri's own
         # overview stays on Mod + O
@@ -292,6 +294,8 @@ def default_binds(f, term, files):
         ("Alt+Tab", 'hotkey-overlay-title="Switch windows"', run(b + "rice-taskview", "switch")),
         ("Alt+Shift+Tab", "hotkey-overlay-title=null", run(b + "rice-taskview", "back")),
         ("Mod+O", 'repeat=false hotkey-overlay-title="niri overview"', "toggle-overview;"),
+        ("Mod+Slash", 'hotkey-overlay-title="Every key of the shell"', run(b + "rice-keymap", "show")),
+        ("Mod+X", 'hotkey-overlay-title="Toolbox"', run(b + "rice-tools", "toggle")),
         ("Mod+Shift+Slash", 'hotkey-overlay-title="These keys"', "show-hotkey-overlay;"),
         ("Mod+Escape", "allow-inhibiting=false", "toggle-keyboard-shortcuts-inhibit;"),
         ("Mod+Shift+P", "", "power-off-monitors;"),
@@ -328,7 +332,7 @@ ACTION_KEYS = {
     "terminal": "Mod+Return", "launcher": "Mod+D", "launcher2": "Alt+Space", "settings": "Mod+U", "wallpaper": "Mod+W",
     "quick": "Mod+A", "cc": "Mod+N", "gamebar": "Mod+G", "dashboard": "Mod+Alt+D", "lock": "Mod+L", "close": "Mod+Q",
     "float": "Mod+Shift+V", "clipboard": "Mod+V", "shot": "Print", "shotfull": "Shift+Print", "record": "Mod+Shift+R", "widgets": "Mod+Alt+W",
-    "taskview": "Mod+Tab", "switcher": "Alt+Tab",
+    "taskview": "Mod+Tab", "switcher": "Alt+Tab", "keys": "Mod+Slash", "tools": "Mod+X",
 }
 
 

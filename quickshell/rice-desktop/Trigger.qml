@@ -10,7 +10,7 @@ Item {
     id: tr
     property string name: ""              // the file in ~/.cache/rice
     property string path: name !== "" ? Quickshell.env("HOME") + "/.cache/rice/" + name : ""
-    property int every: 1500               // the safety-net re-read, in ms
+    property int every: 5000               // the safety-net re-read, in ms (inotify does the real work)
     signal fired(string line)
     signal content(string text)            // the text changed (for files that hold settings)
     // made just now because of this very line (LazyPanel.qml): the line at start fires too, when its time stamp

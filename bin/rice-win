@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+"""rice-win: minimizing windows and stacking them (tabs), for the keys and the shell.
+
+  rice-win minimize            the window you are in goes away (Hyprland: to the hidden workspace "minimized")
+  rice-win restore [ADDRESS]   the last one you minimized (or that one) comes back to the workspace you are on
+  rice-win restore-all         all of them come back
+  rice-win list                JSON: the minimized windows, newest first [{address, title, class}]
+  rice-win stack               the window you are in starts a stack (tabs) or leaves it (Hyprland: a group)
+  rice-win stack-next | stack-prev   the next / previous window of the stack
+  rice-win join left|right|up|down   put the window into the stack next to it (makes one when there is none)
+  rice-win unjoin              take the window out of its stack
+
+niri has no minimizing; there the stack keys put the window into the column next to it (consume / expel) and
+switch the column to tabs.
+"""
+import json
+import os
+import re
+import subprocess
+import sys
+
+HOME = os.path.expanduser("~")
+STACK = HOME + "/.cache/rice/minimized.json"
+SPECIAL = "special:minimized"
+
+
+def niri():
+    return bool(os.environ.get("NIRI_SOCKET"))
+
+
+def sh(cmd, timeout=5):
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        return r.stdout if r.returncode == 0 else ""
+    except Exception:
+        return ""
+
+
+def dispatch(lua, *legacy):
+    """Hyprland 0.55+ takes a Lua expression; an older one only the old dispatcher names (tried next)"""
+    if sh(["hyprctl", "dispatch", lua]).strip().lower().startswith("ok"):
+        return True
+    return bool(legacy) and sh(["hyprctl", "dispatch", *legacy]).strip().lower().startswith("ok")
+
+
+def addr(a):
+    a = str(a or "")
+    return a if re.match(r"^0x[0-9a-fA-F]+$", a) else ""
+
+
+def hj(what):
+    try:
+        return json.loads(sh(["hyprctl", "-j", what]) or "null")
+    except ValueError:
+        return None
+
+
+def load():
+    try:
+        return [x for x in json.load(open(STACK)) if addr(x.get("address"))]
+    except Exception:
+        return []
+
+
+def save(l):
+    os.makedirs(os.path.dirname(STACK), exist_ok=True)
+    tmp = STACK + ".tmp"
+    json.dump(l, open(tmp, "w"))
+    os.replace(tmp, STACK)
+    # the shell (dock, task view) hears about it
+    with open(HOME + "/.cache/rice/minimized-changed", "w") as f:
+        f.write("%d\n" % len(l))
+
+
+def still_minimized():
+    """the list, without windows that were closed or brought back some other way"""
+    clients = hj("clients") or []
+    there = {c.get("address"): c for c in clients if str((c.get("workspace") or {}).get("name", "")) == SPECIAL}
+    l = [x for x in load() if x["address"] in there]
+    # a window put there by hand (SUPER + SHIFT + S style) counts too
+    known = {x["address"] for x in l}
+    for a, c in there.items():
+        if a not in known:
+            l.append({"address": a, "title": c.get("title", ""), "class": c.get("class", "")})
+    return l
+
+
+def minimize():
+    if niri():
+        notify("niri has no minimizing", "Move the window to another workspace instead (Super + Shift + a number)")
+        return
+    w = hj("activewindow") or {}
+    a = addr(w.get("address"))
+    if not a:
+        return
+    l = [x for x in still_minimized() if x["address"] != a]
+    l.insert(0, {"address": a, "title": w.get("title", ""), "class": w.get("class", "")})
+    dispatch('hl.dsp.window.move({ workspace = "%s", follow = false, window = "address:%s" })' % (SPECIAL, a),
+             "movetoworkspacesilent", "%s,address:%s" % (SPECIAL, a))
+    save(l[:50])
+
+
+def restore(which=None):
+    l = still_minimized()
+    if not l:
+        return
+    targets = l if which == "all" else [x for x in l if x["address"] == which] if which else l[:1]
+    ws = (hj("activeworkspace") or {}).get("id", 1)
+    for x in targets:
+        a = x["address"]
+        dispatch('hl.dsp.window.move({ workspace = "%s", follow = false, window = "address:%s" })' % (ws, a),
+                 "movetoworkspacesilent", "%s,address:%s" % (ws, a))
+    if targets:
+        a = targets[-1]["address"]
+        dispatch('hl.dsp.focus({ window = "address:%s" })' % a, "focuswindow", "address:" + a)
+    gone = {x["address"] for x in targets}
+    save([x for x in l if x["address"] not in gone])
+
+
+def niri_act(*act):
+    sh(["niri", "msg", "action", *act])
+
+
+def notify(t, b):
+    try:
+        subprocess.Popen(["notify-send", "-a", "DarkShadow's Shell", t, b], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except OSError:
+        pass
+
+
+DIRS = {"left": "l", "right": "r", "up": "u", "down": "d"}
+
+
+def main(a):
+    cmd = a[1] if len(a) > 1 else ""
+    arg = a[2] if len(a) > 2 else ""
+    if cmd == "minimize":
+        minimize()
+    elif cmd == "restore":
+        restore(addr(arg) or None)
+    elif cmd == "restore-all":
+        restore("all")
+    elif cmd == "list":
+        print(json.dumps([] if niri() else still_minimized()))
+    elif cmd == "stack":
+        if niri():
+            niri_act("toggle-column-tabbed-display")
+        else:
+            dispatch("hl.dsp.group.toggle()", "togglegroup")
+    elif cmd in ("stack-next", "stack-prev"):
+        if niri():
+            niri_act("focus-window-down" if cmd == "stack-next" else "focus-window-up")
+        else:
+            dispatch("hl.dsp.group.%s()" % ("next" if cmd == "stack-next" else "prev"), "changegroupactive", "f" if cmd == "stack-next" else "b")
+    elif cmd == "join" and arg in DIRS:
+        if niri():
+            niri_act("consume-or-expel-window-left" if arg in ("left", "up") else "consume-or-expel-window-right")
+        else:
+            dispatch('hl.dsp.window.move({ into_or_create_group = "%s" })' % DIRS[arg], "moveintogroup", DIRS[arg])
+    elif cmd == "unjoin":
+        if niri():
+            niri_act("expel-window-from-column")
+        else:
+            dispatch("hl.dsp.window.move({ out_of_group = true })", "moveoutofgroup")
+    else:
+        sys.exit(__doc__)
+
+
+if __name__ == "__main__":
+    main(sys.argv)

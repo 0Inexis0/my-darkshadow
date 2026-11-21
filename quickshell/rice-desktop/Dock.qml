@@ -15,7 +15,7 @@ Scope {
     property bool hovering: false
     readonly property bool on: dc.enabled === true
     readonly property bool autoHide: dc.hover !== false
-    readonly property bool reveal: on && (!autoHide || pinned || hovering || apps.open)
+    readonly property bool reveal: on && !Infinite.hideUi && (!autoHide || pinned || hovering || apps.open)
     // Settings > Dock > Keep room for it: while the dock stays out (no hover-to-reveal, or held open with its pin),
     // windows keep away from it, like they do from the bar (an open browser ends above it, not under it)
     readonly property bool reserve: on && dc.reserve !== false && (!autoHide || pinned)
@@ -36,7 +36,9 @@ Scope {
     onDcChanged: {
         if (!initDone && dc.enabled !== undefined) { pinned = dc.pinnedStartup === true; initDone = true }
     }
-    Timer { id: hideTimer; interval: 600; onTriggered: dock.hovering = false }
+    // it only hides when the pointer is really off the dock (a stray "exited" while the dock grows or while an icon
+    // is clicked made it hide and come back over and over)
+    Timer { id: hideTimer; interval: 700; onTriggered: if (!dockMouse.containsMouse) dock.hovering = false }
     DockApps { id: apps; dock: dock }
 
     function pickPlayer() {
@@ -116,10 +118,14 @@ Scope {
         NiriBlur { win: dockWin; items: [panel]; radius: panel.radius; on: dock.t > 0.95 && dock.dc.background !== false }
 
         MouseArea {
+            id: dockMouse
             anchors.fill: parent
             hoverEnabled: true
             acceptedButtons: Qt.NoButton
-            onEntered: { hideTimer.stop(); dock.hovering = true }
+            // while it slides away, a window that appears or moves under a still pointer says "entered" by itself:
+            // only a real movement of the pointer brings the dock back then
+            onEntered: { hideTimer.stop(); if (dock.reveal) dock.hovering = true }
+            onPositionChanged: { hideTimer.stop(); dock.hovering = true }
             onExited: if (dock.autoHide) hideTimer.restart()
         }
 

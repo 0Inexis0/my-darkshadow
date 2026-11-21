@@ -148,7 +148,7 @@ Item {
         SectionTitle { text: I18n.t("At rest"); sub: I18n.t("The island is your clock. Click it for Today, right-click for System, scroll on it for the volume.") }
         ToggleRow { label: I18n.t("Weather"); desc: I18n.t("The weather icon and temperature beside the time")
             checked: page.v("island_weather", true) !== false; onToggled: function(x) { page.setv("island_weather", x ? "on" : "off") } }
-        ToggleRow { label: I18n.t("Date"); desc: I18n.t("The day and date beside the time")
+        ToggleRow { label: I18n.t("Date"); desc: I18n.t("The day and date, with the time in a pill (like the bar date)")
             checked: page.v("island_date", false) === true; onToggled: function(x) { page.setv("island_date", x ? "on" : "off") } }
         ToggleRow { label: I18n.t("Seconds"); desc: I18n.t("Show seconds in the time")
             checked: page.v("seconds", false) === true; onToggled: function(x) { page.setv("seconds", x ? "on" : "off") } }

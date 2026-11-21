@@ -200,6 +200,7 @@ Item {
     }
 
     // ---------- its size ----------
+    readonly property bool showDate: cfg.island_date === true
     readonly property real tw: {
         switch (mode) {
         case "volume": case "mic": return 300
@@ -272,7 +273,7 @@ Item {
         MouseArea {
             anchors.fill: parent; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
             onClicked: function(m) { isl.openInfo(m.button === Qt.RightButton ? "system" : (isl.aiActive ? "ai" : (isl.cfg.island_tab || "today")), true) }
-            onWheel: function(e) { if (isl.bar.sink && isl.bar.sink.audio) isl.bar.sink.audio.volume = Math.max(0, Math.min(1, isl.bar.sink.audio.volume + Look.notches(e) * 0.04)) }
+            onWheel: function(e) { Vol.nudge(isl.bar.sink, Look.notches(e) * 0.04) }
         }
 
         // ---------- idle: the time ----------
@@ -286,11 +287,16 @@ Item {
                 ShapeImage { visible: Player.playing; width: 22; height: 22; anchors.verticalCenter: parent.verticalCenter
                     kind: Look.shape; source: Player.art; empty: isl.pal ? isl.pal.container : "#333"; fallbackColor: isl.pal ? isl.pal.inkContainer : "#ccc"
                     SlowSpin { turn: 360; period: 9000; running: Player.playing && isl.pillMode === "idle" && !Look.lite } }
-                Text { anchors.verticalCenter: parent.verticalCenter; text: isl.bar ? isl.bar.timeText : ""
+                // the date (as the bar's Date module) and the time in a pill in your key color
+                Text { visible: isl.showDate; anchors.verticalCenter: parent.verticalCenter
+                    text: isl.bar ? Qt.locale().dayName(isl.bar.now.getDay(), Locale.ShortFormat) + ", " + isl.bar.two(isl.bar.now.getDate()) + "/" + isl.bar.two(isl.bar.now.getMonth() + 1) : ""
+                    color: isl.pal ? isl.pal.fg : "white"; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium }
+                Rectangle { visible: isl.showDate; anchors.verticalCenter: parent.verticalCenter
+                    width: tp.implicitWidth + 18; height: isl.bh - 14; radius: height / 2; color: isl.pal ? isl.pal.primary : "#8f8"
+                    Text { id: tp; anchors.centerIn: parent; text: isl.bar ? isl.bar.timeText : ""; color: isl.pal ? isl.pal.inkPrimary : "black"
+                        font.family: Fonts.numbers; font.pixelSize: 13; font.weight: Font.DemiBold } }
+                Text { visible: !isl.showDate; anchors.verticalCenter: parent.verticalCenter; text: isl.bar ? isl.bar.timeText : ""
                     color: isl.pal ? isl.pal.fg : "white"; font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.DemiBold }
-                // Settings > Dynamic island: the date and the weather beside the time
-                Text { visible: isl.cfg.island_date === true; anchors.verticalCenter: parent.verticalCenter; text: isl.bar ? isl.bar.dateText : ""
-                    color: isl.pal ? isl.pal.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium }
                 Row {
                     visible: isl.cfg.island_weather !== false && isl.wTemp !== ""
                     anchors.verticalCenter: parent.verticalCenter; spacing: 4
@@ -365,7 +371,7 @@ Item {
                     width: parent.width - isl.bh - 48; height: 18; anchors.verticalCenter: parent.verticalCenter
                     value: isl.muted ? 0 : Math.min(1, isl.vol); moving: !isl.muted; seekable: true
                     color: isl.pal ? isl.pal.primary : "white"; track: isl.pal ? isl.pal.track : "#444"
-                    onMoved: function(v) { if (isl.bar.sink && isl.bar.sink.audio) { isl.bar.sink.audio.muted = false; isl.bar.sink.audio.volume = v }; isl.show("volume", 1600) }
+                    onMoved: function(v) { Vol.set(isl.bar.sink, v); isl.show("volume", 1600) }
                 }
                 Text { visible: isl.mode === "mic"; width: parent.width - isl.bh - 48; anchors.verticalCenter: parent.verticalCenter
                     text: isl.micMuted ? Tr.t("Microphone off") : Tr.t("Microphone on"); color: isl.pal ? isl.pal.fg : "white"; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium }

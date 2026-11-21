@@ -47,7 +47,29 @@ print(json.dumps({"place": p}))' "$CFG" ;;
       if [ -s "$f" ] && [ -n "$(find "$f" -mmin -30 2>/dev/null)" ]; then cat "$f"; exit 0; fi
       # no place: no request, only what was already cached
       [ -n "$url_place" ] || { [ -s "$f" ] && cat "$f"; exit 1; }
-      raw="$(curl -s -m 12 "wttr.in/$url_place?format=j1&lang=en")" || { [ -s "$f" ] && cat "$f"; exit 1; }
+      # wttr.in's long answer (j1) is slow or fails now and then: two tries, then the short answer the island
+      # shows (cached in weather.txt) is turned into the same JSON, so the forecast is never left empty
+      raw=""
+      for _try in 1 2; do
+        raw="$(curl -s -m 15 "wttr.in/$url_place?format=j1&lang=en")"
+        case "$raw" in "{"*) break ;; esac
+        raw=""; sleep 1
+      done
+      if [ -z "$raw" ]; then
+        [ -s "$f" ] && { cat "$f"; exit 1; }
+        [ -s "$HOME/.cache/rice/weather.txt" ] || exit 1
+        python3 - "$HOME/.cache/rice/weather.txt" <<'PY' || exit 1
+import json, re, sys
+try:
+    cond, temp, place = open(sys.argv[1]).read().strip().split("|")[:3]
+    n = int(re.sub(r"[^0-9+-]", "", temp))
+    print(json.dumps({"temp": n, "feels": n, "cond": cond.strip(), "hum": 0, "wind": 0, "unit": "F" if temp.strip().endswith("F") else "C",
+                      "place": place.strip().split(",")[0], "country": "", "hi": n, "lo": n, "hours": [], "days": []}))
+except Exception:
+    sys.exit(1)
+PY
+        exit 0
+      fi
       j="$(printf '%s' "$raw" | python3 -c '
 import json, sys, datetime
 f = sys.argv[1] == "u"

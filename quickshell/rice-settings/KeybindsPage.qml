@@ -57,13 +57,13 @@ Item {
             ["Super + O", "niri's own overview"], ["Super + Shift + Arrows", "Focus another screen"] ] },
         { name: "Screenshots and recording", sym: "screenshot_monitor", keys: [
             ["Print", "Screenshot of an area", "shot"], ["Shift + Print", "Screenshot of the whole screen", "shotfull"],
-            ["Alt + Print", "Screenshot of the window"], ["Super + Shift + R", "Record the screen (again: stop)", "record"] ] },
+            ["Alt + Print", "Screenshot of the window"], ["Super + Shift + R", "Record menu: region, window or screen (again: stop)", "record"] ] },
         { name: "Sound, brightness, music", sym: "volume_up", keys: [
             ["Volume keys", "Louder, quieter, mute"], ["Super + F12 / F11 / F10", "Louder / quieter / mute"],
             ["Alt + ]  /  [", "Louder / quieter"], ["Brightness keys", "Screen brighter / darker"],
             ["Play / Next / Previous", "Music"] ] },
         { name: "Desktop", sym: "desktop_windows", keys: [
-            ["Super + Alt + W", "Edit the desktop widgets", "widgets"], ["Super + Shift + /", "niri's own list of keys"],
+            ["Super + Alt + W", "Edit the desktop widgets", "widgets"], ["Super + /", "Every key on one sheet", "keys"], ["Super + X", "Toolbox: tasks, note, timer, converter, system, chat", "tools"], ["Super + Shift + /", "niri's own list of keys"],
             ["Super + Shift + P", "Screens off"], ["Super + Shift + E", "Log out"] ] }
     ] : [
         { name: "Apps and menus", sym: "apps", keys: [
@@ -78,6 +78,13 @@ Item {
             ["Super + J", "Split the other way"], ["Super + P", "Pseudo-tile (keep its own size)"],
             ["Super + F", "Infinite Desktop: windows on an endless canvas (Ctrl + wheel zooms)", "infinite"],
             ["Super + Arrows", "Focus the window next to it"],
+            ["Super + H", "Minimize the window", "minimize"],
+            ["Super + Shift + H", "Bring back the last minimized window", "restore"],
+            ["Super + T", "Stack windows: make a stack (tabs) of this window, or leave it", "stack"],
+            ["Super + Ctrl + Right", "The next window of the stack", "stack_next"],
+            ["Super + Ctrl + Left", "The previous window of the stack", "stack_prev"],
+            ["Super + Ctrl + Shift + Left", "Put the window into the stack on the left", "join_left"],
+            ["Super + Ctrl + Shift + Right", "Put the window into the stack on the right", "join_right"],
             ["Super + Left mouse", "Drag to move the window"], ["Super + Right mouse", "Drag to resize the window"] ] },
         { name: "Workspaces", sym: "view_carousel", keys: [
             ["Super + Tab", "Task view: every workspace and its windows", "taskview"],
@@ -86,13 +93,13 @@ Item {
             ["Super + Mouse wheel", "Next / previous workspace"], ["Super + S", "The hidden scratch workspace"] ] },
         { name: "Screenshots and recording", sym: "screenshot_monitor", keys: [
             ["Print", "Screenshot of an area", "shot"], ["Shift + Print", "Screenshot of the whole screen", "shotfull"],
-            ["Super + Shift + S", "Screenshot of an area"], ["Super + Shift + R", "Record the screen (again: stop)", "record"] ] },
+            ["Super + Shift + S", "Screenshot of an area"], ["Super + Shift + R", "Record menu: region, window or screen (again: stop)", "record"] ] },
         { name: "Sound, brightness, music", sym: "volume_up", keys: [
             ["Volume keys", "Louder, quieter, mute"], ["Super + F12 / F11 / F10", "Louder / quieter / mute"],
             ["Alt + ]  /  [", "Louder / quieter"], ["Brightness keys", "Screen brighter / darker"],
             ["Play / Next / Previous", "Music"] ] },
         { name: "Desktop", sym: "desktop_windows", keys: [
-            ["Super + Alt + W", "Edit the desktop widgets", "widgets"], ["Super + M", "Log out"] ] }
+            ["Super + Alt + W", "Edit the desktop widgets", "widgets"], ["Super + /", "Every key on one sheet", "keys"], ["Super + X", "Toolbox: tasks, note, timer, converter, system, chat", "tools"], ["Super + M", "Log out"] ] }
     ]
     function match(k) {
         if (q === "") return true

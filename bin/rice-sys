@@ -4,12 +4,65 @@
 #   rice-sys suspend | reboot | poweroff | lock     the power buttons of the shell, the lock screen and hypridle
 #   rice-sys session                                 at login without systemd: PipeWire, a password prompt agent
 #   rice-sys inhibit CMD...                          run CMD while sleep and idle are blocked (Keep Awake)
-#   rice-sys init                                    prints systemd, runit, openrc or other
+#   rice-sys init                                    prints systemd, openrc, runit, s6, dinit or other
+#   rice-sys service-enable NAME[|OTHER]...          (as root) turn a system service on now and at boot, with any
+#                                                    init (Artix: OpenRC, runit, s6, dinit). "a|b": the first that exists
+#   rice-sys service-has NAME[|OTHER]                prints the name this init knows the service by (nothing: none)
 init() {
-  if [ -d /run/systemd/system ]; then echo systemd
-  elif [ -d /run/runit ] || [ -d /etc/runit ]; then echo runit
-  elif [ -d /run/openrc ]; then echo openrc
+  local c=""
+  [ -d /run/systemd/system ] && { echo systemd; return; }
+  c="$(cat /proc/1/comm 2>/dev/null || true)"
+  case "$c" in
+    runit*) echo runit; return ;;
+    dinit*) echo dinit; return ;;
+    s6-svscan*) echo s6; return ;;
+  esac
+  if [ -d /run/openrc ]; then echo openrc
+  elif [ -d /run/runit ] || [ -d /etc/runit/sv ]; then echo runit
+  elif [ -d /run/s6-rc ] || [ -d /etc/s6/sv ]; then echo s6
+  elif [ -d /etc/dinit.d ] && command -v dinitctl >/dev/null 2>&1; then echo dinit
   else echo other; fi
+}
+# the service's name as this init has it (Artix s6 calls them NAME-srv), nothing when it has none
+svc_name() {
+  local i n
+  i="$(init)"
+  IFS='|' read -r -a alts <<<"$1"
+  for n in "${alts[@]}"; do
+    case "$i" in
+      systemd) systemctl list-unit-files "$n.service" 2>/dev/null | grep -q "^$n\.service" && { echo "$n"; return; } ;;
+      openrc) [ -x "/etc/init.d/$n" ] && { echo "$n"; return; } ;;
+      runit) for d in /etc/runit/sv /etc/sv; do [ -d "$d/$n" ] && { echo "$n"; return; }; done ;;
+      s6) for x in "$n" "$n-srv"; do [ -d "/etc/s6/sv/$x" ] && { echo "$x"; return; }; done ;;
+      dinit) [ -f "/etc/dinit.d/$n" ] && { echo "$n"; return; } ;;
+    esac
+  done
+  return 0
+}
+svc_enable() {
+  local i n d
+  i="$(init)"
+  n="$(svc_name "$1")"
+  [ -n "$n" ] || { echo "no service ${1//|/ or } for $i"; return 1; }
+  case "$i" in
+    systemd) systemctl enable --now "$n.service" ;;
+    openrc)
+      rc-update add "$n" default >/dev/null 2>&1 || rc-update show default 2>/dev/null | grep -qw "$n" || return 1
+      rc-service "$n" status >/dev/null 2>&1 || rc-service "$n" start ;;
+    runit)
+      # Artix: /etc/runit/runsvdir/default (live as /run/runit/service); Void: /var/service
+      for d in /etc/runit/runsvdir/default /var/service; do
+        [ -d "$d" ] || continue
+        [ -e "$d/$n" ] || ln -s "$( [ -d "/etc/runit/sv/$n" ] && echo "/etc/runit/sv/$n" || echo "/etc/sv/$n")" "$d/$n" || return 1
+        sleep 1; sv up "$n" >/dev/null 2>&1 || true
+        return 0
+      done
+      return 1 ;;
+    s6)
+      s6-service add default "$n" && s6-db-reload >/dev/null 2>&1; s6-rc -u change "$n" >/dev/null 2>&1 || true ;;
+    dinit) dinitctl enable "$n" ;;
+    *) echo "unknown init: turn $n on yourself"; return 1 ;;
+  esac
 }
 power() {
   local a="$1"
@@ -60,5 +113,14 @@ case "${1:-}" in
     fi
     exit 0 ;;
   init) init ;;
-  *) sed -n '2,7p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+  service-has) svc_name "${2:-}" ;;
+  service-enable)
+    shift
+    [ "$(id -u)" = 0 ] || { echo "service-enable needs root (sudo)"; exit 1; }
+    rc=0
+    for s in "$@"; do
+      if svc_enable "$s"; then echo "on: ${s%%|*}"; else rc=1; fi
+    done
+    exit $rc ;;
+  *) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
 esac

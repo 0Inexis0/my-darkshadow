@@ -170,7 +170,7 @@ ShellRoot {
     Trigger { path: root.home + "/.config/rice/desktop.json"; every: 1500
         onContent: function(t) { if (!cfgProc.running) cfgProc.running = true } }
     Timer {
-        interval: 3000
+        interval: 10000
         running: true
         repeat: true
         onTriggered: { if (!cfgProc.running) cfgProc.running = true }
@@ -573,11 +573,14 @@ ShellRoot {
     WallLum { path: root.wallpaper; sw: root.sw; sh: root.sh }
     // niri: the blurred wallpaper behind the workspaces in the overview (SUPER + Tab)
     NiriBackdrop { path: root.wallpaper }
+    // Infinite Desktop: the wallpaper moves with the canvas (Hyprland)
+    WallCanvas { path: root.wallpaper }
 
     EditorWindow { root: root }
 
     // ---- dashboard (middle of the bar edge, SUPER + W for wallpapers)
-    Launcher { }
+    // made when it is first opened, let go after 10 minutes closed (V4.84: it held every app's icon from the start)
+    LazyPanel { name: "launcher-open"; keep: 600000; Launcher { } }
     // SUPER + Tab: every workspace with its windows; ALT + Tab: the window switcher (rice-taskview)
     TaskView { }
     // the clipboard history (SUPER + V)
@@ -605,6 +608,14 @@ ShellRoot {
     LazyPanel { name: "wifi-open"; WifiMenu { } }
     LazyPanel { name: "bluetooth-open"; BluetoothMenu { } }
     LazyPanel { name: "power-open"; PowerMenu { } }
+    // Print: the screenshot tool (the screen frozen, then Region / Window / Screen / Color), and the record menu
+    LazyPanel { name: "snip-open"; Snip { } }
+    // what the screenshot tool read (text, a translation, a color)
+    LazyPanel { name: "snip-result"; SnipResult { } }
+    // SUPER + /: every key on one sheet
+    LazyPanel { name: "keys-open"; Cheatsheet { } }
+    // SUPER + X: the toolbox (tasks, a note, a focus timer, a converter, the system, a chat)
+    LazyPanel { name: "tools-open"; Tools { } }
     LazyPanel { name: "volume-open"; VolumeMenu { } }
     VolumeOsd { islandTakes: mainBar.islandVolume }
     LazyPanel { name: "gamebar-open"; GamePanel { gb: root.cfg.gamebar ? root.cfg.gamebar : ({}) } }

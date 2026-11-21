@@ -10,7 +10,8 @@ import QtQuick
 
 // The DarkShadow bar: the bar of this shell, made in Quickshell (Settings > DarkShadow bar and Bar layout).
 // Styles: flat, island (one pill), islands (a pill for each side), pills (a pill for each module), notch (the middle
-// grows out of the screen edge, the sides are islands), dynamic (Material 3: tonal pills in your theme color, the
+// grows out of the screen edge, the sides are islands), edge (like dynamic, but every part is one piece with the
+// screen edge, HugShape.qml), dynamic (Material 3: tonal pills in your theme color, the
 // launcher and the active workspace in your key color, soft state layers on hover, and in the middle an island that
 // grows into the player, the volume, the workspace, notifications and recording: DynIsland.qml). The old "google"
 // style is dynamic now. Auto-hide: it slides away and a thin strip at the edge brings it back.
@@ -40,7 +41,7 @@ PanelWindow {
     Behavior on barK { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
     // the style asked for; the bar fades and settles into it (sty follows want once the old look has gone)
     readonly property string want: bc.style === "google" || bc.style === undefined ? "dynamic"
-        : (bc.style === "flat" || bc.style === "islands" || bc.style === "pills" || bc.style === "notch" || bc.style === "island" ? bc.style : "dynamic")
+        : (["flat", "islands", "pills", "notch", "island", "edge"].indexOf(bc.style) >= 0 ? bc.style : "dynamic")
     property string sty: "island"
     property real swap: 0                       // 0 shown .. 1 gone (while the style changes)
     property bool styReady: false
@@ -63,18 +64,31 @@ PanelWindow {
         NumberAnimation { target: bar; property: "swap"; to: 0; duration: 520; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.decel }
     }
     readonly property bool notch: sty === "notch"
-    readonly property bool dyn: sty === "dynamic"
+    // edge: the Dynamic style's look and island, but every side of the bar is one piece with the screen edge
+    // (HugShape.qml): the left part reaches the screen's left side, the right part its right side, the middle hangs
+    // from the edge with soft curves; the modules sit on tonal pills inside them
+    // the black hole and the moon logo move while the pointer is on them (Settings > Bar > Logo moves all the time:
+    // on, as before; it redraws the bar every frame of the screen)
+    readonly property bool logoMove: bc.logo_move === true
+    readonly property bool hug: sty === "edge"
+    // edge: the dark frame along the edge can be turned off (Settings > Bar > Frame along the edge): then the pills
+    // keep their places, without anything behind them
+    readonly property bool hugFrame: hug && bc.edge_frame !== false
+    readonly property bool dyn: sty === "dynamic" || hug
     readonly property bool goo: dyn                              // the Material 3 look of the Dynamic style
     property var nf: null                                         // Notifs.qml, for the island
     readonly property bool islandNotifs: hasIsland && bc.island_dynamic !== false && bc.island_notifs !== false
     readonly property bool islandVolume: hasIsland && bc.island_dynamic !== false && bc.island_volume !== false
     // the Google style's colors: tonal, made from your theme color (the same as the control center)
-    NPal { id: gp; theme: "shell"; alpha: Math.min(1, bar.alpha + 0.14) }
+    // (the bar's Transparency is its own now: before V4.83 it was made 0.14 more solid here, so with the default the
+    // bar was nearly solid and its blur could hardly be seen)
+    NPal { id: gp; theme: "shell"; alpha: Math.min(1, bar.alpha + 0.04) }
     readonly property bool hideOn: bc.autohide === true
     readonly property bool shadowOn: bc.shadow !== false && Look.shadows && Look.shadowBar
     // auto-hide: shown while the pointer is on it (and a moment after it leaves)
     property bool peek: false
-    readonly property bool shownBar: !hideOn || peek || !on
+    // Infinite Desktop: it gets out of the way while you move the canvas (SUPER + ALT + mouse)
+    readonly property bool shownBar: (!hideOn || peek || !on) && !(on && Infinite.hideUi)
     Timer { id: leaveT; interval: 700; onTriggered: bar.peek = false }
     readonly property bool island: sty === "island"
     readonly property bool floating: sty !== "flat"
@@ -83,10 +97,13 @@ PanelWindow {
     readonly property var layRaw: bc.layout ? ({ left: noClock(bc.layout.left), center: noClock(bc.layout.center), right: noClock(bc.layout.right) })
         : ({ left: ["launcher", "workspaces", "title"], center: ["island"], right: ["music", "tray", "volume", "bluetooth", "network", "battery", "notifications", "power"] })
     function laid(l, k) { return (l.left || []).indexOf(k) >= 0 || (l.center || []).indexOf(k) >= 0 || (l.right || []).indexOf(k) >= 0 }
-    // the island is a module of the layout ("island", any zone, any style, with modules beside it). Dynamic without
-    // it in the layout puts it in the middle, as before
-    readonly property var lay: dyn && !laid(layRaw, "island")
-        ? ({ left: layRaw.left || [], center: ["island"], right: layRaw.right || [] }) : layRaw
+    // the island is a module of the layout ("island", any zone, any style, with modules beside it). Taken out in
+    // Bar layout (island_off) the bar has no island, only its cards (clock card, volume, notifications) stay.
+    // A layout from before that (no island in it, no island_off) still gets the island in the middle of the
+    // middle zone, and the modules that were in the middle stay (they were lost: the zone became just the island)
+    function withIsland(c) { const a = (c || []).slice(); a.splice(Math.floor(a.length / 2), 0, "island"); return a }
+    readonly property var lay: dyn && bc.island_off !== true && !laid(layRaw, "island")
+        ? ({ left: layRaw.left || [], center: withIsland(layRaw.center), right: layRaw.right || [] }) : layRaw
     readonly property bool hasIsland: on && laid(lay, "island")
     property Item islSlot: null                 // where the island sits in its zone
     readonly property bool islAlone: ["left", "center", "right"].some(function(z) { const m = lay[z] || []; return m.length === 1 && m[0] === "island" })
@@ -140,7 +157,7 @@ PanelWindow {
     readonly property color line: goo ? "transparent" : Qt.rgba(1, 1, 1, 0.09)
     readonly property real alpha: Look.flat ? 1 : (bc.opacity !== undefined ? bc.opacity : 0.72)
     readonly property color bg: goo ? gp.surface : Qt.rgba(0.05, 0.05, 0.05, alpha)
-    readonly property real gap: floating ? 8 : 0
+    readonly property real gap: hug ? 3 : (floating ? 8 : 0)
     property string cfgText: ""
     readonly property string home: Quickshell.env("HOME")
 
@@ -194,6 +211,8 @@ PanelWindow {
             if (!bar.on) { }
             else if (bar.sty === "island" || bar.sty === "flat") { l.push(bodyBg); r.push(bar.sty === "island" ? pill : 0) }
             else if (bar.notch) { l.push(notchBody); r.push(notchBg.corner) }
+            else if (bar.hugFrame) { for (const z of [hl, hc, hr]) if (z.visible) { l.push(z); r.push(18) } }
+            else if (bar.hug) { for (const z of [zl, zc, zr]) if (z.any && !z.onlyIsland) { l.push(z); r.push(pill) } }
             else if (body.soft) {
                 for (const z of [zl, zc, zr]) if (z.any && !z.onlyIsland) { l.push(z); r.push(pill) }
             }
@@ -280,7 +299,7 @@ PanelWindow {
 
     readonly property var sink: Pipewire.defaultAudioSink
     PwObjectTracker { objects: [bar.sink] }
-    readonly property real vol: sink && sink.audio ? sink.audio.volume : 0
+    readonly property real vol: Vol.of(sink)
     readonly property bool muted: sink && sink.audio ? sink.audio.muted : false
 
     readonly property var batt: UPower.displayDevice
@@ -345,10 +364,10 @@ PanelWindow {
             // DarkShadow's own logos: the black hole (its disk turns) or the moon
             BlackHoleMark { visible: bar.logoKey === "blackhole"; anchors.centerIn: parent; size: bar.goo ? bar.barH - 2 : 36; extras: false
                 readonly property var pl: bar.logoPal("blackhole"); hot: pl[0]; warm: pl[1]; cool: pl[2]; glowColor: pl[3]
-                running: visible && !Look.lite; scale: lm.containsMouse ? 1.15 : 1; Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } } }
+                running: visible && !Look.lite && (lm.containsMouse || bar.logoMove); scale: lm.containsMouse ? 1.15 : 1; Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } } }
             MoonMark { visible: bar.logoKey === "moon"; anchors.centerIn: parent; size: bar.goo ? bar.barH - 8 : 28; extras: false
                 readonly property var pl: bar.logoPal("moon"); moonTop: pl[0]; moonBottom: pl[1]; glowColor: pl[3]
-                running: visible && !Look.lite; scale: lm.containsMouse ? 1.15 : 1; Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } } }
+                running: visible && !Look.lite && (lm.containsMouse || bar.logoMove); scale: lm.containsMouse ? 1.15 : 1; Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } } }
             Text { visible: bar.logoKey !== "apps" && bar.logoKey !== "blackhole" && bar.logoKey !== "moon"; anchors.centerIn: parent; anchors.horizontalCenterOffset: 1
                 text: bar.logos[bar.logoKey] !== undefined ? String.fromCodePoint(bar.logos[bar.logoKey]) : ""
                 font.family: Fonts.icons; font.pixelSize: bar.goo ? 17 : 18; color: bar.goo ? (gp.mono ? gp.inkContainer : gp.inkPrimary) : bar.fg
@@ -608,7 +627,7 @@ PanelWindow {
                     if (m.button === Qt.LeftButton) { const p = mapToItem(null, width / 2, 0); bar.run("\"$HOME/.local/bin/rice-volume\" menu " + Math.round(p.x)); return }
                     if (bar.sink && bar.sink.audio) bar.sink.audio.muted = !bar.sink.audio.muted
                 }
-                onWheel: function(e) { if (bar.sink && bar.sink.audio) bar.sink.audio.volume = Math.max(0, Math.min(1, bar.sink.audio.volume + Look.notches(e) * 0.04)) } }
+                onWheel: function(e) { Vol.nudge(bar.sink, Look.notches(e) * 0.04) } }
             HoverLine { on: vm.containsMouse; full: 16 * Math.min(1, bar.vol); color: bar.fg }   // how loud, as a line under the icon
         }
     }
@@ -818,15 +837,17 @@ PanelWindow {
         property bool soft: false       // a pill of its own (islands), else no background
         readonly property bool any: row.width > 0
         visible: any
-        height: bar.barH
         // Google: the zone with the clock gets a tinted pill of its own
         readonly property bool tint: bar.goo && mods.length === 1 && mods[0] === "clock"
         readonly property bool onlyIsland: mods.length === 1 && mods[0] === "island"
         // the gap between modules lives inside each module, so a module that comes or goes slides the others
         readonly property real sp: bar.sty === "pills" ? 8 : (bar.goo ? 2 : 14)
         width: Math.max(0, row.width - sp) + (soft && any && !onlyIsland ? (bar.goo ? 12 : 28) : 0)
+        // edge: a tonal pill a little inside the edge's shape
+        height: bar.hug ? bar.barH - 8 : bar.barH
+        y: bar.hug ? 4 : 0
         radius: height / 2
-        color: soft && !onlyIsland ? (tint ? gp.container : bar.bg) : "transparent"
+        color: soft && !onlyIsland ? (tint ? gp.container : (bar.hug ? body.hpill : bar.bg)) : "transparent"
         Behavior on color { ColorAnimation { duration: 300 } }
         border.width: soft && !onlyIsland ? 1 : 0
         border.color: bar.line
@@ -834,6 +855,7 @@ PanelWindow {
             id: row
             x: Math.round((parent.width - width) / 2); y: Math.round((parent.height - height) / 2)
             spacing: 0
+            // edge: the pill is a little lower than the bar; the modules keep the bar's own height
             Repeater {
                 model: zone.mods
                 delegate: Item {
@@ -915,7 +937,7 @@ PanelWindow {
 
         // a soft shadow under every background (the bar floats above the wallpaper)
         Repeater {
-            model: bar.shadowOn ? (bar.sty === "island" ? [body] : (bar.sty === "islands" || bar.goo ? [zl, zc, zr] : [])) : []
+            model: bar.shadowOn && !bar.hug ? (bar.sty === "island" ? [body] : (bar.sty === "islands" || bar.goo ? [zl, zc, zr] : [])) : []
             delegate: Item {
                 readonly property var src: modelData
                 visible: src.visible !== false && src.width > 0 && src.onlyIsland !== true && bar.barK > 0.01
@@ -944,12 +966,45 @@ PanelWindow {
             shadow: bar.shadowOn
         }
 
+        // ---------- edge: the parts of the bar that are one piece with the screen edge ----------
+        readonly property real hpad: 7
+        // the edge's own color is the darkest layer (like the screen's frame), the pills on it one step lighter.
+        // Both follow the bar's Transparency, so the blur behind them shows
+        readonly property color hbase: Qt.darker(gp.surface, 1.35)
+        readonly property color hfill: Qt.rgba(hbase.r, hbase.g, hbase.b, Look.flat ? 1 : Math.min(1, bar.alpha + 0.1))
+        readonly property color hcard: Qt.lighter(gp.card, 1.12)
+        readonly property color hpill: Qt.rgba(hcard.r, hcard.g, hcard.b, Look.flat ? 1 : Math.min(1, bar.alpha + (bar.hugFrame ? 0.16 : 0.1)))
+        // where a part is: its zone, and the island too when it sits there (the island grows on its own, for the
+        // player, a notification, a recording; the part grows with it in the same frame). No animation of its own:
+        // V4.82 eased these after the zones and the island, so the parts lagged and swung when they changed
+        function spanOf(z) {
+            let a = z.x, b = z.x + z.width
+            if (bar.islSlot && isl.visible && !isl.ghost && z.mods.indexOf("island") >= 0) {
+                a = Math.min(a, isl.x); b = Math.max(b, isl.x + isl.width)
+            }
+            return [a, b]
+        }
+        component Hug: HugShape {
+            property Item zn
+            readonly property var sp: body.spanOf(zn)
+            visible: bar.hugFrame && zn.any && bar.barK > 0.01
+            opacity: bar.barK
+            flip: bar.atBottom
+            fill: body.hfill
+            shadow: bar.shadowOn
+            height: bar.barH + bar.gap
+            y: bar.atBottom ? 0 : -bar.gap
+        }
+        Hug { id: hl; zn: zl; openL: true; x: -bar.gap; width: Math.round(sp[1] + body.hpad + ear + bar.gap) }
+        Hug { id: hc; zn: zc; x: Math.round(sp[0] - body.hpad - ear); width: Math.round(sp[1] - sp[0] + 2 * (body.hpad + ear)) }
+        Hug { id: hr; zn: zr; openR: true; x: Math.round(sp[0] - body.hpad - ear); width: body.width - x + bar.gap }
+
         Zone { id: zl; mods: bar.lay.left || []; soft: body.soft; opacity: bar.barK; visible: bar.barK > 0.01
-            x: bar.notch ? body.nX : body.edge; y: 0 }
+            x: bar.notch ? body.nX : (bar.hug ? 8 : body.edge) }
         Zone { id: zc; mods: bar.lay.center || []; soft: body.soft; opacity: bar.barK; visible: bar.barK > 0.01
-            x: Math.round(bar.notch ? body.nX + (zl.any ? zl.width + body.ngap : 0) : (body.width - width) / 2); y: 0 }
+            x: Math.round(bar.notch ? body.nX + (zl.any ? zl.width + body.ngap : 0) : (body.width - width) / 2) }
         Zone { id: zr; mods: bar.lay.right || []; soft: body.soft; opacity: bar.barK; visible: bar.barK > 0.01
-            x: bar.notch ? body.nX + body.nW - width : body.width - width - body.edge; y: 0 }
+            x: bar.notch ? body.nX + body.nW - width : body.width - width - (bar.hug ? 8 : body.edge) }
 
         // ---------- dynamic: the island in the middle ----------
         DynIsland {
@@ -964,7 +1019,7 @@ PanelWindow {
             nf: bar.nf
             // in the notch it is the notch's own color, so at rest it is part of it
             areaW: body.width
-            fill: bar.notch ? notchBg.fill : (bar.goo ? gp.surface : Qt.rgba(bar.bg.r, bar.bg.g, bar.bg.b, Math.min(1, bar.alpha + 0.14)))
+            fill: bar.notch ? notchBg.fill : (bar.hug ? body.hpill : (bar.goo ? gp.surface : Qt.rgba(bar.bg.r, bar.bg.g, bar.bg.b, Math.min(1, bar.alpha + 0.14))))
             // at rest it only casts a shadow when it stands alone (not inside the notch or a pill with modules)
             flatRest: bar.notch || !bar.islAlone
             readonly property real cx: bar.islSlot ? bar.islSlot.bx + bar.islSlot.width / 2 : body.width / 2

@@ -6,8 +6,9 @@ case "${1:-}" in
   up|down|mute|mic)
     if command -v wpctl >/dev/null 2>&1; then
       case "$1" in
-        up) wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ "${step}%+" ;;
-        down) wpctl set-volume @DEFAULT_AUDIO_SINK@ "${step}%-" ;;
+        # rice-sound: the same volume curve as the shell's sliders (Settings > Sound > Volume)
+        up) "$HOME/.local/bin/rice-sound" step "+$step" 2>/dev/null || { wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ "${step}%+"; } ;;
+        down) "$HOME/.local/bin/rice-sound" step "-$step" 2>/dev/null || wpctl set-volume @DEFAULT_AUDIO_SINK@ "${step}%-" ;;
         mute) wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle ;;
         mic) wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle ;;
       esac

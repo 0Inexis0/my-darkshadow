@@ -77,10 +77,14 @@ PanelWindow {
 
     // ---------- what it shows ----------
     readonly property real aspect: d ? Math.max(0.3, d.w / Math.max(1, d.h)) : 16 / 9
-    readonly property var wins: d ? d.wins : []
+    // only while it is on the screen: closed, every card and every live picture of a window is let go. (Before
+    // V4.84 they stayed after the first use, and each window kept being captured, every frame, behind everything:
+    // lag and a lot of memory)
+    readonly property bool alive: open || t > 0.01
+    readonly property var wins: d && alive ? d.wins : []
     readonly property var mru: wins.slice().sort(function(a, b) { return a.order - b.order })
     readonly property var wsList: {
-        if (!d) return []
+        if (!d || !alive) return []
         const o = []
         const top = Math.max(cfg.count || 10, d.used.length ? d.used[d.used.length - 1] : 1, d.active)
         if (cfg.empty !== false) for (let i = 1; i <= top; i++) o.push(i)
@@ -327,6 +331,7 @@ PanelWindow {
                                             if (!tl) return
                                             try {
                                                 obj = Qt.createQmlObject('import Quickshell.Wayland\nScreencopyView { anchors.fill: parent; live: true; paintCursor: false }', live, "shot")
+                                                obj.live = Qt.binding(function() { return tv.open })
                                                 obj.captureSource = tl
                                             } catch (e) { obj = null }
                                         }
@@ -441,6 +446,7 @@ PanelWindow {
                                 if (!tl) return
                                 try {
                                     obj = Qt.createQmlObject('import Quickshell.Wayland\nScreencopyView { anchors.fill: parent; live: true; paintCursor: false }', slive, "shot")
+                                    obj.live = Qt.binding(function() { return tv.open })
                                     obj.captureSource = tl
                                 } catch (e) { obj = null }
                             }

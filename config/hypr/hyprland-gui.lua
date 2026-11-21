@@ -32,6 +32,6 @@ hl.bind("SUPER + W", hl.dsp.exec_cmd("qs -n -p @HOME@/.config/quickshell/hyprqui
 hl.unbind("SUPER + E")
 hl.bind("SUPER + E", hl.dsp.exec_cmd("$HOME/.local/bin/rice-files"))   -- your file manager (Settings > Desktop > Look & Feel)
 hl.unbind("SUPER + SHIFT + S")
-hl.bind("SUPER + SHIFT + S", hl.dsp.exec_cmd("@HOME@/.local/bin/screenshot"))
+hl.bind("SUPER + SHIFT + S", hl.dsp.exec_cmd("@HOME@/.local/bin/rice-hotcorner shot region"))
 hl.unbind("SUPER + SHIFT + R")
 hl.bind("SUPER + SHIFT + R", hl.dsp.exec_cmd("@HOME@/.local/bin/record"))

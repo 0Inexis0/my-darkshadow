@@ -395,6 +395,10 @@ def cmd_set(f):
         # one frame of it under the video: the lock screen, the blur and the colors use it
         if still:
             apply_picture(still, True)
+        elif os.access(HOME + "/.local/bin/rice-sddm", os.X_OK):
+            # no picture of it could be made: the login screen still gets the video
+            subprocess.Popen([HOME + "/.local/bin/rice-sddm", "sync"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                             start_new_session=True)
     else:
         if os.path.exists(LIVE):
             os.remove(LIVE)

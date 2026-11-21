@@ -12,12 +12,30 @@ fi
 FAMILY=other
 case " $DISTRO_ID $DISTRO_LIKE " in
   *" nixos "*) FAMILY=nixos ;;
-  *" arch "*|*" archlinux "*|*" cachyos "*|*" endeavouros "*|*" manjaro "*|*" garuda "*) FAMILY=arch ;;
+  *" arch "*|*" archlinux "*|*" artix "*|*" cachyos "*|*" endeavouros "*|*" manjaro "*|*" garuda "*) FAMILY=arch ;;
   *" fedora "*|*" nobara "*|*" ultramarine "*) FAMILY=fedora ;;
 esac
 # the flavour inside a family, for messages (CachyOS, EndeavourOS, Manjaro, Nobara, Bazzite ...)
 DISTRO_FLAVOR="$DISTRO_ID"
 case "$FAMILY" in arch|fedora) : ;; *) DISTRO_FLAVOR="$FAMILY" ;; esac
+# the init system: systemd, or (Artix, Void) OpenRC, runit, s6, dinit. Without systemd the installer turns services on
+# with that init, installs Artix's service scripts (NAME-openrc ...), and the session starts PipeWire itself
+INIT_SYS=other
+if [ -d /run/systemd/system ]; then INIT_SYS=systemd
+else
+  case "$(cat /proc/1/comm 2>/dev/null)" in
+    runit*) INIT_SYS=runit ;; dinit*) INIT_SYS=dinit ;; s6-svscan*) INIT_SYS=s6 ;;
+    *) if [ -d /run/openrc ]; then INIT_SYS=openrc
+       elif [ -d /run/runit ] || [ -d /etc/runit/sv ]; then INIT_SYS=runit
+       elif [ -d /run/s6-rc ] || [ -d /etc/s6/sv ]; then INIT_SYS=s6
+       elif [ -d /etc/dinit.d ]; then INIT_SYS=dinit; fi ;;
+  esac
+fi
+# Artix: the service script packages for its init (networkmanager-openrc ...), the ones that exist are installed
+ARTIX_SVC_PKGS=(elogind dbus networkmanager bluez power-profiles-daemon)
+# the services turned on at boot without systemd (Bluetooth and power modes are turned on where they are installed)
+ARTIX_SERVICES=(dbus elogind NetworkManager)
+
 # the Hyprland config is Lua, which needs Hyprland 0.55 or newer
 HYPR_MIN_MAJOR=0; HYPR_MIN_MINOR=55
 # Fedora Atomic (Bazzite, Silverblue, Kinoite...): packages are layered with rpm-ostree, not dnf

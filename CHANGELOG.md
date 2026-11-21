@@ -1,5 +1,163 @@
 # Changelog
 
+## V4.84: much lighter and quicker; minimize and stack windows; your own keys; a gentler volume; login screen clocks
+- **Performance**
+  - Task view: closed, it lets every window picture go. Before, after the first SUPER + Tab every window was captured live, every frame, behind everything until the shell restarted: lag and a lot of memory
+  - Waves (progress lines, the timer, gauges, the game bar) are drawn about 30 times a second, not once every frame of the screen (240 times a second on a 240 Hz screen, by the processor)
+  - The black hole and moon logos on the bar move while the pointer is on them (Settings > Bar > "The logo moves all the time" for the old way)
+  - Infinite Desktop's moving wallpaper exists only while Infinite Desktop is on (a whole-screen surface and a big picture sat in memory all the time)
+  - The launcher is made when you first open it and let go after 10 minutes closed
+  - Settings no longer waits in the background by default (about 300 MB): it starts when you open it and quits a minute after you close it (Settings > Desktop > Performance > Keep Settings ready, for the old way)
+  - Fewer wake-ups: the files the shell watches are re-read every 5 seconds as a safety net (inotify does the real work), the desktop's settings every 10
+  - `rice-perf`: how much memory and processor each part of the shell uses right now, and what would make it lighter
+- **Windows**: minimize (SUPER + H) and bring back (SUPER + SHIFT + H); stack windows into tabs (SUPER + T), the next / previous one of the stack (SUPER + CTRL + Right / Left), put a window into the stack beside it (SUPER + CTRL + SHIFT + Left / Right). All of them can get other keys in Settings > System > Keybinds. `rice-win`
+- **Your own keys**: Settings > System > Keybinds > "Turn a key off" takes any key of the window manager away (then give it something of your own); ready-made actions for your own keys (minimize, fullscreen, close, float, pin, screenshot ...)
+- **Launcher favorites**: right click an app (or Ctrl + D) and it comes first, with a star
+- **Volume**: the sliders, keys and the bar's wheel use a gentler curve (below 35 % it was nearly silent) and the top can be louder than 100 % (Settings > Sound > Volume: Low volumes, Loudest; `rice-sound`)
+- **Login screen clocks**: classic, stacked, center, pill and shapes (Settings > Desktop > Idle & Lockscreen > Login screen; `rice-sddm clock STYLE`)
+- **niri**: at the last column, Super + Left / Right (and the wheel) go on to the next monitor, Super + Ctrl + Left / Right take the window with them
+- Settings: with Hyprland's blur off the window is nearly solid, so the desktop widgets no longer show through it
+
+## V4.83: smoother Edge bar, a see-through toolbox, a launcher in your wallpaper's colors
+- Edge bar: its parts no longer lag and swing when something changes (another workspace, the island growing for a notification or a recording): they follow the zones and the island in the same frame. New: Settings > Bar > "Frame along the edge" (off: only the pills stay, without the dark parts behind them)
+- Blur: the bar and the island are blurred on every install now (the rule only came with Settings > Launcher before), and the bar's Transparency is its own (it was made more solid on top, so the blur could hardly be seen)
+- Toolbox: Transparency and blur work (its cards were solid and covered most of the sheet; the default is 80% now). It opens like the control center: the title, then every part of the page one after another, then the tabs pop in; a tab you go to plays its parts in again
+- Launcher: a new "Wallpaper" look, the default: the wallpaper's colors instead of black with a white selection (it was "Shadow"; you can still pick that one in Settings > Launcher)
+- Also in this release: everything from V4.77 to V4.82 below (screenshot text / translate / color, the record menu, the key sheet, the toolbox, conversions, the Edge bar, files in the launcher, your own themes, live wallpapers on the login screen)
+
+## V4.82: the Edge bar, files in the launcher, your own themes
+- **Edge** (Settings > Bar > Bar style, `rice-bar set style edge`): a new bar style. It has the Dynamic style's look and island, but every part is one piece with the screen edge: the left part reaches the screen's left side, the right part its right side, the middle hangs from the edge, each with soft curves where it meets the edge. The modules sit on tonal pills inside. Also in the desktop's edit panel
+- **Launcher**: files and folders in your home show after three letters (fd, else locate, else a short search); Enter opens one. A "/" in front shows only files. `rice-tools files TEXT`
+- **Your own theme** (Settings > Appearance > Themes): "Save the look I have now" keeps the colors, the wallpaper, corners and shapes, the bar, widgets, notifications, window corners and gaps, motion and the font under a name. It shows with the other themes (marked "Yours"), one click brings all of it back, and the bin on its card takes it away. `rice-theme save NAME`, `rice-theme delete KEY`
+
+## V4.81: the toolbox's blur is on the toolbox only; the island is gone
+- Toolbox: with blur on, the whole screen behind the toolbox was blurred and a lighter square showed around the sheet. Now only the sheet itself is blurred (the dim behind it and its shadow stay under the blur rule's threshold)
+- Toolbox: the island (folding the sheet into a pill) is taken out again
+- Settings > Desktop > Toolbox: the little screen in the preview has round corners all the way (the dim in it was square)
+
+## V4.80: the toolbox as an island, its transparency and blur; live wallpapers on the login screen
+- Toolbox: the button next to the X folds it into an **island**, a small pill at its edge with the tab you were on and its one line (the timer's time, what is left to do ...); the windows under the rest of the screen stay usable, a click or SUPER + X opens it again. Settings > Desktop > Toolbox > "Open as an island" makes it start that way
+- Toolbox: **Transparency** (0 to 70%) and **Blur behind it** in Settings > Desktop > Toolbox (`rice-tools set opacity 0.7`, `rice-tools set blur off`)
+- Toolbox: new tabs at the bottom: the one you are on opens into a pill with its name, the others are round icons; the icon you go to tips over and back
+- Infinite Desktop: a new wallpaper fades in over the old one while the canvas is on (before, it changed with no animation at all, because the moving wallpaper covers the real one)
+- Login screen (SDDM): a **live wallpaper plays there too**. `rice-sddm sync` brings the video and a frame of that very video (before, the picture could stay the one of the wallpaper before). It needs QtMultimedia for SDDM's Qt (Arch / Artix: `qt6-multimedia qt6-multimedia-ffmpeg`); without it the picture stays. Run `rice-sddm install` once after this update, so the login screen gets its new files
+
+## V4.79: the toolbox opens like the control center, shows temperatures, and has its own settings page
+- Toolbox (SUPER + X): it opens the way the control center does: it comes out of its edge and grows the last bit, and the title, the page and the tabs follow one after the other; a soft light in your key color sits behind the title, and every tab says one line about itself under its name (tasks left, the timer's time, the processor's load and temperature ...)
+- Toolbox > System, made again: the processor and the graphics card each have a ring and a temperature pill that turns amber and red with the heat (and the processor's speed in GHz); memory, swap and disk show their percent; below them download and upload speed, how long the computer has been on, the load, and the fan and battery when the machine has them
+- The processor's temperature is found on more boards (sensors that only name the processor on one of their lines: Tctl, Package id 0, CPUTIN ...)
+- **Settings > Desktop > Toolbox** (new): the left or the right edge, the width, dim the screen behind it, close on a click outside, open on the tab you used last, which tabs it has and in what order, and its key (SUPER + X, SUPER + B, SUPER + ALT + T, or any other in Keybinds). `rice-tools state`, `rice-tools set side left`
+
+## V4.78: the toolbox, conversions in the launcher, a livelier key sheet
+- **Toolbox** (SUPER + X, `rice-tools toggle [tab]`): a sheet on the right edge with six tabs. Ctrl + 1 ... 6 or Ctrl + Tab changes the tab, Esc closes it
+  - **Tasks** and **Note**: the same list and note as the desktop widgets, so they are always in step
+  - **Timer**: a focus timer (15 to 60 minutes, then a break) with a wavy ring; it keeps counting while the toolbox is closed and tells you when the time is up
+  - **Convert**: length, mass, temperature, volume, speed, data, time and money; or type it whole ("10 km in mi"). A click on the answer copies it. Currency rates are the European Central Bank's, fetched at most twice a day and only when you use money
+  - **System**: processor, graphics, memory, swap and disk, measured only while the tab is on the screen
+  - **Chat**: talk to an AI model of your choice. By default Ollama on your own computer (nothing leaves it); the gear sets a service with an OpenAI-style API instead (address, model, your key, kept in ~/.config/rice/ai.json, readable only by you). The answer arrives word by word
+- Launcher: "10 km in mi", "72 f c", "100 usd pln" convert, like "2+2" calculates (Enter copies)
+- The key sheet (SUPER + /): typing folds away what does not match and the rest glides into place, what you typed is marked in your key color, matching keys pop, the groups count their matches, and the groups come up one after the other when it opens
+
+## V4.77: the screenshot tool reads text, translates, finds colors; a record menu; every key on one sheet
+- Screenshot tool (Print, SUPER + SHIFT + S), new in the toolbar:
+  - **Copy the text** (T): reads the text in the box and copies it (needs `tesseract` and a language, Arch: `sudo pacman -S tesseract tesseract-data-eng tesseract-data-pol`)
+  - **Translate** (L): that text in your language, on a small card in the corner (with `trans` from translate-shell when you have it, else Google's translator: the text is sent there, only when you press it)
+  - **Search with the picture** (G): copies the crop and opens Google Lens, Ctrl+V there pastes it (nothing is uploaded until you paste)
+  - **Color** (4 or C): a loupe follows the pointer, a click copies the color of that pixel (#RRGGBB, the card has rgb() too)
+  - The loupe is drawn in a plainer way now (V4.75's could come out empty on some graphics drivers)
+- Record menu (SUPER + SHIFT + R): the same toolbar over the live screen. Region, Window or Screen, computer sound and microphone on or off, then Record. Pressing the keys again stops it, as before. Without the shell it is the old selection (slurp)
+- Every key on one sheet (SUPER + /): all the shell's keys in groups, the ones you changed in your key color, type to find one. `rice-keymap show`; the key itself can be changed in Settings > System > Keybinds
+
+## V4.76: SUPER + SHIFT + S opens the new screenshot tool
+- SUPER + SHIFT + S still opened the old selection (slurp). It opens the new screenshot tool now, the same one as Print (Hyprland and niri). Good for keyboards without a Print key
+
+## V4.75: a new screenshot tool, wallpaper zoom
+- Screenshots, redesigned (Print, and the dashboard's screenshot button): the screen freezes the moment you press the key, then a Material 3 toolbar at the bottom lets you pick:
+  - **Region**: drag a box, move it by dragging inside, resize it by its corners; its size in real pixels sits above it, and a rounded loupe shows the pixels under the pointer while you drag
+  - **Window**: point at a window (it is outlined, with its app name), click to save it (Hyprland)
+  - **Screen**: the whole screen
+  - Save (Enter, or double-click the box) keeps it in Pictures/Screenshots and copies it (as set in Settings), Copy (Ctrl+C) only copies, Edit (E) opens it in satty or swappy when you have one, Esc or a right click cancels; 1 / 2 / 3 (R / W / S) switch the mode
+  - The crop is taken from the frozen picture at full resolution, so menus and hover states are kept. Without the shell it falls back to the old selection (slurp). SHIFT + Print still saves the whole screen at once
+- Infinite Desktop: "Wallpaper zoom" in Settings > Desktop > Infinite Desktop (1.05x to 1.5x, `rice-infinite set wallzoom 1.1`). The default is smaller now (1.15x instead of 1.42x), so the moving wallpaper looks much closer to your wallpaper
+
+## V4.74: the wallpaper moves while you hold SUPER + ALT, not only after
+- Fix: with SUPER + ALT + mouse the wallpaper (and the bar stepping aside) only reacted after you let go. The live moves went over Quickshell's SocketServer, which delivered nothing on some systems. rice-canvasd now sends them as datagrams to a small listener the shell runs (the way Sarods2D's Iridium Shell feeds its parallax), so the wallpaper moves with the windows while you hold the keys. Moves that arrive together are added up, and the wallpaper glides with an animation made for a target that changes many times a second (smoother)
+- An updated rice-canvasd replaces the one still running from before the update, as soon as Infinite Desktop turns on (no logout needed)
+- The switch is in Settings > Desktop > Infinite Desktop: "The wallpaper moves with it" (`rice-infinite set wall 0|1`)
+
+## V4.73: the wallpaper follows every move at once
+- Fix: after a long trip over the canvas the moving wallpaper stayed at the end of its room, and moving back did nothing until you had come a long way back. It is now counted from the moves themselves: every move the other way moves it back at once, and it moves a little more per pixel (0.3)
+- rice-canvasd connects to the shell at the start of every hold, so the first move of a hold already moves the wallpaper
+
+## V4.72: no crash when Infinite Desktop turns on
+- Fix: Quickshell crashed right after turning Infinite Desktop on (V4.71, seen on Artix with NVIDIA: QWaylandWindow::calculateExposure). The moving wallpaper's surface was mapped and unmapped together with its picture's loading state, a binding loop that made Qt's Wayland client trip over a window being taken away. The surface now stays (see-through) while the feature is on and only the picture inside it comes and goes
+
+## V4.71: Infinite Desktop: the wallpaper travels with you, the bar steps aside
+- Infinite Desktop (Hyprland): the wallpaper moves with the canvas, slower than the windows, as if you travelled over a big picture. Turning Infinite Desktop on grows the wallpaper a little from exactly where it is (room to move), and turning it off brings it back the same way. Live while you hold SUPER + ALT and move the mouse, a smooth glide with the keys, the wheel and SUPER + CTRL + arrows. At the end of the picture it slows down softly instead of stopping
+- While you move the canvas with SUPER + ALT + mouse, the bar (with the island) and the dock slide away and come back a moment after you let go
+- Both can be turned off: Settings > Desktop > Infinite Desktop ("The wallpaper moves with it", "The bar and the dock step aside while you move"), or `rice-infinite set wall 0`, `rice-infinite set hidebar 0`
+- The moving wallpaper and the bar hiding while you pan are inspired by Sarods2D's Iridium Shell
+
+## V4.70: Flatpak on Artix (and other systems without systemd)
+- Fix: Flatpak apps (Spotify, Discord ...) did not start or had no tray / portals on Artix: "Unknown or unsupported transport 'disabled'". `dbus-run-session` makes a D-Bus bus with an abstract address, which Flatpak cannot use; systemd would put the bus at `$XDG_RUNTIME_DIR/bus`. The "Hyprland (DarkShadow)" and "niri (DarkShadow)" login sessions now start through `rice-session` (installed in /usr/local/bin), which starts the bus there and stops it with the session. Log out and pick the session again after updating. From a console: `rice-session Hyprland`
+
+## V4.69: Infinite Desktop works right after "Allow", without logging out
+- Fix: you join the input group, but the login you are in keeps the groups it started with, so SUPER + ALT + mouse stayed dead until you logged out and in. `rice-infinite daemon` (and Hyprland's start of it) now starts the daemon through `sg input` when you are in the group in /etc/group but this login is not, and a new daemon replaces the old one that cannot read the input devices. Run `rice-infinite daemon` once after updating and it works
+
+## V4.68: Infinite Desktop on Artix, Artix on the README
+- Fix: SUPER + ALT + mouse did nothing after joining the input group (seen on Artix). A copy of rice-canvasd from the session before (started without the input group) kept running and held the lock, so the new one never started; whether Hyprland was still there was judged by its folder, which can stay after a logout. Now Hyprland must answer on its socket, and a new copy stops an old one that belongs to another session or cannot read the input devices
+- `rice-infinite check` tells more: whether you are in the input group in /etc/group and in this login, and whether the running daemon belongs to this Hyprland and can read the input devices
+- README: Artix Linux is listed as supported (badge and table)
+
+## V4.67: Artix system update no longer stops on a package clash
+- Fix (installer, Artix): the system update stopped with "geocode-glib-3.26.4-6 and geocode-glib-common-3.26.4-5 are in conflict". With Arch's `[extra]` on, Artix's own build of a package replaces Arch's and the old split-off part has to be removed; `--noconfirm` said no to that. On Artix the update now says yes to removing the conflicting package (`--ask=4`), and if it still fails it tells you what to answer by hand
+
+## V4.66: Files glass really shows up
+- Fix: Files did not get the glass look and the blur (Artix, and anywhere Files was already running): Files stays running in the background after its window is closed and keeps the CSS it started with. It is now quit once when the glass / Material 3 look is written, so the next window opens with it
+
+## V4.65: Files glass, no more date module, steadier dock and weather
+- Files (Nautilus) in a Material 3 look: pill rows in the sidebar, round buttons and search, the selected item in the wallpaper's secondary-container color, and see-through surfaces so the compositor's blur shows behind it (works the same on Arch and Artix). The old window-wide opacity rule is gone, so the text stays sharp. Settings > Desktop > Look & Feel > "Glass and Material 3 shapes" turns it off (`rice-look files-glass off`). Icons stay Papirus
+- The date is part of the Dynamic island now (the island shows the day, the date and the time in a pill); the separate Date module is gone from Bar layout. "Date" in Settings > Dynamic island is on by default
+- Fix: a lighter square of blur past the rounded corners of widgets (the soft shadow was just opaque enough for Hyprland to blur it). With blur on, the shadow is kept below that
+- Fix: the dock appearing and disappearing again and again while the pointer rests on it (an "entered" event from a dock that is sliding away brought it back). It returns on real pointer movement only, and hides only when the pointer is really away
+- Fix: the weather popup and the Forecast widget stayed empty ("Looking outside...", "--") while the island showed the temperature: the long answer of wttr.in is slower and fails more often, so it is tried twice and, if it still fails, the short answer is used
+- Weather needs a place (it is not asked from your IP, on purpose): `rice-weather place "Warsaw"` or Settings > Language & region > Online lookups
+
+## V4.64: date in the island, removing the island keeps your bar
+- The Dynamic island now shows the date like the bar's Date module: `niedz., 15/11` and the time in a pill in your key color. It appears when "Date" is on in Settings > Dynamic island, or when the Date module is in your bar layout (the separate Date module is then hidden, so it is not shown twice)
+- Fix: removing the island (clock) from Bar layout also removed the launcher and everything else in the middle. Now only the island goes; the rest stays. Older layouts that have no island keep working
+- Infinite Desktop on Artix and other systems without systemd: SUPER+ALT needs your user in the `input` group (`sudo usermod -aG input $USER`, then log out and in). Settings > Desktop > Infinite Desktop > Allow does it for you
+
+## V4.63: no more "Invalid keyboard layout passed"
+- Fix: with a plain US keyboard, an update could save the layout with its quotes and comma (`"us",`, read from the line `kb_layout = "us",` in hyprland.lua) and Hyprland showed "Invalid keyboard layout passed". Values read from config files and from Hyprland are cleaned now, and a broken value saved before is mended by itself
+- The installer is not changed in this version
+
+## V4.62: Artix Linux
+- The installer supports Artix (OpenRC, runit, s6 and dinit). It is treated as Arch, and what systemd would do is done with your init:
+  - Arch's `[extra]` repository is turned on (`artix-archlinux-support`, as the Artix wiki says) when Hyprland is not in Artix's own repositories; a copy of pacman.conf stays as `pacman.conf.bak-darkshadow`
+  - Artix's service scripts for your init are installed (`networkmanager-openrc`, `bluez-openrc`, `power-profiles-daemon-openrc`, `sddm-openrc` ...) and D-Bus, elogind, NetworkManager, Bluetooth and power modes are turned on at boot
+  - new login sessions "Hyprland (DarkShadow)" and "niri (DarkShadow)" start with their own D-Bus (without it notifications, the tray, portals and Bluetooth do not work); from a console: `dbus-run-session Hyprland`
+  - a warning when ConnMan runs the network (NetworkManager is then left off) or when neither elogind nor seatd runs
+- `rice-sys service-enable` / `service-has`: turning a system service on with any init. The SDDM login screen and Settings > Home (power modes) use it without systemd
+- Fix: an update from Settings that changes the installer opens one terminal at most (once a minute) and that terminal no longer opens another one (the endless terminals of V4.56)
+
+## V4.61: rice-update starts again
+- Fix: `rice-update` crashed on start (`name 're' is not defined`) since V4.58. The import was missing. All Python tools were checked for the same kind of mistake
+- The installer is not changed in this version
+
+## V4.60: Infinite Desktop leaves app pop-ups alone (Steam notifications)
+Reported by R31tr0 (issue #19).
+- Steam's notification toasts (`notificationtoasts_*`) no longer move the canvas, get repositioned, or take focus: they stay where Steam puts them, like a pinned window. Before, a toast was taken as a canvas window, so it shifted the screen and the other windows
+- The installer is not changed in this version
+
+## V4.59: the Wi-Fi list no longer goes blank, and connecting always works
+Reported by a user: the networks sometimes vanish from the Wi-Fi menu and connecting sometimes does nothing, while the internet itself works.
+- The list keeps the last networks while NetworkManager is scanning or busy (it answers with an empty list for a moment), instead of showing nothing
+- A stuck `nmcli` can no longer freeze the list: every read and every connect has a time limit, and a connect that hangs is stopped, so the next click works
+- A saved network whose profile is named differently than the network ("Home 1") now connects by its SSID instead of failing
+- A timed-out connect says so
+- The installer is not changed in this version
+
 ## V4.58: fixes from the V4.55 audit, and the keyboard layout stays after an update
 Thanks to notwafel (pull request #18).
 - Bar on every screen: the bars share one `rice-services` and one `rice-weather` (BarSvc.qml) instead of each starting its own; the side bar uses it too
