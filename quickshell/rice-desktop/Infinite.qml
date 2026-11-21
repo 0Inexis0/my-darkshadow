@@ -15,16 +15,18 @@ Singleton {
     property real ox: 0
     property real oy: 0
     property real zoom: 1
-    // infinite.conf: the wallpaper moves with the canvas (wall=1), the bar and the dock hide while it moves (hidebar=1)
+    // infinite.conf: the wallpaper moves with the canvas (wall=1), the bar and the dock hide while it moves (hidebar=1),
+    // every screen is one canvas (screens=0) or only the workspace it was turned on (screens=1)
     property bool wallOn: true
     property bool hideBarOn: true
+    property int screens: 0
     // how much bigger than the screen the moving wallpaper is (wallzoom=1.05 ... 1.5): room to move, but also zoom
     property real wallZoom: 1.15
     // live
     property bool held: false
     property bool moved: false           // this hold moved the canvas
     property bool live: false            // the last change came from a hold (short smoothing), not from a glide
-    readonly property bool here: Wm.hypr && on && Wm.focusedId === ws
+    readonly property bool here: Wm.hypr && on && (screens === 0 || Wm.focusedId === ws)
     readonly property bool moving: here && held && moved
     // the bar and the dock go while you move it, and come back a moment after you let go
     property bool hideUi: false
@@ -71,10 +73,11 @@ Singleton {
             const g = (k, d) => { const m = t.match(new RegExp("^\\s*" + k + "\\s*=\\s*(\\S+)", "m")); return m ? m[1] : d }
             cv.wallOn = g("wall", "1") !== "0"
             cv.hideBarOn = g("hidebar", "1") !== "0"
+            cv.screens = g("screens", "0") === "1" ? 1 : 0
             const wz = parseFloat(g("wallzoom", "1.15"))
             cv.wallZoom = isNaN(wz) ? 1.15 : Math.max(1.05, Math.min(1.5, wz))
         }
-        onLoadFailed: { cv.wallOn = true; cv.hideBarOn = true; cv.wallZoom = 1.15 }
+        onLoadFailed: { cv.wallOn = true; cv.hideBarOn = true; cv.wallZoom = 1.15; cv.screens = 0 }
     }
 
     // rice-canvasd's messages: a small listener (python3) on a datagram socket, one line per message on its output.
