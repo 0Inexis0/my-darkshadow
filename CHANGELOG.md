@@ -1,5 +1,8 @@
 # Changelog
 
+## V4.85
+- **Infinite Desktop on every screen**: the canvas is one for all the screens, side by side as they are (Settings > Desktop > Infinite Desktop > Screens > Every screen, the new default): moving it takes the windows of every screen, a new window gets its room on its own screen. "This workspace" keeps the old way. The moving wallpaper sits on every screen too
+
 ## V4.84: much lighter and quicker; minimize and stack windows; your own keys; a gentler volume; login screen clocks
 - **Performance**
   - Task view: closed, it lets every window picture go. Before, after the first SUPER + Tab every window was captured live, every frame, behind everything until the shell restarted: lag and a lot of memory
