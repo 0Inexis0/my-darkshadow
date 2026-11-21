@@ -9,7 +9,7 @@ Item {
     id: page
     property var ctl
     readonly property bool niri: !!Quickshell.env("NIRI_SOCKET")
-    property var st: ({ keys: { key_toggle: "SUPER + F", mod_hold: "SUPER + ALT", mod_go: "SUPER + CTRL", mod_zoom: "CTRL" }, on: false, zoom: 1, step: 0.12, min: 0.2, pan: 180, speed: 1.0, dir: 1, push: 1, input: true, daemon: true, devices: null, loaded: true })
+    property var st: ({ keys: { key_toggle: "SUPER + F", mod_hold: "SUPER + ALT", mod_go: "SUPER + CTRL", mod_zoom: "CTRL" }, on: false, zoom: 1, step: 0.12, min: 0.2, pan: 180, speed: 1.0, dir: 1, push: 1, screens: 0, input: true, daemon: true, devices: null, loaded: true })
 
     function sh(args) { runner.command = ["bash", "-c", "\"$HOME/.local/bin/rice-infinite\" \"$@\" 2>&1", "_"].concat(args); runner.running = true }
     function fmt(n) { return String(Math.round(n * 100) / 100) }
@@ -219,6 +219,18 @@ Item {
             from: 0.3; to: 3; step: 0.05; decimals: 2; unit: "x"
             value: page.st.speed || 1.0
             onCommitted: function(v) { page.sh(["set", "speed", String(Math.round(v * 100) / 100)]); const n = Object.assign({}, page.st); n.speed = v; page.st = n }
+        }
+        SettingRow {
+            visible: !page.niri
+            label: I18n.t("Screens")
+            desc: page.st.screens === 1 ? I18n.t("The canvas is the workspace you turn it on: the screens on either side keep their own windows, which stay where they are") : I18n.t("Every screen is one canvas, side by side as the screens are: a drag that leaves a screen goes on the other one, and a new window gets its room on its own screen")
+            reserved: 420
+            Seg {
+                anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
+                options: [{ value: "1", label: I18n.t("This workspace") }, { value: "0", label: I18n.t("Every screen") }]
+                current: page.st.screens === 1 ? "1" : "0"
+                onChosen: v => { page.sh(["set", "screens", v]); const n = Object.assign({}, page.st); n.screens = Number(v); page.st = n }
+            }
         }
         ToggleRow {
             visible: !page.niri
