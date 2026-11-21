@@ -22,10 +22,12 @@ Item {
     property string q: ""
     function idOf(e) { return (e.id || "").replace(/\.desktop$/, "") }
     function entry(id) { return DesktopEntries.heuristicLookup(id) }
-    function setPins(l) {
-        // the pins of apps that are not installed stay in the file (an app you reinstall keeps its place)
-        const d = JSON.parse(JSON.stringify(page.ctl.dst)); d.dock = d.dock || {}; d.dock.apps = l.concat(gone); page.ctl.dst = d
-        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" dock-apps \"$1\"", "_", JSON.stringify(l)])
+    // dropGone: "Remove them" writes the list as it is; everything else keeps the pins of apps that are not
+    // installed in the file (an app you reinstall keeps its place, the dock skips it)
+    function setPins(l, dropGone) {
+        const all = dropGone ? l : l.concat(gone)
+        const d = JSON.parse(JSON.stringify(page.ctl.dst)); d.dock = d.dock || {}; d.dock.apps = all; page.ctl.dst = d
+        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" dock-apps \"$1\"", "_", JSON.stringify(all)])
         page.ctl.status = I18n.t("Dock: ") + l.length + I18n.t(" pinned apps")
     }
     function pin(id) { if (pins.indexOf(id) < 0 && gone.indexOf(id) < 0) setPins(pins.concat([id])) }
@@ -270,7 +272,7 @@ Item {
                 reserved: 190
                 Btn { anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
                     text: I18n.t("Remove them"); sym: "delete"; icon: ""; variant: "tonal"
-                    onClicked: page.setPins(page.pins) }
+                    onClicked: page.setPins(page.pins, true) }
             }
             ToggleRow {
                 label: I18n.t("Tint app icons")
