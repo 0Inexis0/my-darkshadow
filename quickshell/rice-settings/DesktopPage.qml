@@ -336,7 +336,7 @@ Item {
                 width: parent.width; height: perfCol.implicitHeight
                 property bool lite: false
                 property bool lazy: false
-                Process { running: true; command: ["bash", "-c", "[ -e \"$HOME/.config/rice/settings-lazy\" ] && echo 1"]
+                Process { running: true; command: ["bash", "-c", "[ ! -e \"$HOME/.config/rice/settings-keep\" ] && echo 1"]
                     stdout: StdioCollector { onStreamFinished: perf.lazy = text.trim() === "1" } }
                 Process { running: true; command: ["bash", "-c", "\"$HOME/.local/bin/rice-effects\" state 2>/dev/null"]
                     stdout: StdioCollector { onStreamFinished: { try { perf.lite = JSON.parse(text).lite === true } catch (e) { } } } }

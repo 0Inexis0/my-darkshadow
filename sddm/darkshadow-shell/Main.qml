@@ -167,36 +167,112 @@ Rectangle {
     readonly property string hours: clock24 ? two(now.getHours()) : String(((now.getHours() + 11) % 12) + 1)
     readonly property string minutes: two(now.getMinutes())
 
+    // the clock's look (Settings > Desktop > Idle & Lockscreen > Login screen > Clock, rice-sddm clock):
+    // classic (big, bottom left), stacked (hours over minutes, left), center (light and wide, in the middle),
+    // pill (a Material 3 pill at the bottom), shapes (hours and minutes in two shapes, the seconds as a ring)
+    readonly property string clockStyle: ["classic", "stacked", "center", "pill", "shapes"].indexOf(cfg("clockStyle", "classic")) >= 0 ? cfg("clockStyle", "classic") : "classic"
+    readonly property string dateText: { const t = root.now.toLocaleDateString(root.loc, "dddd, d MMMM"); return t.charAt(0).toUpperCase() + t.slice(1) }
     Item {
         id: clock
-        // resting: big, bottom left; awake: small, top center
-        width: clockCol.width; height: clockCol.height
-        x: root.awake ? (root.width - width) / 2 : 96 * root.s
-        y: root.awake ? 72 * root.s : root.height - height - 96 * root.s
-        scale: root.awake ? 0.42 : 1
-        transformOrigin: root.awake ? Item.Top : Item.BottomLeft
+        // resting: where its style puts it; awake: small, top center
+        width: clockFace.width; height: clockFace.height
+        readonly property real restX: root.clockStyle === "classic" || root.clockStyle === "stacked" ? 96 * root.s : (root.width - width) / 2
+        readonly property real restY: root.clockStyle === "classic" ? root.height - height - 96 * root.s
+                                    : root.clockStyle === "stacked" ? (root.height - height) / 2
+                                    : root.clockStyle === "pill" ? root.height - height - 120 * root.s
+                                    : (root.height - height) / 2 - 40 * root.s
+        x: root.awake ? (root.width - width) / 2 : restX
+        y: root.awake ? 72 * root.s : restY
+        scale: root.awake ? (root.clockStyle === "stacked" || root.clockStyle === "shapes" ? 0.3 : 0.42) : 1
+        transformOrigin: Item.Top
         Behavior on x { NumberAnimation { duration: 700; easing.type: Easing.OutExpo } }
         Behavior on y { NumberAnimation { duration: 700; easing.type: Easing.OutExpo } }
         Behavior on scale { NumberAnimation { duration: 700; easing.type: Easing.OutExpo } }
-        Column {
-            id: clockCol
-            spacing: 4 * root.s
-            Row {
-                spacing: 0
-                Text { text: root.hours; color: root.ink; font.family: root.fontName; font.pixelSize: 210 * root.s; font.weight: Font.DemiBold }
-                Text { text: ":"; color: root.primary; font.family: root.fontName; font.pixelSize: 210 * root.s; font.weight: Font.Light
-                       opacity: root.now.getSeconds() % 2 === 0 ? 1 : 0.45
-                       Behavior on opacity { NumberAnimation { duration: 300 } } }
-                Text { text: root.minutes; color: root.primary; font.family: root.fontName; font.pixelSize: 210 * root.s; font.weight: Font.DemiBold }
+        Item {
+            id: clockFace
+            width: classic.visible ? classic.width : stacked.visible ? stacked.width : center.visible ? center.width : pill.visible ? pill.width : shapes.width
+            height: classic.visible ? classic.height : stacked.visible ? stacked.height : center.visible ? center.height : pill.visible ? pill.height : shapes.height
+
+            // classic: as before
+            Column {
+                id: classic
+                visible: root.clockStyle === "classic"
+                spacing: 4 * root.s
+                Row {
+                    Text { text: root.hours; color: root.ink; font.family: root.fontName; font.pixelSize: 210 * root.s; font.weight: Font.DemiBold }
+                    Text { text: ":"; color: root.primary; font.family: root.fontName; font.pixelSize: 210 * root.s; font.weight: Font.Light
+                           opacity: root.now.getSeconds() % 2 === 0 ? 1 : 0.45
+                           Behavior on opacity { NumberAnimation { duration: 300 } } }
+                    Text { text: root.minutes; color: root.primary; font.family: root.fontName; font.pixelSize: 210 * root.s; font.weight: Font.DemiBold }
+                }
+                Text { x: 10 * root.s; text: root.dateText; color: root.inkVariant; font.family: root.fontName; font.pixelSize: 40 * root.s
+                       opacity: root.awake ? 0 : 1; Behavior on opacity { NumberAnimation { duration: 300 } } }
             }
-            Text {
-                x: 10 * root.s
-                text: { const t = root.now.toLocaleDateString(root.loc, "dddd, d MMMM"); return t.charAt(0).toUpperCase() + t.slice(1) }
-                color: root.inkVariant
-                font.family: root.fontName
-                font.pixelSize: 40 * root.s
-                opacity: root.awake ? 0 : 1
-                Behavior on opacity { NumberAnimation { duration: 300 } }
+            // stacked: hours over minutes, heavy, the minutes in your color
+            Column {
+                id: stacked
+                visible: root.clockStyle === "stacked"
+                spacing: -70 * root.s
+                Text { text: root.hours; color: root.ink; font.family: root.fontName; font.pixelSize: 260 * root.s; font.weight: Font.Black }
+                Text { text: root.minutes; color: root.primary; font.family: root.fontName; font.pixelSize: 260 * root.s; font.weight: Font.Black }
+                Text { topPadding: 70 * root.s; x: 8 * root.s; text: root.dateText; color: root.inkVariant; font.family: root.fontName; font.pixelSize: 34 * root.s
+                       opacity: root.awake ? 0 : 1; Behavior on opacity { NumberAnimation { duration: 300 } } }
+            }
+            // center: light, wide, in the middle, the date in small letters above it
+            Column {
+                id: center
+                visible: root.clockStyle === "center"
+                spacing: 0
+                Text { anchors.horizontalCenter: parent.horizontalCenter; text: root.dateText.toUpperCase(); color: root.inkVariant
+                       font.family: root.fontName; font.pixelSize: 26 * root.s; font.letterSpacing: 6 * root.s; font.weight: Font.Medium
+                       opacity: root.awake ? 0 : 1; Behavior on opacity { NumberAnimation { duration: 300 } } }
+                Text { anchors.horizontalCenter: parent.horizontalCenter; text: root.hours + ":" + root.minutes; color: root.ink
+                       font.family: root.fontName; font.pixelSize: 240 * root.s; font.weight: Font.Light; font.letterSpacing: -4 * root.s }
+            }
+            // pill: the time in a big tonal pill, the date beside it
+            Rectangle {
+                id: pill
+                visible: root.clockStyle === "pill"
+                width: pillRow.width + 72 * root.s; height: 150 * root.s; radius: height / 2
+                color: root.alpha(root.primaryContainer, 0.9)
+                Row {
+                    id: pillRow
+                    anchors.centerIn: parent; spacing: 28 * root.s
+                    Text { anchors.verticalCenter: parent.verticalCenter; text: root.hours + ":" + root.minutes; color: root.inkPrimaryC
+                           font.family: root.fontName; font.pixelSize: 108 * root.s; font.weight: Font.DemiBold }
+                    Rectangle { anchors.verticalCenter: parent.verticalCenter; width: 3 * root.s; height: 70 * root.s; radius: 2; color: root.alpha(root.inkPrimaryC, 0.3)
+                                visible: !root.awake }
+                    Text { anchors.verticalCenter: parent.verticalCenter; visible: !root.awake; text: root.dateText; color: root.inkPrimaryC
+                           font.family: root.fontName; font.pixelSize: 30 * root.s; width: Math.min(implicitWidth, 480 * root.s); wrapMode: Text.WordWrap }
+                }
+            }
+            // shapes: the hours in a soft square, the minutes in a circle with the seconds running round it
+            Row {
+                id: shapes
+                visible: root.clockStyle === "shapes"
+                spacing: 24 * root.s
+                Rectangle {
+                    width: 260 * root.s; height: width; radius: 72 * root.s; color: root.alpha(root.primaryContainer, 0.92)
+                    Text { anchors.centerIn: parent; text: root.hours; color: root.inkPrimaryC; font.family: root.fontName; font.pixelSize: 150 * root.s; font.weight: Font.Bold }
+                }
+                Item {
+                    width: 260 * root.s; height: width
+                    Rectangle { anchors.fill: parent; radius: width / 2; color: root.alpha(root.primary, 0.92) }
+                    Canvas {
+                        id: secRing
+                        anchors.fill: parent
+                        property int sec: root.now.getSeconds()
+                        onSecChanged: requestPaint()
+                        onPaint: {
+                            const c = getContext("2d"); c.reset()
+                            const r = width / 2 - 10 * root.s
+                            c.lineWidth = 7 * root.s; c.lineCap = "round"
+                            c.strokeStyle = root.alpha(root.inkPrimary, 0.25); c.beginPath(); c.arc(width / 2, height / 2, r, 0, Math.PI * 2); c.stroke()
+                            c.strokeStyle = root.inkPrimary; c.beginPath(); c.arc(width / 2, height / 2, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0.01, sec / 60)); c.stroke()
+                        }
+                    }
+                    Text { anchors.centerIn: parent; text: root.minutes; color: root.inkPrimary; font.family: root.fontName; font.pixelSize: 150 * root.s; font.weight: Font.Bold }
+                }
             }
         }
     }

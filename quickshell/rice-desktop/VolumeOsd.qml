@@ -11,7 +11,7 @@ PanelWindow {
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property var source: Pipewire.defaultAudioSource
     PwObjectTracker { objects: [osd.sink, osd.source] }
-    readonly property real vol: sink && sink.audio ? sink.audio.volume : 0
+    readonly property real vol: Vol.of(sink)
     readonly property bool muted: sink && sink.audio ? sink.audio.muted : false
     readonly property bool micMuted: source && source.audio ? source.audio.muted : false
 

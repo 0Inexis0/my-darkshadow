@@ -318,8 +318,8 @@ PanelWindow {
                         width: (parent.width - 8) * 0.62
                         readonly property bool mt: cc.sink && cc.sink.audio ? cc.sink.audio.muted : false
                         icon: mt ? "volume_off" : "volume_up"; glyph: "󰕾"; off: mt
-                        v: cc.sink && cc.sink.audio ? cc.sink.audio.volume : 0
-                        onMoved: function(x) { if (cc.sink && cc.sink.audio) { cc.sink.audio.muted = false; cc.sink.audio.volume = x } }
+                        v: Vol.of(cc.sink)
+                        onMoved: function(x) { Vol.set(cc.sink, x) }
                         onIconClicked: if (cc.sink && cc.sink.audio) cc.sink.audio.muted = !cc.sink.audio.muted
                     }
                     Line {

@@ -404,5 +404,10 @@
  "Load": "Obciążenie",
  "threads": "wątków",
  "Fan": "Wentylator",
- "Battery": "Bateria"
+ "Battery": "Bateria",
+ "Minimize the window": "Zminimalizuj okno",
+ "Bring back the last minimized window": "Przywróć ostatnio zminimalizowane okno",
+ "Stack windows (tabs), or leave the stack": "Stos okien (karty) albo wyjście ze stosu",
+ "Previous / next window of the stack": "Poprzednie / następne okno stosu",
+ "Put the window into the stack next to it": "Wstaw okno do sąsiedniego stosu"
 }

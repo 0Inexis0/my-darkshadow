@@ -25,6 +25,14 @@ Item {
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-sfx\" set \"$1\" \"$2\"", "_", key, arg])
         page.ctl.status = I18n.t("Applied")
     }
+    property var snd: ({ curve: "gentle", max: 100 })
+    Process { running: true; command: ["bash", "-c", "\"$HOME/.local/bin/rice-sound\" state 2>/dev/null"]
+        stdout: StdioCollector { onStreamFinished: { try { page.snd = JSON.parse(text) } catch (e) { } } } }
+    function sndSet(k, v) {
+        const n = Object.assign({}, snd); n[k] = k === "max" ? Number(v) : v; snd = n
+        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-sound\" set \"$1\" \"$2\"", "_", k, v])
+        page.ctl.status = I18n.t("Applied")
+    }
     function setn(key, value) {
         const n = Object.assign({}, ns)
         n[key] = value
@@ -101,6 +109,22 @@ Item {
         }
 
         // ---------- interface sounds ----------
+        // ---------- the volume curve (rice-sound) ----------
+        SectionTitle { text: I18n.t("Volume"); sub: I18n.t("How the volume sliders, the keys and the wheel on the bar turn into loudness") }
+        SegRow {
+            label: I18n.t("Low volumes")
+            desc: page.snd.curve === "natural" ? I18n.t("Natural: like other apps; below about 35 % it is very quiet") : I18n.t("Gentle: 20 % is still easy to hear, the steps feel even")
+            options: [{ label: I18n.t("Gentle"), value: "gentle" }, { label: I18n.t("Natural"), value: "natural" }]
+            current: page.snd.curve || "gentle"
+            onChosen: function(v) { page.sndSet("curve", v) }
+        }
+        SegRow {
+            label: I18n.t("Loudest")
+            desc: I18n.t("How loud the top of the slider is. Above 100 % can distort on some speakers")
+            options: [{ label: "100 %", value: "100" }, { label: "125 %", value: "125" }, { label: "150 %", value: "150" }]
+            current: String(page.snd.max || 100)
+            onChosen: function(v) { page.sndSet("max", v) }
+        }
         SectionTitle { text: I18n.t("Sound pack"); sub: I18n.t("How the clicks and switches sound. Click one to hear it.") }
         Flow {
             id: packs

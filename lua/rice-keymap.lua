@@ -34,6 +34,14 @@ RK.actions = {
     switcher  = { "ALT + TAB",         exec(BIN .. "rice-taskview switch") },
     keys      = { "SUPER + slash",     exec(BIN .. "rice-keymap show") },
     tools     = { "SUPER + X",         exec(BIN .. "rice-tools toggle") },
+    -- minimizing and stacking windows (rice-win)
+    minimize  = { "SUPER + H", exec(BIN .. "rice-win minimize"), true },
+    restore   = { "SUPER + SHIFT + H", exec(BIN .. "rice-win restore"), true },
+    stack     = { "SUPER + T", exec(BIN .. "rice-win stack"), true },
+    stack_next= { "SUPER + CTRL + right", exec(BIN .. "rice-win stack-next"), true },
+    stack_prev= { "SUPER + CTRL + left", exec(BIN .. "rice-win stack-prev"), true },
+    join_left = { "SUPER + CTRL + SHIFT + left", exec(BIN .. "rice-win join left"), true },
+    join_right= { "SUPER + CTRL + SHIFT + right", exec(BIN .. "rice-win join right"), true },
     infinite  = { "SUPER + F",         function() return function() if RiceInfinite then RiceInfinite.toggle() end end end },
 }
 
@@ -51,10 +59,18 @@ local function read()
     return out
 end
 
--- give every action the key it should have now
+-- give every action the key it should have now. Actions marked `true` have no key anywhere else: this file
+-- gives them their default key itself (once)
+RK.own = RK.own or {}
 function RK.apply()
     local want = read()
     for id, a in pairs(RK.actions) do
+        if a[3] and not RK.own[id] then
+            RK.own[id] = true
+            local ok, d = pcall(a[2])
+            if ok and d then pcall(hl.bind, want[id] or a[1], d) end
+            if want[id] and want[id] ~= a[1] then RK.cur[id] = want[id] end
+        end
         local now = RK.cur[id] or a[1]
         local new = want[id] or a[1]
         if now ~= new then

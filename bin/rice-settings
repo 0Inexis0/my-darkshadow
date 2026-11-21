@@ -16,16 +16,18 @@ wake() {
   return 1
 }
 # rice-settings lazy on|off|state: do not keep Settings ready in the background (it takes about 300 MB of memory);
-# it then starts when you open it (a second or two slower). ~/.config/rice/settings-lazy
-LAZY="$HOME/.config/rice/settings-lazy"
+# it then starts when you open it (a second or two slower). Since V4.84 that is the default: keeping it ready is
+# your choice (~/.config/rice/settings-keep, "lazy off")
+KEEP="$HOME/.config/rice/settings-keep"
+lazy() { [ ! -e "$KEEP" ]; }
 if [ "${1:-}" = lazy ]; then
   case "${2:-state}" in
-    on)  mkdir -p "$HOME/.config/rice"; : >"$LAZY"
+    on)  rm -f "$KEEP" "$HOME/.config/rice/settings-lazy"
          # the hidden one that waits is closed now (an open window is left alone: it is the one you are using)
          [ -e "$P" ] && { pkill -f "quickshell/rice-settings"; rm -f "$P"; } ;;
-    off) rm -f "$LAZY" ;;
+    off) mkdir -p "$HOME/.config/rice"; : >"$KEEP"; rm -f "$HOME/.config/rice/settings-lazy" ;;
   esac
-  [ -e "$LAZY" ] && echo on || echo off
+  lazy && echo on || echo off
   exit 0
 fi
 # rice-settings preload (at login): Settings starts hidden and waits, so even the first opening is instant.
@@ -33,7 +35,7 @@ fi
 if [ "${1:-}" = preload ]; then
   alive && exit 0
   [ -e "$C/flat" ] && exit 0
-  [ -e "$LAZY" ] && exit 0
+  lazy && exit 0
   rm -f "$P"
   RICE_SETTINGS_HIDDEN=1 setsid -f qs -n -p "$HOME/.config/quickshell/rice-settings" >/dev/null 2>&1
   exit 0

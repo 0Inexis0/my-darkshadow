@@ -203,6 +203,13 @@ Item {
                 MouseArea { id: ilm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.ctl.page = 6 }
             }
             ToggleRow {
+                visible: ["blackhole", "moon"].indexOf(page.v("logo", "auto")) >= 0
+                label: I18n.t("The logo moves all the time")
+                desc: I18n.t("Off: the black hole and the moon move while the pointer is on them. On, the bar is drawn again every frame of the screen")
+                checked: page.v("logo_move", false) === true
+                onToggled: function(x) { page.setv("logo_move", x ? "on" : "off") }
+            }
+            ToggleRow {
                 visible: page.v("style", "dynamic") === "edge"
                 label: I18n.t("Frame along the edge")
                 desc: I18n.t("Edge style: the dark parts that join the bar to the screen edge. Off: only the pills stay")

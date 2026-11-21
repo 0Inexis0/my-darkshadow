@@ -24,10 +24,14 @@ DEFAULTS = {
     "dashboard": "SUPER + ALT + D", "lock": "SUPER + L", "close": "SUPER + Q", "float": "SUPER + SHIFT + V", "clipboard": "SUPER + V",
     "shot": "Print", "shotfull": "SHIFT + Print", "record": "SUPER + SHIFT + R", "widgets": "SUPER + ALT + W",
     "infinite": "SUPER + F", "taskview": "SUPER + TAB", "switcher": "ALT + TAB", "keys": "SUPER + slash", "tools": "SUPER + X",
+    "minimize": "SUPER + H", "restore": "SUPER + SHIFT + H", "stack": "SUPER + T", "stack_next": "SUPER + CTRL + right", "stack_prev": "SUPER + CTRL + left", "join_left": "SUPER + CTRL + SHIFT + left", "join_right": "SUPER + CTRL + SHIFT + right",
 }
 # niri: the same actions, its keys (the launcher is SUPER + D there; Infinite Desktop is Hyprland only)
 NIRI_DEFAULTS = dict(DEFAULTS, launcher="SUPER + D")
 NIRI_DEFAULTS.pop("infinite")
+# niri: no minimizing; stacking is niri's own (Mod+T tabs, Mod+[ ] consume / expel)
+for _k in ("minimize", "restore", "stack", "stack_next", "stack_prev", "join_left", "join_right"):
+    NIRI_DEFAULTS.pop(_k, None)
 # (the Task view and the switcher are the shell's on niri too: SUPER + Tab, ALT + Tab)
 MODS = [(64, "SUPER"), (4, "CTRL"), (8, "ALT"), (1, "SHIFT")]
 
@@ -66,6 +70,9 @@ SHEET_HYPR = [
         ["Super + Q", "Close the window", "close"], ["Super + Shift + V", "Float / tile the window", "float"],
         ["Super + J", "Split the other way", ""], ["Super + P", "Pseudo-tile (keep its own size)", ""],
         ["Super + F", "Infinite Desktop (Ctrl + wheel zooms)", "infinite"], ["Super + Arrows", "Focus the window next to it", ""],
+        ["Super + H", "Minimize the window", "minimize"], ["Super + Shift + H", "Bring back the last minimized window", "restore"],
+        ["Super + T", "Stack windows (tabs), or leave the stack", "stack"], ["Super + Ctrl + Left / Right", "Previous / next window of the stack", ""],
+        ["Super + Ctrl + Shift + Left / Right", "Put the window into the stack next to it", ""],
         ["Super + Left mouse", "Drag to move the window", ""], ["Super + Right mouse", "Drag to resize the window", ""]]),
     ("Workspaces", "view_carousel", [
         ["Super + Tab", "Task view: every workspace and its windows", "taskview"],

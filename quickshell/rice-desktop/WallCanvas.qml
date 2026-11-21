@@ -20,7 +20,10 @@ PanelWindow {
     // the surface stays (see-through) while the feature is on, and only the picture in it comes and goes. Mapping and
     // unmapping the surface every time (and on the picture's loading state, which changed with it: a binding loop)
     // crashed Qt's Wayland client (QWaylandWindow::calculateExposure, seen on Artix with NVIDIA)
-    visible: picture && Wm.hypr && Infinite.wallOn && !Look.lite
+    // V4.84: only while Infinite Desktop is on (and while it fades out): a whole-screen surface and a big picture
+    // sat in memory all the time before. It is mapped once when you turn the canvas on, not on every change
+    readonly property bool needed: picture && Wm.hypr && Infinite.wallOn && !Look.lite && (Infinite.on || k > 0.001)
+    visible: needed
     color: "transparent"
     anchors { top: true; bottom: true; left: true; right: true }
     exclusionMode: ExclusionMode.Ignore
@@ -94,7 +97,7 @@ PanelWindow {
     Pic {
         id: img
         visible: wc.k > 0.001 && status === Image.Ready
-        source: wc.shownPath !== "" ? "file://" + wc.shownPath : ""
+        source: wc.shownPath !== "" && wc.needed ? "file://" + wc.shownPath : ""
         opacity: old.source != "" ? wc.mixT : 1
         // the new picture is read: now it comes in
         onStatusChanged: if (status === Image.Ready && wc.mixT === 0 && old.source != "") mixAnim.restart()
