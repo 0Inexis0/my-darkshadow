@@ -81,10 +81,14 @@ def kbd():
 
 
 def env_text():
+    # "System" (no language chosen): nothing is set, the programs keep the language the session gave them
+    out = []
     l = lang()
-    p = posix(l)
-    # LANG and LANGUAGE agree: programs and their translations both follow the language of the shell
-    out = ['LANG="%s"' % p, 'LANGUAGE="%s"' % p]
+    if l:
+        p = posix(l)
+        # LANG is a locale (pl_PL.UTF-8); LANGUAGE is the list gettext walks: the locale, the language, English
+        names = [p[:-len(".UTF-8")], l] + (["en"] if l != "en" else [])
+        out += ['LANG="%s"' % p, 'LANGUAGE="%s"' % ":".join(names)]
     # a layout that types keys differently from the US one is poor alone (pl types 'z' as 'y'): it comes next to the US
     # layout, and the two switch with the key from Settings > Keyboard
     k = kbd()
@@ -114,7 +118,7 @@ def main(a):
         c["kbd"] = kbd()
         print(json.dumps(c))
     elif len(a) >= 2 and a[1] == "env":
-        print(env_text())
+        sys.stdout.write(env_text())
     elif len(a) >= 2 and a[1] == "write-env":
         # also at login (rice-desktop start): the file carries the language of Settings > System > Languages too
         write_env()
