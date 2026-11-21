@@ -61,8 +61,7 @@
     "appsButton": true,
     "tint": false,
     "opacity": 0.78,
-    "blur": true,
-    "apps": []
+    "blur": true
   },
   "lock": {
     "toolbars": false,
