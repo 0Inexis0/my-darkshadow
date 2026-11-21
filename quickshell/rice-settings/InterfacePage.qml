@@ -10,16 +10,25 @@ Item {
         return c && c[k] !== undefined ? c[k] : d
     }
     // ---------- pinned apps (the dock shows them first, in this order) ----------
-    readonly property var pins: page.ctl && page.ctl.dst.dock && page.ctl.dst.dock.apps ? page.ctl.dst.dock.apps : []
+    readonly property var pins: {
+        const l = page.ctl && page.ctl.dst.dock && page.ctl.dst.dock.apps ? page.ctl.dst.dock.apps : []
+        return l.filter(function(id) { return DesktopEntries.heuristicLookup(id) !== null })
+    }
+    // pins whose app is gone: they take no row from the dock, they only wait here
+    readonly property var gone: {
+        const l = page.ctl && page.ctl.dst.dock && page.ctl.dst.dock.apps ? page.ctl.dst.dock.apps : []
+        return l.filter(function(id) { return DesktopEntries.heuristicLookup(id) === null })
+    }
     property string q: ""
     function idOf(e) { return (e.id || "").replace(/\.desktop$/, "") }
     function entry(id) { return DesktopEntries.heuristicLookup(id) }
     function setPins(l) {
-        const d = JSON.parse(JSON.stringify(page.ctl.dst)); d.dock = d.dock || {}; d.dock.apps = l; page.ctl.dst = d
+        // the pins of apps that are not installed stay in the file (an app you reinstall keeps its place)
+        const d = JSON.parse(JSON.stringify(page.ctl.dst)); d.dock = d.dock || {}; d.dock.apps = l.concat(gone); page.ctl.dst = d
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" dock-apps \"$1\"", "_", JSON.stringify(l)])
         page.ctl.status = I18n.t("Dock: ") + l.length + I18n.t(" pinned apps")
     }
-    function pin(id) { if (pins.indexOf(id) < 0) setPins(pins.concat([id])) }
+    function pin(id) { if (pins.indexOf(id) < 0 && gone.indexOf(id) < 0) setPins(pins.concat([id])) }
     function unpin(id) { setPins(pins.filter(function(x) { return x !== id })) }
     function move(i, d) { const l = pins.slice(); const j = i + d; if (j < 0 || j >= l.length) return; const t = l[i]; l[i] = l[j]; l[j] = t; setPins(l) }
     readonly property var found: {
@@ -153,16 +162,12 @@ Item {
                 onToggled: function(v) { page.ctl.dset("dock", "hover", v ? "on" : "off") }
             }
             ToggleRow {
+                // only a dock that stays out can keep room: one that hides on hover is over the windows when it shows
+                visible: page.dv("hover", true) !== true
                 label: I18n.t("Keep room for it")
                 desc: I18n.t("While the dock stays out, windows end next to it instead of under it (like the bar)")
                 checked: page.dv("reserve", true) === true
                 onToggled: function(v) { page.ctl.dset("dock", "reserve", v ? "on" : "off") }
-            }
-            ToggleRow {
-                label: I18n.t("Pinned on startup")
-                desc: I18n.t("Start with the dock held open")
-                checked: page.dv("pinnedStartup", false) === true
-                onToggled: function(v) { page.ctl.dset("dock", "pinnedStartup", v ? "on" : "off") }
             }
 
             T { kind: "title"; text: I18n.t("Buttons"); font.pixelSize: 16; font.bold: true; topPadding: 8 }
@@ -178,12 +183,6 @@ Item {
                 desc: I18n.t("Write the song title and artist in the dock while something plays")
                 checked: page.dv("nowText", true) === true
                 onToggled: function(v) { page.ctl.dset("dock", "nowText", v ? "on" : "off") }
-            }
-            ToggleRow {
-                label: I18n.t("Show pin button")
-                desc: I18n.t("Button that holds the dock open")
-                checked: page.dv("pinButton", true) === true
-                onToggled: function(v) { page.ctl.dset("dock", "pinButton", v ? "on" : "off") }
             }
             ToggleRow {
                 label: I18n.t("Show apps button")
@@ -263,6 +262,16 @@ Item {
                 }
             }
 
+            // pins whose app is gone: they stay in the file, but the dock cannot show or start them
+            SettingRow {
+                visible: page.gone.length > 0
+                label: page.gone.length + I18n.t(" pinned apps are not installed")
+                desc: I18n.t("They take no row on the dock. Install the app and it shows up, or take the pin away")
+                reserved: 190
+                Btn { anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
+                    text: I18n.t("Remove them"); sym: "delete"; icon: ""; variant: "tonal"
+                    onClicked: page.setPins(page.pins) }
+            }
             ToggleRow {
                 label: I18n.t("Tint app icons")
                 desc: I18n.t("Paint icons in a single neutral tone")

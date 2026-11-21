@@ -798,14 +798,28 @@ def startup(f, s):
     return L
 
 
+def langenv():
+    """KEY=VALUE lines of rice-region env (the language and keyboard in Settings), "" when it cannot tell"""
+    try:
+        return subprocess.run([BIN + "/rice-region", "env"], capture_output=True, text=True, timeout=8).stdout
+    except Exception:
+        return ""
+
+
 def misc(f, gaming, fx, flat):
     theme, size = cursor()
     L = ["prefer-no-csd", 'screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"']
     L += block("hotkey-overlay", ["skip-at-startup"] + (["hide-not-bound"] if f.overlay_hide else []))
     L += block("cursor", ["xcursor-theme %s" % q(theme), "xcursor-size %d" % size, "hide-when-typing"])
-    L += block("environment", ['ELECTRON_OZONE_PLATFORM_HINT "auto"', 'QT_QPA_PLATFORM "wayland;xcb"',
-                               'QT_WAYLAND_DISABLE_WINDOWDECORATION "1"', 'MOZ_ENABLE_WAYLAND "1"',
-                               'XDG_CURRENT_DESKTOP "niri"', 'XDG_SESSION_TYPE "wayland"'])
+    env = ['ELECTRON_OZONE_PLATFORM_HINT "auto"', 'QT_QPA_PLATFORM "wayland;xcb"',
+           'QT_WAYLAND_DISABLE_WINDOWDECORATION "1"', 'MOZ_ENABLE_WAYLAND "1"',
+           'XDG_CURRENT_DESKTOP "niri"', 'XDG_SESSION_TYPE "wayland"']
+    # the language and keyboard from Settings (rice-region): niri puts those in the programs it starts
+    for line in langenv().splitlines():
+        k, _, v = line.partition("=")
+        if k and v:
+            env.append('%s %s' % (k, q(v.strip('"'))))
+    L += block("environment", env)
     if f.overview:
         L += block("overview", ["zoom 0.5", 'backdrop-color "#101114"'] +
                    block("workspace-shadow", ["softness 40", "spread 10", "offset x=0 y=10", 'color "#00000050"']))

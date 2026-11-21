@@ -32,19 +32,35 @@ THEMES = ["shadow", "google", "outline"]
 DEFAULTS = {
     "widgets": {w: {"enabled": False} for w in WIDGETS},
     "clock": {"enabled": True, "onlyLocked": False, "placement": "draggable", "style": "digital", "font": "bebas"},   # the only widget at first: in the middle
-    "dock": {"enabled": False, "position": "bottom", "background": True, "hover": True, "pinnedStartup": False,
-             "media": True, "nowText": True, "pinButton": True, "appsButton": True, "tint": False, "shade": True, "appMenu": True,
+    "dock": {"enabled": False, "position": "bottom", "background": True, "hover": True, "media": True, "nowText": True, "appsButton": True, "tint": False, "shade": True, "appMenu": True,
              "opacity": 0.78, "blur": True, "reserve": True,
-             "apps": ["kitty", "org.gnome.Nautilus", "firefox", "spotify", "discord", "steam"]},
+             # only apps that are installed: a pin on a missing app is an entry that cannot start (# dock shows it)
+             "apps": ([x for x in ["kitty", "org.gnome.Nautilus", "firefox", "spotify", "discord", "steam"] if desktop_id(x)])},
     "lock": {"toolbars": False, "widgets": False, "media": False},
     # the game bar (SUPER + G, Settings > Gaming): how see-through it is and the blur behind it
     "gamebar": {"opacity": 0.9, "blur": True},
     "widgetBlur": True,
+    "terminalOpacity": 0.6,  # see-through terminal (kitty): rice-effects writes it to kitty's config
     "widgetTheme": "google",  # how the widget cards look: Google (Material You); the other styles are gone
     "widgetAdapt": True,      # text and cards turn light or dark with the wallpaper behind each widget
     "autoHide": True,        # widgets hide while windows are open (Settings > Desktop); on from the start
     "editing": False,
 }
+def desktop_id(app_id):
+    """true when the app has a .desktop file: the pinned id itself or an id ending with it (steam -> steam.desktop)"""
+    home = os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share")
+    dirs = (os.environ.get("XDG_DATA_DIRS") or "/usr/local/share:/usr/share").split(":")
+    for d in dirs + [home + "/flatpak/exports/share", "/var/lib/flatpak/exports/share",
+                     home + "/applications", os.path.expanduser("~/.local/share/applications")]:
+        d = d + "/applications"
+        if not os.path.isdir(d):
+            continue
+        for name in os.listdir(d):
+            if name.endswith(".desktop") and (name[:-8] == app_id or name[:-8].endswith("." + app_id)):
+                return True
+    return False
+
+
 CHOICES = {"placement": ["draggable", "leastBusy", "mostBusy"], "style": ["digital", "line", "cookie", "pixel"], "font": list(FONTS)}
 
 
@@ -315,6 +331,13 @@ def main(a):
             g["opacity"] = round(max(0.2, min(1.0, float(a[3]))), 2)
         else:
             g["blur"] = tobool(a[3])
+    elif cmd == "terminal-opacity":
+        # terminal-opacity 0.3-1: how see-through the terminal is (rice-effects writes it to kitty, loaded last)
+        c["terminalOpacity"] = round(max(0.3, min(1.0, float(a[2] if len(a) > 2 else 0.6))), 2)
+        fx = os.path.expanduser("~/.local/bin/rice-effects")
+        if os.access(fx, os.X_OK):
+            subprocess.Popen([fx, "apply"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                             start_new_session=True)
     elif cmd in ("lock-regen", "dock-blur"):
         pass
     elif cmd == "widgets-blur":

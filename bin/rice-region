@@ -1,18 +1,33 @@
 #!/usr/bin/env python3
-"""rice-region state | set KEY VALUE
+"""rice-region state | set KEY VALUE | env
 Language and region of the shell (Settings > Sound & language > Language & region), in ~/.config/rice/region.json:
   clock 24|12     the clock on the bar, the game bar and the desktop clock
   units c|f       temperatures: weather widgets and the lock screen
   week mon|sun    the first day of the week in calendars
-  lang  CODE      the language you prefer (the shell speaks English for now; it is kept for later)"""
+  lang  CODE      the language of the shell and of your terminals (English, Polish, ...; "" = the system's)
+  kbd   LAYOUT    the keyboard layout (us, pl, ...; "" = the system's)
+
+The language and the keyboard also reach the programs you start: rice-region env prints them as KEY=VALUE lines
+(rice-desktop start passes them on, kitty.conf reads them), and writes ~/.config/environment.d/50-darkshadows-lang.conf
+for the programs systemd starts (a program that already runs keeps the old one until it starts again)."""
 import json
 import os
 import sys
 
-CFG = os.path.expanduser("~/.config/rice/region.json")
-DEFAULTS = {"clock": "24", "units": "c", "week": "mon", "lang": "en"}
+HOME = os.path.expanduser("~")
+CFG = HOME + "/.config/rice/region.json"
+ENV = HOME + "/.config/environment.d/50-darkshadows-lang.conf"
+APPCFG = HOME + "/.config/rice/settings-app.json"     # Settings > System > Languages (the whole shell)
+KBD = HOME + "/.config/rice/kbd.json"                 # written by hypr-set kbd (Settings > Keyboard)
+DEFAULTS = {"clock": "24", "units": "c", "week": "mon", "lang": "en", "kbd": ""}
 CHOICES = {"clock": ("24", "12"), "units": ("c", "f"), "week": ("mon", "sun"),
-           "lang": ("en", "pl", "de", "fr", "es", "pt", "it", "nl", "ru", "uk", "cs", "tr", "ja", "ko", "zh")}
+           "lang": ("", "en", "pl", "de", "fr", "es", "pt", "it", "nl", "ru", "uk", "cs", "tr", "ja", "ko", "zh")}
+# codes that mean the region of the language when the system has no locale for it
+REGION = {"en": "US", "pl": "PL", "de": "DE", "fr": "FR", "es": "ES", "pt": "PT", "it": "IT", "nl": "NL",
+          "ru": "RU", "uk": "UA", "cs": "CZ", "tr": "TR", "ja": "JP", "ko": "KR", "zh": "CN"}
+# the keyboard layouts that language is typed on
+KBD_OF = {"pl": "pl", "de": "de", "fr": "fr", "es": "es", "pt": "pt", "it": "it", "nl": "us", "ru": "ru",
+          "uk": "ua", "cs": "cz", "tr": "tr", "ja": "us", "ko": "us", "zh": "us", "en": "us", "": ""}
 
 
 def load():
@@ -20,26 +35,96 @@ def load():
     try:
         j = json.load(open(CFG))
         for k in DEFAULTS:
-            if j.get(k) in CHOICES[k]:
+            if isinstance(j.get(k), str) and (k not in CHOICES or j[k] in CHOICES[k]):
                 c[k] = j[k]
     except Exception:
         pass
     return c
 
 
+def save(c):
+    os.makedirs(os.path.dirname(CFG), exist_ok=True)
+    tmp = CFG + ".tmp"
+    json.dump(c, open(tmp, "w"))
+    os.replace(tmp, CFG)
+
+
+def lang():
+    """the language the shell speaks: Settings > System > Languages, else this page (English: the system's)"""
+    try:
+        v = json.load(open(APPCFG)).get("lang", "")
+        if isinstance(v, str) and v and v != "en":
+            return v
+    except Exception:
+        pass
+    return load()["lang"]
+
+
+def posix(code):
+    """en-PL -> en_PL.UTF-8: the codes 'locale -a' lists everywhere (glibc, musl)"""
+    base = (code or "en").replace("-", "_")
+    if "_" not in base and len(base) == 2:
+        base = base + "_" + REGION.get(base, "US")
+    return base + ".UTF-8"
+
+
+def kbd():
+    """the layouts themselves: "pl" or "us,pl" (what XKB_DEFAULT_LAYOUT takes)"""
+    try:
+        v = json.load(open(KBD)).get("layout", "")
+    except Exception:
+        return ""
+    lays = [x for x in str(v).split(",") if x]
+    if lays and lays[0] not in ("us", "gb"):
+        lays = ["us"] + lays
+    return ",".join(lays)
+
+
+def env_text():
+    l = lang()
+    p = posix(l)
+    # LANG and LANGUAGE agree: programs and their translations both follow the language of the shell
+    out = ['LANG="%s"' % p, 'LANGUAGE="%s"' % p]
+    # a layout that types keys differently from the US one is poor alone (pl types 'z' as 'y'): it comes next to the US
+    # layout, and the two switch with the key from Settings > Keyboard
+    k = kbd()
+    if k:
+        out.append('XKB_DEFAULT_LAYOUT="%s"' % k)
+        if k not in ("us", "gb"):
+            out.append('XKB_DEFAULT_OPTIONS="grp:alt_shift_toggle"')
+    return "\n".join(out) + "\n"
+
+
+def write_env():
+    try:
+        os.makedirs(os.path.dirname(ENV), exist_ok=True)
+        s = env_text()
+        if os.path.exists(ENV) and open(ENV).read() == s:
+            return
+        open(ENV + ".tmp", "w").write(s)
+        os.replace(ENV + ".tmp", ENV)
+    except OSError as e:
+        sys.stderr.write("rice-region: %s\n" % e)
+
+
 def main(a):
     if len(a) >= 2 and a[1] == "state":
-        print(json.dumps(load()))
+        c = load()
+        c["lang"] = lang()
+        c["kbd"] = kbd()
+        print(json.dumps(c))
+    elif len(a) >= 2 and a[1] == "env":
+        print(env_text())
+    elif len(a) >= 2 and a[1] == "write-env":
+        # also at login (rice-desktop start): the file carries the language of Settings > System > Languages too
+        write_env()
     elif len(a) == 4 and a[1] == "set":
         k, v = a[2], a[3]
         if k not in CHOICES or v not in CHOICES[k]:
             sys.exit("%s: %s" % (k, "|".join(CHOICES.get(k, ()))))
         c = load()
         c[k] = v
-        os.makedirs(os.path.dirname(CFG), exist_ok=True)
-        tmp = CFG + ".tmp"
-        json.dump(c, open(tmp, "w"))
-        os.replace(tmp, CFG)
+        save(c)
         if k == "units":
             # the next weather read uses the new unit
             for f in ("weather.txt",):
@@ -47,6 +132,8 @@ def main(a):
                     os.remove(os.path.expanduser("~/.cache/rice/" + f))
                 except OSError:
                     pass
+        if k == "lang":
+            write_env()
         print("Saved: %s = %s" % (k, v))
     else:
         sys.exit(__doc__)

@@ -17,6 +17,13 @@ Item {
     function set(k, v) {
         const n = Object.assign({}, rg); n[k] = v; rg = n
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-region\" set \"$1\" \"$2\"", "_", k, v])
+        // the whole shell and the terminals speak the same language: Settings > System > Languages keeps
+        // Prefs.lang (the shell), rice-region the one Kitty reads when it starts
+        if (k === "lang") {
+            Prefs.setLang(v || "en")
+            // niri's programs read their environment from its config: it is written again to carry the new language
+            if (Quickshell.env("NIRI_SOCKET")) Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-niri\" apply >/dev/null 2>&1"])
+        }
         page.ctl.status = I18n.t("Saved")
     }
     property var now: new Date()
@@ -41,7 +48,7 @@ Item {
         : two(now.getHours()) + ":" + two(now.getMinutes())
 
     readonly property var langs: [
-        { k: "en", n: "English" }, { k: "pl", n: "Polski" }, { k: "de", n: "Deutsch" }, { k: "fr", n: "Français" },
+        { k: "", n: "System" }, { k: "en", n: "English" }, { k: "pl", n: "Polski" }, { k: "de", n: "Deutsch" }, { k: "fr", n: "Français" },
         { k: "es", n: "Español" }, { k: "pt", n: "Português" }, { k: "it", n: "Italiano" }, { k: "nl", n: "Nederlands" },
         { k: "cs", n: "Čeština" }, { k: "uk", n: "Українська" }, { k: "ru", n: "Русский" }, { k: "tr", n: "Türkçe" },
         { k: "ja", n: "日本語" }, { k: "ko", n: "한국어" }, { k: "zh", n: "中文" }
@@ -119,7 +126,7 @@ Item {
             onToggled: function(v) { page.runBin(["rice-update", "watch", v ? "on" : "off"], v ? I18n.t("Update checks on") : I18n.t("Update checks off")) }
         }
 
-        SectionTitle { text: I18n.t("Language"); sub: I18n.t("The shell speaks English for now. Your choice is kept, so the shell can switch when a translation arrives.") }
+        SectionTitle { text: I18n.t("Language"); sub: I18n.t("The shell and your terminals. It changes right away; a program that is already open follows at its next start.") }
         Rectangle {
             width: parent.width; height: lflow.implicitHeight + 28; radius: M3.rL; color: M3.surfaceC
             Grid {

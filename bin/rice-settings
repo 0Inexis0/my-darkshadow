@@ -30,6 +30,15 @@ if [ "${1:-}" = lazy ]; then
   lazy && echo on || echo off
   exit 0
 fi
+# rice-settings park: a Flatpak app was installed (or taken away): close the running Settings, so it is started
+# again on your next open with the new app in its lists (they are read when it starts)
+if [ "${1:-}" = park ]; then
+  ask hide
+  sleep 0.2
+  pkill -f "quickshell/rice-settings"
+  rm -f "$P"
+  exit 0
+fi
 # rice-settings preload (at login): Settings starts hidden and waits, so even the first opening is instant.
 # Not in Light mode (it keeps memory free there), nor when you chose "lazy".
 if [ "${1:-}" = preload ]; then
@@ -40,6 +49,12 @@ if [ "${1:-}" = preload ]; then
   RICE_SETTINGS_HIDDEN=1 setsid -f qs -n -p "$HOME/.config/quickshell/rice-settings" >/dev/null 2>&1
   exit 0
 fi
+# Flatpak apps: their .desktop files live in flatpak's exports (the same dirs rice-desktop adds for the launcher)
+fp_add() { case ":${XDG_DATA_DIRS}:" in *":$1:"*) ;; *) [ -d "$1" ] && XDG_DATA_DIRS="${XDG_DATA_DIRS:+$XDG_DATA_DIRS:}$1" ;; esac; }
+[ -n "${XDG_DATA_DIRS:-}" ] || XDG_DATA_DIRS="/usr/local/share:/usr/share"
+fp_add "${XDG_DATA_HOME:-$HOME/.local/share}/flatpak/exports/share"
+fp_add "/var/lib/flatpak/exports/share"
+export XDG_DATA_DIRS
 # an older Settings (from before an update) does not answer: it is closed the old way
 pid="$(pgrep -f "quickshell/rice-settings" | head -1)"
 if [ -n "$pid" ] && [ "$(cat "$C/settings-pid" 2>/dev/null)" != "$pid" ]; then

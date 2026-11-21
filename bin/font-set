@@ -138,7 +138,7 @@ def cmd_set(key, val):
 
 def main(a):
     if len(a) < 2:
-        sys.exit("usage: font-set state|list|set ROLE FAMILY|reset|migrate")
+        sys.exit("usage: font-set state|list|set ROLE FAMILY|reset|migrate|mono")
     if a[1] == "state":
         print(json.dumps(load()))
     elif a[1] == "list":
@@ -147,6 +147,9 @@ def main(a):
         cmd_set(a[2], " ".join(a[3:]))
     elif a[1] == "migrate":
         cmd_migrate()
+    elif a[1] == "mono":
+        # the terminal font follows the Monospace font of Settings > Appearance > Fonts (kitty reads it again)
+        apply_kitty(load()["mono"])
     elif a[1] == "reset":
         if os.path.exists(CFG):
             os.remove(CFG)

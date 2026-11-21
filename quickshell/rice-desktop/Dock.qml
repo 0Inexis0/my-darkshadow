@@ -11,14 +11,13 @@ import QtQuick.Effects
 Scope {
     id: dock
     property var dc: ({})
-    property bool pinned: false
     property bool hovering: false
     readonly property bool on: dc.enabled === true
     readonly property bool autoHide: dc.hover !== false
-    readonly property bool reveal: on && !Infinite.hideUi && (!autoHide || pinned || hovering || apps.open)
-    // Settings > Dock > Keep room for it: while the dock stays out (no hover-to-reveal, or held open with its pin),
-    // windows keep away from it, like they do from the bar (an open browser ends above it, not under it)
-    readonly property bool reserve: on && dc.reserve !== false && (!autoHide || pinned)
+    readonly property bool reveal: on && !Infinite.hideUi && (!autoHide || hovering || apps.open)
+    // "Keep room for it" never takes room from a dock that hides on hover: a saved space at the edge all the time
+    // is a strip of wallpaper the windows cannot use (that is the bar's job)
+    readonly property bool reserve: false
     readonly property string edge: dc.position === "left" || dc.position === "right" ? dc.position : "bottom"
     readonly property bool vert: edge === "left" || edge === "right"
     readonly property real alpha: Look.flat ? 1 : (dc.opacity !== undefined ? Number(dc.opacity) : 0.78)
@@ -32,13 +31,9 @@ Scope {
     property real t: reveal ? 1 : 0
     Behavior on t { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
 
-    property bool initDone: false
-    onDcChanged: {
-        if (!initDone && dc.enabled !== undefined) { pinned = dc.pinnedStartup === true; initDone = true }
-    }
     // it only hides when the pointer is really off the dock (a stray "exited" while the dock grows or while an icon
     // is clicked made it hide and come back over and over)
-    Timer { id: hideTimer; interval: 700; onTriggered: if (!dockMouse.containsMouse) dock.hovering = false }
+    Timer { id: hideTimer; interval: 700; onTriggered: if (!dockMouse.containsMouse && !apps.overPanel) dock.hovering = false }
     DockApps { id: apps; dock: dock }
 
     function pickPlayer() {
@@ -123,8 +118,8 @@ Scope {
             hoverEnabled: true
             acceptedButtons: Qt.NoButton
             // while it slides away, a window that appears or moves under a still pointer says "entered" by itself:
-            // only a real movement of the pointer brings the dock back then
-            onEntered: { hideTimer.stop(); if (dock.reveal) dock.hovering = true }
+            // only the edge strip or a real movement of the pointer brings the dock back
+            onEntered: hideTimer.stop()
             onPositionChanged: { hideTimer.stop(); dock.hovering = true }
             onExited: if (dock.autoHide) hideTimer.restart()
         }
@@ -154,18 +149,6 @@ Scope {
                 columns: dock.vert ? 1 : 1000
                 horizontalItemAlignment: Grid.AlignHCenter
                 verticalItemAlignment: Grid.AlignVCenter
-
-                // keep the dock shown
-                Rectangle {
-                    visible: dock.dc.pinButton !== false
-                    width: 40; height: 40; radius: 14
-                    color: dock.pinned ? "#F6F5F4" : (pinM.containsMouse ? Qt.rgba(1, 1, 1, 0.14) : Qt.rgba(1, 1, 1, 0.06))
-                    Behavior on color { ColorAnimation { duration: 140 } }
-                    MIcon { anchors.centerIn: parent; name: "keep"; glyph: String.fromCodePoint(0xF0403); size: 18
-                        color: dock.pinned ? "#0d0d0d" : "#F6F5F4"; rotation: dock.pinned ? 0 : 45
-                        Behavior on rotation { RotationAnimator { duration: 200 } } }
-                    MouseArea { id: pinM; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: dock.pinned = !dock.pinned }
-                }
 
                 // the apps
                 Repeater {
