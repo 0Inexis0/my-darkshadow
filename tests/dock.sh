@@ -21,13 +21,13 @@ grep -q 'property bool overPanel: false' "$apps" && ok "the app menu reports the
 ( grep -q 'DesktopEntries.heuristicLookup(id) === null' "$page" && grep -q 'l.concat(gone)' "$page" ) \
   && ok "the pins list knows the apps that are gone" || bad "no gone pins"
 
-# the default pins: only the apps that have a .desktop file
+# the default pins: only the apps that have a .desktop file. The script is run (not copied): a NameError at import,
+# like desktop_id below DEFAULTS, gives an empty list and used to pass this check.
 t="$(mktemp -d)"; trap 'rm -rf "$t"' EXIT
-mkdir -p "$t/a/applications" "$t/b/applications"
+mkdir -p "$t/a/applications" "$t/b/applications" "$t/home"
 : >"$t/a/applications/kitty.desktop"; : >"$t/b/applications/steam.desktop"
-out="$(XDG_DATA_DIRS="$t/a:$t/b" XDG_DATA_HOME="$t/none" python3 -c "
-import os
-src = open('$root/bin/desktop-set').read()
-exec(src[src.index('def desktop_id'):src.index('CHOICES = {')])
-print(' '.join(x for x in ['kitty', 'steam', 'firefox'] if desktop_id(x)))")"
-[ "$out" = "kitty steam" ] && ok "a default pin needs its .desktop file" || bad "desktop_id gave: $out"
+if ! out="$(HOME="$t/home" XDG_DATA_DIRS="$t/a:$t/b" XDG_DATA_HOME="$t/none" "$root/bin/desktop-set" state 2>&1)"; then
+  bad "desktop-set does not run: $out"
+fi
+out="$(printf '%s' "$out" | python3 -c 'import json, sys; print(" ".join(json.load(sys.stdin)["dock"]["apps"]))')"
+[ "$out" = "kitty steam" ] && ok "a default pin needs its .desktop file" || bad "the default pins are: $out"

@@ -29,6 +29,21 @@ COLORS = {"visualizer": ["accent", "gradient", "rainbow", "mono"]}
 FONTS = {"default": "", "bebas": "Bebas Neue", "orbitron": "Orbitron", "outfit": "Outfit",
          "grotesk": "Space Grotesk", "unbounded": "Unbounded", "shoulders": "Big Shoulders Display"}
 THEMES = ["shadow", "google", "outline"]
+def desktop_id(app_id):
+    """true when the app has a .desktop file: the pinned id itself or an id ending with it (steam -> steam.desktop)"""
+    home = os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share")
+    dirs = (os.environ.get("XDG_DATA_DIRS") or "/usr/local/share:/usr/share").split(":")
+    for d in dirs + [home + "/flatpak/exports/share", "/var/lib/flatpak/exports/share",
+                     home + "/applications", os.path.expanduser("~/.local/share/applications")]:
+        d = d + "/applications"
+        if not os.path.isdir(d):
+            continue
+        for name in os.listdir(d):
+            if name.endswith(".desktop") and (name[:-8] == app_id or name[:-8].endswith("." + app_id)):
+                return True
+    return False
+
+
 DEFAULTS = {
     "widgets": {w: {"enabled": False} for w in WIDGETS},
     "clock": {"enabled": True, "onlyLocked": False, "placement": "draggable", "style": "digital", "font": "bebas"},   # the only widget at first: in the middle
@@ -46,21 +61,6 @@ DEFAULTS = {
     "autoHide": True,        # widgets hide while windows are open (Settings > Desktop); on from the start
     "editing": False,
 }
-def desktop_id(app_id):
-    """true when the app has a .desktop file: the pinned id itself or an id ending with it (steam -> steam.desktop)"""
-    home = os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share")
-    dirs = (os.environ.get("XDG_DATA_DIRS") or "/usr/local/share:/usr/share").split(":")
-    for d in dirs + [home + "/flatpak/exports/share", "/var/lib/flatpak/exports/share",
-                     home + "/applications", os.path.expanduser("~/.local/share/applications")]:
-        d = d + "/applications"
-        if not os.path.isdir(d):
-            continue
-        for name in os.listdir(d):
-            if name.endswith(".desktop") and (name[:-8] == app_id or name[:-8].endswith("." + app_id)):
-                return True
-    return False
-
-
 CHOICES = {"placement": ["draggable", "leastBusy", "mostBusy"], "style": ["digital", "line", "cookie", "pixel"], "font": list(FONTS)}
 
 
