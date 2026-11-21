@@ -50,6 +50,7 @@ case "$1" in
       if [ -n "$fp_now" ] && [ "$fp_now" != "$(cat "$fp_seen" 2>/dev/null)" ]; then
         if [ -e "$fp_seen" ] && running; then
           "$HOME/.local/bin/rice-settings" park >/dev/null 2>&1
+          # shellcheck disable=SC2016  # $HOME is expanded by the shell that starts after the sleep
           setsid -f bash -c 'sleep 3; "$HOME/.local/bin/rice-desktop" restart' >/dev/null 2>&1
           exit 0
         fi
