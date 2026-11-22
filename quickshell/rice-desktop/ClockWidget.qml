@@ -1,8 +1,14 @@
 import QtQuick
 
+// The clock of the desktop (V4.93: new, Material 3 Expressive). Three styles (Edit mode, the clock's style):
+//   expressive  hours and minutes side by side, big and heavy, the hours in your theme's light tone, the minutes in
+//               white; the date under them
+//   stacked     the hours over the minutes, the date on a small pill
+//   shape       the time inside a big soft cookie in your theme's color, the date under it
+// A digit that changes rolls up into the new one. The old styles (digital, line, cookie, pixel) became these.
 Item {
     id: ck
-    property string clockStyle: "digital"
+    property string clockStyle: "expressive"
     property string mode: "draggable"
     property string wallpaper: ""
     property var pal: null
@@ -12,64 +18,96 @@ Item {
     property date now: new Date()
     property real fx: -1
     property real fy: -1
-    readonly property int natW: clockStyle === "cookie" ? 260 : (clockStyle === "pixel" ? 270 : (clockStyle === "line" ? 430 : 200))
-    readonly property int natH: clockStyle === "cookie" ? 260 : (clockStyle === "pixel" ? 100 : (clockStyle === "line" ? 190 : 310))
+    // the old styles map to the new ones
+    readonly property string sty: ({ digital: "stacked", line: "expressive", cookie: "shape", pixel: "expressive" })[clockStyle] || clockStyle
+    readonly property int natW: sty === "shape" ? 290 : (sty === "stacked" ? 250 : 470)
+    readonly property int natH: sty === "shape" ? 290 : (sty === "stacked" ? 360 : 220)
     readonly property var fonts: ({ bebas: "Bebas Neue", orbitron: "Orbitron", outfit: "Outfit", grotesk: "Space Grotesk",
                                     unbounded: "Unbounded", shoulders: "Big Shoulders Display" })
     readonly property string fam: fonts[fontKey] !== undefined ? fonts[fontKey] : Fonts.family("number")
     readonly property bool lightBg: pal ? pal.light : false
     readonly property color ink: pal ? pal.fg : "#F6F5F4"
     readonly property color hand: pal ? pal.primary : "#F6F5F4"
+    // the hours: a light, warm tone of your theme color (dark on a light wallpaper)
+    readonly property color tone: lightBg ? Qt.darker(hand, 1.25) : Qt.hsla(hand.hslHue < 0 ? 0 : hand.hslHue, Math.min(0.7, Math.max(0.25, hand.hslSaturation)), 0.86, 1)
     // frosted like the other widgets when blur is on (Hyprland: its layer rule; niri: the round region below)
     readonly property bool glass: Look.blur && !Look.flat
-    onGlassChanged: cookie.requestPaint()
-    onLightBgChanged: { cookie.requestPaint(); pixel.requestPaint() }
-    onHandChanged: { cookie.requestPaint(); pixel.requestPaint() }
 
     function pad(n) { return n < 10 ? "0" + n : "" + n }
     readonly property string hh: pad(now.getHours())
     readonly property string mm: pad(now.getMinutes())
+    readonly property string dateText: now.toLocaleDateString(Tr.loc, "ddd d MMM")
 
     Timer { interval: 1000; running: true; repeat: true; onTriggered: ck.now = new Date() }
 
-    // ---- digital
-    Column {
-        visible: ck.clockStyle === "digital"
-        anchors.centerIn: parent
-        spacing: -42
-        T { text: ck.hh; font.family: ck.fam; font.pixelSize: 150; font.bold: true; color: ck.hand; opacity: 0.9; anchors.horizontalCenter: parent.horizontalCenter }
-        T { text: ck.mm; font.family: ck.fam; font.pixelSize: 150; font.bold: true; color: ck.ink; opacity: ck.lightBg ? 0.6 : 0.45; anchors.horizontalCenter: parent.horizontalCenter }
+    // one digit: the new one rolls up out of the line, the old one rolls up and away
+    component Digit: Item {
+        id: dg
+        property string ch: "0"
+        property real px: 150
+        property color color: "white"
+        property string shown: ch
+        property string prev: ""
+        property real roll: 1
+        width: cur.implicitWidth; height: cur.implicitHeight * 0.8
+        clip: true
+        onChChanged: { prev = shown; shown = ch; roll = 0; ra.restart() }
+        NumberAnimation { id: ra; target: dg; property: "roll"; from: 0; to: 1; duration: 620; easing.type: Easing.OutBack; easing.overshoot: 1.2 }
+        Text { y: (dg.height - implicitHeight) / 2 - dg.roll * dg.height; opacity: 1 - dg.roll; text: dg.prev
+            font: cur.font; color: dg.color; visible: dg.roll < 1 }
+        Text { id: cur; y: (dg.height - implicitHeight) / 2 + (1 - dg.roll) * dg.height; text: dg.shown
+            font.family: ck.fam; font.pixelSize: dg.px; font.weight: Font.Black; color: dg.color }
+    }
+    component Pair: Row {
+        property string txt: "00"
+        property real px: 150
+        property color color: "white"
+        spacing: -px * 0.04
+        Digit { ch: parent.txt.charAt(0); px: parent.px; color: parent.color }
+        Digit { ch: parent.txt.charAt(1); px: parent.px; color: parent.color }
     }
 
-    // ---- line: hours and minutes side by side, the date under them
+    // ---- expressive
     Column {
-        visible: ck.clockStyle === "line"
+        visible: ck.sty === "expressive"
         anchors.centerIn: parent
-        spacing: -6
+        spacing: -8
         Row {
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 0
-            T { text: ck.hh; font.family: ck.fam; font.pixelSize: 128; font.bold: true; color: ck.hand; opacity: 0.92 }
-            T { text: ":"; font.family: ck.fam; font.pixelSize: 128; font.bold: true; color: ck.ink; opacity: 0.4; anchors.verticalCenter: parent.verticalCenter }
-            T { text: ck.mm; font.family: ck.fam; font.pixelSize: 128; font.bold: true; color: ck.ink; opacity: ck.lightBg ? 0.62 : 0.5 }
+            spacing: 22
+            Pair { txt: ck.hh; px: 176; color: ck.tone }
+            Pair { txt: ck.mm; px: 176; color: ck.ink }
         }
-        T {
+        Text { anchors.right: parent.right; anchors.rightMargin: 10; text: ck.dateText
+            color: ck.ink; opacity: 0.92; font.family: ck.fam; font.pixelSize: 26; font.weight: Font.Bold }
+    }
+
+    // ---- stacked
+    Column {
+        visible: ck.sty === "stacked"
+        anchors.centerIn: parent
+        spacing: -26
+        Pair { anchors.horizontalCenter: parent.horizontalCenter; txt: ck.hh; px: 168; color: ck.tone }
+        Pair { anchors.horizontalCenter: parent.horizontalCenter; txt: ck.mm; px: 168; color: ck.ink }
+        Item { width: 1; height: 46 }
+        Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: ck.now.toLocaleDateString(Tr.loc, "dddd, d MMMM")
-            font.pixelSize: 19
-            color: ck.pal ? ck.pal.fg2 : "#c8c8cc"
+            width: sd.implicitWidth + 30; height: 36; radius: 18
+            color: ck.pal ? ck.pal.primary : "#33ffffff"
+            Text { id: sd; anchors.centerIn: parent; text: ck.dateText; color: ck.pal ? ck.pal.inkOn : "white"
+                font.family: Fonts.main; font.pixelSize: 15; font.weight: Font.DemiBold }
         }
     }
 
-    // ---- cookie
+    // ---- shape: the time in a big soft cookie that turns slowly
     // niri blurs only behind the cards a widget names (Card.qml): this round one sits just inside the cookie's
     // waves, so no blur shows outside the shape
     Rectangle {
         id: cookieBlur
-        visible: ck.clockStyle === "cookie" && ck.glass
-        anchors.centerIn: cookie
-        width: 212; height: 212; radius: 106
-        readonly property real blurRadius: 106
+        visible: ck.sty === "shape" && ck.glass
+        anchors.centerIn: parent
+        width: 236; height: 236; radius: 118
+        readonly property real blurRadius: 118
         color: "#20000000"
         opacity: 0
         property var holderItem: null
@@ -78,93 +116,27 @@ Item {
         }
         Component.onDestruction: if (holderItem) { const me = this; holderItem.cards = holderItem.cards.filter(c => c !== me) }
     }
-    Canvas {
-        id: cookie
-        visible: ck.clockStyle === "cookie"
-        anchors.centerIn: parent
-        width: 250
-        height: 250
-        property real sec: ck.now.getSeconds()
-        onSecChanged: requestPaint()
-        onVisibleChanged: requestPaint()
-        onPaint: {
-            const c = getContext("2d")
-            c.reset()
-            const cx = 125, cy = 125, R = 112
-            c.fillStyle = ck.lightBg ? (ck.glass ? "rgba(248,248,250,0.55)" : "rgba(248,248,250,0.85)")
-                                     : (ck.glass ? "rgba(30,30,34,0.5)" : "rgba(44,44,48,0.82)")
-            c.beginPath()
-            for (let i = 0; i <= 360; i++) {
-                const a = i * Math.PI / 180
-                const r = R * (1 + 0.05 * Math.cos(12 * a))
-                const x = cx + r * Math.cos(a), y = cy + r * Math.sin(a)
-                if (i === 0) c.moveTo(x, y); else c.lineTo(x, y)
-            }
-            c.closePath()
-            c.fill()
-            c.fillStyle = ck.lightBg ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.35)"
-            for (let h = 0; h < 12; h++) {
-                const a = h * Math.PI / 6
-                c.beginPath()
-                c.arc(cx + 88 * Math.sin(a), cy - 88 * Math.cos(a), h % 3 === 0 ? 4 : 2.5, 0, Math.PI * 2)
-                c.fill()
-            }
-            const d = ck.now
-            const hAng = ((d.getHours() % 12) + d.getMinutes() / 60) * Math.PI / 6
-            const mAng = (d.getMinutes() + d.getSeconds() / 60) * Math.PI / 30
-            const sAng = d.getSeconds() * Math.PI / 30
-            c.lineCap = "round"
-            c.strokeStyle = ck.lightBg ? "#15151a" : "#F6F5F4"
-            c.lineWidth = 9
-            c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + 46 * Math.sin(hAng), cy - 46 * Math.cos(hAng)); c.stroke()
-            c.lineWidth = 6
-            c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + 72 * Math.sin(mAng), cy - 72 * Math.cos(mAng)); c.stroke()
-            c.strokeStyle = ck.hand
-            c.globalAlpha = 0.85
-            c.lineWidth = 2
-            c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + 82 * Math.sin(sAng), cy - 82 * Math.cos(sAng)); c.stroke()
-            c.globalAlpha = 1
-            c.fillStyle = ck.hand
-            c.beginPath(); c.arc(cx, cy, 6, 0, Math.PI * 2); c.fill()
+    Item {
+        visible: ck.sty === "shape"
+        anchors.fill: parent
+        Blob {
+            anchors.centerIn: parent
+            width: 270; height: 270
+            kind: "cookie"
+            color: ck.pal ? ck.pal.shapeFill : "#334"
+            RotationAnimator on rotation { from: 0; to: 360; duration: 90000; loops: Animation.Infinite; running: ck.sty === "shape" && !Look.lite }
         }
-    }
-
-    // ---- pixel
-    Canvas {
-        id: pixel
-        visible: ck.clockStyle === "pixel"
-        anchors.centerIn: parent
-        readonly property int cell: 14
-        width: 17 * cell
-        height: 5 * cell
-        property string txt: ck.hh + ck.mm
-        onTxtChanged: requestPaint()
-        onVisibleChanged: requestPaint()
-        readonly property var glyphs: ({
-            "0": ["111","101","101","101","111"], "1": ["010","110","010","010","111"],
-            "2": ["111","001","111","100","111"], "3": ["111","001","111","001","111"],
-            "4": ["101","101","111","001","001"], "5": ["111","100","111","001","111"],
-            "6": ["111","100","111","101","111"], "7": ["111","001","001","001","001"],
-            "8": ["111","101","111","101","111"], "9": ["111","101","111","001","111"],
-            ":": ["0","1","0","1","0"]
-        })
-        onPaint: {
-            const c = getContext("2d")
-            c.reset()
-            const seq = [txt[0], txt[1], ":", txt[2], txt[3]]
-            let x = 0
-            c.fillStyle = ck.ink
-            for (let s = 0; s < seq.length; s++) {
-                const g = glyphs[seq[s]]
-                if (!g) continue
-                for (let r = 0; r < g.length; r++)
-                    for (let q = 0; q < g[r].length; q++)
-                        if (g[r][q] === "1") {
-                            c.globalAlpha = s < 2 ? 0.9 : (s === 2 ? 0.6 : 0.5)
-                            c.fillRect((x + q) * cell + 1, r * cell + 1, cell - 2, cell - 2)
-                        }
-                x += g[0].length + 1
+        Column {
+            anchors.centerIn: parent
+            spacing: -14
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 8
+                Pair { txt: ck.hh; px: 96; color: ck.ink }
+                Pair { txt: ck.mm; px: 96; color: ck.pal ? ck.pal.primary : "white" }
             }
+            Text { anchors.horizontalCenter: parent.horizontalCenter; text: ck.dateText
+                color: ck.ink; opacity: 0.8; font.family: Fonts.main; font.pixelSize: 16; font.weight: Font.DemiBold }
         }
     }
 

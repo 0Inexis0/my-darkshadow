@@ -84,7 +84,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width - 60
             spacing: 2
-            T { kind: "title"; text: parent.parent.title; font.pixelSize: 17; font.weight: Font.DemiBold }
+            T { kind: "title"; text: parent.parent.title; font.pixelSize: 15; font.weight: Font.DemiBold; color: M3.primary; leftPadding: 6 }
             T { kind: "reading"; text: parent.parent.sub; font.pixelSize: 12; color: M3.inkDim; width: parent.width; wrapMode: Text.WordWrap }
         }
     }

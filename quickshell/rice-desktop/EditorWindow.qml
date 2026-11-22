@@ -12,11 +12,14 @@ PanelWindow {
     property bool grid: false
     property bool guideX: false
     property bool guideY: false
-    readonly property var cat: root ? root.catalog : []
-    readonly property var selInfo: { for (let i = 0; i < cat.length; i++) if (cat[i].id === sel) return cat[i]; return null }
+    readonly property var cat: root ? root.allWidgets : []
+    // V4.93: a widget of a family (Music, Weather, System, Date) shows the family's styles
+    readonly property var selInfo: root && sel !== "" ? root.infoOf(sel) : null
     readonly property var selWin: sel !== "" && root && root.wins[sel] ? root.wins[sel] : null
     // a widget you are dragging (or resizing) that comes over the panel on the left: the panel slides away
-    readonly property bool panelAway: !!selWin && selWin.dragging && selWin.px < 20 + 300 + 30
+    readonly property bool panelAway: !!selWin && selWin.dragging && selWin.px < leftRoom + 20 + 300 + 30
+    // a dock on the left edge stays in sight next to the panel (V4.89: the panel has the dock's tab now)
+    readonly property real leftRoom: root && root.dockRef && root.dockRef.on && root.dockRef.edge === "left" ? root.dockRef.thick + 24 : 0
 
     visible: root ? root.editing : false
     color: "transparent"
@@ -41,7 +44,8 @@ PanelWindow {
     }
     function pick(id) {
         if (!root.enabledOf(id)) root.addWidget(id)
-        sel = id
+        // a family: the widget of it that is on
+        if (root.families[id]) { const m = root.memberOn(id); sel = m !== "" ? m : root.families[id][0][1] } else sel = id
         keys.forceActiveFocus()
     }
     function nudge(dx, dy) {
@@ -80,7 +84,7 @@ PanelWindow {
 
     // ---------- one frame per widget on the desktop ----------
     Repeater {
-        model: ed.root ? ed.root.catalog : []
+        model: ed.root ? ed.root.allWidgets : []
         delegate: Item {
             id: fr
             readonly property var w: ed.root.wins[modelData.id] || null
@@ -305,7 +309,7 @@ PanelWindow {
                 visible: ed.selInfo && ed.selInfo.styles !== undefined
                 options: ed.selInfo && ed.selInfo.styles ? ed.selInfo.styles : []
                 current: ed.root.styleOf(ed.sel)
-                onChosen: function(v) { ed.root.setStyle(ed.sel, v) }
+                onChosen: function(v) { const n = ed.root.setStyle(ed.sel, v); if (n && n !== ed.sel) ed.sel = n }
             }
             EdDrop {
                 up: !tb.below
@@ -345,7 +349,8 @@ PanelWindow {
     EditPanel {
         id: panel
         ed: ed
-        x: 20; anchors.verticalCenter: parent.verticalCenter
+        x: 20 + ed.leftRoom; anchors.verticalCenter: parent.verticalCenter
+        Behavior on x { NumberAnimation { duration: 380; easing.type: Easing.OutCubic } }
         // it steps aside while you move or resize a widget over it, and comes back when you let go
         shown: ed.visible && !ed.panelAway
         z: 30

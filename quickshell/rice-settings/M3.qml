@@ -39,9 +39,9 @@ Singleton {
     // surfaces: near black with a hint of the key color, each container a step lighter
     readonly property color surface: mix("#111213", seed, 0.035)
     readonly property color surfaceLow: mix("#17181a", seed, 0.04)
-    readonly property color surfaceC: mix("#1c1d20", seed, 0.05)
-    readonly property color surfaceHigh: mix("#25272a", seed, 0.06)
-    readonly property color surfaceHighest: mix("#2f3134", seed, 0.07)
+    readonly property color surfaceC: mix("#1f2023", seed, 0.055)
+    readonly property color surfaceHigh: mix("#292a2e", seed, 0.065)
+    readonly property color surfaceHighest: mix("#333539", seed, 0.075)
     readonly property color ink: "#E5E3E3"
     readonly property color inkDim: "#B6B8BA"
     readonly property color outline: "#8C8F92"
@@ -67,6 +67,30 @@ Singleton {
     readonly property int rM: Math.round(16 * shapeK)
     readonly property int rL: Math.round(24 * shapeK)
     readonly property int rXL: Math.round(30 * shapeK)
+    // Rows next to each other join into one group (Material 3 Expressive, like the settings of Android 16):
+    // true when the nearest shown item before (d = -1) or after (d = 1) the host in its Column is a row too.
+    // Repeaters and empty spacers are skipped; anything else (a title, a card) ends the group.
+    function near(h, d) {
+        if (!h || !h.parent) return false
+        const p = h.parent
+        if (p.spacing === undefined || p.layoutDirection !== undefined) return false
+        const c = p.children
+        let i = -1
+        for (let k = 0; k < c.length; k++) if (c[k] === h) { i = k; break }
+        if (i < 0) return false
+        for (let k = i + d; k >= 0 && k < c.length; k += d) {
+            const s = c[k]
+            if (!s || !s.visible) continue
+            if (s.joinable === true) return true
+            if (s.width === 0 || s.height === 0) continue
+            return false
+        }
+        return false
+    }
+    // the corners of a grouped row: round at the ends of a group, small inside it
+    readonly property int rRowOut: Math.round(22 * shapeK)
+    readonly property int rRowIn: Math.round(6 * shapeK)
+    readonly property int rowGap: 3
     // motion: Material's emphasized curve, or a small spring (Settings > Motion)
     readonly property var emph: [0.2, 0, 0, 1, 1, 1]
     readonly property bool bouncy: Prefs.motion === "expressive"

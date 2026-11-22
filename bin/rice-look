@@ -9,8 +9,9 @@
   rice-look shell fish|zsh|bash    the shell your terminals start
   rice-look login-shell            make it your login shell too (opens a terminal: chsh asks your password)
   rice-look terminal NAME          the terminal the keys open (kitty, foot, alacritty, ghostty, wezterm, konsole)
-  rice-look files NAME             the file manager (nautilus, thunar, nemo, dolphin, pcmanfm): SUPER + E and every
+  rice-look files NAME             the file manager (darkshadow, nautilus, thunar, nemo, dolphin, pcmanfm): SUPER + E and every
                                    "open folder" (xdg-mime) open it
+  rice-look apps-default on|off    pictures, music and videos open in our Photos, Music and Videos (rice-app defaults)
   rice-look files-colors on|off    the file manager (and the other GTK apps, Dolphin) in the wallpaper's colors
   rice-look files-glass on|off     Files see-through (the compositor blurs behind it) with Material 3 shapes
   rice-look files-theme            write those colors again (the wallpaper changed)
@@ -58,7 +59,9 @@ TERMS = [
 ]
 # file managers: the binary, its .desktop file (the default for folders), its icon and its toolkit
 FILES = [
-    {"id": "nautilus", "name": "Files", "app": "org.gnome.Nautilus", "desktop": "org.gnome.Nautilus.desktop",
+    {"id": "darkshadow", "name": "Files", "app": "darkshadow-files", "desktop": "darkshadow-files.desktop",
+     "kit": "qs", "desc": "Ours: Material 3 in your wallpaper's colors, quick look, drag and drop"},
+    {"id": "nautilus", "name": "Nautilus", "app": "org.gnome.Nautilus", "desktop": "org.gnome.Nautilus.desktop",
      "kit": "gtk", "desc": "GNOME's: clean, tabs, quick search"},
     {"id": "thunar", "name": "Thunar", "app": "org.xfce.thunar", "desktop": "thunar.desktop",
      "kit": "gtk", "desc": "Xfce's: light, fast, your own actions"},
@@ -669,7 +672,21 @@ def apply_all(c, force_fetch=False):
 # ---------------------------------------------------------------- file managers
 
 def files_installed(f):
+    if f["id"] == "darkshadow":
+        # ours: rice-app and its Quickshell folder
+        return os.access(BIN + "/rice-app", os.X_OK) and os.path.exists(CFG + "/quickshell/rice-apps/shell.qml")
     return bool(shutil.which(f["id"]))
+
+
+def apps_default():
+    """are pictures, music and videos opened in our Photos, Music and Videos"""
+    if not shutil.which("xdg-mime"):
+        return False
+    try:
+        r = subprocess.run(["xdg-mime", "query", "default", "image/png"], capture_output=True, text=True, timeout=5)
+        return r.stdout.strip() == "darkshadow-photos.desktop"
+    except Exception:
+        return False
 
 
 def current_files(c):
@@ -901,6 +918,11 @@ def apply_files_choice(c):
         return ""
     write(FILESFILE, f + "\n")
     info = next(x for x in FILES if x["id"] == f)
+    if os.access(BIN + "/rice-app", os.X_OK):
+        if f == "darkshadow":
+            run([BIN + "/rice-app", "install"], 10)      # its entry in the app menu (the default for folders needs it)
+        # ours picked: the old file manager leaves the app menu (it comes back when you pick it again)
+        run([BIN + "/rice-app", "hide-old", "on" if f == "darkshadow" else "off"], 10)
     # every "open folder" (the browser's downloads, other apps) opens it too
     if shutil.which("xdg-mime") and desktop_exists(info["desktop"]):
         run(["xdg-mime", "default", info["desktop"], "inode/directory"], 5)
@@ -966,7 +988,7 @@ def state():
                      "list": [dict(x, installed=bool(shutil.which(x["id"])),
                                    look=(x["id"] == "kitty" or res.get(x["id"], False)))
                               for x in TERMS]},
-        "files": {"current": current_files(c), "colors": c["files_colors"], "glass": c["files_glass"],
+        "files": {"current": current_files(c), "colors": c["files_colors"], "glass": c["files_glass"], "apps": apps_default(),
                   "list": [dict(x, installed=files_installed(x)) for x in FILES]},
         "distro": distro(),
         "wallpaper": wallpaper(),
@@ -1035,6 +1057,10 @@ def main(a):
         apply_files_choice(c)
         apply_files_theme(c)
         print("Files open in %s" % f["name"])
+    elif cmd == "apps-default" and len(a) == 3 and a[2] in ("on", "off"):
+        if not os.access(BIN + "/rice-app", os.X_OK):
+            sys.exit("rice-app is missing (run rice-update)")
+        print(run([BIN + "/rice-app", "defaults", a[2]], 20).strip() or a[2])
     elif cmd == "files-colors" and len(a) == 3 and a[2] in ("on", "off"):
         c["files_colors"] = a[2] == "on"
         save(c)

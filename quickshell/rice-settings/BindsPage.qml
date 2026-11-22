@@ -117,7 +117,7 @@ Column {
                 { n: "Stack windows (tabs)", c: "~/.local/bin/rice-win stack" }, { n: "Fullscreen", c: "hyprctl dispatch 'hl.dsp.window.fullscreen()'" },
                 { n: "Close the window", c: "hyprctl dispatch 'hl.dsp.window.close()'" }, { n: "Float / tile", c: "hyprctl dispatch 'hl.dsp.window.float({ action = \"toggle\" })'" },
                 { n: "Pin on every workspace", c: "hyprctl dispatch 'hl.dsp.window.pin()'" }, { n: "Screenshot tool", c: "~/.local/bin/rice-hotcorner shot region" },
-                { n: "Files", c: "xdg-open ~" }, { n: "Toolbox", c: "~/.local/bin/rice-tools toggle" } ]
+                { n: "Files", c: "xdg-open ~" } ]
             delegate: Pill { required property var modelData; label: I18n.t(modelData.n); onClicked: { cmdField.text = modelData.c; keysField.forceActiveFocus() } }
         }
     }

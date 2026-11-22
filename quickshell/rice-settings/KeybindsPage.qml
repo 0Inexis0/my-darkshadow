@@ -63,7 +63,7 @@ Item {
             ["Alt + ]  /  [", "Louder / quieter"], ["Brightness keys", "Screen brighter / darker"],
             ["Play / Next / Previous", "Music"] ] },
         { name: "Desktop", sym: "desktop_windows", keys: [
-            ["Super + Alt + W", "Edit the desktop widgets", "widgets"], ["Super + /", "Every key on one sheet", "keys"], ["Super + X", "Toolbox: tasks, note, timer, converter, system, chat", "tools"], ["Super + Shift + /", "niri's own list of keys"],
+            ["Super + Alt + W", "Edit the desktop widgets", "widgets"], ["Super + /", "Every key on one sheet", "keys"], ["Super + Shift + /", "niri's own list of keys"],
             ["Super + Shift + P", "Screens off"], ["Super + Shift + E", "Log out"] ] }
     ] : [
         { name: "Apps and menus", sym: "apps", keys: [
@@ -99,7 +99,7 @@ Item {
             ["Alt + ]  /  [", "Louder / quieter"], ["Brightness keys", "Screen brighter / darker"],
             ["Play / Next / Previous", "Music"] ] },
         { name: "Desktop", sym: "desktop_windows", keys: [
-            ["Super + Alt + W", "Edit the desktop widgets", "widgets"], ["Super + /", "Every key on one sheet", "keys"], ["Super + X", "Toolbox: tasks, note, timer, converter, system, chat", "tools"], ["Super + M", "Log out"] ] }
+            ["Super + Alt + W", "Edit the desktop widgets", "widgets"], ["Super + /", "Every key on one sheet", "keys"], ["Super + M", "Log out"] ] }
     ]
     function match(k) {
         if (q === "") return true

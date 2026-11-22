@@ -82,8 +82,16 @@ PanelWindow {
         // for a few reads instead of showing "no networks" (that was the list that sometimes went blank)
         if (list.length === 0 && nets.length > 0 && radio && emptyN < 3) { emptyN++; return }
         emptyN = 0
+        // V4.94: the list is made again only when something in it changed, and never while you type a password:
+        // every read (each 5 s) made all the rows again, which emptied the password field while you typed
+        if (askFor !== "") return
+        const js = JSON.stringify(list)
+        if (js === netsJs) return
+        netsJs = js
         nets = list
     }
+    property string netsJs: ""
+    property string pw: ""              // the password you type (kept here, not in a row that could be made again)
 
     Process {
         id: stateProc
@@ -306,7 +314,9 @@ PanelWindow {
                                 echoMode: showPw.checked ? TextInput.Normal : TextInput.Password
                                 color: wm.fg; font.family: Fonts.main; font.pixelSize: 14; clip: true
                                 passwordCharacter: "•"
-                                onVisibleChanged: if (visible) { text = ""; forceActiveFocus() }
+                                text: wm.pw
+                                onTextChanged: if (text !== wm.pw) wm.pw = text
+                                onVisibleChanged: if (visible) { wm.pw = ""; forceActiveFocus() }
                                 Keys.onReturnPressed: if (text.length >= 8) wm.connect(modelData, text)
                                 Keys.onEnterPressed: if (text.length >= 8) wm.connect(modelData, text)
                                 Keys.onEscapePressed: wm.askFor = ""

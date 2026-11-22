@@ -23,7 +23,7 @@ DEFAULTS = {
     "wallpaper": "SUPER + W", "quick": "SUPER + A", "cc": "SUPER + N", "gamebar": "SUPER + G",
     "dashboard": "SUPER + ALT + D", "lock": "SUPER + L", "close": "SUPER + Q", "float": "SUPER + SHIFT + V", "clipboard": "SUPER + V",
     "shot": "Print", "shotfull": "SHIFT + Print", "record": "SUPER + SHIFT + R", "widgets": "SUPER + ALT + W",
-    "infinite": "SUPER + F", "taskview": "SUPER + TAB", "switcher": "ALT + TAB", "keys": "SUPER + slash", "tools": "SUPER + X",
+    "infinite": "SUPER + F", "taskview": "SUPER + TAB", "switcher": "ALT + TAB", "keys": "SUPER + slash",
     "minimize": "SUPER + H", "restore": "SUPER + SHIFT + H", "stack": "SUPER + T", "stack_next": "SUPER + CTRL + right", "stack_prev": "SUPER + CTRL + left", "join_left": "SUPER + CTRL + SHIFT + left", "join_right": "SUPER + CTRL + SHIFT + right",
 }
 # niri: the same actions, its keys (the launcher is SUPER + D there; Infinite Desktop is Hyprland only)
@@ -63,7 +63,7 @@ APPS = [
     ["Super + W", "Wallpapers", "wallpaper"], ["Super + A", "Quick switches", "quick"],
     ["Super + N", "Control center and notifications", "cc"], ["Super + G", "Game bar", "gamebar"],
     ["Super + Alt + D", "Dashboard", "dashboard"], ["Super + L", "Lock the screen", "lock"],
-    ["Super + V", "Clipboard: everything you copied", "clipboard"], ["Super + X", "Toolbox: tasks, note, timer, converter, system, chat", "tools"], ["Super + /", "These keys", "keys"]]
+    ["Super + V", "Clipboard: everything you copied", "clipboard"], ["Super + /", "These keys", "keys"]]
 SHEET_HYPR = [
     ("Apps and menus", "apps", APPS),
     ("Windows", "select_window", [

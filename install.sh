@@ -818,7 +818,8 @@ step_apps() {
     d="$(basename "$d")"
     case "$d" in
       rice-settings) n="Settings app" ;; rice-desktop) n="Desktop widgets and dock" ;;
-      rice-welcome) n="Welcome screen" ;; hyprquickpaper) n="Wallpaper picker" ;; *) n="$d" ;;
+      rice-welcome) n="Welcome screen" ;; hyprquickpaper) n="Wallpaper picker" ;;
+      rice-apps) n="Files, Photos, Music and Videos (our apps)" ;; *) n="$d" ;;
     esac
     task "$n  ->  ~/.config/quickshell/$d" copy_tree "$ROOT/quickshell/$d" "$HOME/.config/quickshell/$d"
   done
@@ -828,6 +829,10 @@ step_apps() {
     rm -f "$HOME/.config/quickshell/rice-desktop/$old.qml"
   done
   rm -f "$HOME/.config/quickshell/rice-settings/DashboardPage.qml" "$HOME/.config/quickshell/rice-settings/DashMini.qml"
+  # V4.85: our own apps in the app menu (Files, Photos, Music, Videos), their icons in the wallpaper's colors
+  [ "$DRY_RUN" = 1 ] || { [ -x "$BIN/rice-app" ] && task "Files, Photos, Music and Videos in the app menu" "$BIN/rice-app" install
+    # our Files is the file manager (picked, or nothing picked yet): the old one leaves the app menu
+    case "$(cat "$HOME/.config/rice/files" 2>/dev/null)" in ""|darkshadow) "$BIN/rice-app" hide-old on >/dev/null 2>&1 ;; esac; }
   if ! printf '%s' ":$PATH:" | grep -q ":$HOME/.local/bin:"; then
     warn "\$HOME/.local/bin is not in your PATH. Add it in your shell config (fish: fish_add_path \$HOME/.local/bin)"
   fi
@@ -975,6 +980,14 @@ prune_backups() {
 # V4.52 removed the hot corner panel: take its files out
 remove_old_parts() {
   [ "$DRY_RUN" = 1 ] && return 0
+  # V4.92: the toolbox (SUPER + X) is gone: its program, its panels, its Settings page and its settings (the chat's
+  # address and key in ai.json too). The launcher's file search and currency rates moved to rice-find
+  rm -f "$HOME/.local/bin/rice-tools" "$HOME/.config/rice/tools.json" "$HOME/.config/rice/ai.json" "$HOME/.cache/rice/tools-open" \
+    "$HOME/.config/quickshell/rice-settings/ToolboxPage.qml"
+  local tq
+  for tq in Tools ToolBtn ToolChat ToolConvert ToolField ToolNote ToolSystem ToolTasks ToolTimer; do
+    rm -f "$HOME/.config/quickshell/rice-desktop/$tq.qml"
+  done
   rm -f "$HOME/.config/hypr/rice-hotcorner.lua" "$HOME/.config/quickshell/rice-desktop/HotCorner.qml" "$HOME/.config/quickshell/rice-desktop/HotCornerPanel.qml" \
     "$HOME/.config/quickshell/rice-settings/HotCornersPage.qml" "$HOME/.config/quickshell/rice-settings/HotCornerPanel.qml"
   return 0

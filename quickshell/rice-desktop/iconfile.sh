@@ -13,8 +13,12 @@ for d in "${dd[@]}" /run/current-system/sw/share "$HOME/.nix-profile/share" /usr
   [ -n "$d" ] && roots+=("$d/icons")
 done
 themes=()
-[ -n "$theme" ] && themes+=("$theme")
-themes+=(hicolor Papirus Papirus-Dark breeze breeze-dark Adwaita)
+# Edit mode > Icons > Icon pack (V4.89): that pack first, then the system's
+[ -n "${RICE_ICON_THEME:-}" ] && themes+=("$RICE_ICON_THEME")
+# RICE_ICON_ONLY=1: only that pack (its preview in Edit mode), nothing else
+if [ "${RICE_ICON_ONLY:-}" = 1 ]; then only=1; else only=0; fi
+[ "$only" = 0 ] && [ -n "$theme" ] && themes+=("$theme")
+[ "$only" = 0 ] && themes+=(hicolor Papirus Papirus-Dark breeze breeze-dark Adwaita)
 sizes=(48x48 64x64 32x32 128x128 256x256 96x96 scalable 512x512 24x24 22x22 16x16)
 
 find_one() {
@@ -29,24 +33,30 @@ find_one() {
     f="$(find -L "$own" -maxdepth 5 \( -name "$n.png" -o -name "$n.svg" -o -name "$n.xpm" \) 2>/dev/null | sort -r | head -1)"
     [ -n "$f" ] && { echo "$f"; return 0; }
   fi
-  for ext in png svg; do
+  # V4.92: the pack comes first, whatever its files are (before, a PNG of the app's own hicolor icon beat the SVGs of
+  # the pack you chose, so most packs never showed): pack by pack, then PNG before SVG inside one pack
+  for t in "${themes[@]}"; do
     for r in "${roots[@]}"; do
-      [ -d "$r" ] || continue
-      for t in "${themes[@]}"; do
-        [ -d "$r/$t" ] || continue
-        for s in "${sizes[@]}"; do
-          for c in apps applications categories mimetypes places devices status legacy; do
+      [ -d "$r/$t" ] || continue
+      for s in "${sizes[@]}"; do
+        for c in apps applications categories mimetypes places devices status legacy; do
+          for ext in png svg; do
             f="$r/$t/$s/$c/$n.$ext"; [ -f "$f" ] && { echo "$f"; return 0; }
             f="$r/$t/$c/${s%%x*}/$n.$ext"; [ -f "$f" ] && { echo "$f"; return 0; }   # breeze: apps/48
           done
         done
       done
     done
-    for d in "${dd[@]}" /usr/share; do
-      f="$d/pixmaps/$n.$ext"; [ -f "$f" ] && { echo "$f"; return 0; }
-    done
   done
+  if [ "$only" = 0 ]; then
+    for ext in png svg; do
+      for d in "${dd[@]}" /usr/share; do
+        f="$d/pixmaps/$n.$ext"; [ -f "$f" ] && { echo "$f"; return 0; }
+      done
+    done
+  fi
   # last: any icon theme on this computer (other themes, odd folder layouts)
+  [ "$only" = 1 ] && return 0
   for r in "${roots[@]}"; do
     [ -d "$r" ] || continue
     f="$(find -L "$r" -maxdepth 5 \( -name "$n.png" -o -name "$n.svg" \) 2>/dev/null | head -1)"

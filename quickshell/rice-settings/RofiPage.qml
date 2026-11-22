@@ -55,7 +55,8 @@ Item {
             // ---------- live preview ----------
             Rectangle {
                 id: rprev
-                visible: Prefs.previews
+                // V4.91: this drew the old (Rofi-like) layouts; the launcher is Material now, "Open it" shows it
+                visible: false
                 width: parent.width
                 height: 230
                 radius: M3.rL
@@ -69,7 +70,8 @@ Item {
                 readonly property var th: (page.rs.themes && page.rs.themes[page.v("theme", "wallpaper")]) ? page.rs.themes[page.v("theme", "wallpaper")]
                                           : ({ bg: "#0d0d0d", alt: M3.surfaceHigh, sel: "#F6F5F4", fg: "#F6F5F4" })
                 readonly property real sc: width / 1920 * 1.35
-                readonly property string lay: page.v("layout", "list")
+                // V4.91: the preview of the launcher's styles: Spotlight a list, Drawer a grid, Side sheet the split one
+                readonly property string lay: ({ spotlight: "list", side: "split" })[page.v("layout", "drawer")] || "grid"
                 readonly property string pos: page.v("position", "center")
                 readonly property real alpha: page.v("transparency", true) === true ? page.v("opacity", 0.82) : 1
                 function withAlpha(c, a) { const q = Qt.color(c); return Qt.rgba(q.r, q.g, q.b, a) }
@@ -134,7 +136,7 @@ Item {
                         }
                         // list
                         Repeater {
-                            model: rprev.lay === "list" ? ["Firefox", "Kitty", "Files", "Spotify", "Discord"].slice(0, rprev.rows) : []
+                            model: rprev.lay === "list" || rprev.lay === "classic" ? ["Firefox", "Kitty", "Files", "Spotify", "Discord"].slice(0, rprev.rows) : []
                             delegate: Rectangle {
                                 width: body.width; height: 20; radius: Math.max(3, win.radius - 6)
                                 color: index === 0 ? rprev.th.sel : "transparent"
@@ -170,9 +172,11 @@ Item {
                 }
             }
 
-            T { kind: "title"; text: I18n.t("Theme"); font.pixelSize: 16; font.bold: true }
+            // V4.91: the launcher takes your theme's colors now (no Rofi theme, corners or font size of its own)
+            SectionTitle { visible: false; text: I18n.t("Theme") }
 
             Flow {
+                visible: false
                 width: parent.width
                 spacing: 10
                 Repeater {
@@ -216,18 +220,17 @@ Item {
                 }
             }
 
-            T { kind: "title"; text: I18n.t("Layout"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
+            SectionTitle { text: I18n.t("Layout") }
 
             SegRow {
                 label: I18n.t("Style")
-                desc: I18n.t("List, icon grid, full-width bar, or split (wallpaper on the left)")
+                desc: I18n.t("Drawer: big icons, filter chips and all apps; Spotlight: a search bar with a list that grows; Side sheet: a tall panel at the left edge")
                 options: [
-                    { label: I18n.t("List"), value: "list" },
-                    { label: I18n.t("Grid"), value: "grid" },
-                    { label: I18n.t("Bar"), value: "bar" },
-                    { label: I18n.t("Split"), value: "split" }
+                    { label: I18n.t("Drawer"), value: "drawer" },
+                    { label: I18n.t("Spotlight"), value: "spotlight" },
+                    { label: I18n.t("Side sheet"), value: "side" }
                 ]
-                current: page.v("layout", "list")
+                current: ["drawer", "spotlight", "side"].indexOf(page.v("layout", "drawer")) >= 0 ? page.v("layout", "drawer") : "drawer"
                 onChosen: function(x) { page.setv("layout", x) }
             }
             SegRow {
@@ -243,7 +246,7 @@ Item {
             }
             SliderRow {
                 label: I18n.t("Width")
-                desc: I18n.t("Not used by the bar style")
+                desc: I18n.t("How wide the launcher is (the side sheet keeps close to its own width)")
                 from: 360; to: 1200; step: 20
                 value: page.v("width", 620)
                 unit: " px"
@@ -257,7 +260,7 @@ Item {
                 onCommitted: function(x) { page.setv("lines", Math.round(x)) }
             }
 
-            T { kind: "title"; text: I18n.t("Appearance"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
+            SectionTitle { text: I18n.t("Appearance") }
 
             ToggleRow {
                 label: I18n.t("Transparency")
@@ -280,6 +283,7 @@ Item {
                 onToggled: function(x) { page.setv("blur", x ? "on" : "off") }
             }
             SliderRow {
+                visible: false
                 label: I18n.t("Corner radius")
                 desc: I18n.t("Roundness of the window")
                 from: 0; to: 32; step: 1
@@ -288,9 +292,10 @@ Item {
                 onCommitted: function(x) { page.setv("radius", Math.round(x)) }
             }
 
-            T { kind: "title"; text: I18n.t("Text"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
+            SectionTitle { text: I18n.t("Icons") }
 
             SliderRow {
+                visible: false
                 label: I18n.t("Font size")
                 desc: I18n.t("The font comes from Services > Fonts (monospace)")
                 from: 9; to: 20; step: 1
@@ -300,7 +305,7 @@ Item {
             }
             ToggleRow {
                 label: I18n.t("App icons")
-                desc: I18n.t("Show icons next to the results")
+                desc: I18n.t("Icons next to what it finds; their style and shape: Edit mode > Icons")
                 checked: page.v("icons", true) === true
                 onToggled: function(x) { page.setv("icons", x ? "on" : "off") }
             }

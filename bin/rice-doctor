@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+# rice-doctor: what is wrong with this computer for DarkShadow's Shell, in plain words (V4.94).
+#   rice-doctor              a report: the graphics card and its driver (NVIDIA most of all), Hyprland, Quickshell,
+#                            its last crash and the last lines of the shell's log. Paste it when you ask for help
+#   rice-doctor nvidia-fix   NVIDIA: the settings Hyprland needs (kernel mode setting and its framebuffer, the
+#                            Wayland part of the driver), then the boot image again. Asks first; needs your password
+# Nothing is changed without nvidia-fix.
+set -u
+B=$'\e[1m'; G=$'\e[32m'; Y=$'\e[33m'; R=$'\e[31m'; D=$'\e[2m'; Z=$'\e[0m'
+[ -t 1 ] || { B=; G=; Y=; R=; D=; Z=; }
+ok() { printf '  %s✔%s %s\n' "$G" "$Z" "$*"; }
+warn() { printf '  %s!%s %s\n' "$Y" "$Z" "$*"; }
+bad() { printf '  %s✘%s %s\n' "$R" "$Z" "$*"; }
+fixes=()
+
+nv_card() { lspci 2>/dev/null | grep -iE 'vga|3d|display' | grep -qi nvidia; }
+param() { cat "/sys/module/nvidia_drm/parameters/$1" 2>/dev/null; }
+egl_wl() {
+  local f
+  for f in /usr/share/egl/egl_external_platform.d/*nvidia_wayland*.json /usr/lib/libnvidia-egl-wayland.so* /usr/lib64/libnvidia-egl-wayland.so* \
+           /usr/lib/x86_64-linux-gnu/libnvidia-egl-wayland.so*; do
+    [ -e "$f" ] && return 0
+  done
+  return 1
+}
+
+gpu_report() {
+  printf '\n%sGraphics%s\n' "$B" "$Z"
+  lspci 2>/dev/null | grep -iE 'vga|3d|display' | sed 's/^[0-9a-f:.]* /  /'
+  if ! nv_card; then ok "no NVIDIA card"; return; fi
+  if [ -r /proc/driver/nvidia/version ]; then
+    local v; v="$(head -1 /proc/driver/nvidia/version | sed 's/.*Module *//; s/  .*//')"
+    if grep -qi "open kernel" /proc/driver/nvidia/version; then ok "NVIDIA driver (open): $v"; else ok "NVIDIA driver: $v"; fi
+  elif lsmod 2>/dev/null | grep -q '^nouveau'; then
+    warn "nouveau (the free driver) is in use: games are slow. For games install nvidia-open (Arch: sudo pacman -S nvidia-open nvidia-utils)"
+    return
+  else
+    bad "the NVIDIA driver is not loaded (installed, but no reboot since? Then reboot)"
+    fixes+=("reboot after installing the driver")
+    return
+  fi
+  if command -v nvidia-smi >/dev/null && ! nvidia-smi >/dev/null 2>&1; then
+    bad "nvidia-smi fails: the driver and its programs are of different versions (update both, then reboot)"
+    fixes+=("sudo pacman -Syu, then reboot")
+  fi
+  case "$(param modeset)" in
+    Y|1) ok "kernel mode setting is on (nvidia_drm modeset)" ;;
+    *) bad "kernel mode setting is off: Hyprland freezes or shows nothing usable"; fixes+=("rice-doctor nvidia-fix") ;;
+  esac
+  case "$(param fbdev)" in
+    Y|1) ok "the framebuffer is on (nvidia_drm fbdev)" ;;
+    "") warn "this driver does not say whether fbdev is on" ;;
+    *) warn "the framebuffer is off (nvidia_drm fbdev): a black screen or a flickering TTY is possible"; fixes+=("rice-doctor nvidia-fix") ;;
+  esac
+  if egl_wl; then ok "the Wayland part of the driver (egl-wayland) is there"
+  else bad "egl-wayland is missing: Wayland apps and the shell itself can crash or stay black"; fixes+=("rice-doctor nvidia-fix"); fi
+  if [ -e "$HOME/.config/hypr/rice-gpu.lua" ]; then ok "Hyprland draws the cursor itself (no invisible cursor)"; fi
+}
+
+shell_report() {
+  printf '\n%sDesktop%s\n' "$B" "$Z"
+  printf '  DarkShadow'\''s Shell V%s\n' "$(cat "$(cat "$HOME/.config/rice/repo" 2>/dev/null || echo "$HOME/shadows-shell")/VERSION" 2>/dev/null || echo '?')"
+  command -v Hyprland >/dev/null && printf '  %s\n' "$(Hyprland --version 2>/dev/null | head -1)"
+  command -v qs >/dev/null && printf '  %s\n' "$(qs --version 2>/dev/null | head -1)"
+  printf '  session: %s\n' "${XDG_SESSION_TYPE:-?} ${XDG_CURRENT_DESKTOP:-}"
+  if pgrep -f "quickshell/rice-desktop" >/dev/null; then ok "the shell is running"; else bad "the shell is not running (start it: rice-desktop start)"; fi
+  local cr="$HOME/.cache/quickshell/crashes" last n
+  n="$(find "$cr" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)"
+  if [ "$n" -gt 0 ]; then
+    # shellcheck disable=SC2012  # crash folders have plain names
+    last="$(ls -td "$cr"/*/ 2>/dev/null | head -1)"
+    warn "Quickshell crashed $n time(s); the last one: $(date -r "$last" '+%Y-%m-%d %H:%M' 2>/dev/null)"
+    [ -f "$last/report.txt" ] && { printf '%s' "$D"; grep -vE '^\s*$' "$last/report.txt" | head -25 | sed 's/^/    /'; printf '%s' "$Z"; }
+  else
+    ok "no Quickshell crashes"
+  fi
+  if [ -s "$HOME/.cache/rice/desktop.log" ]; then
+    printf '  the last lines of the shell'\''s log (~/.cache/rice/desktop.log):\n%s' "$D"
+    grep -vE 'FileView|Read of .* failed' "$HOME/.cache/rice/desktop.log" | tail -15 | sed 's/^/    /'
+    printf '%s' "$Z"
+  fi
+}
+
+nvidia_fix() {
+  nv_card || { echo "No NVIDIA card here: nothing to do."; exit 0; }
+  echo "This sets, for Hyprland on NVIDIA:"
+  echo "  - /etc/modprobe.d/darkshadow-nvidia.conf: options nvidia_drm modeset=1 fbdev=1"
+  echo "  - egl-wayland (the Wayland part of the driver), if your package manager has it"
+  echo "  - the boot image again (mkinitcpio or dracut), so it takes effect at the next start"
+  printf 'Go on? [y/N] '; read -r a
+  case "$a" in y|Y|yes) ;; *) echo "Nothing changed."; exit 0 ;; esac
+  echo "options nvidia_drm modeset=1 fbdev=1" | sudo tee /etc/modprobe.d/darkshadow-nvidia.conf >/dev/null || { echo "Could not write it."; exit 1; }
+  if ! egl_wl; then
+    if command -v pacman >/dev/null; then sudo pacman -S --needed --noconfirm egl-wayland
+    elif command -v dnf >/dev/null; then sudo dnf install -y egl-wayland
+    elif command -v apt-get >/dev/null; then sudo apt-get install -y libnvidia-egl-wayland1
+    fi
+  fi
+  if command -v mkinitcpio >/dev/null; then sudo mkinitcpio -P
+  elif command -v dracut >/dev/null; then sudo dracut --regenerate-all --force
+  elif command -v update-initramfs >/dev/null; then sudo update-initramfs -u
+  fi
+  echo "Done. Restart the computer now."
+}
+
+case "${1:-}" in
+  nvidia-fix) nvidia_fix ;;
+  ""|report)
+    printf '%sDarkShadow'\''s Shell: what this computer looks like%s\n' "$B" "$Z"
+    gpu_report
+    shell_report
+    if [ "${#fixes[@]}" -gt 0 ]; then
+      printf '\n%sTo do%s\n' "$B" "$Z"
+      printf '%s\n' "${fixes[@]}" | sort -u | sed 's/^/  → /'
+    fi
+    echo ;;
+  *) sed -n '2,7p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+esac

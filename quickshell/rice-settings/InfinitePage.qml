@@ -29,14 +29,15 @@ Item {
     onVisibleChanged: if (visible) stateProc.running = true
 
     component KeyPick: SettingRow {
+        id: kp
         property string key: ""
         property var choices: []
         reserved: 520
         Seg {
             anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
-            options: parent.choices.map(function(c) { return { value: c, label: page.nice(c) } })
-            current: page.kv(parent.key, parent.choices[0])
-            onChosen: v => page.setKey(parent.key, v)
+            options: kp.choices.map(function(c) { return { value: c, label: page.nice(c) } })
+            current: page.kv(kp.key, kp.choices[0])
+            onChosen: v => page.setKey(kp.key, v)
         }
     }
     component Key: Rectangle {

@@ -1,0 +1,109 @@
+#!/usr/bin/env python3
+"""rice-find: what the launcher looks up for you (V4.92; it was part of the toolbox, which is gone).
+
+  rice-find files TEXT     JSON: up to 8 files and folders in your home whose name has TEXT in it
+                           (the launcher, after a few letters). fd, else locate, else a short walk
+  rice-find rates          JSON: currency rates (European Central Bank, through frankfurter.dev), fetched at
+                           most twice a day, kept in ~/.cache/rice/rates.json ("100 usd pln" in the launcher)
+"""
+import json
+import os
+import sys
+import time
+import urllib.request
+
+HOME = os.path.expanduser("~")
+CACHE = HOME + "/.cache/rice"
+RATES = CACHE + "/rates.json"
+
+
+def out(o):
+    sys.stdout.write(json.dumps(o) + "\n")
+    sys.stdout.flush()
+
+
+# ---------------- currency ----------------
+def rates():
+    try:
+        j = json.load(open(RATES))
+        if time.time() - j.get("time", 0) < 12 * 3600 and j.get("rates"):
+            return j
+    except Exception:
+        j = None
+    for url in ("https://api.frankfurter.dev/v1/latest?base=EUR", "https://api.frankfurter.app/latest?from=EUR"):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "DarkShadowShell"})
+            d = json.loads(urllib.request.urlopen(req, timeout=8).read().decode())
+            r = {k.upper(): float(v) for k, v in (d.get("rates") or {}).items()}
+            if r:
+                r["EUR"] = 1.0
+                new = {"time": time.time(), "date": d.get("date", ""), "rates": r}
+                os.makedirs(CACHE, exist_ok=True)
+                tmp = RATES + ".tmp"
+                json.dump(new, open(tmp, "w"))
+                os.replace(tmp, RATES)
+                return new
+        except Exception:
+            continue
+    return j or {"time": 0, "date": "", "rates": {}}      # offline: the last ones we had
+
+
+# ---------------- files for the launcher ----------------
+SKIP = {".cache", ".local", ".git", "node_modules", ".var", ".cargo", ".rustup", ".npm", ".mozilla", "__pycache__",
+        ".steam", "Steam", ".wine", ".config"}
+
+
+def files(q):
+    import shutil
+    import subprocess
+    q = q.strip()
+    if len(q) < 2 or len(q) > 100:
+        return out([])
+    found = []
+    fd = shutil.which("fd") or shutil.which("fdfind")
+    try:
+        if fd:
+            r = subprocess.run([fd, "-i", "-F", "--max-results", "40", "--exclude", ".cache", "--exclude", "node_modules",
+                                "--exclude", ".git", "--", q, HOME], capture_output=True, text=True, timeout=2)
+            found = [x.rstrip("/") for x in r.stdout.splitlines() if x]
+        elif shutil.which("plocate") or shutil.which("locate"):
+            r = subprocess.run([shutil.which("plocate") or shutil.which("locate"), "-i", "-l", "200", "-b", q],
+                               capture_output=True, text=True, timeout=2)
+            found = [x for x in r.stdout.splitlines() if x.startswith(HOME + "/") and "/." not in x[len(HOME):]]
+    except Exception:
+        found = []
+    if not found:
+        ql, end = q.lower(), time.time() + 0.7
+        for root, dirs, fs in os.walk(HOME):
+            dirs[:] = [d for d in dirs if not d.startswith(".") and d not in SKIP]
+            if root[len(HOME):].count("/") >= 6:
+                dirs[:] = []
+            for n in dirs + fs:
+                if ql in n.lower():
+                    found.append(os.path.join(root, n))
+            if len(found) >= 40 or time.time() > end:
+                break
+    ql = q.lower()
+
+    def rank(p):
+        n = os.path.basename(p).lower()
+        return (0 if n == ql else 1 if n.startswith(ql) else 2, p.count("/"), len(n))
+    res = []
+    for p in sorted(set(found), key=rank)[:8]:
+        res.append({"path": p, "name": os.path.basename(p), "dir": os.path.isdir(p),
+                    "where": os.path.dirname(p).replace(HOME, "~", 1)})
+    out(res)
+
+
+def main(a):
+    cmd = a[1] if len(a) > 1 else ""
+    if cmd == "rates":
+        out(rates())
+    elif cmd == "files":
+        files(" ".join(a[2:]))
+    else:
+        sys.exit(__doc__)
+
+
+if __name__ == "__main__":
+    main(sys.argv)

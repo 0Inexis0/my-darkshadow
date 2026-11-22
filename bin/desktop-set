@@ -20,7 +20,7 @@ WIDGETS = ["weather", "media", "resources", "usercard", "calendar", "visualizer"
 GEOM = ("x", "y", "scale", "w", "h", "opacity", "bg", "style", "flip", "color", "font", "focus", "metric", "bars", "shape", "gap", "gain")
 # the visualizer's bars (Edit mode > Visualizer)
 VIZ = {"bars": ["16", "32", "48", "64"], "shape": ["square", "rounded", "pill"], "gap": ["thin", "normal", "wide"], "gain": ["1", "1.4", "2", "2.8"]}
-STYLES = {"visualizer": ["bars", "mirror", "wave", "dots"], "clock": ["digital", "line", "cookie", "pixel"],
+STYLES = {"visualizer": ["bars", "mirror", "wave", "dots"], "clock": ["expressive", "stacked", "shape", "digital", "line", "cookie", "pixel"],
           "gauge": ["water", "pentagon", "cookie", "flower", "clover", "hexagon", "sun", "circle"],
           "date": ["flower", "cookie", "clover", "sun", "square", "circle"]}
 METRICS = ["cpu", "ram", "gpu", "temp", "battery"]
@@ -29,14 +29,29 @@ COLORS = {"visualizer": ["accent", "gradient", "rainbow", "mono"]}
 FONTS = {"default": "", "bebas": "Bebas Neue", "orbitron": "Orbitron", "outfit": "Outfit",
          "grotesk": "Space Grotesk", "unbounded": "Unbounded", "shoulders": "Big Shoulders Display"}
 THEMES = ["shadow", "google", "outline"]
+DOCK_STYLES = ["floating", "pills", "full"]
+# the shapes an app can sit on in the dock ("" = none: the icon alone)
+# V4.92: the modules of the dock (Edit mode > Dock > Modules), like the icons of a phone's status bar
+# V4.94: "apps" is where your apps are in that row, "pin" the keep-it-out pin, "launcher" the all-apps button
+DOCK_MODS = ["apps", "pin", "launcher", "music", "clock", "battery", "volume", "network", "bluetooth", "weather", "sysmon", "search", "notifications", "power", "control"]
+DOCK_SHAPES = ["", "squircle", "circle", "cookie", "cookie4", "flower", "clover", "sun", "softburst", "puffy"]
+# V4.89: how app icons look (Edit mode > Icons): auto = what Settings > Dock says (its Tint and wallpaper switches, its shape)
+ICON_LOOKS = ["auto", "original", "tinted", "grey", "themed", "filled", "mono"]
+ICON_SHAPES = ["auto", "none"] + [x for x in DOCK_SHAPES if x]
 DEFAULTS = {
     "widgets": {w: {"enabled": False} for w in WIDGETS},
-    "clock": {"enabled": True, "onlyLocked": False, "placement": "draggable", "style": "digital", "font": "bebas"},   # the only widget at first: in the middle
+    "clock": {"enabled": True, "onlyLocked": False, "placement": "draggable", "style": "expressive", "font": "outfit"},   # the only widget at first: in the middle
     "dock": {"enabled": False, "position": "bottom", "background": True, "hover": True, "pinnedStartup": False,
              "media": True, "nowText": True, "pinButton": True, "appsButton": True, "tint": False, "shade": True, "appMenu": True,
              "opacity": 0.78, "blur": True, "reserve": True,
+             # V4.87: the dock's look (its editor: right click on the dock > Edit dock)
+             "style": "floating", "iconSize": 34, "gap": 6, "iconShape": "",
+             # V4.92: its modules and the magnifying under the pointer (0 = off .. 100 % bigger)
+             "mods": ["music"], "magnify": 0,
              "apps": ["kitty", "org.gnome.Nautilus", "firefox", "spotify", "discord", "steam"]},
     "lock": {"toolbars": False, "widgets": False, "media": False},
+    # the icon pack: a folder name in the icon folders ("" = the system's icon theme)
+    "icons": {"look": "auto", "shape": "auto", "theme": ""},
     # the game bar (SUPER + G, Settings > Gaming): how see-through it is and the blur behind it
     "gamebar": {"opacity": 0.9, "blur": True},
     "widgetBlur": True,
@@ -44,6 +59,7 @@ DEFAULTS = {
     "widgetAdapt": True,      # text and cards turn light or dark with the wallpaper behind each widget
     "autoHide": True,        # widgets hide while windows are open (Settings > Desktop); on from the start
     "editing": False,
+    "editTab": "",
 }
 CHOICES = {"placement": ["draggable", "leastBusy", "mostBusy"], "style": ["digital", "line", "cookie", "pixel"], "font": list(FONTS)}
 
@@ -245,7 +261,7 @@ def ensure_shell():
 def main(a):
     if len(a) < 2:
         die("usage: desktop-set state|widget ID on|off|pos ID X Y|geom ID X Y [SCALE] [W H]|wset ID KEY VAL|"
-            "reset-widget ID|edit on|off|toggle|clock KEY VAL|dock KEY VAL|lock KEY VAL|dock-blur|widgets-blur on|off|gamebar opacity N|blur on|off|widgets-theme shadow|google|outline|widgets-adapt on|off|auto-hide on|off|reset-pos")
+            "reset-widget ID|edit on|off|toggle|clock KEY VAL|dock KEY VAL|icons look|shape|theme VAL|lock KEY VAL|dock-blur|widgets-blur on|off|gamebar opacity N|blur on|off|widgets-theme shadow|google|outline|widgets-adapt on|off|auto-hide on|off|reset-pos")
     cmd = a[1]
     os.makedirs(DIR, exist_ok=True)
     lk = open(LOCK, "w")
@@ -304,8 +320,49 @@ def main(a):
             c["dock"]["position"] = "bottom" if a[3] == "top" else a[3]   # the top belongs to the bar
         elif cmd == "dock" and a[2] == "opacity":
             c["dock"]["opacity"] = round(max(0.2, min(1.0, float(a[3]))), 2)
+        elif cmd == "dock" and a[2] == "style":
+            if a[3] not in DOCK_STYLES:
+                die("dock style: " + "|".join(DOCK_STYLES))
+            c["dock"]["style"] = a[3]
+        elif cmd == "dock" and a[2] in ("iconSize", "gap"):
+            lo, hi = (24, 64) if a[2] == "iconSize" else (0, 24)
+            try:
+                c["dock"][a[2]] = int(max(lo, min(hi, float(a[3]))))
+            except ValueError:
+                die("dock %s: a number %d-%d" % (a[2], lo, hi))
+        elif cmd == "dock" and a[2] == "mods":
+            # dock mods music,clock,battery,... (in this order; "none" for no modules)
+            l = [] if a[3] in ("none", "") else [x.strip() for x in a[3].split(",") if x.strip()]
+            bad = [x for x in l if x not in DOCK_MODS]
+            if bad:
+                die("dock mods: a list of " + ",".join(DOCK_MODS))
+            c["dock"]["mods"] = list(dict.fromkeys(l))
+        elif cmd == "dock" and a[2] == "magnify":
+            try:
+                c["dock"]["magnify"] = int(max(0, min(100, float(a[3]))))
+            except ValueError:
+                die("dock magnify: 0-100")
+        elif cmd == "dock" and a[2] == "iconShape":
+            v = "" if a[3] == "none" else a[3]
+            if v not in DOCK_SHAPES:
+                die("dock iconShape: none|" + "|".join(x for x in DOCK_SHAPES if x))
+            c["dock"]["iconShape"] = v
         else:
             c[cmd][a[2]] = tobool(a[3])
+    elif cmd == "icons":
+        # icons look auto|original|tinted|grey|themed|filled|mono | icons shape auto|none|squircle|... | icons theme NAME|none
+        if len(a) < 4 or a[2] not in ("look", "shape", "theme"):
+            die("icons look %s | shape %s | theme NAME|none" % ("|".join(ICON_LOOKS), "|".join(ICON_SHAPES)))
+        v = a[3]
+        if a[2] == "look" and v not in ICON_LOOKS:
+            die("icons look: " + "|".join(ICON_LOOKS))
+        if a[2] == "shape" and v not in ICON_SHAPES:
+            die("icons shape: " + "|".join(ICON_SHAPES))
+        if a[2] == "theme":
+            v = "" if v in ("none", "system", "") else v
+            if v and (len(v) > 80 or "/" in v or v.startswith(".") or not all(ch.isalnum() or ch in "._+- " for ch in v)):
+                die("icons theme: the name of a folder in ~/.local/share/icons or /usr/share/icons")
+        c["icons"][a[2]] = v
     elif cmd == "gamebar":
         # gamebar opacity 0.2-1 | gamebar blur on|off
         if len(a) < 4 or a[2] not in ("opacity", "blur"):
@@ -364,8 +421,11 @@ def main(a):
             if k not in ("style", "color", "font", "focus", "metric", "bars", "shape", "gap", "gain"):
                 t.pop(k, None)
     elif cmd == "edit":
+        # edit on|off|toggle [TAB]: TAB (dock, dock-add, icons, widgets, quick, bar, visualizer) opens Edit mode on that tab
         v = a[2] if len(a) > 2 else "toggle"
         c["editing"] = (not c.get("editing")) if v == "toggle" else tobool(v)
+        tab = a[3] if len(a) > 3 else ""
+        c["editTab"] = tab if c["editing"] and tab in ("dock", "dock-add", "icons", "widgets", "quick", "bar", "visualizer") else ""
     elif cmd == "reset-pos":
         for w in WIDGETS:
             for k in ("x", "y", "scale", "w", "h"):
@@ -382,7 +442,7 @@ def main(a):
         lock_conf(c)
     if cmd == "dock" and a[2] == "blur" or cmd in ("dock-blur", "widgets-blur") or (cmd == "gamebar" and a[2] == "blur"):
         dock_blur(c)
-    elif cmd not in ("pos", "geom", "wset", "edit", "reset-widget", "widgets-theme", "widgets-adapt", "widgets-opacity", "widgets-fps", "dock-apps", "dock-pin", "dock-unpin", "gamebar"):
+    elif cmd not in ("pos", "geom", "wset", "edit", "reset-widget", "widgets-theme", "widgets-adapt", "widgets-opacity", "widgets-fps", "dock-apps", "dock-pin", "dock-unpin", "gamebar", "icons"):
         ensure_shell()
     elif cmd == "edit" and c["editing"]:
         ensure_shell()

@@ -330,6 +330,15 @@ Item {
             }
         }
         ToggleRow {
+            label: I18n.t("Our Photos, Music and Videos for your files")
+            desc: I18n.t("Pictures open in Photos, music in Music and videos in Videos (off: the apps you had before)")
+            checked: !!page.st.files && page.st.files.apps === true
+            onToggled: function(v) {
+                const s2 = Object.assign({}, page.st); s2.files = Object.assign({}, page.st.files || {}); s2.files.apps = v; page.st = s2
+                page.look(["apps-default", v ? "on" : "off"])
+            }
+        }
+        ToggleRow {
             label: I18n.t("Colors from the wallpaper")
             desc: I18n.t("The file manager and your other apps (GTK and KDE) follow the wallpaper. Open them again to see it")
             checked: !page.st.files || page.st.files.colors !== false

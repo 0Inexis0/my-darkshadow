@@ -1,0 +1,490 @@
+#!/usr/bin/env python3
+"""Music / Videos (our player) on the session bus as an MPRIS player (org.mpris.MediaPlayer2.shadowplayer), so the bar, the island,
+the media keys (playerctl) and the lock screen see and control it. Plain Python: it speaks D-Bus itself.
+
+The Player runs this and talks to it through lines:
+  in  (stdin, JSON):  {"status": "Playing", "pos": 12.5, "len": 200, "title": ..., "artist": ..., "album": ..., "art": URL,
+                       "url": URL, "id": N, "vol": 0.8, "shuffle": false, "loop": "None", "canNext": true, "canPrev": true,
+                       "seeked": true}
+  out (stdout):       play, pause, toggle, stop, next, prev, seek SECONDS, pos SECONDS, vol 0..1, shuffle 0|1,
+                      loop None|Track|Playlist, raise, quit, open URI
+It quits when the Player does (its stdin closes).
+"""
+import json
+import os
+import select
+import socket
+import struct
+import sys
+import time
+
+NAME = "org.mpris.MediaPlayer2.shadowplayer"
+PATH = "/org/mpris/MediaPlayer2"
+ROOT = "org.mpris.MediaPlayer2"
+PLAYER = "org.mpris.MediaPlayer2.Player"
+PROPS = "org.freedesktop.DBus.Properties"
+
+
+# ---------------------------------------------------------------- the wire format
+
+class Var:
+    """a value with its D-Bus type (for variants)"""
+    def __init__(self, sig, val):
+        self.sig, self.val = sig, val
+
+
+def split_sig(sig):
+    """'sa{sv}as' -> ['s', 'a{sv}', 'as']"""
+    out, i = [], 0
+    while i < len(sig):
+        j = one_type_end(sig, i)
+        out.append(sig[i:j])
+        i = j
+    return out
+
+
+def one_type_end(sig, i):
+    c = sig[i]
+    if c == "a":
+        return one_type_end(sig, i + 1)
+    if c in "({":
+        close = ")" if c == "(" else "}"
+        j = i + 1
+        while sig[j] != close:
+            j = one_type_end(sig, j)
+        return j + 1
+    return i + 1
+
+
+ALIGN = {"y": 1, "b": 4, "n": 2, "q": 2, "i": 4, "u": 4, "x": 8, "t": 8, "d": 8, "s": 4, "o": 4, "g": 1, "a": 4, "(": 8, "{": 8, "v": 1, "h": 4}
+FMT = {"y": "B", "b": "I", "n": "h", "q": "H", "i": "i", "u": "I", "x": "q", "t": "Q", "d": "d", "h": "I"}
+
+
+class W:
+    def __init__(self):
+        self.b = bytearray()
+
+    def pad(self, n):
+        while len(self.b) % n:
+            self.b.append(0)
+
+    def put(self, t, v):
+        c = t[0]
+        self.pad(ALIGN[c])
+        if c in FMT:
+            self.b += struct.pack("<" + FMT[c], int(bool(v)) if c == "b" else v)
+        elif c in "so":
+            e = v.encode()
+            self.b += struct.pack("<I", len(e)) + e + b"\0"
+        elif c == "g":
+            e = v.encode()
+            self.b += struct.pack("<B", len(e)) + e + b"\0"
+        elif c == "v":
+            sig, val = (v.sig, v.val) if isinstance(v, Var) else guess(v)
+            self.put("g", sig)
+            self.put(sig, val)
+        elif c == "a":
+            et = t[1:]
+            at = len(self.b)
+            self.b += b"\0\0\0\0"
+            self.pad(ALIGN[et[0]])
+            start = len(self.b)
+            if et[0] == "{":
+                kt, vt = split_sig(et[1:-1])
+                for k, x in v.items():
+                    self.pad(8)
+                    self.put(kt, k)
+                    self.put(vt, x)
+            else:
+                for x in v:
+                    self.put(et, x)
+            struct.pack_into("<I", self.b, at, len(self.b) - start)
+        elif c == "(":
+            for st, x in zip(split_sig(t[1:-1]), v):
+                self.put(st, x)
+        else:
+            raise ValueError(t)
+
+
+def guess(v):
+    if isinstance(v, bool):
+        return "b", v
+    if isinstance(v, int):
+        return "x", v
+    if isinstance(v, float):
+        return "d", v
+    if isinstance(v, list):
+        return "as", v
+    return "s", str(v)
+
+
+class R:
+    def __init__(self, b, pos=0):
+        self.b, self.i = b, pos
+
+    def pad(self, n):
+        self.i += (-self.i) % n
+
+    def get(self, t):
+        c = t[0]
+        self.pad(ALIGN[c])
+        if c in FMT:
+            f = "<" + FMT[c]
+            v = struct.unpack_from(f, self.b, self.i)[0]
+            self.i += struct.calcsize(f)
+            return bool(v) if c == "b" else v
+        if c in "so":
+            n = struct.unpack_from("<I", self.b, self.i)[0]
+            v = self.b[self.i + 4:self.i + 4 + n].decode("utf-8", "replace")
+            self.i += 4 + n + 1
+            return v
+        if c == "g":
+            n = self.b[self.i]
+            v = self.b[self.i + 1:self.i + 1 + n].decode()
+            self.i += 1 + n + 1
+            return v
+        if c == "v":
+            sig = self.get("g")
+            return Var(sig, self.get(sig))
+        if c == "a":
+            n = struct.unpack_from("<I", self.b, self.i)[0]
+            self.i += 4
+            et = t[1:]
+            self.pad(ALIGN[et[0]])
+            end = self.i + n
+            if et[0] == "{":
+                kt, vt = split_sig(et[1:-1])
+                d = {}
+                while self.i < end:
+                    self.pad(8)
+                    k = self.get(kt)
+                    d[k] = self.get(vt)
+                return d
+            out = []
+            while self.i < end:
+                out.append(self.get(et))
+            return out
+        if c == "(":
+            return [self.get(st) for st in split_sig(t[1:-1])]
+        raise ValueError(t)
+
+
+# header field codes
+F_PATH, F_IFACE, F_MEMBER, F_ERROR, F_REPLY, F_DEST, F_SENDER, F_SIG = 1, 2, 3, 4, 5, 6, 7, 8
+
+
+class Bus:
+    def __init__(self):
+        addr = os.environ.get("DBUS_SESSION_BUS_ADDRESS", "")
+        if not addr:
+            addr = "unix:path=/run/user/%d/bus" % os.getuid()
+        self.s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        done = False
+        for part in addr.split(";"):
+            if not part.startswith("unix:"):
+                continue
+            kv = dict(x.split("=", 1) for x in part[5:].split(",") if "=" in x)
+            try:
+                if "path" in kv:
+                    self.s.connect(kv["path"])
+                elif "abstract" in kv:
+                    self.s.connect("\0" + kv["abstract"])
+                else:
+                    continue
+                done = True
+                break
+            except OSError:
+                continue
+        if not done:
+            raise OSError("no session bus")
+        self.s.sendall(b"\0AUTH EXTERNAL " + str(os.getuid()).encode().hex().encode() + b"\r\n")
+        r = self._line()
+        if not r.startswith(b"OK"):
+            raise OSError("D-Bus said no: %r" % r)
+        self.s.sendall(b"BEGIN\r\n")
+        self.serial = 0
+        self.buf = b""
+        self.wait = {}
+
+    def _line(self):
+        d = b""
+        while not d.endswith(b"\r\n"):
+            c = self.s.recv(1)
+            if not c:
+                raise OSError("closed")
+            d += c
+        return d
+
+    def send(self, mtype, fields, sig="", args=(), flags=0):
+        self.serial += 1
+        body = W()
+        for t, a in zip(split_sig(sig), args):
+            body.put(t, a)
+        h = W()
+        h.b += struct.pack("<cBBBII", b"l", mtype, flags, 1, len(body.b), self.serial)
+        fl = []
+        for code, (t, v) in fields.items():
+            fl.append((code, Var(t, v)))
+        if sig:
+            fl.append((F_SIG, Var("g", sig)))
+        h.put("a(yv)", fl)
+        h.pad(8)
+        self.s.sendall(bytes(h.b) + bytes(body.b))
+        return self.serial
+
+    def call(self, dest, path, iface, member, sig="", args=()):
+        return self.send(1, {F_PATH: ("o", path), F_IFACE: ("s", iface), F_MEMBER: ("s", member), F_DEST: ("s", dest)}, sig, args)
+
+    def reply(self, msg, sig="", args=()):
+        f = {F_REPLY: ("u", msg["serial"])}
+        if msg.get("sender"):
+            f[F_DEST] = ("s", msg["sender"])
+        self.send(2, f, sig, args, flags=1)
+
+    def error(self, msg, name, text):
+        f = {F_REPLY: ("u", msg["serial"]), F_ERROR: ("s", name)}
+        if msg.get("sender"):
+            f[F_DEST] = ("s", msg["sender"])
+        self.send(3, f, "s", [text], flags=1)
+
+    def signal(self, path, iface, member, sig, args):
+        self.send(4, {F_PATH: ("o", path), F_IFACE: ("s", iface), F_MEMBER: ("s", member)}, sig, args, flags=1)
+
+    def read(self):
+        """the messages that have fully arrived"""
+        try:
+            d = self.s.recv(65536)
+        except BlockingIOError:
+            d = b""
+        if d == b"" and not self.buf:
+            raise OSError("bus closed")
+        self.buf += d
+        out = []
+        while len(self.buf) >= 16:
+            blen, serial, flen = struct.unpack_from("<III", self.buf, 4)
+            hlen = 16 + flen
+            hlen += (-hlen) % 8
+            total = hlen + blen
+            if len(self.buf) < total:
+                break
+            m = self.buf[:total]
+            self.buf = self.buf[total:]
+            r = R(m, 12)
+            fields = {k: v.val for k, v in r.get("a(yv)")}
+            msg = {"type": m[1], "serial": serial, "path": fields.get(F_PATH), "iface": fields.get(F_IFACE),
+                   "member": fields.get(F_MEMBER), "sender": fields.get(F_SENDER), "sig": fields.get(F_SIG, ""),
+                   "reply": fields.get(F_REPLY), "args": []}
+            if msg["sig"]:
+                br = R(m, hlen)
+                try:
+                    msg["args"] = [br.get(t) for t in split_sig(msg["sig"])]
+                except Exception:
+                    msg["args"] = []
+            out.append(msg)
+        return out
+
+
+INTRO = """<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+ <interface name="org.freedesktop.DBus.Introspectable"><method name="Introspect"><arg name="data" type="s" direction="out"/></method></interface>
+ <interface name="org.freedesktop.DBus.Properties">
+  <method name="Get"><arg type="s" direction="in"/><arg type="s" direction="in"/><arg type="v" direction="out"/></method>
+  <method name="GetAll"><arg type="s" direction="in"/><arg type="a{sv}" direction="out"/></method>
+  <method name="Set"><arg type="s" direction="in"/><arg type="s" direction="in"/><arg type="v" direction="in"/></method>
+  <signal name="PropertiesChanged"><arg type="s"/><arg type="a{sv}"/><arg type="as"/></signal>
+ </interface>
+ <interface name="org.mpris.MediaPlayer2">
+  <method name="Raise"/><method name="Quit"/>
+  <property name="CanQuit" type="b" access="read"/><property name="CanRaise" type="b" access="read"/>
+  <property name="HasTrackList" type="b" access="read"/><property name="Identity" type="s" access="read"/>
+  <property name="DesktopEntry" type="s" access="read"/>
+  <property name="SupportedUriSchemes" type="as" access="read"/><property name="SupportedMimeTypes" type="as" access="read"/>
+ </interface>
+ <interface name="org.mpris.MediaPlayer2.Player">
+  <method name="Next"/><method name="Previous"/><method name="Pause"/><method name="PlayPause"/><method name="Stop"/><method name="Play"/>
+  <method name="Seek"><arg type="x" direction="in"/></method>
+  <method name="SetPosition"><arg type="o" direction="in"/><arg type="x" direction="in"/></method>
+  <method name="OpenUri"><arg type="s" direction="in"/></method>
+  <signal name="Seeked"><arg type="x"/></signal>
+  <property name="PlaybackStatus" type="s" access="read"/><property name="LoopStatus" type="s" access="readwrite"/>
+  <property name="Rate" type="d" access="readwrite"/><property name="Shuffle" type="b" access="readwrite"/>
+  <property name="Metadata" type="a{sv}" access="read"/><property name="Volume" type="d" access="readwrite"/>
+  <property name="Position" type="x" access="read"/><property name="MinimumRate" type="d" access="read"/>
+  <property name="MaximumRate" type="d" access="read"/><property name="CanGoNext" type="b" access="read"/>
+  <property name="CanGoPrevious" type="b" access="read"/><property name="CanPlay" type="b" access="read"/>
+  <property name="CanPause" type="b" access="read"/><property name="CanSeek" type="b" access="read"/>
+  <property name="CanControl" type="b" access="read"/>
+ </interface>
+</node>"""
+
+
+class Player:
+    def __init__(self):
+        self.st = {"status": "Stopped", "pos": 0.0, "len": 0.0, "title": "", "artist": "", "album": "", "art": "", "url": "",
+                   "id": 0, "vol": 1.0, "shuffle": False, "loop": "None", "canNext": False, "canPrev": False}
+        self.stamp = time.time()
+
+    def pos_us(self):
+        p = self.st["pos"]
+        if self.st["status"] == "Playing":
+            p += time.time() - self.stamp
+        if self.st["len"] > 0:
+            p = min(p, self.st["len"])
+        return int(max(0, p) * 1e6)
+
+    def meta(self):
+        m = {"mpris:trackid": Var("o", "/org/mpris/MediaPlayer2/track/%d" % int(self.st["id"] or 0))}
+        if self.st["len"] > 0:
+            m["mpris:length"] = Var("x", int(self.st["len"] * 1e6))
+        if self.st["title"]:
+            m["xesam:title"] = Var("s", self.st["title"])
+        if self.st["artist"]:
+            m["xesam:artist"] = Var("as", [self.st["artist"]])
+        if self.st["album"]:
+            m["xesam:album"] = Var("s", self.st["album"])
+        if self.st["art"]:
+            m["mpris:artUrl"] = Var("s", self.st["art"])
+        if self.st["url"]:
+            m["xesam:url"] = Var("s", self.st["url"])
+        return m
+
+    def props(self, iface):
+        s = self.st
+        if iface == ROOT:
+            return {"CanQuit": Var("b", True), "CanRaise": Var("b", True), "HasTrackList": Var("b", False),
+                    "Identity": Var("s", "Music"), "DesktopEntry": Var("s", "darkshadow-music"),
+                    "SupportedUriSchemes": Var("as", ["file"]),
+                    "SupportedMimeTypes": Var("as", ["audio/mpeg", "audio/flac", "audio/ogg", "audio/opus", "audio/wav", "video/mp4", "video/webm", "video/x-matroska"])}
+        if iface == PLAYER:
+            have = bool(s["url"])
+            return {"PlaybackStatus": Var("s", s["status"]), "LoopStatus": Var("s", s["loop"]), "Rate": Var("d", 1.0),
+                    "Shuffle": Var("b", bool(s["shuffle"])), "Metadata": Var("a{sv}", self.meta()), "Volume": Var("d", float(s["vol"])),
+                    "Position": Var("x", self.pos_us()), "MinimumRate": Var("d", 1.0), "MaximumRate": Var("d", 1.0),
+                    "CanGoNext": Var("b", bool(s["canNext"])), "CanGoPrevious": Var("b", bool(s["canPrev"]) or have),
+                    "CanPlay": Var("b", have), "CanPause": Var("b", have), "CanSeek": Var("b", have and s["len"] > 0),
+                    "CanControl": Var("b", True)}
+        return None
+
+
+def say(line):
+    sys.stdout.write(line + "\n")
+    sys.stdout.flush()
+
+
+def main():
+    try:
+        bus = Bus()
+    except OSError as e:
+        sys.stderr.write("rice-player-mpris: %s\n" % e)
+        # without a bus the Player still plays: just wait for it to quit
+        for _ in sys.stdin:
+            pass
+        return
+    bus.call("org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus", "Hello")
+    bus.call("org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus", "RequestName", "su", [NAME, 4])
+    bus.s.setblocking(False)
+    pl = Player()
+    inbuf = b""
+    fin = sys.stdin.buffer.raw if hasattr(sys.stdin.buffer, "raw") else sys.stdin.buffer
+    os.set_blocking(fin.fileno(), False)
+    while True:
+        r, _, _ = select.select([bus.s, fin], [], [], 30)
+        if fin in r:
+            try:
+                d = os.read(fin.fileno(), 65536)
+            except BlockingIOError:
+                d = None
+            if d == b"":
+                return
+            if d:
+                inbuf += d
+                while b"\n" in inbuf:
+                    line, inbuf = inbuf.split(b"\n", 1)
+                    try:
+                        j = json.loads(line)
+                    except Exception:
+                        continue
+                    before = pl.props(PLAYER)
+                    seeked = j.pop("seeked", False)
+                    for k, v in j.items():
+                        if k in pl.st:
+                            pl.st[k] = v
+                    pl.stamp = time.time()
+                    after = pl.props(PLAYER)
+                    changed = {}
+                    for k, v in after.items():
+                        if k == "Position":
+                            continue
+                        b = before.get(k)
+                        if k == "Metadata":
+                            if {a: x.val for a, x in b.val.items()} != {a: x.val for a, x in v.val.items()}:
+                                changed[k] = v
+                        elif b is None or b.val != v.val:
+                            changed[k] = v
+                    if changed:
+                        bus.signal(PATH, PROPS, "PropertiesChanged", "sa{sv}as", [PLAYER, changed, []])
+                    if seeked:
+                        bus.signal(PATH, PLAYER, "Seeked", "x", [pl.pos_us()])
+        if bus.s in r:
+            try:
+                msgs = bus.read()
+            except OSError:
+                return
+            for m in msgs:
+                if m["type"] != 1:
+                    continue
+                it, mb, a = m["iface"], m["member"], m["args"]
+                try:
+                    if mb == "Introspect":
+                        bus.reply(m, "s", [INTRO])
+                    elif it == PROPS or (it is None and mb in ("Get", "GetAll", "Set")):
+                        if mb == "GetAll":
+                            p = pl.props(a[0]) if a else None
+                            bus.reply(m, "a{sv}", [p or {}])
+                        elif mb == "Get":
+                            p = pl.props(a[0]) or {}
+                            if a[1] in p:
+                                bus.reply(m, "v", [p[a[1]]])
+                            else:
+                                bus.error(m, "org.freedesktop.DBus.Error.UnknownProperty", "No such property")
+                        elif mb == "Set":
+                            name, val = a[1], a[2].val
+                            if name == "Volume":
+                                say("vol %f" % max(0.0, min(1.5, float(val))))
+                            elif name == "Shuffle":
+                                say("shuffle %d" % (1 if val else 0))
+                            elif name == "LoopStatus":
+                                say("loop " + str(val))
+                            bus.reply(m)
+                        else:
+                            bus.error(m, "org.freedesktop.DBus.Error.UnknownMethod", "No such method")
+                    elif it in (PLAYER, None) and mb in ("Play", "Pause", "PlayPause", "Stop", "Next", "Previous", "Seek", "SetPosition", "OpenUri"):
+                        if mb == "Seek":
+                            say("seek %f" % (a[0] / 1e6))
+                        elif mb == "SetPosition":
+                            say("pos %f" % (a[1] / 1e6))
+                        elif mb == "OpenUri":
+                            say("open " + a[0])
+                        else:
+                            say({"Play": "play", "Pause": "pause", "PlayPause": "toggle", "Stop": "stop", "Next": "next", "Previous": "prev"}[mb])
+                        bus.reply(m)
+                    elif it in (ROOT, None) and mb in ("Raise", "Quit"):
+                        say(mb.lower())
+                        bus.reply(m)
+                    elif mb == "Ping":
+                        bus.reply(m)
+                    else:
+                        bus.error(m, "org.freedesktop.DBus.Error.UnknownMethod", "No such method")
+                except Exception as e:
+                    try:
+                        bus.error(m, "org.freedesktop.DBus.Error.Failed", str(e))
+                    except Exception:
+                        pass
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass

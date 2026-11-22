@@ -40,6 +40,9 @@ Singleton {
     readonly property var emph: [0.2, 0, 0, 1, 1, 1]
     // the accent color of your theme (Waybar colors), used by the Google style and the visualizer
     property color accent: "#9ec9bd"
+    // V4.92: a new wallpaper's colors flow in over 0.7 s (not on the first read at start)
+    property bool accentReady: false
+    Behavior on accent { enabled: look.accentReady; ColorAnimation { duration: 700; easing.type: Easing.InOutCubic } }
     // frames a second for the moving parts of the widgets (turning shapes, the visualizer): Settings > Desktop >
     // Frame rate. 0 = as fast as the screen (180 Hz: 180)
     property int fps: 60

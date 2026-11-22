@@ -295,7 +295,6 @@ def default_binds(f, term, files):
         ("Alt+Shift+Tab", "hotkey-overlay-title=null", run(b + "rice-taskview", "back")),
         ("Mod+O", 'repeat=false hotkey-overlay-title="niri overview"', "toggle-overview;"),
         ("Mod+Slash", 'hotkey-overlay-title="Every key of the shell"', run(b + "rice-keymap", "show")),
-        ("Mod+X", 'hotkey-overlay-title="Toolbox"', run(b + "rice-tools", "toggle")),
         ("Mod+Shift+Slash", 'hotkey-overlay-title="These keys"', "show-hotkey-overlay;"),
         ("Mod+Escape", "allow-inhibiting=false", "toggle-keyboard-shortcuts-inhibit;"),
         ("Mod+Shift+P", "", "power-off-monitors;"),
@@ -332,7 +331,7 @@ ACTION_KEYS = {
     "terminal": "Mod+Return", "launcher": "Mod+D", "launcher2": "Alt+Space", "settings": "Mod+U", "wallpaper": "Mod+W",
     "quick": "Mod+A", "cc": "Mod+N", "gamebar": "Mod+G", "dashboard": "Mod+Alt+D", "lock": "Mod+L", "close": "Mod+Q",
     "float": "Mod+Shift+V", "clipboard": "Mod+V", "shot": "Print", "shotfull": "Shift+Print", "record": "Mod+Shift+R", "widgets": "Mod+Alt+W",
-    "taskview": "Mod+Tab", "switcher": "Alt+Tab", "keys": "Mod+Slash", "tools": "Mod+X",
+    "taskview": "Mod+Tab", "switcher": "Alt+Tab", "keys": "Mod+Slash",
 }
 
 

@@ -1,0 +1,337 @@
+#!/usr/bin/env python3
+"""Your account and the other accounts of this computer, for Settings > System > Account (V4.87).
+
+As you:
+  rice-account info                 JSON: you (name, user name, admin ...) and the accounts of this computer
+  rice-account passwd               your password: reads "current\\nnew\\n" on stdin and answers JSON
+  rice-account add                  a new account: reads JSON on stdin (name, user, password, admin, copy)
+  rice-account admin USER on|off    make an account an administrator or a standard one
+  rice-account name "Full name"     your full name
+  rice-account remove USER [keep]   remove an account (keep: its home folder stays)
+Changes to accounts ask for an administrator password (pkexec; sudo in a terminal).
+Passwords only ever go through stdin, never through the command line.
+"""
+import grp
+import json
+import os
+import pty
+import pwd
+import re
+import select
+import signal
+import shutil
+import socket
+import subprocess
+import sys
+import time
+
+USER_RE = re.compile(r"^[a-z_][a-z0-9_-]{0,30}$")
+ADMIN_GROUPS = ("wheel", "sudo", "admin")
+# what "Copy my desktop" takes to the new account (the shell, its apps and their settings, not your files)
+COPY_CONFIG = ["quickshell", "hypr", "niri", "rice", "kitty", "fastfetch", "cava", "matugen", "MangoHud", "yazi",
+               "fish", "gtk-3.0", "gtk-4.0", "qt5ct", "qt6ct", "Kvantum", "dunst", "rofi", "btop", "nvim",
+               "hyprquickpaper", "illogical-impulse", "starship.toml", "mimeapps.list", "pipewire", "wireplumber"]
+COPY_HOME = [".bashrc", ".bash_profile", ".zshrc", ".face", ".face.icon", ".local/bin", ".local/share/fonts",
+             ".local/share/icons", ".local/share/applications", ".local/share/themes", ".icons", ".themes"]
+COPY_SKIP = {"Wallpapers", "Recordings", "Screenshots", ".cache", "cache"}
+
+
+def out(obj, code=0):
+    print(json.dumps(obj))
+    sys.exit(code)
+
+
+def admin_group():
+    for g in ADMIN_GROUPS:
+        try:
+            grp.getgrnam(g)
+            return g
+        except KeyError:
+            pass
+    return ""
+
+
+def is_admin(user, gid):
+    for g in ADMIN_GROUPS:
+        try:
+            e = grp.getgrnam(g)
+        except KeyError:
+            continue
+        if user in e.gr_mem or e.gr_gid == gid:
+            return True
+    return False
+
+
+def face_of(p):
+    for f in ("/var/lib/AccountsService/icons/" + p.pw_name, os.path.join(p.pw_dir, ".face")):
+        try:
+            if os.path.isfile(f) and os.access(f, os.R_OK):
+                return f
+        except OSError:
+            pass
+    return ""
+
+
+def human(p):
+    return 1000 <= p.pw_uid < 60000 and not p.pw_shell.endswith(("nologin", "/false")) and p.pw_name != "nobody"
+
+
+def full_name(p):
+    return p.pw_gecos.split(",")[0].strip()
+
+
+def info():
+    me = pwd.getpwuid(os.getuid())
+    users = []
+    for p in sorted(pwd.getpwall(), key=lambda x: x.pw_uid):
+        if not human(p):
+            continue
+        users.append({"user": p.pw_name, "name": full_name(p), "uid": p.pw_uid, "admin": is_admin(p.pw_name, p.pw_gid),
+                      "me": p.pw_uid == me.pw_uid, "face": face_of(p)})
+    out({"user": me.pw_name, "name": full_name(me), "uid": me.pw_uid, "home": me.pw_dir,
+         "shell": os.path.basename(me.pw_shell), "host": socket.gethostname(),
+         "admin": is_admin(me.pw_name, me.pw_gid), "group": admin_group(), "users": users,
+         "pkexec": shutil.which("pkexec") is not None})
+
+
+def passwd():
+    """Runs passwd in a terminal of its own and answers its questions (in English, LC_ALL=C)."""
+    lines = sys.stdin.read().split("\n")
+    if len(lines) < 2 or not lines[1]:
+        out({"ok": False, "error": "empty"}, 1)
+    cur, new = lines[0], lines[1]
+    pid, fd = pty.fork()
+    if pid == 0:
+        os.environ["LC_ALL"] = "C"
+        os.execvp("passwd", ["passwd"])
+    buf, sent, deadline = "", 0, time.time() + 25
+    answers = [cur, new, new]
+    while time.time() < deadline:
+        r, _, _ = select.select([fd], [], [], 0.5)
+        if fd in r:
+            try:
+                chunk = os.read(fd, 1024).decode(errors="replace")
+            except OSError:
+                break
+            if not chunk:
+                break
+            buf += chunk
+            tail = buf.lower().rstrip()
+            if tail.endswith(":") and sent >= len(answers):
+                break    # it asks again (a weak password): stop here, the answer comes from what it said
+            if tail.endswith(":") and sent < len(answers):
+                # the first question may already be the new password (no current one asked)
+                if sent == 0 and "new" in tail.splitlines()[-1]:
+                    answers = [new, new]
+                os.write(fd, (answers[sent] + "\n").encode())
+                sent += 1
+                buf += "\n"
+        else:
+            try:
+                done, _ = os.waitpid(pid, os.WNOHANG)
+            except ChildProcessError:
+                break
+            if done:
+                break
+    code = 1
+    try:
+        done, status = os.waitpid(pid, os.WNOHANG)
+        if done == 0:
+            time.sleep(0.5)
+            done, status = os.waitpid(pid, os.WNOHANG)
+        if done == 0:
+            os.kill(pid, signal.SIGTERM)
+            os.waitpid(pid, 0)
+        else:
+            code = os.waitstatus_to_exitcode(status)
+    except (ChildProcessError, ProcessLookupError):
+        pass
+    low = buf.lower()
+    if code == 0 and ("success" in low or "updated" in low or "changed" in low or sent >= len(answers)):
+        out({"ok": True})
+    why = "wrong" if ("authentication" in low or "incorrect" in low or "failure" in low) else "weak" if (
+        "bad password" in low or "short" in low or "simple" in low or "dictionary" in low or "palindrome" in low) else "other"
+    last = [x.strip() for x in buf.splitlines() if x.strip() and not x.strip().endswith(":")]
+    out({"ok": False, "error": why, "detail": last[-1] if last else ""}, 1)
+
+
+def as_root(args, data=None):
+    """Runs this script again as root (pkexec shows a password window; sudo in a terminal)."""
+    me = os.path.realpath(__file__)
+    if sys.stdin.isatty() and shutil.which("sudo"):
+        cmd = ["sudo", sys.executable, me] + args
+    elif shutil.which("pkexec"):
+        cmd = ["pkexec", sys.executable, me] + args
+    else:
+        out({"ok": False, "error": "nopkexec"}, 1)
+    p = subprocess.run(cmd, input=json.dumps(data or {}), text=True, capture_output=True)
+    if p.returncode in (126, 127) and "pkexec" in cmd[0]:
+        out({"ok": False, "error": "cancelled"}, 1)
+    txt = p.stdout.strip().splitlines()
+    try:
+        res = json.loads(txt[-1]) if txt else {}
+    except ValueError:
+        res = {}
+    if not res:
+        res = {"ok": p.returncode == 0, "error": (p.stderr.strip().splitlines() or ["other"])[-1]}
+    out(res, 0 if res.get("ok") else 1)
+
+
+def clean_name(s):
+    return re.sub(r"[:,\n\r\t=]", " ", str(s or "")).strip()[:80]
+
+
+# ---------------- as root ----------------
+def caller():
+    """The account that asked (pkexec and sudo say who): never trusted from the command line."""
+    uid = os.environ.get("PKEXEC_UID") or os.environ.get("SUDO_UID")
+    if os.getuid() != 0 or not uid:
+        out({"ok": False, "error": "needs root"}, 1)
+    return pwd.getpwuid(int(uid))
+
+
+def run(cmd, data=None):
+    p = subprocess.run(cmd, input=data, text=True, capture_output=True)
+    if p.returncode != 0:
+        out({"ok": False, "error": (p.stderr.strip().splitlines() or [" ".join(cmd[:2])])[-1]}, 1)
+
+
+def copy_desktop(src, dst):
+    """The shell and its apps' settings go to the new account; its paths point to the new home."""
+    pairs = [(os.path.join(src.pw_dir, ".config", n), os.path.join(dst.pw_dir, ".config", n)) for n in COPY_CONFIG]
+    pairs += [(os.path.join(src.pw_dir, n), os.path.join(dst.pw_dir, n)) for n in COPY_HOME]
+    repo = ""
+    try:
+        with open(os.path.join(src.pw_dir, ".config/rice/repo")) as f:
+            repo = f.read().strip()
+    except OSError:
+        pass
+    if repo and repo.startswith(src.pw_dir + "/") and os.path.isdir(repo):
+        pairs.append((repo, dst.pw_dir + repo[len(src.pw_dir):]))
+    ign = shutil.ignore_patterns(*COPY_SKIP)
+    for a, b in pairs:
+        if os.path.islink(a) or not os.path.exists(a):
+            continue
+        os.makedirs(os.path.dirname(b), exist_ok=True)
+        if os.path.isdir(a):
+            shutil.copytree(a, b, symlinks=True, ignore=ign, dirs_exist_ok=True)
+        else:
+            shutil.copy2(a, b)
+    # paths inside the copied text files: /home/you -> /home/new
+    old, new = src.pw_dir.encode(), dst.pw_dir.encode()
+    roots = [os.path.join(dst.pw_dir, ".config"), os.path.join(dst.pw_dir, ".local/bin")]
+    if repo:
+        roots.append(dst.pw_dir + repo[len(src.pw_dir):])
+    for r in roots:
+        for d, _, files in os.walk(r):
+            if "/.git" in d:
+                continue
+            for n in files:
+                f = os.path.join(d, n)
+                try:
+                    if os.path.islink(f) or os.path.getsize(f) > 2_000_000:
+                        continue
+                    with open(f, "rb") as h:
+                        b = h.read()
+                    if b"\0" in b[:4096] or old not in b:
+                        continue
+                    with open(f, "wb") as h:
+                        h.write(b.replace(old, new))
+                except OSError:
+                    pass
+    for n in ("Pictures/Wallpapers", "Videos/Recordings", "Pictures/Screenshots"):
+        os.makedirs(os.path.join(dst.pw_dir, n), exist_ok=True)
+    run(["chown", "-R", "--no-dereference", "%d:%d" % (dst.pw_uid, dst.pw_gid), dst.pw_dir])
+
+
+def root_add():
+    me = caller()
+    d = json.loads(sys.stdin.read() or "{}")
+    user, name, pw = str(d.get("user", "")), clean_name(d.get("name")), str(d.get("password", ""))
+    if not USER_RE.match(user):
+        out({"ok": False, "error": "user name"}, 1)
+    try:
+        pwd.getpwnam(user)
+        out({"ok": False, "error": "taken"}, 1)
+    except KeyError:
+        pass
+    if not pw or "\n" in pw or ":" in user:
+        out({"ok": False, "error": "password"}, 1)
+    shell = me.pw_shell if me.pw_shell and os.path.exists(me.pw_shell) else "/bin/bash"
+    cmd = ["useradd", "-m", "-s", shell]
+    if name:
+        cmd += ["-c", name]
+    g = admin_group()
+    if d.get("admin") and g:
+        cmd += ["-G", g]
+    run(cmd + [user])
+    run(["chpasswd"], "%s:%s\n" % (user, pw))
+    if d.get("copy"):
+        copy_desktop(me, pwd.getpwnam(user))
+    out({"ok": True, "user": user})
+
+
+def root_admin(user, on):
+    me = caller()
+    if user == me.pw_name:
+        out({"ok": False, "error": "self"}, 1)
+    p = pwd.getpwnam(user)
+    if not human(p):
+        out({"ok": False, "error": "not a person"}, 1)
+    g = admin_group()
+    if not g:
+        out({"ok": False, "error": "no admin group"}, 1)
+    run(["gpasswd", "-a" if on == "on" else "-d", user, g])
+    out({"ok": True})
+
+
+def root_name(name):
+    me = caller()
+    run(["usermod", "-c", clean_name(name), me.pw_name])
+    out({"ok": True})
+
+
+def root_remove(user, keep):
+    me = caller()
+    p = pwd.getpwnam(user)
+    if user == me.pw_name or not human(p):
+        out({"ok": False, "error": "self"}, 1)
+    if subprocess.run(["pgrep", "-u", user], capture_output=True).returncode == 0:
+        out({"ok": False, "error": "busy"}, 1)
+    run(["userdel"] + ([] if keep else ["-r"]) + [user])
+    out({"ok": True})
+
+
+def main():
+    a = sys.argv[1:]
+    c = a[0] if a else "info"
+    if c == "info":
+        info()
+    elif c == "passwd":
+        passwd()
+    elif c == "add":
+        d = json.loads(sys.stdin.read() or "{}")
+        if not USER_RE.match(str(d.get("user", ""))):
+            out({"ok": False, "error": "user name"}, 1)
+        as_root(["root-add"], d)
+    elif c == "admin" and len(a) == 3 and USER_RE.match(a[1]):
+        as_root(["root-admin", a[1], "on" if a[2] == "on" else "off"])
+    elif c == "name" and len(a) == 2:
+        as_root(["root-name", clean_name(a[1])])
+    elif c == "remove" and len(a) >= 2 and USER_RE.match(a[1]):
+        as_root(["root-remove", a[1]] + (["keep"] if a[2:3] == ["keep"] else []))
+    elif c == "root-add":
+        root_add()
+    elif c == "root-admin" and len(a) == 3 and USER_RE.match(a[1]):
+        root_admin(a[1], a[2])
+    elif c == "root-name" and len(a) == 2:
+        root_name(a[1])
+    elif c == "root-remove" and len(a) >= 2 and USER_RE.match(a[1]):
+        root_remove(a[1], a[2:3] == ["keep"])
+    else:
+        print(__doc__.strip())
+        sys.exit(2)
+
+
+if __name__ == "__main__":
+    main()

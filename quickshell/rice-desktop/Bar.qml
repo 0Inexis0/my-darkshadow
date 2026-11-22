@@ -525,9 +525,9 @@ PanelWindow {
             readonly property string title: tl ? (tl.title || "") : ""
             // the app's icon name, worked out a moment after the window changes (never inside that change)
             property string appId: ""
-            Timer { id: idT; interval: 120; onTriggered: tt.appId = tt.tl && tt.tl.appId ? tt.tl.appId : "" }
+            Timer { id: idT; interval: 120; onTriggered: tt.appId = tt.tl ? Icons.appKey(tt.tl.appId, tt.tl.title) : "" }
             onTlChanged: idT.restart()
-            Connections { target: tt.tl; ignoreUnknownSignals: true; function onAppIdChanged() { idT.restart() } }
+            Connections { target: tt.tl; ignoreUnknownSignals: true; function onAppIdChanged() { idT.restart() } function onTitleChanged() { idT.restart() } }
             Component.onCompleted: idT.restart()
             readonly property string iconName: {
                 if (appId === "") return ""

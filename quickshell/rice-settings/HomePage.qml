@@ -233,125 +233,31 @@ Item {
                 }
             }
 
-            // Light mode: one switch for slower computers, right on Home
-            Rectangle {
-                // found by the search in the sidebar
-                property string label: I18n.t("Light mode")
-                property string desc: I18n.t("Running slow? Turn off blur, transparency and shadows, animations stay; performance")
-                property real reserved: 80
-                width: parent.width
-                height: 76
-                radius: 14
-                color: M3.surfaceC
-                border.width: 1
-                border.color: page.lite ? M3.primary : M3.outlineVariant
-                Behavior on border.color { ColorAnimation { duration: 160 } }
-                Rectangle {
-                    id: litei
-                    x: 14
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 40; height: 40; radius: 12
-                    color: Qt.rgba(1, 1, 1, page.lite ? 0.14 : 0.06)
-                    T { kind: "icon"; anchors.centerIn: parent; text: "\uf0e7"; font.pixelSize: 17 }
-                }
-                Column {
-                    anchors.left: litei.right
-                    anchors.leftMargin: 12
-                    anchors.right: litetog.left
-                    anchors.rightMargin: 12
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
-                    T { text: I18n.t("Light mode"); font.pixelSize: 13; font.bold: true }
-                    T { kind: "reading"; text: I18n.t("Running slow? No blur or shadows, widgets rest when a window covers them. Animations stay"); color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
-                }
-                Tog {
-                    id: litetog
-                    anchors.right: parent.right; anchors.rightMargin: 16
-                    anchors.verticalCenter: parent.verticalCenter
-                    checked: page.lite
-                    onToggled: function(v) { page.setLite(v) }
-                }
+            // Light mode, auto-hide and the stars: one group of switches right on Home
+            ToggleRow {
+                label: I18n.t("Light mode")
+                desc: I18n.t("Running slow? No blur or shadows, widgets rest when a window covers them. Animations stay")
+                icon: "\uf0e7"; sym: "bolt"; lit: page.lite
+                checked: page.lite
+                onToggled: function(v) { page.setLite(v) }
             }
-
-            // Auto-hide widgets: the desktop widgets rest while a window covers the screen
-            Rectangle {
-                property string label: I18n.t("Auto-hide widgets")
-                property string desc: I18n.t("Hide the desktop widgets while a window covers the screen; floating windows leave them alone")
-                property real reserved: 80
+            ToggleRow {
                 readonly property bool on: page.ctl.dst.autoHide === true || page.lite
-                width: parent.width
-                height: 76
-                radius: 14
-                color: M3.surfaceC
-                border.width: 1
-                border.color: on ? M3.primary : M3.outlineVariant
-                Behavior on border.color { ColorAnimation { duration: 160 } }
-                Rectangle {
-                    id: ahi
-                    x: 14
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 40; height: 40; radius: 12
-                    color: Qt.rgba(1, 1, 1, parent.on ? 0.14 : 0.06)
-                    T { kind: "icon"; anchors.centerIn: parent; text: parent.parent.on ? "\uf070" : "\uf06e"; font.pixelSize: 17 }
-                }
-                Column {
-                    anchors.left: ahi.right
-                    anchors.leftMargin: 12
-                    anchors.right: ahtog.left
-                    anchors.rightMargin: 12
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
-                    T { text: I18n.t("Auto-hide widgets"); font.pixelSize: 13; font.bold: true }
-                    T { kind: "reading"; text: page.lite ? I18n.t("On while Light mode is on") : I18n.t("Widgets hide while a window covers the screen, and come back on an empty desktop"); color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
-                }
-                Tog {
-                    id: ahtog
-                    anchors.right: parent.right; anchors.rightMargin: 16
-                    anchors.verticalCenter: parent.verticalCenter
-                    checked: parent.on
-                    onToggled: function(v) { page.ctl.setAutoHide(v) }
-                }
+                label: I18n.t("Auto-hide widgets")
+                desc: page.lite ? I18n.t("On while Light mode is on") : I18n.t("Widgets hide while a window covers the screen, and come back on an empty desktop")
+                icon: on ? "\uf070" : "\uf06e"; sym: on ? "visibility_off" : "visibility"; lit: on
+                checked: on
+                onToggled: function(v) { page.ctl.setAutoHide(v) }
+            }
+            ToggleRow {
+                label: I18n.t("Falling stars")
+                desc: I18n.t("Comets falling across this window")
+                icon: "\uf005"; sym: "auto_awesome"; lit: page.ctl.stars
+                checked: page.ctl.stars
+                onToggled: function(v) { page.ctl.setStars(v) }
             }
 
-            // the falling stars across this window
-            Rectangle {
-                property string label: I18n.t("Falling stars")
-                property string desc: I18n.t("Comets falling across this window; turn them off for a calm look")
-                property real reserved: 80
-                width: parent.width
-                height: 64
-                radius: 14
-                color: M3.surfaceC
-                border.width: 1
-                border.color: M3.outlineVariant
-                Rectangle {
-                    id: starsi
-                    x: 14
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 36; height: 36; radius: 11
-                    color: Qt.rgba(1, 1, 1, page.ctl.stars ? 0.12 : 0.06)
-                    T { kind: "icon"; anchors.centerIn: parent; text: "\uf005"; font.pixelSize: 15 }
-                }
-                Column {
-                    anchors.left: starsi.right
-                    anchors.leftMargin: 12
-                    anchors.right: starstog.left
-                    anchors.rightMargin: 12
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
-                    T { text: I18n.t("Falling stars"); font.pixelSize: 13; font.bold: true }
-                    T { kind: "reading"; text: I18n.t("Comets falling across this window"); color: M3.inkDim; font.pixelSize: 11; width: parent.width; elide: Text.ElideRight }
-                }
-                Tog {
-                    id: starstog
-                    anchors.right: parent.right; anchors.rightMargin: 16
-                    anchors.verticalCenter: parent.verticalCenter
-                    checked: page.ctl.stars
-                    onToggled: function(v) { page.ctl.setStars(v) }
-                }
-            }
-
-            T { kind: "title"; text: I18n.t("Make it yours"); font.pixelSize: 16; font.bold: true; topPadding: 10 }
+            SectionTitle { text: I18n.t("Make it yours") }
 
             Flow {
                 id: quick

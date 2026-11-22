@@ -32,6 +32,14 @@ def name_of(pid):
         return "shell (desktop)", full
     if "quickshell/rice-settings" in full:
         return "Settings", full
+    if "quickshell/rice-apps" in full:
+        # our Files, Photos or Music / Videos (which one: its environment says)
+        try:
+            env = open("/proc/%s/environ" % pid, "rb").read().split(b"\0")
+            app = next((e[9:].decode() for e in env if e.startswith(b"RICE_APP=")), "files")
+        except OSError:
+            app = "files"
+        return {"files": "Files", "photos": "Photos", "player": "Music / Videos"}.get(app, app) + " (app)", full
     if not any(exe.startswith(m) or exe == m for m in MINE):
         return None, None
     return exe, full

@@ -277,7 +277,7 @@ Item {
                 Btn { anchors.right: parent.right; anchors.rightMargin: 14; anchors.verticalCenter: parent.verticalCenter; text: I18n.t("Open"); onClicked: page.ctl.page = 19 }
             }
 
-            T { kind: "title"; text: I18n.t("Autostart"); font.pixelSize: 16; font.bold: true; topPadding: 18 }
+            SectionTitle { text: I18n.t("Autostart") }
 
             AutostartPage { width: parent.width; ctl: page.ctl }
         }

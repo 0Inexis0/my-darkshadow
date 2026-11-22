@@ -181,7 +181,7 @@ Item {
                 MouseArea { id: blMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.ctl.page = 3 }
             }
 
-            T { kind: "title"; text: I18n.t("Style"); font.pixelSize: 16; font.bold: true; topPadding: 10 }
+            SectionTitle { text: I18n.t("Style") }
             SegRow {
                 label: I18n.t("Bar style")
                 desc: prev.sty === "edge" ? I18n.t("Edge: like Dynamic, but every part of the bar is one piece with the screen edge") : I18n.t("Dynamic: tonal pills in your theme color and an island in the middle that grows")
@@ -265,7 +265,7 @@ Item {
             }
 
             // ---------- launcher icon ----------
-            T { kind: "title"; text: I18n.t("Launcher icon"); font.pixelSize: 16; font.bold: true; topPadding: 10 }
+            SectionTitle { text: I18n.t("Launcher icon") }
             T { kind: "reading"; text: I18n.t("The button that opens the launcher. Auto picks the logo of the system you run."); color: M3.inkDim; font.pixelSize: 12 }
             Flow {
                 width: parent.width
@@ -324,7 +324,7 @@ Item {
                 }
             }
 
-            T { kind: "title"; text: I18n.t("Content"); font.pixelSize: 16; font.bold: true; topPadding: 10 }
+            SectionTitle { text: I18n.t("Content") }
             SegRow {
                 label: I18n.t("Workspaces")
                 desc: I18n.t("How many dots are always shown (more appear when you use them)")
@@ -346,7 +346,7 @@ Item {
                 onToggled: function(x) { page.setv("seconds", x ? "on" : "off") }
             }
 
-            T { kind: "title"; text: I18n.t("Old bar"); font.pixelSize: 16; font.bold: true; topPadding: 10 }
+            SectionTitle { text: I18n.t("Old bar") }
             ToggleRow {
                 label: I18n.t("Use Waybar instead")
                 desc: I18n.t("Go back to the old Waybar if the DarkShadow bar gives you trouble. Waybar needs to be installed")

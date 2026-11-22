@@ -54,7 +54,7 @@ Item {
             width: flick.width
             spacing: 10
 
-            T { kind: "title"; text: I18n.t("Dock"); font.pixelSize: 16; font.bold: true }
+            SectionTitle { text: I18n.t("Dock") }
 
             // live preview of the dock
             Rectangle {
@@ -127,6 +127,13 @@ Item {
                 current: page.dv("position", "bottom") === "top" ? "bottom" : page.dv("position", "bottom")
                 onChosen: function(x) { page.ctl.dset("dock", "position", x) }
             }
+            SegRow {
+                label: I18n.t("Style")
+                desc: I18n.t("Sizes, spacing and icons: Edit mode, Dock and Icons tabs (right click on the dock)")
+                options: [{ label: I18n.t("Floating"), value: "floating" }, { label: I18n.t("Pills"), value: "pills" }, { label: I18n.t("Full"), value: "full" }]
+                current: page.dv("style", "floating")
+                onChosen: function(x) { page.ctl.dset("dock", "style", x) }
+            }
             ToggleRow {
                 label: I18n.t("Background")
                 desc: I18n.t("Draw a panel behind the icons")
@@ -165,7 +172,7 @@ Item {
                 onToggled: function(v) { page.ctl.dset("dock", "pinnedStartup", v ? "on" : "off") }
             }
 
-            T { kind: "title"; text: I18n.t("Buttons"); font.pixelSize: 16; font.bold: true; topPadding: 8 }
+            SectionTitle { text: I18n.t("Buttons") }
 
             ToggleRow {
                 label: I18n.t("Media player")
@@ -263,18 +270,31 @@ Item {
                 }
             }
 
+            // V4.89: the dock's own tab and its icons live in Edit mode now (these two switches still work: they
+            // hand the icons back to them)
+            SettingRow {
+                label: I18n.t("Dock and icons in Edit mode")
+                desc: I18n.t("Its look, sizes and pinned apps, and icon styles, shapes and packs, with the dock in sight")
+                reserved: 230
+                Row {
+                    anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
+                    spacing: 8
+                    Btn { text: I18n.t("Dock"); variant: "tonal"; onClicked: Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" edit on dock"]) }
+                    Btn { text: I18n.t("Icons"); variant: "tonal"; onClicked: Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" edit on icons"]) }
+                }
+            }
             ToggleRow {
                 label: I18n.t("Tint app icons")
                 desc: I18n.t("Paint icons in a single neutral tone")
                 checked: page.dv("tint", false) === true
-                onToggled: function(v) { page.ctl.dset("dock", "tint", v ? "on" : "off") }
+                onToggled: function(v) { page.ctl.dset("dock", "tint", v ? "on" : "off"); page.ctl.dset("icons", "look", "auto") }
             }
             ToggleRow {
                 visible: page.dv("tint", false) !== true
                 label: I18n.t("Match the wallpaper")
                 desc: I18n.t("App icons take a shade of your wallpaper's color")
                 checked: page.dv("shade", true) !== false
-                onToggled: function(v) { page.ctl.dset("dock", "shade", v ? "on" : "off") }
+                onToggled: function(v) { page.ctl.dset("dock", "shade", v ? "on" : "off"); page.ctl.dset("icons", "look", "auto") }
             }
 
             T {

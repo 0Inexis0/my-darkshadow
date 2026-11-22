@@ -43,7 +43,7 @@ case "$1" in
     running && exit 0
     [ -f "$dir/shell.qml" ] || { echo "missing $dir/shell.qml" >&2; exit 1; }
     "$HOME/.local/bin/desktop-set" state >/dev/null 2>&1
-    setsid -f qs -n -p "$dir" >/dev/null 2>&1
+    setsid -f "$HOME/.local/bin/rice-desktop" keep >/dev/null 2>&1
     ;;
   stop) pkill -f "quickshell/rice-desktop" ;;
   restart)
@@ -57,8 +57,35 @@ case "$1" in
     [ -x "$HOME/.local/bin/rice-rules" ] && setsid -f "$HOME/.local/bin/rice-rules" watch >/dev/null 2>&1
     [ -x "$HOME/.local/bin/rice-update" ] && setsid -f "$HOME/.local/bin/rice-update" watch >/dev/null 2>&1
     for _ in 1 2 3 4 5 6 7 8 9 10; do running || break; sleep 0.2; done
-    setsid -f qs -n -p "$dir" >/dev/null 2>&1
+    setsid -f "$HOME/.local/bin/rice-desktop" keep >/dev/null 2>&1
     ;;
   status) running && echo running || { echo stopped; exit 1; } ;;
-  *) echo "usage: rice-desktop start|stop|restart|ensure|status" >&2; exit 1 ;;
+  # V4.94: the shell runs under this: after a crash it starts again by itself (at most 4 times in 2 minutes; a stop
+  # or a restart ends it normally, so nothing comes back then). What it says goes to ~/.cache/rice/desktop.log
+  keep)
+    log="$HOME/.cache/rice/desktop.log"
+    mkdir -p "$HOME/.cache/rice"
+    n=0; t0=$(date +%s)
+    while :; do
+      # the log keeps its last part only
+      if [ -f "$log" ] && [ "$(stat -c %s "$log" 2>/dev/null || echo 0)" -gt 1000000 ]; then tail -n 2000 "$log" >"$log.old" && mv -f "$log.old" "$log"; fi
+      echo "--- $(date '+%F %T') the shell starts" >>"$log"
+      qs -n -p "$dir" >>"$log" 2>&1
+      c=$?
+      # stopped on purpose (rice-desktop stop / restart, a logout) or ended normally
+      case "$c" in 0|130|143) break ;; esac
+      now=$(date +%s)
+      [ $((now - t0)) -gt 120 ] && { n=0; t0=$now; }
+      n=$((n + 1))
+      echo "--- $(date '+%F %T') the shell stopped (code $c)" >>"$log"
+      if [ "$n" -gt 4 ]; then
+        notify-send -a "DarkShadow's Shell" "The shell keeps crashing" "Run rice-doctor in a terminal: it tells what is wrong (NVIDIA drivers most of all)." 2>/dev/null
+        break
+      fi
+      running && break        # another one came up in the meantime
+      sleep 1
+    done
+    ;;
+  report) exec "$HOME/.local/bin/rice-doctor" ;;
+  *) echo "usage: rice-desktop start|stop|restart|ensure|status|report" >&2; exit 1 ;;
 esac

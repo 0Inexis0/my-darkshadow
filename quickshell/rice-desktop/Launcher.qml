@@ -2,39 +2,34 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import QtQuick
-import QtQuick.Effects
 
-// The DarkShadow Launcher: the app launcher of this shell (Settings > Rofi > Launcher). It looks like Rofi does and
-// uses the same settings (theme, style, position, width, corners, transparency, icons, font size, lines).
+// The DarkShadow Launcher: the app launcher of this shell (Settings > Launcher, SUPER + R, ALT + Space), in Material 3
+// Expressive (LauncherM3.qml draws it) in your theme's colors and the icon style of Edit mode > Icons. V4.91: three
+// styles: Drawer (big icons, filter chips, all apps in a grid), Spotlight (a search bar and a list that grows as you
+// type) and Side sheet (a tall panel at the edge of the screen). This file finds things; LauncherM3.qml shows them.
 // Type to search, arrows or Tab to move, Enter to open, Esc to close. "2+2" calculates and "10 km in mi" or "100 usd pln" converts (Enter copies the result),
 // files in your home show after three letters ("/" in front: only files), anything else can be searched on the web. The apps you open most come first.
 PanelWindow {
     screen: Mon.screen
     id: ln
     property bool open: false
-    property real t: 0
-    Behavior on t { NumberAnimation { duration: 170; easing.type: Easing.OutCubic } }
-    onOpenChanged: t = open ? 1 : 0
+    onOpenChanged: if (!open) { ctx = null; qs = false }
 
     // ---------- settings (rice-rofi state) ----------
     property var rs: ({})
-    readonly property var fallbackTh: ({ bg: "#0d0d0d", alt: "#1a1a1a", fg: "#F6F5F4", dim: "#8a8a8a", sel: "#F6F5F4", selfg: "#0d0d0d", bd: "#ffffff1a" })
-    readonly property var th: rs.themes && rs.themes[rs.theme] ? rs.themes[rs.theme] : fallbackTh
-    readonly property string lay: rs.layout === "grid" || rs.layout === "bar" || rs.layout === "split" ? rs.layout : "list"
+    // the style: drawer (the old List, Grid, Split, Bar and Classic come here too), spotlight, side
+    readonly property string lay: rs.layout === "spotlight" || rs.layout === "side" ? rs.layout : "drawer"
     readonly property string where: rs.position === "top" || rs.position === "bottom" ? rs.position : "center"
     readonly property real alpha: rs.transparency === false ? 1 : (rs.opacity !== undefined ? rs.opacity : 0.82)
     readonly property bool icons: rs.icons !== false
-    readonly property int fs: rs.font_size ? rs.font_size : 13
-    // the same font as Rofi: rice-rofi's font (your mono font) at the same size (Rofi sizes are points)
-    readonly property string ff: Fonts.main
-    readonly property int px: Math.round(fs * 4 / 3)
     readonly property int nlines: rs.lines ? rs.lines : 8
-    readonly property real rad: lay === "bar" ? 0 : (rs.radius !== undefined ? rs.radius : 18)
-    readonly property real cw: lay === "bar" ? width : (lay === "grid" ? Math.max(rs.width ? rs.width : 620, 720) : (lay === "split" ? Math.max(rs.width ? rs.width : 620, 860) : (rs.width ? rs.width : 620)))
-    readonly property bool listy: lay === "list" || lay === "split"
-    readonly property real leftW: lay === "split" ? Math.round(cw * 0.36) : 0
-    readonly property string wall: rs.wallpaper ? "file://" + rs.wallpaper : ""
-    function col(h, a) {            // "#rrggbb" or "#rrggbbaa" (like rofi) to a color
+    readonly property string ff: Fonts.main
+    readonly property bool mat: true
+    NPal { id: lpal; theme: "shell"; alpha: Math.max(0.6, ln.alpha) }
+    // the menus' colors (col() turns them into colors with their own see-through)
+    readonly property var th: ({ bg: lpal.surface, alt: lpal.card, fg: lpal.fg, dim: lpal.dim, sel: lpal.primary, selfg: lpal.inkPrimary, bd: lpal.line })
+    function col(h, a) {            // "#rrggbb" or "#rrggbbaa" (like rofi) to a color; a color stays one
+        if (typeof h === "object" && h !== null) return Qt.rgba(h.r, h.g, h.b, a !== undefined ? a : h.a)
         const s = String(h).replace("#", "")
         const al = s.length >= 8 ? parseInt(s.substr(6, 2), 16) / 255 : 1
         return Qt.rgba(parseInt(s.substr(0, 2), 16) / 255, parseInt(s.substr(2, 2), 16) / 255, parseInt(s.substr(4, 2), 16) / 255, a !== undefined ? a : al)
@@ -63,6 +58,10 @@ PanelWindow {
     }
     property int cur: 0
     readonly property var apps: DesktopEntries.applications.values.filter(function(e) { return !e.noDisplay })
+    // the app list was read again (an app was installed or removed, rice-app wrote its entries): Quickshell deletes
+    // the old entries, so the results are made again at once. Kept, they pointed at deleted entries and the whole
+    // shell crashed the next time the launcher showed them (V4.85)
+    onAppsChanged: Qt.callLater(recompute)
     property var results: []
     function sub(s, q) {            // letters of q appear in s in order
         let i = 0
@@ -100,10 +99,15 @@ PanelWindow {
             const u = Math.min(usage[e.id] || 0, 30)
             const fv = favs.indexOf(e.id)
             const fb = fv >= 0 ? 100000 - fv : 0
+            if (lay !== "spotlight" && cat !== "" && !inCat(e, cat, fv >= 0)) continue
             if (q === "") list.push({ e: e, s: u * 10 + fb })
             else { const sc = score(e, q); if (sc >= 0) list.push({ e: e, s: sc + u * 4 + (fv >= 0 ? 150 : 0) }) }
         }
-        list.sort(function(a, b) { return b.s !== a.s ? b.s - a.s : (a.e.name || "").localeCompare(b.e.name || "") })
+        // the drawer and the side sheet before you type: the grid goes A to Z (the most used are the big icons above it)
+        const az = lay !== "spotlight" && q === ""
+        if (az) { freqList = list.slice().sort(function(a, b) { return b.s - a.s }).filter(function(x) { return x.s > 0 }).slice(0, 8).map(function(x) {
+                      return { kind: "app", name: x.e.name, sub: "", entry: x.e, id: x.e.id } }) }
+        list.sort(function(a, b) { return !az && b.s !== a.s ? b.s - a.s : (a.e.name || "").localeCompare(b.e.name || "") })
         const c = q !== "" ? calc(query) : null
         if (c !== null) out.push({ kind: "calc", name: "= " + c, sub: Tr.t("Press Enter to copy the result"), val: c })
         // "10 km in mi", "100 usd pln": units and money (Conv.qml; the rates are fetched only when you type money)
@@ -114,17 +118,83 @@ PanelWindow {
         }
         for (let i = 0; i < list.length && i < 80; i++)
             out.push({ kind: "app", name: list[i].e.name, sub: list[i].e.genericName || list[i].e.comment || "", entry: list[i].e, id: list[i].e.id })
-        // files in your home (rice-tools files), after a few letters; "/" in front: only files
+        // files in your home (rice-find files), after a few letters; "/" in front: only files
         const fq = query.trim().replace(/^\//, "").trim()
         if (fq === filesFor) for (let i = 0; i < files.length; i++)
             out.push({ kind: "file", name: files[i].name, sub: files[i].where, path: files[i].path, dir: files[i].dir })
-        if (q !== "") out.push({ kind: "web", name: "Search the web for \"" + query.trim() + "\"", sub: Tr.t("DuckDuckGo"), q: query.trim() })
+        if (q !== "") out.push({ kind: "web", name: Tr.t("Search the web for") + " \"" + query.trim() + "\"", sub: "DuckDuckGo", q: query.trim() })
         if (query.trim().indexOf("/") === 0) { for (let i = out.length - 1; i >= 0; i--) if (out[i].kind !== "file") out.splice(i, 1) }
         results = out
         resetScroll()
         cur = 0
     }
     onQueryChanged: { recompute(); fileT.restart() }
+
+    // ---------- V4.90: Material: the filter chips, the icon style, the keys ----------
+    property string cat: ""
+    property var freqList: []           // Material: the apps you use most and your favorites
+    onCatChanged: recompute()
+    readonly property var catDefs: [
+        { id: "fav", name: "Favorites", c: [] },
+        { id: "net", name: "Internet", c: ["Network", "WebBrowser", "Email", "Chat", "InstantMessaging"] },
+        { id: "media", name: "Media", c: ["AudioVideo", "Audio", "Video", "Music", "Player"] },
+        { id: "games", name: "Games", c: ["Game"] },
+        { id: "dev", name: "Development", c: ["Development", "IDE", "TextEditor"] },
+        { id: "gfx", name: "Graphics", c: ["Graphics", "Photography", "2DGraphics", "3DGraphics"] },
+        { id: "office", name: "Office", c: ["Office", "Education"] },
+        { id: "sys", name: "System", c: ["System", "Settings", "Monitor", "PackageManager"] },
+        { id: "util", name: "Utilities", c: ["Utility", "Accessories", "FileManager", "TerminalEmulator", "Archiving"] }
+    ]
+    function inCat(e, id, fav) {
+        if (id === "fav") return fav
+        let d = null
+        for (let i = 0; i < catDefs.length; i++) if (catDefs[i].id === id) d = catDefs[i]
+        if (!d) return true
+        const c = e.categories || []
+        for (let i = 0; i < c.length; i++) if (d.c.indexOf(c[i]) >= 0) return true
+        return false
+    }
+    // the chips: All, then only those that have apps (Favorites once you have some)
+    readonly property var cats: {
+        const out = [{ id: "", name: "All" }]
+        for (let k = 0; k < catDefs.length; k++) {
+            const d = catDefs[k]
+            if (d.id === "fav") { if (favs.length > 0) out.push(d); continue }
+            for (let i = 0; i < apps.length; i++) if (inCat(apps[i], d.id, false)) { out.push(d); break }
+        }
+        return out
+    }
+    readonly property int mcols: m3 ? m3.cols : 6
+    // the grid before you type moves by rows with up and down
+    readonly property bool gridNow: lay !== "spotlight" && query.trim() === ""
+    function groupName(k) { return ({ calc: "Result", app: "Apps", file: "Files", web: "The web" })[k] || "" }
+    function fileIcon(r) {
+        const ext = (String(r.name).split(".").pop() || "").toLowerCase()
+        const m = { png: "image-x-generic", jpg: "image-x-generic", jpeg: "image-x-generic", webp: "image-x-generic", gif: "image-x-generic",
+                    mp4: "video-x-generic", mkv: "video-x-generic", webm: "video-x-generic", mp3: "audio-x-generic", flac: "audio-x-generic",
+                    pdf: "application-pdf", zip: "package-x-generic", gz: "package-x-generic", tar: "package-x-generic",
+                    sh: "text-x-script", py: "text-x-script", qml: "text-x-script" }
+        return m[ext] || "text-x-generic"
+    }
+    // how app icons look: Edit mode > Icons (desktop.json "icons"); "auto" is the app's own picture here
+    property var iconCfg: ({})
+    readonly property string iLook: iconCfg.look && iconCfg.look !== "auto" ? iconCfg.look : "original"
+    readonly property string iShape: iconCfg.shape && iconCfg.shape !== "auto" && iconCfg.shape !== "none" ? iconCfg.shape : ""
+    // the keys of the search field (both looks)
+    function keyNav(e, inp) {
+        const ctrl = (e.modifiers & Qt.ControlModifier) !== 0
+        const grid = gridNow, cols = mcols
+        if (e.key === Qt.Key_Escape) { if (ctx || qs) { ctx = null; qs = false } else if (cat !== "" && query === "") cat = ""; else hide(); e.accepted = true }
+        else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) { activate(results[cur]); e.accepted = true }
+        else if (ctrl && e.key === Qt.Key_D) { toggleFav(results[cur]); e.accepted = true }
+        else if (lay !== "spotlight" && ctrl && e.key === Qt.Key_Tab) { const i = cats.findIndex(function(c) { return c.id === cat }); cat = cats[(i + 1) % cats.length].id; e.accepted = true }
+        else if (e.key === Qt.Key_Down || (e.key === Qt.Key_Tab && !(e.modifiers & Qt.ShiftModifier)) || (ctrl && (e.key === Qt.Key_J || e.key === Qt.Key_N))) { move(grid && e.key === Qt.Key_Down ? cols : (grid && e.key !== Qt.Key_Tab ? cols : 1)); e.accepted = true }
+        else if (e.key === Qt.Key_Up || e.key === Qt.Key_Backtab || (ctrl && (e.key === Qt.Key_K || e.key === Qt.Key_P))) { move(grid && e.key !== Qt.Key_Backtab ? -cols : -1); e.accepted = true }
+        else if (grid && e.key === Qt.Key_Right && inp.cursorPosition === inp.text.length) { move(1); e.accepted = true }
+        else if (grid && e.key === Qt.Key_Left && inp.cursorPosition === 0) { move(-1); e.accepted = true }
+        else if (e.key === Qt.Key_PageDown) { move(grid ? cols * 3 : nlines); e.accepted = true }
+        else if (e.key === Qt.Key_PageUp) { move(grid ? -cols * 3 : -nlines); e.accepted = true }
+    }
     // ---------- files: asked a moment after you stop typing ----------
     property var files: []
     property string filesFor: ""
@@ -143,7 +213,7 @@ PanelWindow {
     Process {
         id: fileP
         property string want: ""
-        command: ["bash", "-c", "exec \"$HOME/.local/bin/rice-tools\" files \"$1\" 2>/dev/null", "_", want]
+        command: ["bash", "-c", "exec \"$HOME/.local/bin/rice-find\" files \"$1\" 2>/dev/null", "_", want]
         stdout: StdioCollector { onStreamFinished: {
             let l = []
             try { l = JSON.parse(text) } catch (e) { l = [] }
@@ -153,29 +223,12 @@ PanelWindow {
         } }
     }
     Connections { target: Conv; function onRatesChanged() { if (ln.open && ln.query !== "") ln.recompute() } }
-    onAppsChanged: if (open) recompute()
     onUsageChanged: if (open) recompute()
-    function iconOf(r) {
-        if (r.kind === "calc") return ""
-        if (r.kind === "web") return Icons.get("web-browser", true)
-        if (r.kind === "file") {
-            if (r.dir) return Icons.get("folder", true)
-            const ext = (r.name.split(".").pop() || "").toLowerCase()
-            const m = { png: "image-x-generic", jpg: "image-x-generic", jpeg: "image-x-generic", webp: "image-x-generic", gif: "image-x-generic",
-                        mp4: "video-x-generic", mkv: "video-x-generic", webm: "video-x-generic", mp3: "audio-x-generic", flac: "audio-x-generic",
-                        pdf: "application-pdf", zip: "package-x-generic", gz: "package-x-generic", tar: "package-x-generic",
-                        sh: "text-x-script", py: "text-x-script", qml: "text-x-script" }
-            return Icons.get(m[ext] || "text-x-generic", true) || Icons.get("text-x-generic", true)
-        }
-        const n = r.entry && r.entry.icon ? r.entry.icon : ""
-        const p = n !== "" ? Icons.get(n, true) : ""
-        return p !== "" ? p : Icons.get("application-x-executable", true)
-    }
-    function glyphOf(r) { return r.kind === "calc" ? "=" : "" }
 
     // ---------- opening and closing ----------
     function show() {
         query = ""
+        cat = ""
         rsProc.running = true
         usageProc.running = true
         open = true
@@ -183,7 +236,7 @@ PanelWindow {
         focusTimer.restart()
     }
     function hide() { open = false }
-    Timer { id: focusTimer; interval: 40; onTriggered: input.forceActiveFocus() }
+    Timer { id: focusTimer; interval: 40; onTriggered: m3.input.forceActiveFocus() }
     function bump(id) {
         const n = Object.assign({}, usage); n[id] = (n[id] || 0) + 1; usage = n
         Quickshell.execDetached(["bash", "-c", "python3 - \"$1\" <<'PY'\nimport json, os, sys\np = os.path.expanduser('~/.cache/rice/launcher-usage.json')\ntry:\n    d = json.load(open(p))\nexcept Exception:\n    d = {}\nos.makedirs(os.path.dirname(p), exist_ok=True)\nd[sys.argv[1]] = d.get(sys.argv[1], 0) + 1\njson.dump(d, open(p, 'w'))\nPY", "_", id])
@@ -203,6 +256,34 @@ PanelWindow {
     }
     function move(d) { if (results.length > 0) cur = Math.max(0, Math.min(results.length - 1, cur + d)) }
 
+    // ---------- V4.87: a menu on the right click (open, favorite, pin to the dock) and quick settings (the gear) ----------
+    property var ctx: null              // { r, x, y }
+    property bool qs: false
+    function menuFor(r, p) { if (r) { qs = false; ctx = { r: r, x: p.x, y: p.y } } }
+    function setv(k, v) {
+        // shown at once (as a number or a yes/no, like rice-rofi state gives them back)
+        const x = v === "true" ? true : v === "false" ? false : (typeof v === "string" && /^[0-9.]+$/.test(v) ? Number(v) : v)
+        const n = JSON.parse(JSON.stringify(rs)); n[k] = x; rs = n
+        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-rofi\" set \"$1\" \"$2\"", "_", k, String(v)])
+    }
+    // the dock's pinned apps (desktop.json), to pin and unpin from here
+    property var dockApps: []
+    FileView {
+        path: Quickshell.env("HOME") + "/.config/rice/desktop.json"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: { try { const j = JSON.parse(text()); ln.dockApps = j.dock && j.dock.apps ? j.dock.apps : []; ln.iconCfg = j.icons || ({}) } catch (e) { } }
+    }
+    function appId(r) { return r && r.entry ? (r.entry.id || "").replace(/\.desktop$/, "") : "" }
+    function onDock(r) { return dockApps.indexOf(appId(r)) >= 0 }
+    function togglePin(r) {
+        const id = appId(r), on = onDock(r)
+        if (!id) return
+        dockApps = on ? dockApps.filter(function(x) { return x !== id }) : dockApps.concat([id])
+        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" \"$1\" \"$2\"", "_", on ? "dock-unpin" : "dock-pin", id])
+    }
+
     Process {
         id: rsProc
         command: ["bash", "-c", "\"$HOME/.local/bin/rice-rofi\" state 2>/dev/null"]
@@ -221,11 +302,12 @@ PanelWindow {
     Trigger { name: "launcher-open"; fresh: true; onFired: function(o) { if (ln.open) ln.hide(); else ln.show() } }
 
     // ---------- window ----------
-    visible: open || (t > 0.01 && !closeT.done)
+    visible: open || (m3.p > 0.005 && !closeT.done)
     // if the closing animation ever stalls (the compositor sent no frames for a moment), it still goes away
     Timer { id: closeT; property bool done: false; interval: 600; running: !open; onRunningChanged: if (running) done = false; onTriggered: done = true }
     // niri: blur behind the card (Hyprland blurs this layer with its own rule)
-    NiriBlur { win: ln; items: [card]; radius: card.radius; on: ln.open && ln.t > 0.98 }
+    NiriBlur { win: ln; items: [ln.box]; radius: m3.card.radius; on: ln.open && m3.p > 0.98 }
+    readonly property Item box: m3.card
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore
@@ -233,261 +315,10 @@ PanelWindow {
     WlrLayershell.namespace: "rice-launcher"
     WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
-    MouseArea { anchors.fill: parent; onClicked: ln.hide() }
+    MouseArea { anchors.fill: parent; onClicked: { if (ln.ctx || ln.qs) { ln.ctx = null; ln.qs = false } else ln.hide() } }
 
-    readonly property real pad: lay === "bar" ? 10 : 14
-    readonly property real inputH: lay === "bar" ? 44 : 50
-    readonly property real rowH: Math.max(46, px * 2.8)
-    readonly property int gcols: Math.max(3, Math.floor((cw - 2 * pad) / 120))
-    readonly property int grows: Math.min(4, Math.max(2, Math.round(nlines / 2.5)))
-    readonly property real cellH: 104
-    readonly property int shownRows: lay === "grid" ? Math.min(Math.ceil(results.length / gcols), grows) : (lay === "split" ? nlines : Math.min(results.length, nlines))
-    readonly property real listH: lay === "grid" ? shownRows * cellH : shownRows * rowH
-    readonly property real cardH: lay === "bar" ? inputH + 2 * pad : 2 * pad + inputH + (listH > 0 || lay === "split" ? 10 + listH : 0)
-    readonly property real maxH: lay === "bar" ? cardH : 2 * pad + inputH + 10 + (lay === "grid" ? grows * cellH : nlines * rowH)
+    LauncherM3 { id: m3; ln: ln; pal: lpal }
 
-    Rectangle {
-        id: card
-        width: ln.cw
-        height: ln.cardH
-        x: (ln.width - width) / 2
-        y: ln.where === "top" ? (ln.lay === "bar" ? 0 : 64) : (ln.where === "bottom" ? ln.height - (ln.lay === "bar" ? ln.cardH : 64 + ln.maxH) : (ln.height - (ln.lay === "bar" ? ln.cardH : ln.maxH)) / 2)
-        radius: ln.rad
-        color: ln.col(ln.th.bg, ln.alpha)
-        border.width: ln.lay === "bar" ? 0 : 1
-        border.color: ln.col(ln.th.bd)
-        opacity: ln.t
-        scale: 0.965 + 0.035 * ln.t
-        transform: Translate { y: (1 - ln.t) * 10 }
-        Behavior on height { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-        MouseArea { anchors.fill: parent }   // clicks on the card do not close it
-
-        // split: the wallpaper on the left, with the apps you use most as round buttons
-        Item {
-            id: leftPane
-            visible: ln.lay === "split"
-            x: 0; y: 0; width: ln.leftW; height: parent.height
-            Image { id: wallImg; anchors.fill: parent; source: ln.wall; fillMode: Image.PreserveAspectCrop; visible: false; asynchronous: true; sourceSize.width: 1200 }
-            Item { id: wallMask; anchors.fill: parent; visible: false; layer.enabled: true
-                Rectangle { anchors.fill: parent; radius: ln.rad }
-                Rectangle { x: parent.width / 2; width: parent.width / 2; height: parent.height } }
-            MultiEffect { anchors.fill: parent; source: wallImg; maskEnabled: true; maskSource: wallMask; visible: wallImg.status === Image.Ready }
-            Rectangle { anchors.fill: parent; radius: ln.rad; color: ln.col(ln.th.alt); visible: wallImg.status !== Image.Ready
-                Rectangle { x: parent.width / 2; width: parent.width / 2; height: parent.height; color: parent.color } }
-            Column {
-                x: 14; anchors.verticalCenter: parent.verticalCenter; spacing: 12
-                Repeater {
-                    model: ln.query === "" ? ln.results.filter(function(r) { return r.kind === "app" }).slice(0, 4) : []
-                    delegate: Rectangle {
-                        id: fav
-                        width: 42; height: 42; radius: 21
-                        color: favM.containsMouse ? ln.col(ln.th.sel) : ln.col(ln.th.bg, 0.55)
-                        border.width: 1; border.color: ln.col(ln.th.bd)
-                        scale: favM.containsMouse ? 1.12 : 1
-                        Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
-                        Behavior on color { ColorAnimation { duration: 140 } }
-                        Image { anchors.centerIn: parent; width: 24; height: 24; source: ln.iconOf(modelData); sourceSize.width: 48; sourceSize.height: 48; asynchronous: true }
-                        MouseArea { id: favM; anchors.fill: parent; hoverEnabled: true; onClicked: ln.activate(modelData) }
-                    }
-                }
-            }
-        }
-
-        Rectangle {
-            id: field
-            x: ln.leftW + ln.pad; y: ln.pad
-            width: ln.lay === "bar" ? Math.min(340, parent.width * 0.3) : parent.width - ln.leftW - 2 * ln.pad
-            height: ln.inputH
-            radius: ln.lay === "bar" ? 10 : Math.max(8, ln.rad - 6)
-            color: ln.col(ln.th.alt, ln.alpha < 1 ? Math.min(1, ln.alpha + 0.08) : 1)
-            Rectangle {    // line under the field that grows while you type
-                anchors.bottom: parent.bottom; anchors.horizontalCenter: parent.horizontalCenter
-                height: 2; radius: 1; color: ln.col(ln.th.sel)
-                width: ln.query !== "" ? parent.width - 2 * ln.rad : 0
-                opacity: ln.query !== "" ? 0.9 : 0
-                Behavior on width { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
-                Behavior on opacity { NumberAnimation { duration: 200 } }
-            }
-            TextInput {
-                id: input
-                x: 18; width: parent.width - 36; anchors.verticalCenter: parent.verticalCenter
-                text: ln.query
-                color: ln.col(ln.th.fg); selectionColor: ln.col(ln.th.sel); selectedTextColor: ln.col(ln.th.selfg)
-                font.family: ln.ff; font.pixelSize: ln.px
-                clip: true
-                onTextChanged: { if (text !== ln.query) { ln.query = text; if (activeFocus) Sfx.play("type") } }
-                Keys.onPressed: function(e) {
-                    const ctrl = (e.modifiers & Qt.ControlModifier) !== 0
-                    const grid = ln.lay === "grid", bar = ln.lay === "bar"
-                    if (e.key === Qt.Key_Escape) { ln.hide(); e.accepted = true }
-                    else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) { ln.activate(ln.results[ln.cur]); e.accepted = true }
-                    else if (ctrl && e.key === Qt.Key_D) { ln.toggleFav(ln.results[ln.cur]); e.accepted = true }
-                    else if (e.key === Qt.Key_Down || (e.key === Qt.Key_Tab && !(e.modifiers & Qt.ShiftModifier)) || (ctrl && (e.key === Qt.Key_J || e.key === Qt.Key_N))) { ln.move(grid ? ln.gcols : 1); e.accepted = true }
-                    else if (e.key === Qt.Key_Up || e.key === Qt.Key_Backtab || (ctrl && (e.key === Qt.Key_K || e.key === Qt.Key_P))) { ln.move(grid ? -ln.gcols : -1); e.accepted = true }
-                    else if ((grid || bar) && e.key === Qt.Key_Right && input.cursorPosition === input.text.length) { ln.move(1); e.accepted = true }
-                    else if ((grid || bar) && e.key === Qt.Key_Left && input.cursorPosition === 0) { ln.move(-1); e.accepted = true }
-                    else if (e.key === Qt.Key_PageDown) { ln.move(ln.nlines); e.accepted = true }
-                    else if (e.key === Qt.Key_PageUp) { ln.move(-ln.nlines); e.accepted = true }
-                }
-                DText { visible: input.text.length === 0; text: Tr.t("Search"); font.family: ln.ff; font.pixelSize: ln.px; color: ln.col(ln.th.dim) }
-            }
-        }
-
-        // ---------- list ----------
-        ListView {
-            id: listV
-            visible: ln.listy
-            x: ln.leftW + ln.pad; y: ln.pad + ln.inputH + 10
-            width: parent.width - ln.leftW - 2 * ln.pad; height: ln.listH
-            clip: true
-            interactive: false
-            model: ln.listy ? ln.results : []
-            currentIndex: ln.cur
-            highlightMoveDuration: 150
-            highlightFollowsCurrentItem: true
-            boundsBehavior: Flickable.StopAtBounds
-            NumberAnimation { id: listAnim; target: listV; property: "contentY"; duration: 150; easing.type: Easing.OutCubic }
-            WheelHandler { acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                onWheel: function(e) { ln.wheel(listV, listAnim, e, false) } }
-            highlight: Rectangle { radius: Math.max(6, ln.rad - 8); color: ln.col(ln.th.sel); Behavior on y { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } } }
-            delegate: Item {
-                id: row
-                width: listV.width; height: ln.rowH
-                readonly property bool sel: index === ln.cur
-                opacity: 0
-                property real slide: 18
-                transform: Translate { y: row.slide }
-                Component.onCompleted: enter.start()
-                SequentialAnimation {
-                    id: enter
-                    PauseAnimation { duration: Math.min(index, 9) * 24 }
-                    ParallelAnimation {
-                        NumberAnimation { target: row; property: "opacity"; to: 1; duration: 220; easing.type: Easing.OutCubic }
-                        NumberAnimation { target: row; property: "slide"; to: 0; duration: 300; easing.type: Easing.OutBack; easing.overshoot: 1.2 }
-                    }
-                }
-                Image {
-                    id: ico
-                    visible: ln.icons && modelData.kind !== "calc"
-                    x: 14 + (row.sel ? 3 : 0); anchors.verticalCenter: parent.verticalCenter
-                    width: ln.rowH - 18; height: width
-                    scale: row.sel ? 1.1 : 1
-                    Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } }
-                    Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-                    source: ln.icons ? ln.iconOf(modelData) : ""
-                    sourceSize.width: 64; sourceSize.height: 64; asynchronous: true
-                }
-                DText { visible: modelData.kind === "calc"; x: 14; width: ln.rowH - 18; anchors.verticalCenter: parent.verticalCenter; horizontalAlignment: Text.AlignHCenter
-                    text: "="; font.family: ln.ff; font.pixelSize: ln.fs + 8; font.weight: Font.DemiBold; color: parent.sel ? ln.col(ln.th.selfg) : ln.col(ln.th.dim) }
-                DText {
-                    x: (ln.icons || modelData.kind === "calc" ? ln.rowH : 0) + 8 + (row.sel ? 3 : 0)
-                    Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-                    width: parent.width - x - 16
-                    anchors.verticalCenter: parent.verticalCenter
-                    elide: Text.ElideRight; text: modelData.name; font.family: ln.ff; font.pixelSize: ln.px
-                    color: parent.sel ? ln.col(ln.th.selfg) : ln.col(ln.th.fg)
-                }
-                // a favorite: a small star
-                DText { visible: modelData.kind === "app" && ln.isFav(modelData.id); anchors.right: parent.right; anchors.rightMargin: 14
-                    anchors.verticalCenter: parent.verticalCenter; text: "★"; font.pixelSize: ln.fs; color: parent.sel ? ln.col(ln.th.selfg) : ln.col(ln.th.sel) }
-                MouseArea { anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    onPositionChanged: { ln.noScroll = true; ln.cur = index; ln.noScroll = false }
-                    onClicked: function(m) { if (m.button === Qt.RightButton) ln.toggleFav(modelData); else ln.activate(modelData) } }
-            }
-        }
-
-        // ---------- grid ----------
-        GridView {
-            id: gridV
-            visible: ln.lay === "grid"
-            x: ln.pad; y: ln.pad + ln.inputH + 10
-            width: parent.width - 2 * ln.pad; height: ln.listH
-            clip: true
-            interactive: false
-            cellWidth: width / ln.gcols; cellHeight: ln.cellH
-            model: ln.lay === "grid" ? ln.results : []
-            currentIndex: ln.cur
-            highlightMoveDuration: 150
-            boundsBehavior: Flickable.StopAtBounds
-            NumberAnimation { id: gridAnim; target: gridV; property: "contentY"; duration: 150; easing.type: Easing.OutCubic }
-            WheelHandler { acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                onWheel: function(e) { ln.wheel(gridV, gridAnim, e, false) } }
-            highlight: Rectangle { radius: Math.max(6, ln.rad - 8); color: ln.col(ln.th.sel) }
-            delegate: Item {
-                id: cell
-                width: gridV.cellWidth; height: ln.cellH
-                readonly property bool sel: index === ln.cur
-                opacity: 0; scale: 0.8
-                Component.onCompleted: enterG.start()
-                SequentialAnimation {
-                    id: enterG
-                    PauseAnimation { duration: Math.min(index, 14) * 18 }
-                    ParallelAnimation {
-                        NumberAnimation { target: cell; property: "opacity"; to: 1; duration: 200 }
-                        NumberAnimation { target: cell; property: "scale"; to: 1; duration: 280; easing.type: Easing.OutBack }
-                    }
-                }
-                Image {
-                    visible: modelData.kind !== "calc"
-                    anchors.horizontalCenter: parent.horizontalCenter; y: 10
-                    width: 48; height: 48
-                    source: ln.iconOf(modelData)
-                    sourceSize.width: 96; sourceSize.height: 96; asynchronous: true
-                }
-                DText { visible: modelData.kind === "calc"; anchors.horizontalCenter: parent.horizontalCenter; y: 10; height: 48; verticalAlignment: Text.AlignVCenter
-                    text: "="; font.pixelSize: 30; font.weight: Font.DemiBold; color: parent.sel ? ln.col(ln.th.selfg) : ln.col(ln.th.dim) }
-                DText {
-                    x: 6; y: 64; width: parent.width - 12; horizontalAlignment: Text.AlignHCenter
-                    elide: Text.ElideRight; maximumLineCount: 2; wrapMode: Text.WordWrap
-                    text: modelData.name; font.family: ln.ff; font.pixelSize: ln.px - 2
-                    color: parent.sel ? ln.col(ln.th.selfg) : ln.col(ln.th.fg)
-                }
-                MouseArea { anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    onPositionChanged: { ln.noScroll = true; ln.cur = index; ln.noScroll = false }
-                    onClicked: function(m) { if (m.button === Qt.RightButton) ln.toggleFav(modelData); else ln.activate(modelData) } }
-            }
-        }
-
-        // ---------- bar ----------
-        ListView {
-            id: barV
-            visible: ln.lay === "bar"
-            x: field.x + field.width + 10; y: ln.pad
-            width: parent.width - x - ln.pad; height: ln.inputH
-            orientation: ListView.Horizontal
-            clip: true
-            spacing: 6
-            model: ln.lay === "bar" ? ln.results : []
-            currentIndex: ln.cur
-            highlightMoveDuration: 150
-            boundsBehavior: Flickable.StopAtBounds
-            highlight: Rectangle { radius: 10; color: ln.col(ln.th.sel) }
-            delegate: Item {
-                id: chip
-                width: Math.min(220, bt.implicitWidth + (ln.icons ? 54 : 28)); height: barV.height
-                readonly property bool sel: index === ln.cur
-                opacity: 0; scale: 0.85
-                Component.onCompleted: enterB.start()
-                SequentialAnimation {
-                    id: enterB
-                    PauseAnimation { duration: Math.min(index, 10) * 22 }
-                    ParallelAnimation {
-                        NumberAnimation { target: chip; property: "opacity"; to: 1; duration: 200 }
-                        NumberAnimation { target: chip; property: "scale"; to: 1; duration: 260; easing.type: Easing.OutBack }
-                    }
-                }
-                Image { visible: ln.icons && modelData.kind !== "calc"; x: 10; anchors.verticalCenter: parent.verticalCenter; width: 26; height: 26
-                    source: ln.icons ? ln.iconOf(modelData) : ""; sourceSize.width: 52; sourceSize.height: 52; asynchronous: true }
-                DText { id: bt; x: ln.icons ? 44 : 14; width: parent.width - x - 10; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
-                    text: modelData.name; font.family: ln.ff; font.pixelSize: ln.px - 1; color: parent.sel ? ln.col(ln.th.selfg) : ln.col(ln.th.fg) }
-                MouseArea { anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    onPositionChanged: { ln.noScroll = true; ln.cur = index; ln.noScroll = false }
-                    onClicked: function(m) { if (m.button === Qt.RightButton) ln.toggleFav(modelData); else ln.activate(modelData) } }
-            }
-        }
-
-        DText { visible: ln.query !== "" && ln.results.length === 0 && ln.lay !== "bar"; x: ln.leftW + ln.pad + 16; y: ln.pad + ln.inputH + 20; text: Tr.t("Nothing found"); font.family: ln.ff; font.pixelSize: ln.px; color: ln.col(ln.th.dim) }
-    }
     // smooth scrolling: the wheel and the keys move the view with an easing animation
     property bool noScroll: false
     function clampY(v, view) { return Math.max(0, Math.min(v, view.contentHeight - view.height)) }
@@ -502,17 +333,153 @@ PanelWindow {
         const base = anim.running ? anim.to : view.contentY
         glide(view, anim, base - d)
     }
-    function resetScroll() { listAnim.stop(); gridAnim.stop(); listV.contentY = 0; gridV.contentY = 0 }
-    onCurChanged: {
-        if (noScroll) return
-        if (listy) {
-            const y = cur * rowH, base = listAnim.running ? listAnim.to : listV.contentY
-            if (y < base) glide(listV, listAnim, y)
-            else if (y + rowH > base + listV.height) glide(listV, listAnim, y + rowH - listV.height)
-        } else if (lay === "grid") {
-            const y = Math.floor(cur / gcols) * cellH, base = gridAnim.running ? gridAnim.to : gridV.contentY
-            if (y < base) glide(gridV, gridAnim, y)
-            else if (y + cellH > base + gridV.height) glide(gridV, gridAnim, y + cellH - gridV.height)
-        } else barV.positionViewAtIndex(cur, ListView.Contain)
+    function resetScroll() { if (m3) m3.reset() }
+    onCurChanged: if (!noScroll) m3.follow()
+
+    // ---------- the right-click menu ----------
+    Rectangle {
+        id: ctxM
+        visible: ln.ctx !== null
+        width: 232
+        height: ctxC.implicitHeight + 12
+        x: ln.ctx ? Math.min(ln.width - width - 8, ln.box.x + ln.ctx.x) : 0
+        y: ln.ctx ? Math.min(ln.height - height - 8, ln.box.y + ln.ctx.y) : 0
+        radius: 22
+        color: ln.col(ln.th.bg, Math.min(1, ln.alpha + 0.12))
+        border.width: 1; border.color: ln.col(ln.th.bd)
+        MouseArea { anchors.fill: parent }
+        Column {
+            id: ctxC
+            x: 6; y: 6
+            width: parent.width - 12
+            readonly property var r: ln.ctx ? ln.ctx.r : null
+            readonly property bool app: !!(r && r.kind === "app")
+            LItem { sym: "open_in_new"; glyph: "\uf35d"; text: Tr.t("Open"); onPicked: { const r = ctxC.r; ln.ctx = null; ln.activate(r) } }
+            LItem { visible: ctxC.app; sym: "star"; glyph: "\uf005"; text: ctxC.app && ln.isFav(ctxC.r.id) ? Tr.t("Remove from favorites") : Tr.t("Add to favorites")
+                onPicked: { ln.toggleFav(ctxC.r); ln.ctx = null } }
+            LItem { visible: ctxC.app; sym: "keep"; glyph: "\uf08d"; text: ctxC.app && ln.onDock(ctxC.r) ? Tr.t("Unpin from the dock") : Tr.t("Pin to the dock")
+                onPicked: { ln.togglePin(ctxC.r); ln.ctx = null } }
+            LItem { visible: !!(ctxC.r && ctxC.r.kind === "file"); sym: "folder_open"; glyph: "\uf07c"; text: Tr.t("Open its folder")
+                onPicked: { Quickshell.execDetached(["xdg-open", ctxC.r.dir]); ln.ctx = null; ln.hide() } }
+        }
     }
+
+    // ---------- quick settings (the gear) ----------
+    Rectangle {
+        id: qsP
+        visible: ln.qs && ln.open
+        width: 300
+        height: qsC.implicitHeight + 28
+        readonly property bool side: ln.box.x + ln.box.width + 12 + width < ln.width - 8
+        x: side ? ln.box.x + ln.box.width + 12 : Math.max(8, ln.box.x + ln.box.width - width)
+        y: side ? Math.max(8, Math.min(ln.height - height - 8, ln.box.y)) : Math.min(ln.height - height - 8, ln.box.y + 84)
+        radius: 28
+        color: ln.col(ln.th.bg, Math.min(1, ln.alpha + 0.12))
+        border.width: 1; border.color: ln.col(ln.th.bd)
+        opacity: visible ? 1 : 0
+        MouseArea { anchors.fill: parent }
+        Column {
+            id: qsC
+            x: 14; y: 14
+            width: parent.width - 28
+            spacing: 12
+            DText { text: Tr.t("Launcher"); font.family: ln.ff; font.pixelSize: 16; font.weight: Font.DemiBold; color: ln.col(ln.th.fg) }
+            LSeg { title: Tr.t("Style"); value: ln.lay; opts: [["drawer", Tr.t("Drawer")], ["spotlight", Tr.t("Spotlight")], ["side", Tr.t("Side sheet")]]
+                onChosen: function(v) { ln.setv("layout", v) } }
+            LSeg { visible: ln.lay !== "side"; title: Tr.t("Position"); value: ln.where; opts: [["top", Tr.t("Top")], ["center", Tr.t("Center")], ["bottom", Tr.t("Bottom")]]
+                onChosen: function(v) { ln.setv("position", v) } }
+            LSeg { title: Tr.t("Icons"); value: ln.icons ? "on" : "off"; opts: [["on", Tr.t("Shown")], ["off", Tr.t("Hidden")]]
+                onChosen: function(v) { ln.setv("icons", v === "on" ? "true" : "false") } }
+            LStep { title: Tr.t("Rows"); value: ln.nlines; lo: 3; hi: 14; step: 1; onPick: function(v) { ln.setv("lines", v) } }
+            LStep { title: Tr.t("Width"); value: ln.rs.width || 620; lo: 360; hi: 1200; step: 40; unit: " px"; onPick: function(v) { ln.setv("width", v) } }
+            LStep { title: Tr.t("See-through"); value: Math.round((1 - ln.alpha) * 100); lo: 0; hi: 70; step: 5; unit: " %"
+                onPick: function(v) { ln.setv("opacity", (1 - v / 100).toFixed(2)) } }
+            LItem { sym: "settings"; glyph: "\uf013"; text: Tr.t("All launcher settings")
+                onPicked: { ln.hide(); Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-settings\" 7"]) } }
+        }
+    }
+
+    component LItem: Rectangle {
+        id: li
+        property string sym: ""
+        property string glyph: ""
+        property string text: ""
+        signal picked()
+        width: parent ? parent.width : 200
+        height: visible ? 40 : 0
+        radius: 14
+        color: lim.containsMouse ? ln.col(ln.th.alt) : "transparent"
+        MIcon { x: 12; anchors.verticalCenter: parent.verticalCenter; name: li.sym; glyph: li.glyph; size: 17; color: ln.col(ln.th.dim) }
+        DText { x: 42; anchors.verticalCenter: parent.verticalCenter; width: parent.width - 50; elide: Text.ElideRight
+            text: li.text; font.family: ln.ff; font.pixelSize: 13; color: ln.col(ln.th.fg) }
+        MouseArea { id: lim; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: li.picked() }
+    }
+    component LSeg: Column {
+        id: ls
+        property string title: ""
+        property string value: ""
+        property var opts: []
+        signal chosen(string v)
+        width: parent ? parent.width : 260
+        spacing: 6
+        DText { text: ls.title; font.family: ln.ff; font.pixelSize: 12; color: ln.col(ln.th.dim) }
+        Rectangle {
+            width: parent.width; height: 36; radius: 18
+            color: ln.col(ln.th.alt)
+            Row {
+                anchors.fill: parent; anchors.margins: 3
+                Repeater {
+                    model: ls.opts
+                    Rectangle {
+                        id: so
+                        required property var modelData
+                        readonly property bool on: modelData[0] === ls.value
+                        width: (ls.width - 6) / ls.opts.length; height: 30; radius: 15
+                        color: on ? ln.col(ln.th.sel) : (som.containsMouse ? ln.col(ln.th.bg, 0.5) : "transparent")
+                        Behavior on color { ColorAnimation { duration: 140 } }
+                        DText { anchors.centerIn: parent; text: so.modelData[1]; font.family: ln.ff; font.pixelSize: 12
+                            font.weight: so.on ? Font.DemiBold : Font.Normal; color: so.on ? ln.col(ln.th.selfg) : ln.col(ln.th.fg) }
+                        MouseArea { id: som; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ls.chosen(so.modelData[0]) }
+                    }
+                }
+            }
+        }
+    }
+    component LStep: Item {
+        id: lst
+        property string title: ""
+        property int value: 0
+        property int lo: 0
+        property int hi: 10
+        property int step: 1
+        property string unit: ""
+        signal pick(int v)
+        width: parent ? parent.width : 260
+        height: 36
+        DText { anchors.verticalCenter: parent.verticalCenter; text: lst.title; font.family: ln.ff; font.pixelSize: 13; color: ln.col(ln.th.fg) }
+        Row {
+            anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
+            spacing: 4
+            Repeater {
+                model: [-1, 0, 1]
+                Item {
+                    id: sb
+                    required property int modelData
+                    width: modelData === 0 ? 64 : 32; height: 32
+                    Rectangle {
+                        visible: sb.modelData !== 0
+                        anchors.fill: parent; radius: 16
+                        color: sbm.containsMouse ? ln.col(ln.th.sel) : ln.col(ln.th.alt)
+                        opacity: (sb.modelData < 0 ? lst.value > lst.lo : lst.value < lst.hi) ? 1 : 0.35
+                        MIcon { anchors.centerIn: parent; name: sb.modelData < 0 ? "remove" : "add"; glyph: sb.modelData < 0 ? "\uf068" : "\uf067"; size: 15
+                            color: sbm.containsMouse ? ln.col(ln.th.selfg) : ln.col(ln.th.fg) }
+                        MouseArea { id: sbm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                            onClicked: lst.pick(Math.max(lst.lo, Math.min(lst.hi, lst.value + sb.modelData * lst.step))) }
+                    }
+                    DText { visible: sb.modelData === 0; anchors.centerIn: parent; text: lst.value + lst.unit; font.family: ln.ff; font.pixelSize: 13; color: ln.col(ln.th.fg) }
+                }
+            }
+        }
+    }
+
 }

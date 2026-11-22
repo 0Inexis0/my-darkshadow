@@ -38,7 +38,7 @@ Item {
         Column {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 2
-            T { kind: "title"; text: parent.parent.title; font.pixelSize: 17; font.weight: Font.DemiBold }
+            T { kind: "title"; text: parent.parent.title; font.pixelSize: 15; font.weight: Font.DemiBold; color: M3.primary; leftPadding: 6 }
             T { kind: "reading"; text: parent.parent.sub; font.pixelSize: 12; color: M3.inkDim }
         }
     }

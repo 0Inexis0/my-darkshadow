@@ -25,12 +25,12 @@ ShellRoot {
 
     // ---------------- widget editor ----------------
     readonly property bool editing: cfg.editing === true
-    // what the editor offers; free = free width and height instead of scaling
-    readonly property var catalog: [
+    // every widget there is (one frame each in Edit mode); free = free width and height instead of scaling
+    readonly property var allWidgets: [
         { id: "visualizer", name: "Visualizer", icon: "\udb85\udc7d", free: true,
           styles: [["bars", "Bars"], ["mirror", "Mirror"], ["wave", "Wave"], ["dots", "Dots"]],
           optKey: "color", opts: [["accent", "Theme color"], ["gradient", "Gradient"], ["rainbow", "Rainbow"], ["mono", "White / black"]], optDefault: "accent" },
-        { id: "clock", name: "Clock", icon: "\uf017", styles: [["digital", "Digital"], ["line", "Line"], ["cookie", "Cookie"], ["pixel", "Pixel"]],
+        { id: "clock", name: "Clock", icon: "\uf017", styles: [["expressive", "Expressive"], ["stacked", "Stacked"], ["shape", "Shape"]],
           optKey: "font", opts: [["default", "Font: Default"], ["bebas", "Bebas Neue"], ["orbitron", "Orbitron"], ["outfit", "Outfit"],
                                  ["grotesk", "Space Grotesk"], ["unbounded", "Unbounded"], ["shoulders", "Big Shoulders"]], optDefault: "default" },
         { id: "media", name: "Music", icon: "\uf001", card: true },
@@ -58,16 +58,42 @@ ShellRoot {
         { id: "date", name: "Date", icon: "\uf073", card: true,
           styles: [["flower", "Flower"], ["cookie", "Cookie"], ["clover", "Clover"], ["sun", "Sun"], ["square", "Square"], ["circle", "Circle"]] }
     ]
+    // V4.93: widgets that were nearly the same are one widget with styles now (its style is which of them shows):
+    // [style, widget, name]. A widget of a family that was on stays on; changing the style swaps it in place.
+    readonly property var families: ({
+        media: [["card", "media", "Card"], ["big", "music", "Big card"], ["ring", "nowring", "Ring"], ["player", "player", "Player"], ["button", "playpill", "Button"]],
+        weather: [["card", "weather", "Card"], ["sky", "sky", "Sky"], ["forecast", "forecast", "Forecast"]],
+        resources: [["bars", "resources", "Bars"], ["rings", "trio", "Rings"]],
+        date: [["flower", "date", "Flower"], ["cookie", "date", "Cookie"], ["clover", "date", "Clover"], ["sun", "date", "Sun"], ["square", "date", "Square"],
+               ["circle", "date", "Circle"], ["pill", "datepill", "Pill"]]
+    })
+    function famOf(id) { for (const k in families) for (let i = 0; i < families[k].length; i++) if (families[k][i][1] === id || k === id) return k; return "" }
+    function rawInfo(id) { for (let i = 0; i < allWidgets.length; i++) if (allWidgets[i].id === id) return allWidgets[i]; return null }
+    function famEntry(k, name, icon) { return { id: k, name: name, icon: icon, card: true, styles: families[k].map(function(f) { return [f[0], f[2]] }) } }
+    // what the editor's list offers (15 instead of 23)
+    readonly property var catalog: [rawInfo("visualizer"), rawInfo("clock"), famEntry("media", "Music", "\uf001"), rawInfo("lyrics"),
+        famEntry("weather", "Weather", "\uf0c2"), rawInfo("calendar"), famEntry("date", "Date", "\uf073"), famEntry("resources", "System", "\uf2db"),
+        rawInfo("gauge"), rawInfo("storage"), rawInfo("battery"), rawInfo("todo"), rawInfo("focus"), rawInfo("notes"), rawInfo("usercard")]
+    // what a widget is in the editor (a member of a family: the family, with its styles)
+    function infoOf(id) { const f = famOf(id); if (f !== "") return catalog.filter(function(c) { return c.id === f })[0]; return rawInfo(id) }
+    // the widget of a family that is on ("" when none)
+    function memberOn(k) { const l = families[k] || []; for (let i = 0; i < l.length; i++) if (on(l[i][1])) return l[i][1]; return "" }
     property var wins: ({})
     function reg(id, w) { const n = Object.assign({}, wins); n[id] = w; wins = n }
     function unreg(id) { if (!wins[id]) return; const n = Object.assign({}, wins); delete n[id]; wins = n }
     function ds(args) { Quickshell.execDetached([home + "/.local/bin/desktop-set"].concat(args.map(function(a) { return String(a) }))) }
-    function enabledOf(id) { return id === "clock" ? !!(cfg.clock && cfg.clock.enabled === true) : on(id) }
+    function enabledOf(id) { return id === "clock" ? !!(cfg.clock && cfg.clock.enabled === true) : (families[id] ? memberOn(id) !== "" : on(id)) }
     function styleOf(id) {
+        const f = famOf(id)
+        if (f !== "") {
+            const mid = families[id] ? memberOn(id) : id
+            if (mid !== "date") { const m = families[f].filter(function(x) { return x[1] === mid })[0]; return m ? m[0] : families[f][0][0] }
+            id = "date"                 // the date: its shape is its own style
+        }
         const w = wins[id]
         if (w && w.sty) return w.sty
         if (id !== "clock" && wc(id).style) return wc(id).style
-        return id === "clock" ? (cfg.clock && cfg.clock.style ? cfg.clock.style : "digital") : (id === "visualizer" ? "bars" : (id === "gauge" ? "pentagon" : (id === "date" ? "flower" : "")))
+        return id === "clock" ? (cfg.clock && cfg.clock.style ? cfg.clock.style : "expressive") : (id === "visualizer" ? "bars" : (id === "gauge" ? "pentagon" : (id === "date" ? "flower" : "")))
     }
     // the second choice of a widget (visualizer color, clock font)
     function optOf(id, key, dflt) {
@@ -99,12 +125,31 @@ ShellRoot {
     }
     function wset(id, key, val) { ds(["wset", id, key, val]) }
     function setStyle(id, v) {
+        // a family: the widget of that style takes the place of the one that was there; its id comes back
+        const f = famOf(id)
+        if (f !== "") {
+            const to = families[f].filter(function(x) { return x[0] === v })[0]
+            if (!to) return id
+            const cur = families[id] ? memberOn(id) : id
+            if (to[1] !== cur && cur !== "") {
+                const cw = wins[cur], g = wc(cur)
+                const x = cw ? Math.round(cw.px) : g.x, y = cw ? Math.round(cw.py) : g.y
+                removeWidget(cur)
+                patch(to[1], { enabled: true, x: x, y: y })
+                ds(["widget", to[1], "on"])
+                if (x !== undefined) ds(["geom", to[1], x, y])
+            } else if (cur === "") addWidget(to[1])
+            if (to[1] === "date") { const dw = wins.date; if (dw) dw.sty = v; patch("date", { style: v }); wset("date", "style", v) }
+            return to[1]
+        }
         const w = wins[id]
         if (w) w.sty = v
         if (id === "clock") { patch("clock", { style: v }); ds(["clock", "style", v]) }
         else { patch(id, { style: v }); wset(id, "style", v) }
+        return id
     }
     function addWidget(id) {
+        if (families[id]) { if (memberOn(id) === "") addWidget(families[id][0][1]); return }
         const w = wins[id]
         let geo = {}
         if (w && id !== "visualizer" && !(id === "clock" ? (cfg.clock && cfg.clock.x !== undefined) : (wc(id).x !== undefined))) {
@@ -116,6 +161,7 @@ ShellRoot {
         if (geo.x !== undefined) ds(["geom", id, geo.x, geo.y])
     }
     function removeWidget(id) {
+        if (families[id]) { families[id].forEach(function(m) { if (on(m[1])) removeWidget(m[1]) }); return }
         if (id === "clock") { patch("clock", { enabled: false }); ds(["clock", "enabled", "off"]) }
         else { patch(id, { enabled: false }); ds(["widget", id, "off"]) }
     }
@@ -125,7 +171,21 @@ ShellRoot {
         if (w) { w.sc = 1; w.op = 1; w.bgv = 1; w.flp = false; w.px = w.defX; w.py = w.defY; w.fw = w.defW; w.fh = w.defH }
     }
     function resetAll() { ds(["reset-pos"]) }
-    function finishEditing() { const c = JSON.parse(JSON.stringify(cfg)); c.editing = false; cfg = c; ds(["edit", "off"]) }
+    function finishEditing() { const c = JSON.parse(JSON.stringify(cfg)); c.editing = false; cfg = c; editSec = ""; ds(["edit", "off"]) }
+    // V4.89: Edit mode on one of its tabs (the dock's menu: Edit dock, Add apps, Icons): "dock", "dock-add", "icons"
+    property string editSec: ""
+    function startEditing(sec) {
+        editSec = ""; editSec = sec || ""
+        if (!editing) { const c = JSON.parse(JSON.stringify(cfg)); c.editing = true; cfg = c; ds(["edit", "on"]) }
+    }
+    // desktop-set edit on TAB (Settings > Interface: Dock, Icons): the same, from outside
+    readonly property string editTab: cfg.editTab || ""
+    onEditingChanged: if (editing && editTab !== "") { editSec = ""; editSec = editTab }
+    onEditTabChanged: if (editing && editTab !== "") { editSec = ""; editSec = editTab }
+    readonly property var dockRef: dockObj
+    // how app icons look (Edit mode > Icons): the icon pack goes to Icons, the rest to the dock
+    readonly property var iconCfg: cfg.icons ? cfg.icons : ({})
+    Binding { target: Icons; property: "theme"; value: root.iconCfg.theme || "" }
 
     Process {
         id: cfgProc
@@ -141,7 +201,7 @@ ShellRoot {
                 const ai = text.indexOf("@@accent")
                 if (ai >= 0) {
                     const ac = text.substring(ai + 8).trim()
-                    if (/^#[0-9a-fA-F]{6}$/.test(ac) && Look.accent.toString() !== ac.toLowerCase()) Look.accent = ac
+                    root.setAccent(ac)
                 }
                 const t = (ai >= 0 ? text.substring(0, ai) : text).replace("@@flat", "").replace("@@lite", "")
                 if (t.trim().length === 0 || t === root.cfgText) return
@@ -159,6 +219,15 @@ ShellRoot {
             }
         }
     }
+    // V4.92: the theme color is taken the moment the new wallpaper's colors are written (it was read every 10 s with
+    // the rest, so the colors came long after the wallpaper); it flows in (Look.qml)
+    function setAccent(ac) {
+        if (!/^#[0-9a-fA-F]{6}$/.test(ac)) return
+        if (Look.accent.toString() !== ac.toLowerCase()) Look.accent = ac
+        Look.accentReady = true
+    }
+    Trigger { path: root.home + "/.config/waybar/colors.css"; every: 2000
+        onContent: function(t) { const r = /@define-color accent *(#[0-9a-fA-F]{6})/.exec(t); if (r) root.setAccent(r[1]) } }
     // desktop.json is read as soon as it changes (no more starting a program 5 times a second to look at it);
     // the flags (flat, lite) and the accent color every 3 seconds
     Trigger { path: root.home + "/.config/rice/desktop.json"; every: 1500
@@ -272,7 +341,7 @@ ShellRoot {
             ClockWidget {
                 id: clk
                 anchors.fill: parent
-                clockStyle: clockWin.sty !== "" ? clockWin.sty : (root.cfg.clock && root.cfg.clock.style ? root.cfg.clock.style : "digital")
+                clockStyle: clockWin.sty !== "" ? clockWin.sty : (root.cfg.clock && root.cfg.clock.style ? root.cfg.clock.style : "expressive")
                 mode: root.placement
                 wallpaper: root.wallpaper
                 bw: root.sw
@@ -607,8 +676,6 @@ ShellRoot {
     LazyPanel { name: "snip-result"; SnipResult { } }
     // SUPER + /: every key on one sheet
     LazyPanel { name: "keys-open"; Cheatsheet { } }
-    // SUPER + X: the toolbox (tasks, a note, a focus timer, a converter, the system, a chat)
-    LazyPanel { name: "tools-open"; Tools { } }
     LazyPanel { name: "volume-open"; VolumeMenu { } }
     VolumeOsd { islandTakes: mainBar.islandVolume }
     LazyPanel { name: "gamebar-open"; GamePanel { gb: root.cfg.gamebar ? root.cfg.gamebar : ({}) } }
@@ -616,7 +683,7 @@ ShellRoot {
     // made only when opened, let go two minutes after it closed (less memory from the start)
     LazyPanel { name: "cc-open"; ControlCenter { nf: notifs } }
 
-    Dock { dc: root.cfg.dock ? root.cfg.dock : ({}) }
+    Dock { id: dockObj; dc: root.cfg.dock ? root.cfg.dock : ({}); ic: root.iconCfg; desk: root; editing: root.editing }
 
 
 }

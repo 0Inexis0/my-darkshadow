@@ -56,8 +56,13 @@ PanelWindow {
             list.push({ mac: f[0], name: f[1], active: conn, paired: paired, icon: f[4].trim(), batt: parseInt(f[5]) })
         }
         list.sort(function(a, b) { return a.active !== b.active ? (a.active ? -1 : 1) : (a.paired !== b.paired ? (a.paired ? -1 : 1) : a.name.localeCompare(b.name)) })
+        // V4.94: only when something changed (every read made all the rows again: they flashed in every 4 s)
+        const js = JSON.stringify(list)
+        if (js === netsJs) return
+        netsJs = js
         nets = list
     }
+    property string netsJs: ""
 
     Process {
         id: stateProc

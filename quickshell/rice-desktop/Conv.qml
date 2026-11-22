@@ -3,8 +3,8 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 
-// Units and money for the launcher and the toolbox: "10 km in mi", "72 f c", "100 usd pln", "1.5 gb mb".
-// Units are worked out here; currencies use the European Central Bank's rates, which rice-tools fetches at most
+// Units and money for the launcher: "10 km in mi", "72 f c", "100 usd pln", "1.5 gb mb".
+// Units are worked out here; currencies use the European Central Bank's rates, which rice-find fetches at most
 // twice a day (ask() starts that, only when something that shows a conversion is open).
 Singleton {
     id: cv
@@ -14,7 +14,7 @@ Singleton {
     function ask() { if (!asked) { asked = true; rp.running = true } }
     Process {
         id: rp
-        command: ["bash", "-c", "\"$HOME/.local/bin/rice-tools\" rates 2>/dev/null"]
+        command: ["bash", "-c", "\"$HOME/.local/bin/rice-find\" rates 2>/dev/null"]
         stdout: StdioCollector { onStreamFinished: { try { const j = JSON.parse(text); cv.rates = j.rates || {}; cv.ratesDate = j.date || "" } catch (e) { } } }
     }
     // the rates are a day old at most while the shell runs

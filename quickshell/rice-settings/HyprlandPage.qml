@@ -159,7 +159,7 @@ Item {
         Column {
             spacing: 10
             OptionsList { width: parent.width; ctl: page.ctl; specs: page.fit(page.bordersSpec) }
-            T { kind: "title"; text: I18n.t("Border colors"); font.pixelSize: 16; font.bold: true; topPadding: 8 }
+            SectionTitle { text: I18n.t("Border colors") }
             SegRow {
                 width: parent.width
                 label: I18n.t("Color source")

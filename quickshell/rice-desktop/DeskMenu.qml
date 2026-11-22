@@ -3,10 +3,10 @@ import Quickshell.Io
 import Quickshell.Wayland
 import QtQuick
 
-// The desktop menu: right-click the desktop (where no window is). It opens where you clicked:
-//   your wallpapers in a row on top (click one; the last tile opens all of them), a few quick switches
-//   (next wallpaper, night light, Do Not Disturb, gaming mode, lock), then the places you change most
-//   (Themes, Wallpaper & colors, the bar, the dock, widgets, monitors) and Settings.
+// The desktop menu: right-click the desktop (where no window is). It opens where you clicked (V4.93: smaller):
+//   your wallpapers in a row on top (All opens all of them), five quick switches (next wallpaper, night light,
+//   Do Not Disturb, gaming mode, lock), then Shortcuts: Files, Terminal, Browser, Music, Photos, a screenshot,
+//   Edit widgets and Settings.
 // rice-deskmenu (the "deskmenu-open" file) opens it in the middle of the screen, e.g. from a key.
 Scope {
     id: dm
@@ -136,8 +136,8 @@ Scope {
         property string label: ""
         property bool on: false
         signal clicked()
-        height: 72
-        radius: tm.pressed ? 14 : (on ? 22 : 36)
+        height: 58
+        radius: tm.pressed ? 12 : (on ? 18 : 29)
         color: on ? pal.primary : (tm.containsMouse ? pal.cardHi : pal.card)
         scale: tm.pressed ? 0.94 : 1
         Behavior on radius { NumberAnimation { duration: dm.shape; easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
@@ -148,8 +148,8 @@ Scope {
             spacing: 5
             Item {
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: 24; height: 24
-                MIcon { anchors.centerIn: parent; size: 21; name: tl.icon; glyph: tl.glyph; color: tl.on ? pal.inkPrimary : pal.fg
+                width: 20; height: 20
+                MIcon { anchors.centerIn: parent; size: 18; name: tl.icon; glyph: tl.glyph; color: tl.on ? pal.inkPrimary : pal.fg
                     // a small turn and pop when it flips
                     rotation: tl.on ? 0 : -8; scale: tl.on ? 1.08 : 1
                     Behavior on rotation { NumberAnimation { duration: dm.shape; easing.type: Easing.OutBack } }
@@ -157,10 +157,42 @@ Scope {
                     Behavior on color { ColorAnimation { duration: dm.quick } } }
             }
             Text { anchors.horizontalCenter: parent.horizontalCenter; width: tl.width - 8; horizontalAlignment: Text.AlignHCenter; elide: Text.ElideRight
-                text: tl.label; color: tl.on ? pal.inkPrimary : pal.fg; font.family: Fonts.main; font.pixelSize: 11; font.weight: Font.Medium
+                text: tl.label; color: tl.on ? pal.inkPrimary : pal.fg; font.family: Fonts.main; font.pixelSize: 10; font.weight: Font.Medium
                 Behavior on color { ColorAnimation { duration: dm.quick } } }
         }
         MouseArea { id: tm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("click"); tl.clicked() } }
+    }
+    // a shortcut: an app's icon (or a symbol on a soft shape) over its name
+    component Shortcut: Item {
+        id: sc
+        property string app: ""           // an icon name of an app
+        property var keys: []
+        property string icon: ""          // else a symbol
+        property string glyph: ""
+        property string label: ""
+        signal clicked()
+        height: 72
+        Rectangle { anchors.fill: parent; radius: 18; color: scm.containsMouse ? pal.card : "transparent"
+            Behavior on color { ColorAnimation { duration: dm.quick } } }
+        AppIcon {
+            visible: sc.app !== ""
+            anchors.horizontalCenter: parent.horizontalCenter; y: 8
+            size: 38; name: sc.app; keys: sc.keys; look: "original"; colors: pal
+            hover: scm.containsMouse; pressed: scm.pressed
+        }
+        Blob {
+            visible: sc.app === ""
+            anchors.horizontalCenter: parent.horizontalCenter; y: 8
+            width: 38; height: 38; kind: "cookie"
+            color: scm.containsMouse ? pal.primary : pal.container
+            rotation: scm.containsMouse ? 30 : 0
+            Behavior on rotation { NumberAnimation { duration: 520; easing.type: Easing.OutBack } }
+            MIcon { anchors.centerIn: parent; rotation: -parent.rotation; size: 18; name: sc.icon; glyph: sc.glyph
+                color: scm.containsMouse ? pal.inkPrimary : pal.inkContainer }
+        }
+        Text { anchors.horizontalCenter: parent.horizontalCenter; y: 52; width: parent.width - 4; horizontalAlignment: Text.AlignHCenter; elide: Text.ElideRight
+            text: sc.label; color: pal.fg; font.family: Fonts.main; font.pixelSize: 11 }
+        MouseArea { id: scm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("click"); sc.clicked() } }
     }
     // a place in Settings: a tonal row with a round icon, a name, a line under it and an arrow
     component Place: Rectangle {
@@ -223,8 +255,8 @@ Scope {
             on: Look.shadows && Look.shadowPanels; size: Look.shadowSize; strength: Look.shadowStrength }
         Rectangle {
             id: card
-            readonly property real w: 372
-            readonly property real fullH: col.implicitHeight + 28
+            readonly property real w: 316
+            readonly property real fullH: col.implicitHeight + 24
             // it opens where you clicked, and always stays on the screen; near the bottom it opens upwards
             readonly property real baseY: Math.max(10, Math.min(win.height - fullH - 10, dm.py + 4))
             readonly property bool up: baseY < dm.py - 20
@@ -234,7 +266,7 @@ Scope {
             x: Math.max(10, Math.min(win.width - width - 10, dm.px + 4))
             y: up ? baseY + fullH - height : baseY
             clip: true
-            radius: 32 + 8 * (1 - dm.unfold)
+            radius: 28 + 8 * (1 - dm.unfold)
             color: pal.surface
             border.width: 1
             border.color: pal.line
@@ -247,20 +279,20 @@ Scope {
 
             Column {
                 id: col
-                x: 14; y: 14; width: parent.width - 28
+                x: 12; y: 12; width: parent.width - 24
                 spacing: 8
 
                 // ---- header: the wallpapers, and All
                 Item {
                     visible: dm.wallsOn
-                    width: parent.width; height: 32
+                    width: parent.width; height: 28
                     opacity: dm.stg(0); transform: Translate { y: (1 - dm.stg(0)) * -10 }
                     Column { x: 6; anchors.verticalCenter: parent.verticalCenter
-                        Text { text: Tr.t("Wallpapers"); color: pal.fg; font.family: Fonts.main; font.pixelSize: 15; font.weight: Font.DemiBold }
+                        Text { text: Tr.t("Wallpapers"); color: pal.fg; font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.DemiBold }
                     }
                     Rectangle {
                         anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-                        width: allRow.implicitWidth + 24; height: 32
+                        width: allRow.implicitWidth + 20; height: 28
                         radius: allM.pressed ? 10 : 16
                         color: allM.containsMouse ? pal.primary : pal.container
                         Behavior on color { ColorAnimation { duration: dm.quick } }
@@ -277,7 +309,7 @@ Scope {
                 ListView {
                     id: wl
                     visible: dm.wallsOn
-                    width: parent.width; height: 72
+                    width: parent.width; height: 58
                     orientation: ListView.Horizontal
                     spacing: 8
                     clip: true
@@ -292,7 +324,7 @@ Scope {
                     } }
                     delegate: Item {
                         id: wt
-                        width: 108; height: 72
+                        width: 88; height: 58
                         readonly property bool cur: modelData.path === dm.current
                         readonly property real it: dm.stg(1 + Math.min(index, 4) * 0.6)
                         opacity: it
@@ -334,7 +366,7 @@ Scope {
                     Tile { width: tiles.tw; icon: "shuffle"; glyph: ""; label: Tr.t("Next")
                         opacity: dm.stg(2); transform: Translate { y: (1 - dm.stg(2)) * 22 }
                         onClicked: Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-walls\" next"]) }
-                    Tile { width: tiles.tw; icon: "nightlight"; glyph: ""; label: Tr.t("Night light"); on: dm.st.night
+                    Tile { width: tiles.tw; icon: "nightlight"; glyph: ""; label: Tr.t("Night"); on: dm.st.night
                         opacity: dm.stg(2.4); transform: Translate { y: (1 - dm.stg(2.4)) * 22 }
                         onClicked: { dm.flip("night"); Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-services\" toggle nightlight"]); again.restart() } }
                     Tile { width: tiles.tw; icon: "do_not_disturb_on"; glyph: ""; label: Tr.t("Silence"); on: dm.st.dnd
@@ -350,41 +382,37 @@ Scope {
                 // the real state a moment after a switch (it changes the look of the whole shell first)
                 Timer { id: again; interval: 1500; onTriggered: stateP.running = true }
 
-                // ---- places in Settings
-                Column {
+                // ---- shortcuts
+                Text { x: 6; text: Tr.t("Shortcuts"); color: pal.dim; font.family: Fonts.main; font.pixelSize: 11; font.weight: Font.DemiBold
+                    opacity: dm.stg(4) }
+                Grid {
+                    id: shorts
                     width: parent.width
-                    spacing: 4
+                    columns: 4
+                    spacing: 2
+                    readonly property real cw: (width - 3 * spacing) / 4
                     Repeater {
                         model: [
-                            { i: "palette", g: "", n: "Themes", d: "A whole look in one click", p: "34" },
-                            { i: "wallpaper", g: "", n: "Wallpaper & colors", d: "Animation, slideshow, live wallpapers", p: "18" },
-                            { i: "widgets", g: "", n: "Edit widgets", d: "Add, move and resize them", p: "edit" },
-                            { i: "toolbar", g: "", n: "Bar", d: "Style, position, modules", p: "2" },
-                            { i: "dock_to_bottom", g: "", n: "Dock", d: "Apps on a screen edge", p: "14" },
-                            { i: "desktop_windows", g: "", n: "Monitors", d: "Resolution, size, arrangement", p: "28" }
+                            { a: "darkshadow-files", k: ["files"], n: "Files", c: "\"$HOME/.local/bin/rice-app\" files" },
+                            { a: "utilities-terminal", k: ["terminal"], n: "Terminal", c: "\"$HOME/.local/bin/rice-term\"" },
+                            { a: "web-browser", k: [], n: "Browser", c: "b=\"$(xdg-settings get default-web-browser 2>/dev/null)\"; [ -n \"$b\" ] && gtk-launch \"${b%.desktop}\" || xdg-open https://duckduckgo.com" },
+                            { a: "darkshadow-music", k: ["music"], n: "Music", c: "\"$HOME/.local/bin/rice-app\" music" },
+                            { a: "darkshadow-photos", k: ["photos"], n: "Photos", c: "\"$HOME/.local/bin/rice-app\" photos" },
+                            { a: "", i: "screenshot_region", g: 0xF0E51, n: "Screenshot", c: "sleep 0.3; \"$HOME/.local/bin/screenshot\"" },
+                            { a: "", i: "widgets", g: 0xF072C, n: "Widgets", c: "\"$HOME/.local/bin/desktop-set\" edit on" },
+                            { a: "", i: "settings", g: 0xF0493, n: "Settings", c: "\"$HOME/.local/bin/rice-settings\" 0" }
                         ]
-                        delegate: Place {
-                            width: col.width
-                            icon: modelData.i; glyph: modelData.g; label: Tr.t(modelData.n); sub: Tr.t(modelData.d)
-                            opacity: dm.stg(4 + index * 0.55); transform: Translate { y: (1 - dm.stg(4 + index * 0.55)) * 26 }
-                            onClicked: modelData.p === "edit" ? dm.run("\"$HOME/.local/bin/desktop-set\" edit on") : dm.settings(modelData.p)
+                        delegate: Shortcut {
+                            required property var modelData
+                            required property int index
+                            width: shorts.cw
+                            app: modelData.a; keys: modelData.k
+                            icon: modelData.i || ""; glyph: modelData.g ? String.fromCodePoint(modelData.g) : ""
+                            label: Tr.t(modelData.n)
+                            opacity: dm.stg(4.4 + index * 0.35); transform: Translate { y: (1 - dm.stg(4.4 + index * 0.35)) * 20 }
+                            onClicked: dm.run(modelData.c)
                         }
                     }
-                }
-
-                // ---- Settings: a filled button in your key color
-                Rectangle {
-                    width: parent.width; height: 50
-                    radius: sm.pressed ? 14 : 25
-                    color: sm.containsMouse ? Qt.lighter(pal.primary, 1.07) : pal.primary
-                    opacity: dm.stg(7.6); transform: Translate { y: (1 - dm.stg(7.6)) * 26 }
-                    Behavior on radius { NumberAnimation { duration: dm.shape; easing.type: Easing.OutBack; easing.overshoot: 1.6 } }
-                    Behavior on color { ColorAnimation { duration: dm.quick } }
-                    Row { anchors.centerIn: parent; spacing: 8
-                        MIcon { anchors.verticalCenter: parent.verticalCenter; size: 19; name: "settings"; glyph: ""; color: pal.inkPrimary
-                            rotation: sm.containsMouse ? 60 : 0; Behavior on rotation { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } } }
-                        Text { anchors.verticalCenter: parent.verticalCenter; text: Tr.t("Settings"); color: pal.inkPrimary; font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.DemiBold } }
-                    MouseArea { id: sm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("click"); dm.settings("0") } }
                 }
             }
         }

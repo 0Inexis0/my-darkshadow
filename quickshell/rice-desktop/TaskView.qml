@@ -93,7 +93,8 @@ PanelWindow {
     }
     function hit(w) { const q = query.toLowerCase(); return q === "" || (w.title + " " + w.cls).toLowerCase().indexOf(q) >= 0 }
     readonly property var found: query === "" ? [] : mru.filter(hit)
-    function iconOf(cls) {
+    function iconOf(cls, title) {
+        cls = Icons.appKey(cls, title)
         const e = cls ? DesktopEntries.heuristicLookup(cls) : null
         const n = e && e.icon ? e.icon : (cls || "").toLowerCase()
         const p = n !== "" ? Icons.get(n, true) : ""
@@ -340,14 +341,14 @@ PanelWindow {
                                         anchors.centerIn: parent
                                         readonly property real sz: Math.min(parent.width, parent.height) * 0.42
                                         width: sz; height: sz; sourceSize.width: 96; sourceSize.height: 96
-                                        source: tv.iconOf(wv.w.cls)
+                                        source: tv.iconOf(wv.w.cls, wv.w.title)
                                         visible: !live.obj || !live.obj.hasContent
                                         smooth: true; mipmap: true
                                     }
                                 }
                                 // the app on top of its picture, small
                                 Image { visible: live.obj !== null && wv.width > 70; x: 6; y: wv.height - height - 6; width: 18; height: 18
-                                    sourceSize.width: 36; sourceSize.height: 36; source: tv.iconOf(wv.w.cls) }
+                                    sourceSize.width: 36; sourceSize.height: 36; source: tv.iconOf(wv.w.cls, wv.w.title) }
                                 // close
                                 Rectangle {
                                     visible: wm2.containsMouse && !wm2.drag.active && wv.width > 50
@@ -452,13 +453,13 @@ PanelWindow {
                             }
                         }
                         Image { anchors.centerIn: parent; width: parent.height * 0.4; height: width; sourceSize.width: 128; sourceSize.height: 128
-                            source: tv.iconOf(sw.w.cls); visible: !slive.obj || !slive.obj.hasContent; mipmap: true }
+                            source: tv.iconOf(sw.w.cls, sw.w.title); visible: !slive.obj || !slive.obj.hasContent; mipmap: true }
                         MouseArea { anchors.fill: parent; hoverEnabled: true; onEntered: tv.sel = index; onClicked: { tv.sel = index; tv.commit() } }
                     }
                     Row {
                         anchors.horizontalCenter: parent.horizontalCenter
                         y: sbox.height + 8; spacing: 6
-                        Image { width: 18; height: 18; sourceSize.width: 36; sourceSize.height: 36; source: tv.iconOf(sw.w.cls); anchors.verticalCenter: parent.verticalCenter }
+                        Image { width: 18; height: 18; sourceSize.width: 36; sourceSize.height: 36; source: tv.iconOf(sw.w.cls, sw.w.title); anchors.verticalCenter: parent.verticalCenter }
                         Text { width: Math.min(implicitWidth, sw.width - 26); elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter
                             text: sw.w.title !== "" ? sw.w.title : tv.nameOf(sw.w.cls)
                             color: sw.on ? pal.fg : pal.dim; font.family: Fonts.main; font.pixelSize: 12; font.weight: sw.on ? Font.DemiBold : Font.Normal }

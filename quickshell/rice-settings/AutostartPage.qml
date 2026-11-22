@@ -105,7 +105,7 @@ Column {
         model: page.main
         delegate: SettingRow {
             width: page.width
-            height: 48
+            cardHeight: 48
             label: modelData.cmd
             Tog {
                 anchors.right: parent.right

@@ -32,10 +32,11 @@ if [ -z "$RICE_COLORS_ONLY" ]; then
   targs=()
   [ -x "$HOME/.local/bin/rice-walls" ] && mapfile -t targs < <("$HOME/.local/bin/rice-walls" awww-args 2>/dev/null)
   [ "${#targs[@]}" -gt 0 ] || targs=(-t random --transition-duration 1)
+  # V4.92: the picture changes while the colors are made (they waited for it before)
   if command -v awww >/dev/null 2>&1; then
-    awww img "$img" "${targs[@]}" 2>>"$log" || awww img "$img" 2>>"$log" || say "awww could not set it (is awww-daemon running?)"
+    { awww img "$img" "${targs[@]}" 2>>"$log" || awww img "$img" 2>>"$log" || say "awww could not set it (is awww-daemon running?)"; } &
   elif command -v swww >/dev/null 2>&1; then
-    swww img "$img" "${targs[@]}" 2>>"$log" || swww img "$img" 2>>"$log"
+    { swww img "$img" "${targs[@]}" 2>>"$log" || swww img "$img" 2>>"$log"; } &
   else
     say "no awww: the wallpaper itself was not changed"
   fi
@@ -53,8 +54,9 @@ sat=50; lum=50
 if [ -n "$im" ]; then
   # how colorful it is: the chroma (HCL), not the HSL saturation. HSL calls a near-black pixel with a hint of blue
   # "saturated", so a black or white wallpaper with a few stars came out pink or blue before
-  s=$("$im" -define jpeg:size=200x200 "$src[0]" -resize 100x100! -colorspace HCL -channel G -separate +channel -format "%[fx:mean*100]" info: 2>>"$log")
-  l=$("$im" -define jpeg:size=200x200 "$src[0]" -resize 100x100! -colorspace Gray -format "%[fx:mean*100]" info: 2>>"$log")
+  # V4.92: both in one go (the picture is read and made small once)
+  read -r s l < <("$im" -define jpeg:size=200x200 "${src}[0]" -resize 64x64! \( +clone -colorspace HCL -channel G -separate +channel -format "%[fx:mean*100] " -write info: +delete \) \
+    -colorspace Gray -format "%[fx:mean*100]\n" info: 2>>"$log")
   [[ "$s" =~ ^[0-9.]+$ ]] && sat="$s"
   [[ "$l" =~ ^[0-9.]+$ ]] && lum="$l"
 else
@@ -117,6 +119,9 @@ fi
 
 mkdir -p "$HOME/.cache"
 echo "$img" > "$HOME/.cache/hyprquickpaper-current"
+wait
 
 # recolor notifications and the lock screen (Shadow's Shell)
 "$HOME/.local/bin/rice-colors" refresh >/dev/null 2>&1 &
+# the icons of our apps (Files, Photos, Music, Videos) take the new colors too
+[ -x "$HOME/.local/bin/rice-app" ] && "$HOME/.local/bin/rice-app" icons >/dev/null 2>&1 &
