@@ -1,5 +1,17 @@
 # Changelog
 
+## V4.95: widgets work again, three new widgets, menus above the dock, sounds every time, a lighter shell
+- Fixed: **widgets of Music, Weather, System and Date could not be added** (and adding one could crash the shell): a widget whose name is also the name of its family called itself without end. Gauge, Progress and the rest come back too
+- **New widgets** (Edit mode > Widgets): **Analog**, a new clock style (a soft cookie face, round hands that spring to the minute, a dot that runs round the rim with the seconds), **Weather > Pills** (the weather as a stack of pills: the temperature big in your theme color, the sky and the place, wind, humidity, high and low) and **Progress** (how much of the day, the week, the month and the year is gone, as thick pills that fill)
+- **A widget is always all on the screen**: one saved near an edge that got bigger (another style, the stacked clock) or a smaller screen was cut off at the top or the side
+- Fixed: **Settings > Dock > Pinned at startup** did nothing until the next start; it pins or unpins the dock at once now
+- **Settings is in the launcher** (DarkShadow Settings, with its own icon in your colors), so it can be pinned to the dock like any app
+- Fixed: **Settings > Home > Power modes > Turn on** often did nothing: it unmasks power-profiles-daemon, starts a password prompt when none runs, waits until the modes are there, and says why not when tlp, auto-cpufreq or tuned control the power. The modes are read over D-Bus, so tuned-ppd and a broken powerprofilesctl work too
+- **The dock's Session, Wi-Fi, Bluetooth and Volume menus open above the dock** (they opened at the top, by the bar)
+- Fixed: **click sounds played once or twice and then never again** on some systems (a sound that still said "playing" was never played again; if this way of playing fails, they play another way). The control center and the notifications click too now
+- **Lighter**: the fonts file is watched instead of starting a program every 1.5 seconds for as long as the shell runs; the To-do widget reads its list when it changes (it started Python every 2.5 seconds); the clock wakes once a minute (it woke every second); CPU, RAM and GPU are not sampled while windows cover the widgets, and nvidia-smi is asked a third as often; the slow turning shapes move at 30 frames a second by default (Settings > Widgets > Frame rate)
+- Thanks to Sarods2D for the ideas; the designs and the code are our own
+
 ## V4.94: the dock in your order, typing a Wi-Fi password works, the shell comes back after a crash, rice-doctor
 - **The dock in your order** (Edit mode > Dock): the pin, your apps, the song, every module and the all-apps button (the 9 dots) are parts of one row. Order: ← → move a part, and past your apps it goes to their other side, so modules can sit on the left, on the right or on both ends. The pin and the all-apps button are modules now: take them off like any other. A part that comes grows in with a little spring, the others slide aside (`desktop-set dock mods clock,pin,apps,music,launcher`)
 - Fixed: **typing a Wi-Fi password was impossible**: the list of networks was made again every 5 seconds, which emptied the field while you typed. The list is only made again when it really changed, never while you type a password, and what you typed is kept. The Bluetooth menu flashed its rows in every 4 seconds for the same reason

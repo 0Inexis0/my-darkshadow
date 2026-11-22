@@ -54,8 +54,13 @@ Scope {
     Behavior on t { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
 
     property bool initDone: false
+    // Settings > Dock > Pinned at startup: at the start, and at once when you switch it (V4.95; before, it waited for the
+    // next start, so the switch looked like it did nothing)
+    property bool lastPinStart: false
     onDcChanged: {
-        if (!initDone && dc.enabled !== undefined) { pinned = dc.pinnedStartup === true; initDone = true }
+        if (!initDone && dc.enabled !== undefined) { pinned = dc.pinnedStartup === true; lastPinStart = pinned; initDone = true; return }
+        const ps = dc.pinnedStartup === true
+        if (initDone && ps !== lastPinStart) { lastPinStart = ps; pinned = ps }
     }
     // it only hides when the pointer is really off the dock (a stray "exited" while the dock grows or while an icon
     // is clicked made it hide and come back over and over)

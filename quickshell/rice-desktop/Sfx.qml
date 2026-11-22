@@ -32,7 +32,7 @@ Singleton {
     // outside: play in its own process, so it is heard even if this window closes right away
     function play(ev, outside) {
         if (!allowed(ev)) return
-        const now = Date.now(), g = gaps[ev] || 0
+        const now = Date.now(), g = outside ? 0 : (gaps[ev] || 0)
         if (g > 0 && lastAt[ev] && now - lastAt[ev] < g) return
         lastAt[ev] = now
         if (bank && !outside && bank.play(ev)) return

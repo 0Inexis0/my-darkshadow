@@ -28,7 +28,9 @@ Item {
         { key: "trio", label: I18n.t("CPU · GPU · RAM"), icon: "\uf2db", desc: I18n.t("Three small shapes") },
         { key: "forecast", label: I18n.t("Forecast"), icon: "\uf0c2", desc: I18n.t("Now, how it feels and the next hours") },
         { key: "music", label: I18n.t("Music card"), icon: "\uf001", desc: I18n.t("Cover and buttons; opens to the lyrics") },
-        { key: "datepill", label: I18n.t("Date & time"), icon: "\uf017", desc: I18n.t("A slim pill with the date and the time") }
+        { key: "datepill", label: I18n.t("Date & time"), icon: "\uf017", desc: I18n.t("A slim pill with the date and the time") },
+        { key: "wpills", label: I18n.t("Weather pills"), icon: "\uf0c2", desc: I18n.t("The weather as a stack of pills") },
+        { key: "progress", label: I18n.t("Progress"), icon: "\uf252", desc: I18n.t("How much of the day, week, month and year is gone") }
     ]
 
     // widget styles (Settings > Widgets > Theme)
@@ -245,7 +247,7 @@ Item {
                 label: I18n.t("Frame rate")
                 desc: I18n.t("How smooth the moving parts of the widgets are (turning shapes, the visualizer). Screen: as fast as your monitor (144, 180 Hz ...), a little more work")
                 options: [{ label: "30", value: "30" }, { label: "60", value: "60" }, { label: "120", value: "120" }, { label: I18n.t("Screen"), value: "0" }]
-                current: String(page.ctl.dst.fps !== undefined ? page.ctl.dst.fps : 60)
+                current: String(page.ctl.dst.fps !== undefined ? page.ctl.dst.fps : 30)
                 onChosen: function(v) {
                     const d = JSON.parse(JSON.stringify(page.ctl.dst)); d.fps = Number(v); page.ctl.dst = d
                     Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" widgets-fps \"$1\"", "_", v])
@@ -461,7 +463,8 @@ Item {
                 options: [
                     { label: I18n.t("Expressive"), value: "expressive" },
                     { label: I18n.t("Stacked"), value: "stacked" },
-                    { label: I18n.t("Shape"), value: "shape" }
+                    { label: I18n.t("Shape"), value: "shape" },
+                    { label: I18n.t("Analog"), value: "analog" }
                 ]
                 current: ({ digital: "stacked", line: "expressive", cookie: "shape", pixel: "expressive" })[page.cv("style", "expressive")] || page.cv("style", "expressive")
                 onChosen: function(v) { page.ctl.dset("clock", "style", v) }

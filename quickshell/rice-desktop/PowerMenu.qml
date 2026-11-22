@@ -21,12 +21,15 @@ PanelWindow {
     readonly property color line: Qt.rgba(1, 1, 1, 0.09)
     readonly property color bg: Qt.rgba(0.05, 0.05, 0.05, Look.flat ? 1 : 0.62)
     property var bc: ({})
-    readonly property bool atBottom: bc.position === "bottom"
-    readonly property real barSpace: (bc.enabled === false ? 34 : (bc.height ? bc.height : 38)) + (bc.style === "flat" ? 0 : 16) + 8
+    // V4.95: opened from the dock ("dock:SPACE" after the place): it opens above the dock, not by the bar
+    property real dockSpace: -1
+    readonly property bool fromDock: dockSpace >= 0
+    readonly property bool atBottom: fromDock || bc.position === "bottom"
+    readonly property real barSpace: fromDock ? dockSpace : ((bc.enabled === false ? 34 : (bc.height ? bc.height : 38)) + (bc.style === "flat" ? 0 : 16) + 8)
     property real cx: 0
     // the bar on the left or right edge (VBar.qml): the menu opens beside the bar, level with the icon (cy)
     property real cy: -1
-    readonly property bool side: bc.position === "left" || bc.position === "right"
+    readonly property bool side: !fromDock && (bc.position === "left" || bc.position === "right")
     readonly property bool atRight: bc.position === "right"
     readonly property real sideSpace: (bc.enabled === false ? 34 : (bc.height ? bc.height + 4 : 42)) + (bc.style === "flat" ? 0 : 16) + 8
     property string armed: ""          // the action that waits for its second click
@@ -57,7 +60,8 @@ PanelWindow {
     Trigger {
         name: "power-open"; fresh: true
         onFired: function(o) {
-            const x = parseFloat(o.split(" ")[1]), yv = parseFloat(o.split(" ")[2])
+            const x = parseFloat(o.split(" ")[1]), y2 = o.split(" ")[2] || "", yv = parseFloat(y2)
+            pw.dockSpace = y2.indexOf("dock:") === 0 ? (parseFloat(y2.substring(5)) || 80) : -1
             if (pw.open) pw.hide(); else pw.show(isNaN(x) ? pw.width - 120 : x, yv)
         }
     }

@@ -24,14 +24,17 @@ PanelWindow {
     readonly property real alpha: Look.flat ? 1 : 0.62
     readonly property color bg: Qt.rgba(0.05, 0.05, 0.05, alpha)
     property var bc: ({})
-    readonly property bool atBottom: bc.position === "bottom"
-    readonly property real barSpace: (bc.enabled === false ? 34 : (bc.height ? bc.height : 38)) + (bc.style === "flat" ? 0 : 16) + 8
+    // V4.95: opened from the dock ("dock:SPACE" after the place): it opens above the dock, not by the bar
+    property real dockSpace: -1
+    readonly property bool fromDock: dockSpace >= 0
+    readonly property bool atBottom: fromDock || bc.position === "bottom"
+    readonly property real barSpace: fromDock ? dockSpace : ((bc.enabled === false ? 34 : (bc.height ? bc.height : 38)) + (bc.style === "flat" ? 0 : 16) + 8)
 
     // ---------- data ----------
     property real cx: 0
     // the bar on the left or right edge (VBar.qml): the menu opens beside the bar, level with the icon (cy)
     property real cy: -1
-    readonly property bool side: bc.position === "left" || bc.position === "right"
+    readonly property bool side: !fromDock && (bc.position === "left" || bc.position === "right")
     readonly property bool atRight: bc.position === "right"
     readonly property real sideSpace: (bc.enabled === false ? 34 : (bc.height ? bc.height + 4 : 42)) + (bc.style === "flat" ? 0 : 16) + 8
     property bool radio: true
@@ -129,7 +132,8 @@ PanelWindow {
     Trigger {
         name: "bluetooth-open"; fresh: true
         onFired: function(o) {
-            const x = parseFloat(o.split(" ")[1]), yv = parseFloat(o.split(" ")[2])
+            const x = parseFloat(o.split(" ")[1]), y2 = o.split(" ")[2] || "", yv = parseFloat(y2)
+            wm.dockSpace = y2.indexOf("dock:") === 0 ? (parseFloat(y2.substring(5)) || 80) : -1
             if (wm.open) wm.hide(); else wm.show(isNaN(x) ? wm.width - 200 : x, yv)
         }
     }

@@ -62,7 +62,7 @@ Item {
     function setProfile(k) {
         profile = k
         wanted = k
-        setProc.command = ["bash", "-c", "\"$HOME/.local/bin/rice-services\" profile \"$1\" 2>&1; powerprofilesctl get 2>/dev/null", "_", k]
+        setProc.command = ["bash", "-c", "\"$HOME/.local/bin/rice-services\" profile \"$1\" >/dev/null 2>&1; \"$HOME/.local/bin/rice-services\" profile get", "_", k]
         setProc.running = true
     }
     function pname(k) { return k === "power-saver" ? I18n.t("Power saver") : (k === "balanced" ? I18n.t("Balanced") : I18n.t("Performance")) }
@@ -78,24 +78,41 @@ Item {
             }
         }
     }
-    // power-profiles-daemon is installed but not running: start it (asks for your password)
+    // power-profiles-daemon is installed but not running: turn it on now and at every start (asks for your password).
+    // V4.95: rice-services pp start unmasks it, starts a password agent when none runs, waits until the modes are
+    // there and says why not (tlp / auto-cpufreq / tuned take its place); before, it often said nothing and did nothing
+    property bool ppBusy: false
+    property string ppWhy: ""
     Process {
         id: startPP
-        command: ["bash", "-c", "if [ -d /run/systemd/system ]; then systemctl start power-profiles-daemon.service 2>&1 || pkexec systemctl enable --now power-profiles-daemon.service 2>&1; else pkexec \"$HOME/.local/bin/rice-sys\" service-enable power-profiles-daemon 2>&1; fi"]
-        onExited: function(code) { page.ctl.status = code === 0 ? I18n.t("Power modes are on") : I18n.t("Could not start power-profiles-daemon"); page.readProfile() }
+        command: ["bash", "-c", "\"$HOME/.local/bin/rice-services\" pp start 2>&1 | tail -1"]
+        onRunningChanged: if (running) { page.ppBusy = true; page.ctl.status = I18n.t("Turning on power modes…") }
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const r = text.trim()
+                page.ppBusy = false
+                if (r === "ok") page.ctl.status = I18n.t("Power modes are on")
+                else if (r.indexOf("conflict:") === 0) page.ctl.status = I18n.t("Power modes are off because this app controls power: ") + r.substring(9)
+                else page.ctl.status = I18n.t("Could not start power-profiles-daemon") + (r.indexOf("fail:") === 0 && r.length > 5 ? " (" + r.substring(5) + ")" : "")
+                page.readProfile()
+            }
+        }
     }
     property bool ppInstalled: false
     Process {
         id: profProc
-        // every mode this computer has (a "* " marks the one on), then the one on now
-        command: ["bash", "-c", "command -v powerprofilesctl >/dev/null || { echo NONE; exit 0; }; powerprofilesctl list 2>/dev/null | sed -nE 's/^[*[:space:]]*(power-saver|balanced|performance):[[:space:]]*$/\\1/p'; echo CUR; powerprofilesctl get 2>/dev/null"]
+        // every mode this computer has and the one on now (over D-Bus, so tuned-ppd and a broken powerprofilesctl work too)
+        command: ["bash", "-c", "\"$HOME/.local/bin/rice-services\" pp state 2>/dev/null"]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
-                page.ppInstalled = text.indexOf("NONE") < 0
-                const parts = text.split("CUR")
-                page.profiles = page.ppInstalled ? parts[0].split("\n").map(function(x) { return x.trim() }).filter(function(x) { return x.length > 0 && x !== "NONE" }) : []
-                page.profile = parts.length > 1 ? parts[1].trim() : ""
+                try {
+                    const j = JSON.parse(text)
+                    page.ppInstalled = j.installed === true
+                    page.profiles = j.profiles || []
+                    page.profile = j.active || ""
+                    page.ppWhy = j.why || ""
+                } catch (e) { }
             }
         }
     }
@@ -382,16 +399,18 @@ Item {
                     kind: "reading"
                     font.pixelSize: 12
                     color: M3.inkDim
-                    text: page.ppInstalled
+                    text: page.ppWhy === "tlp" || page.ppWhy === "auto-cpufreq" || page.ppWhy === "tuned"
+                        ? I18n.t("Power modes are off because this app controls power: ") + page.ppWhy
+                        : page.ppInstalled
                         ? I18n.t("power-profiles-daemon is installed but not running. Turn it on (it asks for your password); on NixOS: services.power-profiles-daemon.enable = true.")
                         : I18n.t("Power modes need power-profiles-daemon, and it is not running on this computer. Install it and turn it on: sudo systemctl enable --now power-profiles-daemon (on NixOS: services.power-profiles-daemon.enable = true).")
                 }
                 Btn {
                     id: startBtn
-                    visible: page.profiles.length === 0 && page.ppInstalled
+                    visible: page.profiles.length === 0 && page.ppInstalled && page.ppWhy !== "tlp" && page.ppWhy !== "auto-cpufreq" && page.ppWhy !== "tuned"
                     anchors.right: parent.right; y: 26
-                    text: I18n.t("Turn on"); sym: "bolt"; icon: ""; primary: true
-                    onClicked: startPP.running = true
+                    text: page.ppBusy ? I18n.t("Turning on…") : I18n.t("Turn on"); sym: "bolt"; icon: ""; primary: true
+                    onClicked: if (!startPP.running) startPP.running = true
                 }
             }
 

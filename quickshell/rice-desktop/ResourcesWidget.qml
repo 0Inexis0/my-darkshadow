@@ -8,7 +8,7 @@ Item {
     property var pal: null
     property bool running: true
     // one rice-stats for the whole shell (Stats.qml)
-    StatsHold { on: rs.running }
+    StatsHold { on: rs.running && !Look.covered }   // V4.95: no sampling while windows cover it
     readonly property int cpu: Math.round(Stats.st.cpu || 0)
     readonly property int ram: Math.round(Stats.st.ram || 0)
     readonly property int gpu: Math.round(Stats.st.gpu || 0)

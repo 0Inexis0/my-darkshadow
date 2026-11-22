@@ -14,11 +14,23 @@ QtObject {
 
     component Snd: SoundEffect {
         property bool warming: false
+        property bool heard: true
         volume: warming ? 0 : bank.vol
         onStatusChanged: {
             if (status === SoundEffect.Ready) { warming = true; play() }
         }
-        onPlayingChanged: if (!playing) warming = false
+        onPlayingChanged: { if (playing) heard = true; else warming = false }
+    }
+    // V4.95: on some systems (PipeWire, Qt's FFmpeg sound) a sound played once or twice and then never again: it
+    // still said "playing", so play() did nothing. Now a sound that still plays is stopped first, and a sound that
+    // did not start within a moment means this way of playing is broken: from then on every sound plays through
+    // pw-play (Sfx.qml), so none is ever silent
+    property bool broken: false
+    property var pend: null
+    property string pendEv: ""
+    property Timer check: Timer {
+        interval: 300
+        onTriggered: if (bank.pend && !bank.pend.heard) { bank.broken = true; if (bank.sfx) bank.sfx.play(bank.pendEv, true) }
     }
 
     property SoundEffect click: Snd { source: bank.src("click") }
@@ -36,9 +48,13 @@ QtObject {
                                   slide: slide, type: type, "page-next": pageNext, "page-prev": pagePrev, add: addSnd, remove: removeSnd })
     // false: not ready here (the caller plays it another way)
     function play(ev) {
+        if (broken) return false
         const s = map[ev]
         if (!s || s.status !== SoundEffect.Ready || s.warming) return false
+        if (s.playing) s.stop()
+        s.heard = false
         s.play()
+        pend = s; pendEv = ev; check.restart()
         return true
     }
 }

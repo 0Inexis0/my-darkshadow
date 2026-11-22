@@ -30,7 +30,7 @@ ShellRoot {
         { id: "visualizer", name: "Visualizer", icon: "\udb85\udc7d", free: true,
           styles: [["bars", "Bars"], ["mirror", "Mirror"], ["wave", "Wave"], ["dots", "Dots"]],
           optKey: "color", opts: [["accent", "Theme color"], ["gradient", "Gradient"], ["rainbow", "Rainbow"], ["mono", "White / black"]], optDefault: "accent" },
-        { id: "clock", name: "Clock", icon: "\uf017", styles: [["expressive", "Expressive"], ["stacked", "Stacked"], ["shape", "Shape"]],
+        { id: "clock", name: "Clock", icon: "\uf017", styles: [["expressive", "Expressive"], ["stacked", "Stacked"], ["shape", "Shape"], ["analog", "Analog"]],
           optKey: "font", opts: [["default", "Font: Default"], ["bebas", "Bebas Neue"], ["orbitron", "Orbitron"], ["outfit", "Outfit"],
                                  ["grotesk", "Space Grotesk"], ["unbounded", "Unbounded"], ["shoulders", "Big Shoulders"]], optDefault: "default" },
         { id: "media", name: "Music", icon: "\uf001", card: true },
@@ -53,6 +53,8 @@ ShellRoot {
         { id: "storage", name: "Storage", icon: "\uf0a0", card: true },
         { id: "trio", name: "CPU · GPU · RAM", icon: "\uf2db", card: true },
         { id: "forecast", name: "Forecast", icon: "\uf0c2", card: true },
+        { id: "wpills", name: "Weather pills", icon: "\uf0c2", card: true },
+        { id: "progress", name: "Progress", icon: "\uf252", card: true },
         { id: "music", name: "Music card", icon: "\uf001", card: true },
         { id: "datepill", name: "Date & time", icon: "\uf017", card: true },
         { id: "date", name: "Date", icon: "\uf073", card: true,
@@ -62,7 +64,7 @@ ShellRoot {
     // [style, widget, name]. A widget of a family that was on stays on; changing the style swaps it in place.
     readonly property var families: ({
         media: [["card", "media", "Card"], ["big", "music", "Big card"], ["ring", "nowring", "Ring"], ["player", "player", "Player"], ["button", "playpill", "Button"]],
-        weather: [["card", "weather", "Card"], ["sky", "sky", "Sky"], ["forecast", "forecast", "Forecast"]],
+        weather: [["card", "weather", "Card"], ["sky", "sky", "Sky"], ["forecast", "forecast", "Forecast"], ["pills", "wpills", "Pills"]],
         resources: [["bars", "resources", "Bars"], ["rings", "trio", "Rings"]],
         date: [["flower", "date", "Flower"], ["cookie", "date", "Cookie"], ["clover", "date", "Clover"], ["sun", "date", "Sun"], ["square", "date", "Square"],
                ["circle", "date", "Circle"], ["pill", "datepill", "Pill"]]
@@ -73,7 +75,7 @@ ShellRoot {
     // what the editor's list offers (15 instead of 23)
     readonly property var catalog: [rawInfo("visualizer"), rawInfo("clock"), famEntry("media", "Music", "\uf001"), rawInfo("lyrics"),
         famEntry("weather", "Weather", "\uf0c2"), rawInfo("calendar"), famEntry("date", "Date", "\uf073"), famEntry("resources", "System", "\uf2db"),
-        rawInfo("gauge"), rawInfo("storage"), rawInfo("battery"), rawInfo("todo"), rawInfo("focus"), rawInfo("notes"), rawInfo("usercard")]
+        rawInfo("gauge"), rawInfo("progress"), rawInfo("storage"), rawInfo("battery"), rawInfo("todo"), rawInfo("focus"), rawInfo("notes"), rawInfo("usercard")]
     // what a widget is in the editor (a member of a family: the family, with its styles)
     function infoOf(id) { const f = famOf(id); if (f !== "") return catalog.filter(function(c) { return c.id === f })[0]; return rawInfo(id) }
     // the widget of a family that is on ("" when none)
@@ -134,11 +136,11 @@ ShellRoot {
             if (to[1] !== cur && cur !== "") {
                 const cw = wins[cur], g = wc(cur)
                 const x = cw ? Math.round(cw.px) : g.x, y = cw ? Math.round(cw.py) : g.y
-                removeWidget(cur)
+                removeWidget(cur, true)
                 patch(to[1], { enabled: true, x: x, y: y })
                 ds(["widget", to[1], "on"])
                 if (x !== undefined) ds(["geom", to[1], x, y])
-            } else if (cur === "") addWidget(to[1])
+            } else if (cur === "") addWidget(to[1], true)
             if (to[1] === "date") { const dw = wins.date; if (dw) dw.sty = v; patch("date", { style: v }); wset("date", "style", v) }
             return to[1]
         }
@@ -148,8 +150,10 @@ ShellRoot {
         else { patch(id, { style: v }); wset(id, "style", v) }
         return id
     }
-    function addWidget(id) {
-        if (families[id]) { if (memberOn(id) === "") addWidget(families[id][0][1]); return }
+    // raw: that very widget (a family's key is also the id of one of its widgets: "media", "weather", "resources",
+    // "date"; without raw that one called itself without end and no widget of those families could be added)
+    function addWidget(id, raw) {
+        if (!raw && families[id]) { if (memberOn(id) === "") addWidget(families[id][0][1], true); return }
         const w = wins[id]
         let geo = {}
         if (w && id !== "visualizer" && !(id === "clock" ? (cfg.clock && cfg.clock.x !== undefined) : (wc(id).x !== undefined))) {
@@ -160,8 +164,8 @@ ShellRoot {
         else { patch(id, Object.assign({ enabled: true }, geo)); ds(["widget", id, "on"]) }
         if (geo.x !== undefined) ds(["geom", id, geo.x, geo.y])
     }
-    function removeWidget(id) {
-        if (families[id]) { families[id].forEach(function(m) { if (on(m[1])) removeWidget(m[1]) }); return }
+    function removeWidget(id, raw) {
+        if (!raw && families[id]) { families[id].forEach(function(m) { if (on(m[1])) removeWidget(m[1], true) }); return }
         if (id === "clock") { patch("clock", { enabled: false }); ds(["clock", "enabled", "off"]) }
         else { patch(id, { enabled: false }); ds(["widget", id, "off"]) }
     }
@@ -213,7 +217,7 @@ ShellRoot {
                     Look.widgetAlpha = j.widgetOpacity !== undefined ? Math.max(0.2, Math.min(1, Number(j.widgetOpacity))) : 1
                     // one widget style now: Google (Material You cards in your theme color)
                     Look.theme = "google"
-                    Look.fps = j.fps !== undefined ? Math.max(0, Number(j.fps)) : 60
+                    Look.fps = j.fps !== undefined ? Math.max(0, Number(j.fps)) : 30   // V4.95: 30 by default (the slow decorative turns look the same, half the redraws)
                     Look.adapt = j.widgetAdapt !== false
                 } catch (e) { }
             }
@@ -552,6 +556,30 @@ ShellRoot {
             Component.onCompleted: root.reg(wid, lyricsWin)
             Component.onDestruction: root.unreg(wid)
             LyricsWidget { anchors.fill: parent; pal: lyricsWin.pal; bg: lyricsWin.bgv; running: root.on("lyrics") && !root.hideWidgets }
+        }
+    }
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("wpills")
+        WidgetWindow {
+            id: wpillsWin
+            wid: "wpills"; wc: root.wc("wpills"); active: root.on("wpills"); editing: root.editing; hidden: root.hideWidgets
+            bw: root.sw; bh: root.sh; cw: 260; ch: 290; defX: 80; defY: 420
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, wpillsWin)
+            Component.onDestruction: root.unreg(wid)
+            WeatherPillsWidget { anchors.fill: parent; pal: wpillsWin.pal; bg: wpillsWin.bgv; running: root.on("wpills") && !root.hideWidgets }
+        }
+    }
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("progress")
+        WidgetWindow {
+            id: progressWin
+            wid: "progress"; wc: root.wc("progress"); active: root.on("progress"); editing: root.editing; hidden: root.hideWidgets
+            bw: root.sw; bh: root.sh; cw: 300; ch: 214; defX: 1500; defY: 420
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, progressWin)
+            Component.onDestruction: root.unreg(wid)
+            ProgressWidget { anchors.fill: parent; pal: progressWin.pal; bg: progressWin.bgv; running: root.on("progress") && !root.hideWidgets }
         }
     }
     // made only while it is on (an off widget takes no memory)

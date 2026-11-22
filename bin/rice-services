@@ -7,6 +7,7 @@
   rice-services is KEY                    "true" / "false" (KEY, or profile:NAME), for the notification center
   rice-services toggle KEY                flip a switch (the notification center buttons use this)
   rice-services profile power-saver|balanced|performance|get
+  rice-services pp state|start            power modes: JSON {installed, running, profiles, active, why}; start the daemon
   rice-services session lock|suspend|logout|reboot|poweroff   (the last three ask first)
 """
 import json
@@ -129,7 +130,8 @@ def state():
         "nightlight": night_on(),
     }
     s["profile"] = profile_get()
-    s["have"]["powerprofilesctl"] = shutil.which("powerprofilesctl") is not None
+    # "powerprofilesctl": power modes work (over D-Bus too, so tuned-ppd counts)
+    s["have"]["powerprofilesctl"] = bool(s["profile"])
     s["airplane"] = have["nmcli"] and not s["wifi"] and not s["bluetooth"] and out(["nmcli", "radio", "wwan"]) != "enabled"
     try:
         s["night_temp"] = int(open(NIGHT).read().strip() or 4500)
@@ -199,19 +201,109 @@ def is_on(key):
         return False
 
 
+# power-profiles-daemon (or tuned-ppd, which answers the same way) over D-Bus with busctl: powerprofilesctl is a
+# Python script that breaks when python-gobject is missing, and tuned-ppd has none (V4.94: then Settings > Home
+# said "not running" and "Turn on" did nothing)
+PP_BUS = [("net.hadess.PowerProfiles", "/net/hadess/PowerProfiles", "net.hadess.PowerProfiles"),
+          ("org.freedesktop.UPower.PowerProfiles", "/org/freedesktop/UPower/PowerProfiles",
+           "org.freedesktop.UPower.PowerProfiles")]
+PP_NAMES = ("power-saver", "balanced", "performance")
+
+
+def pp_bus(prop):
+    for name, path, iface in PP_BUS:
+        r = out(["busctl", "--system", "get-property", name, path, iface, prop], 4)
+        if r:
+            return r, (name, path, iface)
+    return "", None
+
+
+def pp_state():
+    import re
+    active, where = pp_bus("ActiveProfile")
+    profiles = []
+    if where:
+        allp, _ = pp_bus("Profiles")
+        profiles = [p for p in re.findall(r'"Profile" s "([a-z-]+)"', allp) if p in PP_NAMES]
+        m = re.search(r'"([a-z-]+)"', active)
+        active = m.group(1) if m else ""
+    elif shutil.which("powerprofilesctl"):
+        lst = out(["powerprofilesctl", "list"], 4)
+        profiles = re.findall(r"^[*\s]*(power-saver|balanced|performance):\s*$", lst, re.M)
+        active = out(["powerprofilesctl", "get"], 4) if profiles else ""
+    profiles = [p for p in PP_NAMES if p in profiles]
+    installed = bool(where or profiles or shutil.which("powerprofilesctl") or any(os.path.exists(f) for f in (
+        "/usr/lib/systemd/system/power-profiles-daemon.service", "/etc/systemd/system/power-profiles-daemon.service",
+        "/usr/libexec/power-profiles-daemon", "/usr/lib/power-profiles-daemon")))
+    why = ""
+    if installed and not profiles and os.path.isdir("/run/systemd/system"):
+        r = run(["systemctl", "is-enabled", "power-profiles-daemon.service"])
+        if r and r.stdout.strip() == "masked":
+            why = "masked"
+        for c in ("tlp", "auto-cpufreq", "tuned"):
+            r = run(["systemctl", "is-active", c + ".service"])
+            if r and r.stdout.strip() == "active":
+                why = c
+    return {"installed": installed, "running": bool(profiles), "profiles": profiles, "active": active, "why": why}
+
+
+def pp_start():
+    """turns power-profiles-daemon on now and at every start (asks for your password), then waits for it"""
+    import time
+    st = pp_state()
+    if st["running"]:
+        print("ok")
+        return
+    if st["why"] in ("tlp", "auto-cpufreq", "tuned"):
+        print("conflict:" + st["why"])
+        sys.exit(3)
+    if os.path.isdir("/run/systemd/system"):
+        cmd = ["pkexec", "sh", "-c", "systemctl unmask power-profiles-daemon.service >/dev/null 2>&1; "
+               "systemctl enable --now power-profiles-daemon.service"]
+    else:
+        cmd = ["pkexec", BIN + "/rice-sys", "service-enable", "power-profiles-daemon"]
+    # a password prompt needs a polkit agent: start one if none runs
+    if subprocess.run(["pgrep", "-u", str(os.getuid()), "-f", "polkit.*agent|hyprpolkitagent|polkit-gnome-authentication"],
+                      capture_output=True).returncode != 0:
+        r = run(["systemctl", "--user", "start", "hyprpolkitagent.service"], 8)
+        if r is None or r.returncode != 0:
+            for a in ("/usr/lib/hyprpolkitagent/hyprpolkitagent", "/usr/libexec/hyprpolkitagent",
+                      "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1",
+                      "/usr/libexec/polkit-gnome-authentication-agent-1", "/usr/lib/polkit-kde-authentication-agent-1"):
+                if os.access(a, os.X_OK):
+                    bg([a])
+                    break
+        time.sleep(0.8)
+    r = run(cmd, 120)
+    if r is None or r.returncode != 0:
+        print("fail:" + ((r.stderr.strip().splitlines() or [""])[-1] if r else "pkexec not found"))
+        sys.exit(1)
+    for _ in range(25):
+        if pp_state()["running"]:
+            print("ok")
+            return
+        time.sleep(0.2)
+    print("fail:the service started but gives no power modes")
+    sys.exit(1)
+
+
 def profile_get():
-    if shutil.which("powerprofilesctl"):
-        return out(["powerprofilesctl", "get"]) or "balanced"
-    return ""
+    st = pp_state()
+    return st["active"] or ("balanced" if st["running"] else "")
 
 
 def profile_set(name):
     if name not in ("power-saver", "balanced", "performance"):
         sys.exit("profile: power-saver|balanced|performance")
-    if not shutil.which("powerprofilesctl"):
+    if not pp_state()["running"]:
         bg(["notify-send", "-a", "DarkShadow's Shell", "Power modes need power-profiles-daemon",
             "Install it (Arch: power-profiles-daemon, NixOS: services.power-profiles-daemon.enable)"])
         return
+    _, where = pp_bus("ActiveProfile")
+    if where:
+        r = run(["busctl", "--system", "set-property", where[0], where[1], where[2], "ActiveProfile", "s", name], 10)
+        if r and r.returncode == 0:
+            return
     r = run(["powerprofilesctl", "set", name], 10)
     if r is None or r.returncode != 0:
         bg(["notify-send", "-a", "DarkShadow's Shell", "Could not switch the power mode",
@@ -277,6 +369,10 @@ def main(a):
             print(profile_get())
         else:
             profile_set(a[2])
+    elif cmd == "pp" and len(a) > 2 and a[2] == "state":
+        print(json.dumps(pp_state()))
+    elif cmd == "pp" and len(a) > 2 and a[2] == "start":
+        pp_start()
     elif cmd == "session" and len(a) > 2:
         session(a[2])
     elif cmd == "night-temp" and len(a) > 2:

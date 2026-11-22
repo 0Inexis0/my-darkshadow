@@ -132,7 +132,7 @@ Item {
                     Behavior on radius { NumberAnimation { duration: 200 } }
                     Behavior on color { ColorAnimation { duration: 140 } }
                     Text { id: at; anchors.centerIn: parent; text: modelData.text; color: am.containsMouse ? nc.pal.inkPrimary : nc.pal.inkContainer; font.family: Fonts.main; font.pixelSize: nc.fs - 1; font.weight: Font.Medium }
-                    MouseArea { id: am; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { modelData.invoke(); nc.closed() } }
+                    MouseArea { id: am; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("select"); modelData.invoke(); nc.closed() } }
                 }
             }
         }
@@ -142,6 +142,6 @@ Item {
         width: 30; height: 30; radius: 15
         color: xm.containsMouse ? nc.pal.cardHi : "transparent"
         MIcon { anchors.centerIn: parent; size: 16; name: "close"; glyph: ""; color: nc.pal.dim }
-        MouseArea { id: xm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: nc.closed() }
+        MouseArea { id: xm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("remove"); nc.closed() } }
     }
 }

@@ -11,7 +11,7 @@ Item {
     property bool running: true
     // one rice-stats for the whole shell (Stats.qml)
     readonly property var st: Stats.st
-    StatsHold { on: tw.running }
+    StatsHold { on: tw.running && !Look.covered }   // V4.95: no sampling while windows cover it
     readonly property bool haveGpu: Stats.haveGpu
     Row {
         anchors.centerIn: parent

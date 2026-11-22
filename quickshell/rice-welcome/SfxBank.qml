@@ -14,11 +14,21 @@ QtObject {
 
     component Snd: SoundEffect {
         property bool warming: false
+        property bool heard: true
         volume: warming ? 0 : bank.vol
         onStatusChanged: {
             if (status === SoundEffect.Ready) { warming = true; play() }
         }
-        onPlayingChanged: if (!playing) warming = false
+        onPlayingChanged: { if (playing) heard = true; else warming = false }
+    }
+    // V4.95: a sound that still "plays" is stopped first; one that does not start means this way is broken here:
+    // from then on every sound plays through pw-play (Sfx.qml), so none is silent after the first one or two
+    property bool broken: false
+    property var pend: null
+    property string pendEv: ""
+    property Timer check: Timer {
+        interval: 300
+        onTriggered: if (bank.pend && !bank.pend.heard) { bank.broken = true; if (bank.sfx) bank.sfx.play(bank.pendEv, true) }
     }
 
     property SoundEffect click: Snd { source: bank.src("click") }
@@ -32,9 +42,13 @@ QtObject {
                                   slide: slide, type: type })
     // false: not ready here (the caller plays it another way)
     function play(ev) {
+        if (broken) return false
         const s = map[ev]
         if (!s || s.status !== SoundEffect.Ready || s.warming) return false
+        if (s.playing) s.stop()
+        s.heard = false
         s.play()
+        pend = s; pendEv = ev; check.restart()
         return true
     }
 }

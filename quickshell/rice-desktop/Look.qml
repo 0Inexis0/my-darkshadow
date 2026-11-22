@@ -45,7 +45,7 @@ Singleton {
     Behavior on accent { enabled: look.accentReady; ColorAnimation { duration: 700; easing.type: Easing.InOutCubic } }
     // frames a second for the moving parts of the widgets (turning shapes, the visualizer): Settings > Desktop >
     // Frame rate. 0 = as fast as the screen (180 Hz: 180)
-    property int fps: 60
+    property int fps: 30
     // the same color made bright enough to stand out on the dark menus (a dark wallpaper gives a dark accent,
     // which looked muddy on switches and sliders): the hue stays, it gets light and a little colorful
     readonly property color accentHi: Qt.hsla(accent.hslHue < 0 ? 0 : accent.hslHue,

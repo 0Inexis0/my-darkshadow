@@ -52,7 +52,11 @@ Item {
             }
         }
     }
-    Timer { interval: 2500; running: td.running && td.visible; repeat: true; triggeredOnStart: true; onTriggered: if (!proc.running) proc.running = true }
+    // V4.95: read when todo.json changes (inotify) instead of starting Python every 2.5 seconds
+    Trigger { path: td.running ? Quickshell.env("HOME") + "/.config/rice/todo.json" : ""; every: 20000
+        onContent: function(t) { if (!td.quiet && !proc.running) proc.running = true } }
+    Component.onCompleted: proc.running = true
+    onRunningChanged: if (running && !proc.running) proc.running = true
     Timer { id: settle; interval: 1200; onTriggered: { td.quiet = false; proc.running = true } }
 
     Card { anchors.fill: parent; k: td.bg; pal: td.pal }

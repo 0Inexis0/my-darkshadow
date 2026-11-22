@@ -73,7 +73,20 @@ PanelWindow {
         sty = wc.style !== undefined ? wc.style : ""
         flp = wc.flip === true
         vcolor = wc.color !== undefined ? wc.color : ""
+        fit()
     }
+    // V4.95: always all on the screen. A widget saved near an edge that got bigger (another style, a bigger clock)
+    // or a smaller screen put part of it off the screen (a clock cut at the top, a card cut at the left)
+    function fit() {
+        if (dragging || bw <= 0 || bh <= 0) return
+        if (dispW < bw) px = Math.max(0, Math.min(bw - dispW, px))
+        if (dispH < bh) py = Math.max(0, Math.min(bh - dispH, py))
+    }
+    onDispWChanged: fitT.restart()
+    onDispHChanged: fitT.restart()
+    onBwChanged: fitT.restart()
+    onBhChanged: fitT.restart()
+    Timer { id: fitT; interval: 60; onTriggered: w.fit() }
     onWcChanged: adopt()
     onDefXChanged: adopt()
     onDefYChanged: adopt()

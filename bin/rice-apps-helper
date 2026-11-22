@@ -950,7 +950,7 @@ def exif(p):
 
 # ---------------------------------------------------------------- the apps' icons
 
-ICON_APPS = ("files", "photos", "music", "videos")
+ICON_APPS = ("files", "photos", "music", "videos", "settings")
 
 
 def hexrgb(h):
@@ -1004,6 +1004,9 @@ def icon_svg(app, pal):
     elif app == "music":
         bg, glyph, glyph_back = mixc(p["primary"], p["surface"], 0.58), mixc(p["primary"], "#ffffff", 0.45), p["primary"]
         shape = "cookie"
+    elif app == "settings":
+        bg, glyph, glyph_back = p["secondary_container"], mixc(p["primary"], "#ffffff", 0.3), p["secondary_container"]
+        shape = "square"
     else:
         bg, glyph, glyph_back = p["primary"], p["on_primary"], p["on_primary"]
         shape = "clover"
@@ -1024,6 +1027,16 @@ def icon_svg(app, pal):
              '<rect x="90" y="36" width="8" height="42" rx="3" fill="{f}"/>'
              '<ellipse cx="49" cy="87" rx="13" ry="10.5" fill="{f}" transform="rotate(-18 49 87)"/>'
              '<ellipse cx="83" cy="79" rx="13" ry="10.5" fill="{f}" transform="rotate(-18 83 79)"/>')
+    elif app == "settings":
+        import math
+        pts = []
+        for i in range(360):
+            t = 2 * math.pi * i / 360
+            k = (math.cos(8 * t) + 1) / 2
+            r = 30 + 8 * min(1, max(0, (k - 0.25) * 2.2))
+            pts.append((64 + r * math.cos(t), 64 + r * math.sin(t)))
+        gear = "M" + " L".join("%.2f %.2f" % q for q in pts) + " Z"
+        g = '<path d="' + gear + '" fill="{f}"/><circle cx="64" cy="64" r="13" fill="{b}"/>'
     else:
         g = '<path d="M54 45 L54 83 L87 64 Z" fill="{f}" stroke="{f}" stroke-width="12" stroke-linejoin="round"/>'
     g = g.format(b=glyph_back, f=glyph, bg=bg)

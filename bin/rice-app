@@ -52,6 +52,21 @@ install_entries() {
   entry photos "Photos" "Photo viewer" photos "$IMAGES" "Graphics;Viewer;Photography;" "pictures;gallery;images;" "Zdjęcia"
   entry music "Music" "Music player" music "$AUDIO" "AudioVideo;Audio;Player;" "songs;albums;player;" "Muzyka"
   entry videos "Videos" "Video player" videos "$VIDEO" "AudioVideo;Video;Player;" "movies;player;" "Filmy"
+  # V4.95: Settings in the launcher (and so it can be pinned to the dock)
+  {
+    echo "[Desktop Entry]"
+    echo "Type=Application"
+    echo "Name=DarkShadow Settings"
+    echo "Name[pl]=Ustawienia DarkShadow"
+    echo "GenericName=Settings"
+    echo "Comment=Settings of DarkShadow's Shell"
+    echo "Icon=darkshadow-settings"
+    echo "Exec=$BIN/rice-settings"
+    echo "Terminal=false"
+    echo "StartupNotify=false"
+    echo "Categories=Settings;System;"
+    echo "Keywords=settings;preferences;control;config;ustawienia;"
+  } >"$LA/darkshadow-settings.desktop"
   # V4.85's first names
   rm -f "$LA/darkshadow-player.desktop"
   command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database -q "$LA" 2>/dev/null

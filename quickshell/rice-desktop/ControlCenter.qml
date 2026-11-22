@@ -157,7 +157,7 @@ PanelWindow {
         Item {
             width: 46; height: 46
             MIcon { anchors.centerIn: parent; size: 19; name: ln.icon; glyph: ln.glyph; color: ln.off ? cc.dim : cc.inkPrimary }
-            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: ln.iconClicked() }
+            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("click"); ln.iconClicked() } }
         }
     }
     // a quick switch: icon over a short name, the shape closes in when it is on
@@ -182,7 +182,7 @@ PanelWindow {
             Text { anchors.horizontalCenter: parent.horizontalCenter; width: tl.width - 10; horizontalAlignment: Text.AlignHCenter; elide: Text.ElideRight
                 text: tl.label; color: tl.on ? cc.inkPrimary : cc.fg; font.family: Fonts.main; font.pixelSize: 11; font.weight: Font.Medium }
         }
-        MouseArea { id: tm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: tl.clicked() }
+        MouseArea { id: tm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play(tl.on ? "switch-off" : "switch-on"); tl.clicked() } }
     }
     // a wide switch with a name and a line under it (Wi-Fi, Bluetooth); the arrow opens its menu
     component Wide: Rectangle {
@@ -205,11 +205,11 @@ PanelWindow {
             Text { width: parent.width; elide: Text.ElideRight; text: wd.label; color: wd.on ? cc.inkPrimary : cc.fg; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.DemiBold }
             Text { width: parent.width; elide: Text.ElideRight; text: wd.sub; color: wd.on ? Qt.darker(cc.inkPrimary, 0.7) : cc.dim; font.family: Fonts.main; font.pixelSize: 11; visible: text !== "" }
         }
-        MouseArea { id: wm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: wd.clicked() }
+        MouseArea { id: wm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play(wd.on ? "switch-off" : "switch-on"); wd.clicked() } }
         Item {
             anchors.right: parent.right; width: 40; height: parent.height
             MIcon { anchors.centerIn: parent; size: 18; name: "chevron_right"; glyph: ""; color: wd.on ? cc.inkPrimary : cc.dim }
-            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: wd.more() }
+            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("click"); wd.more() } }
         }
     }
 
@@ -271,7 +271,7 @@ PanelWindow {
                                     Behavior on color { ColorAnimation { duration: 300 } } }
                                 Text { text: modelData.n; color: parent.parent.on ? cc.inkPrimary : cc.fg; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium; anchors.verticalCenter: parent.verticalCenter
                                     Behavior on color { ColorAnimation { duration: 300 } } } }
-                            MouseArea { id: tbm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: cc.tab = modelData.k }
+                            MouseArea { id: tbm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("page-next"); cc.tab = modelData.k } }
                         }
                     }
                 }
@@ -453,7 +453,7 @@ PanelWindow {
                         Row { id: ca; anchors.centerIn: parent; spacing: 5
                             MIcon { size: 15; name: "clear_all"; glyph: ""; color: cc.fg; anchors.verticalCenter: parent.verticalCenter }
                             Text { text: Tr.t("Clear all"); color: cc.fg; font.family: Fonts.main; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter } }
-                        MouseArea { id: cam; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: cc.nf.clearAll() }
+                        MouseArea { id: cam; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("remove"); cc.nf.clearAll() } }
                     }
                 }
                 Repeater {

@@ -25,6 +25,8 @@ Item {
     function run(c) { Quickshell.execDetached(["bash", "-c", c]) }
     // where the module is on the screen (the Wi-Fi, Bluetooth and session menus open there)
     function sx() { const p = mapToItem(null, width / 2, 0); return Math.round(p.x) }
+    // V4.95: the menus open above a dock at the bottom (they opened up by the bar before)
+    function at() { return host && host.edge === "bottom" ? " dock:" + Math.round(host.thick + 22) : "" }
 
     // ---------- what the modules show ----------
     readonly property var batt: UPower.displayDevice
@@ -93,15 +95,15 @@ Item {
             case "clock": dm.run("\"$HOME/.local/bin/rice-cc\" toggle"); break
             case "volume":
                 if (right) { if (dm.sink && dm.sink.audio) dm.sink.audio.muted = !dm.sink.audio.muted }
-                else dm.run("\"$HOME/.local/bin/rice-volume\" menu " + dm.sx())
+                else dm.run("\"$HOME/.local/bin/rice-volume\" menu " + dm.sx() + dm.at())
                 break
-            case "network": dm.run("\"$HOME/.local/bin/rice-wifi\" " + dm.sx()); break
-            case "bluetooth": dm.run("\"$HOME/.local/bin/rice-bluetooth\" " + dm.sx()); break
+            case "network": dm.run("\"$HOME/.local/bin/rice-wifi\" " + dm.sx() + dm.at()); break
+            case "bluetooth": dm.run("\"$HOME/.local/bin/rice-bluetooth\" " + dm.sx() + dm.at()); break
             case "weather": BarSvc.refreshWx(); break
             case "sysmon": dm.run("\"$HOME/.local/bin/rice-perf\" >/dev/null 2>&1 || missioncenter || gnome-system-monitor"); break
             case "search": dm.run("\"$HOME/.local/bin/rice-launch\""); break
             case "notifications": dm.run(right ? "\"$HOME/.local/bin/rice-cc\" dnd toggle" : "\"$HOME/.local/bin/rice-cc\" toggle"); BarSvc.refreshSoon(); break
-            case "power": dm.run("\"$HOME/.local/bin/rice-power\" " + dm.sx()); break
+            case "power": dm.run("\"$HOME/.local/bin/rice-power\" " + dm.sx() + dm.at()); break
             case "control": dm.run("\"$HOME/.local/bin/rice-cc\" toggle"); break
             }
         }
