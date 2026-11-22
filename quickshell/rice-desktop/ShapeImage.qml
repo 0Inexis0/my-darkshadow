@@ -11,6 +11,15 @@ Item {
     property string fallbackGlyph: ""
     property color fallbackColor: "#8a8a8f"
     property string loaded: ""
+    // V4.96: the picture's shape from a tiny decode (createImageData made a full copy of the picture on every paint)
+    property real ratio: 1
+    Image {
+        id: probe
+        visible: false; asynchronous: true; cache: false
+        sourceSize.width: 32
+        source: si.source
+        onStatusChanged: if (status === Image.Ready && implicitWidth > 0) { si.ratio = implicitHeight / implicitWidth; cv.requestPaint() }
+    }
     Blob {
         id: shape
         anchors.fill: parent
@@ -31,19 +40,22 @@ Item {
             shape.trace(c, width, height, 1)
             c.clip()
             // cover: fill the shape, keep the picture's proportions
-            const im = c.createImageData(si.source)
-            const iw = im && im.width ? im.width : width, ih = im && im.height ? im.height : height
+            const iw = width, ih = width * si.ratio
             const k = Math.max(width / iw, height / ih)
             c.drawImage(si.source, (width - iw * k) / 2, (height - ih * k) / 2, iw * k, ih * k)
         }
         onWidthChanged: requestPaint()
     }
+    // V4.96: the art of every song you played stayed loaded (a leak that grew all day); the last one is dropped now
+    property string held: ""
     onSourceChanged: {
+        if (held !== "" && held !== source) cv.unloadImage(held)
+        held = source
         if (source === "") { loaded = ""; return }
         if (cv.isImageLoaded(source)) { loaded = source; cv.requestPaint() }
         else cv.loadImage(source)
     }
     onKindChanged: cv.requestPaint()
-    Component.onCompleted: if (source !== "") { if (cv.isImageLoaded(source)) { loaded = source; cv.requestPaint() } else cv.loadImage(source) }
+    Component.onCompleted: if (source !== "") { held = source; if (cv.isImageLoaded(source)) { loaded = source; cv.requestPaint() } else cv.loadImage(source) }
     Component.onDestruction: if (source !== "") cv.unloadImage(source)
 }

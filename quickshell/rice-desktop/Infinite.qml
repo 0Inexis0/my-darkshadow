@@ -83,7 +83,8 @@ Singleton {
     readonly property string sock: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/rice-canvas.sock"
     Process {
         id: listen
-        running: Wm.hypr
+        // V4.96: only while Infinite Desktop is on (a Python process waited all the time before)
+        running: Wm.hypr && cv.on
         command: ["python3", "-u", "-c", "import os, select, socket, sys\n"
             + "p = sys.argv[1]\n"
             + "try: os.unlink(p)\nexcept OSError: pass\n"
@@ -106,5 +107,5 @@ Singleton {
         // it stopped (python3 missing, a crash): try again in a while
         onExited: restartT.restart()
     }
-    Timer { id: restartT; interval: 5000; onTriggered: if (Wm.hypr) listen.running = true }
+    Timer { id: restartT; interval: 5000; onTriggered: if (Wm.hypr && cv.on) { listen.running = false; listen.running = Qt.binding(function() { return Wm.hypr && cv.on }) } }
 }

@@ -7,7 +7,7 @@ Item {
     property var pal: null
     property real bg: 1
     property bool running: true
-    Instantiator { model: pw.running ? 1 : 0; delegate: QtObject { Component.onCompleted: Player.hold(); Component.onDestruction: Player.release() } }
+    Instantiator { model: pw.running && !Look.covered ? 1 : 0; delegate: QtObject { Component.onCompleted: Player.hold(); Component.onDestruction: Player.release() } }
     readonly property color ink: pal ? pal.fg : "#F6F5F4"
     Card { anchors.fill: parent; k: pw.bg; pal: pw.pal }
     // the art and the ring

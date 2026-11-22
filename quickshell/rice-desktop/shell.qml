@@ -191,38 +191,27 @@ ShellRoot {
     readonly property var iconCfg: cfg.icons ? cfg.icons : ({})
     Binding { target: Icons; property: "theme"; value: root.iconCfg.theme || "" }
 
-    Process {
-        id: cfgProc
-        // desktop.json, then "@@flat" while rice-effects has blur and transparency off
-        command: ["bash", "-c", "cat \"$HOME/.config/rice/desktop.json\" 2>/dev/null; [ -e \"$HOME/.cache/rice/flat\" ] && printf '@@flat'; [ -e \"$HOME/.cache/rice/lite\" ] && printf '@@lite'; printf '@@accent'; sed -n 's/^@define-color accent *\\(#[0-9a-fA-F]\\{6\\}\\).*/\\1/p' \"$HOME/.config/waybar/colors.css\" 2>/dev/null | head -1"]
-        running: true
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const fl = text.indexOf("@@flat") >= 0
-                if (fl !== Look.flat) Look.flat = fl
-                const lt = text.indexOf("@@lite") >= 0
-                if (lt !== Look.lite) Look.lite = lt
-                const ai = text.indexOf("@@accent")
-                if (ai >= 0) {
-                    const ac = text.substring(ai + 8).trim()
-                    root.setAccent(ac)
-                }
-                const t = (ai >= 0 ? text.substring(0, ai) : text).replace("@@flat", "").replace("@@lite", "")
-                if (t.trim().length === 0 || t === root.cfgText) return
-                try {
-                    const j = JSON.parse(t)
-                    root.cfgText = t
-                    root.cfg = j
-                    Look.blur = j.widgetBlur !== false
-                    Look.widgetAlpha = j.widgetOpacity !== undefined ? Math.max(0.2, Math.min(1, Number(j.widgetOpacity))) : 1
-                    // one widget style now: Google (Material You cards in your theme color)
-                    Look.theme = "google"
-                    Look.fps = j.fps !== undefined ? Math.max(0, Number(j.fps)) : 30   // V4.95: 30 by default (the slow decorative turns look the same, half the redraws)
-                    Look.adapt = j.widgetAdapt !== false
-                } catch (e) { }
-            }
-        }
+    // V4.96: desktop.json, the flat / lite flags and the theme color are read inside the shell (inotify, plus a slow
+    // re-read); before, a bash, a cat and a sed were started every 10 seconds and on every change
+    function applyCfg(t) {
+        if (t.trim().length === 0 || t === root.cfgText) return
+        try {
+            const j = JSON.parse(t)
+            root.cfgText = t
+            root.cfg = j
+            Look.blur = j.widgetBlur !== false
+            Look.widgetAlpha = j.widgetOpacity !== undefined ? Math.max(0.2, Math.min(1, Number(j.widgetOpacity))) : 1
+            // one widget style now: Google (Material You cards in your theme color)
+            Look.theme = "google"
+            Look.fps = j.fps !== undefined ? Math.max(0, Number(j.fps)) : 30   // V4.95: 30 by default (the slow decorative turns look the same, half the redraws)
+            Look.adapt = j.widgetAdapt !== false
+        } catch (e) { }
     }
+    // a flag file there or not (rice-effects writes them): no program needed to look
+    FileView { id: flatF; path: root.home + "/.cache/rice/flat"; printErrors: false; watchChanges: true
+        onFileChanged: reload(); onLoaded: if (!Look.flat) Look.flat = true; onLoadFailed: if (Look.flat) Look.flat = false }
+    FileView { id: liteF; path: root.home + "/.cache/rice/lite"; printErrors: false; watchChanges: true
+        onFileChanged: reload(); onLoaded: if (!Look.lite) Look.lite = true; onLoadFailed: if (Look.lite) Look.lite = false }
     // V4.92: the theme color is taken the moment the new wallpaper's colors are written (it was read every 10 s with
     // the rest, so the colors came long after the wallpaper); it flows in (Look.qml)
     function setAccent(ac) {
@@ -235,12 +224,12 @@ ShellRoot {
     // desktop.json is read as soon as it changes (no more starting a program 5 times a second to look at it);
     // the flags (flat, lite) and the accent color every 3 seconds
     Trigger { path: root.home + "/.config/rice/desktop.json"; every: 1500
-        onContent: function(t) { if (!cfgProc.running) cfgProc.running = true } }
+        onContent: function(t) { root.applyCfg(t) } }
     Timer {
         interval: 10000
         running: true
         repeat: true
-        onTriggered: { if (!cfgProc.running) cfgProc.running = true }
+        onTriggered: { flatF.reload(); liteF.reload() }
     }
 
     // wavy progress (Settings > Appearance > Components keeps it in settings-app.json)
@@ -284,7 +273,7 @@ ShellRoot {
         stdout: StdioCollector { onStreamFinished: root.wallpaper = text.trim() }
     }
     Timer {
-        interval: 30000
+        interval: 180000     // V4.96: 3 minutes (the file above tells at once; this is only for other wallpaper tools)
         running: Look.adapt || Wm.niri || !!(root.placement !== "draggable" && root.cfg.clock && root.cfg.clock.enabled === true)
         repeat: true
         triggeredOnStart: true
@@ -666,7 +655,9 @@ ShellRoot {
     // Infinite Desktop: the wallpaper moves with the canvas (Hyprland)
     WallCanvas { path: root.wallpaper }
 
-    EditorWindow { root: root }
+    // V4.96: the widget editor (and its big side panel) is made when Edit mode starts and let go when it ends; it sat
+    // in memory all the time before
+    LazyLoader { active: root.editing; EditorWindow { root: root } }
 
     // ---- dashboard (middle of the bar edge, SUPER + W for wallpapers)
     // made when it is first opened, let go after 10 minutes closed (V4.84: it held every app's icon from the start)
@@ -678,7 +669,12 @@ ShellRoot {
     LazyPanel { name: "walls-open"; WallPicker { } }
     Bar { id: mainBar; nf: notifs }
     // the bar on the left or right edge (Settings > DarkShadow bar > Position)
-    VBar { }
+    // V4.96: the side bar only while the bar is on the left or right (and a moment after, for its way out)
+    property bool vbAlive: false
+    readonly property bool vbWant: mainBar.vertical && mainBar.bc.enabled !== false
+    onVbWantChanged: { if (vbWant) { vbOff.stop(); vbAlive = true } else vbOff.restart() }
+    Timer { id: vbOff; interval: 2500; onTriggered: root.vbAlive = false }
+    LazyLoader { active: root.vbAlive; VBar { } }
     // Settings > System > Monitors > Bar on every screen: the same bar on the other screens too
     Variants {
         model: Mon.everywhere ? Mon.others : []

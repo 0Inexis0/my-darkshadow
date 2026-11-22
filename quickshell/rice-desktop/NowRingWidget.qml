@@ -7,7 +7,7 @@ Item {
     property var pal: null
     property real bg: 1
     property bool running: true
-    Instantiator { model: nr.running ? 1 : 0; delegate: QtObject { Component.onCompleted: Player.hold(); Component.onDestruction: Player.release() } }
+    Instantiator { model: nr.running && !Look.covered ? 1 : 0; delegate: QtObject { Component.onCompleted: Player.hold(); Component.onDestruction: Player.release() } }
     readonly property color ink: pal ? pal.fg : "#F6F5F4"
     Blob {
         id: disc

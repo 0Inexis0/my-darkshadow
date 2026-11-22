@@ -245,6 +245,7 @@ Item {
             }
             ck.fx = ((best % 3) + 0.5) / 3
             ck.fy = (Math.floor(best / 3) + 0.5) / 3
+            unloadImage(src)      // V4.96: the full picture does not stay in memory after this
         }
     }
 }

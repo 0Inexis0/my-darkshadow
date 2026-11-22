@@ -286,6 +286,7 @@ Item {
                 if (score > bs) { bs = score; best = [r, g, b] }
             }
             if (best) Theme.dyn = Qt.rgba(best[0], best[1], best[2], 1).toString()
+            unloadImage(src)      // V4.96: every cover stayed in memory after its color was taken
         }
     }
     onDynColorChanged: { if (!dynColor) Theme.dyn = ""; else if (cur) { coverColor.src = ""; coverColor.take(cur.cover || "") } saveT.restart() }

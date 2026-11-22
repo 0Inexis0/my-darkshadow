@@ -19,10 +19,11 @@ Singleton {
     function refreshWx() { if (!wxProc.running) wxProc.running = true }
     Process {
         id: svcProc
-        command: ["bash", "-c", "\"$HOME/.local/bin/rice-services\" state 2>/dev/null"]
+        // V4.96: only what the bars and the dock show (Wi-Fi, Bluetooth, Do not disturb): 2 small asks instead of ~18 programs
+        command: [Quickshell.env("HOME") + "/.local/bin/rice-services", "bar"]
         stdout: StdioCollector { onStreamFinished: { try { svc.state = JSON.parse(text) } catch (e) { } } }
     }
-    Timer { interval: 8000; running: svc.shown || svc.sideShown || svc.dockShown; repeat: true; triggeredOnStart: true; onTriggered: svc.refresh() }
+    Timer { interval: 10000; running: svc.shown || svc.sideShown || svc.dockShown; repeat: true; triggeredOnStart: true; onTriggered: svc.refresh() }
     Timer { id: soon; interval: 700; onTriggered: svc.refresh() }
     Process {
         id: wxProc

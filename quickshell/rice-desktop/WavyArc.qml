@@ -15,7 +15,7 @@ Item {
     // the wave moves about 30 times a second, not once every frame of the screen (on a 144 or 240 Hz screen that
     // was a picture drawn by the processor up to 240 times a second for every moving wave: V4.84)
     Timer {
-        interval: 33; repeat: true
+        interval: 50; repeat: true      // V4.96: 20 a second (a canvas drawn by the processor)
         running: wa.visible && wa.moving && wa.wavy && !Look.lite
         onTriggered: wa.phase = (Date.now() % 2200) / 2200 * Math.PI * 2
     }

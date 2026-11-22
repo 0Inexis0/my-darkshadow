@@ -29,7 +29,7 @@ Item {
     readonly property bool dynamic: cfg.island_dynamic !== false
     function on(k) { return dynamic && cfg[k] !== false }
 
-    Instantiator { model: isl.visible ? 1 : 0; delegate: QtObject { Component.onCompleted: Player.hold(); Component.onDestruction: Player.release() } }
+    Instantiator { model: isl.visible && isl.big ? 1 : 0; delegate: QtObject { Component.onCompleted: Player.hold(); Component.onDestruction: Player.release() } }
     readonly property var source: Pipewire.defaultAudioSource
     PwObjectTracker { objects: [isl.source] }
     readonly property bool micMuted: source && source.audio ? source.audio.muted : false

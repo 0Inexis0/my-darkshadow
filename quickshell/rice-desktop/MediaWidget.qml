@@ -13,7 +13,7 @@ Item {
     readonly property var player: pick()
     property bool running: true
     // where the song is (asked for once a second while it plays)
-    Instantiator { model: me.running && me.visible ? 1 : 0; delegate: QtObject { Component.onCompleted: Player.hold(); Component.onDestruction: Player.release() } }
+    Instantiator { model: me.running && me.visible && !Look.covered ? 1 : 0; delegate: QtObject { Component.onCompleted: Player.hold(); Component.onDestruction: Player.release() } }
 
     Card { anchors.fill: parent; k: me.bg; pal: me.pal }
 

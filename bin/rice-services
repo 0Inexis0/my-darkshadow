@@ -7,6 +7,7 @@
   rice-services is KEY                    "true" / "false" (KEY, or profile:NAME), for the notification center
   rice-services toggle KEY                flip a switch (the notification center buttons use this)
   rice-services profile power-saver|balanced|performance|get
+  rice-services bar                       {network, wifi, bluetooth, dnd}: the little the bar shows, cheap (V4.96)
   rice-services pp state|start            power modes: JSON {installed, running, profiles, active, why}; start the daemon
   rice-services session lock|suspend|logout|reboot|poweroff   (the last three ask first)
 """
@@ -142,6 +143,34 @@ def state():
         u = unit_state(name, scope) if have["systemctl"] else {"installed": False, "active": False, "enabled": False}
         if u["installed"]:
             s["units"].append(dict(u, name=name, scope=scope, label=label, desc=desc))
+    print(json.dumps(s))
+
+
+def bar_state():
+    """V4.96: what the bar, the side bar and the dock show (Wi-Fi, Bluetooth, Do not disturb), with two small asks
+    at most. The bar asked for the whole state every 8 seconds: about 18 programs (nmcli three times, bluetoothctl,
+    wpctl twice, systemctl six times, pgrep, busctl, rice-hotcorner ...)"""
+    s = {"network": False, "wifi": False, "bluetooth": False, "dnd": False}
+    if shutil.which("nmcli"):
+        g = out(["nmcli", "-t", "-f", "NETWORKING,WIFI", "general"], 4).split(":")
+        s["network"] = len(g) > 0 and g[0] == "enabled"
+        s["wifi"] = len(g) > 1 and g[1] == "enabled"
+    # Bluetooth: the adapter's Powered over D-Bus (bluetoothctl starts a whole session for it)
+    bt = ""
+    if shutil.which("busctl"):
+        try:
+            hcis = sorted(d for d in os.listdir("/sys/class/bluetooth") if d.startswith("hci") and ":" not in d)
+        except OSError:
+            hcis = []
+        if hcis:
+            bt = out(["busctl", "--system", "get-property", "org.bluez", "/org/bluez/" + hcis[0], "org.bluez.Adapter1", "Powered"], 3)
+            s["bluetooth"] = bt.strip() == "b true"
+    elif shutil.which("bluetoothctl"):
+        s["bluetooth"] = bt_on()
+    if shell_notify():
+        s["dnd"] = dnd_on()
+    elif shutil.which("swaync-client"):
+        s["dnd"] = dnd_on()
     print(json.dumps(s))
 
 
@@ -369,6 +398,8 @@ def main(a):
             print(profile_get())
         else:
             profile_set(a[2])
+    elif cmd == "bar":
+        bar_state()
     elif cmd == "pp" and len(a) > 2 and a[2] == "state":
         print(json.dumps(pp_state()))
     elif cmd == "pp" and len(a) > 2 and a[2] == "start":

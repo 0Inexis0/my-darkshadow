@@ -19,6 +19,22 @@ EVENTS = (b"openwindow>>", b"closewindow>>", b"movewindow", b"workspace", b"focu
 
 
 def hypr(what):
+    """V4.96: asked over Hyprland's own socket (it started hyprctl twice for every change and every 4 seconds)"""
+    try:
+        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        s.settimeout(3)
+        s.connect(sock_path().replace(".socket2.sock", ".socket.sock"))
+        s.sendall(b"j/" + what.encode())
+        out = b""
+        while True:
+            d = s.recv(65536)
+            if not d:
+                break
+            out += d
+        s.close()
+        return json.loads(out.decode(errors="replace"))
+    except Exception:
+        pass
     try:
         r = subprocess.run(["hyprctl", "-j", what], capture_output=True, text=True, timeout=3)
         return json.loads(r.stdout)
@@ -130,7 +146,7 @@ def main():
             s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             s.connect(sock_path())
             buf = b""
-            s.settimeout(4)
+            s.settimeout(30)
             while True:
                 try:
                     data = s.recv(4096)
@@ -143,7 +159,16 @@ def main():
                 lines = buf.split(b"\n")
                 buf = lines.pop()
                 if any(l.startswith(EVENTS) for l in lines):
-                    time.sleep(0.06)    # let Hyprland finish the change
+                    # let Hyprland finish the change, and take the events that come with it in one go (switching a
+                    # workspace sends several): one check for all of them
+                    s.settimeout(0.08)
+                    try:
+                        while s.recv(4096):
+                            pass
+                    except (socket.timeout, BlockingIOError):
+                        pass
+                    s.settimeout(30)
+                    buf = b""
                     say()
         except (OSError, ValueError):
             pass

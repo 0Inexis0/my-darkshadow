@@ -72,7 +72,8 @@ Scope {
             }
         }
     }
-    Timer { interval: 15000; repeat: true; running: nfy.srvOn; onTriggered: if (!ownerProc.running) ownerProc.running = true }
+    // V4.96: once a minute (it was every 15 s, three programs each time, for as long as the shell ran)
+    Timer { interval: 60000; repeat: true; running: nfy.srvOn; onTriggered: if (!ownerProc.running) ownerProc.running = true }
     Loader {
         id: srvLoader
         active: nfy.srvOn

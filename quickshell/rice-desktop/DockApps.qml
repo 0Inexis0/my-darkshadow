@@ -105,7 +105,8 @@ PanelWindow {
             cellWidth: width / Math.max(4, Math.floor(width / 120)); cellHeight: 112
             clip: true
             boundsBehavior: Flickable.StopAtBounds
-            model: am.apps
+            // V4.96: the app icons only exist while the menu is out (they were made at start and kept)
+            model: am.visible ? am.apps : []
             delegate: Item {
                 id: cellIt
                 width: grid.cellWidth; height: grid.cellHeight

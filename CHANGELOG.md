@@ -1,5 +1,15 @@
 # Changelog
 
+## V4.96: a much lighter shell (less memory, almost nothing in the background)
+- **The bar, the side bar and the dock** ask for Wi-Fi, Bluetooth and Do not disturb with two small asks every 10 seconds. Before, they asked for everything the control center shows every 8 seconds: about 18 programs each time (nmcli three times, bluetoothctl, wpctl twice, systemctl six times ...)
+- **Auto-hide and the widgets' pausing** (rice-busy) ask Hyprland over its own socket. Before, they started hyprctl twice for every window change and every 4 seconds, all day
+- **Settings from desktop.json, the Lite and flat switches and the theme color** are read inside the shell. Before, a bash, a cat and a sed were started every 10 seconds
+- **A memory leak is fixed**: the cover of every song you played stayed in memory (all day long with music on). The Music app kept every cover too
+- **The wallpaper** (33 MB for a 4K picture, 130 MB for 8K) no longer stays in memory after the shell measures how bright it is
+- **Made only when needed**: the widget editor and its side panel (only in Edit mode), the side bar (only when the bar is on the left or right) and the icons of the dock's app menu (only while it is open)
+- **While windows cover the desktop**: no music position ticks and no visualizer (cava) for the widgets behind them. The island asks for the music position only while its card is open
+- The drawn waves (Gauge, wavy progress lines) move at 20 frames a second instead of 30. Infinite Desktop's listener runs only while Infinite Desktop is on. The check for another notification program runs once a minute instead of every 15 seconds. The wallpaper safety check runs every 3 minutes instead of every 30 seconds
+
 ## V4.95: widgets work again, three new widgets, menus above the dock, sounds every time, a lighter shell
 - Fixed: **widgets of Music, Weather, System and Date could not be added** (and adding one could crash the shell): a widget whose name is also the name of its family called itself without end. Gauge, Progress and the rest come back too
 - **New widgets** (Edit mode > Widgets): **Analog**, a new clock style (a soft cookie face, round hands that spring to the minute, a dot that runs round the rim with the seconds), **Weather > Pills** (the weather as a stack of pills: the temperature big in your theme color, the sky and the place, wind, humidity, high and low) and **Progress** (how much of the day, the week, the month and the year is gone, as thick pills that fill)

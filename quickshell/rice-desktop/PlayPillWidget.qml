@@ -7,7 +7,7 @@ Item {
     property var pal: null
     property real bg: 1
     property bool running: true
-    Instantiator { model: pp.running ? 1 : 0; delegate: QtObject { Component.onCompleted: Player.hold(); Component.onDestruction: Player.release() } }
+    Instantiator { model: pp.running && !Look.covered ? 1 : 0; delegate: QtObject { Component.onCompleted: Player.hold(); Component.onDestruction: Player.release() } }
     Item {
         id: btn
         width: parent.height; height: parent.height
