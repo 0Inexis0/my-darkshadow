@@ -44,7 +44,7 @@ Item {
         Rectangle {
             width: parent.width
             height: 132
-            radius: M3.rXL
+            radius: M3.sq ? 0 : (M3.rXL)
             color: M3.primaryContainer
             clip: true
             Blob { width: 220; height: 220; x: parent.width - 150; y: -50; kind: "flower"; color: M3.alpha(M3.inkPrimaryC, 0.06) }
@@ -60,7 +60,7 @@ Item {
         // the font for Japanese, Korean or Chinese is on its way (or could not be had)
         Rectangle {
             visible: page.fontMsg !== ""
-            width: parent.width; height: fm.implicitHeight + 26; radius: M3.rM
+            width: parent.width; height: fm.implicitHeight + 26; radius: M3.sq ? 0 : (M3.rM)
             color: M3.alpha(M3.tertiary, 0.14)
             Icon { id: fIc; x: 16; anchors.verticalCenter: parent.verticalCenter; name: fonts.running ? "downloading" : "text_fields"; glyph: ""; size: 20; color: M3.tertiary }
             T { id: fm; x: 48; anchors.verticalCenter: parent.verticalCenter; width: parent.width - 64; wrapMode: Text.WordWrap; font.pixelSize: 13
@@ -84,7 +84,7 @@ Item {
                     readonly property bool on: I18n.lang === modelData[0]
                     width: flow.cw
                     height: 64
-                    radius: M3.rL
+                    radius: M3.sq ? 0 : (M3.rL)
                     color: on ? M3.secondaryContainer : (hov.hovered ? M3.surfaceHigh : M3.surfaceC)
                     border.width: on ? 2 : 0
                     border.color: M3.primary

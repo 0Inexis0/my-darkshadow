@@ -7,7 +7,7 @@ Rectangle {
     property color ink: Theme.ink
     property bool on: false
     anchors.fill: parent
-    radius: parent.radius !== undefined ? parent.radius : 0
+    radius: Theme.sq ? 0 : (parent.radius !== undefined ? parent.radius : 0)
     color: ink
     opacity: !area ? 0 : (area.pressed ? 0.14 : (area.containsMouse || on ? 0.08 : 0))
     Behavior on opacity { NumberAnimation { duration: 140 } }

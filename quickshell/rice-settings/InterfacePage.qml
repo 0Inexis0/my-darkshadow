@@ -60,7 +60,7 @@ Item {
             Rectangle {
                 width: parent.width
                 height: 150
-                radius: M3.rL
+                radius: M3.sq ? 0 : (M3.rL)
                 clip: true
                 border.width: 0
                 border.color: M3.outlineVariant
@@ -68,8 +68,8 @@ Item {
                     GradientStop { position: 0; color: M3.stageTop }
                     GradientStop { position: 1; color: M3.stageBottom }
                 }
-                Rectangle { x: 40; y: 26; width: 180; height: 60; radius: 10; color: Qt.rgba(1, 1, 1, 0.07) }
-                Rectangle { x: parent.width - 260; y: 18; width: 200; height: 76; radius: 10; color: Qt.rgba(1, 1, 1, 0.05) }
+                Rectangle { x: 40; y: 26; width: 180; height: 60; radius: M3.sq ? 0 : (10); color: Qt.rgba(1, 1, 1, 0.07) }
+                Rectangle { x: parent.width - 260; y: 18; width: 200; height: 76; radius: M3.sq ? 0 : (10); color: Qt.rgba(1, 1, 1, 0.05) }
                 Rectangle {
                     id: mockDock
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -77,7 +77,7 @@ Item {
                     anchors.bottomMargin: 14
                     width: icons.width + 20
                     height: 52
-                    radius: 20
+                    radius: M3.sq ? 0 : (20)
                     visible: page.dv("enabled", false) === true
                     color: page.dv("background", true) === false ? "transparent"
                          : Qt.rgba(0.1, 0.1, 0.11, Number(page.dv("opacity", 0.78)))
@@ -91,7 +91,7 @@ Item {
                         Repeater {
                             model: ["#e06c75", "#61afef", "#e5c07b", "#98c379", "#c678dd", "#56b6c2"]
                             delegate: Rectangle {
-                                width: 34; height: 34; radius: 10
+                                width: 34; height: 34; radius: M3.sq ? 0 : (10)
                                 color: page.dv("tint", false) === true ? M3.inkDim : (page.dv("shade", true) !== false ? Qt.tint(modelData, Qt.rgba(M3.primary.r, M3.primary.g, M3.primary.b, 0.62)) : modelData)
                                 opacity: 0.9
                             }
@@ -217,7 +217,7 @@ Item {
                         readonly property var e: page.entry(modelData)
                         readonly property int pi: index
                         readonly property string pid: modelData
-                        height: 52; width: pr.implicitWidth + 24; radius: 26
+                        height: 52; width: pr.implicitWidth + 24; radius: M3.sq ? 0 : (26)
                         color: M3.secondaryContainer
                         Row {
                             id: pr
@@ -230,7 +230,7 @@ Item {
                             Repeater {
                                 model: [{ s: "chevron_left", g: "‹", d: -1 }, { s: "chevron_right", g: "›", d: 1 }, { s: "close", g: "×", d: 0 }]
                                 delegate: Rectangle {
-                                    width: 26; height: 26; radius: 13; anchors.verticalCenter: parent.verticalCenter
+                                    width: 26; height: 26; radius: M3.sq ? 0 : (13); anchors.verticalCenter: parent.verticalCenter
                                     color: bm.containsMouse ? M3.alpha(M3.ink, 0.12) : "transparent"
                                     Icon { anchors.centerIn: parent; name: modelData.s; glyph: modelData.g; size: 15; color: M3.inkSecondaryC }
                                     MouseArea { id: bm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
@@ -254,7 +254,7 @@ Item {
                     delegate: Rectangle {
                         readonly property string aid: page.idOf(modelData)
                         readonly property bool on: page.pins.indexOf(aid) >= 0
-                        width: ar.implicitWidth + 24; height: 44; radius: on ? 22 : 12
+                        width: ar.implicitWidth + 24; height: 44; radius: M3.sq ? 0 : (on ? 22 : 12)
                         color: on ? M3.primary : (am.containsMouse ? M3.surfaceHigh : M3.surfaceC)
                         Behavior on radius { NumberAnimation { duration: M3.d(240); easing.type: M3.springy; easing.overshoot: 1.6 * Prefs.bounce } }
                         Behavior on color { ColorAnimation { duration: 160 } }

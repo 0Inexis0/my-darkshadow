@@ -24,7 +24,7 @@ Item {
     Connections { target: r.pl; function onViewTickChanged() { rowIn.restart() } }
     Rectangle {
         anchors.fill: parent
-        radius: Theme.rL
+        radius: Theme.sq ? 0 : (Theme.rL)
         color: r.now ? Theme.secondaryContainer : "transparent"
         Layer { area: ma; ink: Theme.ink }
     }
@@ -35,17 +35,17 @@ Item {
         Rectangle {
             visible: r.num === ""
             anchors.fill: parent
-            radius: 12
+            radius: Theme.sq ? 0 : (12)
             color: Theme.surfaceHigh
             Ic { anchors.centerIn: parent; name: "music_note"; size: 20; color: Theme.inkVar; visible: cov.status !== Image.Ready }
-            Pic { id: cov; anchors.fill: parent; radius: 12; res: 96; source: Theme.url(r.t.cover || "") }
+            Pic { id: cov; anchors.fill: parent; radius: Theme.sq ? 0 : (12); res: 96; source: Theme.url(r.t.cover || "") }
         }
         T { visible: r.num !== "" && !r.now; anchors.centerIn: parent; text: r.num; color: Theme.inkVar; role: "label" }
         // it is playing: three little bars
         Rectangle {
             visible: r.now
             anchors.fill: parent
-            radius: 12
+            radius: Theme.sq ? 0 : (12)
             color: r.num === "" ? Qt.rgba(0, 0, 0, 0.45) : "transparent"
             Row {
                 anchors.centerIn: parent
@@ -54,7 +54,7 @@ Item {
                     model: 3
                     Rectangle {
                         required property int index
-                        width: 4; radius: 2
+                        width: 4; radius: Theme.sq ? 0 : (2)
                         color: r.num === "" ? "white" : Theme.primary
                         anchors.bottom: parent.bottom
                         height: 6

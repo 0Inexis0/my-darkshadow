@@ -14,7 +14,7 @@ Rectangle {
     function clear() { input.text = "" }
     function focusIn() { input.forceActiveFocus() }
     height: 52
-    radius: 26 * M3.shapeK
+    radius: M3.sq ? 0 : (26 * M3.shapeK)
     color: input.activeFocus ? M3.surfaceHighest : M3.surfaceHigh
     border.width: input.activeFocus || bad ? 2 : 0
     border.color: bad ? M3.error : M3.primary
@@ -50,7 +50,7 @@ Rectangle {
         visible: pf.secret
         anchors.right: parent.right; anchors.rightMargin: 8
         anchors.verticalCenter: parent.verticalCenter
-        width: 36; height: 36; radius: 18
+        width: 36; height: 36; radius: M3.sq ? 0 : (18)
         color: em.containsMouse ? M3.surfaceHighest : "transparent"
         Icon { anchors.centerIn: parent; name: pf.show ? "visibility_off" : "visibility"; glyph: pf.show ? "" : ""; size: 17; color: M3.inkDim }
         MouseArea { id: em; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: pf.show = !pf.show }

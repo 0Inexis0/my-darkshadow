@@ -11,10 +11,10 @@ Rectangle {
     implicitHeight: small ? 48 : 56
     implicitWidth: text !== "" && expanded ? row.implicitWidth + 40 : implicitHeight
     Behavior on implicitWidth { NumberAnimation { duration: Theme.d(320); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.emph } }
-    radius: small ? 14 : 18
+    radius: Theme.sq ? 0 : (small ? 14 : 18)
     color: Theme.primaryContainer
     clip: true
-    Rectangle { anchors.fill: parent; anchors.topMargin: 3; radius: parent.radius; color: Qt.rgba(0, 0, 0, 0.25); z: -1 }
+    Rectangle { anchors.fill: parent; anchors.topMargin: 3; radius: Theme.sq ? 0 : (parent.radius); color: Qt.rgba(0, 0, 0, 0.25); z: -1 }
     Layer { area: ma; ink: Theme.inkPrimaryC }
     Row {
         id: row

@@ -8,7 +8,7 @@ Rectangle {
     signal clicked()
     width: size * 1.28
     height: size
-    radius: ma.pressed ? size * 0.22 : (playing ? size * 0.3 : size / 2)
+    radius: Theme.sq ? 0 : (ma.pressed ? size * 0.22 : (playing ? size * 0.3 : size / 2))
     color: Theme.primary
     Behavior on radius { NumberAnimation { duration: Theme.d(360); easing.type: Easing.OutBack; easing.overshoot: 1.6 } }
     Behavior on color { ColorAnimation { duration: 400 } }

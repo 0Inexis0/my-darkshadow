@@ -14,7 +14,7 @@ Item {
             readonly property real sz: Math.random() < 0.2 ? 2.4 : 1.5
             x: Math.random() * sf.width
             y: Math.random() * sf.height
-            width: sz; height: sz; radius: sz / 2
+            width: sz; height: sz; radius: M3.sq ? 0 : (sz / 2)
             color: "#ffffff"
             opacity: 0.15
             SequentialAnimation on opacity {
@@ -48,7 +48,7 @@ Item {
                 y: -height
                 width: st.size
                 height: st.len
-                radius: width / 2
+                radius: M3.sq ? 0 : (width / 2)
                 transformOrigin: Item.Bottom
                 rotation: 19
                 gradient: Gradient {
@@ -57,8 +57,8 @@ Item {
                 }
             }
             // head with a little glow
-            Rectangle { x: -st.size * 2; y: -st.size * 2; width: st.size * 4; height: width; radius: width / 2; color: Qt.rgba(1, 1, 1, 0.12) }
-            Rectangle { x: -st.size; y: -st.size; width: st.size * 2; height: width; radius: width / 2; color: "#ffffff" }
+            Rectangle { x: -st.size * 2; y: -st.size * 2; width: st.size * 4; height: width; radius: M3.sq ? 0 : (width / 2); color: Qt.rgba(1, 1, 1, 0.12) }
+            Rectangle { x: -st.size; y: -st.size; width: st.size * 2; height: width; radius: M3.sq ? 0 : (width / 2); color: "#ffffff" }
             SequentialAnimation {
                 running: sf.running
                 loops: Animation.Infinite

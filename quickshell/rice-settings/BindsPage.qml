@@ -44,7 +44,7 @@ Column {
         delegate: Rectangle {
             width: page.width
             height: 44
-            radius: 10
+            radius: M3.sq ? 0 : (10)
             color: M3.surfaceC
             T { x: 16; anchors.verticalCenter: parent.verticalCenter; text: modelData.keys; font.bold: true; font.pixelSize: 13 }
             T {
@@ -59,7 +59,7 @@ Column {
             Rectangle {
                 width: 28
                 height: 28
-                radius: 14
+                radius: M3.sq ? 0 : (14)
                 anchors.right: parent.right
                 anchors.rightMargin: 10
                 anchors.verticalCenter: parent.verticalCenter
@@ -134,7 +134,7 @@ Column {
         delegate: Rectangle {
             required property string modelData
             required property int index
-            width: page.width; height: 40; radius: 10; color: M3.surfaceC
+            width: page.width; height: 40; radius: M3.sq ? 0 : (10); color: M3.surfaceC
             T { x: 16; anchors.verticalCenter: parent.verticalCenter; text: modelData + "   ·   " + I18n.t("off"); font.pixelSize: 13; font.bold: true }
             Pill { anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter; label: I18n.t("Turn back on")
                 onClicked: { page.ctl.hrun(["bind-on", String(index)], I18n.t("On again")); refresh.restart() } }

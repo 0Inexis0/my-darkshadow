@@ -20,31 +20,31 @@ Item {
         anchors.centerIn: parent
         width: t.chosen ? t.size * 0.84 : t.size
         height: width
-        radius: t.chosen ? Theme.rL : Theme.rXS
+        radius: Theme.sq ? 0 : (t.chosen ? Theme.rL : Theme.rXS)
         color: Theme.surfaceHigh
         Behavior on width { NumberAnimation { duration: Theme.d(220); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.emph } }
         Behavior on radius { NumberAnimation { duration: Theme.d(220) } }
         Pic {
             id: pic
             anchors.fill: parent
-            radius: parent.radius
+            radius: Theme.sq ? 0 : (parent.radius)
             res: Math.ceil(t.size * 1.5)
             source: Theme.url(t.x_.video ? (t.ph.thumbs[t.x_.path] || "") : t.x_.path)
             opacity: status === Image.Ready ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: 200 } }
         }
-        Rectangle { anchors.fill: parent; radius: parent.radius; color: "#000000"; opacity: ma.containsMouse && !t.chosen ? 0.12 : 0
+        Rectangle { anchors.fill: parent; radius: Theme.sq ? 0 : (parent.radius); color: "#000000"; opacity: ma.containsMouse && !t.chosen ? 0.12 : 0
             Behavior on opacity { NumberAnimation { duration: 140 } } }
         // the top of it darker while the pointer is on it, so the circle shows on light pictures
         Rectangle {
-            width: parent.width; height: 44; radius: parent.radius
+            width: parent.width; height: 44; radius: Theme.sq ? 0 : (parent.radius)
             opacity: (ma.containsMouse || t.ph.selecting) && !t.chosen ? 1 : 0
             gradient: Gradient { GradientStop { position: 0; color: Qt.rgba(0, 0, 0, 0.4) } GradientStop { position: 1; color: "transparent" } }
         }
         Rectangle {
             visible: t.x_.video
             anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 6
-            width: 26; height: 26; radius: 13
+            width: 26; height: 26; radius: Theme.sq ? 0 : (13)
             color: Qt.rgba(0, 0, 0, 0.5)
             Ic { anchors.centerIn: parent; name: "play_arrow"; size: 18; color: "white" }
         }
@@ -58,7 +58,7 @@ Item {
     // the circle: choose it
     Rectangle {
         x: 6; y: 6
-        width: 24; height: 24; radius: 12
+        width: 24; height: 24; radius: Theme.sq ? 0 : (12)
         visible: ma.containsMouse || t.ph.selecting
         color: t.chosen ? Theme.primary : "transparent"
         border.width: t.chosen ? 0 : 2

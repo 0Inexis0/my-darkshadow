@@ -54,7 +54,7 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "rice-dock-edit"
     WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
-    NiriBlur { win: de; items: [menu]; radius: 24; on: de.open && de.t > 0.94 }
+    NiriBlur { win: de; items: [menu]; radius: Look.sq ? 0 : (24); on: de.open && de.t > 0.94 }
     MouseArea { anchors.fill: parent; acceptedButtons: Qt.LeftButton | Qt.RightButton; onClicked: de.close() }
     Item { focus: de.open; Keys.onEscapePressed: de.close() }
 
@@ -64,6 +64,7 @@ PanelWindow {
     readonly property bool fromBottom: !dock || dock.edge === "bottom"
     Rectangle {
         id: menu
+        Frame { }      // V4.98 Minimal mode
         readonly property real fullH: mcol.implicitHeight + 16
         // just off the dock: above it at the bottom, beside it on a side; along it, where you clicked
         readonly property real gap: de.dock ? de.dock.thick + (de.dock.style === "full" ? 0 : 10) + 12 : 80
@@ -75,7 +76,7 @@ PanelWindow {
         height: Math.max(40, fullH * (0.42 + 0.58 * de.et))
         x: baseX + (de.vert ? (de.dock.edge === "left" ? -18 : 18) * (1 - de.et) : 0)
         y: de.fromBottom ? baseY + fullH - height : baseY
-        radius: 24
+        radius: Look.sq ? 0 : (24)
         clip: true
         color: pal.surface
         border.width: 1; border.color: pal.line
@@ -140,7 +141,7 @@ PanelWindow {
         signal picked()
         width: parent ? parent.width : 200
         height: visible ? 42 : 0
-        radius: 14
+        radius: Look.sq ? 0 : (14)
         color: mim.containsMouse ? (danger ? Qt.rgba(1, 0.3, 0.3, 0.16) : pal.card) : "transparent"
         Behavior on color { ColorAnimation { duration: 120 } }
         opacity: de.stg(mi.idx)

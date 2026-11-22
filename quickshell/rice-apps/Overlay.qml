@@ -55,7 +55,7 @@ Item {
         height: col.implicitHeight + 12
         x: Math.max(8, Math.min(ov.width - width - 8, left ? ox - width : ox))
         y: Math.max(8, Math.min(ov.height - height - 8, up ? oy - height : oy + 4))
-        radius: Theme.rL
+        radius: Theme.sq ? 0 : (Theme.rL)
         color: Theme.surfaceC
         border.width: 1
         border.color: Theme.alpha(Theme.outlineVariant, 0.6)
@@ -65,7 +65,7 @@ Item {
         transformOrigin: up ? (toLeft ? Item.BottomRight : Item.BottomLeft) : (toLeft ? Item.TopRight : Item.TopLeft)
         Behavior on opacity { NumberAnimation { duration: Theme.d(menu.open ? 180 : 120) } }
         Behavior on scale { NumberAnimation { duration: Theme.d(260); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.emph } }
-        Rectangle { anchors.fill: parent; anchors.margins: -1; anchors.topMargin: 4; anchors.bottomMargin: -6; radius: parent.radius + 2; color: Qt.rgba(0, 0, 0, 0.28); z: -1 }
+        Rectangle { anchors.fill: parent; anchors.margins: -1; anchors.topMargin: 4; anchors.bottomMargin: -6; radius: Theme.sq ? 0 : (parent.radius + 2); color: Qt.rgba(0, 0, 0, 0.28); z: -1 }
         Keys.onEscapePressed: ov.closeMenu()
         Keys.onDownPressed: step(1)
         Keys.onUpPressed: step(-1)
@@ -96,7 +96,7 @@ Item {
                     Rectangle {
                         visible: !row.modelData.sep
                         anchors.fill: parent
-                        radius: Theme.rS
+                        radius: Theme.sq ? 0 : (Theme.rS)
                         color: row.modelData.danger ? Theme.error : Theme.ink
                         opacity: row.off ? 0 : (im.pressed ? 0.14 : (im.containsMouse || menu.cur === row.index ? 0.08 : 0))
                     }
@@ -161,7 +161,7 @@ Item {
         width: Math.min(ov.width - 48, 420)
         height: dc.implicitHeight + 48
         anchors.centerIn: parent
-        radius: Theme.rXL
+        radius: Theme.sq ? 0 : (Theme.rXL)
         color: Theme.surfaceHigh
         visible: opacity > 0.01
         opacity: open ? 1 : 0
@@ -183,7 +183,7 @@ Item {
             Rectangle {
                 visible: ov.dlgO.field !== undefined
                 width: parent.width; height: 56
-                radius: Theme.rXS
+                radius: Theme.sq ? 0 : (Theme.rXS)
                 color: "transparent"
                 border.width: field.activeFocus ? 2 : 1
                 border.color: field.activeFocus ? Theme.primary : Theme.outline
@@ -229,7 +229,7 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         y: open ? ov.height - height - 20 : ov.height + 10
         Behavior on y { NumberAnimation { duration: Theme.d(360); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.emph } }
-        radius: Theme.rM
+        radius: Theme.sq ? 0 : (Theme.rM)
         color: Theme.dark ? "#e3e2e6" : "#303034"
         visible: y < ov.height
         Row {
@@ -245,13 +245,13 @@ Item {
         }
         Rectangle {
             visible: ov.prog > -2
-            x: 16; width: parent.width - 32; height: 4; radius: 2
+            x: 16; width: parent.width - 32; height: 4; radius: Theme.sq ? 0 : (2)
             anchors.bottom: parent.bottom; anchors.bottomMargin: 14
             color: Theme.alpha(Theme.dark ? "#303034" : "#e3e2e6", 0.18)
             clip: true
             Rectangle {
                 visible: ov.prog >= 0
-                height: parent.height; radius: 2
+                height: parent.height; radius: Theme.sq ? 0 : (2)
                 color: Theme.mix(Theme.primary, "#000000", Theme.dark ? 0.45 : 0)
                 width: parent.width * Math.max(0, ov.prog)
                 Behavior on width { NumberAnimation { duration: 200 } }
@@ -259,7 +259,7 @@ Item {
             Rectangle {
                 id: bar
                 visible: ov.prog === -1
-                height: parent.height; radius: 2
+                height: parent.height; radius: Theme.sq ? 0 : (2)
                 width: parent.width * 0.3
                 color: Theme.mix(Theme.primary, "#000000", Theme.dark ? 0.45 : 0)
                 NumberAnimation on x {
@@ -288,7 +288,7 @@ Item {
         }
         width: tt.implicitWidth + 16
         height: 26
-        radius: Theme.rXS
+        radius: Theme.sq ? 0 : (Theme.rXS)
         color: Theme.dark ? "#e3e2e6" : "#303034"
         opacity: shown ? 1 : 0
         visible: opacity > 0.01

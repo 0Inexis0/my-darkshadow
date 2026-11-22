@@ -216,7 +216,7 @@ Item {
                 { key: "favs", icon: "favorite", text: "Favorites" }, { key: "videos", icon: "movie", text: "Videos" }]
         onPicked: function(k) { photos.tab = k; photos.album = ""; photos.clearSel(); grid.contentY = grid.originY; albumGrid.contentY = albumGrid.originY }
         mark: [AppIcon { app: "photos"; width: 44; height: 44; anchors.centerIn: parent
-            Rectangle { anchors.centerIn: parent; width: 40; height: 40; radius: 14; color: Theme.tertiary
+            Rectangle { anchors.centerIn: parent; width: 40; height: 40; radius: Theme.sq ? 0 : (14); color: Theme.tertiary
                 Ic { anchors.centerIn: parent; name: "photo"; size: 24; color: Theme.inkPrimary } } }]
     }
     Rectangle {
@@ -225,7 +225,7 @@ Item {
         anchors.right: parent.right; anchors.rightMargin: 8
         anchors.top: parent.top; anchors.topMargin: 8
         anchors.bottom: parent.bottom; anchors.bottomMargin: 8
-        radius: Theme.rXL
+        radius: Theme.sq ? 0 : (Theme.rXL)
         color: Theme.surfaceLow
         clip: true
 
@@ -259,7 +259,7 @@ Item {
             }
             Rectangle {
                 anchors.fill: parent; anchors.margins: 12
-                radius: 36
+                radius: Theme.sq ? 0 : (36)
                 color: Theme.secondaryContainer
                 visible: photos.selecting
                 IconBtn { x: 10; anchors.verticalCenter: parent.verticalCenter; icon: "close"; ink: Theme.inkSecondaryC; onClicked: photos.clearSel() }
@@ -351,14 +351,14 @@ Item {
                     id: cov
                     x: 8; y: 8
                     width: parent.width - 16; height: width
-                    radius: Theme.rXL
+                    radius: Theme.sq ? 0 : (Theme.rXL)
                     color: Theme.surfaceHigh
                     scale: am.pressed ? 0.96 : 1
                     Behavior on scale { NumberAnimation { duration: 140 } }
-                    Pic { anchors.fill: parent; radius: parent.radius; res: 400
+                    Pic { anchors.fill: parent; radius: Theme.sq ? 0 : (parent.radius); res: 400
                           source: Theme.url(al.modelData.coverVideo ? (photos.thumbs[al.modelData.cover] || "") : al.modelData.cover)
                           Component.onCompleted: if (al.modelData.coverVideo) photos.needThumb(al.modelData.cover) }
-                    Rectangle { anchors.fill: parent; radius: parent.radius; color: Theme.ink; opacity: am.containsMouse ? 0.08 : 0 }
+                    Rectangle { anchors.fill: parent; radius: Theme.sq ? 0 : (parent.radius); color: Theme.ink; opacity: am.containsMouse ? 0.08 : 0 }
                 }
                 T { x: 12; anchors.top: cov.bottom; anchors.topMargin: 8; width: parent.width - 24; text: photos.albumName(al.modelData.dir); role: "title"; font.pixelSize: 15 }
                 T { x: 12; anchors.top: cov.bottom; anchors.topMargin: 30; text: al.modelData.n + (al.modelData.n === 1 ? " item" : " items"); role: "small"; color: Theme.inkVar }
@@ -378,7 +378,7 @@ Item {
             visible: !photos.loading && (photos.tab === "albums" && photos.album === "" ? photos.albums.length === 0 : photos.shown.length === 0)
             Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: 112; height: 112; radius: 40; rotation: -8
+                width: 112; height: 112; radius: Theme.sq ? 0 : (40); rotation: -8
                 color: Theme.surfaceC
                 Ic { anchors.centerIn: parent; rotation: 8; size: 52; color: Theme.primary
                      name: photos.tab === "favs" ? "favorite" : (photos.tab === "videos" ? "movie" : "add_photo_alternate") }
@@ -390,7 +390,7 @@ Item {
         }
         Rectangle {
             anchors.centerIn: parent
-            width: 56; height: 56; radius: 28
+            width: 56; height: 56; radius: Theme.sq ? 0 : (28)
             color: Theme.surfaceHigh
             visible: photos.loading
             Ic { anchors.centerIn: parent; name: "progress_activity"; size: 28; color: Theme.primary

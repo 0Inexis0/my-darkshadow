@@ -76,7 +76,7 @@ Item {
             delegate: Rectangle {
                 width: tabText.implicitWidth + 24
                 height: 30
-                radius: 9
+                radius: M3.sq ? 0 : (9)
                 color: page.tab === index ? M3.primary : (tabMouse.containsMouse ? M3.surfaceHighest : M3.surfaceHigh)
                 border.width: 1
                 border.color: M3.surfaceHighest

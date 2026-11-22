@@ -43,10 +43,10 @@ Item {
         id: face
         width: parent.width
         height: row.cardHeight
-        topLeftRadius: row.joinPrev ? M3.rRowIn : M3.rRowOut
-        topRightRadius: topLeftRadius
-        bottomLeftRadius: row.joinNext ? M3.rRowIn : M3.rRowOut
-        bottomRightRadius: bottomLeftRadius
+        topLeftRadius: M3.sq ? 0 : (row.joinPrev ? M3.rRowIn : M3.rRowOut)
+        topRightRadius: M3.sq ? 0 : (topLeftRadius)
+        bottomLeftRadius: M3.sq ? 0 : (row.joinNext ? M3.rRowIn : M3.rRowOut)
+        bottomRightRadius: M3.sq ? 0 : (bottomLeftRadius)
         Behavior on topLeftRadius { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
         Behavior on bottomLeftRadius { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
         color: hov.hovered ? M3.surfaceHigh : M3.surfaceC
@@ -58,7 +58,7 @@ Item {
             x: 16
             anchors.verticalCenter: parent.verticalCenter
             width: 40; height: 40
-            radius: row.lit ? 20 : 12 * M3.shapeK
+            radius: M3.sq ? 0 : (row.lit ? 20 : 12 * M3.shapeK)
             color: row.lit ? M3.primaryContainer : M3.surfaceHighest
             Behavior on radius { NumberAnimation { duration: M3.d(320); easing.type: M3.springy; easing.overshoot: 1.6 * Prefs.bounce } }
             Behavior on color { ColorAnimation { duration: 200 } }

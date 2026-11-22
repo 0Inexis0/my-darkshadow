@@ -8,7 +8,7 @@ Rectangle {
     signal picked(string key)
     implicitHeight: 36
     implicitWidth: row.implicitWidth
-    radius: height / 2
+    radius: Theme.sq ? 0 : (height / 2)
     color: "transparent"
     border.width: 1
     border.color: Theme.outlineVariant
@@ -27,7 +27,7 @@ Rectangle {
                 color: on ? Theme.secondaryContainer : "transparent"
                 Behavior on color { ColorAnimation { duration: 160 } }
                 Rectangle { visible: index > 0; width: 1; height: parent.height; color: Theme.outlineVariant }
-                Layer { area: sm; ink: Theme.inkSecondaryC; radius: 0 }
+                Layer { area: sm; ink: Theme.inkSecondaryC; radius: Theme.sq ? 0 : (0) }
                 Row {
                     id: inner
                     anchors.centerIn: parent

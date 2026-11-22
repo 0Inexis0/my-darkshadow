@@ -10,7 +10,7 @@ Rectangle {
     signal accepted()
     signal escaped()
     implicitHeight: 48
-    radius: height / 2
+    radius: Theme.sq ? 0 : (height / 2)
     color: input.activeFocus ? Theme.surfaceHighest : Theme.surfaceHigh
     Behavior on color { ColorAnimation { duration: 160 } }
     Ic { id: lead; name: s.icon; size: 22; color: Theme.inkVar; anchors.left: parent.left; anchors.leftMargin: 16; anchors.verticalCenter: parent.verticalCenter }

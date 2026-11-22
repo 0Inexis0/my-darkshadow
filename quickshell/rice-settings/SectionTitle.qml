@@ -39,7 +39,7 @@ Item {
     Rectangle {
         id: badge
         x: 4; y: st.topPadding
-        width: 44; height: 44; radius: 22
+        width: 44; height: 44; radius: M3.sq ? 0 : (22)
         color: M3.secondaryContainer
         Icon { visible: st.pick !== "" || st.icon !== ""; anchors.centerIn: parent; name: st.pick; glyph: st.icon; size: 21; color: M3.inkSecondaryC }
         Blob { visible: st.pick === "" && st.icon === ""; anchors.centerIn: parent; width: 22; height: 22; kind: Prefs.accentShape || "cookie"; color: M3.primary }

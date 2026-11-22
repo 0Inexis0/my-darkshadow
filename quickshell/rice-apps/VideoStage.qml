@@ -41,7 +41,7 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom; anchors.bottomMargin: 18
         width: Math.min(parent.width - 32, 860); height: 112
-        radius: Theme.rXL
+        radius: Theme.sq ? 0 : (Theme.rXL)
         color: Theme.alpha(Theme.surfaceC, 0.88)
         opacity: vs.chrome ? 1 : 0
         visible: opacity > 0.01

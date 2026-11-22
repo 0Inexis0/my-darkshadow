@@ -172,7 +172,7 @@ Item {
         visible: logo.running && logo.extras
         Rectangle {
             anchors.fill: parent
-            radius: 1
+            radius: Look.sq ? 0 : (1)
             gradient: Gradient {
                 orientation: Gradient.Horizontal
                 GradientStop { position: 0; color: Qt.rgba(1, 1, 1, 0) }

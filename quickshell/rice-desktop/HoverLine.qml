@@ -6,7 +6,7 @@ Rectangle {
     property real full: 16
     anchors.horizontalCenter: parent ? parent.horizontalCenter : undefined
     y: parent ? Math.round(parent.height / 2 + 13) : 0
-    height: 2; radius: 1
+    height: 2; radius: Look.sq ? 0 : (1)
     width: on ? full : 4
     color: "#F6F5F4"
     opacity: on ? 0.9 : 0

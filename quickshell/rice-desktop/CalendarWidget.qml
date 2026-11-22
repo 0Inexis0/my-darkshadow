@@ -48,7 +48,7 @@ Item {
             delegate: Rectangle {
                 width: 34
                 height: 34
-                radius: 17
+                radius: Look.sq ? 0 : (17)
                 color: navMouse.containsMouse ? (cal.pal ? cal.pal.chipHover : Qt.rgba(1, 1, 1, 0.14)) : (cal.pal ? cal.pal.chip : Qt.rgba(1, 1, 1, 0.07))
                 Behavior on color { ColorAnimation { duration: 140 } }
                 T { anchors.centerIn: parent; text: modelData.g; font.pixelSize: 18; color: cal.cFg }

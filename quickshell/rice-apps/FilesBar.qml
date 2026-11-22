@@ -46,7 +46,7 @@ Item {
         anchors.right: tools.left; anchors.rightMargin: 8
         anchors.verticalCenter: parent.verticalCenter
         height: 48
-        radius: 24
+        radius: Theme.sq ? 0 : (24)
         color: bar.editing ? Theme.surfaceHighest : Theme.surfaceC
         visible: !bar.searching
         Behavior on color { ColorAnimation { duration: 160 } }
@@ -89,7 +89,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     height: 36
                     width: segRow.implicitWidth + 24
-                    radius: 18
+                    radius: Theme.sq ? 0 : (18)
                     color: last ? Theme.secondaryContainer : "transparent"
                     readonly property bool dropOn: sda.containsDrag
                     border.width: dropOn ? 2 : 0

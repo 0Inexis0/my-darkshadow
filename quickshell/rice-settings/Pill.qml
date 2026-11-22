@@ -6,7 +6,7 @@ Rectangle {
     signal clicked()
     implicitWidth: pillText.implicitWidth + 32
     height: 40
-    radius: 20
+    radius: M3.sq ? 0 : (20)
     color: pillMouse.containsMouse ? M3.surfaceHighest : M3.secondaryContainer
     Behavior on color { ColorAnimation { duration: 140 } }
 

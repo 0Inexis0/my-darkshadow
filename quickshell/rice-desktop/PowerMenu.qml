@@ -70,7 +70,7 @@ PanelWindow {
     // if the closing animation ever stalls (the compositor sent no frames for a moment), it still goes away
     Timer { id: closeT; property bool done: false; interval: 600; running: !open; onRunningChanged: if (running) done = false; onTriggered: done = true }
     // niri: blur behind the card (Hyprland blurs this layer with its own rule)
-    NiriBlur { win: pw; items: [card]; radius: card.radius; on: pw.open && pw.et > 0.94 }
+    NiriBlur { win: pw; items: [card]; radius: Look.sq ? 0 : (card.radius); on: pw.open && pw.et > 0.94 }
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore
@@ -81,13 +81,14 @@ PanelWindow {
 
     Rectangle {
         id: card
+        Frame { }      // V4.98 Minimal mode
         width: 220
         height: col.height + 16
         x: pw.side ? (pw.atRight ? pw.width - pw.sideSpace - width : pw.sideSpace)
                      : Math.max(12, Math.min(pw.width - width - 12, pw.cx - width / 2))
         y: pw.side ? Math.max(12, Math.min(pw.height - height - 12, (pw.cy < 0 ? pw.height / 2 : pw.cy) - 30))
                      : (pw.atBottom ? pw.height - pw.barSpace - height : pw.barSpace)
-        radius: 20
+        radius: Look.sq ? 0 : (20)
         color: pw.bg
         border.width: 1; border.color: pw.line
         opacity: Math.min(1, pw.et * 1.6)
@@ -123,7 +124,7 @@ PanelWindow {
                         }
                     }
                     Rectangle {
-                        anchors.fill: parent; anchors.topMargin: 2; anchors.bottomMargin: 2; radius: 13
+                        anchors.fill: parent; anchors.topMargin: 2; anchors.bottomMargin: 2; radius: Look.sq ? 0 : (13)
                         color: row.hot ? (row.danger ? Qt.rgba(1, 0.42, 0.42, 0.22) : Qt.rgba(1, 1, 1, 0.14)) : (rm.containsMouse ? (row.red ? Qt.rgba(1, 0.42, 0.42, 0.14) : Qt.rgba(1, 1, 1, 0.07)) : "transparent")
                         Behavior on color { ColorAnimation { duration: 140 } }
                     }

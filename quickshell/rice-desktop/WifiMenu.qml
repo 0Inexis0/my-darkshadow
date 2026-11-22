@@ -173,7 +173,7 @@ PanelWindow {
     // if the closing animation ever stalls (the compositor sent no frames for a moment), it still goes away
     Timer { id: closeT; property bool done: false; interval: 600; running: !open; onRunningChanged: if (running) done = false; onTriggered: done = true }
     // niri: blur behind the card (Hyprland blurs this layer with its own rule)
-    NiriBlur { win: wm; items: [card]; radius: card.radius; on: wm.open && wm.et > 0.94 }
+    NiriBlur { win: wm; items: [card]; radius: Look.sq ? 0 : (card.radius); on: wm.open && wm.et > 0.94 }
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore
@@ -186,6 +186,7 @@ PanelWindow {
     readonly property real listH: shown * rowH + (askFor !== "" && nets.length <= maxRows ? 52 : 0)
     Rectangle {
         id: card
+        Frame { }      // V4.98 Minimal mode
         width: wm.cardW
         height: head.height + 14 + wm.listH + (wm.msg !== "" ? 34 : 0) + 14
         Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
@@ -193,7 +194,7 @@ PanelWindow {
                      : Math.max(12, Math.min(wm.width - width - 12, wm.cx - width / 2))
         y: wm.side ? Math.max(12, Math.min(wm.height - height - 12, (wm.cy < 0 ? wm.height / 2 : wm.cy) - 30))
                      : (wm.atBottom ? wm.height - wm.barSpace - height : wm.barSpace)
-        radius: 20
+        radius: Look.sq ? 0 : (20)
         color: wm.bg
         border.width: 1; border.color: wm.line
         opacity: Math.min(1, wm.et * 1.6)
@@ -223,10 +224,10 @@ PanelWindow {
             Rectangle {   // the switch
                 id: sw
                 anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-                width: 42; height: 24; radius: 12
+                width: 42; height: 24; radius: Look.sq ? 0 : (12)
                 color: wm.radio ? Look.accentHi : Qt.rgba(1, 1, 1, 0.14)
                 Behavior on color { ColorAnimation { duration: 160 } }
-                Rectangle { y: 3; x: wm.radio ? 21 : 3; width: 18; height: 18; radius: 9; color: wm.radio ? "#0d0d0d" : "#F6F5F4"
+                Rectangle { y: 3; x: wm.radio ? 21 : 3; width: 18; height: 18; radius: Look.sq ? 0 : (9); color: wm.radio ? "#0d0d0d" : "#F6F5F4"
                     Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutBack } } }
                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                     onClicked: { Sfx.play(wm.radio ? "switch-off" : "switch-on"); wm.radio = !wm.radio; wm.nm(["radio", "wifi", wm.radio ? "on" : "off"], ""); if (wm.radio) wm.rescan() } }
@@ -280,7 +281,7 @@ PanelWindow {
                             }
                         }
                         Rectangle {
-                            x: 0; y: 2; width: parent.width; height: parent.height - 4; radius: 14
+                            x: 0; y: 2; width: parent.width; height: parent.height - 4; radius: Look.sq ? 0 : (14)
                             color: modelData.active ? Qt.rgba(1, 1, 1, 0.1) : (rm.containsMouse ? wm.hot : "transparent")
                             Behavior on color { ColorAnimation { duration: 120 } }
                         }
@@ -310,7 +311,7 @@ PanelWindow {
                         // the password
                         Rectangle {
                             visible: row.asking
-                            x: 14; y: wm.rowH - 2; width: parent.width - 28; height: 40; radius: 12
+                            x: 14; y: wm.rowH - 2; width: parent.width - 28; height: 40; radius: Look.sq ? 0 : (12)
                             color: Qt.rgba(1, 1, 1, 0.07)
                             TextInput {
                                 id: pwField
@@ -329,7 +330,7 @@ PanelWindow {
                             Item { id: showPw; property bool checked: false; anchors.right: parent.right; anchors.rightMargin: 44; anchors.verticalCenter: parent.verticalCenter; width: 24; height: 24
                                 MIcon { anchors.centerIn: parent; name: showPw.checked ? "visibility_off" : "visibility"; glyph: String.fromCodePoint(showPw.checked ? 0xF0209 : 0xF0208); size: 16; color: wm.dim }
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: showPw.checked = !showPw.checked } }
-                            Rectangle { anchors.right: parent.right; anchors.rightMargin: 6; anchors.verticalCenter: parent.verticalCenter; width: 32; height: 28; radius: 9
+                            Rectangle { anchors.right: parent.right; anchors.rightMargin: 6; anchors.verticalCenter: parent.verticalCenter; width: 32; height: 28; radius: Look.sq ? 0 : (9)
                                 color: pwField.text.length >= 8 ? Look.accentHi : Qt.rgba(1, 1, 1, 0.1)
                                 MIcon { anchors.centerIn: parent; name: "arrow_forward"; glyph: String.fromCodePoint(0xF0054); size: 16; color: pwField.text.length >= 8 ? "#0d0d0d" : wm.dim }
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: if (pwField.text.length >= 8) wm.connect(modelData, pwField.text) } }

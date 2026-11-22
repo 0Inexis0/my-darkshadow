@@ -140,7 +140,7 @@ Item {
             }
             Rectangle {
                 x: 20; y: Math.round(parent.height * 0.36) - height - 14
-                height: 26; radius: 13; width: Math.min(parent.width - 40, art2.implicitWidth + 22)
+                height: 26; radius: LockCtx.sq ? 0 : (13); width: Math.min(parent.width - 40, art2.implicitWidth + 22)
                 color: lc.acc
                 Text { id: art2; anchors.centerIn: parent; width: Math.min(implicitWidth, parent.width - 22); elide: Text.ElideRight
                     text: pl.artist; color: lc.ink; font.family: Fonts.main; font.pixelSize: 12; font.weight: Font.DemiBold }
@@ -169,17 +169,17 @@ Item {
 
         // battery and the layout
         Rectangle {
-            height: 52; radius: 26; width: left.implicitWidth + 16
+            height: 52; radius: LockCtx.sq ? 0 : (26); width: left.implicitWidth + 16
             color: lc.pal ? lc.pal.surface : "#222"
             Row {
                 id: left
                 anchors.centerIn: parent; spacing: 6
-                Rectangle { visible: lv && lv.hasBatt; height: 38; radius: 19; width: bt.implicitWidth + 24; color: Qt.rgba(1, 1, 1, 0.06)
+                Rectangle { visible: lv && lv.hasBatt; height: 38; radius: LockCtx.sq ? 0 : (19); width: bt.implicitWidth + 24; color: Qt.rgba(1, 1, 1, 0.06)
                     Row { id: bt; anchors.centerIn: parent; spacing: 6
                         Item { width: 22; height: 22; anchors.verticalCenter: parent.verticalCenter
                             WavyArc { anchors.fill: parent; value: lv ? Math.max(0.02, lv.battPct) : 0; thick: 3; wavy: false; color: lv && lv.battPct <= 0.15 ? "#ff8a80" : lc.acc; track: Qt.rgba(1, 1, 1, 0.1) } }
                         Text { anchors.verticalCenter: parent.verticalCenter; text: lv ? Math.round(lv.battPct * 100) + "%" : ""; color: lc.fg; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium } } }
-                Rectangle { visible: lc.layout !== ""; height: 38; radius: 19; width: lay.implicitWidth + 24; color: lm.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.06)
+                Rectangle { visible: lc.layout !== ""; height: 38; radius: LockCtx.sq ? 0 : (19); width: lay.implicitWidth + 24; color: lm.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.06)
                     Row { id: lay; anchors.centerIn: parent; spacing: 6
                         MIcon { anchors.verticalCenter: parent.verticalCenter; size: 17; name: "keyboard"; glyph: ""; color: lc.acc }
                         Text { anchors.verticalCenter: parent.verticalCenter; text: lc.shortLay(lc.layout); color: lc.fg; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.DemiBold } }
@@ -195,7 +195,7 @@ Item {
             readonly property bool wrong: !!lc.root && lc.root.phase === "wrong"
             readonly property bool checking: !!lc.root && lc.root.phase === "checking"
             readonly property bool done: !!lc.root && lc.root.phase === "done"
-            height: 52; radius: 26
+            height: 52; radius: LockCtx.sq ? 0 : (26)
             width: Math.round(400 * Math.min(1, lc.k)) + (done ? 60 : 0)
             Behavior on width { NumberAnimation { duration: 420; easing.type: Easing.OutBack } }
             color: wrong ? Qt.rgba(1, 0.42, 0.42, 0.22) : (lc.pal ? lc.pal.surface : "#222")
@@ -244,7 +244,7 @@ Item {
                             id: ring
                             anchors.centerIn: parent
                             property real r: 0
-                            width: 14 + 22 * r; height: width; radius: width / 2
+                            width: 14 + 22 * r; height: width; radius: LockCtx.sq ? 0 : (width / 2)
                             color: "transparent"; border.width: 2; border.color: lc.acc
                             opacity: (1 - r) * 0.8
                             NumberAnimation { id: ringA; target: ring; property: "r"; from: 0; to: 1; duration: 520; easing.type: Easing.OutCubic }
@@ -272,7 +272,7 @@ Item {
                 anchors.right: parent.right; anchors.rightMargin: 7; anchors.verticalCenter: parent.verticalCenter
                 width: 38; height: 38
                 visible: !!lc.root && lc.root.pass !== "" && !pass.checking
-                Rectangle { anchors.fill: parent; radius: 19; color: lc.acc; scale: gm.pressed ? 0.9 : 1; Behavior on scale { NumberAnimation { duration: 120 } } }
+                Rectangle { anchors.fill: parent; radius: LockCtx.sq ? 0 : (19); color: lc.acc; scale: gm.pressed ? 0.9 : 1; Behavior on scale { NumberAnimation { duration: 120 } } }
                 MIcon { anchors.centerIn: parent; size: 20; name: "arrow_forward"; glyph: ""; color: lc.ink }
                 MouseArea { id: gm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: if (lc.root) lc.root.submit() }
             }
@@ -281,7 +281,7 @@ Item {
         // power
         Rectangle {
             visible: lv && lv.v("power", true) !== false
-            height: 52; radius: 26; width: pr.implicitWidth + 16
+            height: 52; radius: LockCtx.sq ? 0 : (26); width: pr.implicitWidth + 16
             color: lc.pal ? lc.pal.surface : "#222"
             Row {
                 id: pr
@@ -325,7 +325,7 @@ Item {
         property int idx: 0
         readonly property real e: lc.stg(idx + 1)
         width: lc.cw; height: lc.ch
-        radius: Math.round(30 * lc.k)
+        radius: LockCtx.sq ? 0 : (Math.round(30 * lc.k))
         clip: true
         gradient: Gradient {
             GradientStop { position: 0; color: Qt.rgba(lc.acc.r * 0.45, lc.acc.g * 0.45, lc.acc.b * 0.45, 0.82) }
@@ -345,7 +345,7 @@ Item {
         property bool strong: false
         signal hit()
         width: Math.round(w * Math.min(1, lc.k)); height: Math.round(46 * Math.min(1, lc.k))
-        Rectangle { anchors.fill: parent; radius: pm.pressed ? 14 : height / 2; color: p2.strong ? lc.acc : Qt.rgba(lc.acc.r, lc.acc.g, lc.acc.b, 0.28)
+        Rectangle { anchors.fill: parent; radius: LockCtx.sq ? 0 : (pm.pressed ? 14 : height / 2); color: p2.strong ? lc.acc : Qt.rgba(lc.acc.r, lc.acc.g, lc.acc.b, 0.28)
             Behavior on radius { NumberAnimation { duration: 160 } } }
         MIcon { anchors.centerIn: parent; size: 22; name: p2.icon; glyph: ""; color: p2.strong ? lc.ink : lc.fg }
         MouseArea { id: pm; anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: p2.hit() }
@@ -359,7 +359,7 @@ Item {
         readonly property bool armed: parent && parent.armed === k
         width: armed ? 78 : 38; height: 38
         Behavior on width { NumberAnimation { duration: 240; easing.type: Easing.OutBack } }
-        Rectangle { anchors.fill: parent; radius: 19
+        Rectangle { anchors.fill: parent; radius: LockCtx.sq ? 0 : (19)
             color: pb.red ? Qt.rgba(1, 0.42, 0.42, pb.armed ? 0.9 : (pbm.containsMouse ? 0.32 : 0.16)) : (pb.armed ? lc.acc : (pbm.containsMouse ? Qt.rgba(1, 1, 1, 0.14) : Qt.rgba(1, 1, 1, 0.06)))
             Behavior on color { ColorAnimation { duration: 150 } } }
         Row { anchors.centerIn: parent; spacing: 4

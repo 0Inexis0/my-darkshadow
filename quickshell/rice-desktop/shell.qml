@@ -209,7 +209,11 @@ ShellRoot {
     }
     // a flag file there or not (rice-effects writes them): no program needed to look
     FileView { id: flatF; path: root.home + "/.cache/rice/flat"; printErrors: false; watchChanges: true
-        onFileChanged: reload(); onLoaded: if (!Look.flat) Look.flat = true; onLoadFailed: if (Look.flat) Look.flat = false }
+        onFileChanged: reload(); onLoaded: root.flatFile = true; onLoadFailed: root.flatFile = false }
+    // no blur and no transparency: Lite / gaming mode (the flag file), or Minimal mode with solid windows
+    property bool flatFile: false
+    property bool minSolid: false
+    Binding { target: Look; property: "flat"; value: root.flatFile || root.minSolid }
     FileView { id: liteF; path: root.home + "/.cache/rice/lite"; printErrors: false; watchChanges: true
         onFileChanged: reload(); onLoaded: if (!Look.lite) Look.lite = true; onLoadFailed: if (Look.lite) Look.lite = false }
     // V4.92: the theme color is taken the moment the new wallpaper's colors are written (it was read every 10 s with
@@ -223,6 +227,15 @@ ShellRoot {
         onContent: function(t) { const r = /@define-color accent *(#[0-9a-fA-F]{6})/.exec(t); if (r) root.setAccent(r[1]) } }
     // desktop.json is read as soon as it changes (no more starting a program 5 times a second to look at it);
     // the flags (flat, lite) and the accent color every 3 seconds
+    // V4.98 Minimal mode (rice-minimal): square corners and plain frames
+    Trigger { path: root.home + "/.config/rice/minimal.json"; every: 3000
+        onContent: function(t) {
+            let j = {}
+            try { j = JSON.parse(t) } catch (e) { j = {} }
+            Look.sq = j.on === true
+            Look.frame = j.frame === "single" || j.frame === "thin" ? j.frame : "double"
+            root.minSolid = j.on === true && j.solid !== false
+        } }
     Trigger { path: root.home + "/.config/rice/desktop.json"; every: 1500
         onContent: function(t) { root.applyCfg(t) } }
     Timer {

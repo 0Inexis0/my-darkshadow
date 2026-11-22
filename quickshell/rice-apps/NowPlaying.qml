@@ -6,7 +6,7 @@ Rectangle {
     property var pl
     property bool full: false
     signal close()
-    radius: Theme.rXL
+    radius: Theme.sq ? 0 : (Theme.rXL)
     color: Theme.surfaceC
     Behavior on color { ColorAnimation { duration: 500 } }
     readonly property var t: pl.cur || ({ title: "", artist: "", album: "", cover: "" })
@@ -52,14 +52,14 @@ Rectangle {
                     id: cover
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: parent.s; height: parent.s
-                    radius: Theme.rXL
+                    radius: Theme.sq ? 0 : (Theme.rXL)
                     color: Theme.surfaceHighest
                     scale: np.pl.playing ? 1 : 0.92
                     Behavior on scale { NumberAnimation { duration: Theme.d(500); easing.type: Easing.OutBack; easing.overshoot: 1.3 } }
                     Rectangle { anchors.fill: parent; anchors.topMargin: 10; anchors.bottomMargin: -12; anchors.leftMargin: 6; anchors.rightMargin: 6
-                                radius: parent.radius; color: Qt.rgba(0, 0, 0, 0.35); z: -1 }
+                                radius: Theme.sq ? 0 : (parent.radius); color: Qt.rgba(0, 0, 0, 0.35); z: -1 }
                     Ic { anchors.centerIn: parent; name: np.pl.isVideo ? "movie" : "music_note"; size: parent.width * 0.32; color: Theme.inkVar; visible: art.status !== Image.Ready }
-                    Pic { id: art; anchors.fill: parent; radius: parent.radius; res: 640; source: Theme.url(np.t.cover || "")
+                    Pic { id: art; anchors.fill: parent; radius: Theme.sq ? 0 : (parent.radius); res: 640; source: Theme.url(np.t.cover || "")
                         // V4.93: a new song: the cover springs in
                         onSourceChanged: coverIn.restart() }
                     property real bump: 1
@@ -133,13 +133,13 @@ Rectangle {
                     required property var modelData
                     readonly property var tr: modelData && modelData.t ? modelData.t : ({ title: "", artist: "", cover: "" })
                     width: col.width; height: 52
-                    Rectangle { anchors.fill: parent; radius: 14; color: "transparent"; Layer { area: qm; ink: Theme.ink } }
+                    Rectangle { anchors.fill: parent; radius: Theme.sq ? 0 : (14); color: "transparent"; Layer { area: qm; ink: Theme.ink } }
                     Rectangle {
                         id: qc
-                        x: 4; width: 40; height: 40; radius: 10
+                        x: 4; width: 40; height: 40; radius: Theme.sq ? 0 : (10)
                         anchors.verticalCenter: parent.verticalCenter
                         color: Theme.surfaceHighest
-                        Pic { anchors.fill: parent; radius: 10; res: 80; source: Theme.url(q.tr.cover || "") }
+                        Pic { anchors.fill: parent; radius: Theme.sq ? 0 : (10); res: 80; source: Theme.url(q.tr.cover || "") }
                     }
                     Column {
                         anchors.left: qc.right; anchors.leftMargin: 12; anchors.right: rm.left; anchors.rightMargin: 4

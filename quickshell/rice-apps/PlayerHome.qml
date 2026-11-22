@@ -70,7 +70,7 @@ Item {
                 id: hero
                 width: parent.width
                 height: 248
-                radius: Theme.rXL + 8
+                radius: Theme.sq ? 0 : (Theme.rXL + 8)
                 color: Theme.primaryContainer
                 clip: true
                 Behavior on color { ColorAnimation { duration: 500 } }
@@ -148,17 +148,17 @@ Item {
                         readonly property bool now: hm.pl.cur && hm.pl.cur.path === modelData.path
                         width: (parent.width - (parent.columns - 1) * 8) / parent.columns
                         height: 68
-                        radius: Theme.rL
+                        radius: Theme.sq ? 0 : (Theme.rL)
                         color: now ? Theme.secondaryContainer : (tm.containsMouse ? Theme.surfaceHigh : Theme.surfaceC)
                         Behavior on color { ColorAnimation { duration: 140 } }
                         Rectangle {
                             id: tc
                             x: 10; anchors.verticalCenter: parent.verticalCenter
-                            width: 48; height: 48; radius: Theme.rM
+                            width: 48; height: 48; radius: Theme.sq ? 0 : (Theme.rM)
                             color: Theme.surfaceHighest
                             Ic { anchors.centerIn: parent; name: "music_note"; size: 22; color: Theme.inkVar }
-                            Pic { anchors.fill: parent; radius: parent.radius; res: 120; source: Theme.url(tr.modelData.cover || "") }
-                            Rectangle { anchors.fill: parent; radius: parent.radius; color: Qt.rgba(0, 0, 0, 0.45); visible: tm.containsMouse || tr.now
+                            Pic { anchors.fill: parent; radius: Theme.sq ? 0 : (parent.radius); res: 120; source: Theme.url(tr.modelData.cover || "") }
+                            Rectangle { anchors.fill: parent; radius: Theme.sq ? 0 : (parent.radius); color: Qt.rgba(0, 0, 0, 0.45); visible: tm.containsMouse || tr.now
                                 Ic { anchors.centerIn: parent; name: tr.now && hm.pl.playing ? "graphic_eq" : "play_arrow"; size: 24; color: "white" } }
                         }
                         Column {
@@ -260,13 +260,13 @@ Item {
             id: cv
             x: 6; y: 4
             width: 164; height: 164
-            radius: Theme.rXL
+            radius: Theme.sq ? 0 : (Theme.rXL)
             color: Theme.surfaceHigh
             visible: ac.kind === ""
             scale: cm.pressed ? 0.96 : 1
             Behavior on scale { NumberAnimation { duration: 140 } }
             Ic { anchors.centerIn: parent; name: "album"; size: 48; color: Theme.inkVar }
-            Pic { anchors.fill: parent; radius: parent.radius; res: 360; source: Theme.url(ac.a ? ac.a.cover : "") }
+            Pic { anchors.fill: parent; radius: Theme.sq ? 0 : (parent.radius); res: 360; source: Theme.url(ac.a ? ac.a.cover : "") }
         }
         ShapePic {
             visible: ac.kind !== ""
@@ -278,7 +278,7 @@ Item {
         }
         Rectangle {
             x: cv.x + cv.width - width - 10; y: cv.y + cv.height - height - 10
-            width: 48; height: 48; radius: pm.pressed ? 14 : 24
+            width: 48; height: 48; radius: Theme.sq ? 0 : (pm.pressed ? 14 : 24)
             color: Theme.primary
             opacity: cm.containsMouse || pm.containsMouse || ac.now ? 1 : 0
             scale: cm.containsMouse || pm.containsMouse || ac.now ? 1 : 0.6

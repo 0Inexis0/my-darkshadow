@@ -160,7 +160,7 @@ Item {
                 id: hero
                 width: parent.width
                 height: 214
-                radius: M3.rXL
+                radius: M3.sq ? 0 : (M3.rXL)
                 color: M3.primaryContainer
                 clip: true
                 // calm shapes in the corner, they turn slowly
@@ -169,7 +169,7 @@ Item {
                     id: shapeA
                     width: 200; height: 200; x: parent.width - 300; y: -70
                     color: M3.alpha(M3.primary, 0.14)
-                    radius: 40
+                    radius: M3.sq ? 0 : (40)
                     SequentialAnimation on radius {
                         running: page.visible; loops: Animation.Infinite
                         NumberAnimation { to: 100; duration: 4200; easing.type: Easing.InOutSine }
@@ -190,7 +190,7 @@ Item {
                     }
                 }
                 Rectangle {
-                    width: 150; height: 64; radius: 32; x: parent.width - 360; y: 140; rotation: -24
+                    width: 150; height: 64; radius: M3.sq ? 0 : (32); x: parent.width - 360; y: 140; rotation: -24
                     color: M3.alpha(M3.tertiary, 0.22)
                     SequentialAnimation on scale {
                         running: page.visible; loops: Animation.Infinite
@@ -229,7 +229,7 @@ Item {
                                 visible: modelData.t.length > 3
                                 height: 28
                                 width: chip.implicitWidth + 24
-                                radius: 14
+                                radius: M3.sq ? 0 : (14)
                                 color: M3.alpha(M3.inkPrimaryC, 0.12)
                                 Row {
                                     id: chip
@@ -292,7 +292,7 @@ Item {
                     delegate: Rectangle {
                         width: (quick.width - 20) / 3
                         height: 80
-                        radius: qMouse.pressed ? M3.rM : M3.rL
+                        radius: M3.sq ? 0 : (qMouse.pressed ? M3.rM : M3.rL)
                         color: qMouse.containsMouse ? M3.surfaceHigh : M3.surfaceC
                         Behavior on color { ColorAnimation { duration: 140 } }
                         Behavior on radius { NumberAnimation { duration: 160 } }
@@ -300,7 +300,7 @@ Item {
                             id: qi
                             x: 16
                             anchors.verticalCenter: parent.verticalCenter
-                            width: 44; height: 44; radius: qMouse.containsMouse ? 14 : 22
+                            width: 44; height: 44; radius: M3.sq ? 0 : (qMouse.containsMouse ? 14 : 22)
                             color: M3.secondaryContainer
                             Behavior on radius { NumberAnimation { duration: 260; easing.type: Easing.OutBack } }
                             Icon { anchors.centerIn: parent; name: modelData.s || ""; glyph: modelData.i; size: 20; color: M3.inkSecondaryC }
@@ -358,7 +358,7 @@ Item {
                             readonly property bool on: page.profile === modelData.k
                             width: (profBox.width - 10 * (page.profiles.length - 1)) / Math.max(1, page.profiles.length)
                             height: 84
-                            radius: 14
+                            radius: M3.sq ? 0 : (14)
                             color: on ? M3.primary : (pMouse.containsMouse ? "#1b1b1d" : M3.surfaceC)
                             border.width: 1
                             border.color: on ? M3.primary : (pMouse.containsMouse ? M3.outline : M3.outlineVariant)
@@ -367,7 +367,7 @@ Item {
                                 id: pi
                                 x: 14
                                 anchors.verticalCenter: parent.verticalCenter
-                                width: 42; height: 42; radius: 13
+                                width: 42; height: 42; radius: M3.sq ? 0 : (13)
                                 color: pc.on ? Qt.rgba(0, 0, 0, 0.10) : Qt.rgba(1, 1, 1, 0.06)
                                 T { kind: "icon"; anchors.centerIn: parent; text: modelData.i; font.pixelSize: 19; color: pc.on ? M3.inkPrimary : "#F6F5F4" }
                             }
@@ -428,7 +428,7 @@ Item {
                 id: szPrev
                 width: parent.width
                 height: 168
-                radius: 12
+                radius: M3.sq ? 0 : (12)
                 color: M3.surfaceC
                 border.width: 1
                 border.color: M3.outlineVariant
@@ -445,7 +445,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     height: 136
                     width: Math.min(260, Math.round(height * szPrev.sw / szPrev.sh))
-                    radius: 6
+                    radius: M3.sq ? 0 : (6)
                     color: "#0b0b0d"
                     border.width: 2
                     border.color: "#3a3a40"
@@ -463,17 +463,17 @@ Item {
                         height: Math.round(mon.height * szPrev.wh / szPrev.sh)
                         x: Math.round((mon.width - width) / 2)
                         y: Math.round((mon.height - height) / 2)
-                        radius: 4
+                        radius: M3.sq ? 0 : (4)
                         color: M3.surfaceC
                         border.width: 1
                         border.color: M3.inkDim
-                        Rectangle { x: 0; y: 0; width: Math.round(parent.width * 0.26); height: parent.height; color: "#1c1c1f"; radius: 4 }
+                        Rectangle { x: 0; y: 0; width: Math.round(parent.width * 0.26); height: parent.height; color: "#1c1c1f"; radius: M3.sq ? 0 : (4) }
                         Repeater {
                             model: 5
                             Rectangle {
                                 x: 4; y: 8 + index * 9
                                 width: Math.round(miniWin.width * 0.26) - 8
-                                height: 4; radius: 2
+                                height: 4; radius: M3.sq ? 0 : (2)
                                 color: index === 0 ? M3.primary : "#3a3a40"
                             }
                         }
@@ -483,7 +483,7 @@ Item {
                                 x: Math.round(miniWin.width * 0.26) + 6
                                 y: 8 + index * Math.round(miniWin.height * 0.2)
                                 width: Math.round(miniWin.width * 0.74) - 12
-                                height: Math.max(6, Math.round(miniWin.height * 0.14)); radius: 3
+                                height: Math.max(6, Math.round(miniWin.height * 0.14)); radius: M3.sq ? 0 : (3)
                                 color: "#202024"
                             }
                         }
@@ -547,7 +547,7 @@ Item {
             Rectangle {
                 width: parent.width
                 height: 128
-                radius: 12
+                radius: M3.sq ? 0 : (12)
                 color: M3.surfaceC
                 border.width: 1
                 border.color: M3.outlineVariant
@@ -562,7 +562,7 @@ Item {
                     x: 226; y: 12
                     width: parent.width - 226 - 14
                     height: parent.height - 24
-                    radius: 9
+                    radius: M3.sq ? 0 : (9)
                     color: "#0e0e0f"
                     border.width: 1
                     border.color: M3.outlineVariant
@@ -583,7 +583,7 @@ Item {
                             Repeater {
                                 model: 40
                                 delegate: Rectangle {
-                                    width: tryCol.width; height: 26; radius: 6
+                                    width: tryCol.width; height: 26; radius: M3.sq ? 0 : (6)
                                     color: index % 2 === 0 ? Qt.rgba(1, 1, 1, 0.035) : "transparent"
                                     T { x: 8; anchors.verticalCenter: parent.verticalCenter; text: I18n.t("Line ") + (index + 1); font.pixelSize: 12; color: "#9a9aa2" }
                                 }
@@ -592,7 +592,7 @@ Item {
                     }
                     // where you are
                     Rectangle {
-                        x: parent.width - 6; width: 3; radius: 1.5
+                        x: parent.width - 6; width: 3; radius: M3.sq ? 0 : (1.5)
                         y: 4 + (parent.height - 8 - height) * (tryFlick.contentHeight > tryFlick.height ? tryFlick.contentY / (tryFlick.contentHeight - tryFlick.height) : 0)
                         height: Math.max(16, (parent.height - 8) * tryFlick.height / Math.max(1, tryFlick.contentHeight))
                         color: "#5a5a60"

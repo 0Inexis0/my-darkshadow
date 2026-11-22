@@ -1,5 +1,14 @@
 # Changelog
 
+## V4.98: Minimal mode
+- **New: Minimal mode** (Settings > Desktop > Look & Feel > Minimal mode, `rice-minimal on`): square corners everywhere, like a classic floating window manager. Windows, the bar, the dock, the control center, the launcher, menus, notifications, widgets, Settings, Files, Music and the lock screen all turn square. Soft shadows go, and turning shapes stand still as plain squares
+- **Window frames** in three kinds: **Double** (a frame in your theme color with a dark line outside it), **Single** (the color frame only) and **Thin** (one quiet line). Frame width goes from 1 to 8 px. The windows use one plain color taken from your wallpaper (no gradient), and the panels, menus, the dock and the widget cards get the same frame
+- **Solid windows** (on by default): no transparency and no blur, the terminal too
+- **Flat bar** (on by default): the bar turns flat along the edge with numbered workspaces; your own bar comes back when Minimal mode is off
+- **The terminal** (kitty) gets room around the text, a still block cursor and simple tabs
+- Works on Hyprland and niri. Gaming mode and Lite still win over it
+- Thanks to Sarods2D and lilith for the ideas; the designs and the code are our own
+
 ## V4.97: Edit mode works again
 - Fixed: **Edit widgets did nothing** (from Settings, the desktop menu or SUPER + ALT + W) since V4.96: the widget editor, now made only when Edit mode starts, could not find the desktop it edits
 - Fixed: a clock that changed its style could go round in a circle working out its size and place (a binding loop)

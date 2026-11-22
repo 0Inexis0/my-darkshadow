@@ -14,19 +14,19 @@ Item {
     Rectangle {
         x: width * 0.02; y: 0
         width: g.width * 0.44; height: g.height * 0.32
-        radius: Math.max(3, g.width * 0.07)
+        radius: Theme.sq ? 0 : (Math.max(3, g.width * 0.07))
         color: g.back
     }
     Rectangle {
         y: g.height * 0.12
         width: g.width; height: g.height * 0.88
-        radius: Math.max(4, g.width * 0.1)
+        radius: Theme.sq ? 0 : (Math.max(4, g.width * 0.1))
         color: g.back
     }
     Rectangle {
         y: g.open ? g.height * 0.36 : g.height * 0.24
         width: g.width; height: g.height - y
-        radius: Math.max(4, g.width * 0.1)
+        radius: Theme.sq ? 0 : (Math.max(4, g.width * 0.1))
         color: g.face
         Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
         Rectangle { anchors.top: parent.top; anchors.horizontalCenter: parent.horizontalCenter; anchors.topMargin: 1

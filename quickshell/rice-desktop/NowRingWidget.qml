@@ -30,7 +30,7 @@ Item {
         anchors.fill: parent
         rotation: Player.frac * 360
         Behavior on rotation { enabled: Player.playing; NumberAnimation { duration: 900 } }
-        Rectangle { anchors.horizontalCenter: parent.horizontalCenter; y: 4; width: 16; height: 6; radius: 3; color: nr.pal ? nr.pal.primary : "#9ec9bd" }
+        Rectangle { anchors.horizontalCenter: parent.horizontalCenter; y: 4; width: 16; height: 6; radius: Look.sq ? 0 : (3); color: nr.pal ? nr.pal.primary : "#9ec9bd" }
     }
     T {
         anchors.centerIn: parent

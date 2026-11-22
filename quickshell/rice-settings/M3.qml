@@ -8,6 +8,17 @@ import QtQuick
 Singleton {
     id: m
     property string seed: "#9ec9bd"
+    // V4.98 Minimal mode (Settings > Look & Feel; rice-minimal): every corner square
+    property bool sq: false
+    property string frame: "double"
+    FileView {
+        path: Quickshell.env("HOME") + "/.config/rice/minimal.json"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: { try { const j = JSON.parse(text()); m.sq = j.on === true; m.frame = j.frame || "double" } catch (e) { m.sq = false } }
+        onLoadFailed: m.sq = false
+    }
     // the accent of your theme (matugen writes it with every new wallpaper): read again whenever it changes, so
     // Settings takes the new colors while it is open (it kept the old ones, e.g. green on a black wallpaper)
     FileView {

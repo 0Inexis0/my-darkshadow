@@ -24,11 +24,12 @@ Item {
         Rectangle {
             width: parent.width
             height: 170
-            radius: M3.rXL
+            radius: M3.sq ? 0 : (M3.rXL)
             color: M3.primaryContainer
             clip: true
             Blob {
                 id: big
+                keepShape: true
                 x: 28; anchors.verticalCenter: parent.verticalCenter
                 width: 124; height: 124
                 kind: Prefs.accentShape
@@ -54,7 +55,7 @@ Item {
         Rectangle {
             width: parent.width
             height: grid.implicitHeight + 32
-            radius: M3.rL
+            radius: M3.sq ? 0 : (M3.rL)
             color: M3.surfaceC
             Grid {
                 id: grid
@@ -71,7 +72,7 @@ Item {
                         height: width + 4
                         Rectangle {
                             anchors.fill: parent
-                            radius: M3.rM
+                            radius: M3.sq ? 0 : (M3.rM)
                             color: cell.on ? M3.secondaryContainer : (cm.containsMouse ? M3.surfaceHigh : "transparent")
                             Behavior on color { ColorAnimation { duration: 140 } }
                         }
@@ -80,6 +81,7 @@ Item {
                             y: 10
                             width: parent.width * 0.52; height: width
                             kind: modelData
+                            keepShape: true
                             color: cell.on ? M3.primary : M3.inkDim
                             scale: cm.pressed ? 0.85 : (cm.containsMouse ? 1.08 : 1)
                             rotation: cm.containsMouse ? 20 : 0
@@ -109,17 +111,17 @@ Item {
             width: parent.width
             spacing: 10
             Rectangle {
-                width: (parent.width - 10) * 0.4; height: 110; radius: M3.rL; color: M3.surfaceC
+                width: (parent.width - 10) * 0.4; height: 110; radius: M3.sq ? 0 : (M3.rL); color: M3.surfaceC
                 T { x: 16; y: 14; text: I18n.t("Card"); font.pixelSize: 14; font.weight: Font.Medium }
                 T { kind: "reading"; x: 16; y: 36; width: parent.width - 32; wrapMode: Text.WordWrap; font.pixelSize: 11; color: M3.inkDim
                     text: I18n.t("Corners grow and shrink with the slider.") }
             }
             Rectangle {
-                width: (parent.width - 10) * 0.6; height: 110; radius: M3.rL; color: M3.surfaceC
+                width: (parent.width - 10) * 0.6; height: 110; radius: M3.sq ? 0 : (M3.rL); color: M3.surfaceC
                 Column {
                     x: 14; y: 14; width: parent.width - 28; spacing: 8
                     Rectangle {
-                        width: parent.width; height: 40; radius: M3.rM; color: M3.secondaryContainer
+                        width: parent.width; height: 40; radius: M3.sq ? 0 : (M3.rM); color: M3.secondaryContainer
                         Icon { x: 12; anchors.verticalCenter: parent.verticalCenter; name: "wifi"; glyph: ""; size: 18; color: M3.inkSecondaryC }
                         T { x: 42; anchors.verticalCenter: parent.verticalCenter; text: I18n.t("Wi-Fi  ·  connected"); font.pixelSize: 13; color: M3.inkSecondaryC }
                     }

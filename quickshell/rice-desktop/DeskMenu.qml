@@ -137,7 +137,7 @@ Scope {
         property bool on: false
         signal clicked()
         height: 58
-        radius: tm.pressed ? 12 : (on ? 18 : 29)
+        radius: Look.sq ? 0 : (tm.pressed ? 12 : (on ? 18 : 29))
         color: on ? pal.primary : (tm.containsMouse ? pal.cardHi : pal.card)
         scale: tm.pressed ? 0.94 : 1
         Behavior on radius { NumberAnimation { duration: dm.shape; easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
@@ -172,7 +172,7 @@ Scope {
         property string label: ""
         signal clicked()
         height: 72
-        Rectangle { anchors.fill: parent; radius: 18; color: scm.containsMouse ? pal.card : "transparent"
+        Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (18); color: scm.containsMouse ? pal.card : "transparent"
             Behavior on color { ColorAnimation { duration: dm.quick } } }
         AppIcon {
             visible: sc.app !== ""
@@ -205,7 +205,7 @@ Scope {
         property bool last: false
         signal clicked()
         height: 54
-        radius: pm.pressed ? 12 : 18
+        radius: Look.sq ? 0 : (pm.pressed ? 12 : 18)
         color: pm.containsMouse ? pal.cardHi : pal.card
         Behavior on color { ColorAnimation { duration: dm.quick; easing.type: Easing.OutCubic } }
         Behavior on radius { NumberAnimation { duration: dm.shape; easing.type: Easing.OutBack } }
@@ -213,7 +213,7 @@ Scope {
             id: pi
             x: 9; anchors.verticalCenter: parent.verticalCenter
             width: 36; height: 36
-            radius: pm.containsMouse ? 12 : 18
+            radius: Look.sq ? 0 : (pm.containsMouse ? 12 : 18)
             color: pm.containsMouse ? pal.primary : pal.container
             Behavior on radius { NumberAnimation { duration: dm.shape; easing.type: Easing.OutBack; easing.overshoot: 1.6 } }
             Behavior on color { ColorAnimation { duration: dm.quick } }
@@ -245,16 +245,17 @@ Scope {
         WlrLayershell.namespace: "rice-deskmenu"
         WlrLayershell.keyboardFocus: dm.shown ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         // niri: frosted glass behind the card once it has settled (gaming mode and Light mode: none, Look.flat)
-        NiriBlur { win: win; items: [card]; radius: card.radius; on: dm.open && dm.t > 0.98 }
+        NiriBlur { win: win; items: [card]; radius: Look.sq ? 0 : (card.radius); on: dm.open && dm.t > 0.98 }
 
         // a click anywhere else closes it
         MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons; onPressed: dm.close() }
         Item { focus: dm.shown; Keys.onEscapePressed: dm.close() }
 
-        Shadow { x: card.x; y: card.y; width: card.width; height: card.height; radius: card.radius; opacity: card.opacity
+        Shadow { x: card.x; y: card.y; width: card.width; height: card.height; radius: Look.sq ? 0 : (card.radius); opacity: card.opacity
             on: Look.shadows && Look.shadowPanels; size: Look.shadowSize; strength: Look.shadowStrength }
         Rectangle {
             id: card
+            Frame { }      // V4.98 Minimal mode
             readonly property real w: 316
             readonly property real fullH: col.implicitHeight + 24
             // it opens where you clicked, and always stays on the screen; near the bottom it opens upwards
@@ -266,7 +267,7 @@ Scope {
             x: Math.max(10, Math.min(win.width - width - 10, dm.px + 4))
             y: up ? baseY + fullH - height : baseY
             clip: true
-            radius: 28 + 8 * (1 - dm.unfold)
+            radius: Look.sq ? 0 : (28 + 8 * (1 - dm.unfold))
             color: pal.surface
             border.width: 1
             border.color: pal.line
@@ -293,7 +294,7 @@ Scope {
                     Rectangle {
                         anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
                         width: allRow.implicitWidth + 20; height: 28
-                        radius: allM.pressed ? 10 : 16
+                        radius: Look.sq ? 0 : (allM.pressed ? 10 : 16)
                         color: allM.containsMouse ? pal.primary : pal.container
                         Behavior on color { ColorAnimation { duration: dm.quick } }
                         Behavior on radius { NumberAnimation { duration: dm.shape; easing.type: Easing.OutBack } }
@@ -337,19 +338,19 @@ Scope {
                             Behavior on anchors.margins { NumberAnimation { duration: dm.shape; easing.type: Easing.OutBack } }
                             RoundImage { anchors.fill: parent; source: modelData.thumb ? "file://" + modelData.thumb : ""; cornerRadius: wt.cur ? 14 : 18 }
                             // a soft state layer while the pointer is on it
-                            Rectangle { anchors.fill: parent; radius: wt.cur ? 14 : 18; color: "white"; opacity: tm.containsMouse && !wt.cur ? 0.12 : 0
+                            Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (wt.cur ? 14 : 18); color: "white"; opacity: tm.containsMouse && !wt.cur ? 0.12 : 0
                                 Behavior on opacity { NumberAnimation { duration: dm.quick } } }
                         }
-                        Rectangle { anchors.fill: parent; radius: 18; color: "transparent"; border.width: 2.5; border.color: pal.primary
+                        Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (18); color: "transparent"; border.width: 2.5; border.color: pal.primary
                             opacity: wt.cur ? 1 : 0; Behavior on opacity { NumberAnimation { duration: dm.quick } } }
                         // the one you have: a check that pops in
                         Rectangle {
-                            x: parent.width - width - 8; y: 8; width: 20; height: 20; radius: 10; color: pal.primary
+                            x: parent.width - width - 8; y: 8; width: 20; height: 20; radius: Look.sq ? 0 : (10); color: pal.primary
                             scale: wt.cur ? 1 : 0
                             Behavior on scale { NumberAnimation { duration: dm.shape; easing.type: Easing.OutBack; easing.overshoot: 2 } }
                             MIcon { anchors.centerIn: parent; size: 13; name: "check"; glyph: ""; color: pal.inkPrimary }
                         }
-                        Rectangle { visible: modelData.live === true; x: 8; y: parent.height - 24; width: 34; height: 16; radius: 8; color: Qt.rgba(0, 0, 0, 0.55)
+                        Rectangle { visible: modelData.live === true; x: 8; y: parent.height - 24; width: 34; height: 16; radius: Look.sq ? 0 : (8); color: Qt.rgba(0, 0, 0, 0.55)
                             Text { anchors.centerIn: parent; text: "LIVE"; color: "white"; font.family: Fonts.main; font.pixelSize: 8; font.weight: Font.Bold } }
                         MouseArea { id: tm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("click"); dm.setWall(modelData.path) } }
                     }

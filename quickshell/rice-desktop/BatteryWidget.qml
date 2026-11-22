@@ -99,7 +99,7 @@ Item {
             visible: bt.devs.length === 0
             spacing: 14
             Rectangle {
-                width: 46; height: 46; radius: 23
+                width: 46; height: 46; radius: Look.sq ? 0 : (23)
                 color: bt.pal ? bt.pal.chip : Qt.rgba(1, 1, 1, 0.07)
                 T { kind: "icon"; anchors.centerIn: parent; text: ""; font.pixelSize: 18; color: bt.cFg2 }
             }
@@ -122,9 +122,9 @@ Item {
                 Rectangle {
                     anchors.right: pv.left; anchors.rightMargin: 8
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 60; height: 6; radius: 3
+                    width: 60; height: 6; radius: Look.sq ? 0 : (3)
                     color: bt.cTrack
-                    Rectangle { width: parent.width * Math.max(0.03, modelData.pct / 100); height: parent.height; radius: 3; color: modelData.pct <= 15 ? bt.cWarn : bt.cMain }
+                    Rectangle { width: parent.width * Math.max(0.03, modelData.pct / 100); height: parent.height; radius: Look.sq ? 0 : (3); color: modelData.pct <= 15 ? bt.cWarn : bt.cMain }
                 }
                 T { id: pv; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; kind: "number"; text: modelData.pct + "%"; font.pixelSize: 12; font.bold: true; color: bt.cFg; width: 36; horizontalAlignment: Text.AlignRight }
             }

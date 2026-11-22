@@ -8,7 +8,7 @@ Rectangle {
     property var pal: null
     visible: show && text !== ""
     z: 10
-    width: Math.min(260, lab.implicitWidth + 16); height: 24; radius: 12
+    width: Math.min(260, lab.implicitWidth + 16); height: 24; radius: Look.sq ? 0 : (12)
     anchors.horizontalCenter: parent.horizontalCenter
     y: parent.height + 4
     color: pal ? pal.surface : "#141414"

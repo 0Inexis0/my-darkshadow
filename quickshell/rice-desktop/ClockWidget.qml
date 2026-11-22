@@ -99,7 +99,7 @@ Item {
         Item { width: 1; height: 46 }
         Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
-            width: sd.implicitWidth + 30; height: 36; radius: 18
+            width: sd.implicitWidth + 30; height: 36; radius: Look.sq ? 0 : (18)
             color: ck.pal ? ck.pal.primary : "#33ffffff"
             Text { id: sd; anchors.centerIn: parent; text: ck.dateText; color: ck.pal ? ck.pal.inkOn : "white"
                 font.family: Fonts.main; font.pixelSize: 15; font.weight: Font.DemiBold }
@@ -113,7 +113,7 @@ Item {
         id: cookieBlur
         visible: ck.sty === "shape" && ck.glass
         anchors.centerIn: parent
-        width: 236; height: 236; radius: 118
+        width: 236; height: 236; radius: Look.sq ? 0 : (118)
         readonly property real blurRadius: 118
         color: "#20000000"
         opacity: 0
@@ -131,7 +131,7 @@ Item {
             width: 270; height: 270
             kind: "cookie"
             color: ck.pal ? ck.pal.shapeFill : "#334"
-            RotationAnimator on rotation { from: 0; to: 360; duration: 90000; loops: Animation.Infinite; running: ck.sty === "shape" && !Look.lite && !Look.covered }
+            RotationAnimator on rotation { from: 0; to: 360; duration: 90000; loops: Animation.Infinite; running: ck.sty === "shape" && !Look.lite && !Look.covered && !Look.sq }
         }
         Column {
             anchors.centerIn: parent
@@ -167,7 +167,7 @@ Item {
             model: 12
             delegate: Rectangle {
                 readonly property bool q: index % 3 === 0
-                width: q ? 6 : 5; height: q ? 16 : 5; radius: width / 2
+                width: q ? 6 : 5; height: q ? 16 : 5; radius: Look.sq ? 0 : (width / 2)
                 color: q ? (ck.pal ? ck.pal.primary : "white") : Qt.rgba(ck.ink.r, ck.ink.g, ck.ink.b, 0.45)
                 x: an2.width / 2 - width / 2 + Math.sin(index * Math.PI / 6) * (an2.r - 26)
                 y: an2.height / 2 - height / 2 - Math.cos(index * Math.PI / 6) * (an2.r - 26)
@@ -183,14 +183,14 @@ Item {
         Item {
             anchors.fill: parent
             Rectangle {   // hour
-                width: 14; height: 66; radius: 7
+                width: 14; height: 66; radius: Look.sq ? 0 : (7)
                 color: ck.tone
                 x: an2.width / 2 - 7; y: an2.height / 2 - 66 + 7
                 transform: Rotation { origin.x: 7; origin.y: 59; angle: an2.hA
                     Behavior on angle { enabled: !Look.lite; RotationAnimation { duration: 700; direction: RotationAnimation.Clockwise; easing.type: Easing.OutBack; easing.overshoot: 1.2 } } }
             }
             Rectangle {   // minute
-                width: 9; height: 96; radius: 4.5
+                width: 9; height: 96; radius: Look.sq ? 0 : (4.5)
                 color: ck.ink
                 x: an2.width / 2 - 4.5; y: an2.height / 2 - 96 + 4.5
                 transform: Rotation { origin.x: 4.5; origin.y: 91.5; angle: an2.mA
@@ -198,12 +198,12 @@ Item {
             }
             Rectangle {   // the middle
                 anchors.centerIn: parent
-                width: 18; height: 18; radius: 9
+                width: 18; height: 18; radius: Look.sq ? 0 : (9)
                 color: ck.pal ? ck.pal.primary : "white"
                 border.width: 3; border.color: ck.pal ? ck.pal.shapeFill : "#334"
             }
             Rectangle {   // seconds: a dot on the rim
-                width: 12; height: 12; radius: 6
+                width: 12; height: 12; radius: Look.sq ? 0 : (6)
                 color: ck.pal ? ck.pal.primary : "white"
                 visible: ck.secs
                 x: an2.width / 2 - 6 + Math.sin(an2.sA * Math.PI / 180) * (an2.r - 46)

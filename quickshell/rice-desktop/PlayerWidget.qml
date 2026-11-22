@@ -66,7 +66,7 @@ Item {
             delegate: Rectangle {
                 readonly property bool big: modelData.a === "toggle"
                 width: big ? 64 : 38; height: 42
-                radius: bm.pressed ? 12 : (big ? 21 : 19)
+                radius: Look.sq ? 0 : (bm.pressed ? 12 : (big ? 21 : 19))
                 color: big ? (pw.pal ? pw.pal.primary : "#9ec9bd") : (bm.containsMouse ? (pw.pal ? pw.pal.chipHover : Qt.rgba(1, 1, 1, 0.16)) : (pw.pal ? pw.pal.chip : Qt.rgba(1, 1, 1, 0.08)))
                 Behavior on radius { NumberAnimation { duration: 200; easing.type: Easing.OutBack; easing.overshoot: 2 } }
                 MIcon {

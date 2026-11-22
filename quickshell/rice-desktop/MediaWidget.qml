@@ -74,7 +74,7 @@ Item {
         Rectangle {
             width: 34
             height: 34
-            radius: 17
+            radius: Look.sq ? 0 : (17)
             color: "transparent"
             opacity: me.player ? 1 : 0.35
             T { anchors.centerIn: parent; text: ""; font.pixelSize: 14; color: me.pal ? me.pal.fg : "#F6F5F4" }
@@ -111,7 +111,7 @@ Item {
         Rectangle {
             width: 34
             height: 34
-            radius: 17
+            radius: Look.sq ? 0 : (17)
             color: "transparent"
             opacity: me.player ? 1 : 0.35
             T { anchors.centerIn: parent; text: ""; font.pixelSize: 14; color: me.pal ? me.pal.fg : "#F6F5F4" }

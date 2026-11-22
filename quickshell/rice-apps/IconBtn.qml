@@ -14,7 +14,7 @@ Rectangle {
     signal rightClicked(var mouse)
     implicitWidth: 40
     implicitHeight: 40
-    radius: ma.pressed ? Math.min(width, height) * 0.32 : Math.min(width, height) / 2
+    radius: Theme.sq ? 0 : (ma.pressed ? Math.min(width, height) * 0.32 : Math.min(width, height) / 2)
     Behavior on radius { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
     color: kind === "filled" ? Theme.primary : (kind === "tonal" || toggled ? Theme.secondaryContainer : "transparent")
     border.width: kind === "outlined" ? 1 : 0

@@ -25,7 +25,7 @@ Item {
         y: n.rail ? 4 : 0
         width: n.rail ? 56 : n.width
         height: n.rail ? 32 : n.height
-        radius: height / 2
+        radius: Theme.sq ? 0 : (height / 2)
         color: n.on || n.dropOn ? Theme.secondaryContainer : "transparent"
         Behavior on color { ColorAnimation { duration: 160 } }
         Layer { area: ma; ink: Theme.inkSecondaryC }
@@ -44,7 +44,7 @@ Item {
             id: badgeR
             visible: !n.rail && n.badge !== ""
             anchors.right: parent.right; anchors.rightMargin: 16; anchors.verticalCenter: parent.verticalCenter
-            width: Math.max(22, bt.implicitWidth + 12); height: 22; radius: 11
+            width: Math.max(22, bt.implicitWidth + 12); height: 22; radius: Theme.sq ? 0 : (11)
             color: Theme.alpha(Theme.inkVar, 0.14)
             T { id: bt; anchors.centerIn: parent; text: n.badge; role: "small"; color: Theme.inkVar }
         }
@@ -53,8 +53,8 @@ Item {
             visible: !n.rail && n.usage >= 0
             x: 52; width: parent.width - x - 16; height: 18
             anchors.top: parent.verticalCenter; anchors.topMargin: 2
-            Rectangle { y: 2; width: parent.width; height: 4; radius: 2; color: Theme.alpha(Theme.inkVar, 0.18)
-                Rectangle { width: parent.width * Math.max(0.02, n.usage); height: 4; radius: 2
+            Rectangle { y: 2; width: parent.width; height: 4; radius: Theme.sq ? 0 : (2); color: Theme.alpha(Theme.inkVar, 0.18)
+                Rectangle { width: parent.width * Math.max(0.02, n.usage); height: 4; radius: Theme.sq ? 0 : (2)
                             color: n.usage > 0.9 ? Theme.error : Theme.primary } }
             T { y: 7; text: n.sub; role: "small"; color: Theme.inkVar; width: parent.width }
         }

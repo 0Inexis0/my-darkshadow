@@ -186,7 +186,7 @@ Item {
         clip: true
         Behavior on height { NumberAnimation { duration: 460; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
         opacity: ep.stg(sec.order); transform: Translate { x: (1 - ep.stg(sec.order)) * -30 }
-        Rectangle { anchors.fill: parent; radius: 22; color: sec.open ? pal.card : (hm.containsMouse ? pal.card : Qt.rgba(1, 1, 1, 0.03))
+        Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (22); color: sec.open ? pal.card : (hm.containsMouse ? pal.card : Qt.rgba(1, 1, 1, 0.03))
             Behavior on color { ColorAnimation { duration: 200 } } }
         Item {
             id: head
@@ -224,11 +224,11 @@ Item {
         Text { anchors.verticalCenter: parent.verticalCenter; width: parent.width - 60; elide: Text.ElideRight; text: sw.label; color: pal.fg; font.family: Fonts.main; font.pixelSize: 12 }
         Rectangle {
             anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-            width: 46; height: 28; radius: 14
+            width: 46; height: 28; radius: Look.sq ? 0 : (14)
             color: sw.on ? pal.primary : pal.cardHi
             Behavior on color { ColorAnimation { duration: 180 } }
             Rectangle {
-                width: sw.on ? 20 : 14; height: width; radius: width / 2
+                width: sw.on ? 20 : 14; height: width; radius: Look.sq ? 0 : (width / 2)
                 anchors.verticalCenter: parent.verticalCenter
                 x: sw.on ? parent.width - width - 4 : 7
                 color: sw.on ? pal.inkPrimary : pal.dim
@@ -250,7 +250,7 @@ Item {
             delegate: Rectangle {
                 readonly property bool on: pls.current === modelData[0]
                 width: pt.implicitWidth + 22; height: 30
-                radius: on ? 15 : 9
+                radius: Look.sq ? 0 : (on ? 15 : 9)
                 color: on ? pal.primary : (pm.containsMouse ? pal.cardHi : Qt.rgba(1, 1, 1, 0.05))
                 Behavior on radius { NumberAnimation { duration: 300; easing.type: Easing.OutBack; easing.overshoot: 1.6 } }
                 Behavior on color { ColorAnimation { duration: 160 } }
@@ -284,10 +284,10 @@ Item {
             y: 24; width: parent.width; height: 20
             readonly property real hx: 2 + (width - 4) * sl.f
             Rectangle { anchors.verticalCenter: parent.verticalCenter; x: 0; width: Math.max(0, tr.hx - 6); height: 14; color: pal.primary
-                topLeftRadius: 7; bottomLeftRadius: 7; topRightRadius: 3; bottomRightRadius: 3 }
+                topLeftRadius: Look.sq ? 0 : (7); bottomLeftRadius: Look.sq ? 0 : (7); topRightRadius: Look.sq ? 0 : (3); bottomRightRadius: Look.sq ? 0 : (3) }
             Rectangle { anchors.verticalCenter: parent.verticalCenter; x: tr.hx + 6; width: Math.max(0, tr.width - x); height: 14; color: pal.cardHi
-                topRightRadius: 7; bottomRightRadius: 7; topLeftRadius: 3; bottomLeftRadius: 3 }
-            Rectangle { x: tr.hx - 2; anchors.verticalCenter: parent.verticalCenter; width: 4; height: sl.drag ? 26 : 22; radius: 2; color: pal.primary
+                topRightRadius: Look.sq ? 0 : (7); bottomRightRadius: Look.sq ? 0 : (7); topLeftRadius: Look.sq ? 0 : (3); bottomLeftRadius: Look.sq ? 0 : (3) }
+            Rectangle { x: tr.hx - 2; anchors.verticalCenter: parent.verticalCenter; width: 4; height: sl.drag ? 26 : 22; radius: Look.sq ? 0 : (2); color: pal.primary
                 Behavior on height { NumberAnimation { duration: 160 } } }
         }
         MouseArea {
@@ -321,7 +321,7 @@ Item {
                 readonly property string st: mt.kind === "style" ? modelData[0] : mt.sty
                 width: (mt.width - mt.spacing * (mt.options.length - 1)) / Math.max(1, mt.options.length)
                 height: 80
-                radius: on ? 22 : 14
+                radius: Look.sq ? 0 : (on ? 22 : 14)
                 color: on ? pal.container : (tm.containsMouse ? pal.cardHi : Qt.rgba(1, 1, 1, 0.05))
                 border.width: on ? 2 : 0; border.color: pal.primary
                 Behavior on radius { NumberAnimation { duration: 320; easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
@@ -330,7 +330,7 @@ Item {
                 Behavior on scale { NumberAnimation { duration: 120 } }
                 Rectangle {
                     id: scr
-                    x: 10; y: 10; width: parent.width - 20; height: 40; radius: 10
+                    x: 10; y: 10; width: parent.width - 20; height: 40; radius: Look.sq ? 0 : (10)
                     color: Qt.rgba(0, 0, 0, 0.3)
                     clip: true
                     readonly property bool v: tl.e !== "bottom"
@@ -342,7 +342,7 @@ Item {
                         height: scr.v ? len : 8
                         x: scr.v ? (tl.e === "left" ? (scr.full ? 0 : 3) : scr.width - width - (scr.full ? 0 : 3)) : (scr.width - width) / 2
                         y: scr.v ? (scr.height - height) / 2 : scr.height - height - (scr.full ? 0 : 3)
-                        radius: scr.full ? 0 : 4
+                        radius: Look.sq ? 0 : (scr.full ? 0 : 4)
                         color: tl.st === "pills" ? "transparent" : scr.ink
                         Grid {
                             anchors.centerIn: parent
@@ -350,7 +350,7 @@ Item {
                             spacing: tl.st === "pills" ? 2 : 3
                             Repeater {
                                 model: 4
-                                Rectangle { width: tl.st === "pills" ? 6 : 3; height: width; radius: tl.st === "pills" ? 2 : 1.5
+                                Rectangle { width: tl.st === "pills" ? 6 : 3; height: width; radius: Look.sq ? 0 : (tl.st === "pills" ? 2 : 1.5)
                                     color: tl.st === "pills" ? scr.ink : (tl.on ? pal.inkPrimary : pal.surface) }
                             }
                         }
@@ -370,7 +370,7 @@ Item {
         property bool danger: false
         property bool dimmed: false
         signal picked()
-        width: 30; height: 30; radius: 15
+        width: 30; height: 30; radius: Look.sq ? 0 : (15)
         color: tbm.containsMouse && !dimmed ? (danger ? Qt.rgba(1, 0.35, 0.35, 0.22) : pal.cardHi) : "transparent"
         opacity: dimmed ? 0.3 : 1
         MIcon { anchors.centerIn: parent; size: 15; name: tb.sym; glyph: tb.glyph; color: tb.danger ? "#ffb4ab" : pal.fg }
@@ -383,7 +383,7 @@ Item {
         property string sym: "open_in_new"
         property string glyph: String.fromCodePoint(0xF03CC)
         signal picked()
-        width: lrr.implicitWidth + 28; height: 34; radius: 17
+        width: lrr.implicitWidth + 28; height: 34; radius: Look.sq ? 0 : (17)
         color: lrm.containsMouse ? pal.cardHi : "transparent"
         Row { id: lrr; anchors.centerIn: parent; spacing: 6
             MIcon { size: 15; name: lr.sym; glyph: lr.glyph; color: pal.primary; anchors.verticalCenter: parent.verticalCenter }
@@ -392,11 +392,11 @@ Item {
     }
 
     // ---------- the panel ----------
-    Shadow { anchors.fill: bgr; radius: bgr.radius; on: Look.shadows && Look.shadowPanels }
+    Shadow { anchors.fill: bgr; radius: Look.sq ? 0 : (bgr.radius); on: Look.shadows && Look.shadowPanels }
     Rectangle {
         id: bgr
         anchors.fill: parent
-        radius: 28
+        radius: Look.sq ? 0 : (28)
         color: pal.surface
         border.width: 1; border.color: pal.line
         MouseArea { anchors.fill: parent }     // clicks here do not deselect the widget
@@ -430,7 +430,7 @@ Item {
                 }
                 Rectangle {
                     anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-                    width: 40; height: 40; radius: dm.pressed ? 12 : 20
+                    width: 40; height: 40; radius: Look.sq ? 0 : (dm.pressed ? 12 : 20)
                     color: dm.containsMouse ? pal.primary : pal.card
                     Behavior on radius { NumberAnimation { duration: 200 } }
                     MIcon { anchors.centerIn: parent; size: 20; name: "check"; glyph: ""; color: dm.containsMouse ? pal.inkPrimary : pal.fg }
@@ -464,7 +464,7 @@ Item {
                             readonly property bool on: ep.root.enabledOf(modelData.id)
                             readonly property bool picked: ep.ed.sel === modelData.id || (ep.ed.sel !== "" && ep.root.famOf(ep.ed.sel) === modelData.id)
                             width: (parent.width - 12) / 3; height: 70
-                            radius: wc.on ? 20 : 14
+                            radius: Look.sq ? 0 : (wc.on ? 20 : 14)
                             color: wc.picked ? pal.primary : (wc.on ? pal.container : (wm.containsMouse ? pal.cardHi : Qt.rgba(1, 1, 1, 0.05)))
                             Behavior on radius { NumberAnimation { duration: 320; easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
                             Behavior on color { ColorAnimation { duration: 180 } }
@@ -480,7 +480,7 @@ Item {
                             Rectangle {
                                 visible: wc.on
                                 x: parent.width - 22; y: 4
-                                width: 18; height: 18; radius: 9
+                                width: 18; height: 18; radius: Look.sq ? 0 : (9)
                                 color: xm.containsMouse ? Qt.rgba(1, 0.4, 0.4, 0.55) : (wc.picked ? Qt.rgba(0, 0, 0, 0.15) : Qt.rgba(1, 1, 1, 0.12))
                                 MIcon { anchors.centerIn: parent; size: 11; name: "close"; glyph: "\uf00d"; color: wc.picked ? pal.inkPrimary : pal.inkContainer }
                                 MouseArea { id: xm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
@@ -511,7 +511,7 @@ Item {
                     onChosen: function(v) { ep.fontSet(v) } }
                 Item { width: 1; height: 2 }
                 Rectangle {
-                    width: rt.implicitWidth + 30; height: 34; radius: 17; color: rm.containsMouse ? pal.cardHi : Qt.rgba(1, 1, 1, 0.05)
+                    width: rt.implicitWidth + 30; height: 34; radius: Look.sq ? 0 : (17); color: rm.containsMouse ? pal.cardHi : Qt.rgba(1, 1, 1, 0.05)
                     Row { id: rt; anchors.centerIn: parent; spacing: 6
                         MIcon { size: 15; name: "restart_alt"; glyph: ""; color: pal.fg; anchors.verticalCenter: parent.verticalCenter }
                         Text { text: Tr.t("Reset all positions"); color: pal.fg; font.family: Fonts.main; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter } }
@@ -542,7 +542,7 @@ Item {
                         delegate: Rectangle {
                             readonly property bool on: ep.hasMod(modelData.k)
                             width: (parent.width - 6) / 2; height: 34
-                            radius: on ? 17 : 10
+                            radius: Look.sq ? 0 : (on ? 17 : 10)
                             color: on ? pal.container : (mm.containsMouse ? pal.cardHi : Qt.rgba(1, 1, 1, 0.05))
                             Behavior on radius { NumberAnimation { duration: 300; easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
                             Behavior on color { ColorAnimation { duration: 160 } }
@@ -599,9 +599,9 @@ Item {
                 Item {
                     width: parent.width; height: 30
                     readonly property real f: viz.w ? Math.max(0, Math.min(1, (viz.w.fh - 60) / 640)) : 0.2
-                    Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: 10; radius: 5; color: pal.cardHi }
-                    Rectangle { anchors.verticalCenter: parent.verticalCenter; width: Math.max(10, parent.width * parent.f); height: 10; radius: 5; color: pal.primary }
-                    Rectangle { x: parent.width * parent.f - 2; anchors.verticalCenter: parent.verticalCenter; width: 4; height: 24; radius: 2; color: pal.primary }
+                    Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: 10; radius: Look.sq ? 0 : (5); color: pal.cardHi }
+                    Rectangle { anchors.verticalCenter: parent.verticalCenter; width: Math.max(10, parent.width * parent.f); height: 10; radius: Look.sq ? 0 : (5); color: pal.primary }
+                    Rectangle { x: parent.width * parent.f - 2; anchors.verticalCenter: parent.verticalCenter; width: 4; height: 24; radius: Look.sq ? 0 : (2); color: pal.primary }
                     MouseArea {
                         anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                         function set(x) {
@@ -667,7 +667,7 @@ Item {
                             readonly property int at: cur.filter(function(x) { return x !== "apps" }).indexOf(modelData[0])
                             readonly property bool on: at >= 0
                             width: (parent.width - 12) / 3; height: 70
-                            radius: on ? 20 : 14
+                            radius: Look.sq ? 0 : (on ? 20 : 14)
                             color: on ? pal.container : (mtm.containsMouse ? pal.cardHi : Qt.rgba(1, 1, 1, 0.05))
                             border.width: on ? 2 : 0; border.color: pal.primary
                             Behavior on radius { NumberAnimation { duration: 300; easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
@@ -679,7 +679,7 @@ Item {
                             Text { anchors.horizontalCenter: parent.horizontalCenter; y: 42; width: parent.width - 8; horizontalAlignment: Text.AlignHCenter; elide: Text.ElideRight
                                 text: Tr.t(mt.modelData[1]); color: mt.on ? pal.inkContainer : pal.fg; font.family: Fonts.main; font.pixelSize: 11 }
                             // its place in the row (the order you picked them in)
-                            Rectangle { visible: mt.on; x: parent.width - 20; y: 5; width: 16; height: 16; radius: 8; color: pal.primary
+                            Rectangle { visible: mt.on; x: parent.width - 20; y: 5; width: 16; height: 16; radius: Look.sq ? 0 : (8); color: pal.primary
                                 Text { anchors.centerIn: parent; text: mt.at + 1; color: pal.inkPrimary; font.family: Fonts.main; font.pixelSize: 9; font.weight: Font.Bold } }
                             MouseArea { id: mtm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                                 onClicked: {
@@ -715,7 +715,7 @@ Item {
                                 notifications: ["Notifications", 0xF009A, "notifications"], control: ["Control center", 0xF062E, "tune"], power: ["Session", 0xF0425, "power_settings_new"] })[modelData] || [modelData, 0x3F, "help"]
                             height: 34
                             width: appsPart ? apT.implicitWidth + 44 : 34 + 30 + 30
-                            radius: 17
+                            radius: Look.sq ? 0 : (17)
                             color: appsPart ? pal.primary : Qt.rgba(1, 1, 1, 0.08)
                             Row {
                                 visible: oc.appsPart
@@ -751,8 +751,8 @@ Item {
                             readonly property var e: DesktopEntries.heuristicLookup(modelData)
                             readonly property int n: (secDock.d.apps || []).length
                             width: parent.width; height: 44
-                            topLeftRadius: index === 0 ? 16 : 6; topRightRadius: topLeftRadius
-                            bottomLeftRadius: index === n - 1 ? 16 : 6; bottomRightRadius: bottomLeftRadius
+                            topLeftRadius: Look.sq ? 0 : (index === 0 ? 16 : 6); topRightRadius: Look.sq ? 0 : (topLeftRadius)
+                            bottomLeftRadius: Look.sq ? 0 : (index === n - 1 ? 16 : 6); bottomRightRadius: Look.sq ? 0 : (bottomLeftRadius)
                             color: prm.containsMouse ? pal.cardHi : pal.card
                             Behavior on color { ColorAnimation { duration: 120 } }
                             MouseArea { id: prm; anchors.fill: parent; hoverEnabled: true }
@@ -776,7 +776,7 @@ Item {
                 // add apps: search them here and pin them with +
                 Rectangle {
                     id: addBox
-                    width: parent.width; height: 42; radius: ep.addOpen ? 21 : 14
+                    width: parent.width; height: 42; radius: Look.sq ? 0 : (ep.addOpen ? 21 : 14)
                     color: ep.addOpen ? pal.cardHi : (abm.containsMouse ? pal.cardHi : Qt.rgba(1, 1, 1, 0.05))
                     border.width: addField.activeFocus ? 2 : 0; border.color: pal.primary
                     Behavior on radius { NumberAnimation { duration: 300; easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
@@ -809,7 +809,7 @@ Item {
                             id: fr
                             required property var modelData
                             readonly property bool pinned: ep.pinnedId(fr.modelData)
-                            width: parent.width; height: 40; radius: 14
+                            width: parent.width; height: 40; radius: Look.sq ? 0 : (14)
                             color: frm.containsMouse ? pal.card : "transparent"
                             AppIcon { x: 8; anchors.verticalCenter: parent.verticalCenter; size: 26
                                 name: fr.modelData.icon || ""; keys: [fr.modelData.id, fr.modelData.name]
@@ -818,7 +818,7 @@ Item {
                                 text: fr.modelData.name; color: pal.fg; font.family: Fonts.main; font.pixelSize: 12 }
                             Rectangle {
                                 anchors.right: parent.right; anchors.rightMargin: 6; anchors.verticalCenter: parent.verticalCenter
-                                width: 30; height: 30; radius: 15
+                                width: 30; height: 30; radius: Look.sq ? 0 : (15)
                                 color: fr.pinned ? pal.primary : (frm.containsMouse ? pal.cardHi : pal.card)
                                 MIcon { anchors.centerIn: parent; size: 15; name: fr.pinned ? "check" : "add"; glyph: String.fromCodePoint(fr.pinned ? 0xF012C : 0xF0415)
                                     color: fr.pinned ? pal.inkPrimary : pal.fg }
@@ -843,7 +843,7 @@ Item {
                 onOpenChanged: if (open) ep.loadPacks()
                 // how the dock looks with it
                 Rectangle {
-                    width: parent.width; height: 66; radius: 24
+                    width: parent.width; height: 66; radius: Look.sq ? 0 : (24)
                     color: Qt.rgba(0, 0, 0, 0.22)
                     border.width: 1; border.color: pal.line
                     Row {
@@ -868,7 +868,7 @@ Item {
                             required property var modelData
                             readonly property bool on: (ep.dk ? ep.dk.look : "original") === modelData[0]
                             width: (parent.width - 6) / 2; height: 78
-                            radius: on ? 22 : 16
+                            radius: Look.sq ? 0 : (on ? 22 : 16)
                             // the chosen one: an outline, not a fill (its icons' own shapes would melt into it)
                             color: on ? Qt.rgba(0, 0, 0, 0.28) : (ltm.containsMouse ? pal.cardHi : Qt.rgba(1, 1, 1, 0.05))
                             border.width: on ? 2 : 0; border.color: pal.primary
@@ -905,7 +905,7 @@ Item {
                             id: sc
                             required property string modelData
                             readonly property bool on: (ep.dk ? ep.dk.shape : "") === modelData
-                            width: 48; height: 48; radius: on ? 24 : 14
+                            width: 48; height: 48; radius: Look.sq ? 0 : (on ? 24 : 14)
                             color: on ? pal.container : (scm.containsMouse ? pal.cardHi : Qt.rgba(1, 1, 1, 0.05))
                             border.width: on ? 2 : 0; border.color: pal.primary
                             Behavior on radius { NumberAnimation { duration: 300; easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
@@ -936,8 +936,8 @@ Item {
                             required property int index
                             readonly property bool on: (ep.iconCfg.theme || "") === modelData.id
                             width: parent.width; height: 46
-                            topLeftRadius: index === 0 ? 16 : 6; topRightRadius: topLeftRadius
-                            bottomLeftRadius: index === ep.packs.length ? 16 : 6; bottomRightRadius: bottomLeftRadius
+                            topLeftRadius: Look.sq ? 0 : (index === 0 ? 16 : 6); topRightRadius: Look.sq ? 0 : (topLeftRadius)
+                            bottomLeftRadius: Look.sq ? 0 : (index === ep.packs.length ? 16 : 6); bottomRightRadius: Look.sq ? 0 : (bottomLeftRadius)
                             color: on ? pal.container : (pkm.containsMouse ? pal.cardHi : pal.card)
                             Behavior on color { ColorAnimation { duration: 140 } }
                             Row {

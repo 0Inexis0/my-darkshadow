@@ -51,7 +51,7 @@ PanelWindow {
     // if the closing animation ever stalls (the compositor sent no frames for a moment), it still goes away
     Timer { id: closeT; property bool done: false; interval: 600; running: !open; onRunningChanged: if (running) done = false; onTriggered: done = true }
     // niri: blur behind the card (Hyprland blurs this layer with its own rule)
-    NiriBlur { win: am; items: [panel]; radius: panel.radius; on: am.open && am.et > 0.94 }
+    NiriBlur { win: am; items: [panel]; radius: Look.sq ? 0 : (panel.radius); on: am.open && am.et > 0.94 }
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore
@@ -60,15 +60,16 @@ PanelWindow {
     WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     MouseArea { anchors.fill: parent; onClicked: am.open = false }
 
-    Shadow { x: panel.x; y: panel.y; width: panel.width; height: panel.height; radius: panel.radius; opacity: panel.opacity; scale: panel.scale
+    Shadow { x: panel.x; y: panel.y; width: panel.width; height: panel.height; radius: Look.sq ? 0 : (panel.radius); opacity: panel.opacity; scale: panel.scale
         transformOrigin: panel.transformOrigin; on: Look.shadows && Look.shadowPanels }
     Rectangle {
         id: panel
+        Frame { }      // V4.98 Minimal mode
         width: Math.min(parent.width - 40, 640)
         height: Math.min(parent.height - 140, 560)
         x: am.edge === "left" ? 92 : (am.edge === "right" ? parent.width - width - 92 : (parent.width - width) / 2)
         y: am.edge === "bottom" ? parent.height - height - 92 : (parent.height - height) / 2
-        radius: 32
+        radius: Look.sq ? 0 : (32)
         color: pal.surface
         border.width: 1; border.color: pal.line
         opacity: Math.min(1, am.et * 1.5)
@@ -81,7 +82,7 @@ PanelWindow {
         // search
         Rectangle {
             id: sbox
-            x: 18; y: 18; width: parent.width - 36; height: 48; radius: 24
+            x: 18; y: 18; width: parent.width - 36; height: 48; radius: Look.sq ? 0 : (24)
             color: pal.card
             MIcon { x: 16; anchors.verticalCenter: parent.verticalCenter; size: 20; name: "search"; glyph: "\uf002"; color: pal.dim }
             TextInput {
@@ -113,7 +114,7 @@ PanelWindow {
                 readonly property bool pin: am.isPinned(modelData)
                 opacity: am.stg(index); transform: Translate { y: (1 - am.stg(index)) * 18 }
                 Rectangle {
-                    anchors.fill: parent; anchors.margins: 4; radius: 22
+                    anchors.fill: parent; anchors.margins: 4; radius: Look.sq ? 0 : (22)
                     color: cm.containsMouse ? pal.card : "transparent"
                     Behavior on color { ColorAnimation { duration: 140 } }
                 }
@@ -133,7 +134,7 @@ PanelWindow {
                 // the pin
                 Rectangle {
                     anchors.right: parent.right; anchors.rightMargin: 10; y: 10
-                    width: 28; height: 28; radius: 14
+                    width: 28; height: 28; radius: Look.sq ? 0 : (14)
                     visible: cellIt.pin || cm.containsMouse || pm.containsMouse
                     color: cellIt.pin ? pal.primary : (pm.containsMouse ? pal.cardHi : pal.card)
                     MIcon { anchors.centerIn: parent; size: 15; name: "keep"; glyph: "\uf08d"; filled: cellIt.pin; color: cellIt.pin ? pal.inkPrimary : pal.fg }

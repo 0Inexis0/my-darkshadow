@@ -8,7 +8,7 @@ Rectangle {
     property real k: 1     // 0 = no background, 1 = normal
     property var pal: null
     readonly property bool glass: Look.blur && !Look.flat
-    radius: pal ? pal.radius : 26
+    radius: Look.sq ? 0 : (pal ? pal.radius : 26)
     // tell the widget's window about this card (niri blurs behind the cards only)
     property var holderItem: null
     Component.onCompleted: {
@@ -18,14 +18,15 @@ Rectangle {
     color: pal ? pal.cardColor : Qt.rgba(0.10, 0.10, 0.115, 0.46 * k)
     border.width: pal ? pal.edgeWidth : 1
     border.color: pal ? pal.edge : Qt.rgba(1, 1, 1, 0.10 * k)
+    Frame { opacity: parent.k > 0.02 ? 1 : 0 }      // V4.98 Minimal mode
     // a soft shadow under the card (Settings > Desktop > Windows > Shell shadows)
-    Shadow { z: -1; anchors.fill: parent; radius: parent.radius; on: Look.shadows && Look.shadowWidgets && parent.k > 0.02 && parent.color.a > 0.05
+    Shadow { z: -1; anchors.fill: parent; radius: Look.sq ? 0 : (parent.radius); on: Look.shadows && Look.shadowWidgets && parent.k > 0.02 && parent.color.a > 0.05
         size: Look.shadowSize * 0.8; strength: Look.shadowStrength * 0.8 }
     // a soft light along the top edge of the glass
     Rectangle {
         visible: (pal ? pal.shine : parent.glass) && parent.k > 0.02
         anchors.fill: parent
-        radius: parent.radius
+        radius: Look.sq ? 0 : (parent.radius)
         opacity: 0.6 * parent.k
         gradient: Gradient {
             GradientStop { position: 0; color: Qt.rgba(1, 1, 1, 0.07) }

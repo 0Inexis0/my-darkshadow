@@ -32,10 +32,10 @@ Item {
                     id: pill
                     anchors.horizontalCenter: parent.horizontalCenter
                     y: 4
-                    width: it.on ? 56 : 32; height: 32; radius: 16
+                    width: it.on ? 56 : 32; height: 32; radius: Theme.sq ? 0 : (16)
                     color: it.on ? Theme.secondaryContainer : "transparent"
                     Behavior on width { NumberAnimation { duration: Theme.d(260); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.emph } }
-                    Layer { area: ma; ink: Theme.inkSecondaryC; width: 56; x: (pill.width - 56) / 2; anchors.fill: undefined; height: 32; radius: 16 }
+                    Layer { area: ma; ink: Theme.inkSecondaryC; width: 56; x: (pill.width - 56) / 2; anchors.fill: undefined; height: 32; radius: Theme.sq ? 0 : (16) }
                     Ic { anchors.centerIn: parent; name: it.modelData.icon; size: 22; color: it.on ? Theme.inkSecondaryC : Theme.inkVar }
                 }
                 T { anchors.horizontalCenter: parent.horizontalCenter; y: 40; text: it.modelData.text; role: "small"

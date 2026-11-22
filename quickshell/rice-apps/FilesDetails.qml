@@ -34,7 +34,7 @@ Item {
             spacing: 14
             Rectangle {
                 width: parent.width; height: width * 0.78
-                radius: Theme.rL
+                radius: Theme.sq ? 0 : (Theme.rL)
                 color: Theme.surfaceC
                 FileTile {
                     anchors.centerIn: parent

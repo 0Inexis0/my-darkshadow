@@ -9,7 +9,7 @@ Rectangle {
     signal clicked()
     implicitHeight: 32
     implicitWidth: row.implicitWidth + 24
-    radius: Theme.rS
+    radius: Theme.sq ? 0 : (Theme.rS)
     color: on ? Theme.secondaryContainer : "transparent"
     border.width: on ? 0 : 1
     border.color: Theme.outlineVariant

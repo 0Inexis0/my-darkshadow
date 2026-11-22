@@ -250,13 +250,13 @@ Item {
     readonly property bool playing: Player.playing
 
     // ---------- the shape ----------
-    Shadow { anchors.fill: bg; radius: bg.radius; on: Look.shadows && Look.shadowBar && !isl.flatRest && !isl.ghost; size: Look.shadowSize * 0.5; strength: Look.shadowStrength }
+    Shadow { anchors.fill: bg; radius: Look.sq ? 0 : (bg.radius); on: Look.shadows && Look.shadowBar && !isl.flatRest && !isl.ghost; size: Look.shadowSize * 0.5; strength: Look.shadowStrength }
     Rectangle {
         id: bg
         anchors.fill: parent
         visible: !isl.ghost
         transform: Scale { origin.x: bg.width / 2; origin.y: bg.height / 2; xScale: 1 + 0.035 * isl.squeeze; yScale: 1 - 0.09 * isl.squeeze }
-        radius: height / 2
+        radius: Look.sq ? 0 : (height / 2)
         // inside the notch or a pill with modules it has no color of its own (no darker band)
         color: isl.flatRest ? Qt.rgba(isl.fill.r, isl.fill.g, isl.fill.b, 0) : isl.fill
         clip: true
@@ -284,7 +284,7 @@ Item {
                     text: isl.bar ? Qt.locale().dayName(isl.bar.now.getDay(), Locale.ShortFormat) + ", " + isl.bar.two(isl.bar.now.getDate()) + "/" + isl.bar.two(isl.bar.now.getMonth() + 1) : ""
                     color: isl.pal ? isl.pal.fg : "white"; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium }
                 Rectangle { visible: isl.showDate; anchors.verticalCenter: parent.verticalCenter
-                    width: tp.implicitWidth + 18; height: isl.bh - 14; radius: height / 2; color: isl.pal ? isl.pal.primary : "#8f8"
+                    width: tp.implicitWidth + 18; height: isl.bh - 14; radius: Look.sq ? 0 : (height / 2); color: isl.pal ? isl.pal.primary : "#8f8"
                     Text { id: tp; anchors.centerIn: parent; text: isl.bar ? isl.bar.timeText : ""; color: isl.pal ? isl.pal.inkPrimary : "black"
                         font.family: Fonts.numbers; font.pixelSize: 13; font.weight: Font.DemiBold } }
                 Text { visible: !isl.showDate; anchors.verticalCenter: parent.verticalCenter; text: isl.bar ? isl.bar.timeText : ""
@@ -309,7 +309,7 @@ Item {
                 id: recRow
                 anchors.centerIn: parent
                 spacing: 12
-                Rectangle { anchors.verticalCenter: parent.verticalCenter; width: 12; height: 12; radius: 6; color: "#ff5a5a"
+                Rectangle { anchors.verticalCenter: parent.verticalCenter; width: 12; height: 12; radius: Look.sq ? 0 : (6); color: "#ff5a5a"
                     SequentialAnimation on opacity { running: isl.pillMode === "rec"; loops: Animation.Infinite
                         NumberAnimation { to: 0.35; duration: 700 } NumberAnimation { to: 1; duration: 700 } } }
                 Text { anchors.verticalCenter: parent.verticalCenter; text: isl.bar ? isl.bar.recTime : ""
@@ -320,7 +320,7 @@ Item {
                     MouseArea { anchors.fill: parent; anchors.margins: -4; cursorShape: Qt.PointingHandCursor
                         onClicked: isl.bar.run("\"$HOME/.local/bin/rice-volume\" mic") } }
                 Item { width: 24; height: 24; anchors.verticalCenter: parent.verticalCenter
-                    Rectangle { anchors.centerIn: parent; width: 13; height: 13; radius: 4; color: "transparent"; border.width: 2; border.color: "#ff8a8a" }
+                    Rectangle { anchors.centerIn: parent; width: 13; height: 13; radius: Look.sq ? 0 : (4); color: "transparent"; border.width: 2; border.color: "#ff8a8a" }
                     MouseArea { anchors.fill: parent; anchors.margins: -4; cursorShape: Qt.PointingHandCursor
                         onClicked: { isl.bar.recOn = false; isl.bar.run("\"$HOME/.local/bin/rice-hotcorner\" record stop") } } }
             }
@@ -427,7 +427,7 @@ Item {
                             readonly property real r: Math.max(0, Math.min(1, chgFace.ring * 1.25 - index * 0.25))
                             visible: chgFace.on && r > 0 && r < 1
                             anchors.centerIn: parent
-                            width: parent.width * (1 + 0.32 * r); height: width; radius: width / 2
+                            width: parent.width * (1 + 0.32 * r); height: width; radius: Look.sq ? 0 : (width / 2)
                             color: "transparent"; border.width: 2; border.color: chgFace.green
                             opacity: (1 - r) * 0.9
                         }
@@ -446,16 +446,16 @@ Item {
                     Text { text: chgFace.on ? (chgFace.pct >= 99 ? Tr.t("Fully charged") : Tr.t("Charging")) : Tr.t("On battery")
                         color: isl.pal ? isl.pal.fg : "white"; font.family: Fonts.main; font.pixelSize: 12; font.weight: Font.Medium }
                     Rectangle {
-                        width: parent.width; height: 5; radius: 2.5
+                        width: parent.width; height: 5; radius: Look.sq ? 0 : (2.5)
                         color: isl.pal ? isl.pal.track : "#444"
                         Rectangle {
-                            width: Math.max(height, parent.width * chgFace.fillV); height: parent.height; radius: 2.5; clip: true
+                            width: Math.max(height, parent.width * chgFace.fillV); height: parent.height; radius: Look.sq ? 0 : (2.5); clip: true
                             color: chgFace.tone
                             Behavior on color { ColorAnimation { duration: 300 } }
                             // a light that runs along the bar while it charges
                             Rectangle {
                                 visible: chgFace.on && chgFace.act
-                                width: 16; height: parent.height; radius: height / 2
+                                width: 16; height: parent.height; radius: Look.sq ? 0 : (height / 2)
                                 property real k: 0
                                 x: (parent.width - width) * k
                                 color: "white"
@@ -495,7 +495,7 @@ Item {
                         Rectangle {
                             visible: wc.st === "dots"
                             anchors.centerIn: parent
-                            width: parent.width; height: wc.act ? 20 : 8; radius: height / 2
+                            width: parent.width; height: wc.act ? 20 : 8; radius: Look.sq ? 0 : (height / 2)
                             Behavior on height { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
                             color: wc.act ? (isl.bar ? isl.bar.wsTint(wc.wid) : "white") : (isl.pal ? isl.pal.track : "#555")
                             Behavior on color { ColorAnimation { duration: 300 } }
@@ -504,7 +504,7 @@ Item {
                         // letters / numbers: the active one in a round pill of your key color
                         Rectangle {
                             visible: wc.st === "letters" || wc.st === "numbers"
-                            anchors.centerIn: parent; width: 22; height: 22; radius: 11
+                            anchors.centerIn: parent; width: 22; height: 22; radius: Look.sq ? 0 : (11)
                             color: isl.bar ? isl.bar.wsTint(wc.wid) : "white"
                             opacity: wc.act ? 1 : 0; scale: wc.act ? 1 : 0.4
                             Behavior on opacity { NumberAnimation { duration: 180 } }
@@ -520,7 +520,7 @@ Item {
                         // Pac-Man: dots he has eaten fade, he sits on the one you are on
                         Rectangle {
                             visible: wc.st === "pacman" && !wc.act
-                            anchors.centerIn: parent; width: 6; height: 6; radius: 3
+                            anchors.centerIn: parent; width: 6; height: 6; radius: Look.sq ? 0 : (3)
                             color: isl.pal ? isl.pal.fg : "white"
                             opacity: wc.wid < isl.wsId ? 0.25 : 0.8
                         }
@@ -548,9 +548,10 @@ Item {
     }
 
     // ---------- the card: the player or a notification, just beside the bar ----------
-    Shadow { anchors.fill: card; radius: card.radius; on: Look.shadows && Look.shadowBar; opacity: card.opacity; size: Look.shadowSize; strength: Look.shadowStrength }
+    Shadow { anchors.fill: card; radius: Look.sq ? 0 : (card.radius); on: Look.shadows && Look.shadowBar; opacity: card.opacity; size: Look.shadowSize; strength: Look.shadowStrength }
     Rectangle {
         id: card
+        Frame { }      // V4.98 Minimal mode
         // it is the island growing: at 0 it sits exactly on the island, at 1 it is the card beside the bar
         // (a container transform: size, place and corners morph together, with a little overshoot)
         property real t: isl.big ? 1 : 0
@@ -568,7 +569,7 @@ Item {
         // centred on the island, but always on the screen
         x: Math.max(-isl.x, Math.min(isl.areaW - isl.x - width, (isl.width - width) / 2))
         y: isl.down ? (isl.bh + 8) * Math.min(1, tc) : isl.bh - height - (isl.bh + 8) * Math.min(1, tc)
-        radius: Math.min(height / 2, isl.bh / 2 + (30 - isl.bh / 2) * Math.min(1, tc))
+        radius: Look.sq ? 0 : (Math.min(height / 2, isl.bh / 2 + (30 - isl.bh / 2) * Math.min(1, tc)))
         color: isl.fill
         visible: opacity > 0.01
         opacity: t < 0.02 ? 0 : Math.min(1, t * 4)
@@ -576,7 +577,7 @@ Item {
         HoverHandler { id: hovC }
         // the player tints the card with your key color
         Rectangle {
-            anchors.fill: parent; radius: parent.radius
+            anchors.fill: parent; radius: Look.sq ? 0 : (parent.radius)
             opacity: isl.cardMode === "media" ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: 300 } }
             gradient: Gradient {
@@ -597,11 +598,11 @@ Item {
                 id: tabs
                 anchors.horizontalCenter: parent.horizontalCenter; y: isl.down ? 14 : 14
                 width: tabRow.width + 8; height: 38
-                Rectangle { anchors.fill: parent; radius: height / 2; color: fInfo.pp ? fInfo.pp.card : "#222" }
+                Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (height / 2); color: fInfo.pp ? fInfo.pp.card : "#222" }
                 Rectangle {
                     id: tabPill
                     readonly property var cur: isl.infoTab === "system" ? tSys : (isl.infoTab === "about" ? tAbout : tToday)
-                    x: 4 + cur.x; y: 4; width: cur.width; height: parent.height - 8; radius: height / 2
+                    x: 4 + cur.x; y: 4; width: cur.width; height: parent.height - 8; radius: Look.sq ? 0 : (height / 2)
                     color: fInfo.pp ? fInfo.pp.primary : "white"
                     Behavior on x { SpringAnimation { spring: 4; damping: 0.4; epsilon: 0.3 } }
                     Behavior on width { SpringAnimation { spring: 4; damping: 0.4; epsilon: 0.3 } }
@@ -726,7 +727,7 @@ Item {
                 }
                 // updates
                 Rectangle {
-                    x: 24; y: 124; width: parent.width - 48; height: 104; radius: 24
+                    x: 24; y: 124; width: parent.width - 48; height: 104; radius: Look.sq ? 0 : (24)
                     color: isl.up.update ? (fInfo.pp ? fInfo.pp.container : "#333") : (fInfo.pp ? fInfo.pp.card : "#222")
                     Behavior on color { ColorAnimation { duration: 260 } }
                     Item { id: upIc; x: 18; anchors.verticalCenter: parent.verticalCenter; width: 48; height: 48
@@ -752,7 +753,7 @@ Item {
                     Rectangle {
                         id: upBtn
                         anchors.right: parent.right; anchors.rightMargin: 16; anchors.verticalCenter: parent.verticalCenter
-                        width: ubt.implicitWidth + 36; height: 42; radius: ubm.pressed ? 14 : 21
+                        width: ubt.implicitWidth + 36; height: 42; radius: Look.sq ? 0 : (ubm.pressed ? 14 : 21)
                         Behavior on radius { NumberAnimation { duration: 200 } }
                         color: isl.up.update ? (fInfo.pp ? fInfo.pp.primary : "white") : (fInfo.pp ? fInfo.pp.cardHi : "#444")
                         Text { id: ubt; anchors.centerIn: parent; text: isl.up.update ? Tr.t("Update now") : Tr.t("Check")
@@ -827,7 +828,7 @@ Item {
             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                 onClicked: { isl.note = null; isl.bar.run("\"$HOME/.local/bin/rice-cc\" open") } }
             Rectangle {
-                anchors.right: parent.right; anchors.rightMargin: 10; y: 10; width: 28; height: 28; radius: 14
+                anchors.right: parent.right; anchors.rightMargin: 10; y: 10; width: 28; height: 28; radius: Look.sq ? 0 : (14)
                 color: xm.containsMouse ? (isl.pal ? isl.pal.cardHi : "#444") : "transparent"
                 MIcon { anchors.centerIn: parent; size: 15; name: "close"; glyph: ""; color: isl.pal ? isl.pal.dim : "#aaa" }
                 MouseArea { id: xm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
@@ -915,7 +916,7 @@ Item {
             model: eq.bars
             delegate: Rectangle {
                 id: bb
-                width: 3.5; radius: 2; anchors.verticalCenter: parent.verticalCenter
+                width: 3.5; radius: Look.sq ? 0 : (2); anchors.verticalCenter: parent.verticalCenter
                 color: isl.pal ? isl.pal.primary : "white"
                 property real lv: 0.4
                 height: Math.max(4, eq.h * lv)
@@ -973,7 +974,7 @@ Item {
         property string icon: ""
         signal hit()
         width: 34; height: 34
-        Rectangle { anchors.fill: parent; radius: width / 2; color: isl.pal ? isl.pal.fg : "white"; opacity: bm.containsMouse ? 0.1 : 0
+        Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (width / 2); color: isl.pal ? isl.pal.fg : "white"; opacity: bm.containsMouse ? 0.1 : 0
             Behavior on opacity { NumberAnimation { duration: 140 } } }
         MIcon { anchors.centerIn: parent; size: 20; filled: true; name: bt.icon; glyph: ""; color: isl.pal ? isl.pal.fg : "white" }
         MouseArea { id: bm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: bt.hit() }

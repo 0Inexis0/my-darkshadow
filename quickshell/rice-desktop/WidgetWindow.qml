@@ -132,7 +132,7 @@ PanelWindow {
     // only behind the widget's cards (Card.qml): widgets drawn as a shape (the clock, the gauges ...) get no square
     // of blur around them, and a widget made of a few cards gets it behind each card
     readonly property var blurCards: holder.cards.filter(c => c && c.visible && c.color.a > 0.02)
-    NiriBlur { win: w; items: w.blurCards; radius: w.pal.radius
+    NiriBlur { win: w; items: w.blurCards; radius: Look.sq ? 0 : (w.pal.radius)
         radii: w.blurCards.map(c => c.blurRadius !== undefined ? c.blurRadius : w.pal.radius)
         on: Look.blur && !w.passive && w.bgv * Look.widgetAlpha > 0.05 && w.fk > 0.99 && !w.editing }
     Item { id: nothing; width: 0; height: 0 }

@@ -87,7 +87,7 @@ Item {
         Rectangle {
             x: tour.tx - tour.bw; y: tour.ty - tour.bw
             width: tour.tw + 2 * tour.bw; height: tour.th + 2 * tour.bw
-            radius: tour.tr + tour.bw
+            radius: M3.sq ? 0 : (tour.tr + tour.bw)
             color: "transparent"
             border.width: tour.bw
             border.color: Qt.rgba(0, 0, 0, 0.62)
@@ -101,7 +101,7 @@ Item {
         visible: tour.tw > 2
         x: tour.tx - 4; y: tour.ty - 4
         width: tour.tw + 8; height: tour.th + 8
-        radius: tour.tr + 4
+        radius: M3.sq ? 0 : (tour.tr + 4)
         color: "transparent"
         border.width: 3
         border.color: M3.primary
@@ -115,7 +115,7 @@ Item {
         visible: tour.tw > 2
         x: tour.tx - 12; y: tour.ty - 12
         width: tour.tw + 24; height: tour.th + 24
-        radius: tour.tr + 12
+        radius: M3.sq ? 0 : (tour.tr + 12)
         color: "transparent"
         border.width: 8
         border.color: M3.alpha(M3.primary, 0.14)
@@ -128,10 +128,10 @@ Item {
         Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
         height: bcol.implicitHeight + 48
         Behavior on height { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
-        radius: 28 * M3.shapeK
+        radius: M3.sq ? 0 : (28 * M3.shapeK)
         color: M3.surfaceHigh
         // a soft shadow under it
-        Rectangle { z: -1; anchors.fill: parent; anchors.margins: -1; anchors.topMargin: 3; radius: parent.radius + 1; color: Qt.rgba(0, 0, 0, 0.35) }
+        Rectangle { z: -1; anchors.fill: parent; anchors.margins: -1; anchors.topMargin: 3; radius: M3.sq ? 0 : (parent.radius + 1); color: Qt.rgba(0, 0, 0, 0.35) }
         readonly property bool onRight: tour.lit && tour.tx + tour.tw + 28 + width <= tour.width - 16
         readonly property bool onLeft: tour.lit && !onRight && tour.tx - 28 - width >= 16
         x: !tour.lit ? (tour.width - width) / 2
@@ -167,7 +167,7 @@ Item {
             Row {
                 spacing: 12
                 Rectangle {
-                    width: 40; height: 40; radius: 20
+                    width: 40; height: 40; radius: M3.sq ? 0 : (20)
                     color: M3.secondaryContainer
                     Icon { anchors.centerIn: parent; name: tour.step && tour.step.icon ? tour.step.icon : "lightbulb"; glyph: ""; size: 20; color: M3.inkSecondaryC }
                 }
@@ -180,7 +180,7 @@ Item {
                 visible: !!(tour.step && tour.step.art)
                 width: parent.width
                 height: visible ? 150 : 0
-                radius: 20 * M3.shapeK
+                radius: M3.sq ? 0 : (20 * M3.shapeK)
                 color: M3.surfaceLowest
                 clip: true
                 Loader {
@@ -200,9 +200,9 @@ Item {
             // progress (Material 3 linear indicator)
             Item {
                 width: parent.width; height: 4
-                Rectangle { anchors.fill: parent; radius: 2; color: M3.outlineVariant }
+                Rectangle { anchors.fill: parent; radius: M3.sq ? 0 : (2); color: M3.outlineVariant }
                 Rectangle {
-                    width: Math.max(8, parent.width * (tour.index + 1) / Math.max(1, tour.steps.length)); height: 4; radius: 2
+                    width: Math.max(8, parent.width * (tour.index + 1) / Math.max(1, tour.steps.length)); height: 4; radius: M3.sq ? 0 : (2)
                     color: M3.primary
                     Behavior on width { NumberAnimation { duration: 420; easing.type: Easing.BezierSpline; easing.bezierCurve: tour.ease } }
                 }
@@ -215,7 +215,7 @@ Item {
                 Rectangle {
                     visible: tour.index < tour.steps.length - 1
                     anchors.verticalCenter: parent.verticalCenter
-                    width: skipT.implicitWidth + 24; height: 40; radius: 20
+                    width: skipT.implicitWidth + 24; height: 40; radius: M3.sq ? 0 : (20)
                     color: skipM.containsMouse ? M3.alpha(M3.primary, 0.08) : "transparent"
                     T { id: skipT; anchors.centerIn: parent; text: I18n.t("Skip tour"); font.pixelSize: 14; font.weight: Font.Medium; color: M3.primary }
                     MouseArea { id: skipM; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: tour.stop() }
@@ -226,14 +226,14 @@ Item {
                     spacing: 8
                     Rectangle {
                         visible: tour.index > 0
-                        width: backT.implicitWidth + 36; height: 40; radius: 20
+                        width: backT.implicitWidth + 36; height: 40; radius: M3.sq ? 0 : (20)
                         color: backM.containsMouse ? M3.alpha(M3.primary, 0.08) : "transparent"
                         border.width: 1; border.color: M3.outline
                         T { id: backT; anchors.centerIn: parent; text: I18n.t("Back"); font.pixelSize: 14; font.weight: Font.Medium; color: M3.primary }
                         MouseArea { id: backM; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: tour.back() }
                     }
                     Rectangle {
-                        width: nextT.implicitWidth + 40; height: 40; radius: 20
+                        width: nextT.implicitWidth + 40; height: 40; radius: M3.sq ? 0 : (20)
                         color: nextM.containsMouse ? Qt.lighter(M3.primary, 1.08) : M3.primary
                         Behavior on color { ColorAnimation { duration: 120 } }
                         T {
@@ -256,7 +256,7 @@ Item {
         Item {
             Repeater {
                 model: [[0.12, 0.25, 3], [0.22, 0.7, 2], [0.8, 0.2, 2], [0.9, 0.62, 3], [0.68, 0.82, 2], [0.35, 0.15, 2]]
-                Rectangle { x: parent.width * modelData[0]; y: parent.height * modelData[1]; width: modelData[2]; height: width; radius: width / 2
+                Rectangle { x: parent.width * modelData[0]; y: parent.height * modelData[1]; width: modelData[2]; height: width; radius: M3.sq ? 0 : (width / 2)
                     color: M3.inkDim; opacity: 0.7 }
             }
             MoonLogo { anchors.centerIn: parent; size: 132; running: tour.active }
@@ -277,12 +277,12 @@ Item {
             }
             // the bar
             Rectangle {
-                x: 16; width: parent.width - 32; height: 34; radius: 17
+                x: 16; width: parent.width - 32; height: 34; radius: M3.sq ? 0 : (17)
                 anchors.verticalCenter: parent.verticalCenter
                 color: M3.surfaceC
                 border.width: 1; border.color: M3.outlineVariant
                 Row { x: 14; anchors.verticalCenter: parent.verticalCenter; spacing: 6
-                    Repeater { model: 4; Rectangle { width: index === 0 ? 18 : 7; height: 7; radius: 4; color: index === 0 ? M3.primary : M3.outline } } }
+                    Repeater { model: 4; Rectangle { width: index === 0 ? 18 : 7; height: 7; radius: M3.sq ? 0 : (4); color: index === 0 ? M3.primary : M3.outline } } }
                 Row { anchors.right: parent.right; anchors.rightMargin: 14; anchors.verticalCenter: parent.verticalCenter; spacing: 10
                     Repeater { model: ["wifi", "volume_up", "battery_full"]; Icon { name: modelData; glyph: ""; size: 14; color: M3.inkDim } } }
             }
@@ -290,12 +290,12 @@ Item {
             Rectangle {
                 anchors.centerIn: parent
                 width: 104 + 120 * ai.grow; height: 26 + 26 * ai.grow
-                radius: height / 2
+                radius: M3.sq ? 0 : (height / 2)
                 color: "#050505"
                 border.width: 1; border.color: M3.alpha(M3.primary, 0.5)
                 Row {
                     anchors.centerIn: parent; spacing: 8
-                    Rectangle { visible: ai.grow > 0.5; opacity: ai.grow; width: 30; height: 30; radius: 9; color: M3.primary; anchors.verticalCenter: parent.verticalCenter
+                    Rectangle { visible: ai.grow > 0.5; opacity: ai.grow; width: 30; height: 30; radius: M3.sq ? 0 : (9); color: M3.primary; anchors.verticalCenter: parent.verticalCenter
                         Icon { anchors.centerIn: parent; name: "music_note"; glyph: ""; size: 16; color: M3.inkPrimary } }
                     Column {
                         anchors.verticalCenter: parent.verticalCenter
@@ -318,7 +318,7 @@ Item {
             Rectangle {
                 anchors.centerIn: parent
                 width: parent.width - 40; height: parent.height - 24
-                radius: 22
+                radius: M3.sq ? 0 : (22)
                 color: "#0b0b0c"
                 border.width: 1; border.color: M3.outlineVariant
                 Row {
@@ -328,7 +328,7 @@ Item {
                     Repeater {
                         model: [["Today", "calendar_today"], ["System", "memory"], ["About", "info"], ["Music", "music_note"]]
                         Rectangle {
-                            width: tl.implicitWidth + 36; height: 28; radius: 14
+                            width: tl.implicitWidth + 36; height: 28; radius: M3.sq ? 0 : (14)
                             color: index === ac.tab ? M3.primary : "transparent"
                             Behavior on color { ColorAnimation { duration: 220 } }
                             Row { anchors.centerIn: parent; spacing: 4
@@ -369,7 +369,7 @@ Item {
                             model: [modelData[0], "+", modelData[1]]
                             Rectangle {
                                 readonly property bool plus: modelData === "+"
-                                width: plus ? 10 : kt.implicitWidth + 20; height: 28; radius: 8
+                                width: plus ? 10 : kt.implicitWidth + 20; height: 28; radius: M3.sq ? 0 : (8)
                                 color: plus ? "transparent" : M3.surfaceHighest
                                 border.width: plus ? 0 : 1; border.color: M3.outlineVariant
                                 T { id: kt; anchors.centerIn: parent; text: modelData; font.pixelSize: 12; font.weight: Font.DemiBold

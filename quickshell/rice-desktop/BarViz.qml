@@ -54,7 +54,7 @@ Item {
             y: bv.vertical ? index * 6 : (bv.thick - len) / 2
             width: bv.vertical ? len : 4
             height: bv.vertical ? 4 : len
-            radius: 2
+            radius: Look.sq ? 0 : (2)
             color: bv.color
             opacity: 0.45 + 0.55 * v
             Behavior on width { enabled: bv.vertical; NumberAnimation { duration: 90; easing.type: Easing.OutQuad } }

@@ -40,7 +40,7 @@ Column {
         delegate: Rectangle {
             width: page.width
             height: 44
-            radius: 10
+            radius: M3.sq ? 0 : (10)
             color: M3.surfaceC
             T {
                 x: 16
@@ -53,7 +53,7 @@ Column {
             Rectangle {
                 width: 28
                 height: 28
-                radius: 14
+                radius: M3.sq ? 0 : (14)
                 anchors.right: parent.right
                 anchors.rightMargin: 10
                 anchors.verticalCenter: parent.verticalCenter

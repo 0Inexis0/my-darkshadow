@@ -125,14 +125,14 @@ PanelWindow {
             }
             Rectangle {
                 anchors.fill: parent
-                radius: 14
+                radius: Look.sq ? 0 : (14)
                 color: fr.picked ? Qt.rgba(1, 1, 1, 0.04) : "transparent"
             }
             // name tag
             Rectangle {
                 visible: !fr.picked
                 x: 8; y: 8
-                width: tagT.implicitWidth + 14; height: 20; radius: 10
+                width: tagT.implicitWidth + 14; height: 20; radius: Look.sq ? 0 : (10)
                 color: Qt.rgba(0.05, 0.05, 0.06, 0.75)
                 T { id: tagT; anchors.centerIn: parent; text: modelData.name; font.pixelSize: 10; color: "#d0d0d4" }
             }
@@ -187,7 +187,7 @@ PanelWindow {
                     readonly property bool corner: h.length === 2
                     width: corner ? 14 : (h === "t" || h === "b" ? 26 : 8)
                     height: corner ? 14 : (h === "t" || h === "b" ? 8 : 26)
-                    radius: corner ? 7 : 4
+                    radius: Look.sq ? 0 : (corner ? 7 : 4)
                     color: "#F6F5F4"
                     border.width: 2
                     border.color: "#101012"
@@ -342,7 +342,7 @@ PanelWindow {
     // a calm frame around the screen while you edit
     Rectangle {
         anchors.fill: parent; anchors.margins: 8
-        radius: 28
+        radius: Look.sq ? 0 : (28)
         color: "transparent"
         border.width: 2; border.color: Qt.rgba(1, 1, 1, 0.12 * panel.et)
     }
@@ -358,7 +358,7 @@ PanelWindow {
     Rectangle {
         id: exitBtn
         anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 22
-        width: exitRow.implicitWidth + 32; height: 42; radius: em.pressed ? 14 : 21
+        width: exitRow.implicitWidth + 32; height: 42; radius: Look.sq ? 0 : (em.pressed ? 14 : 21)
         color: em.containsMouse ? Qt.rgba(1, 1, 1, 0.92) : Qt.rgba(0.06, 0.06, 0.07, 0.85)
         border.width: 1; border.color: Qt.rgba(1, 1, 1, 0.1)
         opacity: panel.et; transform: Translate { y: (1 - panel.et) * -20 }
@@ -384,7 +384,7 @@ PanelWindow {
         property string text: ""
         height: 30
         width: ct.implicitWidth + 18
-        radius: 9
+        radius: Look.sq ? 0 : (9)
         color: Qt.rgba(0.06, 0.06, 0.07, 0.92)
         border.width: 1
         border.color: Qt.rgba(1, 1, 1, 0.08)
@@ -400,7 +400,7 @@ PanelWindow {
         signal clicked()
         width: big ? 40 : 30
         height: width
-        radius: big ? 12 : 9
+        radius: Look.sq ? 0 : (big ? 12 : 9)
         color: danger ? (im.containsMouse ? "#e0505a" : "#b8434b")
                       : (active ? "#F6F5F4" : (im.containsMouse ? Qt.rgba(0.16, 0.16, 0.18, 0.95) : Qt.rgba(0.06, 0.06, 0.07, 0.92)))
         border.width: 1
@@ -413,7 +413,7 @@ PanelWindow {
             visible: im.containsMouse && ei.tip.length > 0
             anchors.horizontalCenter: parent.horizontalCenter
             y: -height - 6
-            width: tt.implicitWidth + 14; height: 22; radius: 7
+            width: tt.implicitWidth + 14; height: 22; radius: Look.sq ? 0 : (7)
             color: "#F6F5F4"
             z: 30
             T { id: tt; anchors.centerIn: parent; text: ei.tip; font.pixelSize: 10; font.bold: true; color: "#0d0d0d" }
@@ -432,7 +432,7 @@ PanelWindow {
         onValueChanged: if (!sm.pressed) shown = value
         height: 32
         width: 186
-        radius: 10
+        radius: Look.sq ? 0 : (10)
         color: Qt.rgba(0.06, 0.06, 0.07, 0.92)
         border.width: 1
         border.color: Qt.rgba(1, 1, 1, 0.08)
@@ -441,9 +441,9 @@ PanelWindow {
         Rectangle {
             id: track
             x: 70; anchors.verticalCenter: parent.verticalCenter
-            width: es.width - 82; height: 8; radius: 4
+            width: es.width - 82; height: 8; radius: Look.sq ? 0 : (4)
             color: Qt.rgba(1, 1, 1, 0.1)
-            Rectangle { width: Math.max(8, parent.width * (es.shown - es.from) / (1 - es.from)); height: parent.height; radius: 4; color: "#F6F5F4" }
+            Rectangle { width: Math.max(8, parent.width * (es.shown - es.from) / (1 - es.from)); height: parent.height; radius: Look.sq ? 0 : (4); color: "#F6F5F4" }
             MouseArea {
                 id: sm
                 anchors.fill: parent
@@ -459,7 +459,7 @@ PanelWindow {
             visible: (sm.containsMouse || sm.pressed) && es.tip.length > 0
             anchors.horizontalCenter: parent.horizontalCenter
             y: parent.height + 6
-            width: stt.implicitWidth + 14; height: 22; radius: 7
+            width: stt.implicitWidth + 14; height: 22; radius: Look.sq ? 0 : (7)
             color: "#F6F5F4"
             T { id: stt; anchors.centerIn: parent; text: es.tip; font.pixelSize: 10; font.bold: true; color: "#0d0d0d" }
         }
@@ -474,7 +474,7 @@ PanelWindow {
         function labelOf(v) { for (let i = 0; i < options.length; i++) if (options[i][0] === v) return options[i][1]; return options.length ? options[0][1] : "" }
         height: 32
         width: 140
-        radius: 10
+        radius: Look.sq ? 0 : (10)
         color: dmo.containsMouse || open ? Qt.rgba(0.16, 0.16, 0.18, 0.95) : Qt.rgba(0.06, 0.06, 0.07, 0.92)
         border.width: 1
         border.color: Qt.rgba(1, 1, 1, 0.08)
@@ -487,7 +487,7 @@ PanelWindow {
             y: dd.up ? -height - 6 : parent.height + 6
             width: parent.width
             height: optCol.implicitHeight + 8
-            radius: 10
+            radius: Look.sq ? 0 : (10)
             color: Qt.rgba(0.08, 0.08, 0.09, 0.97)
             border.width: 1
             border.color: Qt.rgba(1, 1, 1, 0.1)
@@ -498,7 +498,7 @@ PanelWindow {
                 Repeater {
                     model: dd.options
                     delegate: Rectangle {
-                        width: optCol.width; height: 30; radius: 7
+                        width: optCol.width; height: 30; radius: Look.sq ? 0 : (7)
                         color: om.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
                         T { x: 10; anchors.verticalCenter: parent.verticalCenter; text: modelData[1]; font.pixelSize: 12; font.bold: modelData[0] === dd.current }
                         T { visible: modelData[0] === dd.current; kind: "icon"; anchors.right: parent.right; anchors.rightMargin: 10; anchors.verticalCenter: parent.verticalCenter; text: ""; font.pixelSize: 10 }

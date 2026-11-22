@@ -109,14 +109,14 @@ Item {
             Rectangle {
                 width: parent.width
                 height: 72
-                radius: 14
+                radius: M3.sq ? 0 : (14)
                 color: edMouse.containsMouse ? M3.surfaceHigh : M3.surfaceC
                 border.width: 1
                 border.color: M3.surfaceHighest
                 Behavior on color { ColorAnimation { duration: 140 } }
                 Rectangle {
                     x: 16; anchors.verticalCenter: parent.verticalCenter
-                    width: 42; height: 42; radius: 12
+                    width: 42; height: 42; radius: M3.sq ? 0 : (12)
                     color: "#F6F5F4"
                     T { kind: "icon"; anchors.centerIn: parent; text: "\uf044"; font.pixelSize: 17; color: "#0d0d0d" }
                 }
@@ -171,7 +171,7 @@ Item {
                             id: card
                             width: 172
                             height: 146
-                            radius: 14
+                            radius: M3.sq ? 0 : (14)
                             readonly property bool on: page.wOn(modelData.key)
                             color: cardMouse.containsMouse ? M3.surfaceHigh : M3.surfaceC
                             border.width: 1
@@ -191,7 +191,7 @@ Item {
                                 y: 14
                                 width: 40
                                 height: 40
-                                radius: 12
+                                radius: M3.sq ? 0 : (12)
                                 color: card.on ? M3.primary : M3.surfaceHighest
                                 Behavior on color { ColorAnimation { duration: 200 } }
                                 T { anchors.centerIn: parent; text: modelData.icon; font.pixelSize: 18; color: card.on ? M3.inkPrimary : "#F6F5F4" }
@@ -394,14 +394,14 @@ Item {
                 delegate: Rectangle {
                     width: col.width
                     height: 44
-                    radius: 12
+                    radius: M3.sq ? 0 : (12)
                     color: M3.surfaceC
                     border.width: 1
                     border.color: M3.outlineVariant
                     Rectangle {
                         id: tbx
                         x: 14; anchors.verticalCenter: parent.verticalCenter
-                        width: 20; height: 20; radius: 10
+                        width: 20; height: 20; radius: M3.sq ? 0 : (10)
                         color: modelData.done ? M3.primary : "transparent"
                         border.width: modelData.done ? 0 : 2
                         border.color: "#6a6a70"
@@ -489,7 +489,7 @@ Item {
                             readonly property bool here: page.hasFam(modelData.f)
                             width: (cfGrid.width - 30) / 4
                             height: 92
-                            radius: 14
+                            radius: M3.sq ? 0 : (14)
                             color: fm.containsMouse ? M3.surfaceHigh : M3.surfaceC
                             border.width: on ? 2 : 1
                             border.color: on ? M3.primary : M3.outlineVariant

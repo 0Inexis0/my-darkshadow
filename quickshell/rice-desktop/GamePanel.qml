@@ -142,7 +142,7 @@ PanelWindow {
     // if the closing animation ever stalls (the compositor sent no frames for a moment), it still goes away
     Timer { id: closeT; property bool done: false; interval: 600; running: !open; onRunningChanged: if (running) done = false; onTriggered: done = true }
     // niri: blur behind it (Hyprland blurs this layer with its own rule)
-    NiriBlur { win: gp; items: [panel]; radius: panel.radius; on: gp.open && gp.et > 0.94 && gp.blurOn }
+    NiriBlur { win: gp; items: [panel]; radius: Look.sq ? 0 : (panel.radius); on: gp.open && gp.et > 0.94 && gp.blurOn }
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore
@@ -189,7 +189,7 @@ PanelWindow {
         // the heat chip
         Rectangle {
             x: 6; y: 0
-            height: 22; width: hr.implicitWidth + 16; radius: 11
+            height: 22; width: hr.implicitWidth + 16; radius: Look.sq ? 0 : (11)
             color: g.heat >= 85 ? Qt.rgba(1, 0.4, 0.4, 0.25) : gp.card
             Row { id: hr; anchors.centerIn: parent; spacing: 3
                 MIcon { size: 12; name: "thermostat"; glyph: ""; color: gp.dim; anchors.verticalCenter: parent.verticalCenter }
@@ -211,7 +211,7 @@ PanelWindow {
         property color onColor: gp.primary
         signal clicked()
         width: 46; height: 46
-        radius: pm.pressed ? 14 : (on ? 16 : 23)
+        radius: Look.sq ? 0 : (pm.pressed ? 14 : (on ? 16 : 23))
         color: on ? onColor : (pm.containsMouse ? gp.cardHi : gp.card)
         scale: pm.pressed ? 0.92 : 1
         Behavior on radius { NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 2 } }
@@ -227,14 +227,14 @@ PanelWindow {
         property string label: ""
         property string value: ""
         property string chip: ""
-        width: (body.width - 10) / 2; height: 62; radius: 20; color: gp.card
-        Rectangle { x: 12; anchors.verticalCenter: parent.verticalCenter; width: 32; height: 32; radius: 11; color: gp.container
+        width: (body.width - 10) / 2; height: 62; radius: Look.sq ? 0 : (20); color: gp.card
+        Rectangle { x: 12; anchors.verticalCenter: parent.verticalCenter; width: 32; height: 32; radius: Look.sq ? 0 : (11); color: gp.container
             MIcon { anchors.centerIn: parent; size: 16; name: parent.parent.icon; glyph: parent.parent.glyph; color: gp.inkContainer } }
         Column { x: 52; anchors.verticalCenter: parent.verticalCenter
             Text { text: parent.parent.label; color: gp.dim; font.family: Fonts.main; font.pixelSize: 10 }
             Text { text: parent.parent.value; color: gp.fg; font.family: Fonts.numbers; font.pixelSize: 16; font.weight: Font.DemiBold } }
         Rectangle { visible: parent.chip !== ""; anchors.right: parent.right; anchors.rightMargin: 10; y: 10
-            width: ct.implicitWidth + 12; height: 20; radius: 10; color: gp.cardHi
+            width: ct.implicitWidth + 12; height: 20; radius: Look.sq ? 0 : (10); color: gp.cardHi
             Text { id: ct; anchors.centerIn: parent; text: parent.parent.chip; color: gp.dim; font.family: Fonts.main; font.pixelSize: 10 } }
     }
     // a thick slider with the icon inside, like the volume keys of a phone
@@ -246,9 +246,9 @@ PanelWindow {
         signal moved(real v)
         width: body.width; height: 44
         Rectangle {
-            anchors.fill: parent; radius: 22; color: gp.card
+            anchors.fill: parent; radius: Look.sq ? 0 : (22); color: gp.card
             clip: true
-            Rectangle { width: Math.max(44, parent.width * ln.v); height: parent.height; radius: 22; color: gp.primary
+            Rectangle { width: Math.max(44, parent.width * ln.v); height: parent.height; radius: Look.sq ? 0 : (22); color: gp.primary
                 Behavior on width { enabled: !lm.pressed; NumberAnimation { duration: 160 } } }
             MIcon { x: 14; anchors.verticalCenter: parent.verticalCenter; size: 18; name: ln.icon; glyph: ln.glyph; color: gp.inkPrimary }
             Text { anchors.right: parent.right; anchors.rightMargin: 16; anchors.verticalCenter: parent.verticalCenter
@@ -264,17 +264,18 @@ PanelWindow {
     }
 
     // ---------- the panel: a slim column on the left ----------
-    Shadow { x: panel.x; y: panel.y; width: panel.width; height: panel.height; radius: panel.radius; opacity: panel.opacity; scale: panel.scale; transformOrigin: Item.Left
+    Shadow { x: panel.x; y: panel.y; width: panel.width; height: panel.height; radius: Look.sq ? 0 : (panel.radius); opacity: panel.opacity; scale: panel.scale; transformOrigin: Item.Left
         on: Look.shadows && Look.shadowPanels }
     Rectangle {
         id: panel
+        Frame { }      // V4.98 Minimal mode
         width: 372
         x: 12 - 72 * (1 - gp.et)
         scale: 0.94 + 0.06 * gp.et
         transformOrigin: Item.Left
         height: Math.min(parent.height - 24, body.implicitHeight + 32)
         anchors.verticalCenter: parent.verticalCenter
-        radius: 30
+        radius: Look.sq ? 0 : (30)
         color: gp.surface
         border.width: 1; border.color: Qt.rgba(1, 1, 1, 0.06)
         opacity: Math.min(1, gp.et * 1.5)
@@ -296,7 +297,7 @@ PanelWindow {
                 Item {
                     opacity: gp.stg(0); transform: Translate { x: (1 - gp.stg(0)) * -26 }
                     width: parent.width; height: 40
-                    Rectangle { width: 40; height: 40; radius: 14; color: gp.container
+                    Rectangle { width: 40; height: 40; radius: Look.sq ? 0 : (14); color: gp.container
                         MIcon { anchors.centerIn: parent; size: 20; name: "sports_esports"; glyph: ""; color: gp.inkContainer; filled: true } }
                     Text { x: 50; anchors.verticalCenter: parent.verticalCenter; text: gp.now.toLocaleTimeString(Qt.locale(), Locale.ShortFormat)
                         color: gp.fg; font.family: Fonts.numbers; font.pixelSize: 18; font.weight: Font.DemiBold }
@@ -307,7 +308,7 @@ PanelWindow {
                             MIcon { size: 16; name: gp.dnd ? "notifications_off" : "notifications"; glyph: ""; color: gp.dim }
                             Text { text: gp.notifCount; color: gp.dim; font.family: Fonts.main; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter } }
                         Rectangle {
-                            width: 34; height: 34; radius: 17; color: xm.containsMouse ? gp.cardHi : gp.card
+                            width: 34; height: 34; radius: Look.sq ? 0 : (17); color: xm.containsMouse ? gp.cardHi : gp.card
                             MIcon { anchors.centerIn: parent; size: 18; name: "close"; glyph: ""; color: gp.fg }
                             MouseArea { id: xm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: gp.open = false }
                         }
@@ -327,8 +328,8 @@ PanelWindow {
                 // ---- FPS
                 Rectangle {
                     opacity: gp.stg(2); transform: Translate { x: (1 - gp.stg(2)) * -26 }
-                    width: parent.width; height: 74; radius: 22; color: gp.card
-                    Rectangle { x: 14; anchors.verticalCenter: parent.verticalCenter; width: 40; height: 40; radius: 14; color: gp.container
+                    width: parent.width; height: 74; radius: Look.sq ? 0 : (22); color: gp.card
+                    Rectangle { x: 14; anchors.verticalCenter: parent.verticalCenter; width: 40; height: 40; radius: Look.sq ? 0 : (14); color: gp.container
                         MIcon { anchors.centerIn: parent; size: 20; name: "speed"; glyph: "󰓅"; color: gp.inkContainer } }
                     Column {
                         x: 66; anchors.verticalCenter: parent.verticalCenter
@@ -338,7 +339,7 @@ PanelWindow {
                     // turn MangoHud's FPS log on (games started with mangohud)
                     Rectangle {
                         anchors.right: parent.right; anchors.rightMargin: 14; anchors.verticalCenter: parent.verticalCenter
-                        width: ft.implicitWidth + 20; height: 30; radius: 15
+                        width: ft.implicitWidth + 20; height: 30; radius: Look.sq ? 0 : (15)
                         color: gp.fpsOn ? gp.container : (fm.containsMouse ? gp.cardHi : "transparent")
                         border.width: gp.fpsOn ? 0 : 1; border.color: Qt.rgba(1, 1, 1, 0.14)
                         Text { id: ft; anchors.centerIn: parent; text: gp.fpsOn ? Tr.t("MangoHud on") : Tr.t("Use MangoHud"); color: gp.fpsOn ? gp.inkContainer : gp.dim; font.family: Fonts.main; font.pixelSize: 11 }
@@ -353,7 +354,7 @@ PanelWindow {
                     spacing: 8
                     Rectangle {
                         width: body.width - 3 * 46 - 3 * 8; height: 46
-                        radius: rm.pressed ? 14 : 23
+                        radius: Look.sq ? 0 : (rm.pressed ? 14 : 23)
                         color: gp.recording ? Qt.rgba(1, 0.35, 0.35, 0.22) : (rm.containsMouse ? gp.cardHi : gp.card)
                         Behavior on color { ColorAnimation { duration: 160 } }
                         Behavior on radius { NumberAnimation { duration: 200 } }
@@ -361,7 +362,7 @@ PanelWindow {
                             anchors.centerIn: parent; spacing: 10
                             Rectangle {
                                 anchors.verticalCenter: parent.verticalCenter
-                                width: 14; height: 14; radius: gp.recording ? 3 : 7; color: "#ff5c5c"
+                                width: 14; height: 14; radius: Look.sq ? 0 : (gp.recording ? 3 : 7); color: "#ff5c5c"
                                 Behavior on radius { NumberAnimation { duration: 200 } }
                             }
                             Text { anchors.verticalCenter: parent.verticalCenter; text: gp.recording ? gp.recTime : Tr.t("Record")
@@ -393,7 +394,7 @@ PanelWindow {
                 // ---- performance profile
                 Rectangle {
                     opacity: gp.stg(5); transform: Translate { x: (1 - gp.stg(5)) * -26 }
-                    width: parent.width; height: perf.implicitHeight + 28; radius: 22; color: gp.card
+                    width: parent.width; height: perf.implicitHeight + 28; radius: Look.sq ? 0 : (22); color: gp.card
                     Column {
                         id: perf
                         x: 14; y: 14; width: parent.width - 28; spacing: 10
@@ -408,7 +409,7 @@ PanelWindow {
                                 delegate: Rectangle {
                                     readonly property bool on: gp.profile === modelData.k
                                     width: (perf.width - 8) / 3; height: 38
-                                    radius: on ? 19 : 10
+                                    radius: Look.sq ? 0 : (on ? 19 : 10)
                                     color: on ? gp.primary : (pm2.containsMouse ? gp.cardHi : Qt.rgba(1, 1, 1, 0.04))
                                     Behavior on radius { NumberAnimation { duration: 240; easing.type: Easing.OutBack; easing.overshoot: 1.6 } }
                                     Behavior on color { ColorAnimation { duration: 160 } }
@@ -429,7 +430,7 @@ PanelWindow {
                 Rectangle {
                     opacity: gp.stg(6); transform: Translate { x: (1 - gp.stg(6)) * -26 }
                     readonly property bool on: gp.fx.gaming === true
-                    width: parent.width; height: 56; radius: 22
+                    width: parent.width; height: 56; radius: Look.sq ? 0 : (22)
                     color: on ? gp.container : (gm.containsMouse ? gp.cardHi : gp.card)
                     Behavior on color { ColorAnimation { duration: 160 } }
                     MIcon { x: 16; anchors.verticalCenter: parent.verticalCenter; size: 20; name: "sports_esports"; glyph: ""; color: parent.on ? gp.primary : gp.fg; filled: parent.on }

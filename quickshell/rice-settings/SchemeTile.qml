@@ -8,7 +8,7 @@ Rectangle {
     signal peek(string key, bool on)
     width: 104
     height: 76
-    radius: M3.rL
+    radius: M3.sq ? 0 : (M3.rL)
     color: selected ? M3.secondaryContainer : (m.containsMouse ? M3.surfaceHigh : M3.surfaceC)
     Behavior on color { ColorAnimation { duration: 160 } }
     border.width: selected ? 2 : 0
@@ -21,16 +21,16 @@ Rectangle {
         x: 8; y: 8
         width: parent.width - 16
         height: 38
-        radius: 9
+        radius: M3.sq ? 0 : (9)
         color: t.scheme.preview[0]
         border.width: 1
         border.color: Qt.rgba(1, 1, 1, 0.10)
-        Rectangle { x: 7; y: 7; width: 30; height: 8; radius: 4; color: t.scheme.preview[1] }
-        Rectangle { x: 7; y: 20; width: parent.width - 14; height: 10; radius: 5; color: t.scheme.preview[2]; opacity: 0.85 }
+        Rectangle { x: 7; y: 7; width: 30; height: 8; radius: M3.sq ? 0 : (4); color: t.scheme.preview[1] }
+        Rectangle { x: 7; y: 20; width: parent.width - 14; height: 10; radius: M3.sq ? 0 : (5); color: t.scheme.preview[2]; opacity: 0.85 }
         Rectangle {
             visible: t.selected
             anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 5
-            width: 14; height: 14; radius: 7
+            width: 14; height: 14; radius: M3.sq ? 0 : (7)
             color: M3.primary
             T { anchors.centerIn: parent; text: "✓"; font.pixelSize: 9; color: M3.inkPrimary; font.bold: true }
         }

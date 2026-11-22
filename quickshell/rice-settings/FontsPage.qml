@@ -66,7 +66,7 @@ Item {
         Rectangle {
             width: parent.width
             height: 150
-            radius: M3.rXL
+            radius: M3.sq ? 0 : (M3.rXL)
             color: M3.primaryContainer
             clip: true
             T {
@@ -103,7 +103,7 @@ Item {
                 readonly property bool open: page.openKey === modelData.key
                 width: parent.width
                 height: col.implicitHeight + 32
-                radius: M3.rL
+                radius: M3.sq ? 0 : (M3.rL)
                 color: M3.surfaceC
                 Behavior on height { NumberAnimation { duration: M3.d(260); easing.type: Easing.OutCubic } }
                 clip: true
@@ -114,7 +114,7 @@ Item {
                     spacing: 10
                     Item {
                         width: parent.width; height: 40
-                        Rectangle { width: 40; height: 40; radius: 20; color: M3.secondaryContainer
+                        Rectangle { width: 40; height: 40; radius: M3.sq ? 0 : (20); color: M3.secondaryContainer
                             Icon { anchors.centerIn: parent; name: modelData.sym; glyph: modelData.g; size: 18; color: M3.inkSecondaryC } }
                         Column {
                             x: 52; anchors.verticalCenter: parent.verticalCenter
@@ -145,7 +145,7 @@ Item {
                         T { text: card.fam !== "" && !page.have(card.fam) ? I18n.t("Not installed: ") + card.fam : ""; visible: text !== ""; font.pixelSize: 11; color: M3.error; anchors.verticalCenter: parent.verticalCenter }
                         Rectangle {
                             visible: modelData.key !== "icons"
-                            width: st.implicitWidth + 24; height: 30; radius: 15
+                            width: st.implicitWidth + 24; height: 30; radius: M3.sq ? 0 : (15)
                             color: sm.containsMouse ? M3.surfaceHighest : M3.surfaceHigh
                             T { id: st; anchors.centerIn: parent; text: card.open ? I18n.t("Hide suggestions") : I18n.t("Suggestions"); font.pixelSize: 12 }
                             MouseArea { id: sm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.openKey = card.open ? "" : modelData.key }
@@ -159,7 +159,7 @@ Item {
                             model: page.suggestions.filter(function(f) { return page.have(f) && (modelData.key === "mono" ? f.indexOf("Mono") >= 0 || f.indexOf("Iosevka") >= 0 || f.indexOf("Code") >= 0 : f.indexOf("Code") < 0) })
                             delegate: Rectangle {
                                 readonly property bool on: card.fam === modelData
-                                width: sg.implicitWidth + 28; height: 36; radius: on ? 18 : 10
+                                width: sg.implicitWidth + 28; height: 36; radius: M3.sq ? 0 : (on ? 18 : 10)
                                 color: on ? M3.primary : (sgm.containsMouse ? M3.surfaceHighest : M3.surfaceHigh)
                                 Behavior on radius { NumberAnimation { duration: M3.d(220) } }
                                 T { id: sg; anchors.centerIn: parent; text: modelData; font.family: modelData; font.pixelSize: 14; color: parent.on ? M3.inkPrimary : M3.ink }
@@ -200,7 +200,7 @@ Item {
         Rectangle {
             width: parent.width
             height: tsCol.implicitHeight + 28
-            radius: M3.rL
+            radius: M3.sq ? 0 : (M3.rL)
             color: M3.surfaceC
             clip: true
             Column {

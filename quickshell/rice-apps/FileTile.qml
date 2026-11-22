@@ -27,7 +27,7 @@ Item {
         visible: !t.isDir && !(t.picture && pic.status === Image.Ready)
         anchors.centerIn: parent
         width: t.width * 0.72; height: t.width * 0.86
-        radius: Math.max(4, width * 0.14)
+        radius: Theme.sq ? 0 : (Math.max(4, width * 0.14))
         color: Theme.mix(t.kc, Theme.surface, 0.78)
         border.width: 1
         border.color: Theme.alpha(t.kc, 0.25)
@@ -36,7 +36,7 @@ Item {
             visible: t.big && label.text !== ""
             anchors.bottom: parent.bottom; anchors.bottomMargin: parent.height * 0.12
             anchors.horizontalCenter: parent.horizontalCenter
-            width: Math.min(parent.width - 8, label.implicitWidth + 12); height: 18; radius: 9
+            width: Math.min(parent.width - 8, label.implicitWidth + 12); height: 18; radius: Theme.sq ? 0 : (9)
             color: Theme.alpha(t.kc, 0.22)
             T { id: label; anchors.centerIn: parent; role: "small"; font.weight: 600; color: t.kc
                 text: { const m = /\.([^.]{1,5})$/.exec(t.name); return m ? m[1].toUpperCase() : "" } }
@@ -49,13 +49,13 @@ Item {
         anchors.centerIn: parent
         width: t.width * 0.94; height: t.width * 0.94
         fit: true
-        radius: Math.max(4, t.width * 0.1)
+        radius: Theme.sq ? 0 : (Math.max(4, t.width * 0.1))
         res: Math.ceil(t.width * 1.6)
         source: t.picture && t.path !== "" ? Theme.url(t.thumb !== "" ? t.thumb : t.path) : ""
         Rectangle {
             visible: t.kind === "video" && t.big && pic.status === Image.Ready
             anchors.centerIn: parent
-            width: 30; height: 30; radius: 15
+            width: 30; height: 30; radius: Theme.sq ? 0 : (15)
             color: Qt.rgba(0, 0, 0, 0.55)
             Ic { anchors.centerIn: parent; name: "play_arrow"; size: 20; color: "white" }
         }

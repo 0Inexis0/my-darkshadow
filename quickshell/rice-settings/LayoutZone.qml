@@ -15,7 +15,7 @@ Rectangle {
     property int marker: hot ? page.overIndex : -1
     readonly property alias flow: fl
 
-    radius: 12
+    radius: M3.sq ? 0 : (12)
     color: hot ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
     border.width: 1
     border.color: hot ? Qt.rgba(1, 1, 1, 0.35) : (page && page.dragKind === kind ? Qt.rgba(1, 1, 1, 0.12) : "transparent")
@@ -96,7 +96,7 @@ Rectangle {
         visible: zr.marker >= 0
         readonly property point mp: zr.marker >= 0 ? zr.markerPos(zr.marker) : Qt.point(0, 0)
         x: mp.x; y: mp.y
-        width: 2; height: 36; radius: 1
+        width: 2; height: 36; radius: M3.sq ? 0 : (1)
         color: "#F6F5F4"
     }
 }

@@ -24,7 +24,7 @@ Item {
         anchors.fill: parent
         visible: false
         layer.enabled: true
-        Rectangle { anchors.fill: parent; radius: ri.cornerRadius }
+        Rectangle { anchors.fill: parent; radius: M3.sq ? 0 : (ri.cornerRadius) }
     }
     MultiEffect {
         anchors.fill: parent
@@ -35,7 +35,7 @@ Item {
     }
     Rectangle {
         anchors.fill: parent
-        radius: ri.cornerRadius
+        radius: M3.sq ? 0 : (ri.cornerRadius)
         color: M3.outlineVariant
         visible: img.status !== Image.Ready
         T { scaled: false; anchors.centerIn: parent; text: ri.fallback; font.pixelSize: parent.width * 0.42; color: M3.inkDim }

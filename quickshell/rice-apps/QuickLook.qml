@@ -45,7 +45,7 @@ Item {
         anchors.centerIn: parent
         width: Math.min(parent.width - 96, 980)
         height: Math.min(parent.height - 80, 720)
-        radius: Theme.rXL
+        radius: Theme.sq ? 0 : (Theme.rXL)
         color: Theme.surfaceC
         opacity: q.open ? 1 : 0
         scale: q.open ? 1 : 0.94
@@ -74,7 +74,7 @@ Item {
             anchors.top: top.bottom
             anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
             anchors.margins: 12; anchors.topMargin: 0
-            radius: Theme.rL
+            radius: Theme.sq ? 0 : (Theme.rL)
             color: Theme.surfaceLowest
             clip: true
             Image {
@@ -91,7 +91,7 @@ Item {
             Rectangle {
                 visible: q.kind === "video" || q.kind === "audio"
                 anchors.centerIn: parent
-                width: 72; height: 72; radius: 28
+                width: 72; height: 72; radius: Theme.sq ? 0 : (28)
                 color: Theme.primary
                 Ic { anchors.centerIn: parent; name: "play_arrow"; size: 40; color: Theme.inkPrimary }
                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { Sys.app("player", [q.e.path]); q.close() } }

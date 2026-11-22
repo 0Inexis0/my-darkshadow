@@ -116,6 +116,19 @@ def hex6(c, d):
     return d
 
 
+def minimal():
+    """Minimal mode (rice-minimal): square windows with a plain frame; None while it is off"""
+    m = jload(RICE + "/minimal.json", {})
+    if m.get("on") is not True:
+        return None
+    fr = m.get("frame") if m.get("frame") in ("double", "single", "thin") else "double"
+    try:
+        w = int(max(1, min(8, int(m.get("width", 3)))))
+    except (TypeError, ValueError):
+        w = 3
+    return {"frame": fr, "width": 1 if fr == "thin" else w, "solid": m.get("solid", True) is not False}
+
+
 def effects():
     c = {"lite": False, "keep_blur": False, "keep_anim": False, "keep_gaps": False, "keep_shadows": False}
     raw = jload(RICE + "/effects.json", {})
@@ -487,6 +500,17 @@ def layout(f, s, gaming, fx, flat, colors):
     L += block("preset-column-widths", ["proportion 0.33333", "proportion 0.5", "proportion 0.66667", "proportion 1.0"])
     L += block("default-column-width", ["proportion 0.5"])
     L += block("focus-ring", ["off"])
+    mn = minimal()
+    if mn:
+        # one plain color (no gradient), and for "double" a dark line outside it (a hard shadow)
+        L += block("border", ["width %d" % mn["width"],
+                              "active-color %s" % q(c1 + ("b0" if mn["frame"] == "thin" else "")),
+                              'inactive-color "#2e2e2e"', 'urgent-color "#ff8a80"'])
+        if mn["frame"] == "double":
+            L += block("shadow", ["on", "softness 0", "spread 2", "offset x=0 y=0", 'color "#0b0b0bff"'])
+        if strut:
+            L += block("struts", ["left %d" % strut, "right %d" % strut, "top %d" % strut, "bottom %d" % strut])
+        return block("layout", L)
     if bw > 0:
         L += block("border", ["width %d" % bw,
                               'active-gradient from=%s to=%s angle=45 relative-to="workspace-view"' % (q(c1), q(c2)),
@@ -635,6 +659,11 @@ def outputs(s):
 
 def window_rules(f, s, flat):
     rad = int(clampf(opt(s, "decoration.rounding", 9), 0, 40, 9))
+    mn = minimal()
+    if mn:
+        rad = 0
+        if mn["solid"]:
+            flat = True
     L = []
     # every window: your corner radius, clipped so nothing sticks out
     L += block("window-rule", ["geometry-corner-radius %d" % rad, "clip-to-geometry true",

@@ -39,14 +39,14 @@ Item {
         Rectangle {
             width: parent.width
             height: 132
-            radius: M3.rXL
+            radius: M3.sq ? 0 : (M3.rXL)
             color: M3.surfaceC
             clip: true
             // the key color, as a blob that grows into the role circles
             Repeater {
                 model: [M3.primary, M3.secondary, M3.tertiary]
                 delegate: Rectangle {
-                    width: 86; height: 86; radius: 43
+                    width: 86; height: 86; radius: M3.sq ? 0 : (43)
                     x: 24 + index * 46; anchors.verticalCenter: parent.verticalCenter
                     color: modelData
                     border.width: 3; border.color: M3.surfaceC
@@ -79,7 +79,7 @@ Item {
                     id: tile
                     width: (grid.width - (grid.columns - 1) * 10) / grid.columns
                     height: 96
-                    radius: tm.pressed ? M3.rS : M3.rL
+                    radius: M3.sq ? 0 : (tm.pressed ? M3.rS : M3.rL)
                     color: modelData.c
                     scale: tm.pressed ? 0.97 : 1
                     Behavior on radius { NumberAnimation { duration: M3.d(200); easing.type: M3.springy } }
@@ -106,7 +106,7 @@ Item {
                     width: srow.width / page.surfaces.length
                     height: srow.height
                     color: modelData.c
-                    radius: index === 0 || index === page.surfaces.length - 1 ? M3.rL : 0
+                    radius: M3.sq ? 0 : (index === 0 || index === page.surfaces.length - 1 ? M3.rL : 0)
                     // square off the inner side of the two end pieces
                     Rectangle { visible: index === 0; anchors.right: parent.right; width: parent.radius; height: parent.height; color: parent.color }
                     Rectangle { visible: index === page.surfaces.length - 1; anchors.left: parent.left; width: parent.radius; height: parent.height; color: parent.color }
@@ -118,20 +118,20 @@ Item {
         }
         // the same surfaces, nested the way the shell uses them
         Rectangle {
-            width: parent.width; height: 170; radius: M3.rXL; color: M3.surfaceLowest
+            width: parent.width; height: 170; radius: M3.sq ? 0 : (M3.rXL); color: M3.surfaceLowest
             Rectangle {
-                anchors.fill: parent; anchors.margins: 14; radius: M3.rL; color: M3.surfaceC
+                anchors.fill: parent; anchors.margins: 14; radius: M3.sq ? 0 : (M3.rL); color: M3.surfaceC
                 T { x: 16; y: 12; text: I18n.t("Window · surfaceContainer"); font.pixelSize: 11; color: M3.inkDim }
                 Rectangle {
-                    x: 14; y: 36; width: parent.width * 0.5 - 21; height: parent.height - 50; radius: M3.rM; color: M3.surfaceHigh
+                    x: 14; y: 36; width: parent.width * 0.5 - 21; height: parent.height - 50; radius: M3.sq ? 0 : (M3.rM); color: M3.surfaceHigh
                     T { x: 14; y: 12; text: I18n.t("Card · high"); font.pixelSize: 11; color: M3.inkDim }
-                    Rectangle { x: 14; y: 36; width: parent.width - 28; height: 30; radius: 15; color: M3.surfaceHighest
+                    Rectangle { x: 14; y: 36; width: parent.width - 28; height: 30; radius: M3.sq ? 0 : (15); color: M3.surfaceHighest
                         T { anchors.centerIn: parent; text: I18n.t("Field · highest"); font.pixelSize: 11; color: M3.inkDim } }
                 }
                 Rectangle {
-                    x: parent.width * 0.5 + 7; y: 36; width: parent.width * 0.5 - 21; height: parent.height - 50; radius: M3.rM; color: M3.primaryContainer
+                    x: parent.width * 0.5 + 7; y: 36; width: parent.width * 0.5 - 21; height: parent.height - 50; radius: M3.sq ? 0 : (M3.rM); color: M3.primaryContainer
                     T { x: 14; y: 12; text: I18n.t("Selected · primaryContainer"); font.pixelSize: 11; color: M3.inkPrimaryC }
-                    Rectangle { x: 14; y: 36; width: bt.implicitWidth + 30; height: 34; radius: 17; color: M3.primary
+                    Rectangle { x: 14; y: 36; width: bt.implicitWidth + 30; height: 34; radius: M3.sq ? 0 : (17); color: M3.primary
                         T { id: bt; anchors.centerIn: parent; text: I18n.t("Button · primary"); font.pixelSize: 12; font.weight: Font.Medium; color: M3.inkPrimary } }
                 }
             }

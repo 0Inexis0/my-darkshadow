@@ -353,7 +353,7 @@ PanelWindow {
     Component { id: mLauncher
         Item { property bool shown: true; width: bar.goo ? bar.barH - 8 : (bar.logoKey === "blackhole" ? 34 : bar.logoKey === "moon" ? 28 : 22); height: bar.barH
             // Google: the launcher sits in a circle of your key color
-            Rectangle { visible: bar.goo; anchors.centerIn: parent; width: parent.width; height: width; radius: lm.pressed ? width * 0.3 : width / 2
+            Rectangle { visible: bar.goo; anchors.centerIn: parent; width: parent.width; height: width; radius: Look.sq ? 0 : (lm.pressed ? width * 0.3 : width / 2)
                 // grey colors (a black or white wallpaper): a dark circle with a light icon, it fits the bar
                 color: gp.mono ? gp.container : gp.primary; scale: lm.containsMouse ? 1.06 : 1
                 Behavior on radius { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
@@ -409,7 +409,7 @@ PanelWindow {
                         Rectangle {
                             visible: wsm.dots
                             anchors.centerIn: parent
-                            width: parent.width; height: bar.goo && act ? 22 : (bar.goo ? 10 : 14); radius: height / 2
+                            width: parent.width; height: bar.goo && act ? 22 : (bar.goo ? 10 : 14); radius: Look.sq ? 0 : (height / 2)
                             Behavior on height { NumberAnimation { duration: 260; easing.type: Easing.OutBack } }
                             color: bar.goo ? (act ? bar.wsTint(wid) : (occ ? gp.inkContainer : gp.track))
                                            : (act ? bar.wsTint(wid) : (occ ? Qt.rgba(0.965, 0.961, 0.957, 0.62) : Qt.rgba(0.965, 0.961, 0.957, 0.24)))
@@ -425,7 +425,7 @@ PanelWindow {
                         Rectangle {
                             visible: wsm.pac
                             anchors.centerIn: parent
-                            width: occ ? 10 : 7; height: width; radius: width / 2
+                            width: occ ? 10 : 7; height: width; radius: Look.sq ? 0 : (width / 2)
                             color: Qt.rgba(0.965, 0.961, 0.957, occ ? 0.9 : 0.45)
                             opacity: act ? 0 : (wid < bar.focusedId ? 0.25 : 1)
                             scale: wm.containsMouse ? 1.35 : 1
@@ -436,7 +436,7 @@ PanelWindow {
                         Rectangle {
                             visible: bar.goo && !wsm.dots && !wsm.pac
                             anchors.centerIn: parent
-                            width: 22; height: 22; radius: 11
+                            width: 22; height: 22; radius: Look.sq ? 0 : (11)
                             color: bar.wsTint(wid)
                             opacity: act ? 1 : 0
                             scale: act ? 1 : 0.5
@@ -572,7 +572,7 @@ PanelWindow {
             Row { id: gRow; visible: bar.goo; anchors.centerIn: parent; spacing: 8
                 Text { anchors.verticalCenter: parent.verticalCenter; text: bar.timeText; color: gp.inkContainer
                     font.family: Fonts.main; font.pixelSize: 15; font.weight: Font.DemiBold }
-                Rectangle { anchors.verticalCenter: parent.verticalCenter; width: 4; height: 4; radius: 2; color: gp.inkContainer; opacity: 0.5 }
+                Rectangle { anchors.verticalCenter: parent.verticalCenter; width: 4; height: 4; radius: Look.sq ? 0 : (2); color: gp.inkContainer; opacity: 0.5 }
                 Text { anchors.verticalCenter: parent.verticalCenter; text: bar.dateText; color: gp.inkContainer; opacity: 0.8
                     font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium } }
             Text { id: ct; visible: !bar.goo; anchors.centerIn: parent; text: bar.timeText; color: bar.fg; font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.Medium
@@ -771,7 +771,7 @@ PanelWindow {
                 anchors.centerIn: parent
                 readonly property bool playing: bar.player !== null
                 // nothing plays: just the note, as narrow as the other icons; a song: a pill with the bars
-                width: playing ? 46 : 24; height: bar.barH - 12; radius: height / 2
+                width: playing ? 46 : 24; height: bar.barH - 12; radius: Look.sq ? 0 : (height / 2)
                 Behavior on width { NumberAnimation { duration: 320; easing.type: Easing.OutBack } }
                 color: playing ? (bar.goo ? gp.primary : Qt.rgba(1, 1, 1, mum.containsMouse ? 0.16 : 0.08))
                                : (mum.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : "transparent")
@@ -783,7 +783,7 @@ PanelWindow {
                     MIcon { anchors.verticalCenter: parent.verticalCenter; size: 16; name: "music_note"; glyph: String.fromCodePoint(0xF075A); color: mu.ic }
                     Row { visible: mu.playing; anchors.verticalCenter: parent.verticalCenter; spacing: 2; height: 12
                         Repeater { model: 3
-                            Rectangle { width: 3; radius: 1.5; anchors.bottom: parent.bottom; color: mu.ic
+                            Rectangle { width: 3; radius: Look.sq ? 0 : (1.5); anchors.bottom: parent.bottom; color: mu.ic
                                 property real h: 4
                                 height: h
                                 SequentialAnimation on h { running: mu.playing && !Look.lite; loops: Animation.Infinite
@@ -828,7 +828,7 @@ PanelWindow {
         // edge: a tonal pill a little inside the edge's shape
         height: bar.hug ? bar.barH - 8 : bar.barH
         y: bar.hug ? 4 : 0
-        radius: height / 2
+        radius: Look.sq ? 0 : (height / 2)
         color: soft && !onlyIsland ? (tint ? gp.container : (bar.hug ? body.hpill : bar.bg)) : "transparent"
         Behavior on color { ColorAnimation { duration: 300 } }
         border.width: soft && !onlyIsland ? 1 : 0
@@ -861,11 +861,11 @@ PanelWindow {
                     opacity: Math.min(1, k * 1.4)
                     scale: 0.7 + 0.3 * k
                     HoverHandler { id: sh; enabled: slot.lay }
-                    Rectangle { visible: slot.lay; anchors.centerIn: parent; width: slot.full; height: bar.barH - 8; radius: height / 2
+                    Rectangle { visible: slot.lay; anchors.centerIn: parent; width: slot.full; height: bar.barH - 8; radius: Look.sq ? 0 : (height / 2)
                         color: bar.fg; opacity: sh.hovered ? 0.1 : 0
                         Behavior on opacity { NumberAnimation { duration: 160 } } }
                     Rectangle { visible: slot.pill; anchors.centerIn: parent; width: slot.full; height: bar.barH
-                        radius: height / 2; color: bar.bg; border.width: 1; border.color: bar.line }
+                        radius: Look.sq ? 0 : (height / 2); color: bar.bg; border.width: 1; border.color: bar.line }
                     Loader { id: ld; anchors.centerIn: parent; sourceComponent: bar.compFor(modelData) }
                 }
             }
@@ -889,10 +889,11 @@ PanelWindow {
         // island / flat: one background behind everything
         Rectangle {
             id: bodyBg
+            Frame { }      // V4.98 Minimal mode
             anchors.fill: parent
             visible: (bar.sty === "island" || bar.sty === "flat") && bar.barK > 0.01
             opacity: bar.barK
-            radius: bar.sty === "island" ? height / 2 : 0
+            radius: Look.sq ? 0 : (bar.sty === "island" ? height / 2 : 0)
             color: bar.bg
             border.width: bar.sty === "island" ? 1 : 0
             border.color: bar.line
@@ -926,8 +927,8 @@ PanelWindow {
                 opacity: bar.barK
                 x: src === body ? 0 : src.x; y: (src === body ? 0 : src.y) + 3
                 width: src.width; height: bar.barH
-                Rectangle { anchors.fill: parent; anchors.margins: -1; radius: height / 2; color: Qt.rgba(0, 0, 0, 0.18) }
-                Rectangle { anchors.fill: parent; anchors.margins: -3; radius: height / 2; color: Qt.rgba(0, 0, 0, 0.08) }
+                Rectangle { anchors.fill: parent; anchors.margins: -1; radius: Look.sq ? 0 : (height / 2); color: Qt.rgba(0, 0, 0, 0.18) }
+                Rectangle { anchors.fill: parent; anchors.margins: -3; radius: Look.sq ? 0 : (height / 2); color: Qt.rgba(0, 0, 0, 0.08) }
             }
         }
 
@@ -1059,7 +1060,7 @@ PanelWindow {
             Rectangle {
                 anchors.fill: parent
                 visible: !bar.notch
-                radius: height / 2
+                radius: Look.sq ? 0 : (height / 2)
                 color: bar.bg
                 border.width: 1; border.color: bar.line
             }
@@ -1071,7 +1072,7 @@ PanelWindow {
                 // the red dot breathes while it records
                 Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 14; height: 14; radius: 7; color: "#ff4d4d"
+                    width: 14; height: 14; radius: Look.sq ? 0 : (7); color: "#ff4d4d"
                     SequentialAnimation on opacity { running: recIsland.on; loops: Animation.Infinite
                         NumberAnimation { to: 0.35; duration: 700 } NumberAnimation { to: 1; duration: 700 } }
                 }
@@ -1087,7 +1088,7 @@ PanelWindow {
                 }
                 Item {
                     width: 26; height: 26; anchors.verticalCenter: parent.verticalCenter
-                    Rectangle { anchors.centerIn: parent; width: 15; height: 15; radius: 4; color: "transparent"; border.width: 2; border.color: "#ff8a8a" }
+                    Rectangle { anchors.centerIn: parent; width: 15; height: 15; radius: Look.sq ? 0 : (4); color: "transparent"; border.width: 2; border.color: "#ff8a8a" }
                     MouseArea { anchors.fill: parent; anchors.margins: -6; cursorShape: Qt.PointingHandCursor
                         onClicked: { bar.recOn = false; bar.run("\"$HOME/.local/bin/rice-hotcorner\" record stop") } }
                 }

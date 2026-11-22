@@ -68,7 +68,7 @@ Item {
     // ---------- the pill ----------
     Rectangle {
         anchors.fill: parent
-        radius: Math.min(width, height) / 2 > 22 ? 22 : Math.min(width, height) / 2
+        radius: Look.sq ? 0 : (Math.min(width, height) / 2 > 22 ? 22 : Math.min(width, height) / 2)
         color: ma.containsMouse ? dm.np.cardHi : dm.np.card
         Behavior on color { ColorAnimation { duration: 140 } }
         scale: ma.pressed ? 0.94 : 1

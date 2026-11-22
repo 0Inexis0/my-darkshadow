@@ -67,7 +67,7 @@ Item {
         x: 22; y: 18
         spacing: 10
         Rectangle {
-            width: 30; height: 30; radius: 15
+            width: 30; height: 30; radius: Look.sq ? 0 : (15)
             color: td.pal ? td.pal.chip : Qt.rgba(1, 1, 1, 0.08)
             T { kind: "icon"; anchors.centerIn: parent; text: "\uf14a"; font.pixelSize: 14; color: td.cMain }
         }
@@ -103,14 +103,14 @@ Item {
                     Rectangle {
                         anchors.fill: parent
                         anchors.topMargin: 1; anchors.bottomMargin: 1
-                        radius: 10
+                        radius: Look.sq ? 0 : (10)
                         color: rowHover.containsMouse ? (td.pal ? td.pal.chip : Qt.rgba(1, 1, 1, 0.06)) : "transparent"
                     }
                     Rectangle {
                         id: box
                         x: 8
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 20; height: 20; radius: 10
+                        width: 20; height: 20; radius: Look.sq ? 0 : (10)
                         color: row.done ? td.cMain : "transparent"
                         border.width: row.done ? 0 : 2
                         border.color: td.cFg3
@@ -165,7 +165,7 @@ Item {
         y: parent.height - 14 - 38
         width: parent.width - 28
         height: 38
-        radius: 12
+        radius: Look.sq ? 0 : (12)
         color: td.pal ? td.pal.chip : Qt.rgba(1, 1, 1, 0.08)
         border.width: input.activeFocus ? 1.5 : 0
         border.color: td.cMain

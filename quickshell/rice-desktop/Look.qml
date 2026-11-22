@@ -16,6 +16,14 @@ Singleton {
     // windows cover the desktop (rice-busy): the widgets' decorative motion pauses (nobody sees it, and the
     // compositor does not have to redraw the desktop under the windows)
     property bool covered: false
+    // V4.98 Minimal mode (Settings > Look & Feel; rice-minimal): square corners everywhere and plain frames.
+    // sq: every corner square. frame: "double" (a color frame with a dark line outside), "single", "thin" (one quiet line)
+    property bool sq: false
+    property string frame: "double"
+    // the frames of panels, menus, the bar, the dock and widgets (Frame.qml): the dark outer line and the color one
+    readonly property real frameOut: sq && frame === "double" ? 1 : 0
+    readonly property real frameIn: sq ? (frame === "thin" ? 1 : 2) : 0
+    readonly property color frameColor: frame === "thin" ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(accentHi.r, accentHi.g, accentHi.b, 0.85)
     // widget style (Settings > Widgets > Theme): shadow (DarkShadow's Shell), google, outline
     property string theme: "google"
     // text and cards turn light or dark with the wallpaper behind each widget (Settings > Widgets)
@@ -28,7 +36,7 @@ Singleton {
     property bool shadowNotif: true
     property real shadowSize: 18
     property real shadowStrength: 0.45
-    readonly property bool shadows: shadowsAll && !flat
+    readonly property bool shadows: shadowsAll && !flat && !sq      // V4.98: none in Minimal mode
     // your shape (Settings > Appearance > Shapes; settings-app.json): icons, loaders and highlights take it
     property string shape: "verysunny"
     // progress lines and rings: wavy or flat, and how thick (Settings > Appearance > Components; settings-app.json)

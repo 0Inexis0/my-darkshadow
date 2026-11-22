@@ -14,7 +14,7 @@ Rectangle {
     readonly property bool spring: bez.length !== 4
     width: 200
     height: 150
-    radius: M3.rL
+    radius: M3.sq ? 0 : (M3.rL)
     color: gm.containsMouse ? M3.surfaceHigh : M3.surfaceC
     Behavior on color { ColorAnimation { duration: 140 } }
 
@@ -65,7 +65,7 @@ Rectangle {
     Rectangle {
         readonly property real t0: cv.height * 0.18
         readonly property real hh: cv.height - 4 - t0
-        width: 12; height: 12; radius: 6
+        width: 12; height: 12; radius: M3.sq ? 0 : (6)
         color: M3.ink
         x: cv.x + g.t * cv.width - 6
         y: cv.y + cv.height - 4 - g.at(g.t) * hh - 6

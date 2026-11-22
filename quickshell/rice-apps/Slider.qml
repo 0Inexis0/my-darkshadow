@@ -24,7 +24,7 @@ Item {
         visible: !s.wavy
         x: 0; width: Math.max(0, s.hx - s.gap); height: s.trackH
         anchors.verticalCenter: parent.verticalCenter
-        radius: Math.min(height / 2, 8)
+        radius: Theme.sq ? 0 : (Math.min(height / 2, 8))
         color: s.active
     }
     Canvas {
@@ -54,7 +54,7 @@ Item {
     Rectangle {
         x: s.hx + s.gap; width: Math.max(0, s.width - x); height: s.wavy ? 4 : s.trackH
         anchors.verticalCenter: parent.verticalCenter
-        radius: Math.min(height / 2, 8)
+        radius: Theme.sq ? 0 : (Math.min(height / 2, 8))
         color: s.rest
     }
     // the handle
@@ -63,7 +63,7 @@ Item {
         width: ma.pressed ? 2 : 4
         height: s.wavy ? 22 : s.trackH + 18
         anchors.verticalCenter: parent.verticalCenter
-        radius: 2
+        radius: Theme.sq ? 0 : (2)
         color: s.active
         Behavior on width { NumberAnimation { duration: 120 } }
     }

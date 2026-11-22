@@ -22,7 +22,7 @@ Item {
         x: 0
         width: Math.max(0, sl.hx - 5)
         height: Math.round(14 * Prefs.sliderThick)
-        radius: height / 2
+        radius: M3.sq ? 0 : (height / 2)
         color: M3.primary
         Behavior on width { enabled: !sl.dragging; NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
     }
@@ -31,16 +31,16 @@ Item {
         x: sl.hx + 9
         width: Math.max(0, sl.width - x)
         height: Math.round(14 * Prefs.sliderThick)
-        radius: height / 2
+        radius: M3.sq ? 0 : (height / 2)
         color: M3.surfaceHighest
         Behavior on x { enabled: !sl.dragging; NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
         // the end stop
-        Rectangle { anchors.right: parent.right; anchors.rightMargin: 5; anchors.verticalCenter: parent.verticalCenter; width: 4; height: 4; radius: 2; color: M3.primary; visible: parent.width > 14 }
+        Rectangle { anchors.right: parent.right; anchors.rightMargin: 5; anchors.verticalCenter: parent.verticalCenter; width: 4; height: 4; radius: M3.sq ? 0 : (2); color: M3.primary; visible: parent.width > 14 }
     }
     Rectangle {
         width: 4
         height: Math.round((sl.dragging ? 32 : 28) * Math.max(1, Prefs.sliderThick * 0.9))
-        radius: 2
+        radius: M3.sq ? 0 : (2)
         color: M3.primary
         anchors.verticalCenter: parent.verticalCenter
         x: sl.hx
@@ -51,7 +51,7 @@ Item {
             visible: sl.dragging
             anchors.horizontalCenter: parent.horizontalCenter
             y: -34
-            width: Math.max(34, vt.implicitWidth + 16); height: 26; radius: 13
+            width: Math.max(34, vt.implicitWidth + 16); height: 26; radius: M3.sq ? 0 : (13)
             color: M3.ink
             T { id: vt; anchors.centerIn: parent; font.pixelSize: 11; font.bold: true; color: M3.surface
                 text: Math.abs(sl.step) >= 1 ? Math.round(sl.shown) : Number(sl.shown).toFixed(2) }

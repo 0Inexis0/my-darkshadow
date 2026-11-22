@@ -307,14 +307,14 @@ PanelWindow {
         opacity: sn.t
         Rectangle {
             anchors.fill: parent; anchors.margins: -2
-            color: "transparent"; radius: 3
+            color: "transparent"; radius: Look.sq ? 0 : (3)
             border.width: 2; border.color: pal.primary
         }
         // corner handles (region): a ring in your key color
         Repeater {
             model: sn.mode === "region" && !sn.busy ? 4 : 0
             delegate: Rectangle {
-                width: 14; height: 14; radius: 7
+                width: 14; height: 14; radius: Look.sq ? 0 : (7)
                 x: (index % 2 === 0 ? 0 : sn.aw) - 7
                 y: (index < 2 ? 0 : sn.ah) - 7
                 color: pal.primary
@@ -328,7 +328,7 @@ PanelWindow {
             readonly property bool above: sn.ay > 44
             x: Math.max(-sn.ax, Math.min(0, sn.width - sn.ax - width))
             y: above ? -height - 10 : 10
-            width: sizeRow.implicitWidth + 24; height: 30; radius: 15
+            width: sizeRow.implicitWidth + 24; height: 30; radius: Look.sq ? 0 : (15)
             color: pal.surface
             Row {
                 id: sizeRow
@@ -355,7 +355,7 @@ PanelWindow {
         // the few pixels around the pointer: the frozen picture again (the same texture, nothing is loaded twice),
         // drawn six times bigger and cut to the frame. Plain clipping, which every graphics driver does the same way
         // (V4.75 used a shader mask here, which could come out empty)
-        Rectangle { anchors.fill: parent; radius: 12; color: "black" }
+        Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (12); color: "black" }
         Item {
             anchors.fill: parent; anchors.margins: 3
             clip: true
@@ -367,12 +367,12 @@ PanelWindow {
                 y: parent.height / 2 - (sn.my + 0.5) * loupe.zoom
             }
         }
-        Rectangle { anchors.fill: parent; radius: 12; color: "transparent"; border.width: 3; border.color: pal.primary }
+        Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (12); color: "transparent"; border.width: 3; border.color: pal.primary }
         // the pixel under the pointer
         Rectangle { anchors.centerIn: parent; width: loupe.zoom + 4; height: loupe.zoom + 4; color: "transparent"; border.width: 2; border.color: "white" }
         Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter; anchors.top: parent.bottom; anchors.topMargin: 8
-            width: posT.implicitWidth + 18; height: 24; radius: 12; color: pal.surface
+            width: posT.implicitWidth + 18; height: 24; radius: Look.sq ? 0 : (12); color: pal.surface
             Text { id: posT; anchors.centerIn: parent; text: Math.round(sn.mx * sn.dpr) + ", " + Math.round(sn.my * sn.dpr)
                 color: pal.fg; font.family: Fonts.numbers; font.pixelSize: 11 }
         }
@@ -388,7 +388,7 @@ PanelWindow {
         readonly property bool on: sn.mode === m
         enabled: m !== "window" || Wm.hypr
         opacity: enabled ? 1 : 0.35
-        height: 44; radius: 22
+        height: 44; radius: Look.sq ? 0 : (22)
         width: on ? mbRow.implicitWidth + 32 : 48
         Behavior on width { NumberAnimation { duration: 240; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
         color: on ? pal.container : (mbM.containsMouse ? pal.cardHi : "transparent")
@@ -411,7 +411,7 @@ PanelWindow {
         property string tip: ""
         property bool on: false               // a switch that is on (sound, microphone)
         signal clicked()
-        width: 44; height: 44; radius: on ? 14 : 22
+        width: 44; height: 44; radius: Look.sq ? 0 : (on ? 14 : 22)
         Behavior on radius { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
         color: on ? (ibM.containsMouse ? Qt.lighter(pal.container, 1.15) : pal.container) : (ibM.containsMouse ? pal.cardHi : "transparent")
         Behavior on color { ColorAnimation { duration: 160 } }
@@ -420,18 +420,18 @@ PanelWindow {
         Rectangle {
             visible: ibM.containsMouse && ib.tip !== ""
             anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.top; anchors.bottomMargin: 10
-            width: tipT.implicitWidth + 18; height: 26; radius: 8; color: pal.fg
+            width: tipT.implicitWidth + 18; height: 26; radius: Look.sq ? 0 : (8); color: pal.fg
             Text { id: tipT; anchors.centerIn: parent; text: ib.tip; color: pal.surface; font.family: Fonts.main; font.pixelSize: 12 }
         }
     }
 
-    Shadow { anchors.fill: bar; radius: bar.radius; opacity: bar.opacity; on: Look.shadows }
+    Shadow { anchors.fill: bar; radius: Look.sq ? 0 : (bar.radius); opacity: bar.opacity; on: Look.shadows }
     Rectangle {
         id: bar
         anchors.horizontalCenter: parent.horizontalCenter
         y: parent.height - height - 36 + (1 - sn.t) * 40
         opacity: sn.t
-        width: barRow.implicitWidth + 16; height: 60; radius: 30
+        width: barRow.implicitWidth + 16; height: 60; radius: Look.sq ? 0 : (30)
         color: pal.surface
         border.width: 1; border.color: pal.line
         // over the selection: it moves up out of the way
@@ -464,7 +464,7 @@ PanelWindow {
             Rectangle {
                 id: shoot
                 anchors.verticalCenter: parent.verticalCenter
-                height: 44; radius: 22
+                height: 44; radius: Look.sq ? 0 : (22)
                 width: shootRow.implicitWidth + 36
                 opacity: sn.hasSel ? 1 : 0.4
                 readonly property color base: sn.rec ? "#ff6b6b" : pal.primary

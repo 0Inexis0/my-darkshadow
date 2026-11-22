@@ -111,7 +111,7 @@ Item {
             model: 4
             Rectangle {
                 required property int index
-                width: 44; height: 6; radius: 3
+                width: 44; height: 6; radius: M3.sq ? 0 : (3)
                 color: index < parent.level
                        ? (parent.level <= 1 ? M3.error : parent.level === 2 ? M3.tertiary : M3.primary)
                        : M3.surfaceHighest
@@ -124,7 +124,7 @@ Item {
         property bool strong: false
         height: 24
         width: bt.implicitWidth + 18
-        radius: 12
+        radius: M3.sq ? 0 : (12)
         color: strong ? M3.primaryContainer : M3.surfaceHighest
         T { id: bt; anchors.centerIn: parent; text: parent.text; font.pixelSize: 11; font.weight: Font.Medium; color: parent.strong ? M3.inkPrimaryC : M3.inkDim }
     }
@@ -136,7 +136,7 @@ Item {
         Rectangle {
             width: parent.width
             height: 196
-            radius: Math.round(30 * M3.shapeK)
+            radius: M3.sq ? 0 : (Math.round(30 * M3.shapeK))
             color: M3.surfaceC
             clip: true
             // your shape, big and slow, behind everything
@@ -169,7 +169,7 @@ Item {
                 Rectangle {
                     anchors.right: parent.right; anchors.bottom: parent.bottom
                     anchors.rightMargin: 2; anchors.bottomMargin: 2
-                    width: 38; height: 38; radius: 19
+                    width: 38; height: 38; radius: M3.sq ? 0 : (19)
                     color: M3.primary
                     border.width: 3; border.color: M3.surfaceC
                     Icon { anchors.centerIn: parent; name: "photo_camera"; glyph: ""; size: 16; color: M3.inkPrimary }
@@ -243,7 +243,7 @@ Item {
         Rectangle {
             width: parent.width
             height: pwCol.implicitHeight + 36
-            radius: M3.rRowOut
+            radius: M3.sq ? 0 : (M3.rRowOut)
             color: M3.surfaceC
             Column {
                 id: pwCol
@@ -323,7 +323,7 @@ Item {
                     Btn { variant: "text"; text: I18n.t("Keep files"); visible: page.askRemove === ur.modelData.user; onClicked: page.run("remove:" + ur.modelData.user, ["remove", ur.modelData.user, "keep"]) }
                     Btn { variant: "danger"; text: I18n.t("Remove all"); visible: page.askRemove === ur.modelData.user; onClicked: page.run("remove:" + ur.modelData.user, ["remove", ur.modelData.user]) }
                     Rectangle {
-                        width: 40; height: 40; radius: 20
+                        width: 40; height: 40; radius: M3.sq ? 0 : (20)
                         anchors.verticalCenter: parent.verticalCenter
                         color: dm.containsMouse ? M3.errorContainer : M3.surfaceHigh
                         Icon { anchors.centerIn: parent; name: page.askRemove === ur.modelData.user ? "close" : "delete"; glyph: page.askRemove === ur.modelData.user ? "×" : ""; size: 17; color: dm.containsMouse ? M3.inkErrorC : M3.inkDim }
@@ -345,7 +345,7 @@ Item {
             visible: page.adding
             width: parent.width
             height: nc.implicitHeight + 40
-            radius: Math.round(28 * M3.shapeK)
+            radius: M3.sq ? 0 : (Math.round(28 * M3.shapeK))
             color: M3.surfaceC
             border.width: 1; border.color: M3.alpha(M3.primary, 0.35)
             Column {
@@ -358,7 +358,7 @@ Item {
                     T { text: I18n.t("New account"); font.pixelSize: 20; font.weight: Font.DemiBold; anchors.verticalCenter: parent.verticalCenter }
                     Rectangle {
                         anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-                        width: 36; height: 36; radius: 18
+                        width: 36; height: 36; radius: M3.sq ? 0 : (18)
                         color: xm.containsMouse ? M3.surfaceHighest : "transparent"
                         Icon { anchors.centerIn: parent; name: "close"; glyph: "×"; size: 18; color: M3.inkDim }
                         MouseArea { id: xm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.adding = false }
@@ -414,7 +414,7 @@ Item {
                     property bool on: true
                     width: parent.width
                     height: cc.implicitHeight + 32
-                    radius: Math.round(24 * M3.shapeK)
+                    radius: M3.sq ? 0 : (Math.round(24 * M3.shapeK))
                     color: on ? M3.primaryContainer : M3.surfaceHigh
                     Behavior on color { ColorAnimation { duration: 200 } }
                     Column {
@@ -449,7 +449,7 @@ Item {
                                 model: ["Quickshell", "Hyprland", "niri", "Kitty", "Fish", "Fastfetch", "Cava", "Matugen", "Yazi", "MangoHud", "GTK / Qt", ".bashrc"]
                                 Rectangle {
                                     required property string modelData
-                                    height: 26; width: ct.implicitWidth + 20; radius: 13
+                                    height: 26; width: ct.implicitWidth + 20; radius: M3.sq ? 0 : (13)
                                     color: copyCard.on ? M3.alpha(M3.inkPrimaryC, 0.12) : M3.surfaceHighest
                                     T { id: ct; anchors.centerIn: parent; text: parent.modelData; font.pixelSize: 11; color: copyCard.on ? M3.inkPrimaryC : M3.inkDim }
                                 }

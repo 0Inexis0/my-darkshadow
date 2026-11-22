@@ -28,7 +28,7 @@ Item {
         x: btn.width + 10
         anchors.verticalCenter: parent.verticalCenter
         width: parent.width - x; height: parent.height * 0.8
-        radius: height / 2
+        radius: Look.sq ? 0 : (height / 2)
         color: pp.pal ? pp.pal.primary : "#9ec9bd"
         T {
             x: 26; y: parent.height * 0.18; width: parent.width - 52

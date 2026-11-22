@@ -15,7 +15,7 @@ Rectangle {
                                : (variant === "outlined" || variant === "text") ? M3.primary : M3.inkSecondaryC
     width: Math.max(variant === "text" ? 64 : 120, row.implicitWidth + 36)
     height: 40
-    radius: m.pressed ? 12 * M3.shapeK : 20 * M3.shapeK
+    radius: M3.sq ? 0 : (m.pressed ? 12 * M3.shapeK : 20 * M3.shapeK)
     Behavior on radius { NumberAnimation { duration: 160 } }
     color: variant === "filled" ? (m.containsMouse ? Qt.lighter(M3.primary, 1.08) : M3.primary)
          : variant === "danger" ? (m.containsMouse ? Qt.lighter(M3.errorContainer, 1.15) : M3.errorContainer)

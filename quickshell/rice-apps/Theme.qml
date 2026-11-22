@@ -10,6 +10,17 @@ Singleton {
     id: t
     property var p: ({})
     property string dyn: ""
+    // V4.98 Minimal mode (Settings > Look & Feel; rice-minimal): every corner square
+    property bool sq: false
+    property string frame: "double"
+    FileView {
+        path: Quickshell.env("HOME") + "/.config/rice/minimal.json"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: { try { const j = JSON.parse(text()); t.sq = j.on === true; t.frame = j.frame || "double" } catch (e) { t.sq = false } }
+        onLoadFailed: t.sq = false
+    }
     readonly property string home: Quickshell.env("HOME")
 
     FileView {

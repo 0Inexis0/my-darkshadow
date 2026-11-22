@@ -12,7 +12,7 @@ Item {
     Rectangle {
         id: knob
         x: 3; width: ma.containsMouse || ma.pressed ? 6 : 4
-        radius: width / 2
+        radius: Theme.sq ? 0 : (width / 2)
         height: Math.max(28, v.height * v.ratio)
         y: v.flick ? (v.height - height) * Math.max(0, Math.min(1, (v.flick.contentY - v.flick.originY) / Math.max(1, v.flick.contentHeight - v.flick.height))) : 0
         color: Theme.alpha(Theme.inkVar, 0.55)

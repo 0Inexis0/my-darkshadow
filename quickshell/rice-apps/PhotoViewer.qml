@@ -145,7 +145,7 @@ Item {
         Rectangle {
             visible: v.cur.video
             anchors.centerIn: parent
-            width: 84; height: 84; radius: 32
+            width: 84; height: 84; radius: Theme.sq ? 0 : (32)
             color: Theme.primary
             Ic { anchors.centerIn: parent; name: "play_arrow"; size: 48; color: Theme.inkPrimary }
             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Sys.app("player", [v.cur.path]) }
@@ -250,12 +250,12 @@ Item {
                 Behavior on width { NumberAnimation { duration: 200 } }
                 Pic {
                     anchors.fill: parent
-                    radius: 10
+                    radius: Theme.sq ? 0 : (10)
                     res: 120
                     source: Theme.url(modelData.video ? (v.ph.thumbs[modelData.path] || "") : modelData.path)
                     opacity: parent.on ? 1 : 0.62
                 }
-                Rectangle { anchors.fill: parent; radius: 10; color: "transparent"; border.width: parent.on ? 2 : 0; border.color: "white" }
+                Rectangle { anchors.fill: parent; radius: Theme.sq ? 0 : (10); color: "transparent"; border.width: parent.on ? 2 : 0; border.color: "white" }
                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { v.idx = index; v.reset() } }
             }
         }
@@ -307,7 +307,7 @@ Item {
         property string icon: ""
         signal clicked()
         visible: v.list.length > 1
-        width: 52; height: 52; radius: 26
+        width: 52; height: 52; radius: Theme.sq ? 0 : (26)
         color: Qt.rgba(0, 0, 0, 0.42)
         opacity: v.chrome ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: 220 } }

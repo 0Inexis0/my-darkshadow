@@ -48,7 +48,7 @@ Item {
 
         // ---------- a live sample ----------
         Rectangle {
-            width: parent.width; height: 150; radius: M3.rXL
+            width: parent.width; height: 150; radius: M3.sq ? 0 : (M3.rXL)
             gradient: Gradient { GradientStop { position: 0; color: M3.stageTop } GradientStop { position: 1; color: M3.stageBottom } }
             clip: true
             readonly property real rr: page.hv("decoration.rounding", 10)
@@ -66,17 +66,17 @@ Item {
                             readonly property real k: (index + 1) / 5
                             readonly property real sz: Math.min(30, parent.parent.parent.shR) * k
                             x: -sz; y: -sz + 3; width: parent.width + 2 * sz; height: parent.height + 2 * sz
-                            radius: parent.parent.parent.rr + sz
+                            radius: M3.sq ? 0 : (parent.parent.parent.rr + sz)
                             color: Qt.rgba(0, 0, 0, page.ctl.hShadowInt / 100 * 0.18 * (1 - k * 0.8))
                         }
                     }
                     Rectangle {
                         anchors.fill: parent
-                        radius: parent.parent.rr
+                        radius: M3.sq ? 0 : (parent.parent.rr)
                         color: M3.surfaceC
                         border.width: Math.min(6, parent.parent.bs); border.color: index === 0 ? M3.primary : M3.outlineVariant
                         Row { x: 12; y: 10; spacing: 6
-                            Repeater { model: 3; delegate: Rectangle { width: 9; height: 9; radius: 5; color: M3.alpha(M3.ink, 0.25) } } }
+                            Repeater { model: 3; delegate: Rectangle { width: 9; height: 9; radius: M3.sq ? 0 : (5); color: M3.alpha(M3.ink, 0.25) } } }
                         T { x: 14; y: 34; text: index === 0 ? I18n.t("Focused window") : I18n.t("Other window"); font.pixelSize: 13; font.weight: Font.Medium }
                     }
                 }

@@ -12,7 +12,7 @@ Rectangle {
     readonly property bool sfxOwn: true     // it plays its own sound when picked
 
     height: 84
-    radius: M3.rL
+    radius: M3.sq ? 0 : (M3.rL)
     color: selected ? M3.secondaryContainer : (m.containsMouse ? M3.surfaceHigh : M3.surfaceC)
     border.width: selected ? 2 : 0
     border.color: selected ? M3.primary : (m.containsMouse ? M3.outline : M3.surfaceHighest)
@@ -37,7 +37,7 @@ Rectangle {
                 property real k: 1
                 anchors.verticalCenter: parent.verticalCenter
                 width: 5
-                radius: 2.5
+                radius: M3.sq ? 0 : (2.5)
                 height: Math.max(4, 30 * modelData * k)
                 color: tile.selected ? M3.primary : M3.inkDim
                 Behavior on color { ColorAnimation { duration: 140 } }

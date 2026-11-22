@@ -16,7 +16,7 @@ Row {
             readonly property bool last: index === seg.options.length - 1
             width: segText.implicitWidth + (on ? 40 : 28)
             height: 36
-            radius: on ? 18 : 10
+            radius: M3.sq ? 0 : (on ? 18 : 10)
             color: on ? M3.primary : (segMouse.containsMouse ? M3.surfaceHighest : M3.surfaceHigh)
             Behavior on color { ColorAnimation { duration: 160 } }
             Behavior on radius { NumberAnimation { duration: M3.d(260); easing.type: M3.springy; easing.overshoot: 1.4 * Prefs.bounce } }

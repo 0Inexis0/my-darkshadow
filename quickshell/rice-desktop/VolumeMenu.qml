@@ -72,7 +72,7 @@ PanelWindow {
     // if the closing animation ever stalls (the compositor sent no frames for a moment), it still goes away
     Timer { id: closeT; property bool done: false; interval: 600; running: !open; onRunningChanged: if (running) done = false; onTriggered: done = true }
     // niri: blur behind it (Hyprland blurs this layer with its own rule)
-    NiriBlur { win: vm; items: [card]; radius: card.radius; on: vm.open && vm.et > 0.94 }
+    NiriBlur { win: vm; items: [card]; radius: Look.sq ? 0 : (card.radius); on: vm.open && vm.et > 0.94 }
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore
@@ -102,20 +102,20 @@ PanelWindow {
             MIcon { visible: vr.iconSrc === ""; anchors.centerIn: parent; size: 20; color: vr.muted ? vm.dim : vm.fg
                 name: vr.muted ? (vr.iconName === "mic" ? "mic_off" : "volume_off") : vr.iconName
                 glyph: String.fromCodePoint(vr.muted ? (vr.iconName === "mic" ? 0xF036D : 0xF0581) : vr.glyph) }
-            Rectangle { anchors.fill: parent; radius: 10; color: Qt.rgba(1, 1, 1, ibm.containsMouse ? 0.08 : 0) }
+            Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (10); color: Qt.rgba(1, 1, 1, ibm.containsMouse ? 0.08 : 0) }
             MouseArea { id: ibm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                 onClicked: if (vr.node && vr.node.audio) vr.node.audio.muted = !vr.node.audio.muted }
         }
         Item {
             id: track
             x: 46; width: parent.width - 46 - 54; height: 32; y: ib.y
-            Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: 6; radius: 3; color: Qt.rgba(vm.acc.r, vm.acc.g, vm.acc.b, 0.18) }
-            Rectangle { anchors.verticalCenter: parent.verticalCenter; width: Math.max(6, parent.width * vr.v); height: 6; radius: 3
+            Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: 6; radius: Look.sq ? 0 : (3); color: Qt.rgba(vm.acc.r, vm.acc.g, vm.acc.b, 0.18) }
+            Rectangle { anchors.verticalCenter: parent.verticalCenter; width: Math.max(6, parent.width * vr.v); height: 6; radius: Look.sq ? 0 : (3)
                 color: vr.muted ? Qt.rgba(1, 1, 1, 0.3) : vm.acc
                 Behavior on color { ColorAnimation { duration: 160 } }
                 Behavior on width { enabled: !sm.pressed; NumberAnimation { duration: 120 } } }
             Rectangle { x: parent.width * vr.v - width / 2; anchors.verticalCenter: parent.verticalCenter
-                width: sm.pressed || sm.containsMouse ? 16 : 12; height: width; radius: width / 2; color: vr.muted ? vm.fg : vm.acc
+                width: sm.pressed || sm.containsMouse ? 16 : 12; height: width; radius: Look.sq ? 0 : (width / 2); color: vr.muted ? vm.fg : vm.acc
                 Behavior on width { NumberAnimation { duration: 100 } } }
             MouseArea {
                 id: sm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
@@ -134,11 +134,11 @@ PanelWindow {
         property bool chosen: false
         signal picked()
         width: parent ? parent.width : 300; height: 36
-        Rectangle { anchors.fill: parent; radius: 11; color: dr.chosen ? Qt.rgba(vm.acc.r, vm.acc.g, vm.acc.b, 0.16) : (dm.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent")
+        Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (11); color: dr.chosen ? Qt.rgba(vm.acc.r, vm.acc.g, vm.acc.b, 0.16) : (dm.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent")
             Behavior on color { ColorAnimation { duration: 120 } } }
-        Rectangle { x: 14; anchors.verticalCenter: parent.verticalCenter; width: 14; height: 14; radius: 7; color: "transparent"
+        Rectangle { x: 14; anchors.verticalCenter: parent.verticalCenter; width: 14; height: 14; radius: Look.sq ? 0 : (7); color: "transparent"
             border.width: 2; border.color: dr.chosen ? vm.acc : vm.dim
-            Rectangle { anchors.centerIn: parent; width: 6; height: 6; radius: 3; color: vm.acc; visible: dr.chosen } }
+            Rectangle { anchors.centerIn: parent; width: 6; height: 6; radius: Look.sq ? 0 : (3); color: vm.acc; visible: dr.chosen } }
         Text { x: 40; anchors.verticalCenter: parent.verticalCenter; width: parent.width - 52; elide: Text.ElideRight
             text: vm.label(dr.node); color: dr.chosen ? vm.fg : vm.dim; font.family: Fonts.main; font.pixelSize: 13 }
         MouseArea { id: dm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: dr.picked() }
@@ -147,13 +147,14 @@ PanelWindow {
 
     Rectangle {
         id: card
+        Frame { }      // V4.98 Minimal mode
         width: 380
         height: Math.min(col.implicitHeight + 28, vm.height - (vm.side ? 24 : vm.barSpace + 20))
         x: vm.side ? (vm.atRight ? vm.width - vm.sideSpace - width : vm.sideSpace)
                      : Math.max(12, Math.min(vm.width - width - 12, vm.cx - width / 2))
         y: vm.side ? Math.max(12, Math.min(vm.height - height - 12, (vm.cy < 0 ? vm.height / 2 : vm.cy) - 30))
                      : (vm.atBottom ? vm.height - vm.barSpace - height : vm.barSpace)
-        radius: 20
+        radius: Look.sq ? 0 : (20)
         color: vm.bg
         border.width: 1; border.color: vm.line
         clip: true
@@ -184,7 +185,7 @@ PanelWindow {
                     Text { x: 40; anchors.verticalCenter: parent.verticalCenter; text: Tr.t("Sound"); color: vm.fg; font.family: Fonts.main; font.pixelSize: 15; font.weight: Font.DemiBold }
                     Rectangle {   // open pavucontrol
                         anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-                        width: pv.implicitWidth + 22; height: 28; radius: 9
+                        width: pv.implicitWidth + 22; height: 28; radius: Look.sq ? 0 : (9)
                         color: pvm.containsMouse ? Qt.rgba(1, 1, 1, 0.14) : Qt.rgba(1, 1, 1, 0.07)
                         Text { id: pv; anchors.centerIn: parent; text: Tr.t("More…"); color: vm.fg; font.family: Fonts.main; font.pixelSize: 12 }
                         MouseArea { id: pvm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor

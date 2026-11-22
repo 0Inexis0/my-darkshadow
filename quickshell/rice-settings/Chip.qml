@@ -11,7 +11,7 @@ Rectangle {
 
     height: 32
     width: chipRow.implicitWidth + 16
-    radius: 10
+    radius: M3.sq ? 0 : (10)
     color: M3.surfaceHigh
     border.width: 1
     border.color: M3.outlineVariant

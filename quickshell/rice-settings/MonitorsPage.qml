@@ -48,7 +48,7 @@ Column {
         visible: page.countdown > 0
         width: parent.width
         height: 56
-        radius: 12
+        radius: M3.sq ? 0 : (12)
         color: M3.surfaceHigh
         border.width: 1
         border.color: M3.outline
@@ -75,7 +75,7 @@ Column {
             property string curRes: m.width + "x" + m.height
             width: page.width
             height: inner.implicitHeight + 28
-            radius: 12
+            radius: M3.sq ? 0 : (12)
             color: M3.surfaceC
             border.width: 1
             border.color: M3.outlineVariant

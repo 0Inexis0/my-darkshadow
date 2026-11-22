@@ -45,12 +45,12 @@ Item {
                 Rectangle {
                     id: tr
                     anchors.fill: parent
-                    radius: height / 2
+                    radius: Look.sq ? 0 : (height / 2)
                     color: pg.pal ? pg.pal.track : Qt.rgba(1, 1, 1, 0.12)
                 }
                 Rectangle {
                     id: fill
-                    height: parent.height; radius: height / 2
+                    height: parent.height; radius: Look.sq ? 0 : (height / 2)
                     property real f: 0
                     width: Math.max(height, parent.width * f)
                     color: index === 3 ? (pg.pal ? pg.pal.tertiary : "#e8a28c") : (pg.pal ? pg.pal.primary : "#9ec9bd")

@@ -126,7 +126,7 @@ Item {
         Rectangle {
             width: parent.width
             height: 150
-            radius: M3.rXL
+            radius: M3.sq ? 0 : (M3.rXL)
             color: M3.primaryContainer
             clip: true
             Blob { width: 220; height: 220; x: parent.width - 170; y: -40; kind: "puffy"; color: M3.alpha(M3.inkPrimaryC, 0.07)
@@ -154,7 +154,7 @@ Item {
             visible: page.countdown > 0
             width: parent.width
             height: 64
-            radius: M3.rL
+            radius: M3.sq ? 0 : (M3.rL)
             color: M3.tertiaryContainer !== undefined ? M3.tertiaryContainer : M3.secondaryContainer
             T { x: 18; anchors.verticalCenter: parent.verticalCenter; width: parent.width - 290; wrapMode: Text.WordWrap
                 text: I18n.t("Keep this? It goes back in ") + page.countdown + " s"; font.pixelSize: 14; font.weight: Font.Medium
@@ -178,7 +178,7 @@ Item {
             visible: page.mons.length > 1
             width: parent.width
             height: 260
-            radius: M3.rL
+            radius: M3.sq ? 0 : (M3.rL)
             color: M3.surfaceLow
             clip: true
             // all screens in one box: the space they take, scaled to fit with a margin
@@ -204,7 +204,7 @@ Item {
                     readonly property bool isMain: page.mainNow === modelData.name
                     x: desk.ox + r.x * desk.k; y: desk.oy + r.y * desk.k
                     width: Math.max(40, r.w * desk.k); height: Math.max(30, r.h * desk.k)
-                    radius: M3.rS
+                    radius: M3.sq ? 0 : (M3.rS)
                     opacity: modelData.disabled ? 0.45 : 1
                     color: chosen ? M3.primaryContainer : M3.surfaceHigh
                     border.width: chosen ? 2 : 1
@@ -222,7 +222,7 @@ Item {
                     Rectangle {
                         visible: scr.isMain && !scr.modelData.disabled
                         anchors.top: parent.top; anchors.horizontalCenter: parent.horizontalCenter; anchors.topMargin: 5
-                        width: Math.min(parent.width * 0.5, 54); height: 5; radius: 2.5; color: M3.primary
+                        width: Math.min(parent.width * 0.5, 54); height: 5; radius: M3.sq ? 0 : (2.5); color: M3.primary
                     }
                     MouseArea {
                         anchors.fill: parent
@@ -255,7 +255,7 @@ Item {
             visible: page.m !== null
             width: parent.width
             height: one.implicitHeight + 24
-            radius: M3.rL
+            radius: M3.sq ? 0 : (M3.rL)
             color: M3.surfaceC
             Column {
                 id: one
@@ -359,7 +359,7 @@ Item {
                 model: page.m ? page.m.modes : []
                 delegate: Rectangle {
                     readonly property bool on: modelData.res === page.curRes
-                    width: rt.implicitWidth + 32; height: 40; radius: on ? 12 * M3.shapeK : 20 * M3.shapeK
+                    width: rt.implicitWidth + 32; height: 40; radius: M3.sq ? 0 : (on ? 12 * M3.shapeK : 20 * M3.shapeK)
                     Behavior on radius { NumberAnimation { duration: 200 } }
                     color: on ? M3.primary : (rm.containsMouse ? M3.surfaceHighest : M3.surfaceHigh)
                     T { id: rt; anchors.centerIn: parent; text: modelData.res.replace("x", " × "); font.pixelSize: 13; color: parent.on ? M3.inkPrimary : M3.ink }
@@ -378,7 +378,7 @@ Item {
                 model: page.ratesFor(page.curRes)
                 delegate: Rectangle {
                     readonly property bool on: page.m && Math.abs(Number(modelData) - Number(page.m.rate)) < 0.5
-                    width: ft.implicitWidth + 32; height: 40; radius: on ? 12 * M3.shapeK : 20 * M3.shapeK
+                    width: ft.implicitWidth + 32; height: 40; radius: M3.sq ? 0 : (on ? 12 * M3.shapeK : 20 * M3.shapeK)
                     Behavior on radius { NumberAnimation { duration: 200 } }
                     color: on ? M3.primary : (fm.containsMouse ? M3.surfaceHighest : M3.surfaceHigh)
                     T { id: ft; anchors.centerIn: parent; text: Math.round(Number(modelData)) + I18n.t(" Hz"); font.pixelSize: 13; color: parent.on ? M3.inkPrimary : M3.ink }

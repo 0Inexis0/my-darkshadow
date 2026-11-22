@@ -538,7 +538,7 @@ Item {
         anchors.right: parent.right; anchors.rightMargin: 8
         anchors.top: parent.top; anchors.topMargin: 8
         anchors.bottom: parent.bottom; anchors.bottomMargin: 8
-        radius: Theme.rXL
+        radius: Theme.sq ? 0 : (Theme.rXL)
         color: Theme.surfaceLow
         clip: true
 
@@ -560,7 +560,7 @@ Item {
                 Behavior on opacity { NumberAnimation { duration: 300 } }
                 Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    width: 112; height: 112; radius: 40
+                    width: 112; height: 112; radius: Theme.sq ? 0 : (40)
                     color: Theme.surfaceC
                     rotation: 8
                     Ic { anchors.centerIn: parent; rotation: -8; size: 52; color: Theme.primary
@@ -576,7 +576,7 @@ Item {
             Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: 24
-                width: 44; height: 44; radius: 22
+                width: 44; height: 44; radius: Theme.sq ? 0 : (22)
                 color: Theme.surfaceHigh
                 visible: files.loading
                 Ic { anchors.centerIn: parent; name: "progress_activity"; color: Theme.primary

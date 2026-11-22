@@ -59,6 +59,7 @@ Item {
 
     Rectangle {
         id: card
+        Frame { }      // V4.98 Minimal mode
         readonly property real fullH: 14 + 60 + 10 + m3.bodyShown + 46
         width: m3.cw
         // it unfolds from its search bar (a side sheet is full height and slides in instead)
@@ -69,7 +70,7 @@ Item {
         readonly property real y0: ln.where === "top" ? 64 : (ln.where === "bottom" ? m3.height - fullH - 64 : (m3.height - placeH) / 2)
         x: m3.side ? 12 - (m3.cw + 40) * (1 - m3.p) : (m3.width - width) / 2
         y: m3.side ? 12 : (ln.where === "bottom" ? y0 + fullH - height : y0) + (1 - m3.p) * (ln.where === "bottom" ? 14 : -14)
-        radius: 34
+        radius: Look.sq ? 0 : (34)
         clip: true
         color: m3.pal.surface
         border.width: 1; border.color: m3.pal.line
@@ -86,7 +87,7 @@ Item {
             // a card that grows up from the bottom keeps its bar at the top all the same
             y: 14
             width: full * (0.9 + 0.1 * m3.p)
-            height: 60; radius: 30
+            height: 60; radius: Look.sq ? 0 : (30)
             color: input.activeFocus ? m3.pal.cardHi : m3.pal.card
             Behavior on color { ColorAnimation { duration: 200 } }
             MIcon { id: lead; x: 20; anchors.verticalCenter: parent.verticalCenter; size: 22; name: "search"; glyph: ""; color: m3.pal.primary
@@ -146,7 +147,7 @@ Item {
                                 ParallelAnimation {
                                     NumberAnimation { target: fq; property: "opacity"; to: 1; duration: 220 }
                                     NumberAnimation { target: fq; property: "scale"; to: 1; duration: 420; easing.type: Easing.OutBack; easing.overshoot: 1.8 } } }
-                            Rectangle { anchors.fill: parent; anchors.margins: 2; radius: 26; color: fqm.containsMouse ? m3.pal.card : "transparent"
+                            Rectangle { anchors.fill: parent; anchors.margins: 2; radius: Look.sq ? 0 : (26); color: fqm.containsMouse ? m3.pal.card : "transparent"
                                 Behavior on color { ColorAnimation { duration: 140 } } }
                             AppIcon {
                                 anchors.horizontalCenter: parent.horizontalCenter; y: 8
@@ -160,7 +161,7 @@ Item {
                             }
                             Text { x: 4; y: 70; width: parent.width - 8; horizontalAlignment: Text.AlignHCenter; elide: Text.ElideRight
                                 text: fq.modelData.name; color: m3.pal.fg; font.family: Fonts.main; font.pixelSize: 12 }
-                            Rectangle { visible: ln.isFav(fq.modelData.id); x: parent.width / 2 + 16; y: 6; width: 18; height: 18; radius: 9; color: m3.pal.primary
+                            Rectangle { visible: ln.isFav(fq.modelData.id); x: parent.width / 2 + 16; y: 6; width: 18; height: 18; radius: Look.sq ? 0 : (9); color: m3.pal.primary
                                 MIcon { anchors.centerIn: parent; size: 11; name: "star"; glyph: ""; color: m3.pal.inkPrimary; filled: true } }
                             MouseArea { id: fqm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
                                 onClicked: function(m) { if (m.button === Qt.RightButton) ln.menuFor(fq.modelData, mapToItem(card, m.x, m.y)); else ln.activate(fq.modelData) } }
@@ -190,7 +191,7 @@ Item {
                             required property var modelData
                             readonly property bool on: ln.cat === modelData.id
                             height: 34; width: chT.implicitWidth + (on ? 50 : 30)
-                            radius: on ? 12 : 17
+                            radius: Look.sq ? 0 : (on ? 12 : 17)
                             color: on ? m3.pal.container : (chm.containsMouse ? m3.pal.card : "transparent")
                             border.width: on ? 0 : 1; border.color: Qt.rgba(1, 1, 1, 0.14)
                             Behavior on radius { NumberAnimation { duration: 300; easing.type: Easing.OutBack; easing.overshoot: 1.6 } }
@@ -224,7 +225,7 @@ Item {
                 WheelHandler { acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad; onWheel: function(e) { ln.wheel(gridV, gridA, e, false) } }
                 highlight: Item {
                     z: 0
-                    Rectangle { anchors.fill: parent; anchors.margins: 3; radius: 28; color: m3.pal.container
+                    Rectangle { anchors.fill: parent; anchors.margins: 3; radius: Look.sq ? 0 : (28); color: m3.pal.container
                         border.width: 2; border.color: Qt.rgba(m3.pal.primary.r, m3.pal.primary.g, m3.pal.primary.b, 0.55) }
                     Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutBack; easing.overshoot: 1.1 } }
                     Behavior on y { NumberAnimation { duration: 220; easing.type: Easing.OutBack; easing.overshoot: 1.1 } }
@@ -298,13 +299,13 @@ Item {
                     y: row.head + 2; height: parent.height - row.head - 4
                     width: row.sel ? parent.width : parent.width * 0.6
                     x: (parent.width - width) / 2
-                    radius: height / 2 > 28 ? 28 : height / 2
+                    radius: Look.sq ? 0 : (height / 2 > 28 ? 28 : height / 2)
                     color: m3.pal.container
                     opacity: row.sel ? 1 : 0
                     Behavior on width { NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
                     Behavior on opacity { NumberAnimation { duration: 140 } }
                 }
-                Rectangle { y: row.head + 2; height: parent.height - row.head - 4; width: parent.width; radius: 28
+                Rectangle { y: row.head + 2; height: parent.height - row.head - 4; width: parent.width; radius: Look.sq ? 0 : (28)
                     color: rowM.containsMouse && !row.sel ? m3.pal.card : "transparent" }
                 opacity: 0
                 property real slide: 16
@@ -336,7 +337,7 @@ Item {
                     }
                     Rectangle {
                         visible: row.sum
-                        anchors.fill: parent; radius: 18
+                        anchors.fill: parent; radius: Look.sq ? 0 : (18)
                         color: m3.pal.primary
                         Text { anchors.centerIn: parent; text: "="; color: m3.pal.inkPrimary; font.family: Fonts.main; font.pixelSize: 26; font.weight: Font.Bold }
                     }
@@ -370,7 +371,7 @@ Item {
                     Rectangle {
                         visible: row.sel
                         anchors.verticalCenter: parent.verticalCenter
-                        width: enterT.implicitWidth + 22; height: 30; radius: 15
+                        width: enterT.implicitWidth + 22; height: 30; radius: Look.sq ? 0 : (15)
                         color: m3.pal.primary
                         Text { id: enterT; anchors.centerIn: parent; text: row.sum ? Tr.t("Copy") + "  ↵" : Tr.t("Open") + "  ↵"
                             color: m3.pal.inkPrimary; font.family: Fonts.main; font.pixelSize: 12; font.weight: Font.DemiBold }
@@ -402,7 +403,7 @@ Item {
                 delegate: Row {
                     required property var modelData
                     spacing: 6
-                    Rectangle { anchors.verticalCenter: parent.verticalCenter; width: kt.implicitWidth + 12; height: 20; radius: 6; color: m3.pal.card
+                    Rectangle { anchors.verticalCenter: parent.verticalCenter; width: kt.implicitWidth + 12; height: 20; radius: Look.sq ? 0 : (6); color: m3.pal.card
                         Text { id: kt; anchors.centerIn: parent; text: modelData[0]; color: m3.pal.fg; font.family: Fonts.main; font.pixelSize: 10; font.weight: Font.DemiBold } }
                     Text { anchors.verticalCenter: parent.verticalCenter; text: Tr.t(modelData[1]); color: m3.pal.dim; font.family: Fonts.main; font.pixelSize: 11 }
                 }
@@ -445,7 +446,7 @@ Item {
         property bool small: false
         signal picked()
         anchors.verticalCenter: parent ? parent.verticalCenter : undefined
-        width: small ? 32 : 44; height: width; radius: width / 2
+        width: small ? 32 : 44; height: width; radius: Look.sq ? 0 : (width / 2)
         color: on ? m3.pal.primary : (rbm.containsMouse ? m3.pal.cardHi : "transparent")
         Behavior on color { ColorAnimation { duration: 140 } }
         scale: rbm.pressed ? 0.88 : 1

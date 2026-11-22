@@ -81,7 +81,7 @@ Item {
         id: sp
         property var p: page.cur
         property bool small: false
-        radius: page.v("radius", 22) + 4
+        radius: M3.sq ? 0 : (page.v("radius", 22) + 4)
         color: p.surface
         border.width: 1; border.color: p.line
         Item {
@@ -97,13 +97,13 @@ Item {
             T { scaled: false; width: parent.width; elide: Text.ElideRight; visible: !sp.small; text: I18n.t("Did you see the new notifications?"); font.pixelSize: page.v("font_size", 13) - 1; color: sp.p.dim }
             Row {
                 visible: !sp.small; spacing: 6; topPadding: 6
-                Rectangle { width: r1.implicitWidth + 22; height: 28; radius: 14; color: sp.p.container
+                Rectangle { width: r1.implicitWidth + 22; height: 28; radius: M3.sq ? 0 : (14); color: sp.p.container
                     T { id: r1; scaled: false; anchors.centerIn: parent; text: I18n.t("Reply"); font.pixelSize: 11; color: sp.p.inkContainer } }
-                Rectangle { width: r2.implicitWidth + 22; height: 28; radius: 14; color: sp.p.container
+                Rectangle { width: r2.implicitWidth + 22; height: 28; radius: M3.sq ? 0 : (14); color: sp.p.container
                     T { id: r2; scaled: false; anchors.centerIn: parent; text: I18n.t("Mark as read"); font.pixelSize: 11; color: sp.p.inkContainer } }
             }
         }
-        Rectangle { visible: !sp.small; anchors.bottom: parent.bottom; anchors.bottomMargin: 6; x: 18; width: (parent.width - 36) * 0.6; height: 3; radius: 2
+        Rectangle { visible: !sp.small; anchors.bottom: parent.bottom; anchors.bottomMargin: 6; x: 18; width: (parent.width - 36) * 0.6; height: 3; radius: M3.sq ? 0 : (2)
             color: Qt.rgba(sp.p.primary.r, sp.p.primary.g, sp.p.primary.b, 0.55) }
     }
 
@@ -123,10 +123,10 @@ Item {
             id: stage
             width: parent.width
             height: 210
-            radius: M3.rXL
+            radius: M3.sq ? 0 : (M3.rXL)
             clip: true
             gradient: Gradient { GradientStop { position: 0; color: M3.stageTop } GradientStop { position: 1; color: M3.stageBottom } }
-            Rectangle { x: 16; y: 10; width: parent.width - 32; height: 18; radius: 9; color: Qt.rgba(0, 0, 0, 0.35) }
+            Rectangle { x: 16; y: 10; width: parent.width - 32; height: 18; radius: M3.sq ? 0 : (9); color: Qt.rgba(0, 0, 0, 0.35) }
             Sample {
                 width: Math.min(stage.width - 40, page.v("popup_width", 380) * 0.95)
                 height: 112
@@ -194,19 +194,19 @@ Item {
                     readonly property bool on: page.v("colors", "shell") === modelData.k
                     width: (tgrid.width - (tgrid.columns - 1) * 10) / tgrid.columns
                     height: 132
-                    radius: tm.pressed ? M3.rM : M3.rL
+                    radius: M3.sq ? 0 : (tm.pressed ? M3.rM : M3.rL)
                     color: on ? M3.secondaryContainer : (tm.containsMouse ? M3.surfaceHigh : M3.surfaceC)
                     border.width: on ? 2 : 0; border.color: M3.primary
                     Behavior on color { ColorAnimation { duration: 160 } }
                     Behavior on radius { NumberAnimation { duration: M3.d(220) } }
                     Rectangle {
-                        x: 10; y: 10; width: parent.width - 20; height: 74; radius: M3.rM
+                        x: 10; y: 10; width: parent.width - 20; height: 74; radius: M3.sq ? 0 : (M3.rM)
                         gradient: Gradient { GradientStop { position: 0; color: M3.stageTop } GradientStop { position: 1; color: M3.stageBottom } }
                         Sample { small: true; p: page.pal(modelData.k, 0.92); x: 8; y: 8; width: parent.width - 16; height: 58 }
                     }
                     T { x: 14; y: 92; text: modelData.n; font.pixelSize: 13; font.weight: Font.Medium; color: tt.on ? M3.inkSecondaryC : M3.ink }
                     T { x: 14; y: 110; text: modelData.d; font.pixelSize: 11; color: M3.inkDim; width: parent.width - 28; elide: Text.ElideRight }
-                    Rectangle { visible: tt.on; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 16; width: 22; height: 22; radius: 11; color: M3.primary
+                    Rectangle { visible: tt.on; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 16; width: 22; height: 22; radius: M3.sq ? 0 : (11); color: M3.primary
                         Icon { anchors.centerIn: parent; name: "check"; glyph: ""; size: 13; color: M3.inkPrimary } }
                     MouseArea { id: tm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.setv("colors", modelData.k) }
                 }

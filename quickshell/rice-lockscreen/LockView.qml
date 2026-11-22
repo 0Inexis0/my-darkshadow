@@ -372,12 +372,12 @@ FocusScope {
                 Rectangle {
                     id: field
                     width: parent.width; height: 56
-                    radius: passArea.style === "pill" ? height / 2 : (passArea.style === "box" ? 18 : 0)
+                    radius: LockCtx.sq ? 0 : (passArea.style === "pill" ? height / 2 : (passArea.style === "box" ? 18 : 0))
                     color: passArea.style === "line" ? "transparent" : (passArea.wrong ? Qt.rgba(1, 0.42, 0.42, 0.18) : pal.surface)
                     Behavior on color { ColorAnimation { duration: 200 } }
                     border.width: passArea.style === "line" ? 0 : (keys.activeFocus || passArea.checking || passArea.wrong ? 2 : 0)
                     border.color: passArea.wrong ? "#ff8a80" : pal.primary
-                    Rectangle { visible: passArea.style === "line"; anchors.bottom: parent.bottom; width: parent.width; height: 2; radius: 1
+                    Rectangle { visible: passArea.style === "line"; anchors.bottom: parent.bottom; width: parent.width; height: 2; radius: LockCtx.sq ? 0 : (1)
                         color: passArea.wrong ? "#ff8a80" : (keys.activeFocus ? pal.primary : Qt.rgba(1, 1, 1, 0.4)) }
                     // a lock in your shape
                     Item { id: lk; x: passArea.style === "line" ? 0 : 8; anchors.verticalCenter: parent.verticalCenter; width: 40; height: 40
@@ -429,7 +429,7 @@ FocusScope {
                         anchors.right: parent.right; anchors.rightMargin: passArea.style === "line" ? 0 : 8; anchors.verticalCenter: parent.verticalCenter
                         width: 40; height: 40
                         visible: !!root && root.pass !== "" && !passArea.checking
-                        Rectangle { anchors.fill: parent; radius: 20; color: pal.primary; opacity: gom.containsMouse ? 1 : 0.85 }
+                        Rectangle { anchors.fill: parent; radius: LockCtx.sq ? 0 : (20); color: pal.primary; opacity: gom.containsMouse ? 1 : 0.85 }
                         MIcon { anchors.centerIn: parent; size: 20; name: "arrow_forward"; glyph: ""; color: pal.inkPrimary }
                         MouseArea { id: gom; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: if (root) root.submit() }
                     }
@@ -459,7 +459,7 @@ FocusScope {
             Rectangle {
                 id: media
                 visible: lv.v("media", true) !== false && pl.has && lv.first
-                width: Math.min(parent.width, 420); height: 104; radius: 28
+                width: Math.min(parent.width, 420); height: 104; radius: LockCtx.sq ? 0 : (28)
                 anchors.horizontalCenter: lv.atLeft ? undefined : parent.horizontalCenter
                 color: pal.surface
                 opacity: lv.stg(5)
@@ -492,7 +492,7 @@ FocusScope {
             id: fb
             visible: !lv.isPreview && lv.first && !lv.anyKey && (lv.clicked || lv.waited) && lv.v("has_hyprlock", false) === true
             anchors.left: parent.left; anchors.bottom: parent.bottom; anchors.margins: 32
-            height: 52; radius: 26
+            height: 52; radius: LockCtx.sq ? 0 : (26)
             width: fbRow.implicitWidth + 36
             color: fbm.containsMouse ? pal.cardHi : pal.surface
             Behavior on color { ColorAnimation { duration: 160 } }
@@ -507,7 +507,7 @@ FocusScope {
         Rectangle {
             visible: !!lv.root && lv.root.testMode === true && lv.first
             anchors.horizontalCenter: parent.horizontalCenter; anchors.top: parent.top; anchors.topMargin: 24
-            height: 36; radius: 18; width: tst.implicitWidth + 32
+            height: 36; radius: LockCtx.sq ? 0 : (18); width: tst.implicitWidth + 32
             color: pal.primary
             Text { id: tst; anchors.centerIn: parent; color: pal.inkPrimary; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.DemiBold
                 text: lv.root ? Tr.t("Test: it unlocks itself in ") + lv.root.testLeft + " s" : "" }
@@ -553,7 +553,7 @@ FocusScope {
         property bool glyph: false
         property real ring: -1
         property color ringColor: pal.primary
-        height: 40; radius: 20
+        height: 40; radius: LockCtx.sq ? 0 : (20)
         width: row.implicitWidth + 28
         color: pal.surface
         Row {
@@ -571,7 +571,7 @@ FocusScope {
         property string icon: ""
         signal hit()
         width: 36; height: 36
-        Rectangle { anchors.fill: parent; radius: 18; color: pal.fg; opacity: rbm.containsMouse ? 0.12 : 0 }
+        Rectangle { anchors.fill: parent; radius: LockCtx.sq ? 0 : (18); color: pal.fg; opacity: rbm.containsMouse ? 0.12 : 0 }
         MIcon { anchors.centerIn: parent; size: 18; name: rb.icon; glyph: ""; color: pal.fg }
         MouseArea { id: rbm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: rb.hit() }
     }
@@ -586,7 +586,7 @@ FocusScope {
         width: armed ? lab.implicitWidth + 64 : 52; height: 52
         Behavior on width { NumberAnimation { duration: 260; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
         Rectangle {
-            anchors.fill: parent; radius: pwm.pressed ? 16 : 26
+            anchors.fill: parent; radius: LockCtx.sq ? 0 : (pwm.pressed ? 16 : 26)
             Behavior on radius { NumberAnimation { duration: 180 } }
             color: pw.red ? Qt.rgba(1, 0.42, 0.42, pw.armed ? 0.9 : (pwm.containsMouse ? 0.32 : 0.2)) : (pw.armed ? pal.primary : (pwm.containsMouse ? pal.cardHi : pal.surface))
             Behavior on color { ColorAnimation { duration: 160 } }

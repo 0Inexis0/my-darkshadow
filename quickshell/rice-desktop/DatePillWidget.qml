@@ -18,7 +18,7 @@ Item {
                                        : two(now.getHours()) + ":" + two(now.getMinutes())
     readonly property color acc: pal ? pal.primary : "#9ec9bd"
 
-    Card { anchors.fill: parent; k: dp.bg; pal: dp.pal; radius: height / 2; property real blurRadius: height / 2 }
+    Card { anchors.fill: parent; k: dp.bg; pal: dp.pal; radius: Look.sq ? 0 : (height / 2); property real blurRadius: height / 2 }
     // as wide as what it shows (shell.qml sizes the widget by this)
     readonly property real wantW: dpRow.width + 40
     Row {
@@ -28,12 +28,12 @@ Item {
         T { anchors.verticalCenter: parent.verticalCenter; text: dp.day + ", " + dp.date; font.pixelSize: 16; font.weight: Font.DemiBold; color: dp.pal ? dp.pal.fg : "#F6F5F4" }
         Rectangle {
             anchors.verticalCenter: parent.verticalCenter
-            width: tt.implicitWidth + 26; height: dp.height - 16; radius: height / 2
+            width: tt.implicitWidth + 26; height: dp.height - 16; radius: Look.sq ? 0 : (height / 2)
             color: dp.acc
             T { id: tt; anchors.centerIn: parent; kind: "number"; text: dp.time; font.pixelSize: 15; font.weight: Font.DemiBold; color: dp.pal ? dp.pal.inkOn : "#10201c" }
         }
         // the seconds, as a dot that breathes
-        Rectangle { anchors.verticalCenter: parent.verticalCenter; width: 6; height: 6; radius: 3; color: dp.acc
+        Rectangle { anchors.verticalCenter: parent.verticalCenter; width: 6; height: 6; radius: Look.sq ? 0 : (3); color: dp.acc
             opacity: dp.now.getSeconds() % 2 ? 0.35 : 1; Behavior on opacity { NumberAnimation { duration: 600 } } }
     }
 }

@@ -37,7 +37,7 @@ Item {
         id: pill
         anchors.centerIn: parent
         width: parent.width * 0.92; height: parent.height * 0.56
-        radius: height / 2
+        radius: Look.sq ? 0 : (height / 2)
         rotation: -38
         color: sk.pal ? (sk.bg > 0.02 ? sk.pal.shapeFill : "transparent") : "#22262a"
         border.width: sk.pal ? sk.pal.edgeWidth : 0; border.color: sk.pal ? sk.pal.edge : "transparent"

@@ -369,7 +369,7 @@ Item {
         onFab: player.playList(player.lib, 0, true)
         onPicked: function(k) { player.tab = k; player.albumKey = ""; player.artist = ""; player.forceActiveFocus() }
         mark: [AppIcon { app: player.appName === "Videos" ? "videos" : "music"; width: 44; height: 44; anchors.centerIn: parent
-            Rectangle { anchors.centerIn: parent; width: 40; height: 40; radius: 20; color: Theme.primary
+            Rectangle { anchors.centerIn: parent; width: 40; height: 40; radius: Theme.sq ? 0 : (20); color: Theme.primary
                 Ic { anchors.centerIn: parent; name: "graphic_eq"; size: 24; color: Theme.inkPrimary } } }]
     }
     Rectangle {
@@ -379,7 +379,7 @@ Item {
         anchors.rightMargin: player.theater ? 0 : 8
         anchors.top: parent.top; anchors.topMargin: player.theater ? 0 : 8
         anchors.bottom: parent.bottom; anchors.bottomMargin: player.theater ? 0 : 8
-        radius: player.theater ? 0 : Theme.rXL
+        radius: Theme.sq ? 0 : (player.theater ? 0 : Theme.rXL)
         color: player.tab === "video" ? "#000000" : Theme.surfaceLow
         clip: true
         Behavior on color { ColorAnimation { duration: 300 } }

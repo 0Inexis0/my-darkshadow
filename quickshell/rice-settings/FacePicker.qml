@@ -65,7 +65,7 @@ Item {
         anchors.centerIn: parent
         width: Math.min(parent.width - 80, 700)
         height: Math.min(parent.height - 80, 560)
-        radius: M3.rXL
+        radius: M3.sq ? 0 : (M3.rXL)
         color: M3.surfaceC
         border.width: 1; border.color: M3.outlineVariant
         opacity: fp.t
@@ -96,7 +96,7 @@ Item {
                     scale: cm.pressed ? 0.94 : (cm.containsMouse ? 1.04 : 1)
                     Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
                     RoundImage { anchors.fill: parent; source: "file://" + modelData; res: 200; cornerRadius: 18 * M3.shapeK }
-                    Rectangle { anchors.fill: parent; radius: 18 * M3.shapeK; color: "transparent"
+                    Rectangle { anchors.fill: parent; radius: M3.sq ? 0 : (18 * M3.shapeK); color: "transparent"
                         border.width: cm.containsMouse || fp.busy === modelData ? 3 : 0; border.color: M3.primary }
                     MouseArea { id: cm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: fp.use(modelData) }
                 }

@@ -306,7 +306,7 @@ PanelWindow {
     // if the closing animation ever stalls (the compositor sent no frames for a moment), it still goes away
     Timer { id: closeT; property bool done: false; interval: 600; running: !open; onRunningChanged: if (running) done = false; onTriggered: done = true }
     // niri: blur behind the card (Hyprland blurs this layer with its own rule)
-    NiriBlur { win: ln; items: [ln.box]; radius: m3.card.radius; on: ln.open && m3.p > 0.98 }
+    NiriBlur { win: ln; items: [ln.box]; radius: Look.sq ? 0 : (m3.card.radius); on: ln.open && m3.p > 0.98 }
     readonly property Item box: m3.card
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
@@ -344,7 +344,7 @@ PanelWindow {
         height: ctxC.implicitHeight + 12
         x: ln.ctx ? Math.min(ln.width - width - 8, ln.box.x + ln.ctx.x) : 0
         y: ln.ctx ? Math.min(ln.height - height - 8, ln.box.y + ln.ctx.y) : 0
-        radius: 22
+        radius: Look.sq ? 0 : (22)
         color: ln.col(ln.th.bg, Math.min(1, ln.alpha + 0.12))
         border.width: 1; border.color: ln.col(ln.th.bd)
         MouseArea { anchors.fill: parent }
@@ -373,7 +373,7 @@ PanelWindow {
         readonly property bool side: ln.box.x + ln.box.width + 12 + width < ln.width - 8
         x: side ? ln.box.x + ln.box.width + 12 : Math.max(8, ln.box.x + ln.box.width - width)
         y: side ? Math.max(8, Math.min(ln.height - height - 8, ln.box.y)) : Math.min(ln.height - height - 8, ln.box.y + 84)
-        radius: 28
+        radius: Look.sq ? 0 : (28)
         color: ln.col(ln.th.bg, Math.min(1, ln.alpha + 0.12))
         border.width: 1; border.color: ln.col(ln.th.bd)
         opacity: visible ? 1 : 0
@@ -407,7 +407,7 @@ PanelWindow {
         signal picked()
         width: parent ? parent.width : 200
         height: visible ? 40 : 0
-        radius: 14
+        radius: Look.sq ? 0 : (14)
         color: lim.containsMouse ? ln.col(ln.th.alt) : "transparent"
         MIcon { x: 12; anchors.verticalCenter: parent.verticalCenter; name: li.sym; glyph: li.glyph; size: 17; color: ln.col(ln.th.dim) }
         DText { x: 42; anchors.verticalCenter: parent.verticalCenter; width: parent.width - 50; elide: Text.ElideRight
@@ -424,7 +424,7 @@ PanelWindow {
         spacing: 6
         DText { text: ls.title; font.family: ln.ff; font.pixelSize: 12; color: ln.col(ln.th.dim) }
         Rectangle {
-            width: parent.width; height: 36; radius: 18
+            width: parent.width; height: 36; radius: Look.sq ? 0 : (18)
             color: ln.col(ln.th.alt)
             Row {
                 anchors.fill: parent; anchors.margins: 3
@@ -434,7 +434,7 @@ PanelWindow {
                         id: so
                         required property var modelData
                         readonly property bool on: modelData[0] === ls.value
-                        width: (ls.width - 6) / ls.opts.length; height: 30; radius: 15
+                        width: (ls.width - 6) / ls.opts.length; height: 30; radius: Look.sq ? 0 : (15)
                         color: on ? ln.col(ln.th.sel) : (som.containsMouse ? ln.col(ln.th.bg, 0.5) : "transparent")
                         Behavior on color { ColorAnimation { duration: 140 } }
                         DText { anchors.centerIn: parent; text: so.modelData[1]; font.family: ln.ff; font.pixelSize: 12
@@ -468,7 +468,7 @@ PanelWindow {
                     width: modelData === 0 ? 64 : 32; height: 32
                     Rectangle {
                         visible: sb.modelData !== 0
-                        anchors.fill: parent; radius: 16
+                        anchors.fill: parent; radius: Look.sq ? 0 : (16)
                         color: sbm.containsMouse ? ln.col(ln.th.sel) : ln.col(ln.th.alt)
                         opacity: (sb.modelData < 0 ? lst.value > lst.lo : lst.value < lst.hi) ? 1 : 0.35
                         MIcon { anchors.centerIn: parent; name: sb.modelData < 0 ? "remove" : "add"; glyph: sb.modelData < 0 ? "\uf068" : "\uf067"; size: 15

@@ -120,7 +120,7 @@ PanelWindow {
     // if the closing animation ever stalls (the compositor sent no frames for a moment), it still goes away
     Timer { id: closeT; property bool done: false; interval: 600; running: !open; onRunningChanged: if (running) done = false; onTriggered: done = true }
     // niri: blur behind it (Hyprland blurs this layer with its own rule)
-    NiriBlur { win: cc; items: [panel]; radius: panel.radius; on: cc.open && cc.et > 0.94 }
+    NiriBlur { win: cc; items: [panel]; radius: Look.sq ? 0 : (panel.radius); on: cc.open && cc.et > 0.94 }
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore
@@ -142,9 +142,9 @@ PanelWindow {
         signal iconClicked()
         height: 46
         Rectangle {
-            anchors.fill: parent; radius: 23; color: cc.card
+            anchors.fill: parent; radius: Look.sq ? 0 : (23); color: cc.card
             clip: true
-            Rectangle { width: Math.max(46, parent.width * ln.v); height: parent.height; radius: 23; color: ln.off ? cc.cardHi : cc.primary
+            Rectangle { width: Math.max(46, parent.width * ln.v); height: parent.height; radius: Look.sq ? 0 : (23); color: ln.off ? cc.cardHi : cc.primary
                 Behavior on width { enabled: !lm.pressed; NumberAnimation { duration: 160 } } }
         }
         MouseArea {
@@ -169,7 +169,7 @@ PanelWindow {
         property bool on: false
         signal clicked()
         height: 70
-        radius: tm.pressed ? 14 : (on ? 22 : 35)
+        radius: Look.sq ? 0 : (tm.pressed ? 14 : (on ? 22 : 35))
         color: on ? cc.primary : (tm.containsMouse ? cc.cardHi : cc.card)
         scale: tm.pressed ? 0.95 : 1
         Behavior on radius { NumberAnimation { duration: 280; easing.type: Easing.OutBack; easing.overshoot: 1.8 } }
@@ -195,7 +195,7 @@ PanelWindow {
         signal clicked()
         signal more()
         height: 64
-        radius: wm.pressed ? 16 : 24
+        radius: Look.sq ? 0 : (wm.pressed ? 16 : 24)
         color: on ? cc.primary : (wm.containsMouse ? cc.cardHi : cc.card)
         Behavior on color { ColorAnimation { duration: 160 } }
         Behavior on radius { NumberAnimation { duration: 200 } }
@@ -214,16 +214,17 @@ PanelWindow {
     }
 
     // ---------- the panel ----------
-    Shadow { x: panel.x; y: panel.y; width: panel.width; height: panel.height; radius: panel.radius; opacity: panel.opacity; scale: panel.scale; transformOrigin: Item.TopRight
+    Shadow { x: panel.x; y: panel.y; width: panel.width; height: panel.height; radius: Look.sq ? 0 : (panel.radius); opacity: panel.opacity; scale: panel.scale; transformOrigin: Item.TopRight
         on: Look.shadows && Look.shadowPanels }
     Rectangle {
         id: panel
+        Frame { }      // V4.98 Minimal mode
         width: 440
         x: parent.width - width - 12 + 64 * (1 - cc.et)
         scale: 0.94 + 0.06 * cc.et
         transformOrigin: Item.TopRight
         anchors.top: parent.top; anchors.bottom: parent.bottom; anchors.topMargin: 58; anchors.bottomMargin: 12
-        radius: 32
+        radius: Look.sq ? 0 : (32)
         color: cc.surface
         border.width: 1; border.color: pal.line
         opacity: Math.min(1, cc.et * 1.5)
@@ -236,7 +237,7 @@ PanelWindow {
             x: 16; y: 14; width: parent.width - 32; height: 44
             opacity: cc.stg(0); transform: Translate { y: (1 - cc.stg(0)) * -10 }
             Rectangle {
-                width: 40; height: 40; radius: 20; anchors.verticalCenter: parent.verticalCenter
+                width: 40; height: 40; radius: Look.sq ? 0 : (20); anchors.verticalCenter: parent.verticalCenter
                 color: xm.containsMouse ? cc.cardHi : "transparent"
                 MIcon { anchors.centerIn: parent; size: 20; name: "close"; glyph: ""; color: cc.fg }
                 MouseArea { id: xm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: cc.open = false }
@@ -251,7 +252,7 @@ PanelWindow {
                 Rectangle {
                     x: cc.tab === "control" ? 0 : tabs.w0 + 4
                     width: cc.tab === "control" ? tabs.w0 : tabs.w1
-                    height: 40; radius: 20; color: cc.primary
+                    height: 40; radius: Look.sq ? 0 : (20); color: cc.primary
                     Behavior on x { NumberAnimation { duration: 480; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
                     Behavior on width { NumberAnimation { duration: 480; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
                 }
@@ -265,7 +266,7 @@ PanelWindow {
                             width: tr.implicitWidth + 30; height: 40
                             onWidthChanged: if (index === 0) tabs.w0 = width; else tabs.w1 = width
                             Component.onCompleted: if (index === 0) tabs.w0 = width; else tabs.w1 = width
-                            Rectangle { anchors.fill: parent; radius: 20; color: Qt.rgba(1, 1, 1, tbm.containsMouse && !parent.on ? 0.06 : 0) }
+                            Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (20); color: Qt.rgba(1, 1, 1, tbm.containsMouse && !parent.on ? 0.06 : 0) }
                             Row { id: tr; anchors.centerIn: parent; spacing: 6
                                 MIcon { size: 17; name: modelData.i; glyph: modelData.g; filled: parent.parent.on; color: parent.parent.on ? cc.inkPrimary : cc.fg; anchors.verticalCenter: parent.verticalCenter
                                     Behavior on color { ColorAnimation { duration: 300 } } }
@@ -278,7 +279,7 @@ PanelWindow {
             }
             Rectangle {
                 anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-                width: 40; height: 40; radius: 20; color: gm.containsMouse ? cc.cardHi : cc.card
+                width: 40; height: 40; radius: Look.sq ? 0 : (20); color: gm.containsMouse ? cc.cardHi : cc.card
                 MIcon { anchors.centerIn: parent; size: 18; name: "settings"; glyph: ""; color: cc.fg }
                 MouseArea { id: gm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                     onClicked: { cc.open = false; cc.bin(["rice-settings", "10"]) } }
@@ -371,7 +372,7 @@ PanelWindow {
 
                 // ---- the music: the cover as a cookie in a wavy ring, a wavy seek line, five buttons
                 Rectangle {
-                    width: parent.width; height: 176; radius: 28; color: cc.card
+                    width: parent.width; height: 176; radius: Look.sq ? 0 : (28); color: cc.card
                     visible: Player.has
                     opacity: cc.stg(5); transform: Translate { y: (1 - cc.stg(5)) * 22 }
                     // the one Player ticks while this card is out
@@ -416,7 +417,7 @@ PanelWindow {
                                         { i: "fast_forward", g: "\uf04e", a: "fwd" }, { i: "skip_next", g: "\uf051", a: "next" }]
                                 delegate: Rectangle {
                                     readonly property bool big: modelData.a === "toggle"
-                                    width: big ? 54 : 34; height: 38; radius: pm.pressed ? 12 : 19
+                                    width: big ? 54 : 34; height: 38; radius: Look.sq ? 0 : (pm.pressed ? 12 : 19)
                                     color: big ? cc.primary : (pm.containsMouse ? cc.cardHi : Qt.rgba(1, 1, 1, 0.06))
                                     Behavior on radius { NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 1.6 } }
                                     MIcon { anchors.centerIn: parent; size: parent.big ? 21 : 16; filled: true
@@ -449,7 +450,7 @@ PanelWindow {
                     Rectangle {
                         visible: cc.nf && cc.nf.shellMode && cc.nf.count > 0
                         anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-                        width: ca.implicitWidth + 26; height: 32; radius: 16; color: cam.containsMouse ? cc.cardHi : cc.card
+                        width: ca.implicitWidth + 26; height: 32; radius: Look.sq ? 0 : (16); color: cam.containsMouse ? cc.cardHi : cc.card
                         Row { id: ca; anchors.centerIn: parent; spacing: 5
                             MIcon { size: 15; name: "clear_all"; glyph: ""; color: cc.fg; anchors.verticalCenter: parent.verticalCenter }
                             Text { text: Tr.t("Clear all"); color: cc.fg; font.family: Fonts.main; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter } }
@@ -474,15 +475,15 @@ PanelWindow {
                 // swaync shows them
                 Rectangle {
                     visible: !(cc.nf && cc.nf.shellMode)
-                    width: parent.width; height: 120; radius: 22; color: cc.card
+                    width: parent.width; height: 120; radius: Look.sq ? 0 : (22); color: cc.card
                     Column {
                         x: 16; anchors.verticalCenter: parent.verticalCenter; width: parent.width - 32; spacing: 8
                         Text { width: parent.width; wrapMode: Text.WordWrap; text: Tr.t("swaync shows your notifications now. Let the shell show them here, with its own pop-ups?"); color: cc.dim; font.family: Fonts.main; font.pixelSize: 12 }
                         Row { spacing: 8
-                            Rectangle { width: u1.implicitWidth + 28; height: 36; radius: 18; color: cc.primary
+                            Rectangle { width: u1.implicitWidth + 28; height: 36; radius: Look.sq ? 0 : (18); color: cc.primary
                                 Text { id: u1; anchors.centerIn: parent; text: Tr.t("Use the shell"); color: cc.inkPrimary; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium }
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: cc.bin(["rice-cc", "engine", "shell"]) } }
-                            Rectangle { width: u2.implicitWidth + 28; height: 36; radius: 18; color: cc.cardHi
+                            Rectangle { width: u2.implicitWidth + 28; height: 36; radius: Look.sq ? 0 : (18); color: cc.cardHi
                                 Text { id: u2; anchors.centerIn: parent; text: Tr.t("Open swaync"); color: cc.fg; font.family: Fonts.main; font.pixelSize: 13 }
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { cc.open = false; cc.sh("swaync-client -t -sw") } } } }
                     }
@@ -499,7 +500,7 @@ PanelWindow {
                 spacing: 12
                 // the time
                 Rectangle {
-                    width: parent.width; height: 140; radius: 28; color: cc.container
+                    width: parent.width; height: 140; radius: Look.sq ? 0 : (28); color: cc.container
                     opacity: cc.stg(1); transform: Translate { y: (1 - cc.stg(1)) * 22 }
                     clip: true
                     Blob { width: 150; height: 150; x: parent.width - 120; y: -30; kind: Look.shape; color: Qt.rgba(1, 1, 1, 0.06)
@@ -512,7 +513,7 @@ PanelWindow {
                 }
                 // a calendar of this month
                 Rectangle {
-                    width: parent.width; height: cal.implicitHeight + 28; radius: 26; color: cc.card
+                    width: parent.width; height: cal.implicitHeight + 28; radius: Look.sq ? 0 : (26); color: cc.card
                     Column {
                         id: cal
                         x: 14; y: 14; width: parent.width - 28; spacing: 6
@@ -549,7 +550,7 @@ PanelWindow {
                     Repeater {
                         model: [{ k: "cpu", n: "CPU", s: "pentagon" }, { k: "ram", n: "RAM", s: "cookie" }, { k: "gpu", n: "GPU", s: "circle" }]
                         delegate: Rectangle {
-                            width: (ov.width - 16) / 3; height: 120; radius: 24; color: cc.card
+                            width: (ov.width - 16) / 3; height: 120; radius: Look.sq ? 0 : (24); color: cc.card
                             Item {
                                 anchors.horizontalCenter: parent.horizontalCenter; y: 12
                                 width: 72; height: 72

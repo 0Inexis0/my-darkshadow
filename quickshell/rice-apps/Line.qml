@@ -36,7 +36,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         anchors.topMargin: 1; anchors.bottomMargin: 1
-        radius: height / 2
+        radius: Theme.sq ? 0 : (height / 2)
         color: c.selected ? Theme.secondaryContainer : (c.dropOn ? Theme.alpha(Theme.primary, 0.16) : "transparent")
         border.width: c.dropOn ? 2 : 0
         border.color: Theme.primary

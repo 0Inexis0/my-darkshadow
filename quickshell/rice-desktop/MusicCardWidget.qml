@@ -89,7 +89,7 @@ Item {
             property bool on: false
             signal hit()
             width: 36; height: 36; anchors.verticalCenter: parent.verticalCenter
-            Rectangle { anchors.fill: parent; radius: rb.on ? 12 : width / 2; color: rb.on ? Qt.rgba(mc.acc.r, mc.acc.g, mc.acc.b, 0.28) : (mc.pal ? mc.pal.chip : Qt.rgba(1, 1, 1, 0.08))
+            Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (rb.on ? 12 : width / 2); color: rb.on ? Qt.rgba(mc.acc.r, mc.acc.g, mc.acc.b, 0.28) : (mc.pal ? mc.pal.chip : Qt.rgba(1, 1, 1, 0.08))
                 scale: rm.pressed ? 0.9 : (rm.containsMouse ? 1.06 : 1)
                 Behavior on radius { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
                 Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } } }

@@ -79,7 +79,7 @@ MouseArea {
         y: Math.min(b.a.y, b.p.y) - b.y
         width: Math.abs(b.p.x - b.a.x)
         height: Math.abs(b.p.y - b.a.y)
-        radius: 6
+        radius: Theme.sq ? 0 : (6)
         color: Theme.alpha(Theme.primary, 0.14)
         border.width: 1
         border.color: Theme.alpha(Theme.primary, 0.7)

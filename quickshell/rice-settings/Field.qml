@@ -6,7 +6,7 @@ Rectangle {
     property string placeholder: ""
     signal accepted()
     height: 44
-    radius: 12
+    radius: M3.sq ? 0 : (12)
     color: M3.surfaceHigh
     border.width: input.activeFocus ? 2 : 1
     border.color: input.activeFocus ? M3.primary : M3.outlineVariant

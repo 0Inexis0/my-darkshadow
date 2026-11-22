@@ -12,7 +12,7 @@ Rectangle {
                                  : (kind === "danger" ? Theme.inkErrorC : Theme.primary))
     implicitHeight: 40
     implicitWidth: row.implicitWidth + (icon !== "" ? 40 : 48)
-    radius: ma.pressed ? 12 : height / 2
+    radius: Theme.sq ? 0 : (ma.pressed ? 12 : height / 2)
     Behavior on radius { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
     color: kind === "filled" ? Theme.primary : (kind === "tonal" ? Theme.secondaryContainer : (kind === "danger" ? Theme.errorContainer : "transparent"))
     border.width: kind === "outlined" ? 1 : 0

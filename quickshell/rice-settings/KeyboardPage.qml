@@ -63,7 +63,7 @@ Item {
         Rectangle {
             width: parent.width
             height: 150
-            radius: M3.rXL
+            radius: M3.sq ? 0 : (M3.rXL)
             color: M3.primaryContainer
             clip: true
             Blob { width: 220; height: 220; x: parent.width - 170; y: -40; kind: "puffy"; color: M3.alpha(M3.inkPrimaryC, 0.07)
@@ -99,18 +99,18 @@ Item {
                     anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
                     spacing: 6
                     Rectangle {
-                        width: 46; height: 30; radius: 15; color: M3.secondaryContainer
+                        width: 46; height: 30; radius: M3.sq ? 0 : (15); color: M3.secondaryContainer
                         T { kind: "code"; anchors.centerIn: parent; text: modelData.toUpperCase(); font.pixelSize: 12; font.weight: Font.Medium; color: M3.inkSecondaryC }
                     }
                     Rectangle {
                         visible: index > 0
-                        width: 34; height: 30; radius: 15; color: um.containsMouse ? M3.surfaceHighest : "transparent"
+                        width: 34; height: 30; radius: M3.sq ? 0 : (15); color: um.containsMouse ? M3.surfaceHighest : "transparent"
                         Icon { anchors.centerIn: parent; name: "vertical_align_top"; glyph: ""; size: 16; color: M3.inkDim }
                         MouseArea { id: um; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.first(index) }
                     }
                     Rectangle {
                         visible: page.st.layouts.length > 1
-                        width: 34; height: 30; radius: 15; color: xm.containsMouse ? M3.alpha(M3.error, 0.15) : "transparent"
+                        width: 34; height: 30; radius: M3.sq ? 0 : (15); color: xm.containsMouse ? M3.alpha(M3.error, 0.15) : "transparent"
                         Icon { anchors.centerIn: parent; name: "close"; glyph: ""; size: 16; color: xm.containsMouse ? M3.error : M3.inkDim }
                         MouseArea { id: xm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.remove(index) }
                     }
@@ -137,7 +137,7 @@ Item {
         Rectangle {
             width: parent.width
             height: Math.min(520, list.contentHeight + 16)
-            radius: M3.rL
+            radius: M3.sq ? 0 : (M3.rL)
             color: M3.surfaceC
             clip: true
             ListView {
@@ -153,9 +153,9 @@ Item {
                     readonly property bool have: page.st.layouts.indexOf(modelData.id) >= 0
                     readonly property bool open: page.openId === modelData.id
                     Rectangle {
-                        width: parent.width; height: 52; radius: M3.rM
+                        width: parent.width; height: 52; radius: M3.sq ? 0 : (M3.rM)
                         color: lrow.open ? M3.surfaceHigh : (rm.containsMouse ? M3.surfaceHigh : "transparent")
-                        Rectangle { x: 10; anchors.verticalCenter: parent.verticalCenter; width: 40; height: 30; radius: 10; color: lrow.have ? M3.primary : M3.surfaceHighest
+                        Rectangle { x: 10; anchors.verticalCenter: parent.verticalCenter; width: 40; height: 30; radius: M3.sq ? 0 : (10); color: lrow.have ? M3.primary : M3.surfaceHighest
                             T { kind: "code"; anchors.centerIn: parent; text: modelData.id.toUpperCase().substring(0, 3); font.pixelSize: 11; font.weight: Font.Medium; color: lrow.have ? M3.inkPrimary : M3.inkDim } }
                         Column {
                             x: 62; anchors.verticalCenter: parent.verticalCenter
@@ -168,7 +168,7 @@ Item {
                             spacing: 6
                             Icon { visible: (modelData.n || 0) > 0; name: lrow.open ? "expand_less" : "expand_more"; glyph: ""; size: 18; color: M3.inkDim; anchors.verticalCenter: parent.verticalCenter }
                             Rectangle {
-                                width: 34; height: 34; radius: 17
+                                width: 34; height: 34; radius: M3.sq ? 0 : (17)
                                 color: lrow.have ? M3.secondaryContainer : (am.containsMouse ? M3.primary : M3.surfaceHighest)
                                 Icon { anchors.centerIn: parent; name: lrow.have ? "check" : "add"; glyph: lrow.have ? "" : "+"; size: 17; color: lrow.have ? M3.inkSecondaryC : (am.containsMouse ? M3.inkPrimary : M3.ink) }
                                 MouseArea { id: am; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: if (!lrow.have) page.add(modelData.id, "") }
@@ -184,7 +184,7 @@ Item {
                         Repeater {
                             model: lrow.open ? [{ id: "", name: "Default" }].concat(page.vars) : []
                             delegate: Rectangle {
-                                width: Math.min(lrow.width - 70, vt.implicitWidth + 24); height: 32; radius: 10
+                                width: Math.min(lrow.width - 70, vt.implicitWidth + 24); height: 32; radius: M3.sq ? 0 : (10)
                                 color: vm.containsMouse ? M3.primary : M3.surfaceHighest
                                 T { id: vt; anchors.centerIn: parent; width: Math.min(implicitWidth, parent.width - 20); elide: Text.ElideRight
                                     text: modelData.name.replace(page.nameOf(lrow.ListView.view ? "" : ""), ""); font.pixelSize: 12; color: vm.containsMouse ? M3.inkPrimary : M3.ink }

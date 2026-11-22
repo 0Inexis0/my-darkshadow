@@ -62,7 +62,7 @@ Item {
         Rectangle {
             width: parent.width
             height: 112
-            radius: M3.rL
+            radius: M3.sq ? 0 : (M3.rL)
             clip: true
             gradient: Gradient {
                 orientation: Gradient.Horizontal
@@ -79,7 +79,7 @@ Item {
                 Repeater {
                     model: 7
                     Rectangle {
-                        width: 6; radius: 3
+                        width: 6; radius: M3.sq ? 0 : (3)
                         anchors.verticalCenter: parent.verticalCenter
                         color: "#F6F5F4"
                         opacity: page.v("enabled", true) ? 0.9 : 0.25

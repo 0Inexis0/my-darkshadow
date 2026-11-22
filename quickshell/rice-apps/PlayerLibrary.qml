@@ -91,10 +91,10 @@ Item {
             Rectangle {
                 id: ac
                 x: 12; y: 4
-                width: 200; height: 200; radius: Theme.rXL
+                width: 200; height: 200; radius: Theme.sq ? 0 : (Theme.rXL)
                 color: Theme.surfaceHigh
                 Ic { anchors.centerIn: parent; name: "album"; size: 64; color: Theme.inkVar }
-                Pic { anchors.fill: parent; radius: parent.radius; res: 400; source: Theme.url(lb.album ? lb.album.cover : "") }
+                Pic { anchors.fill: parent; radius: Theme.sq ? 0 : (parent.radius); res: 400; source: Theme.url(lb.album ? lb.album.cover : "") }
             }
             Column {
                 anchors.left: ac.right; anchors.leftMargin: 24
@@ -157,10 +157,10 @@ Item {
                 x: 12
                 spacing: 24
                 Rectangle {
-                    width: 160; height: 160; radius: 80
+                    width: 160; height: 160; radius: Theme.sq ? 0 : (80)
                     color: Theme.surfaceHigh
                     Ic { anchors.centerIn: parent; name: "artist"; size: 56; color: Theme.inkVar }
-                    Pic { anchors.fill: parent; radius: 80; res: 320; source: Theme.url(lb.pl.artistAlbums.length > 0 ? lb.pl.artistAlbums[0].cover : "") }
+                    Pic { anchors.fill: parent; radius: Theme.sq ? 0 : (80); res: 320; source: Theme.url(lb.pl.artistAlbums.length > 0 ? lb.pl.artistAlbums[0].cover : "") }
                 }
                 Column {
                     anchors.verticalCenter: parent.verticalCenter
@@ -214,22 +214,22 @@ Item {
                 id: vthumb
                 x: 8; y: 8
                 width: parent.width - 16; height: Math.round(width * 9 / 16)
-                radius: Theme.rL
+                radius: Theme.sq ? 0 : (Theme.rL)
                 color: Theme.surfaceHigh
                 scale: vm.pressed ? 0.97 : 1
                 Behavior on scale { NumberAnimation { duration: 140 } }
                 Ic { anchors.centerIn: parent; name: "movie"; size: 40; color: Theme.inkVar }
-                Pic { anchors.fill: parent; radius: parent.radius; res: 480; source: Theme.url(vd.modelData.cover || "") }
+                Pic { anchors.fill: parent; radius: Theme.sq ? 0 : (parent.radius); res: 480; source: Theme.url(vd.modelData.cover || "") }
                 Rectangle {
                     anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 8
-                    width: dl.implicitWidth + 12; height: 22; radius: 11
+                    width: dl.implicitWidth + 12; height: 22; radius: Theme.sq ? 0 : (11)
                     color: Qt.rgba(0, 0, 0, 0.6)
                     visible: vd.modelData.dur > 0
                     T { id: dl; anchors.centerIn: parent; text: Theme.clock(vd.modelData.dur); role: "small"; color: "white" }
                 }
                 Rectangle {
                     anchors.centerIn: parent
-                    width: 52; height: 52; radius: 26
+                    width: 52; height: 52; radius: Theme.sq ? 0 : (26)
                     color: Theme.primary
                     opacity: vm.containsMouse ? 1 : 0
                     scale: vm.containsMouse ? 1 : 0.7
@@ -257,7 +257,7 @@ Item {
                  || (lb.mode === "artists" && artists.count === 0) || (lb.mode === "videos" && lb.pl.vids.length === 0))
         Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
-            width: 112; height: 112; radius: 56
+            width: 112; height: 112; radius: Theme.sq ? 0 : (56)
             color: Theme.surfaceC
             Ic { anchors.centerIn: parent; size: 52; color: Theme.primary; name: lb.mode === "videos" ? "smart_display" : (lb.pl.query !== "" ? "search_off" : "library_music") }
         }
@@ -268,7 +268,7 @@ Item {
     }
     Rectangle {
         anchors.centerIn: parent
-        width: 56; height: 56; radius: 28
+        width: 56; height: 56; radius: Theme.sq ? 0 : (28)
         color: Theme.surfaceHigh
         visible: lb.pl.loading && lb.mode !== "videos"
         Ic { anchors.centerIn: parent; name: "progress_activity"; size: 28; color: Theme.primary
@@ -298,17 +298,17 @@ Item {
             id: pic
             x: 8; y: 8
             width: c.width - 16; height: width
-            radius: c.round ? width / 2 : Theme.rXL
+            radius: Theme.sq ? 0 : (c.round ? width / 2 : Theme.rXL)
             color: Theme.surfaceHigh
             // V4.93: it lifts a little under the pointer, and pops in when the page opens
             scale: (cm.pressed ? 0.95 : (cm.containsMouse ? 1.04 : 1)) * (0.8 + 0.2 * c.pop)
             Behavior on scale { NumberAnimation { duration: Theme.d(240); easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
             Ic { anchors.centerIn: parent; name: c.round ? "artist" : "album"; size: parent.width * 0.3; color: Theme.inkVar }
-            Pic { anchors.fill: parent; radius: parent.radius; res: 400; source: Theme.url(c.cover) }
+            Pic { anchors.fill: parent; radius: Theme.sq ? 0 : (parent.radius); res: 400; source: Theme.url(c.cover) }
             Rectangle {
                 anchors.right: parent.right; anchors.bottom: parent.bottom
                 anchors.rightMargin: c.round ? parent.width * 0.08 : 10; anchors.bottomMargin: c.round ? parent.width * 0.08 : 10
-                width: 48; height: 48; radius: cpm.pressed ? 14 : 24
+                width: 48; height: 48; radius: Theme.sq ? 0 : (cpm.pressed ? 14 : 24)
                 color: Theme.primary
                 opacity: cm.containsMouse || cpm.containsMouse || c.playing ? 1 : 0
                 scale: cm.containsMouse || cpm.containsMouse || c.playing ? 1 : 0.6

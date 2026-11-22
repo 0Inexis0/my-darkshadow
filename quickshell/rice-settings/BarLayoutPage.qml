@@ -154,7 +154,7 @@ Item {
                     id: pc
                     readonly property bool on: page.isPreset(modelData.l)
                     width: (parent.width - 20) / 3; height: 116
-                    radius: on ? 28 : 18
+                    radius: M3.sq ? 0 : (on ? 28 : 18)
                     Behavior on radius { NumberAnimation { duration: 260; easing.type: Easing.OutBack } }
                     color: on ? M3.primaryContainer : (pm.containsMouse ? M3.surfaceHigh : M3.surfaceC)
                     Behavior on color { ColorAnimation { duration: 180 } }
@@ -166,18 +166,18 @@ Item {
                         Row {
                             id: lRow; spacing: 3; anchors.verticalCenter: parent.verticalCenter
                             visible: modelData.l.left.length > 0
-                            Repeater { model: modelData.l.left; delegate: Rectangle { width: 9; height: 9; radius: 4.5; color: pc.on ? M3.inkPrimaryC : M3.inkDim; opacity: 0.8 } }
+                            Repeater { model: modelData.l.left; delegate: Rectangle { width: 9; height: 9; radius: M3.sq ? 0 : (4.5); color: pc.on ? M3.inkPrimaryC : M3.inkDim; opacity: 0.8 } }
                         }
                         Row {
                             anchors.centerIn: parent; spacing: 3
                             Repeater { model: modelData.l.center
                                 delegate: Rectangle { anchors.verticalCenter: parent.verticalCenter
-                                    width: modelData === "island" ? 44 : 9; height: modelData === "island" ? 18 : 9; radius: height / 2
+                                    width: modelData === "island" ? 44 : 9; height: modelData === "island" ? 18 : 9; radius: M3.sq ? 0 : (height / 2)
                                     color: modelData === "island" ? M3.primary : (pc.on ? M3.inkPrimaryC : M3.inkDim); opacity: modelData === "island" ? 1 : 0.8 } }
                         }
                         Row {
                             anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; spacing: 3
-                            Repeater { model: modelData.l.right; delegate: Rectangle { width: 9; height: 9; radius: 4.5; color: pc.on ? M3.inkPrimaryC : M3.inkDim; opacity: 0.8 } }
+                            Repeater { model: modelData.l.right; delegate: Rectangle { width: 9; height: 9; radius: M3.sq ? 0 : (4.5); color: pc.on ? M3.inkPrimaryC : M3.inkDim; opacity: 0.8 } }
                         }
                     }
                     Column {
@@ -200,7 +200,7 @@ Item {
         Rectangle {
             width: parent.width
             height: 128
-            radius: M3.rL
+            radius: M3.sq ? 0 : (M3.rL)
             border.width: 0
             border.color: M3.outlineVariant
             gradient: Gradient {
@@ -212,7 +212,7 @@ Item {
                 x: 10; y: 12
                 width: parent.width - 20
                 height: 70
-                radius: 14
+                radius: M3.sq ? 0 : (14)
                 color: Qt.rgba(0.04, 0.04, 0.05, 0.92)
                 border.width: 1
                 border.color: Qt.rgba(1, 1, 1, 0.07)
@@ -300,7 +300,7 @@ Item {
         z: 100
         height: 36
         width: grow.implicitWidth + 26
-        radius: 11
+        radius: M3.sq ? 0 : (11)
         color: "#F6F5F4"
         scale: 1.06
         Row {

@@ -140,7 +140,8 @@ FloatingWindow {
         background: ["background", "wallpaper"], top: ["top", "position"], bottom: ["bottom", "position"],
         place: ["position"], where: ["position"], size: ["size", "width", "height", "scale"], big: ["size", "scale"],
         speed: ["speed", "animation"], fast: ["speed"], slow: ["speed", "light", "performance"], lag: ["light", "performance"], laggy: ["light", "performance"], performance: ["light", "performance"], power: ["power", "battery"], wifi: ["wi-fi", "wifi", "network"],
-        launcher: ["launcher", "apps"], rofi: ["launcher"], record: ["record", "recorder", "recording"], recording: ["record", "recorder"], video: ["record", "recorder", "video"], desktop: ["widgets", "widget"], widget: ["widgets", "widget"], hide: ["auto-hide", "hide"], apps: ["apps", "rofi", "dock"], game: ["gaming"], games: ["gaming"], layout: ["layout", "keyboard"], color: ["color", "role", "theme"], switch: ["switch", "icons"], slider: ["slider", "thickness"], wavy: ["wavy", "progress"], spring: ["spring", "motion"]
+        launcher: ["launcher", "apps"], rofi: ["launcher"], record: ["record", "recorder", "recording"], recording: ["record", "recorder"], video: ["record", "recorder", "video"], desktop: ["widgets", "widget"], widget: ["widgets", "widget"], hide: ["auto-hide", "hide"], apps: ["apps", "rofi", "dock"], game: ["gaming"], games: ["gaming"], layout: ["layout", "keyboard"], color: ["color", "role", "theme"], switch: ["switch", "icons"], slider: ["slider", "thickness"], wavy: ["wavy", "progress"], spring: ["spring", "motion"],
+        minimal: ["minimal"], minimalist: ["minimal"], square: ["minimal", "square"], frame: ["minimal", "frame"], border: ["minimal", "frame", "border"], borders: ["minimal", "frame", "border"], dwm: ["minimal"], lilith: ["minimal"], flat: ["minimal", "flat"]
     })
     function buildIndex() {
         const out = []
@@ -240,7 +241,7 @@ FloatingWindow {
                 const y = it.mapToItem(f.contentItem, 0, 0).y
                 f.contentY = Math.max(0, Math.min(f.contentHeight - f.height, y - 30))
             }
-            Qt.createQmlObject('import QtQuick; Rectangle { anchors.fill: parent; anchors.margins: -3; radius: (parent.radius !== undefined ? parent.radius : 8) + 3; color: "transparent"; border.width: 2; border.color: "#F6F5F4"; opacity: 0; z: 50;' +
+            Qt.createQmlObject('import QtQuick; Rectangle { anchors.fill: parent; anchors.margins: -3; radius: M3.sq ? 0 : ((parent.radius !== undefined ? parent.radius : 8) + 3); color: "transparent"; border.width: 2; border.color: "#F6F5F4"; opacity: 0; z: 50;' +
                 ' SequentialAnimation on opacity { running: true; NumberAnimation { to: 1; duration: 220 } PauseAnimation { duration: 500 } NumberAnimation { to: 0.35; duration: 260 } NumberAnimation { to: 1; duration: 260 } PauseAnimation { duration: 500 } NumberAnimation { to: 0; duration: 600 } ScriptAction { script: destroy() } } }', it, "searchFlash")
         }
     }
@@ -698,7 +699,7 @@ FloatingWindow {
             y: 88
             width: parent.width - x - 14
             height: parent.height - y - 14
-            radius: Math.round(30 * M3.shapeK)
+            radius: M3.sq ? 0 : (Math.round(30 * M3.shapeK))
             color: win.flat ? M3.surfaceLow : M3.alpha(M3.surfaceLow, win.noBlur ? 0.97 : 0.82)
             border.width: 1
             border.color: M3.alpha(M3.outlineVariant, 0.55)
@@ -726,7 +727,7 @@ FloatingWindow {
             }
             Rectangle {
                 anchors.fill: parent
-                radius: width / 2
+                radius: M3.sq ? 0 : (width / 2)
                 color: Qt.rgba(0, 0, 0, 0.5)
                 opacity: avm.containsMouse ? 1 : 0
                 Behavior on opacity { NumberAnimation { duration: 160 } }
@@ -775,7 +776,7 @@ FloatingWindow {
                             y: 4
                             width: ri.on ? 52 : (rim.containsMouse ? 48 : 24)
                             height: ri.on ? 44 : 40
-                            radius: ri.on ? 16 * M3.shapeK : 20
+                            radius: M3.sq ? 0 : (ri.on ? 16 * M3.shapeK : 20)
                             Behavior on radius { NumberAnimation { duration: M3.d(360); easing.type: M3.springy; easing.overshoot: 1.4 * Prefs.bounce } }
                             Behavior on height { NumberAnimation { duration: M3.d(300); easing.type: Easing.OutCubic } }
                             color: ri.on ? M3.secondaryContainer : M3.surfaceHigh
@@ -810,7 +811,7 @@ FloatingWindow {
             z: 50
             height: 36
             width: tipT.implicitWidth + 28
-            radius: 18
+            radius: M3.sq ? 0 : (18)
             color: M3.inverseSurface
             T { id: tipT; anchors.centerIn: parent; text: parent.it ? I18n.t(parent.it.name) : ""; font.pixelSize: 13; font.weight: Font.Medium
                 color: "#1b1c1d" }
@@ -821,7 +822,7 @@ FloatingWindow {
             id: backBtn
             x: win.railW + 14
             y: 24
-            width: 48; height: 48; radius: bkm.pressed ? 16 : 24
+            width: 48; height: 48; radius: M3.sq ? 0 : (bkm.pressed ? 16 : 24)
             Behavior on radius { NumberAnimation { duration: 160 } }
             color: bkm.containsMouse ? M3.surfaceHighest : M3.surfaceHigh
             opacity: win.page === 0 && win.hist.length === 0 ? 0.35 : 1
@@ -855,7 +856,7 @@ FloatingWindow {
             id: closeBtn
             width: 40
             height: 40
-            radius: 20
+            radius: M3.sq ? 0 : (20)
             anchors.right: parent.right
             anchors.rightMargin: 18
             y: 22
@@ -880,7 +881,7 @@ FloatingWindow {
             y: 22
             height: 40
             width: msRow.implicitWidth + 8
-            radius: 20
+            radius: M3.sq ? 0 : (20)
             color: M3.surfaceHigh
             Row {
                 id: msRow
@@ -892,7 +893,7 @@ FloatingWindow {
                         id: mo
                         required property var modelData
                         readonly property bool on: Prefs.motion === modelData.v
-                        height: 32; radius: 16
+                        height: 32; radius: M3.sq ? 0 : (16)
                         width: moR.implicitWidth + 24
                         color: on ? M3.primary : (mom.containsMouse ? M3.surfaceHighest : "transparent")
                         Behavior on color { ColorAnimation { duration: 160 } }
@@ -917,7 +918,7 @@ FloatingWindow {
             y: 22
             width: Math.min(250, Math.max(160, parent.width * 0.22))
             height: 40
-            radius: 20
+            radius: M3.sq ? 0 : (20)
             color: searchIn.activeFocus ? M3.surfaceHighest : M3.surfaceHigh
             Behavior on color { ColorAnimation { duration: 160 } }
             Icon { name: "search"; glyph: "\uf002"; size: 17; x: 12; anchors.verticalCenter: parent.verticalCenter; color: searchIn.activeFocus ? M3.primary : M3.inkDim }
@@ -946,7 +947,7 @@ FloatingWindow {
             }
             Rectangle {
                 visible: searchIn.text.length > 0
-                width: 24; height: 24; radius: 12
+                width: 24; height: 24; radius: M3.sq ? 0 : (12)
                 anchors.right: parent.right; anchors.rightMargin: 9
                 anchors.verticalCenter: parent.verticalCenter
                 color: clrM.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : "transparent"
@@ -992,7 +993,7 @@ FloatingWindow {
                 width: it ? it.width : 0
                 y: 4
                 height: 36
-                radius: 18
+                radius: M3.sq ? 0 : (18)
                 color: M3.secondaryContainer
                 onItChanged: Qt.callLater(function() { tabFlick.keep(tabPill.it) })
                 Behavior on x { NumberAnimation { duration: M3.d(M3.bouncy ? 440 : 340); easing.type: M3.bouncy ? Easing.OutBack : Easing.OutCubic; easing.overshoot: 1.2 * Prefs.bounce } }
@@ -1010,7 +1011,7 @@ FloatingWindow {
                         readonly property bool on: win.page === modelData
                         width: tbt.implicitWidth + 36
                         height: 44
-                        Rectangle { x: 0; y: 4; width: parent.width; height: 36; radius: 18; color: tbm.containsMouse && !tb.on ? M3.surfaceHigh : "transparent"
+                        Rectangle { x: 0; y: 4; width: parent.width; height: 36; radius: M3.sq ? 0 : (18); color: tbm.containsMouse && !tb.on ? M3.surfaceHigh : "transparent"
                             Behavior on color { ColorAnimation { duration: 140 } } }
                         T {
                             id: tbt
@@ -1085,7 +1086,7 @@ FloatingWindow {
             y: searchBox.y + searchBox.height + 8
             width: 380
             height: Math.min(parent.height - y - 20, Math.max(64, resultList.contentHeight + 16))
-            radius: M3.rL
+            radius: M3.sq ? 0 : (M3.rL)
             color: M3.surfaceHigh
             border.width: 1
             border.color: M3.outlineVariant
@@ -1103,7 +1104,7 @@ FloatingWindow {
             delegate: Rectangle {
                 width: resultList.width
                 height: 50
-                radius: 11
+                radius: M3.sq ? 0 : (11)
                 color: index === win.searchSel ? Qt.rgba(1, 1, 1, 0.09) : (rm.containsMouse ? Qt.rgba(1, 1, 1, 0.05) : "transparent")
                 Column {
                     x: 12; width: parent.width - 20
@@ -1292,7 +1293,7 @@ PanelWindow {
         property real pulse: 1
         opacity: dimWin.k * dimWin.sk * pulse
         x: dimWin.ix - 4; y: dimWin.iy - 4; width: dimWin.iw + 8; height: dimWin.ih + 8
-        radius: height / 2
+        radius: M3.sq ? 0 : (height / 2)
         color: "transparent"
         border.width: 3
         border.color: M3.primary

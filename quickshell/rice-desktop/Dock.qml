@@ -189,7 +189,7 @@ Scope {
     component DockTile: Item {
         property color color: "transparent"
         anchors.fill: parent
-        Rectangle { anchors.fill: parent; visible: dock.shape === ""; radius: width * 0.36; color: parent.color
+        Rectangle { anchors.fill: parent; visible: dock.shape === ""; radius: Look.sq ? 0 : (width * 0.36); color: parent.color
             Behavior on color { ColorAnimation { duration: 140 } } }
         Blob { anchors.fill: parent; visible: dock.shape !== ""; kind: dock.shape === "squircle" ? "square" : dock.shape; corner: 0.34; color: parent.color }
     }
@@ -241,7 +241,7 @@ Scope {
         WlrLayershell.layer: WlrLayer.Top
         WlrLayershell.namespace: "rice-dock"
         // niri: blur behind the dock while it is out (Hyprland blurs this layer with its own rule)
-        NiriBlur { win: dockWin; items: [panel]; radius: panel.radius; on: dock.t > 0.95 && dock.dc.background !== false }
+        NiriBlur { win: dockWin; items: [panel]; radius: Look.sq ? 0 : (panel.radius); on: dock.t > 0.95 && dock.dc.background !== false }
 
         MouseArea {
             id: dockMouse
@@ -262,6 +262,7 @@ Scope {
 
         Rectangle {
             id: panel
+            Frame { }      // V4.98 Minimal mode
             Component.onCompleted: dock.panelItem = panel
             // sits 10 px from its edge; hidden = slid out over that edge
             readonly property real away: (dock.vert ? width : height) + 14
@@ -276,7 +277,7 @@ Scope {
             opacity: 0.4 + 0.6 * dock.t
             width: dock.vert ? dock.thick : (full ? parent.width : list.implicitWidth + 20)
             height: dock.vert ? (full ? parent.height : list.implicitHeight + 20) : dock.thick
-            radius: full ? 0 : Math.min(dock.thick / 2, 26)
+            radius: Look.sq ? 0 : (full ? 0 : Math.min(dock.thick / 2, 26))
             readonly property bool bare: dock.dc.background === false || dock.style === "pills"
             color: bare ? "transparent" : pal.surface
             border.width: bare || full ? 0 : 1
@@ -354,7 +355,7 @@ Scope {
                     readonly property bool pill: dock.style === "pills"
                     width: mediaG.width + (pill ? 20 : 0)
                     height: mediaG.height + (pill ? 16 : 0)
-                    radius: Math.min(width, height) / 2
+                    radius: Look.sq ? 0 : (Math.min(width, height) / 2)
                     color: pill ? pal.surface : "transparent"
                     border.width: pill ? 1 : 0; border.color: pal.line
                 Grid {
@@ -375,7 +376,7 @@ Scope {
                         T { width: parent.width; elide: Text.ElideRight; font.pixelSize: 10; color: pal.dim; text: dock.player ? (dock.player.trackArtist || "") : "" }
                     }
                     Rectangle {
-                        width: 34; height: 34; radius: 17
+                        width: 34; height: 34; radius: Look.sq ? 0 : (17)
                         color: playM.containsMouse ? pal.cardHi : pal.card
                         Behavior on color { ColorAnimation { duration: 140 } }
                         MIcon { anchors.centerIn: parent; size: 16
@@ -431,7 +432,7 @@ Scope {
                         // open: a dot, the focused one a longer line
                         Rectangle {
                             visible: app.running
-                            radius: 2
+                            radius: Look.sq ? 0 : (2)
                             color: app.act ? pal.primary : pal.fg
                             opacity: app.act ? 1 : 0.5
                             width: dock.vert ? 4 : (app.act ? 14 : 5)

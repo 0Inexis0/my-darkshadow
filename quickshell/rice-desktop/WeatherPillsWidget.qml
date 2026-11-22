@@ -29,7 +29,7 @@ Item {
         id: pl
         property int n: 0
         property real grow: 0
-        height: 52 * wp.u; radius: height / 2
+        height: 52 * wp.u; radius: Look.sq ? 0 : (height / 2)
         border.width: wp.pal ? wp.pal.edgeWidth : 0; border.color: wp.pal ? wp.pal.edge : "transparent"
         opacity: grow
         transform: Translate { x: (1 - pl.grow) * -24 }
@@ -54,7 +54,7 @@ Item {
             }
             Rectangle {
                 anchors.right: parent.right; anchors.rightMargin: 14 * wp.u; anchors.verticalCenter: parent.verticalCenter
-                width: 64 * wp.u; height: width; radius: width / 2
+                width: 64 * wp.u; height: width; radius: Look.sq ? 0 : (width / 2)
                 color: Qt.rgba(1, 1, 1, 0.22)
                 WxIcon { anchors.centerIn: parent; size: 34 * wp.u; cond: wp.w ? wp.w.cond : ""; night: wp.night; color: wp.pal ? wp.pal.inkOn : "#10201c" }
             }

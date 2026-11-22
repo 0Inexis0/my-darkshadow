@@ -35,7 +35,7 @@ Item {
         Rectangle {
             id: stage
             width: parent.width; height: 250
-            radius: M3.rL
+            radius: M3.sq ? 0 : (M3.rL)
             clip: true
             gradient: Gradient {
                 GradientStop { position: 0; color: M3.stageTop }
@@ -48,17 +48,17 @@ Item {
             Timer { running: page.visible; interval: stage.mode === "idle" ? 1600 : 2300; repeat: true; onTriggered: stage.m = (stage.m + 1) % stage.moments.length }
             readonly property bool big: mode === "notif" || mode === "media" || mode === "today"
             // a bar along the top
-            Rectangle { x: 16; y: 14; width: parent.width - 32; height: 36; radius: 18; color: Qt.rgba(0, 0, 0, 0.35) }
+            Rectangle { x: 16; y: 14; width: parent.width - 32; height: 36; radius: M3.sq ? 0 : (18); color: Qt.rgba(0, 0, 0, 0.35) }
             Row { x: 30; y: 14; height: 36; spacing: 8
-                Repeater { model: 4; delegate: Rectangle { anchors.verticalCenter: parent.verticalCenter; width: index === 1 ? 26 : 8; height: 8; radius: 4
+                Repeater { model: 4; delegate: Rectangle { anchors.verticalCenter: parent.verticalCenter; width: index === 1 ? 26 : 8; height: 8; radius: M3.sq ? 0 : (4)
                     color: index === 1 ? M3.primary : Qt.rgba(1, 1, 1, 0.3) } } }
             Row { anchors.right: parent.right; anchors.rightMargin: 30; y: 14; height: 36; spacing: 12
-                Repeater { model: 4; delegate: Rectangle { anchors.verticalCenter: parent.verticalCenter; width: 12; height: 12; radius: 6; color: Qt.rgba(1, 1, 1, 0.45) } } }
+                Repeater { model: 4; delegate: Rectangle { anchors.verticalCenter: parent.verticalCenter; width: 12; height: 12; radius: M3.sq ? 0 : (6); color: Qt.rgba(1, 1, 1, 0.45) } } }
             // the island in the bar
             Rectangle {
                 id: pill
                 readonly property real w: stage.mode === "volume" ? 220 : (stage.mode === "ws" ? 170 : 104)
-                width: w; height: 30; radius: 15
+                width: w; height: 30; radius: M3.sq ? 0 : (15)
                 anchors.horizontalCenter: parent.horizontalCenter; y: 17
                 color: M3.surface
                 Behavior on width { SpringAnimation { spring: 3; damping: 0.32; epsilon: 0.4 } }
@@ -75,7 +75,7 @@ Item {
                 Row { anchors.centerIn: parent; spacing: 6; opacity: stage.mode === "ws" ? 1 : 0
                     Behavior on opacity { NumberAnimation { duration: 200 } }
                     Repeater { model: 5; delegate: Rectangle { anchors.verticalCenter: parent.verticalCenter
-                        width: index === 2 ? 26 : 7; height: index === 2 ? 18 : 7; radius: height / 2
+                        width: index === 2 ? 26 : 7; height: index === 2 ? 18 : 7; radius: M3.sq ? 0 : (height / 2)
                         color: index === 2 ? Qt.hsla(((M3.primary.hslHue < 0 ? 0.55 : M3.primary.hslHue) + 0.24) % 1, M3.primary.hslSaturation, M3.primary.hslLightness, 1) : Qt.rgba(1, 1, 1, 0.25)
                         T { anchors.centerIn: parent; visible: index === 2; text: "3"; font.pixelSize: 10; font.bold: true; color: M3.inkPrimary } } } }
             }
@@ -94,7 +94,7 @@ Item {
                 height: Math.max(20, 30 + (chA - 30) * Math.max(0, t))
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: 17 + 38 * Math.min(1, Math.max(0, t))
-                radius: Math.min(height / 2, 15 + 9 * Math.min(1, Math.max(0, t)))
+                radius: M3.sq ? 0 : (Math.min(height / 2, 15 + 9 * Math.min(1, Math.max(0, t))))
                 color: M3.surface
                 opacity: t < 0.02 ? 0 : Math.min(1, t * 4)
                 clip: true

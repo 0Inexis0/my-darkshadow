@@ -26,6 +26,7 @@ Item {
         kind: si.kind
         color: si.empty
         visible: si.loaded === "" || si.loaded !== si.source
+        onSqrChanged: cv.requestPaint()      // V4.98 Minimal mode: the picture turns square too
         MIcon { anchors.centerIn: parent; size: parent.width * 0.3; name: si.fallbackIcon; glyph: si.fallbackGlyph; color: si.fallbackColor }
     }
     Canvas {

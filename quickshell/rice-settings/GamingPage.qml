@@ -83,13 +83,13 @@ Item {
             id: hero
             width: parent.width
             height: 156
-            radius: M3.rXL
+            radius: M3.sq ? 0 : (M3.rXL)
             color: page.fx.gaming ? M3.primaryContainer : M3.surfaceC
             Behavior on color { ColorAnimation { duration: M3.d(600) } }
             clip: true
             // a soft shape in the corner that turns when gaming mode switches
             Rectangle {
-                width: 200; height: 200; radius: 64
+                width: 200; height: 200; radius: M3.sq ? 0 : (64)
                 x: parent.width - 270; y: -70
                 rotation: page.fx.gaming ? 45 : 20
                 color: page.fx.gaming ? M3.alpha(M3.primary, 0.22) : M3.alpha(M3.ink, 0.04)
@@ -98,7 +98,7 @@ Item {
             }
             Rectangle {
                 x: 24; anchors.verticalCenter: parent.verticalCenter
-                width: 72; height: 72; radius: page.fx.gaming ? 24 : 36
+                width: 72; height: 72; radius: M3.sq ? 0 : (page.fx.gaming ? 24 : 36)
                 color: page.fx.gaming ? M3.primary : M3.surfaceHighest
                 Behavior on radius { NumberAnimation { duration: M3.d(700); easing.type: Easing.BezierSpline; easing.bezierCurve: [0.05, 0.7, 0.1, 1, 1, 1] } }
                 Behavior on color { ColorAnimation { duration: M3.d(500) } }
@@ -120,8 +120,8 @@ Item {
 
         // the game bar
         Rectangle {
-            width: parent.width; height: 84; radius: M3.rL; color: M3.surfaceC
-            Rectangle { x: 18; anchors.verticalCenter: parent.verticalCenter; width: 48; height: 48; radius: 16; color: M3.secondaryContainer
+            width: parent.width; height: 84; radius: M3.sq ? 0 : (M3.rL); color: M3.surfaceC
+            Rectangle { x: 18; anchors.verticalCenter: parent.verticalCenter; width: 48; height: 48; radius: M3.sq ? 0 : (16); color: M3.secondaryContainer
                 Icon { anchors.centerIn: parent; name: "space_dashboard"; glyph: "\uf009"; size: 22; color: M3.inkSecondaryC } }
             Column {
                 x: 80; anchors.verticalCenter: parent.verticalCenter; width: parent.width - 80 - 170; spacing: 3
@@ -136,8 +136,8 @@ Item {
 
         // the gaming workspace (it lives with the window rules)
         Rectangle {
-            width: parent.width; height: 84; radius: M3.rL; color: M3.surfaceC
-            Rectangle { x: 18; anchors.verticalCenter: parent.verticalCenter; width: 48; height: 48; radius: 16; color: M3.tertiaryContainer
+            width: parent.width; height: 84; radius: M3.sq ? 0 : (M3.rL); color: M3.surfaceC
+            Rectangle { x: 18; anchors.verticalCenter: parent.verticalCenter; width: 48; height: 48; radius: M3.sq ? 0 : (16); color: M3.tertiaryContainer
                 Icon { anchors.centerIn: parent; name: "view_carousel"; glyph: "\uf2d2"; size: 22; color: M3.inkTertiaryC } }
             Column {
                 x: 80; anchors.verticalCenter: parent.verticalCenter; width: parent.width - 80 - 170; spacing: 3
@@ -189,7 +189,7 @@ Item {
             Repeater {
                 model: page.found
                 delegate: Rectangle {
-                    width: 128; height: 112; radius: M3.rL
+                    width: 128; height: 112; radius: M3.sq ? 0 : (M3.rL)
                     color: lm.containsMouse ? M3.surfaceHigh : M3.surfaceC
                     scale: lm.pressed ? 0.95 : 1
                     Behavior on color { ColorAnimation { duration: M3.d(220) } }
@@ -223,7 +223,7 @@ Item {
                 ]
                 delegate: Rectangle {
                     readonly property bool ok: page.tools[modelData.k] === true
-                    width: tr.implicitWidth + 30; height: 40; radius: 20
+                    width: tr.implicitWidth + 30; height: 40; radius: M3.sq ? 0 : (20)
                     color: ok ? M3.secondaryContainer : "transparent"
                     border.width: ok ? 0 : 1
                     border.color: M3.outlineVariant

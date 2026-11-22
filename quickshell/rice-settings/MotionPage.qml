@@ -54,7 +54,7 @@ Item {
             id: stage
             width: parent.width
             height: 170
-            radius: M3.rXL
+            radius: M3.sq ? 0 : (M3.rXL)
             color: M3.primaryContainer
             clip: true
             readonly property var st: page.cur()
@@ -71,12 +71,12 @@ Item {
                 id: track
                 x: parent.width * 0.5; width: parent.width * 0.5 - 30
                 height: parent.height
-                Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: 6; radius: 3; color: M3.alpha(M3.inkPrimaryC, 0.12) }
+                Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: 6; radius: M3.sq ? 0 : (3); color: M3.alpha(M3.inkPrimaryC, 0.12) }
                 Rectangle {
                     id: ball
                     readonly property real big: page.flip ? 64 : 44
                     width: big; height: big
-                    radius: page.flip ? big / 2 : 14
+                    radius: M3.sq ? 0 : (page.flip ? big / 2 : 14)
                     anchors.verticalCenter: parent.verticalCenter
                     x: page.flip ? track.width - width : 0
                     color: M3.primary
@@ -110,7 +110,7 @@ Item {
                     readonly property bool on: page.style === modelData.k
                     width: (flow.width - 40) / 5 < 120 ? (flow.width - 20) / 3 : (flow.width - 40) / 5
                     height: 124
-                    radius: tm.pressed ? M3.rM : M3.rL
+                    radius: M3.sq ? 0 : (tm.pressed ? M3.rM : M3.rL)
                     color: on ? M3.secondaryContainer : (tm.containsMouse ? M3.surfaceHigh : M3.surfaceC)
                     border.width: on ? 2 : 0
                     border.color: M3.primary
@@ -119,9 +119,9 @@ Item {
                     // a small dot that plays this style while you point at it
                     Item {
                         x: 14; y: 16; width: parent.width - 28; height: 26
-                        Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: 4; radius: 2; color: M3.alpha(M3.ink, 0.1) }
+                        Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: 4; radius: M3.sq ? 0 : (2); color: M3.alpha(M3.ink, 0.1) }
                         Rectangle {
-                            width: 18; height: 18; radius: 9
+                            width: 18; height: 18; radius: M3.sq ? 0 : (9)
                             anchors.verticalCenter: parent.verticalCenter
                             color: tile.on ? M3.primary : M3.inkDim
                             x: (tm.containsMouse || tile.on) && page.flip ? parent.width - width : 0
@@ -195,7 +195,7 @@ Item {
                     property bool go: false
                     width: (tryGrid.width - (tryGrid.columns - 1) * 10) / tryGrid.columns
                     height: 120
-                    radius: M3.rL
+                    radius: M3.sq ? 0 : (M3.rL)
                     color: tcm.containsMouse ? M3.surfaceHigh : M3.surfaceC
                     T { x: 16; y: 14; text: modelData.n; font.pixelSize: 14; font.weight: Font.Medium }
                     T { x: 16; y: 34; text: modelData.d; font.pixelSize: 11; color: M3.inkDim }
@@ -203,7 +203,7 @@ Item {
                         readonly property bool b: M3.bouncy
                         width: index === 1 ? (tc.go ? 70 : 30) : 30
                         height: index === 1 ? (tc.go ? 40 : 30) : 30
-                        radius: index === 2 ? (tc.go ? 6 : 15) : 15
+                        radius: M3.sq ? 0 : (index === 2 ? (tc.go ? 6 : 15) : 15)
                         x: index === 0 ? (tc.go ? tc.width - width - 18 : 18) : (tc.width - width) / 2
                         y: 66 + (index === 1 ? (40 - height) / 2 : 5)
                         color: M3.primary
@@ -262,7 +262,7 @@ Item {
         Rectangle {
             width: parent.width
             height: dFlow.implicitHeight + 74
-            radius: M3.rL
+            radius: M3.sq ? 0 : (M3.rL)
             color: M3.surfaceC
             Flow {
                 id: dFlow
@@ -272,7 +272,7 @@ Item {
                     model: page.durations
                     delegate: Rectangle {
                         readonly property bool on: page.durSel === index
-                        width: 76; height: 46; radius: on ? 23 : 12
+                        width: 76; height: 46; radius: M3.sq ? 0 : (on ? 23 : 12)
                         color: on ? M3.primary : (dm.containsMouse ? M3.surfaceHighest : M3.surfaceHigh)
                         Behavior on radius { NumberAnimation { duration: M3.d(200) } }
                         Behavior on color { ColorAnimation { duration: 140 } }
@@ -290,9 +290,9 @@ Item {
                 id: durBar
                 property real p: 0
                 x: 16; anchors.bottom: parent.bottom; anchors.bottomMargin: 20
-                width: parent.width - 32; height: 10; radius: 5
+                width: parent.width - 32; height: 10; radius: M3.sq ? 0 : (5)
                 color: M3.surfaceHighest
-                Rectangle { width: Math.max(10, parent.width * durBar.p); height: parent.height; radius: 5; color: M3.primary }
+                Rectangle { width: Math.max(10, parent.width * durBar.p); height: parent.height; radius: M3.sq ? 0 : (5); color: M3.primary }
                 NumberAnimation { id: durRun; target: durBar; property: "p"; from: 0; to: 1; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.2, 0, 0, 1, 1, 1] }
             }
         }
@@ -303,11 +303,11 @@ Item {
             id: pad
             width: parent.width
             height: 230
-            radius: M3.rXL
+            radius: M3.sq ? 0 : (M3.rXL)
             color: M3.stageTop
             clip: true
             // home
-            Rectangle { anchors.centerIn: parent; width: 84; height: 84; radius: 42; color: "transparent"; border.width: 2; border.color: M3.alpha(M3.primary, 0.35) }
+            Rectangle { anchors.centerIn: parent; width: 84; height: 84; radius: M3.sq ? 0 : (42); color: "transparent"; border.width: 2; border.color: M3.alpha(M3.primary, 0.35) }
             T { anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.bottom; anchors.bottomMargin: 14; text: I18n.t("Drag and let go"); font.pixelSize: 12; color: M3.inkDim }
             Item {
                 id: blob
@@ -328,7 +328,7 @@ Item {
                 Rectangle {
                     anchors.centerIn: parent
                     width: 72 * (1 + blob.sp * 0.35); height: 72 * (1 - blob.sp * 0.22)
-                    radius: blob.held ? 22 : height / 2
+                    radius: M3.sq ? 0 : (blob.held ? 22 : height / 2)
                     color: M3.primary
                     Behavior on radius { NumberAnimation { duration: M3.d(260); easing.type: Easing.OutBack; easing.overshoot: 2 * Prefs.bounce } }
                     Icon { anchors.centerIn: parent; rotation: -blob.rotation; name: "pan_tool"; glyph: ""; size: 24; color: M3.inkPrimary; filled: blob.held }

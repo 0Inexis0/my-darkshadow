@@ -160,7 +160,7 @@ Item {
                         readonly property bool on: page.sv[modelData.k] === true
                         width: (swGrid.width - 20) / 3
                         height: 74
-                        radius: 14
+                        radius: M3.sq ? 0 : (14)
                         opacity: avail ? 1 : 0.45
                         color: tm.containsMouse && avail ? M3.surfaceHigh : M3.surfaceC
                         border.width: 1
@@ -169,7 +169,7 @@ Item {
                         Behavior on border.color { ColorAnimation { duration: 200 } }
                         Rectangle {
                             x: 14; anchors.verticalCenter: parent.verticalCenter
-                            width: 40; height: 40; radius: 12
+                            width: 40; height: 40; radius: M3.sq ? 0 : (12)
                             color: tile.on ? M3.primary : M3.surfaceHighest
                             Behavior on color { ColorAnimation { duration: 200 } }
                             T { kind: "icon"; anchors.centerIn: parent; text: modelData.g; font.pixelSize: 16; color: tile.on ? M3.inkPrimary : "#F6F5F4" }
@@ -228,13 +228,13 @@ Item {
                 delegate: Rectangle {
                     width: col.width
                     height: 64
-                    radius: 14
+                    radius: M3.sq ? 0 : (14)
                     color: M3.surfaceC
                     border.width: 1
                     border.color: M3.outlineVariant
                     Rectangle {
                         x: 18; anchors.verticalCenter: parent.verticalCenter
-                        width: 9; height: 9; radius: 4.5
+                        width: 9; height: 9; radius: M3.sq ? 0 : (4.5)
                         color: modelData.active ? "#7bd88f" : M3.primary
                     }
                     Column {
@@ -285,11 +285,11 @@ Item {
 
     component Sw: Rectangle {
         property bool checked: false
-        width: 40; height: 22; radius: 11
+        width: 40; height: 22; radius: M3.sq ? 0 : (11)
         color: checked ? M3.primary : M3.surfaceHighest
         Behavior on color { ColorAnimation { duration: 160 } }
         Rectangle {
-            width: 16; height: 16; radius: 8; y: 3
+            width: 16; height: 16; radius: M3.sq ? 0 : (8); y: 3
             x: parent.checked ? parent.width - width - 3 : 3
             color: parent.checked ? M3.inkPrimary : M3.inkDim
             Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }

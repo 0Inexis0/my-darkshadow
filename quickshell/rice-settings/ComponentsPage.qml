@@ -24,7 +24,7 @@ Item {
         SectionTitle { text: I18n.t("Selection"); sub: I18n.t("Switches, check boxes, radio buttons and filter chips.") }
         ToggleRow { label: I18n.t("Icons in switches"); desc: I18n.t("A check when on, a cross when off"); checked: Prefs.switchIcons; onToggled: function(v) { Prefs.setSwitchIcons(v) } }
         Rectangle {
-            width: parent.width; height: 76; radius: M3.rL; color: M3.stageTop
+            width: parent.width; height: 76; radius: M3.sq ? 0 : (M3.rL); color: M3.stageTop
             Row {
                 anchors.centerIn: parent
                 spacing: 22
@@ -38,7 +38,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         readonly property bool on: page[modelData.k]
                         Rectangle {
-                            width: 20; height: 20; radius: 5 * M3.shapeK + 1
+                            width: 20; height: 20; radius: M3.sq ? 0 : (5 * M3.shapeK + 1)
                             anchors.verticalCenter: parent.verticalCenter
                             color: parent.on ? M3.primary : "transparent"
                             border.width: parent.on ? 0 : 2; border.color: M3.outline
@@ -57,10 +57,10 @@ Item {
                         spacing: 8
                         anchors.verticalCenter: parent.verticalCenter
                         Rectangle {
-                            width: 20; height: 20; radius: 10
+                            width: 20; height: 20; radius: M3.sq ? 0 : (10)
                             anchors.verticalCenter: parent.verticalCenter
                             color: "transparent"; border.width: 2; border.color: page.radioSel === index ? M3.primary : M3.outline
-                            Rectangle { anchors.centerIn: parent; width: page.radioSel === index ? 10 : 0; height: width; radius: width / 2; color: M3.primary
+                            Rectangle { anchors.centerIn: parent; width: page.radioSel === index ? 10 : 0; height: width; radius: M3.sq ? 0 : (width / 2); color: M3.primary
                                 Behavior on width { NumberAnimation { duration: M3.d(220); easing.type: M3.springy; easing.overshoot: 2 * Prefs.bounce } } }
                             MouseArea { anchors.fill: parent; anchors.margins: -6; cursorShape: Qt.PointingHandCursor; onClicked: page.radioSel = index }
                         }
@@ -71,7 +71,7 @@ Item {
         }
         // filter chips
         Rectangle {
-            width: parent.width; height: 64; radius: M3.rL; color: M3.surfaceC
+            width: parent.width; height: 64; radius: M3.sq ? 0 : (M3.rL); color: M3.surfaceC
             Row {
                 anchors.verticalCenter: parent.verticalCenter
                 x: 18
@@ -81,7 +81,7 @@ Item {
                     model: Object.keys(page.filters)
                     delegate: Rectangle {
                         readonly property bool on: page.filters[modelData] === true
-                        height: 34; width: fr.implicitWidth + 28; radius: 10 * M3.shapeK
+                        height: 34; width: fr.implicitWidth + 28; radius: M3.sq ? 0 : (10 * M3.shapeK)
                         anchors.verticalCenter: parent.verticalCenter
                         color: on ? M3.secondaryContainer : "transparent"
                         border.width: on ? 0 : 1; border.color: M3.outline
@@ -117,7 +117,7 @@ Item {
             onCommitted: function(v) { Prefs.setSliderThick(v) }
         }
         Rectangle {
-            width: parent.width; height: 70; radius: M3.rL; color: M3.stageTop
+            width: parent.width; height: 70; radius: M3.sq ? 0 : (M3.rL); color: M3.stageTop
             Row {
                 anchors.centerIn: parent
                 spacing: 16
@@ -144,7 +144,7 @@ Item {
             onCommitted: function(v) { Prefs.setProgressThick(v) }
         }
         Rectangle {
-            width: parent.width; height: 150; radius: M3.rL; color: M3.stageTop
+            width: parent.width; height: 150; radius: M3.sq ? 0 : (M3.rL); color: M3.stageTop
             Column {
                 x: 22; anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - 150
@@ -164,7 +164,7 @@ Item {
         // ---------- buttons ----------
         SectionTitle { text: I18n.t("Buttons"); sub: I18n.t("Filled for the main action, tonal for the rest, outlined and text for quiet ones.") }
         Rectangle {
-            width: parent.width; height: bflow.implicitHeight + 36; radius: M3.rL; color: M3.surfaceC
+            width: parent.width; height: bflow.implicitHeight + 36; radius: M3.sq ? 0 : (M3.rL); color: M3.surfaceC
             Flow {
                 id: bflow
                 x: 18; y: 18; width: parent.width - 36
@@ -178,7 +178,7 @@ Item {
                 Repeater {
                     model: [{ s: "favorite", g: "" }, { s: "share", g: "" }]
                     delegate: Rectangle {
-                        width: 40; height: 40; radius: im.pressed ? 12 : 20
+                        width: 40; height: 40; radius: M3.sq ? 0 : (im.pressed ? 12 : 20)
                         color: index === 0 ? M3.primary : M3.surfaceHighest
                         Behavior on radius { NumberAnimation { duration: 160 } }
                         Icon { anchors.centerIn: parent; name: modelData.s; glyph: modelData.g; size: 18; filled: index === 0; color: index === 0 ? M3.inkPrimary : M3.ink }
@@ -186,7 +186,7 @@ Item {
                     }
                 }
                 Rectangle {
-                    width: 56; height: 56; radius: fm.pressed ? 28 : 16 * M3.shapeK
+                    width: 56; height: 56; radius: M3.sq ? 0 : (fm.pressed ? 28 : 16 * M3.shapeK)
                     color: M3.primaryContainer
                     Behavior on radius { NumberAnimation { duration: M3.d(260); easing.type: M3.springy; easing.overshoot: 1.6 * Prefs.bounce } }
                     Icon { anchors.centerIn: parent; name: "edit"; glyph: ""; size: 22; color: M3.inkPrimaryC }

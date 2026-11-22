@@ -52,7 +52,7 @@ Item {
 
         // ---------- the clock as you will see it ----------
         Rectangle {
-            width: parent.width; height: 150; radius: M3.rXL; color: M3.primaryContainer
+            width: parent.width; height: 150; radius: M3.sq ? 0 : (M3.rXL); color: M3.primaryContainer
             clip: true
             Item {
                 x: 24; anchors.verticalCenter: parent.verticalCenter
@@ -121,7 +121,7 @@ Item {
 
         SectionTitle { text: I18n.t("Language"); sub: I18n.t("The shell speaks English for now. Your choice is kept, so the shell can switch when a translation arrives.") }
         Rectangle {
-            width: parent.width; height: lflow.implicitHeight + 28; radius: M3.rL; color: M3.surfaceC
+            width: parent.width; height: lflow.implicitHeight + 28; radius: M3.sq ? 0 : (M3.rL); color: M3.surfaceC
             Grid {
                 id: lflow
                 x: 14; y: 14; width: parent.width - 28
@@ -132,7 +132,7 @@ Item {
                     delegate: Rectangle {
                         readonly property bool on: page.rg.lang === modelData.k
                         width: (lflow.width - (lflow.columns - 1) * 6) / lflow.columns; height: 40
-                        radius: on ? 20 : M3.rS
+                        radius: M3.sq ? 0 : (on ? 20 : M3.rS)
                         color: on ? M3.primary : (lm.containsMouse ? M3.surfaceHighest : M3.surfaceHigh)
                         Behavior on radius { NumberAnimation { duration: M3.d(220); easing.type: M3.springy; easing.overshoot: 1.6 * Prefs.bounce } }
                         Behavior on color { ColorAnimation { duration: 140 } }
