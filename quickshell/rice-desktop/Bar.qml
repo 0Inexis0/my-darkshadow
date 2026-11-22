@@ -833,6 +833,7 @@ PanelWindow {
         Behavior on color { ColorAnimation { duration: 300 } }
         border.width: soft && !onlyIsland ? 1 : 0
         border.color: bar.line
+        Frame { visible: Look.sq && Look.frameIn > 0 && zone.soft && !zone.onlyIsland && !bar.hug }      // V4.98 Minimal mode
         Row {
             id: row
             x: Math.round((parent.width - width) / 2); y: Math.round((parent.height - height) / 2)
@@ -865,7 +866,8 @@ PanelWindow {
                         color: bar.fg; opacity: sh.hovered ? 0.1 : 0
                         Behavior on opacity { NumberAnimation { duration: 160 } } }
                     Rectangle { visible: slot.pill; anchors.centerIn: parent; width: slot.full; height: bar.barH
-                        radius: Look.sq ? 0 : (height / 2); color: bar.bg; border.width: 1; border.color: bar.line }
+                        radius: Look.sq ? 0 : (height / 2); color: bar.bg; border.width: 1; border.color: bar.line
+                        Frame { } }      // V4.98 Minimal mode
                     Loader { id: ld; anchors.centerIn: parent; sourceComponent: bar.compFor(modelData) }
                 }
             }

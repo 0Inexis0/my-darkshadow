@@ -30,6 +30,15 @@ Item {
         onPaint: {
             const c = getContext("2d"); c.reset()
             const W = width, H = n.height, e = n.ear, r = Math.min(n.corner, (H - e) / 1.2)
+            // V4.98 Minimal mode: a plain square block (no ears, no round corners, no soft shadow) with the frame
+            if (Look.sq) {
+                const x0 = e, x1 = W - e, fo = Look.frameOut, fi = Look.frameIn
+                c.fillStyle = n.fill
+                c.fillRect(x0, 0, x1 - x0, H)
+                if (fo > 0) { c.lineWidth = fo; c.strokeStyle = "#0b0b0b"; c.strokeRect(x0 + fo / 2, fo / 2, x1 - x0 - fo, H - fo) }
+                if (fi > 0) { c.lineWidth = fi; c.strokeStyle = Look.frameColor; c.strokeRect(x0 + fo + fi / 2, fo + fi / 2, x1 - x0 - 2 * fo - fi, H - 2 * fo - fi) }
+                return
+            }
             // the shadow only outside the shape, so a see-through notch stays evenly see-through (and blurred).
             // A few see-through outlines of growing width, not shadowBlur: that one is blurred by the CPU (70-140 ms
             // for every repaint, and the notch repaints whenever its width moves: the bar dropped to 2-3 fps)
@@ -48,6 +57,7 @@ Item {
             c.fill()
         }
     }
+    Connections { target: Look; function onSqChanged() { cv.requestPaint() } function onFrameChanged() { cv.requestPaint() } function onFrameColorChanged() { if (Look.sq) cv.requestPaint() } }
     onFillChanged: cv.requestPaint()
     onWidthChanged: cv.requestPaint()
     onHeightChanged: cv.requestPaint()

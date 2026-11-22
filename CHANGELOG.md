@@ -1,5 +1,9 @@
 # Changelog
 
+## V4.99: Minimal mode for every bar style
+- **Notch and Edge bars in Minimal mode**: they turn into plain square blocks with the same frame as the windows (a dark line with your theme color inside it). Before, they kept their rounded ears and corners and their soft shadow
+- **Islands and Pills bars** get the frame too, round each island and each pill
+
 ## V4.98: Minimal mode
 - **New: Minimal mode** (Settings > Desktop > Look & Feel > Minimal mode, `rice-minimal on`): square corners everywhere, like a classic floating window manager. Windows, the bar, the dock, the control center, the launcher, menus, notifications, widgets, Settings, Files, Music and the lock screen all turn square. Soft shadows go, and turning shapes stand still as plain squares
 - **Window frames** in three kinds: **Double** (a frame in your theme color with a dark line outside it), **Single** (the color frame only) and **Thin** (one quiet line). Frame width goes from 1 to 8 px. The windows use one plain color taken from your wallpaper (no gradient), and the panels, menus, the dock and the widget cards get the same frame
