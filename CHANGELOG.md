@@ -1,5 +1,11 @@
 # Changelog
 
+## V4.97: Edit mode works again
+- Fixed: **Edit widgets did nothing** (from Settings, the desktop menu or SUPER + ALT + W) since V4.96: the widget editor, now made only when Edit mode starts, could not find the desktop it edits
+- Fixed: a clock that changed its style could go round in a circle working out its size and place (a binding loop)
+- Fixed: a warning in the control center while its state was still loading; the Icons tab no longer fails when the dock has not listed its apps yet
+- Checked: the whole desktop shell was run with every widget on, every style of every widget, Edit mode in and out and every panel opened (control center, launcher, session, Wi-Fi, Bluetooth, volume, desktop menu, keys, wallpapers, clipboard, task view, game bar), and every Settings page: no more errors
+
 ## V4.96: a much lighter shell (less memory, almost nothing in the background)
 - **The bar, the side bar and the dock** ask for Wi-Fi, Bluetooth and Do not disturb with two small asks every 10 seconds. Before, they asked for everything the control center shows every 8 seconds: about 18 programs each time (nmcli three times, bluetoothctl, wpctl twice, systemctl six times ...)
 - **Auto-hide and the widgets' pausing** (rice-busy) ask Hyprland over its own socket. Before, they started hyprctl twice for every window change and every 4 seconds, all day

@@ -88,10 +88,12 @@ PanelWindow {
     onBhChanged: fitT.restart()
     Timer { id: fitT; interval: 60; onTriggered: w.fit() }
     onWcChanged: adopt()
-    onDefXChanged: adopt()
-    onDefYChanged: adopt()
-    onDefWChanged: adopt()
-    onDefHChanged: adopt()
+    // V4.97: a moment later (a clock that changed its style changed its size, so its default place, which read its
+    // style again in the same breath: a binding loop)
+    onDefXChanged: Qt.callLater(adopt)
+    onDefYChanged: Qt.callLater(adopt)
+    onDefWChanged: Qt.callLater(adopt)
+    onDefHChanged: Qt.callLater(adopt)
     Component.onCompleted: {
         adopt()
         // Hyprland tells us when you click outside this widget. Made on the fly, so a Quickshell without Hyprland

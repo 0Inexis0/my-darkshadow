@@ -657,7 +657,10 @@ ShellRoot {
 
     // V4.96: the widget editor (and its big side panel) is made when Edit mode starts and let go when it ends; it sat
     // in memory all the time before
-    LazyLoader { active: root.editing; EditorWindow { root: root } }
+    // (deskRoot, not "root: root": made by the loader, that bound EditorWindow's own root to itself, so it was empty
+    // and Edit mode showed nothing)
+    readonly property var deskRoot: root
+    LazyLoader { active: root.editing; EditorWindow { root: deskRoot } }
 
     // ---- dashboard (middle of the bar edge, SUPER + W for wallpapers)
     // made when it is first opened, let go after 10 minutes closed (V4.84: it held every app's icon from the start)

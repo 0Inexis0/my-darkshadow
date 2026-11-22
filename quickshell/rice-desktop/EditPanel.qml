@@ -108,7 +108,7 @@ Item {
     // a few apps to show the icon looks on: the dock's, then some well known ones
     readonly property var samples: {
         const out = [], seen = {}
-        const it = dk ? dk.items : []
+        const it = dk && dk.items ? dk.items : []
         for (let i = 0; i < it.length && out.length < 5; i++) {
             const x = it[i]
             if (seen[x.key]) continue
