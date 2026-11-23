@@ -97,7 +97,7 @@ case "$1" in
     run=false; [ -f "$d.pid" ] && kill -0 "$(cat "$d.pid")" 2>/dev/null && run=true
     printf '{'"$keys"'"hypr":%s,"on":%s,"zoom":%s,"step":%s,"min":%s,"pan":%s,"speed":%s,"dir":%s,"push":%s,"screens":%s,"input":%s,"group":%s,"loaded":%s,"nixos":%s,"daemon":%s,"devices":%s}\n' \
       "$(hypr && echo true || echo false)" "$([ "$on" = 1 ] && echo true || echo false)" "${z:-1}" \
-      "$(val step "$conf" | grep . || echo 0.12)" "$(val min "$conf" | grep . || echo 0.2)" "$(val pan "$conf" | grep . || echo 180)" "$(val speed "$conf" | grep . || echo 1.0)" "$(val dir "$conf" | grep . || echo 1)" "$(val push "$conf" | grep . || echo 1)" "$(val screens "$conf" | grep -x 1 || echo 0)" \
+      "$(val step "$conf" | grep . || echo 0.12)" "$(val min "$conf" | grep . || echo 0.2)" "$(val pan "$conf" | grep . || echo 180)" "$(val speed "$conf" | grep . || echo 1.0)" "$(val dir "$conf" | grep . || echo 1)" "$(val push "$conf" | grep . || echo 1)" "$(val screens "$conf" | grep -x 0 || echo 1)" \
       "$(for e in /dev/input/event*; do [ -r "$e" ] && { echo true; exit 0; }; done; echo false)" \
       "$(id -nG 2>/dev/null | tr ' ' '\n' | grep -qx input && echo true || echo false)" \
       "$([ -f "$HOME/.config/hypr/rice-infinite.lua" ] && echo true || echo false)" \

@@ -19,7 +19,7 @@ Singleton {
     // every screen is one canvas (screens=0) or only the workspace it was turned on (screens=1)
     property bool wallOn: true
     property bool hideBarOn: true
-    property int screens: 0
+    property int screens: 1
     // how much bigger than the screen the moving wallpaper is (wallzoom=1.05 ... 1.5): room to move, but also zoom
     property real wallZoom: 1.15
     // live
@@ -73,11 +73,11 @@ Singleton {
             const g = (k, d) => { const m = t.match(new RegExp("^\\s*" + k + "\\s*=\\s*(\\S+)", "m")); return m ? m[1] : d }
             cv.wallOn = g("wall", "1") !== "0"
             cv.hideBarOn = g("hidebar", "1") !== "0"
-            cv.screens = g("screens", "0") === "1" ? 1 : 0
+            cv.screens = g("screens", "1") === "0" ? 0 : 1
             const wz = parseFloat(g("wallzoom", "1.15"))
             cv.wallZoom = isNaN(wz) ? 1.15 : Math.max(1.05, Math.min(1.5, wz))
         }
-        onLoadFailed: { cv.wallOn = true; cv.hideBarOn = true; cv.wallZoom = 1.15; cv.screens = 0 }
+        onLoadFailed: { cv.wallOn = true; cv.hideBarOn = true; cv.wallZoom = 1.15; cv.screens = 1 }
     }
 
     // rice-canvasd's messages: a small listener (python3) on a datagram socket, one line per message on its output.

@@ -44,11 +44,11 @@ def conf():
     except Exception:
         c = {}
     name = c.get("sound", "glass")
-    vol = c.get("sound_volume", 70)
+    vol = c.get("sound_volume", 45)
     try:
         vol = max(0, min(100, int(float(vol))))
     except Exception:
-        vol = 70
+        vol = 45
     return name, vol
 
 
@@ -64,7 +64,8 @@ def play(name, vol):
     p = path(name)
     if not p or vol <= 0:
         return
-    v = vol / 100.0
+    # V5.02: the slider follows your ears (a curve, not a straight line): 45 % is a soft ding, 100 % the full sound
+    v = (vol / 100.0) ** 1.7
     if shutil.which("pw-play"):
         cmd = ["pw-play", "--media-role", "Notification", "--volume", "%.2f" % v, p]
     elif shutil.which("paplay"):
@@ -72,7 +73,7 @@ def play(name, vol):
     elif shutil.which("aplay"):
         cmd = ["aplay", "-q", p]
     elif shutil.which("ffplay"):
-        cmd = ["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", "-volume", str(vol), p]
+        cmd = ["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", "-volume", str(int(v * 100)), p]
     else:
         return
     subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)

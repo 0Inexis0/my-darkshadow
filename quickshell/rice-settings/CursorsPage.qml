@@ -190,16 +190,27 @@ Item {
                 border.color: M3.outlineVariant
                 Column {
                     x: 18; anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width - 18 - 170
                     spacing: 3
-                    T { text: modelData.name; font.pixelSize: 14; font.bold: true }
-                    T { kind: "reading"; text: modelData.installed ? I18n.t("Installed  ·  ") + modelData.themes.join(", ") : modelData.desc; font.pixelSize: 11; color: M3.inkDim }
+                    T { text: modelData.name; font.pixelSize: 14; font.bold: true; width: parent.width; elide: Text.ElideRight }
+                    T { kind: "reading"; text: modelData.installed ? modelData.themes.join(", ") : modelData.desc; font.pixelSize: 11; color: M3.inkDim; width: parent.width; elide: Text.ElideRight }
                 }
+                // installed: a quiet mark (V5.02: an Update button sat on every installed pack)
                 Btn {
+                    visible: !modelData.installed
                     anchors.right: parent.right; anchors.rightMargin: 14
                     anchors.verticalCenter: parent.verticalCenter
-                    primary: !modelData.installed && page.getting === ""
-                    text: page.getting === modelData.id ? I18n.t("Downloading...") : (modelData.installed ? I18n.t("Update") : I18n.t("Install"))
+                    primary: page.getting === ""
+                    text: page.getting === modelData.id ? I18n.t("Downloading...") : I18n.t("Install")
                     onClicked: if (page.getting === "") page.getPack(modelData.id)
+                }
+                Row {
+                    visible: modelData.installed
+                    anchors.right: parent.right; anchors.rightMargin: 20
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 6
+                    Icon { anchors.verticalCenter: parent.verticalCenter; name: "check_circle"; glyph: ""; size: 16; color: M3.primary }
+                    T { anchors.verticalCenter: parent.verticalCenter; text: I18n.t("Installed"); font.pixelSize: 13; font.weight: Font.Medium; color: M3.primary }
                 }
             }
         }

@@ -8,6 +8,8 @@ import QtQuick
 PanelWindow {
     screen: Mon.screen
     id: wm
+    // Minimal mode: the bar's own tinted surface, so the menu matches the bar (V5.02: it was near black)
+    NPal { id: sqPal; theme: "shell"; alpha: 0.94 }
     property bool open: false
     property real t: 0
     // t runs evenly; the menu eases on its own: it grows out of the bar (quick start, soft landing) and
@@ -22,7 +24,7 @@ PanelWindow {
     readonly property color line: Qt.rgba(1, 1, 1, 0.09)
     readonly property color hot: Qt.rgba(1, 1, 1, 0.07)
     readonly property real alpha: Look.flat ? 1 : 0.62
-    readonly property color bg: Qt.rgba(0.05, 0.05, 0.05, alpha)
+    readonly property color bg: Look.sq ? sqPal.minSurface : Qt.rgba(0.05, 0.05, 0.05, alpha)
     property var bc: ({})
     // V4.95: opened from the dock ("dock:SPACE" after the place): it opens above the dock, not by the bar
     property real dockSpace: -1

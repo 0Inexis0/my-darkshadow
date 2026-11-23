@@ -19,7 +19,8 @@ Item {
             "echo \"qs=$(qs --version 2>/dev/null | head -1 | sed 's/^quickshell *//I')\"",
             "echo \"cpu=$(sed -n 's/^model name[[:space:]]*: //p' /proc/cpuinfo | head -1)\"",
             // the graphics card you play on: the dedicated one when there are two (a laptop lists its CPU graphics first)
-            "echo \"gpu=$(lspci 2>/dev/null | grep -iE 'vga|3d|display' | grep -i nvidia | head -1 | sed 's/.*: //; s/ (rev.*//')\"; gpu_other=$(lspci 2>/dev/null | grep -iE 'vga|3d|display' | head -1 | sed 's/.*: //; s/ (rev.*//')\"; echo \"gpu_other=${gpu_other}\"",
+            // (V5.02: one quote too many here made the whole script fail, so every line showed a dash)
+            "echo \"gpu=$(lspci 2>/dev/null | grep -iE 'vga|3d|display' | grep -i nvidia | head -1 | sed 's/.*: //; s/ (rev.*//')\"; gpu_other=\"$(lspci 2>/dev/null | grep -iE 'vga|3d|display' | head -1 | sed 's/.*: //; s/ (rev.*//')\"; echo \"gpu_other=${gpu_other}\"",
             "echo \"mem=$(awk '/MemTotal/ {printf \"%.1f GB\", $2/1048576}' /proc/meminfo)\"",
             "echo \"up=$(uptime -p 2>/dev/null | sed 's/^up //')\"",
             "echo \"host=$(cat /etc/hostname 2>/dev/null || hostname)\""

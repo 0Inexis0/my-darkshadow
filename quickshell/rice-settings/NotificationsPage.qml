@@ -13,12 +13,13 @@ Item {
     function norm(value) { return value === "on" ? true : value === "off" ? false : value }
     function setv(key, value) {
         const n = Object.assign({}, ns)
-        n[key] = page.norm(value)
+        n[key] = key === "sound" ? value : page.norm(value)      // "off" is a sound name there, not a switch
         ns = n
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-notify\" set \"$1\" \"$2\"", "_", key, String(value)])
         page.ctl.status = I18n.t("Applied")
         refresh.restart()
     }
+    function hear(name, vol) { Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-sound\" play \"$1\" \"$2\"", "_", name, String(vol)]) }
     function tool(arg) { Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-notify\" \"$1\"", "_", arg]) }
 
     Process {
@@ -58,12 +59,12 @@ Item {
         const light = k === "white"
         let s
         switch (k) {
-        case "black": s = Qt.rgba(0.02, 0.02, 0.025, a); break
-        case "graphite": s = Qt.rgba(0.075, 0.075, 0.085, a); break
-        case "slate": s = Qt.rgba(0.09, 0.105, 0.135, a); break
+        case "black": s = Qt.rgba(0, 0, 0, a); break
+        case "graphite": s = Qt.rgba(0.16, 0.16, 0.17, a); break
+        case "slate": s = Qt.hsla(0.6, 0.22, 0.17, a); break
         case "white": s = Qt.rgba(0.96, 0.96, 0.965, a); break
-        case "tinted": s = Qt.hsla(hue, sat * 0.4, 0.11, a); break
-        default: s = Qt.hsla(hue, 0.08, 0.085, a)
+        case "tinted": s = Qt.hsla(hue, sat === 0 ? 0 : sat * 0.55, 0.17, a); break
+        default: s = Qt.hsla(hue, sat === 0 ? 0 : 0.12, 0.1, a)
         }
         return {
             surface: s,
@@ -259,7 +260,34 @@ Item {
             checked: page.v("keep_clicked", true)
             onToggled: function(x) { page.setv("keep_clicked", x ? "on" : "off") }
         }
-        T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 11; color: M3.inkDim; topPadding: 6
-            text: I18n.t("The sound for new notifications is in Sound & language > Sfx & sounds.") }
+
+        // ---------- the sound (V5.02: here too, with its volume) ----------
+        SectionTitle { text: I18n.t("Sound"); sym: "notifications_active"; sub: I18n.t("For new notifications. Click one to hear it.") }
+        Flow {
+            width: parent.width
+            spacing: 8
+            Repeater {
+                model: ["glass", "droplet", "chime", "bubble", "marimba", "aurora", "ping", "harp", "keys", "ripple", "off"]
+                delegate: Rectangle {
+                    readonly property bool on: page.v("sound", "glass") === modelData
+                    width: sl.implicitWidth + 30; height: 36; radius: M3.sq ? 0 : (on ? 18 : 10)
+                    color: on ? M3.secondaryContainer : (sdm.containsMouse ? M3.surfaceHigh : M3.surfaceC)
+                    border.width: on ? 0 : 1; border.color: M3.outlineVariant
+                    Behavior on radius { NumberAnimation { duration: M3.d(200) } }
+                    T { id: sl; anchors.centerIn: parent; font.pixelSize: 13; font.weight: Font.Medium; color: parent.on ? M3.inkSecondaryC : M3.ink
+                        text: modelData === "off" ? I18n.t("Off") : I18n.t(modelData.charAt(0).toUpperCase() + modelData.slice(1)) }
+                    MouseArea { id: sdm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                        onClicked: { if (modelData !== "off") page.hear(modelData, page.v("sound_volume", 45)); page.setv("sound", modelData) } }
+                }
+            }
+        }
+        SliderRow {
+            visible: page.v("sound", "glass") !== "off"
+            label: I18n.t("Notification sound volume")
+            desc: I18n.t("How loud the notification sound is, on top of your system volume")
+            from: 0; to: 100; step: 5; unit: " %"
+            value: page.v("sound_volume", 45)
+            onCommitted: function(x) { page.setv("sound_volume", Math.round(x)); page.hear(page.v("sound", "glass"), Math.round(x)) }
+        }
     }
 }

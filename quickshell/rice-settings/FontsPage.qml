@@ -44,6 +44,68 @@ Item {
     }
     Timer { id: refresh; interval: 500; onTriggered: stateProc.running = true }
 
+    // ---------- more fonts (V5.02): font-set catalog / get / use / remove ----------
+    property var more: []
+    property string moreKind: "all"
+    property string busyFont: ""        // the one downloading now
+    property string moreMsg: ""
+    function moreList() { return more.filter(function(f) { return moreKind === "all" || f.kind === moreKind }) }
+    Process {
+        id: catProc
+        running: true
+        command: ["bash", "-c", "\"$HOME/.local/bin/font-set\" catalog 2>/dev/null"]
+        stdout: StdioCollector { onStreamFinished: { try { page.more = JSON.parse(text) } catch (e) { } } }
+    }
+    Process {
+        id: getProc
+        property string what: ""
+        stdout: StdioCollector { id: getOut }
+        stderr: StdioCollector { id: getErr }
+        onExited: function(code) {
+            page.busyFont = ""
+            if (code === 0 || code === 2) page.moreMsg = I18n.t("%1 is installed. Use it for the text, for everything, or in the terminal.", getProc.what)
+            else page.moreMsg = (getErr.text || getOut.text).trim() || I18n.t("Could not download the font. Check the internet connection.")
+            catProc.running = true
+        }
+    }
+    function getFont(name) {
+        if (busyFont !== "") return
+        busyFont = name; moreMsg = ""
+        getProc.what = name
+        getProc.command = ["bash", "-c", "\"$HOME/.local/bin/font-set\" get \"$1\"", "_", name]
+        getProc.running = true
+    }
+    function removeFont(name) {
+        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/font-set\" remove \"$1\" >/dev/null 2>&1", "_", name])
+        moreMsg = I18n.t("%1 removed", name)
+        catLater.restart()
+    }
+    Timer { id: catLater; interval: 1200; onTriggered: catProc.running = true }
+    // where: text, all or mono. A font downloaded while Settings is open is not seen by the shell (nor by Settings)
+    // until they start again, so then both start again by themselves and Settings opens on this page
+    function useFont(name, where, mine) {
+        const fresh = !page.have(name)
+        const n = Object.assign({}, fonts)
+        const keys = where === "all" ? ["main", "title", "numbers", "reading"] : (where === "mono" ? ["mono"] : ["main"])
+        keys.forEach(function(k) { n[k] = name })
+        fonts = n
+        if (fresh) {
+            page.moreMsg = I18n.t("%1 is set. The shell and Settings start again to show it", name)
+            Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/font-set\" use \"$1\" \"$2\" >/dev/null 2>&1; " +
+                "\"$HOME/.local/bin/rice-desktop\" restart >/dev/null 2>&1; sleep 0.8; " +
+                "mkdir -p \"$HOME/.cache/rice\"; echo 19 > \"$HOME/.cache/rice/settings-page\"; rm -f \"$HOME/.cache/rice/settings-parked\"; " +
+                "exec qs -n -p \"$HOME/.config/quickshell/rice-settings\"", "_", name, where])
+            quitLater.start()
+        } else {
+            // a font Settings downloaded: the shell may have started before it came, so it starts again too
+            setProc.command = ["bash", "-c", "\"$HOME/.local/bin/font-set\" use \"$1\" \"$2\" 2>&1 | tail -1; " +
+                "[ \"$3\" = 1 ] && \"$HOME/.local/bin/rice-desktop\" restart >/dev/null 2>&1; true", "_", name, where, mine ? "1" : "0"]
+            setProc.running = true
+            page.moreMsg = ""
+        }
+    }
+    Timer { id: quitLater; interval: 1500; onTriggered: Qt.quit() }
+
     property string openKey: ""     // the card whose suggestions are open
     property string sampleText: "DarkShadow's Shell — made for you"
     // the 15 roles of the Material 3 type scale: name, size, weight
@@ -174,6 +236,86 @@ Item {
             spacing: 8
             topPadding: 4
             Btn { text: I18n.t("Reset fonts"); sym: "restart_alt"; icon: ""; onClicked: resetProc.running = true }
+        }
+
+        // ---------- get more fonts ----------
+        SectionTitle { text: I18n.t("Get more fonts"); sym: "download"
+            sub: I18n.t("Free fonts from Google Fonts. Download one, then use it for the text, for everything, or in the terminal.") }
+        Row {
+            spacing: 8
+            Repeater {
+                model: [{ k: "all", n: I18n.t("All") }, { k: "sans", n: I18n.t("Sans") }, { k: "display", n: I18n.t("Display") }, { k: "mono", n: I18n.t("Monospace") }]
+                delegate: Rectangle {
+                    readonly property bool on: page.moreKind === modelData.k
+                    width: kl.implicitWidth + 30; height: 34; radius: M3.sq ? 0 : (on ? 17 : 10)
+                    color: on ? M3.secondaryContainer : (km.containsMouse ? M3.surfaceHigh : M3.surfaceC)
+                    border.width: on ? 0 : 1; border.color: M3.outlineVariant
+                    Behavior on radius { NumberAnimation { duration: M3.d(200) } }
+                    T { id: kl; anchors.centerIn: parent; text: modelData.n; font.pixelSize: 13; font.weight: Font.Medium; color: parent.on ? M3.inkSecondaryC : M3.ink }
+                    MouseArea { id: km; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.moreKind = modelData.k }
+                }
+            }
+        }
+        T { visible: page.moreMsg !== ""; text: page.moreMsg; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.primary }
+        T { visible: page.more.length === 0; text: I18n.t("Loading..."); font.pixelSize: 12; color: M3.inkDim }
+        Flow {
+            id: moreFlow
+            width: parent.width
+            spacing: 10
+            Repeater {
+                model: page.moreList()
+                delegate: Rectangle {
+                    id: fc
+                    readonly property bool mono: modelData.kind === "mono"
+                    readonly property bool busy: page.busyFont === modelData.name
+                    readonly property bool used: mono ? page.fonts.mono === modelData.name : page.fonts.main === modelData.name
+                    width: moreFlow.width < 640 ? moreFlow.width : (moreFlow.width - 10) / 2
+                    height: 150
+                    radius: M3.sq ? 0 : (M3.rL)
+                    color: fcm.hovered ? M3.surfaceHigh : M3.surfaceC
+                    border.width: fc.used ? 2 : 0
+                    border.color: M3.primary
+                    Behavior on color { ColorAnimation { duration: 140 } }
+                    // the font file itself, so it shows before the shell knows the font
+                    FontLoader { id: fl; source: modelData.file ? "file://" + modelData.file : "" }
+                    readonly property string face: fl.status === FontLoader.Ready ? fl.name : (page.have(modelData.name) ? modelData.name : Fonts.family("body"))
+                    HoverHandler { id: fcm }
+                    Column {
+                        x: 16; y: 14; width: parent.width - 32; spacing: 4
+                        Row {
+                            width: parent.width; spacing: 8
+                            T { scaled: false; text: modelData.name; font.family: fc.face; font.pixelSize: 21; font.weight: Font.Medium; elide: Text.ElideRight
+                                width: Math.min(implicitWidth, parent.width - kindTag.width - 48) }
+                            Rectangle { id: kindTag; anchors.verticalCenter: parent.verticalCenter; width: kt.implicitWidth + 14; height: 20; radius: M3.sq ? 0 : (10)
+                                color: M3.alpha(M3.primary, 0.14)
+                                T { id: kt; anchors.centerIn: parent; text: fc.mono ? I18n.t("Monospace") : (modelData.kind === "display" ? I18n.t("Display") : I18n.t("Sans")); font.pixelSize: 10; color: M3.primary } }
+                        }
+                        T { scaled: false; width: parent.width; elide: Text.ElideRight; font.family: fc.face; font.pixelSize: 15; color: M3.inkDim
+                            text: fc.mono ? "fn main() { 0O 1lI } -> =>" : "The quick brown fox · 0123456789" }
+                    }
+                    Row {
+                        x: 16; anchors.bottom: parent.bottom; anchors.bottomMargin: 14
+                        spacing: 8
+                        Btn { visible: !modelData.installed; text: fc.busy ? I18n.t("Downloading...") : I18n.t("Download"); sym: fc.busy ? "hourglass_top" : "download"; icon: ""; primary: true
+                              onClicked: page.getFont(modelData.name) }
+                        Btn { visible: modelData.installed && !fc.mono; text: I18n.t("Use for text"); sym: "text_fields"; icon: ""; primary: true
+                              onClicked: page.useFont(modelData.name, "text", modelData.mine) }
+                        Btn { visible: modelData.installed && !fc.mono; text: I18n.t("Use everywhere"); sym: "done_all"; icon: ""
+                              onClicked: page.useFont(modelData.name, "all", modelData.mine) }
+                        Btn { visible: modelData.installed && fc.mono; text: I18n.t("Use in the terminal"); sym: "terminal"; icon: ""; primary: true
+                              onClicked: page.useFont(modelData.name, "mono", modelData.mine) }
+                    }
+                    // remove: only a font Settings downloaded, and not one in use
+                    Rectangle {
+                        visible: modelData.mine && !fc.used && fcm.hovered
+                        anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 10
+                        width: 32; height: 32; radius: M3.sq ? 0 : (16)
+                        color: rmm.containsMouse ? M3.errorContainer : M3.surfaceHighest
+                        Icon { anchors.centerIn: parent; name: "delete"; glyph: ""; size: 15; color: rmm.containsMouse ? M3.inkErrorC : M3.inkDim }
+                        MouseArea { id: rmm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.removeFont(modelData.name) }
+                    }
+                }
+            }
         }
 
         // ---------- text ----------

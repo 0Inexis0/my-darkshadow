@@ -53,7 +53,7 @@ PanelWindow {
     NPal { id: gp; theme: "shell"; alpha: Math.min(1, vb.alpha + 0.14) }
     readonly property color fg: goo ? gp.fg : "#F6F5F4"
     readonly property color dim: goo ? gp.dim : Qt.rgba(0.965, 0.961, 0.957, 0.66)
-    readonly property color bg: goo ? gp.surface : Qt.rgba(0.05, 0.05, 0.05, alpha)
+    readonly property color bg: Look.sq ? gp.minSurface : (goo ? gp.surface : Qt.rgba(0.05, 0.05, 0.05, alpha))
     readonly property color line: goo ? "transparent" : Qt.rgba(1, 1, 1, 0.07)
     readonly property int nws: bc.workspaces ? bc.workspaces : 5
     function noClock(l) { return (l || []).map(function(m) { return m === "clock" ? "island" : m }) }

@@ -113,7 +113,16 @@ else
       if [ "$a" = "--source-color-index" ]; then skip=1; continue; fi
       plain+=("$a")
     done
-    "${plain[@]}" </dev/null >>"$log" 2>&1 || say "matugen failed again: see the lines above"
+    if ! "${plain[@]}" </dev/null >>"$log" 2>&1; then
+      # an older matugen without this scheme type: its default type then
+      basic=(); skip=""
+      for a in "${plain[@]}"; do
+        if [ -n "$skip" ]; then skip=""; continue; fi
+        if [ "$a" = "--type" ]; then skip=1; continue; fi
+        basic+=("$a")
+      done
+      "${basic[@]}" </dev/null >>"$log" 2>&1 || say "matugen failed again: see the lines above"
+    fi
   fi
 fi
 

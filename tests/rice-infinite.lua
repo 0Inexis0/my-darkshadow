@@ -58,9 +58,10 @@ check(b == 0, "screens = 1: the window of the other screen stays")
 RiceInfinite.set(false)
 check(not RiceInfinite.on, "it is off")
 
--- screens = 0 (the default): every screen
+-- screens = 0: every screen, but only the workspace each screen shows (a window on another workspace stays)
 RiceInfinite.cfg.screens = 0
-W = { win("0xa", 1, M1, 100, 100), win("0xb", 11, M2, 1970, 100) }
+M1.active_workspace = { id = 1 }
+W = { win("0xa", 1, M1, 100, 100), win("0xb", 11, M2, 1970, 100), win("0xd", 2, M1, 100, 100) }
 before = #moves
 RiceInfinite.set(true)
 check(RiceInfinite.on, "it is on with every screen")
@@ -71,6 +72,10 @@ for i = before + 1, #moves do
     if moves[i].window == "address:0xb" then b = b + 1 end
 end
 check(a > 0 and b > 0, "screens = 0: the windows of both screens move")
+local d = 0
+for i = before + 1, #moves do if moves[i].window == "address:0xd" then d = d + 1 end end
+check(d == 0, "screens = 0: a window on a workspace no screen shows stays")
+table.remove(W, 3)
 
 -- a window that opens on the second screen gets its room there, inside that screen
 cursor = { x = 2000, y = 300 }

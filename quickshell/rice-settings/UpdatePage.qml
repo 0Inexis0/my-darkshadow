@@ -161,7 +161,8 @@ Item {
                 Icon {
                     anchors.centerIn: parent
                     size: 34
-                    name: page.running ? "sync" : (page.failed ? "error" : (page.finished && !page.hasUpdate ? "check_circle" : (page.hasUpdate ? "system_update_alt" : "verified")))
+                    // Minimal mode: a plain mark in the square (a round check in a square looked broken)
+                    name: page.running ? "sync" : (page.failed ? (M3.sq ? "priority_high" : "error") : (page.finished && !page.hasUpdate ? (M3.sq ? "check" : "check_circle") : (page.hasUpdate ? "system_update_alt" : (M3.sq ? "done_all" : "verified"))))
                     glyph: page.running ? "" : (page.failed ? "" : (page.hasUpdate ? "" : ""))
                     color: M3.inkPrimary
                     RotationAnimation on rotation { running: page.running; from: 0; to: -360; duration: 1400; loops: Animation.Infinite
@@ -175,8 +176,26 @@ Item {
                     property real p: page.progress
                     Behavior on p { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
                     onPChanged: requestPaint()
+                    Connections { target: M3; function onSqChanged() { ring.requestPaint() } }
                     onPaint: {
                         const c = getContext("2d"), r = width / 2 - 2
+                        if (M3.sq) {
+                            // Minimal mode: a square frame that fills clockwise from the top left
+                            c.reset(); c.lineWidth = 3; c.lineCap = "butt"
+                            const a = 2, s = width - 4, per = s * 4
+                            c.strokeStyle = M3.alpha(M3.primary, 0.22); c.strokeRect(a, a, s, s)
+                            let left = per * p
+                            c.strokeStyle = M3.primary; c.beginPath(); c.moveTo(a, a)
+                            const pts = [[a + s, a], [a + s, a + s], [a, a + s], [a, a]]
+                            let x0 = a, y0 = a
+                            for (let i = 0; i < 4 && left > 0; i++) {
+                                const d = Math.min(s, left), t = d / s
+                                c.lineTo(x0 + (pts[i][0] - x0) * t, y0 + (pts[i][1] - y0) * t)
+                                left -= d; x0 = pts[i][0]; y0 = pts[i][1]
+                            }
+                            c.stroke()
+                            return
+                        }
                         c.reset(); c.lineWidth = 3.5; c.lineCap = "round"
                         c.strokeStyle = M3.alpha(M3.primary, 0.22); c.beginPath(); c.arc(width / 2, height / 2, r, 0, Math.PI * 2); c.stroke()
                         c.strokeStyle = M3.primary; c.beginPath(); c.arc(width / 2, height / 2, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * p); c.stroke()

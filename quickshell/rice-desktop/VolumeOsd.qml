@@ -8,6 +8,8 @@ import QtQuick
 PanelWindow {
     screen: Mon.screen
     id: osd
+    // Minimal mode: the bar's own tinted surface, so the menu matches the bar (V5.02: it was near black)
+    NPal { id: sqPal; theme: "shell"; alpha: 0.94 }
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property var source: Pipewire.defaultAudioSource
     PwObjectTracker { objects: [osd.sink, osd.source] }
@@ -50,7 +52,7 @@ PanelWindow {
         Frame { }      // V4.98 Minimal mode
         anchors.fill: parent
         radius: Look.sq ? 0 : (height / 2)
-        color: Qt.rgba(0.05, 0.05, 0.05, Look.flat ? 1 : 0.62)
+        color: Look.sq ? sqPal.minSurface : Qt.rgba(0.05, 0.05, 0.05, Look.flat ? 1 : 0.62)
         border.width: 1; border.color: Qt.rgba(1, 1, 1, 0.09)
         opacity: osd.t
         scale: 0.9 + 0.1 * osd.t

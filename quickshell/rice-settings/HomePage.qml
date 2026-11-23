@@ -25,7 +25,7 @@ Item {
         "Click your picture in the sidebar to change it. It is also shown on the lock screen.",
         "Gaming mode turns off animations, blur and gaps. Click it again to bring them back.",
         "Notifications has nine popup styles. Try Island or Accent bar.",
-        "Theme has 21 color schemes, from pure Mono to Ocean and Rose.",
+        "Theme has 39 color schemes, from pure Mono to Ocean, Lavender and Rainbow.",
         "The launcher can open as a full-width bar, or Split with your wallpaper on the left.",
         "Lock screen clocks come in Big, Stacked and Minimal. Preview them in Idle & Lockscreen.",
         "Run rice-notify test in a terminal to see a sample notification.",

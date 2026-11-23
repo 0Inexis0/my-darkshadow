@@ -30,13 +30,13 @@ RI.ws = nil
 RI.z, RI.ox, RI.oy = 1.0, 0, 0
 RI.world = {}      -- address -> { x, y, w, h } on the canvas (screen = offset + canvas * zoom)
 RI.tiled = {}      -- address -> true: it was tiled before, tile it again when turned off
-RI.cfg = { step = 0.12, min = 0.2, max = 1.0, pan = 180, screens = 0 }
+RI.cfg = { step = 0.12, min = 0.2, max = 1.0, pan = 180, screens = 1 }   -- V5.02: this workspace by default
 
 local function run(d)
     if d then pcall(hl.dispatch, d) end
 end
 
--- every screen is one canvas (screens = 0), or only the workspace it was turned on (screens = 1)
+-- every screen is one canvas (screens = 0), or only the workspace it was turned on (screens = 1, the default)
 local function shared()
     return tonumber(RI.cfg.screens) ~= 1
 end
@@ -96,6 +96,15 @@ local function each_window(fn)
     if ok and type(list) == "table" then for _, w in ipairs(list) do fn(w) end end
 end
 
+-- every screen: only the workspace each screen shows (V5.02: the windows of every other workspace were taken too)
+local function shown(w, wsid)
+    local m = w.monitor
+    local aw = type(m) == "table" and (m.active_workspace or m.activeWorkspace) or nil
+    local id = type(aw) == "table" and aw.id or aw
+    if id == nil then return true end
+    return tonumber(id) == tonumber(wsid)
+end
+
 local function wins()
     local out = {}
     local ok, list = pcall(hl.get_windows)
@@ -103,7 +112,7 @@ local function wins()
     local all = shared()
     for _, w in pairs(list) do
         local wsid = w.workspace and w.workspace.id
-        if wsid ~= nil and (all or wsid == RI.ws) and w.mapped ~= false and not w.hidden and (tonumber(w.fullscreen) or 0) == 0
+        if wsid ~= nil and ((all and shown(w, wsid)) or wsid == RI.ws) and w.mapped ~= false and not w.hidden and (tonumber(w.fullscreen) or 0) == 0
             and not w.pinned and not overlay(w) and w.at and w.size then
             out[#out + 1] = w
         end

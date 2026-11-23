@@ -1,5 +1,17 @@
 # Changelog
 
+## V5.02: fonts to download, new Material 3 motion, more colors, fixes
+- **New: Get more fonts** (Settings > Appearance > Fonts): 32 free fonts from Google Fonts (Inter, Geist, Outfit, Manrope, Plus Jakarta Sans, Lexend, Unbounded, JetBrains Mono, Fira Code, Geist Mono and more). Download one, then **Use for text**, **Use everywhere** or **Use in the terminal**; a downloaded one can be removed again (`font-set get|use|remove`)
+- **New motion styles** (Settings > Motion): Calm stays, and four new Material 3 ones: **Emphasized** (windows grow in on a long, soft landing), **Expressive** (a lively landing with a little overshoot), **Glide** (windows and panels slide in from the edge) and **Pop** (windows spring up with one soft bounce). Lively, Fluid, Snappy and Minimal are gone (they turn into the closest new one)
+- **18 more color schemes** (Settings > Appearance > Colors): Arctic, Cobalt, Indigo, Lavender, Plum, Cherry, Blush, Coral, Peach, Amber, Sand, Mocha, Olive, Sage, Moss, Aqua, Neon and Rainbow
+- **Minimal mode**: the sound, Wi-Fi, Bluetooth and power menus, the volume pop-up, the bar's cards and the control center take the bar's own tinted color (they were near black next to it)
+- Fixed: **Infinite Desktop (SUPER + F) took every workspace**. It is on the workspace where you turn it on again (Settings > Infinite Desktop > Screens: This workspace is the default); "Every screen" only takes the workspace each screen shows
+- Fixed: **Settings > About showed a dash everywhere** (one quote too many in V5.01 broke the whole line)
+- Fixed: **the Update Center's icon in Minimal mode** (a round check in a square) and the empty squares next to some section titles
+- **Notification themes** are set further apart (DarkShadow, Graphite, Black, Slate and Tinted looked nearly the same), and the Google look of swaync follows the theme too
+- **Notification sound**: quieter (the volume now follows your ears; 45 % by default, 70 % from before becomes 45 % once), and its sound and volume are on Settings > Notifications too
+- Cursors: no more Update button on every installed pack, just Installed
+
 ## V5.01: pull requests merged, the visualizer, notification sounds and the login screen fixed
 - Merged: **Infinite Desktop on every screen** (#28 by notwafel): Settings > Infinite Desktop > Screens: "Every screen" makes all your screens one canvas side by side (a window dragged off one screen goes on the next, the moving wallpaper is on every screen); "This workspace" keeps it on the workspace where you turned it on
 - Merged: **picking an entry in the clipboard panel** now really changes the clipboard (#22 by w4nnnn)

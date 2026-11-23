@@ -206,7 +206,7 @@ Item {
                     bars: modelData.b
                     selected: page.nv("sound", "glass") === modelData.k
                     onPicked: {
-                        if (modelData.k !== "off") page.previewNote(modelData.k, page.nv("sound_volume", 70))
+                        if (modelData.k !== "off") page.previewNote(modelData.k, page.nv("sound_volume", 45))
                         if (!selected) page.setn("sound", modelData.k)
                     }
                 }
@@ -216,7 +216,7 @@ Item {
             label: I18n.t("Notification sound volume")
             desc: I18n.t("How loud the notification sound is, on top of your system volume")
             from: 0; to: 100; step: 5; unit: " %"
-            value: page.nv("sound_volume", 70)
+            value: page.nv("sound_volume", 45)
             onCommitted: function(x) {
                 page.setn("sound_volume", Math.round(x))
                 if (page.nv("sound", "glass") !== "off") page.previewNote(page.nv("sound", "glass"), Math.round(x))

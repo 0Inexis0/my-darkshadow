@@ -430,19 +430,21 @@ MOTION = {
     # name: (open, close, springs {workspace, view, move, resize, overview})
     "calm": (("cubic", 320, (0.05, 0.7, 0.1, 1.0)), ("cubic", 200, (0.3, 0.0, 0.8, 0.15)),
              {"ws": (1.0, 700), "view": (1.0, 700), "move": (1.0, 700), "resize": (1.0, 700), "ov": (1.0, 700)}),
-    "lively": (("cubic", 360, (0.05, 0.7, 0.1, 1.0)), ("cubic", 200, (0.3, 0.0, 0.8, 0.15)),
-               {"ws": (0.85, 800), "view": (0.85, 800), "move": (0.8, 800), "resize": (0.85, 800), "ov": (0.85, 800)}),
-    # Fluid: Material 3 emphasized decelerate in, accelerate out, unhurried springs that never overshoot
-    "fluid": (("cubic", 440, (0.05, 0.7, 0.1, 1.0)), ("cubic", 180, (0.3, 0.0, 0.8, 0.15)),
-              {"ws": (1.0, 520), "view": (1.0, 520), "move": (1.0, 560), "resize": (1.0, 560), "ov": (1.0, 520)}),
-    # Expressive: Material 3 expressive springs: a hint of overshoot where things move, a soft pop when they open
-    "expressive": (("cubic", 480, (0.2, 1.22, 0.4, 1.0)), ("cubic", 180, (0.3, 0.0, 0.8, 0.15)),
-                   {"ws": (0.8, 700), "view": (0.8, 700), "move": (0.75, 640), "resize": (0.8, 700), "ov": (0.85, 640)}),
-    "snappy": (("ease-out-expo", 160, None), ("ease-out-quad", 120, None),
-               {"ws": (1.0, 1200), "view": (1.0, 1200), "move": (1.0, 1200), "resize": (1.0, 1200), "ov": (1.0, 1200)}),
-    "minimal": (("ease-out-quad", 150, None), ("ease-out-quad", 120, None),
-                {"ws": (1.0, 1000), "view": (1.0, 1000), "move": (1.0, 1000), "resize": (1.0, 1000), "ov": (1.0, 1000)}),
+    # Emphasized: Material 3 emphasized decelerate in, accelerate out, springs that never overshoot (V5.02)
+    "emphasized": (("cubic", 420, (0.05, 0.7, 0.1, 1.0)), ("cubic", 180, (0.3, 0.0, 0.8, 0.15)),
+                   {"ws": (1.0, 600), "view": (1.0, 600), "move": (1.0, 640), "resize": (1.0, 640), "ov": (1.0, 600)}),
+    # Expressive: Material 3 expressive spatial curve, a hint of overshoot where things move
+    "expressive": (("cubic", 460, (0.38, 1.21, 0.22, 1.0)), ("cubic", 180, (0.3, 0.0, 0.8, 0.15)),
+                   {"ws": (0.78, 650), "view": (0.78, 650), "move": (0.75, 700), "resize": (0.8, 650), "ov": (0.82, 620)}),
+    # Glide: long and unhurried, everything glides to its place
+    "glide": (("cubic", 520, (0.2, 0.0, 0.0, 1.0)), ("cubic", 240, (0.3, 0.0, 0.8, 0.15)),
+              {"ws": (1.0, 380), "view": (1.0, 380), "move": (1.0, 420), "resize": (1.0, 420), "ov": (1.0, 400)}),
+    # Pop: a quick spring with one small bounce
+    "pop": (("cubic", 380, (0.34, 1.56, 0.64, 1.0)), ("cubic", 160, (0.3, 0.0, 0.8, 0.15)),
+            {"ws": (0.7, 800), "view": (0.7, 800), "move": (0.68, 850), "resize": (0.72, 800), "ov": (0.75, 780)}),
 }
+# styles that are gone: Bouncy (V3.97 and older), and Lively, Fluid, Snappy and Minimal (V5.01 and older)
+OLD_STYLES = {"bouncy": "expressive", "lively": "pop", "fluid": "emphasized", "snappy": "calm", "minimal": "calm"}
 
 
 def easing(f, kind, ms, pts):
@@ -462,7 +464,7 @@ def animations(f, s, gaming, fx):
     if a.get("enabled") is False or (gaming and not fx["keep_anim"]):
         return block("animations", ["off"])
     style = a.get("style", "calm")
-    style = {"bouncy": "expressive"}.get(style, style)      # Bouncy (V3.97 and older) is now Expressive
+    style = OLD_STYLES.get(style, style)
     op, cl, sp = MOTION.get(style, MOTION["calm"])
     pct = clampf(a.get("speed", 100), 50, 200, 100)
     L = []

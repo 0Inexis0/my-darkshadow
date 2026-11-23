@@ -24,7 +24,8 @@ Item {
         [/battery|power|energy/, "battery_full"], [/start|autostart|login/, "rocket_launch"], [/hyprland|niri|compositor/, "tune"],
         [/about|credit|thank/, "info"], [/reset|danger|remove/, "restart_alt"], [/layout|position|place/, "dashboard"],
         [/icon|app/, "apps"], [/blur|transparen|see-through|opacity/, "blur_on"], [/gap|border/, "border_style"],
-        [/tool/, "build"], [/bar\b|panel/, "toolbar"], [/style|look|appearance/, "brush"]
+        [/tool/, "build"], [/bar\b|panel/, "toolbar"], [/style|look|appearance/, "brush"],
+        [/computer|system|hardware|machine/, "computer"], [/made with|open source|project|code/, "code"], [/download|get more|install/, "download"]
     ]
     readonly property string pick: {
         if (sym.length) return sym
@@ -41,8 +42,9 @@ Item {
         x: 4; y: st.topPadding
         width: 44; height: 44; radius: M3.sq ? 0 : (22)
         color: M3.secondaryContainer
-        Icon { visible: st.pick !== "" || st.icon !== ""; anchors.centerIn: parent; name: st.pick; glyph: st.icon; size: 21; color: M3.inkSecondaryC }
-        Blob { visible: st.pick === "" && st.icon === ""; anchors.centerIn: parent; width: 22; height: 22; kind: Prefs.accentShape || "cookie"; color: M3.primary }
+        // Minimal mode: a symbol always (the shape turned into a plain square there, which looked like a missing icon)
+        Icon { visible: st.pick !== "" || st.icon !== "" || M3.sq; anchors.centerIn: parent; name: st.pick !== "" || st.icon !== "" ? st.pick : "label"; glyph: st.icon; size: 21; color: M3.inkSecondaryC }
+        Blob { visible: st.pick === "" && st.icon === "" && !M3.sq; anchors.centerIn: parent; width: 22; height: 22; kind: Prefs.accentShape || "cookie"; color: M3.primary }
     }
     Column {
         id: col

@@ -41,7 +41,7 @@ DEFAULTS = {
     "style": "glass", "popup_style": "match", "opacity": 0.80, "radius": 18, "blur": True, "compact": False, "accent": True,
     "colors": "shell", "font": "sans", "font_size": 13, "popup_opacity": 0.85, "blur_popups": True,
     "border": "none", "shadow": False,
-    "sound": "glass", "sound_volume": 70,
+    "sound": "glass", "sound_volume": 45,
     # clicking a notification keeps it in the notification center (swaync would remove it)
     "keep_clicked": True,
 }
@@ -112,7 +112,10 @@ def load():
     # V3.21: no outlines around notifications any more (Settings > Notifications > Border brings them back)
     if raw.get("v", 1) < 4:
         c["border"] = "none"
-    c["v"] = 4
+    # V5.02: the notification sound was too loud: the old default (70) goes to the new one (45) once
+    if raw.get("v", 1) < 5 and raw.get("sound_volume") in (None, 70):
+        c["sound_volume"] = 45
+    c["v"] = 5
     return c
 
 
@@ -153,28 +156,24 @@ def font(c):
 def palette(c, acc):
     """base surface rgb, text, secondary text, card overlay"""
     k = c["colors"]
+    # V5.02: the same colors as the shell's themes (rice-desktop/NPal.qml), set further apart than before
     if k == "black":
         return (0, 0, 0), "#F6F5F4", "#9a9aa4", "rgba(255, 255, 255, 0.07)"
+    if k == "graphite":
+        return (41, 41, 43), "#F2F2F3", "#a4a4ac", "rgba(255, 255, 255, 0.07)"
     if k == "slate":
-        return (24, 27, 34), "#EEF1F6", "#9aa4b5", "rgba(255, 255, 255, 0.06)"
+        return (34, 41, 53), "#EEF1F6", "#9aa4b5", "rgba(255, 255, 255, 0.06)"
     if k == "white":
         return (246, 245, 244), "#141414", "#5c5c64", "rgba(0, 0, 0, 0.05)"
+    h = acc.lstrip("#")
+    try:
+        a = tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+    except Exception:
+        a = (212, 212, 212)
     if k == "tinted":
-        h = acc.lstrip("#")
-        try:
-            a = tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
-        except Exception:
-            a = (212, 212, 212)
-        return tuple(int(14 + (x - 14) * 0.14) for x in a), "#F6F5F4", "#a8a8b4", "rgba(255, 255, 255, 0.07)"
-    if k == "shell":
-        # the shell's own look: dark, a hint of your theme color
-        h = acc.lstrip("#")
-        try:
-            a = tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
-        except Exception:
-            a = (212, 212, 212)
-        return tuple(int(20 + (x - 20) * 0.08) for x in a), "#ECEDEE", "#A9ADB2", "rgba(255, 255, 255, 0.06)"
-    return (18, 18, 20), "#F6F5F4", "#9a9aa4", "rgba(255, 255, 255, 0.06)"
+        return tuple(int(30 + (x - 30) * 0.22) for x in a), "#F6F5F4", "#a8a8b4", "rgba(255, 255, 255, 0.07)"
+    # shell: dark, a hint of your theme color
+    return tuple(int(22 + (x - 22) * 0.1) for x in a), "#ECEDEE", "#A9ADB2", "rgba(255, 255, 255, 0.06)"
 
 
 def backup_once(path, suf):
@@ -341,7 +340,8 @@ def css(c):
     elif c["style"] == "google":
         # Google: Material-like tonal surfaces tinted with your accent, big round corners, no borders, no blur
         a = hex_rgb(acc)
-        b0 = (250, 248, 252) if light else (20, 19, 24)
+        # the theme's own surface (V5.02: Google ignored the theme and was always the same)
+        b0 = (250, 248, 252) if light else base
         k = (0.07, 0.12, 0.18, 0.24) if not light else (0.06, 0.11, 0.17, 0.23)
         surf, cont, high, highest = (mixc(b0, a, x) for x in k)
         bg, card, bd = rgbs(surf), rgbs(cont), "transparent"

@@ -7,19 +7,21 @@ Item {
     id: page
     property var ctl
     readonly property var ha: ctl ? ctl.ha : ({})
-    readonly property string style: ha.style === "bouncy" ? "expressive" : (ha.style || "calm")
+    // styles that are gone (V5.02) show as the one that took their place
+    readonly property var oldStyles: ({ bouncy: "expressive", lively: "pop", fluid: "emphasized", snappy: "calm", minimal: "calm" })
+    readonly property string style: oldStyles[ha.style] || ha.style || "calm"
 
     // a little stage that plays the chosen feeling: a shape that travels, grows and changes its corners
     property bool flip: false
     Timer { interval: 1500; running: page.visible; repeat: true; onTriggered: page.flip = !page.flip }
 
+    // bz: the curve the little previews play (x1, y1, x2, y2 of a cubic Bezier), dur: how long
     readonly property var styles: [
-        { k: "calm", n: "Calm", d: "Smooth curves, no bounce", sym: "waves", g: "", over: 0, dur: 520 },
-        { k: "lively", n: "Lively", d: "Springs with a small overshoot", sym: "airwave", g: "", over: 1.3, dur: 560 },
-        { k: "fluid", n: "Fluid", d: "Material 3 emphasized: a long, soft landing, no bounce", sym: "water", g: "", over: 0, dur: 640 },
-        { k: "expressive", n: "Expressive", d: "Material 3 springs: a soft pop with a hint of overshoot", sym: "auto_awesome", g: "", over: 1.4, dur: 620 },
-        { k: "snappy", n: "Snappy", d: "Short and quick", sym: "bolt", g: "", over: 0, dur: 260 },
-        { k: "minimal", n: "Minimal", d: "Fades only", sym: "blur_on", g: "", over: 0, dur: 360 }
+        { k: "calm", n: "Calm", d: "Smooth curves, no bounce", sym: "waves", g: "", bz: [0.65, 0, 0.35, 1], dur: 520 },
+        { k: "emphasized", n: "Emphasized", d: "Material 3: windows grow in on a long, soft landing", sym: "trending_flat", g: "", bz: [0.05, 0.7, 0.1, 1], dur: 560 },
+        { k: "expressive", n: "Expressive", d: "Material 3 expressive: a lively landing with a little overshoot", sym: "auto_awesome", g: "", bz: [0.38, 1.21, 0.22, 1], dur: 600 },
+        { k: "glide", n: "Glide", d: "Windows and panels slide in from the edge", sym: "swipe_right", g: "", bz: [0.2, 0, 0, 1], dur: 680 },
+        { k: "pop", n: "Pop", d: "Windows spring up from small with one soft bounce", sym: "bubble_chart", g: "", bz: [0.34, 1.56, 0.64, 1], dur: 460 }
     ]
     // Material 3 motion tokens (expressive springs, the standard ones when Settings > Feel is Standard)
     readonly property var springs: M3.bouncy ? [
@@ -63,8 +65,8 @@ Item {
                 width: parent.width * 0.45
                 spacing: 6
                 T { text: I18n.t("MOTION"); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2; color: M3.alpha(M3.inkPrimaryC, 0.75) }
-                T { kind: "title"; text: stage.st.n; font.pixelSize: 30; font.weight: Font.Medium; color: M3.inkPrimaryC }
-                T { kind: "reading"; text: stage.st.d + I18n.t(". Windows, workspaces and pop-ups move like this."); width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.alpha(M3.inkPrimaryC, 0.85) }
+                T { kind: "title"; text: I18n.t(stage.st.n); font.pixelSize: 30; font.weight: Font.Medium; color: M3.inkPrimaryC }
+                T { kind: "reading"; text: I18n.t(stage.st.d) + I18n.t(". Windows, workspaces and pop-ups move like this."); width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.alpha(M3.inkPrimaryC, 0.85) }
             }
             // the track the shape runs on
             Item {
@@ -80,13 +82,13 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     x: page.flip ? track.width - width : 0
                     color: M3.primary
-                    opacity: stage.st.k === "minimal" ? (page.flip ? 1 : 0.35) : 1
-                    Behavior on x { enabled: stage.st.k !== "minimal"
-                        NumberAnimation { duration: stage.st.dur; easing.type: stage.st.over > 0 ? Easing.OutBack : (stage.st.k === "snappy" ? Easing.OutQuart : Easing.InOutCubic); easing.overshoot: stage.st.over } }
-                    Behavior on width { NumberAnimation { duration: stage.st.dur; easing.type: stage.st.over > 0 ? Easing.OutBack : Easing.OutCubic; easing.overshoot: stage.st.over } }
-                    Behavior on height { NumberAnimation { duration: stage.st.dur; easing.type: stage.st.over > 0 ? Easing.OutBack : Easing.OutCubic; easing.overshoot: stage.st.over } }
+                    // it travels and grows on the style's own curve (Pop also grows from small)
+                    scale: stage.st.k === "pop" ? (page.flip ? 1 : 0.55) : 1
+                    Behavior on x { NumberAnimation { duration: stage.st.dur; easing.type: Easing.BezierSpline; easing.bezierCurve: stage.st.bz.concat([1, 1]) } }
+                    Behavior on width { NumberAnimation { duration: stage.st.dur; easing.type: Easing.BezierSpline; easing.bezierCurve: stage.st.bz.concat([1, 1]) } }
+                    Behavior on height { NumberAnimation { duration: stage.st.dur; easing.type: Easing.BezierSpline; easing.bezierCurve: stage.st.bz.concat([1, 1]) } }
+                    Behavior on scale { NumberAnimation { duration: stage.st.dur; easing.type: Easing.BezierSpline; easing.bezierCurve: stage.st.bz.concat([1, 1]) } }
                     Behavior on radius { NumberAnimation { duration: stage.st.dur; easing.type: Easing.OutCubic } }
-                    Behavior on opacity { NumberAnimation { duration: stage.st.dur } }
                 }
             }
         }
@@ -125,15 +127,12 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             color: tile.on ? M3.primary : M3.inkDim
                             x: (tm.containsMouse || tile.on) && page.flip ? parent.width - width : 0
-                            opacity: modelData.k === "minimal" ? ((tm.containsMouse || tile.on) && page.flip ? 1 : 0.3) : 1
-                            Behavior on x { enabled: modelData.k !== "minimal"
-                                NumberAnimation { duration: modelData.dur; easing.type: modelData.over > 0 ? Easing.OutBack : Easing.InOutCubic; easing.overshoot: modelData.over } }
-                            Behavior on opacity { NumberAnimation { duration: modelData.dur } }
+                            Behavior on x { NumberAnimation { duration: modelData.dur; easing.type: Easing.BezierSpline; easing.bezierCurve: modelData.bz.concat([1, 1]) } }
                         }
                     }
                     Icon { x: 14; y: 54; name: modelData.sym; glyph: modelData.g; size: 18; color: tile.on ? M3.primary : M3.inkDim; filled: tile.on }
-                    T { x: 40; y: 55; text: modelData.n; font.pixelSize: 14; font.weight: Font.Medium }
-                    T { x: 14; y: 82; width: parent.width - 28; text: modelData.d; wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight
+                    T { x: 40; y: 55; text: I18n.t(modelData.n); font.pixelSize: 14; font.weight: Font.Medium }
+                    T { x: 14; y: 82; width: parent.width - 28; text: I18n.t(modelData.d); wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight
                         font.pixelSize: 11; color: M3.inkDim }
                     MouseArea { id: tm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.ctl.setAnimStyle(modelData.k) }
                 }
