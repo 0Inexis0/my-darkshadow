@@ -11,10 +11,12 @@ n=0
 ok() { n=$((n + 1)); printf 'ok %d - %s\n' "$n" "$1"; }
 bad() { printf 'not ok %d - %s\n' "$n" "$1"; exit 1; }
 
-grep -q 'readonly property bool reserve: on && !autoHide' "$dock" \
+# it keeps room only while it stays out: no hover-to-reveal, or held open with its pin (the pin and Pinned on startup
+# stay: Settings > Dock, since V4.95)
+grep -q 'readonly property bool reserve: on && dc.reserve !== false && (!autoHide || pinned)' "$dock" \
   && ok "a dock that hides on hover reserves no room" || bad "the dock still reserves room while it hides"
-grep -q 'pinButton\|pinnedStartup\|property bool pinned' "$dock" && bad "the dock still has its hold-open pin" \
-  || ok "no hold-open pin: only the pointer keeps the dock out"
+grep -q 'reveal: on && !Infinite.hideUi && (!autoHide || pinned ||' "$dock" \
+  && ok "the pin holds the dock out" || bad "the pin no longer holds the dock out"
 grep -q 'hideTimer; interval: 700; onTriggered: if (!dockMouse.containsMouse && !apps.overPanel)' "$dock" \
   && ok "the dock stays while the pointer is on its app menu" || bad "the app menu does not keep the dock out"
 grep -q 'property bool overPanel: false' "$apps" && ok "the app menu reports the pointer on its card" || bad "no overPanel"

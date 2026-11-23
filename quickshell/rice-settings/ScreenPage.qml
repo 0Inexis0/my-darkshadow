@@ -163,7 +163,7 @@ Item {
                     Qt.callLater(function() {
                         if (page.countdown <= 0) return
                         scroll.body.cancelFlick()
-                        scroll.body.contentY = Math.min(scroll.body.contentY, page.keepRow.y - 10)
+                        scroll.body.contentY = Math.min(scroll.body.contentY, Math.max(0, keepRow.y - 10))
                     })
                 }
             }

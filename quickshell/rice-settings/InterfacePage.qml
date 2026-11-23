@@ -200,6 +200,12 @@ Item {
                 onToggled: function(v) { page.ctl.dset("dock", "nowText", v ? "on" : "off") }
             }
             ToggleRow {
+                label: I18n.t("Show pin button")
+                desc: I18n.t("Button that holds the dock open")
+                checked: page.dv("pinButton", true) === true
+                onToggled: function(v) { page.ctl.dset("dock", "pinButton", v ? "on" : "off") }
+            }
+            ToggleRow {
                 label: I18n.t("Show apps button")
                 desc: I18n.t("Button that opens the app launcher")
                 checked: page.dv("appsButton", true) === true

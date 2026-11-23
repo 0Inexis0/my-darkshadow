@@ -830,7 +830,8 @@ def lua_text(c):
     # and the sharp background into a checkerboard); only the layer's empty space (alpha 0) is skipped
     for ns, on, ia in (("swaync-control-center", c["blur"] and not flat_look, 0.01),
                        ("swaync-notification-window", c["blur_popups"] and not flat_look, 0.01),
-                       ("rice-cc", c["blur"], 0.01), ("rice-notify-popup", c["blur_popups"], 0.01)):
+                       # the shell's own cards: their soft shadows (alpha below 0.2) are not blurred into a halo
+                       ("rice-cc", c["blur"], 0.2), ("rice-notify-popup", c["blur_popups"], 0.2)):
         if on:
             out.append('hl.layer_rule({\n    name  = "%s-blur",\n    match = { namespace = "%s" },\n'
                        '    blur = true,\n    ignore_alpha = %s,\n})\n' % (ns if ns.startswith("rice-") else "rice-" + ns, ns, ia))

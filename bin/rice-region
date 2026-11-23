@@ -19,7 +19,9 @@ CFG = HOME + "/.config/rice/region.json"
 ENV = HOME + "/.config/environment.d/50-darkshadows-lang.conf"
 APPCFG = HOME + "/.config/rice/settings-app.json"     # Settings > System > Languages (the whole shell)
 KBD = HOME + "/.config/rice/kbd.json"                 # written by hypr-set kbd (Settings > Keyboard)
-DEFAULTS = {"clock": "24", "units": "c", "week": "mon", "lang": "en", "kbd": ""}
+# lang "": the system's (nothing exported); a language only when you pick one (an English default forced en_US on
+# everyone whose system speaks another language)
+DEFAULTS = {"clock": "24", "units": "c", "week": "mon", "lang": "", "kbd": ""}
 CHOICES = {"clock": ("24", "12"), "units": ("c", "f"), "week": ("mon", "sun"),
            "lang": ("", "en", "pl", "de", "fr", "es", "pt", "it", "nl", "ru", "uk", "cs", "tr", "ja", "ko", "zh")}
 # codes that mean the region of the language when the system has no locale for it
@@ -80,6 +82,17 @@ def kbd():
     return ",".join(lays)
 
 
+def have_locale(p):
+    """is this locale made on this computer (locale -a)? An unknown LANG makes programs fall back to C and complain"""
+    import subprocess
+    try:
+        out = subprocess.run(["locale", "-a"], capture_output=True, text=True, timeout=5).stdout
+    except Exception:
+        return True          # cannot tell: as before
+    norm = lambda x: x.lower().replace("utf-8", "utf8")
+    return norm(p) in {norm(l.strip()) for l in out.splitlines()}
+
+
 def env_text():
     # "System" (no language chosen): nothing is set, the programs keep the language the session gave them
     out = []
@@ -88,7 +101,8 @@ def env_text():
         p = posix(l)
         # LANG is a locale (pl_PL.UTF-8); LANGUAGE is the list gettext walks: the locale, the language, English
         names = [p[:-len(".UTF-8")], l] + (["en"] if l != "en" else [])
-        out += ['LANG="%s"' % p, 'LANGUAGE="%s"' % ":".join(names)]
+        # LANG only when the locale exists here (else the session's stays); LANGUAGE alone is safe either way
+        out += (['LANG="%s"' % p] if have_locale(p) else []) + ['LANGUAGE="%s"' % ":".join(names)]
     # a layout that types keys differently from the US one is poor alone (pl types 'z' as 'y'): it comes next to the US
     # layout, and the two switch with the key from Settings > Keyboard
     k = kbd()
