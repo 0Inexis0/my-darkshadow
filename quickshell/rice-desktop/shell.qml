@@ -665,8 +665,12 @@ ShellRoot {
     WallLum { path: root.wallpaper; sw: root.sw; sh: root.sh }
     // niri: the blurred wallpaper behind the workspaces in the overview (SUPER + Tab)
     NiriBackdrop { path: root.wallpaper }
-    // Infinite Desktop: the wallpaper moves with the canvas (Hyprland)
+    // Infinite Desktop: the wallpaper moves with the canvas (Hyprland); every screen is a part of it
     WallCanvas { path: root.wallpaper }
+    Variants {
+        model: Mon.others
+        WallCanvas { required property var modelData; scr: modelData; path: root.wallpaper }
+    }
 
     // V4.96: the widget editor (and its big side panel) is made when Edit mode starts and let go when it ends; it sat
     // in memory all the time before

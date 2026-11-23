@@ -9,7 +9,8 @@ import QtQuick
 // (Settings > Desktop > Infinite Desktop > The wallpaper moves with it)
 PanelWindow {
     id: wc
-    screen: Mon.screen
+    property var scr: null
+    screen: scr || Mon.screen
     property string path: ""
     readonly property bool picture: /\.(png|jpe?g|webp|bmp|avif|jxl)$/i.test(path)
     readonly property bool want: Infinite.here && Infinite.wallOn && picture && !Look.lite

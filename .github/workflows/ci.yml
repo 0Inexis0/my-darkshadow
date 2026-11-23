@@ -20,5 +20,12 @@ jobs:
       - name: Security checks
         run: |
           bash tests/security.sh
+      - name: Infinite Desktop screens
+        run: |
+          sudo apt-get install -y lua5.4
+          mkdir -p "$RUNNER_TEMP/lua"
+          ln -s "$(command -v lua5.4)" "$RUNNER_TEMP/lua/lua"
+          PATH="$RUNNER_TEMP/lua:$PATH" bash tests/infinite.sh
+
       - name: Installer dry run
         run: SHADOWS_ALLOW_ROOT=1 ./install.sh --yes --dry-run

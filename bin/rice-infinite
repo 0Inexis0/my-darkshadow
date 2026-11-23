@@ -8,7 +8,9 @@
 #   rice-infinite state                 JSON for the settings app
 #   rice-infinite set step|min|pan|speed|dir N   zoom step (0.05-0.4), how far it zooms out (0.1-0.9), move step in
 #                                       pixels, SUPER + ALT sensitivity (0.3-3), dir (1: the windows follow the mouse,
-#                                       2: reversed), push (1: SUPER + drag at the edge pushes the others, 0: no)
+#                                       2: reversed), push (1: SUPER + drag at the edge pushes the others, 0: no),
+#                                       screens (0: every screen is one canvas, so the windows float side by side as the
+#                                       screens are; 1: the canvas is only the workspace you turned it on)
 #   rice-infinite daemon | daemon-stop  (Hyprland runs these) rice-canvasd, for SUPER + ALT + mouse
 #   rice-infinite allow                 join the input group (asks for your password; on NixOS: what to add)
 #   rice-infinite check                 what rice-canvasd finds (keyboards, mice, may it read them)
@@ -28,7 +30,7 @@ case "$1" in
     case "$1" in on) f='RiceInfinite.set(true)' ;; off) f='RiceInfinite.set(false)' ;; *) f='RiceInfinite.toggle()' ;; esac
     hyprctl eval "if RiceInfinite then $f end" >/dev/null ;;
   set)
-    case "$2" in step|min|pan|speed|dir|push|wall|hidebar|wallzoom) ;; *) echo "set step|min|pan|speed|dir|push|wall|hidebar|wallzoom N" >&2; exit 2 ;; esac
+    case "$2" in step|min|pan|speed|dir|push|wall|hidebar|wallzoom|screens) ;; *) echo "set step|min|pan|speed|dir|push|wall|hidebar|wallzoom|screens N" >&2; exit 2 ;; esac
     case "$3" in ''|*[!0-9.]*) echo "a number" >&2; exit 2 ;; esac
     touch "$conf"
     if grep -q "^$2=" "$conf"; then sed -i "s/^$2=.*/$2=$3/" "$conf"; else echo "$2=$3" >>"$conf"; fi
@@ -93,9 +95,9 @@ case "$1" in
       "$([ "$(val wall "$conf")" = 0 ] && echo 0 || echo 1)" "$([ "$(val hidebar "$conf")" = 0 ] && echo 0 || echo 1)" "$(val wallzoom "$conf" | grep . || echo 1.15)")
         d="${XDG_RUNTIME_DIR:-/tmp}/rice-canvasd"
     run=false; [ -f "$d.pid" ] && kill -0 "$(cat "$d.pid")" 2>/dev/null && run=true
-    printf '{'"$keys"'"hypr":%s,"on":%s,"zoom":%s,"step":%s,"min":%s,"pan":%s,"speed":%s,"dir":%s,"push":%s,"input":%s,"group":%s,"loaded":%s,"nixos":%s,"daemon":%s,"devices":%s}\n' \
+    printf '{'"$keys"'"hypr":%s,"on":%s,"zoom":%s,"step":%s,"min":%s,"pan":%s,"speed":%s,"dir":%s,"push":%s,"screens":%s,"input":%s,"group":%s,"loaded":%s,"nixos":%s,"daemon":%s,"devices":%s}\n' \
       "$(hypr && echo true || echo false)" "$([ "$on" = 1 ] && echo true || echo false)" "${z:-1}" \
-      "$(val step "$conf" | grep . || echo 0.12)" "$(val min "$conf" | grep . || echo 0.2)" "$(val pan "$conf" | grep . || echo 180)" "$(val speed "$conf" | grep . || echo 1.0)" "$(val dir "$conf" | grep . || echo 1)" "$(val push "$conf" | grep . || echo 1)" \
+      "$(val step "$conf" | grep . || echo 0.12)" "$(val min "$conf" | grep . || echo 0.2)" "$(val pan "$conf" | grep . || echo 180)" "$(val speed "$conf" | grep . || echo 1.0)" "$(val dir "$conf" | grep . || echo 1)" "$(val push "$conf" | grep . || echo 1)" "$(val screens "$conf" | grep -x 1 || echo 0)" \
       "$(for e in /dev/input/event*; do [ -r "$e" ] && { echo true; exit 0; }; done; echo false)" \
       "$(id -nG 2>/dev/null | tr ' ' '\n' | grep -qx input && echo true || echo false)" \
       "$([ -f "$HOME/.config/hypr/rice-infinite.lua" ] && echo true || echo false)" \
