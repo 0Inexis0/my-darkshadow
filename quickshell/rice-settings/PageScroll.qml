@@ -5,6 +5,7 @@ Item {
     id: ps
     default property alias content: col.data
     property alias column: col
+    property alias body: flick
 
     Flickable {
         id: flick

@@ -36,7 +36,9 @@ Singleton {
     function toggle() { if (p && p.canTogglePlaying) p.togglePlaying() }
     function next() { if (p && p.canGoNext) p.next() }
     function prev() { if (p && p.canGoPrevious) p.previous() }
-    function seekBy(s) { if (p && p.canSeek) { p.position = Math.max(0, Math.min(length, p.position + s)); pos = p.position } }
+    // no length (a live stream, an ad, a tab just opened): there is nowhere to seek to, and a write there
+    // (YouTube: "Something went wrong") is what the player gets back
+    function seekBy(s) { if (p && p.canSeek && length > 0) { p.position = Math.max(0, Math.min(length, p.position + s)); pos = p.position } }
     function seekTo(f) { if (p && p.canSeek && length > 0) { p.position = f * length; pos = p.position } }
     function clock(sec) { const v = Math.max(0, Math.floor(sec)); const m = Math.floor(v / 60), s = v % 60; return m + ":" + (s < 10 ? "0" + s : s) }
 }

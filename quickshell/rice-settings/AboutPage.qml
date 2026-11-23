@@ -18,7 +18,8 @@ Item {
             "v=$(\"$HOME/.local/bin/rice-wm\" version 2>/dev/null); echo \"wm=${v%% *}\"; echo \"hypr=${v#* }\"",
             "echo \"qs=$(qs --version 2>/dev/null | head -1 | sed 's/^quickshell *//I')\"",
             "echo \"cpu=$(sed -n 's/^model name[[:space:]]*: //p' /proc/cpuinfo | head -1)\"",
-            "echo \"gpu=$(lspci 2>/dev/null | grep -iE 'vga|3d|display' | head -1 | sed 's/.*: //; s/ (rev.*//')\"",
+            // the graphics card you play on: the dedicated one when there are two (a laptop lists its CPU graphics first)
+            "echo \"gpu=$(lspci 2>/dev/null | grep -iE 'vga|3d|display' | grep -i nvidia | head -1 | sed 's/.*: //; s/ (rev.*//')\"; gpu_other=$(lspci 2>/dev/null | grep -iE 'vga|3d|display' | head -1 | sed 's/.*: //; s/ (rev.*//')\"; echo \"gpu_other=${gpu_other}\"",
             "echo \"mem=$(awk '/MemTotal/ {printf \"%.1f GB\", $2/1048576}' /proc/meminfo)\"",
             "echo \"up=$(uptime -p 2>/dev/null | sed 's/^up //')\"",
             "echo \"host=$(cat /etc/hostname 2>/dev/null || hostname)\""
@@ -27,6 +28,9 @@ Item {
             onStreamFinished: {
                 const o = {}
                 text.split("\n").forEach(function(l) { const i = l.indexOf("="); if (i > 0) o[l.substring(0, i)] = l.substring(i + 1).trim() })
+                // no NVIDIA card: the one line lspci listed
+                if (!o.gpu) o.gpu = o.gpu_other || ""
+                delete o.gpu_other
                 page.info = o
             }
         }

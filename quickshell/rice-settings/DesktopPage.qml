@@ -233,6 +233,17 @@ Item {
                 }
             }
             SliderRow {
+                label: I18n.t("See-through terminal")
+                desc: I18n.t("How much of what is behind the terminal (kitty) shows through. Blur behind it: Settings > Hyprland > Blur. Off in Light mode and in gaming mode without blur")
+                from: 0; to: 70; step: 5; decimals: 0; unit: "%"
+                value: Math.round((1 - (page.ctl.dst.terminalOpacity !== undefined ? Number(page.ctl.dst.terminalOpacity) : 0.6)) * 100)
+                onCommitted: function(x) {
+                    const o = (1 - x / 100).toFixed(2)
+                    const d = JSON.parse(JSON.stringify(page.ctl.dst)); d.terminalOpacity = Number(o); page.ctl.dst = d
+                    Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" terminal-opacity \"$1\"", "_", o])
+                }
+            }
+            SliderRow {
                 label: I18n.t("Transparency of the widgets")
                 desc: I18n.t("How much of the wallpaper shows through the cards (with blur: frosted glass), on Hyprland and niri")
                 from: 0; to: 80; step: 5; decimals: 0; unit: "%"

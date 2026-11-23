@@ -63,15 +63,7 @@
     "appsButton": true,
     "tint": false,
     "opacity": 0.78,
-    "blur": true,
-    "apps": [
-      "kitty",
-      "org.gnome.Nautilus",
-      "firefox",
-      "spotify",
-      "discord",
-      "steam"
-    ]
+    "blur": true
   },
   "lock": {
     "toolbars": false,

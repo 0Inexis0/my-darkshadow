@@ -11,6 +11,8 @@ PanelWindow {
     property var dock: null
     property bool open: false
     property real t: 0
+    // the pointer is on the menu's card: the dock waits to slide away while that is true
+    property bool overPanel: false
     Behavior on t { NumberAnimation { duration: am.open ? 560 : 200; easing.type: Easing.Linear } }
     readonly property real et: 1 - Math.pow(1 - t, 4)
     onOpenChanged: { t = open ? 1 : 0; if (open) { search.text = ""; search.forceActiveFocus() } }
@@ -77,6 +79,7 @@ PanelWindow {
         transformOrigin: am.edge === "left" ? Item.Left : (am.edge === "right" ? Item.Right : Item.Bottom)
         transform: Translate { y: am.edge === "bottom" ? (1 - am.et) * 40 : 0; x: am.edge === "left" ? (1 - am.et) * -40 : (am.edge === "right" ? (1 - am.et) * 40 : 0) }
         clip: true
+        HoverHandler { onHoveredChanged: am.overPanel = hovered }
         MouseArea { anchors.fill: parent }
 
         // search

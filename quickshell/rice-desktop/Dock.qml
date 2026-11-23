@@ -64,7 +64,7 @@ Scope {
     }
     // it only hides when the pointer is really off the dock (a stray "exited" while the dock grows or while an icon
     // is clicked made it hide and come back over and over)
-    Timer { id: hideTimer; interval: 700; onTriggered: if (!dockMouse.containsMouse) dock.hovering = false }
+    Timer { id: hideTimer; interval: 700; onTriggered: if (!dockMouse.containsMouse && !apps.overPanel) dock.hovering = false }
     DockApps { id: apps; dock: dock }
     DockEdit { id: edit; dock: dock; appsMenu: apps }
     NPal { id: pal; theme: "shell"; alpha: dock.alpha }

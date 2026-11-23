@@ -1010,6 +1010,15 @@ def cmd_kbd_state():
                       "all": [{"id": a, "name": b, "n": cnt.get(a, 0)} for a, b in xkb_layouts()]}))
 
 
+def kbd_remember(layout):
+    """the layouts for the programs that are not the window manager: a new kitty terminal reads them too."""
+    try:
+        os.makedirs(DIR, exist_ok=True)
+        write_atomic(DIR + "/kbd.json", json.dumps({"layout": layout}))
+    except OSError:
+        pass
+
+
 def cmd_kbd_set(layouts):
     """LAYOUTS: us,pl or us:intl,pl (layout:variant)"""
     lays, vars_ = [], []
@@ -1028,6 +1037,7 @@ def cmd_kbd_set(layouts):
         s["kbd"]["options"] = "grp:alt_shift_toggle"
     save(s)
     ev("hl.config(%s)" % kbd_lua(s["kbd"]))
+    kbd_remember(",".join(lays))
     print("Keyboard: " + ", ".join(lays))
 
 

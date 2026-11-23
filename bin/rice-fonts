@@ -62,6 +62,11 @@ if [ "${1:-}" = "status" ]; then
 fi
 
 command -v curl >/dev/null || { echo "rice-fonts: curl is needed" >&2; exit 1; }
+# fontconfig does the installing (fc-cache) and the checking (fc-list): without it, nothing here can say "installed"
+if ! command -v fc-list >/dev/null; then
+  echo "rice-fonts: fontconfig is missing (it installs and lists fonts): install it (Arch: fontconfig, Debian: fontconfig, Fedora: fontconfig)" >&2
+  exit 1
+fi
 mkdir -p "$dir"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
@@ -122,8 +127,17 @@ for e in "JetBrainsMono Nerd Font|JetBrainsMono|JetBrainsMonoNerdFont-*.ttf" "Sy
   IFS='|' read -r fam pkg pat <<<"$e"
   if has "$fam"; then
     echo "$fam: already installed"
-  elif command -v tar >/dev/null && curl -fsSL -o "$tmp/$pkg.tar.xz" "$NF/$pkg.tar.xz" &&
-       mkdir -p "$dir/$pkg" && tar -xJf "$tmp/$pkg.tar.xz" -C "$dir/$pkg" --wildcards "$pat" 2>/dev/null; then
+  elif curl -fsSL -o "$tmp/$pkg.tar.xz" "$NF/$pkg.tar.xz" && mkdir -p "$dir/$pkg" &&
+       # tar when it is there (GNU tar unpacks xz), Python when it is not (a distro without xz-utils or with BSD tar)
+       ( { command -v tar >/dev/null && tar -xJf "$tmp/$pkg.tar.xz" -C "$dir/$pkg" --wildcards "$pat"; } 2>/dev/null ||
+         python3 -c '
+import sys, tarfile, fnmatch, os
+src, dst, pat = sys.argv[1:4]
+with tarfile.open(src, "r:xz") as t:
+    for m in t.getmembers():
+        if m.isfile() and fnmatch.fnmatch(os.path.basename(m.name), pat):
+            open(os.path.join(dst, os.path.basename(m.name)), "wb").write(t.extractfile(m).read())
+' "$tmp/$pkg.tar.xz" "$dir/$pkg" "$pat" ); then
     echo "$fam: installed"
     changed=1
   else

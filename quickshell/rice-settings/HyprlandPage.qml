@@ -16,9 +16,10 @@ Item {
         "decoration.active_opacity", "decoration.inactive_opacity", "decoration.shadow.enabled", "decoration.shadow.range",
         "decoration.blur.enabled", "decoration.blur.size", "decoration.blur.passes", "decoration.blur.noise", "decoration.blur.vibrancy"]
     function fit(specs) { return niri ? specs.filter(x => niriKeys.indexOf(x.key) >= 0) : specs }
-    readonly property var tabs: niri ? ["Gaps", "Borders", "Rounding & Opacity", "Blur", "Keybinds", "Monitors"]
-                                     : ["Gaps", "Borders", "Layout", "Rounding & Opacity", "Blur", "Keybinds", "Monitors"]
-    readonly property var comps: niri ? [gapsC, bordersC, roundC, blurC, bindsC, monC] : [gapsC, bordersC, layoutC, roundC, blurC, bindsC, monC]
+    // screens are in Settings > System > Monitors only
+    readonly property var tabs: niri ? ["Gaps", "Borders", "Rounding & Opacity", "Blur", "Keybinds"]
+                                     : ["Gaps", "Borders", "Layout", "Rounding & Opacity", "Blur", "Keybinds"]
+    readonly property var comps: niri ? [gapsC, bordersC, roundC, blurC, bindsC] : [gapsC, bordersC, layoutC, roundC, blurC, bindsC]
 
     readonly property var gapsSpec: [
         { key: "general.gaps_in", type: "slider", label: I18n.t("Inner gaps"), desc: I18n.t("Gaps between windows"), min: 0, max: 40, step: 1, unit: " px", def: 5 },
@@ -257,5 +258,4 @@ Item {
     }
 
     Component { id: bindsC; BindsPage { ctl: page.ctl } }
-    Component { id: monC; MonitorsPage { ctl: page.ctl } }
 }

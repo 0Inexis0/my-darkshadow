@@ -120,6 +120,7 @@ Item {
     }
 
     PageScroll {
+        id: scroll
         anchors.fill: parent
 
         // ---------- the screen now ----------
@@ -151,7 +152,21 @@ Item {
 
         // ---------- keep it? ----------
         Rectangle {
+            id: keepRow
             visible: page.countdown > 0
+            // the page comes back up to it: a change made further down is asked about here, not off the screen
+            Connections {
+                target: page
+                function onCountdownChanged() {
+                    if (page.countdown <= 0) return
+                    // wait a frame: the row is not laid out until it becomes visible
+                    Qt.callLater(function() {
+                        if (page.countdown <= 0) return
+                        scroll.body.cancelFlick()
+                        scroll.body.contentY = Math.min(scroll.body.contentY, page.keepRow.y - 10)
+                    })
+                }
+            }
             width: parent.width
             height: 64
             radius: M3.sq ? 0 : (M3.rL)

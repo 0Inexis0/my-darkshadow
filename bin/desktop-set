@@ -38,6 +38,21 @@ DOCK_SHAPES = ["", "squircle", "circle", "cookie", "cookie4", "flower", "clover"
 # V4.89: how app icons look (Edit mode > Icons): auto = what Settings > Dock says (its Tint and wallpaper switches, its shape)
 ICON_LOOKS = ["auto", "original", "tinted", "grey", "themed", "filled", "mono"]
 ICON_SHAPES = ["auto", "none"] + [x for x in DOCK_SHAPES if x]
+def desktop_id(app_id):
+    """true when the app has a .desktop file: the pinned id itself or an id ending with it (steam -> steam.desktop)"""
+    home = os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share")
+    dirs = (os.environ.get("XDG_DATA_DIRS") or "/usr/local/share:/usr/share").split(":")
+    for d in dirs + [home + "/flatpak/exports/share", "/var/lib/flatpak/exports/share",
+                     home + "/applications", os.path.expanduser("~/.local/share/applications")]:
+        d = d + "/applications"
+        if not os.path.isdir(d):
+            continue
+        for name in os.listdir(d):
+            if name.endswith(".desktop") and (name[:-8] == app_id or name[:-8].endswith("." + app_id)):
+                return True
+    return False
+
+
 DEFAULTS = {
     "widgets": {w: {"enabled": False} for w in WIDGETS},
     "clock": {"enabled": True, "onlyLocked": False, "placement": "draggable", "style": "expressive", "font": "outfit"},   # the only widget at first: in the middle
@@ -48,13 +63,15 @@ DEFAULTS = {
              "style": "floating", "iconSize": 34, "gap": 6, "iconShape": "",
              # V4.92: its modules and the magnifying under the pointer (0 = off .. 100 % bigger)
              "mods": ["music"], "magnify": 0,
-             "apps": ["kitty", "org.gnome.Nautilus", "firefox", "spotify", "discord", "steam"]},
+             # only apps that are installed: a pin on a missing app is an entry that cannot start (PR #26)
+             "apps": ([x for x in ["kitty", "org.gnome.Nautilus", "firefox", "spotify", "discord", "steam"] if desktop_id(x)])},
     "lock": {"toolbars": False, "widgets": False, "media": False},
     # the icon pack: a folder name in the icon folders ("" = the system's icon theme)
     "icons": {"look": "auto", "shape": "auto", "theme": ""},
     # the game bar (SUPER + G, Settings > Gaming): how see-through it is and the blur behind it
     "gamebar": {"opacity": 0.9, "blur": True},
     "widgetBlur": True,
+    "terminalOpacity": 0.6,  # see-through terminal (kitty): rice-effects writes it to kitty's config
     "widgetTheme": "google",  # how the widget cards look: Google (Material You); the other styles are gone
     "widgetAdapt": True,      # text and cards turn light or dark with the wallpaper behind each widget
     "autoHide": True,        # widgets hide while windows are open (Settings > Desktop); on from the start
@@ -372,6 +389,13 @@ def main(a):
             g["opacity"] = round(max(0.2, min(1.0, float(a[3]))), 2)
         else:
             g["blur"] = tobool(a[3])
+    elif cmd == "terminal-opacity":
+        # terminal-opacity 0.3-1: how see-through the terminal is (rice-effects writes it to kitty, loaded last)
+        c["terminalOpacity"] = round(max(0.3, min(1.0, float(a[2] if len(a) > 2 else 0.6))), 2)
+        fx = os.path.expanduser("~/.local/bin/rice-effects")
+        if os.access(fx, os.X_OK):
+            subprocess.Popen([fx, "apply"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                             start_new_session=True)
     elif cmd in ("lock-regen", "dock-blur"):
         pass
     elif cmd == "widgets-blur":
