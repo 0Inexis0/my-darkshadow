@@ -156,7 +156,7 @@ PanelWindow {
     readonly property color dim: goo ? gp.dim : Qt.rgba(0.965, 0.961, 0.957, 0.66)
     readonly property color line: goo ? "transparent" : Qt.rgba(1, 1, 1, 0.09)
     readonly property real alpha: Look.flat ? 1 : (bc.opacity !== undefined ? bc.opacity : 0.72)
-    readonly property color bg: goo ? gp.surface : Qt.rgba(0.05, 0.05, 0.05, alpha)
+    readonly property color bg: Look.sq ? gp.minSurface : (goo ? gp.surface : Qt.rgba(0.05, 0.05, 0.05, alpha))
     readonly property real gap: hug ? 3 : (floating ? 8 : 0)
     property string cfgText: ""
     readonly property string home: Quickshell.env("HOME")
@@ -947,7 +947,7 @@ PanelWindow {
             height: bar.barH + bar.gap
             x: Math.round(body.width / 2 - body.nHalf) - ear - 20
             y: bar.atBottom ? 0 : -bar.gap
-            fill: Qt.rgba(0.02, 0.02, 0.025, Look.flat ? 1 : bar.alpha)
+            fill: Look.sq ? gp.minSurface : Qt.rgba(0.02, 0.02, 0.025, Look.flat ? 1 : bar.alpha)
             shadow: bar.shadowOn
         }
 
@@ -955,7 +955,7 @@ PanelWindow {
         readonly property real hpad: 7
         // the edge's own color is the darkest layer (like the screen's frame), the pills on it one step lighter.
         // Both follow the bar's Transparency, so the blur behind them shows
-        readonly property color hbase: Qt.darker(gp.surface, 1.35)
+        readonly property color hbase: Look.sq ? gp.minSurface : Qt.darker(gp.surface, 1.35)
         readonly property color hfill: Qt.rgba(hbase.r, hbase.g, hbase.b, Look.flat ? 1 : Math.min(1, bar.alpha + 0.1))
         readonly property color hcard: Qt.lighter(gp.card, 1.12)
         readonly property color hpill: Qt.rgba(hcard.r, hcard.g, hcard.b, Look.flat ? 1 : Math.min(1, bar.alpha + (bar.hugFrame ? 0.16 : 0.1)))

@@ -47,7 +47,7 @@ Item {
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         bottomMargin: 16
-        reuseItems: true
+        reuseItems: false      // V5.00: like Files (a reused row could stay on screen from the list before)
         cacheBuffer: 400
         delegate: TrackRow { required property var modelData; required property int index; width: songs.width; pl: lb.pl; t: modelData; list: lb.pl.songs; idx: index }
     }

@@ -21,7 +21,7 @@ Item {
     property string busy: ""                 // what is being changed (its card shows a spinner)
 
     // V4.98 Minimal mode (rice-minimal)
-    property var mn: ({ on: false, frame: "double", width: 3, solid: true, bar: true })
+    property var mn: ({ on: false, frame: "double", width: 3, solid: false, bar: true })
     function setMin(args) {
         const m = Object.assign({}, mn)
         if (args[0] === "on" || args[0] === "off") m.on = args[0] === "on"
@@ -251,8 +251,8 @@ Item {
         ToggleRow {
             visible: page.mn.on === true
             label: I18n.t("Solid windows")
-            desc: I18n.t("No transparency and no blur in the windows (the terminal too)")
-            checked: page.mn.solid !== false
+            desc: I18n.t("No transparency and no blur anywhere (the terminal too); the blur settings wait until it is off")
+            checked: page.mn.solid === true
             onToggled: function(v) { page.setMin(["set", "solid", v ? "on" : "off"]) }
         }
         ToggleRow {

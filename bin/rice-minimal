@@ -10,7 +10,8 @@ screen), window frames like a classic floating window manager, a flat bar and a 
                                                                   line outside it; single: the color frame only;
                                                                   thin: one quiet line)
                                       width 1-8                  (how thick the color frame of the windows is)
-                                      solid on|off               (windows without transparency and blur)
+                                      solid on|off               (windows without transparency and blur; off
+                                                                  by default)
                                       bar on|off                 (the bar turns flat, with numbered workspaces,
                                                                   while Minimal mode is on; your bar comes back
                                                                   when it is off)
@@ -37,7 +38,7 @@ KLINE = "globinclude rice-minimal.conf"
 KMARK = "# DarkShadow's Shell: Minimal mode (Settings > Look & Feel)"
 BIN = HOME + "/.local/bin"
 
-DEFAULTS = {"on": False, "frame": "double", "width": 3, "solid": True, "bar": True}
+DEFAULTS = {"on": False, "frame": "double", "width": 3, "solid": False, "bar": True}
 FRAMES = ("double", "single", "thin")
 
 
@@ -51,6 +52,11 @@ def load():
         for k in ("prev_style", "prev_ws"):
             if k in raw:
                 c[k] = raw[k]
+        # V5.00: "Solid windows" is off by default (it turned the blur off, so Hyprland's blur settings seemed broken);
+        # a file from V4.98-V4.99 had it on without anyone choosing it
+        if raw.get("v", 1) < 2:
+            c["migrated"] = raw.get("on") is True and raw.get("solid", True) is not False
+            c["solid"] = False
     except Exception:
         pass
     if c["frame"] not in FRAMES:
@@ -68,7 +74,8 @@ def save(c):
     os.makedirs(DIR, exist_ok=True)
     # written in place (not a new file put over it): the shell, Settings and the apps watch this file, and a
     # watch stays on the file only while it is the same file
-    t = json.dumps(c)
+    c["v"] = 2
+    t = json.dumps({k: v for k, v in c.items() if k != "migrated"})
     try:
         if open(CFG).read() == t:
             return
@@ -186,7 +193,12 @@ def kitty(c):
 
 
 # ---------------- the bar ----------------
-def bar(c, was_on):
+def bar(c, had):
+    """the flat bar comes when Minimal mode (with Flat bar) turns on, and your own bar comes back when it turns off.
+    Only when it turns on or off: a bar style you choose while it is on stays (V5.00; an update made it flat again)"""
+    want = c["on"] and c["bar"]
+    if want == had:
+        return
     rb = BIN + "/rice-bar"
     if not os.access(rb, os.X_OK):
         return
@@ -194,10 +206,9 @@ def bar(c, was_on):
         st = json.loads(q([rb, "state"]) or "{}")
     except ValueError:
         st = {}
-    if c["on"] and c["bar"]:
-        if not was_on or "prev_style" not in c:
-            c["prev_style"] = st.get("style", "dynamic")
-            c["prev_ws"] = st.get("ws_style", "dots")
+    if want:
+        c["prev_style"] = st.get("style", "dynamic")
+        c["prev_ws"] = st.get("ws_style", "dots")
         q([rb, "set", "style", "flat"])
         q([rb, "set", "ws_style", "numbers"])
     elif "prev_style" in c:
@@ -209,10 +220,10 @@ def bar(c, was_on):
         c.pop("prev_ws", None)
 
 
-def apply(c, was_on=None, reload_wm=True):
-    if was_on is None:
-        was_on = c["on"]
-    bar(c, was_on)
+def apply(c, had_bar=None, reload_wm=True):
+    if had_bar is None:
+        had_bar = c["on"] and c["bar"]
+    bar(c, had_bar)
     save(c)
     os.makedirs(HYPR, exist_ok=True)
     old = open(LUA).read() if os.path.exists(LUA) else ""
@@ -222,6 +233,9 @@ def apply(c, was_on=None, reload_wm=True):
         open(LUA, "w").write(new)
     wire_hypr()
     kitty(c)
+    # the one-time change of V5.00 (Solid windows off) brings the blur back now, even from the installer
+    if c.get("migrated") and changed:
+        reload_wm = True
     if reload_wm:
         if q([BIN + "/rice-wm"]).strip() == "niri":
             q([BIN + "/rice-niri", "apply"], timeout=30)
@@ -237,10 +251,11 @@ def main(a):
     if cmd == "state":
         print(json.dumps({k: c[k] for k in DEFAULTS}))
     elif cmd in ("on", "off", "toggle"):
-        was = c["on"]
-        c["on"] = (not was) if cmd == "toggle" else cmd == "on"
-        apply(c, was)
+        had = c["on"] and c["bar"]
+        c["on"] = (not c["on"]) if cmd == "toggle" else cmd == "on"
+        apply(c, had)
     elif cmd == "set" and len(a) == 3:
+        had = c["on"] and c["bar"]
         k, v = a[1], a[2]
         if k == "frame":
             if v not in FRAMES:
@@ -255,9 +270,9 @@ def main(a):
             c[k] = v.lower() in ("1", "true", "on", "yes")
         else:
             sys.exit(__doc__)
-        apply(c, c["on"])
+        apply(c, had)
     elif cmd == "apply":
-        apply(c, c["on"], reload_wm="--no-reload" not in a)
+        apply(c, None, reload_wm="--no-reload" not in a)
     else:
         sys.exit(__doc__)
 

@@ -234,7 +234,7 @@ ShellRoot {
             try { j = JSON.parse(t) } catch (e) { j = {} }
             Look.sq = j.on === true
             Look.frame = j.frame === "single" || j.frame === "thin" ? j.frame : "double"
-            root.minSolid = j.on === true && j.solid !== false
+            root.minSolid = j.on === true && j.solid === true && (j.v || 1) >= 2
         } }
     Trigger { path: root.home + "/.config/rice/desktop.json"; every: 1500
         onContent: function(t) { root.applyCfg(t) } }

@@ -29,6 +29,9 @@ QtObject {
         default: return Qt.hsla(hue, 0.08, 0.085, a)
         }
     }
+    // V5.00 Minimal mode: the surface of the bar, tinted with your wallpaper's color and lighter than black (a grey
+    // wallpaper gives graphite), so the square bar matches the wallpaper instead of being a black slab
+    readonly property color minSurface: light ? surface : Qt.hsla(hue, mono ? 0 : sat * 0.42, 0.17, a)
     // how solid the cards are (1: solid, as everywhere; the toolbox lets its own Transparency through them too)
     property real cardAlpha: 1
     readonly property color cardBase: light ? Qt.rgba(1, 1, 1, 1) : Qt.lighter(Qt.rgba(surface.r, surface.g, surface.b, 1), theme === "black" ? 2.6 : 1.75)

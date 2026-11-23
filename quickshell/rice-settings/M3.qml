@@ -11,12 +11,13 @@ Singleton {
     // V4.98 Minimal mode (Settings > Look & Feel; rice-minimal): every corner square
     property bool sq: false
     property string frame: "double"
+    property bool minSolid: false      // Minimal mode with Solid windows: no blur, no transparency
     FileView {
         path: Quickshell.env("HOME") + "/.config/rice/minimal.json"
         watchChanges: true
         printErrors: false
         onFileChanged: reload()
-        onLoaded: { try { const j = JSON.parse(text()); m.sq = j.on === true; m.frame = j.frame || "double" } catch (e) { m.sq = false } }
+        onLoaded: { try { const j = JSON.parse(text()); m.sq = j.on === true; m.frame = j.frame || "double"; m.minSolid = j.on === true && j.solid === true && (j.v || 1) >= 2 } catch (e) { m.sq = false } }
         onLoadFailed: m.sq = false
     }
     // the accent of your theme (matugen writes it with every new wallpaper): read again whenever it changes, so

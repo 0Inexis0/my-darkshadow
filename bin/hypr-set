@@ -377,6 +377,21 @@ def cmd_state():
     }))
 
 
+def minimal_keys():
+    """the settings Minimal mode (rice-minimal) sets while it is on"""
+    try:
+        m = json.load(open(DIR + "/minimal.json"))
+    except Exception:
+        return ()
+    if m.get("on") is not True:
+        return ()
+    k = ["decoration.rounding", "general.border_size", "decoration.shadow.enabled", "decoration.shadow.range",
+         "decoration.shadow.render_power"]
+    if m.get("solid") is True and m.get("v", 1) >= 2:
+        k += ["decoration.blur.enabled", "decoration.active_opacity", "decoration.inactive_opacity"]
+    return tuple(k)
+
+
 def cmd_set(key, raw):
     spec = SPEC.get(key)
     if not spec:
@@ -395,6 +410,11 @@ def cmd_set(key, raw):
     s = load()
     s["opts"][key] = v
     save(s)
+    m = minimal_keys()
+    if key in m:
+        # Minimal mode decides this one now: saved for when it is off, not sent (it would undo Minimal mode)
+        print("Saved. Minimal mode decides this while it is on (Settings > Look & Feel > Minimal mode)")
+        return
     if not ev("hl.config(%s)" % nest(key, v)):
         sys.exit(1)
 

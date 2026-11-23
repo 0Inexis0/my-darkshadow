@@ -97,14 +97,15 @@ FocusScope {
         highlightFollowsCurrentItem: false
         cacheBuffer: 400
         bottomMargin: 88
-        reuseItems: true
+        // V5.00: no reused delegates and no add transition: with both, files of the folder you left stayed on
+        // screen under the new ones (two names in one place); the pop-in of each file is its own animation
+        reuseItems: false
         flickDeceleration: 4000
         maximumFlickVelocity: 5000
         opacity: 0.25 + 0.75 * fview.enterK
         transform: Translate { x: fview.dir * 34 * (1 - fview.enterK) }
         Band { view: grid; fv: fview }
         delegate: Cell { fv: fview }
-        add: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 160 } }
         WheelHandler {
             acceptedModifiers: Qt.ControlModifier
             onWheel: function(w) { fview.fa.zoom = Math.max(72, Math.min(220, fview.fa.zoom + (w.angleDelta.y > 0 ? 12 : -12))) }
@@ -125,7 +126,9 @@ FocusScope {
         highlightFollowsCurrentItem: false
         cacheBuffer: 400
         bottomMargin: 88
-        reuseItems: true
+        // V5.00: no reused delegates and no add transition: with both, files of the folder you left stayed on
+        // screen under the new ones (two names in one place); the pop-in of each file is its own animation
+        reuseItems: false
         headerPositioning: ListView.OverlayHeader
         flickDeceleration: 4000
         maximumFlickVelocity: 5000

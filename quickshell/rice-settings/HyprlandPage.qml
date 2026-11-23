@@ -1,4 +1,5 @@
 import Quickshell
+import Quickshell.Io
 import QtQuick
 
 Item {
@@ -99,10 +100,41 @@ Item {
         }
     }
 
+    // V5.00: Minimal mode sets the corners, the frames and the shadows (and with Solid windows the blur and the
+    // transparency): said here, so a slider that seems to do nothing is not a mystery
+    Rectangle {
+        id: minNote
+        visible: M3.sq
+        x: 24; y: tabsFlow.y + tabsFlow.height + 12
+        width: parent.width - 48
+        height: visible ? minText.implicitHeight + 24 : 0
+        radius: M3.sq ? 0 : 14
+        color: M3.surfaceHigh
+        border.width: 1; border.color: M3.primary
+        T {
+            id: minText
+            x: 14; y: 12
+            width: parent.width - 28 - minOff.width - 12
+            wrapMode: Text.WordWrap
+            font.pixelSize: 13
+            color: "#F6F5F4"
+            text: I18n.t("Minimal mode is on: it decides the corners, the border width and the shadows")
+                + (M3.minSolid ? I18n.t(", and with Solid windows the blur and the transparency too") : "")
+                + I18n.t(". What you change here is saved and comes back when Minimal mode is off.")
+        }
+        Pill {
+            id: minOff
+            anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
+            label: I18n.t("Turn off Minimal mode")
+            onClicked: { M3.sq = false; M3.minSolid = false; minOffP.running = true }
+        }
+        Process { id: minOffP; command: ["bash", "-c", "\"$HOME/.local/bin/rice-minimal\" off"] }
+    }
+
     Flickable {
         id: flick
         x: 0
-        y: tabsFlow.y + tabsFlow.height + 14
+        y: tabsFlow.y + tabsFlow.height + 14 + (minNote.visible ? minNote.height + 10 : 0)
         width: parent.width
         height: parent.height - y - 52
         contentWidth: width

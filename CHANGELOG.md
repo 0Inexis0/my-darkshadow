@@ -1,5 +1,13 @@
 # Changelog
 
+## V5.00: Files fixed, a bar that matches the wallpaper, blur works again
+- Fixed: **Files showed two folders at once**. After opening a folder (or showing hidden files), the files of the folder you left stayed on screen under the new ones, with two names in one place. Files and Music no longer reuse old tiles
+- **Minimal mode bar**: the square bar (Notch, Edge, Flat, Islands, Pills) is tinted with your wallpaper's color and lighter than black (a grey wallpaper gives graphite). It is no longer a black slab
+- Fixed: **blur seemed broken** (Blur size 20 did nothing). Minimal mode's "Solid windows" was on by default and turned the blur off everywhere. It is off by default now (also for everyone who turned Minimal mode on in V4.98-V4.99), and only turns the blur off when you switch it on
+- **Settings > Hyprland says when Minimal mode decides** the corners, the border width and the shadows (and with Solid windows the blur and the transparency), with a button to turn it off. A change there is saved and comes back when Minimal mode is off; it no longer undoes Minimal mode halfway
+- Fixed: an update could turn the bar flat again when Minimal mode was on. The flat bar now only comes when Minimal mode turns on, and a bar style you choose afterwards stays
+- Checked: the whole shell in Minimal mode with every widget on, Edit mode and every panel; every Settings page; Files with fast folder changes and hidden files
+
 ## V4.99: Minimal mode for every bar style
 - **Notch and Edge bars in Minimal mode**: they turn into plain square blocks with the same frame as the windows (a dark line with your theme color inside it). Before, they kept their rounded ears and corners and their soft shadow
 - **Islands and Pills bars** get the frame too, round each island and each pill
