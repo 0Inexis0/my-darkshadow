@@ -75,7 +75,7 @@ Item {
     onSatChanged: vz.refreshLater()
     onToneChanged: vz.refreshLater()
 
-    readonly property bool listening: running && visible && !Look.covered   // V4.96: no cava while windows cover it
+    readonly property bool listening: running && visible
     CavaUser { active: vz.listening }
     Connections {
         target: CavaFeed

@@ -125,3 +125,8 @@ wait
 "$HOME/.local/bin/rice-colors" refresh >/dev/null 2>&1 &
 # the icons of our apps (Files, Photos, Music, Videos) take the new colors too
 [ -x "$HOME/.local/bin/rice-app" ] && "$HOME/.local/bin/rice-app" icons >/dev/null 2>&1 &
+# the login screen (SDDM) takes the new wallpaper and colors, when it is the shell's (V5.01: only rice-walls did it,
+# so a wallpaper picked in the picker, in Files or in Photos never got there and the login screen kept the old one)
+if [ -x "$HOME/.local/bin/rice-sddm" ] && { [ -w /usr/share/sddm/themes/darkshadow-shell/user ] || [ -w /var/lib/darkshadow-shell-sddm ]; }; then
+  "$HOME/.local/bin/rice-sddm" sync >/dev/null 2>&1 &
+fi

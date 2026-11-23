@@ -13,7 +13,7 @@ Item {
     readonly property var player: pick()
     property bool running: true
     // where the song is (asked for once a second while it plays)
-    Instantiator { model: me.running && me.visible && !Look.covered ? 1 : 0; delegate: QtObject { Component.onCompleted: Player.hold(); Component.onDestruction: Player.release() } }
+    Instantiator { model: me.running && me.visible ? 1 : 0; delegate: QtObject { Component.onCompleted: Player.hold(); Component.onDestruction: Player.release() } }
 
     Card { anchors.fill: parent; k: me.bg; pal: me.pal }
 
@@ -59,7 +59,7 @@ Item {
         anchors.right: ctrls.left; anchors.rightMargin: 10
         anchors.verticalCenter: ctrls.verticalCenter; height: 18
         visible: Player.has && Player.length > 0
-        value: Player.frac; moving: Player.playing && !Look.covered; seekable: true
+        value: Player.frac; moving: Player.playing; seekable: true
         color: me.pal ? me.pal.primary : "#9ec9bd"; track: me.pal ? me.pal.track : Qt.rgba(1, 1, 1, 0.14)
         onMoved: function(v) { Player.seekTo(v) }
     }
@@ -93,7 +93,7 @@ Item {
             Blob { anchors.fill: parent; kind: me.player && me.player.isPlaying ? Look.shape : "circle"; color: me.pal ? me.pal.primary : "#F6F5F4"
                 scale: pm.pressed ? 0.86 : 1
                 Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
-                SlowSpin { turn: 360; period: 12000; running: (me.player && me.player.isPlaying && !Look.lite) && !Look.covered } }
+                SlowSpin { turn: 360; period: 12000; running: me.player && me.player.isPlaying && !Look.lite } }
             T {
                 anchors.centerIn: parent
                 text: me.player && me.player.isPlaying ? "" : ""

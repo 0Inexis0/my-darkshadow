@@ -40,7 +40,7 @@ Item {
 
     // V4.95: once a minute, right when it turns (it woke every second, to change nothing 59 times out of 60);
     // the analog face moves its seconds dot every second, and only while you can see it
-    readonly property bool secs: sty === "analog" && !Look.lite && !Look.covered
+    readonly property bool secs: sty === "analog" && !Look.lite
     Timer {
         interval: ck.secs ? 1000 : Math.max(250, 60050 - ck.now.getSeconds() * 1000 - ck.now.getMilliseconds())
         running: true; repeat: true
@@ -131,7 +131,7 @@ Item {
             width: 270; height: 270
             kind: "cookie"
             color: ck.pal ? ck.pal.shapeFill : "#334"
-            RotationAnimator on rotation { from: 0; to: 360; duration: 90000; loops: Animation.Infinite; running: ck.sty === "shape" && !Look.lite && !Look.covered && !Look.sq }
+            RotationAnimator on rotation { from: 0; to: 360; duration: 90000; loops: Animation.Infinite; running: ck.sty === "shape" && !Look.lite && !Look.sq }
         }
         Column {
             anchors.centerIn: parent

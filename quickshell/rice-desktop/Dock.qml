@@ -64,7 +64,11 @@ Scope {
     }
     // it only hides when the pointer is really off the dock (a stray "exited" while the dock grows or while an icon
     // is clicked made it hide and come back over and over)
-    Timer { id: hideTimer; interval: 700; onTriggered: if (!dockMouse.containsMouse && !apps.overPanel) dock.hovering = false }
+    Timer { id: hideTimer; interval: 700; onTriggered: if (!dockMouse.containsMouse && !dock.overPanelItems && !apps.overPanel) dock.hovering = false }
+    // V5.01: the pointer on the dock's own card, its apps and modules included. A module or an icon with its own
+    // hover took the hover from dockMouse (it lies under the card): the dock hid under the pointer and came back,
+    // over and over, when you went from an empty spot of the dock onto an icon
+    property bool overPanelItems: false
     DockApps { id: apps; dock: dock }
     DockEdit { id: edit; dock: dock; appsMenu: apps }
     NPal { id: pal; theme: "shell"; alpha: dock.alpha }
@@ -257,12 +261,23 @@ Scope {
                 dock.over = q.x >= 0 && q.y >= 0 && q.x <= panel.width && q.y <= panel.height
                 dock.magnifyAt(dock.vert ? m.y : m.x)
             }
-            onExited: { dock.over = false; if (dock.autoHide && !edit.open) hideTimer.restart() }
+            onExited: { dock.over = dock.overPanelItems; if (dock.autoHide && !edit.open) hideTimer.restart() }
         }
 
         Rectangle {
             id: panel
             Frame { }      // V4.98 Minimal mode
+            HoverHandler {
+                id: panelHover
+                onHoveredChanged: {
+                    dock.overPanelItems = hovered
+                    dock.over = hovered
+                    if (hovered) { hideTimer.stop(); if (dock.reveal) dock.hovering = true }
+                    else if (dock.autoHide && !edit.open && !dockMouse.containsMouse) hideTimer.restart()
+                }
+                // the magnifying follows the pointer over the icons and modules too
+                onPointChanged: if (hovered && dock.mag > 0) { const q = panel.mapToItem(dockMouse, point.position.x, point.position.y); dock.magnifyAt(dock.vert ? q.y : q.x) }
+            }
             Component.onCompleted: dock.panelItem = panel
             // sits 10 px from its edge; hidden = slid out over that edge
             readonly property real away: (dock.vert ? width : height) + 14

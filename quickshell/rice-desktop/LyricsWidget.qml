@@ -9,7 +9,7 @@ Item {
     property var pal: null
     property real bg: 1
     property bool running: true
-    Instantiator { model: ly.running && !Look.covered ? 1 : 0; delegate: QtObject { Component.onCompleted: Player.hold(); Component.onDestruction: Player.release() } }
+    Instantiator { model: ly.running ? 1 : 0; delegate: QtObject { Component.onCompleted: Player.hold(); Component.onDestruction: Player.release() } }
     readonly property color ink: pal ? pal.fg : "#F6F5F4"
     property var lines: []          // [[seconds, text], ...]
     property string plain: ""
@@ -114,7 +114,7 @@ Item {
         anchors.bottom: parent.bottom; anchors.bottomMargin: 12
         x: 16; width: parent.width - 32; height: 16
         value: Player.frac
-        moving: Player.playing && ly.running && !Look.covered
+        moving: Player.playing && ly.running
         seekable: true
         color: ly.pal ? ly.pal.primary : "#9ec9bd"
         track: ly.pal ? ly.pal.track : Qt.rgba(1, 1, 1, 0.14)

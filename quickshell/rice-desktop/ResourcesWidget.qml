@@ -8,7 +8,7 @@ Item {
     property var pal: null
     property bool running: true
     // one rice-stats for the whole shell (Stats.qml)
-    StatsHold { on: rs.running && !Look.covered }   // V4.95: no sampling while windows cover it
+    StatsHold { on: rs.running }
     readonly property int cpu: Math.round(Stats.st.cpu || 0)
     readonly property int ram: Math.round(Stats.st.ram || 0)
     readonly property int gpu: Math.round(Stats.st.gpu || 0)
@@ -35,7 +35,7 @@ Item {
                     anchors.right: parent.right; anchors.rightMargin: 16
                     anchors.top: parent.top; anchors.topMargin: 14
                     // how busy, as a wavy ring around a small shape of yours
-                    WavyArc { anchors.fill: parent; thick: 4; waves: 9; moving: rs.running && !Look.lite && !Look.covered
+                    WavyArc { anchors.fill: parent; thick: 4; waves: 9; moving: rs.running && !Look.lite
                         property real v: cell.val
                         Behavior on v { NumberAnimation { duration: 600; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
                         value: Math.max(0.01, v / 100)

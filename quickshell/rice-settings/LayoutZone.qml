@@ -59,7 +59,11 @@ Rectangle {
 
     Flow {
         id: fl
+        // ver: the chips' widths are read again once they are made (itemAt is not a binding: right after the
+        // model changed it gave nothing, so the zone thought it was empty and its chips stood in one column)
+        property int ver: 0
         readonly property real implicitW: {
+            ver
             let w = 0
             for (let i = 0; i < rep.count; i++) { const it = rep.itemAt(i); if (it) w += it.width + spacing }
             return Math.max(0, w - spacing)
@@ -81,7 +85,10 @@ Rectangle {
                 page: zr.page
                 compact: zr.compact
                 dimmed: !!zr.page && zr.page.dragName === modelData.name && zr.page.dragKind === zr.kind
+                onWidthChanged: fl.ver++
             }
+            onItemAdded: fl.ver++
+            onItemRemoved: fl.ver++
         }
     }
     T {

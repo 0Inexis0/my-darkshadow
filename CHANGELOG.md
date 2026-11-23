@@ -1,5 +1,18 @@
 # Changelog
 
+## V5.01: pull requests merged, the visualizer, notification sounds and the login screen fixed
+- Merged: **Infinite Desktop on every screen** (#28 by notwafel): Settings > Infinite Desktop > Screens: "Every screen" makes all your screens one canvas side by side (a window dragged off one screen goes on the next, the moving wallpaper is on every screen); "This workspace" keeps it on the workspace where you turned it on
+- Merged: **picking an entry in the clipboard panel** now really changes the clipboard (#22 by w4nnnn)
+- Merged: **a round of fixes** (#26 by notwafel): a dock that hides no longer keeps a strip of the screen for itself; pins of apps that are not installed are listed (Remove them drops them); a fresh install pins only apps you have; the keyboard and kitty settings are written safely; the language is only set when you pick one (System leaves it to your system)
+- The dock's **pin button** and **Pinned on startup** stay (#26 took them out)
+- Fixed: **the dock closed and opened again and again** when the pointer went from an empty part of it onto an icon
+- Fixed: **Settings > Bar layout**: the page scrolls now, so "Not on the bar" can be reached in a small window, the box grows with its modules (they spilled out of it), dragging near the top or bottom scrolls, and the modules in the bar preview no longer stand in one column
+- Fixed: **no sound for notifications** since V4.84 (the volume curve had taken the place of the notification sounds; the sound preview in Settings was silent too). Both are back
+- Fixed: **the visualizer**: the one on the bar was off in Minimal mode with Solid windows and with "no blur & transparency"; the visualizer widget and the music widgets stopped behind a see-through terminal. They only stop in Lite mode now (and when widgets hide behind windows)
+- Fixed: **the login screen (SDDM) kept the old wallpaper** when the wallpaper was picked in the wallpaper picker, Files or Photos. Every way of changing the wallpaper or the colors updates it now
+- Polish translations for the new Settings texts
+- Thanks to notwafel and w4nnnn for the pull requests
+
 ## V5.00: Files fixed, a bar that matches the wallpaper, blur works again
 - Fixed: **Files showed two folders at once**. After opening a folder (or showing hidden files), the files of the folder you left stayed on screen under the new ones, with two names in one place. Files and Music no longer reuse old tiles
 - **Minimal mode bar**: the square bar (Notch, Edge, Flat, Islands, Pills) is tinted with your wallpaper's color and lighter than black (a grey wallpaper gives graphite). It is no longer a black slab

@@ -7,6 +7,14 @@ import QtQuick
 Singleton {
     readonly property var d: ({
         "pl": ({
+        "How much of what is behind the terminal (kitty) shows through. Blur behind it: Settings > Hyprland > Blur. Off in Light mode and in gaming mode without blur": "Ile tego, co za terminalem (kitty), prześwituje. Rozmycie za nim: Ustawienia > Hyprland > Rozmycie. Wyłączone w trybie Lekkim i w trybie gry bez rozmycia",
+        "See-through terminal": "Przezroczysty terminal",
+        "Every screen is one canvas, side by side as the screens are: a drag that leaves a screen goes on the other one, and a new window gets its room on its own screen": "Wszystkie ekrany to jedno płótno, obok siebie tak jak ekrany: okno przeciągnięte poza ekran przechodzi na drugi, a nowe okno dostaje miejsce na swoim ekranie",
+        "The canvas is the workspace you turn it on: the screens on either side keep their own windows, which stay where they are": "Płótnem jest obszar roboczy, na którym je włączasz: ekrany obok zachowują swoje okna, które zostają na miejscu",
+        " pinned apps are not installed": " przypiętych aplikacji nie jest zainstalowanych",
+        "Remove them": "Usuń je",
+        "They take no row on the dock. Install the app and it shows up, or take the pin away": "Nie zajmują miejsca w docku. Zainstaluj aplikację, a się pojawi, albo odepnij ją",
+        "The shell and your terminals. It changes right away; a program that is already open follows at its next start.": "Powłoka i twoje terminale. Zmienia się od razu; program, który jest już otwarty, zmieni się przy następnym uruchomieniu.",
         "How wide the launcher is (the side sheet keeps close to its own width)": "Jak szeroki jest launcher (panel boczny trzyma się swojej szerokości)",
         "Icons next to what it finds; their style and shape: Edit mode > Icons": "Ikony obok wyników; ich styl i kształt: tryb edycji > Ikony",
         "Drawer: big icons, filter chips and all apps; Spotlight: a search bar with a list that grows; Side sheet: a tall panel at the left edge": "Szuflada: duże ikony, filtry i wszystkie aplikacje; Spotlight: pasek wyszukiwania z rosnącą listą; Panel boczny: wysoki panel przy lewej krawędzi",

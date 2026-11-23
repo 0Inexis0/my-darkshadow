@@ -7,7 +7,7 @@ Item {
     property var pal: null
     property real bg: 1
     property bool running: true
-    Instantiator { model: pw.running && !Look.covered ? 1 : 0; delegate: QtObject { Component.onCompleted: Player.hold(); Component.onDestruction: Player.release() } }
+    Instantiator { model: pw.running ? 1 : 0; delegate: QtObject { Component.onCompleted: Player.hold(); Component.onDestruction: Player.release() } }
     readonly property color ink: pal ? pal.fg : "#F6F5F4"
     Card { anchors.fill: parent; k: pw.bg; pal: pw.pal }
     // the art and the ring
@@ -19,7 +19,7 @@ Item {
         WavyArc {
             anchors.fill: parent
             value: Player.frac
-            moving: Player.playing && pw.running && !Look.covered
+            moving: Player.playing && pw.running
             color: pw.pal ? pw.pal.primary : "#9ec9bd"
             track: pw.pal ? pw.pal.track : Qt.rgba(1, 1, 1, 0.14)
         }
@@ -30,7 +30,7 @@ Item {
             source: Player.art
             empty: pw.pal ? pw.pal.chip : "#2a2c30"
             fallbackColor: pw.pal ? pw.pal.fg3 : "#8a8a8f"
-            SlowSpin { turn: 360; period: 24000; running: (pw.running && Player.playing && !Look.lite) && !Look.covered }
+            SlowSpin { turn: 360; period: 24000; running: pw.running && Player.playing && !Look.lite }
         }
     }
     T {
@@ -47,7 +47,7 @@ Item {
         anchors.top: tt.bottom; anchors.topMargin: 10
         x: 20; width: parent.width - 40; height: 20
         value: Player.frac
-        moving: Player.playing && pw.running && !Look.covered
+        moving: Player.playing && pw.running
         seekable: true
         color: pw.pal ? pw.pal.primary : "#9ec9bd"
         track: pw.pal ? pw.pal.track : Qt.rgba(1, 1, 1, 0.14)

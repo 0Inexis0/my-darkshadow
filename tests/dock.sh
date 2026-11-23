@@ -17,9 +17,11 @@ grep -q 'readonly property bool reserve: on && dc.reserve !== false && (!autoHid
   && ok "a dock that hides on hover reserves no room" || bad "the dock still reserves room while it hides"
 grep -q 'reveal: on && !Infinite.hideUi && (!autoHide || pinned ||' "$dock" \
   && ok "the pin holds the dock out" || bad "the pin no longer holds the dock out"
-grep -q 'hideTimer; interval: 700; onTriggered: if (!dockMouse.containsMouse && !apps.overPanel)' "$dock" \
+grep -q 'hideTimer; interval: 700; onTriggered: if (!dockMouse.containsMouse && !dock.overPanelItems && !apps.overPanel)' "$dock" \
   && ok "the dock stays while the pointer is on its app menu" || bad "the app menu does not keep the dock out"
 grep -q 'property bool overPanel: false' "$apps" && ok "the app menu reports the pointer on its card" || bad "no overPanel"
+# the pointer on an icon: the panel's HoverHandler keeps it (dockMouse lost it there, so the dock hid and came back)
+grep -q 'dock.overPanelItems = hovered' "$dock" && ok "the icons keep the dock out" || bad "the dock flickers over its icons"
 ( grep -q 'DesktopEntries.heuristicLookup(id) === null' "$page" && grep -q 'l.concat(gone)' "$page" ) \
   && ok "the pins list knows the apps that are gone" || bad "no gone pins"
 

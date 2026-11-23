@@ -103,6 +103,12 @@ Item {
     }
     function moveDrag(x, y) {
         gx = x; gy = y
+        // near the top or the bottom of the page while dragging: the page scrolls, so a module can go from
+        // "Not on the bar" up to the bar (and back) on a small window too
+        if (dragName !== "" && scroller.contentHeight > scroller.height) {
+            if (y < 70) scroller.contentY = Math.max(0, scroller.contentY - 24)
+            else if (y > height - 70) scroller.contentY = Math.min(scroller.contentHeight - scroller.height, scroller.contentY + 24)
+        }
         const zs = dragKind === "sub" ? zonesSub : zonesMod
         let hit = null
         for (let i = 0; i < zs.length; i++) {
@@ -135,10 +141,26 @@ Item {
         }
     }
 
+    // V5.01: the page scrolls (Not on the bar sat below the window: only a bigger window showed it), and it stands
+    // still while a module is dragged
+    Flickable {
+        id: scroller
+        anchors.fill: parent
+        anchors.bottomMargin: 6
+        contentWidth: width
+        contentHeight: col.implicitHeight + 30
+        clip: true
+        interactive: page.dragName === ""
+        boundsBehavior: Flickable.StopAtBounds
+        Behavior on contentY {
+            enabled: !scroller.dragging && !scroller.flicking && !scrollWheel.active
+            NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+        }
+        WheelScroll { id: scrollWheel; flick: scroller }
     Column {
         id: col
         x: 24
-        width: parent.width - 48
+        width: scroller.width - 48
         spacing: 10
 
         SectionTitle {
@@ -267,7 +289,8 @@ Item {
         LayoutZone {
             id: zHidden
             zone: "available"; page: page; wrap: true
-            width: parent.width; height: 70
+            // as tall as its modules need (they wrap onto more lines; they spilled out of a fixed 70 px)
+            width: parent.width; height: Math.max(70, flow.implicitHeight + 34)
             color: hot ? Qt.rgba(1, 1, 1, 0.06) : M3.surfaceLow
             border.color: hot ? Qt.rgba(1, 1, 1, 0.35) : M3.outlineVariant
             items: page.chips(page.lay.available)
@@ -287,6 +310,8 @@ Item {
                 }
             }
         }
+    }
+
     }
 
     // floating copy under the pointer while dragging

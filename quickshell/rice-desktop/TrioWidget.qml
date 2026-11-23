@@ -11,7 +11,7 @@ Item {
     property bool running: true
     // one rice-stats for the whole shell (Stats.qml)
     readonly property var st: Stats.st
-    StatsHold { on: tw.running && !Look.covered }   // V4.95: no sampling while windows cover it
+    StatsHold { on: tw.running }
     readonly property bool haveGpu: Stats.haveGpu
     Row {
         anchors.centerIn: parent
@@ -30,7 +30,7 @@ Item {
                     anchors.fill: parent
                     kind: modelData.s
                     color: parent.mid ? (tw.pal ? tw.pal.tertiary : "#e8a28c") : (tw.pal ? (tw.bg > 0.02 ? tw.pal.shapeFill : "transparent") : "#22262a")
-                    SlowSpin { turn: 360; period: 60000; running: (tw.running && !Look.lite && !parent.mid) && !Look.covered }
+                    SlowSpin { turn: 360; period: 60000; running: tw.running && !Look.lite && !parent.mid }
                 }
                 Column {
                     anchors.centerIn: parent
