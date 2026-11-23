@@ -65,6 +65,8 @@ def have(t):
 
 def cliphist(*a, inp=None, text=True, timeout=4):
     c = load()
+    if inp is not None and not text and isinstance(inp, str):
+        inp = inp.encode()      # text=False means the subprocess speaks bytes
     return run(["cliphist", "-max-items", str(c["max"])] + list(a), inp=inp, text=text, timeout=timeout)
 
 
