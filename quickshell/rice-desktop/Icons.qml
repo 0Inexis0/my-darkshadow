@@ -14,7 +14,57 @@ Singleton {
     property int rev: 0               // goes up when new files are known: bindings that use get() look again
     property var pending: []
     property var asked: ({})
+    // Edit mode > Icons > Icon pack (V4.89): an icon theme of this computer drawn before the system's one ("" = the system's)
+    property string theme: ""
+    onThemeChanged: { ic.files = ({}); ic.asked = ({}); ic.pending = []; ic.rev++ }
 
+    // V4.89: the themed looks (Edit mode > Icons): an app drawn as one plain sign in your theme's colors, like the
+    // themed icons of Android. Known apps get their own sign (Nerd Font glyphs); others keep their picture, recolored.
+    readonly property var glyphRules: [
+        [/libreoffice.*writer|writer$/, 0xF37C], [/libreoffice.*calc/, 0xF378], [/libreoffice.*impress/, 0xF37A], [/libreoffice/, 0xF376],
+        [/firefox/, 0xF0239], [/chrom(e|ium)/, 0xF02AF], [/msedge|microsoft-edge/, 0xF01E9], [/^opera|\.opera/, 0xF03CE],
+        [/discord|vesktop|webcord|armcord|legcord/, 0xF066F], [/spotify/, 0xF04C7], [/steam/, 0xF04D3],
+        [/^(code|code-oss|codium|vscodium)$|visual-?studio-?code|com\.visualstudio|vscod/, 0xF0A1E],
+        [/kitty|alacritty|^foot|wezterm|ghostty|konsole|terminal|xterm|terminator|tilix|ptyxis|blackbox|console/, 0xF018D],
+        [/nautilus|thunar|dolphin|nemo|pcmanfm|file-?manager|darkshadow-files|^files$|yazi/, 0xF024B],
+        [/obsidian/, 0xE6BB], [/telegram/, 0xF2C6], [/whatsapp|zapzap/, 0xF05A3], [/thunderbird|betterbird/, 0xF370],
+        [/vlc/, 0xF057C], [/^mpv|io\.mpv/, 0xF36E], [/celluloid|haruna|totem|showtime|darkshadow-videos|^videos$/, 0xF0230],
+        [/gimp/, 0xF338], [/krita/, 0xF33D], [/inkscape/, 0xF33B], [/blender/, 0xF00AB], [/kdenlive/, 0xF33C],
+        [/obs(proj|-studio|$)/, 0xF044B],
+        [/settings|control-center|systemsettings|preferences-system/, 0xF0493],
+        [/calculator|qalculate|kcalc/, 0xF00EC],
+        [/loupe|eog|gthumb|gwenview|^imv|shotwell|darkshadow-photos|^photos$|image-viewer/, 0xF02E9],
+        [/rhythmbox|elisa|amberol|lollypop|darkshadow-music|^music$|audio-player/, 0xF075A],
+        [/nvim|neovim/, 0xF36F], [/godot/, 0xE7EE], [/minecraft|prismlauncher/, 0xF0373], [/github/, 0xF02A4], [/slack/, 0xF04B1],
+        [/heroic|lutris|bottles|retroarch|gamepad|games/, 0xF0297],
+        [/btop|htop|system-?monitor|missioncenter|resources/, 0xF0A07], [/pavucontrol|pwvucontrol|volume/, 0xF057E],
+        [/text-?editor|gedit|^kate|kwrite|mousepad|notepad|zed/, 0xF021A], [/docker/, 0xF0868], [/android-studio/, 0xF0034],
+        [/jetbrains|intellij|idea|pycharm|webstorm|clion|rider|goland/, 0xE808],
+        [/mail|geary|evolution/, 0xF01EE], [/calendar/, 0xF00ED], [/weather/, 0xF0595], [/clocks?$|alarm/, 0xF0954],
+        [/software|discover|pamac|flathub|bazaar|store/, 0xF04DC], [/camera|cheese|snapshot/, 0xF0100], [/maps/, 0xF034D],
+        [/evince|okular|papers|zathura|pdf/, 0xF0226], [/freetube|youtube/, 0xF05C3], [/twitch/, 0xF0543], [/reddit/, 0xF044D],
+        [/bitwarden|keepass|password|seahorse|secrets/, 0xF0306], [/blueman|bluetooth/, 0xF00AF],
+        [/qbittorrent|transmission|deluge|fragments|torrent/, 0xF01DA], [/file-roller|^ark$|archive/, 0xF03D6], [/dropbox/, 0xF01E3]
+    ]
+    function glyphOf(keys) {
+        for (let k = 0; k < keys.length; k++) {
+            const n = String(keys[k] || "").toLowerCase().replace(/\.desktop$/, "")
+            if (n === "") continue
+            for (let i = 0; i < glyphRules.length; i++) if (glyphRules[i][0].test(n)) return String.fromCodePoint(glyphRules[i][1])
+        }
+        return ""
+    }
+
+    // our own apps (Files, Photos, Music, Videos) are Quickshell windows: their title says which one, so they get
+    // their own entry and icon (darkshadow-files ...) instead of Quickshell's
+    function appKey(appId, title) {
+        const id = String(appId || "").toLowerCase()
+        if (id === "" || id.indexOf("quickshell") >= 0) {
+            const m = /^(Files|Photos|Music|Videos)( — |$)/.exec(String(title || ""))
+            if (m) return "darkshadow-" + m[1].toLowerCase()
+        }
+        return id
+    }
     function get(n, fallback) {
         const r = ic.rev                // (makes the binding depend on new lookups)
         const p = one(n)
@@ -60,7 +110,7 @@ Singleton {
     Process {
         id: look
         property var names: []
-        command: ["bash", Quickshell.shellPath("iconfile.sh")].concat(names)
+        command: ["env", "RICE_ICON_THEME=" + ic.theme, "bash", Quickshell.shellPath("iconfile.sh")].concat(names)
         stdout: StdioCollector {
             onStreamFinished: {
                 const f = Object.assign({}, ic.files)

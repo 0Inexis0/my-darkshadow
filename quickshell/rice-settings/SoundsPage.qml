@@ -62,7 +62,7 @@ Item {
         Rectangle {
             width: parent.width
             height: 112
-            radius: M3.rL
+            radius: M3.sq ? 0 : (M3.rL)
             clip: true
             gradient: Gradient {
                 orientation: Gradient.Horizontal
@@ -79,7 +79,7 @@ Item {
                 Repeater {
                     model: 7
                     Rectangle {
-                        width: 6; radius: 3
+                        width: 6; radius: M3.sq ? 0 : (3)
                         anchors.verticalCenter: parent.verticalCenter
                         color: "#F6F5F4"
                         opacity: page.v("enabled", true) ? 0.9 : 0.25
@@ -206,7 +206,7 @@ Item {
                     bars: modelData.b
                     selected: page.nv("sound", "glass") === modelData.k
                     onPicked: {
-                        if (modelData.k !== "off") page.previewNote(modelData.k, page.nv("sound_volume", 70))
+                        if (modelData.k !== "off") page.previewNote(modelData.k, page.nv("sound_volume", 45))
                         if (!selected) page.setn("sound", modelData.k)
                     }
                 }
@@ -216,7 +216,7 @@ Item {
             label: I18n.t("Notification sound volume")
             desc: I18n.t("How loud the notification sound is, on top of your system volume")
             from: 0; to: 100; step: 5; unit: " %"
-            value: page.nv("sound_volume", 70)
+            value: page.nv("sound_volume", 45)
             onCommitted: function(x) {
                 page.setn("sound_volume", Math.round(x))
                 if (page.nv("sound", "glass") !== "off") page.previewNote(page.nv("sound", "glass"), Math.round(x))

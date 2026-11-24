@@ -28,7 +28,9 @@ Item {
         { key: "trio", label: I18n.t("CPU · GPU · RAM"), icon: "\uf2db", desc: I18n.t("Three small shapes") },
         { key: "forecast", label: I18n.t("Forecast"), icon: "\uf0c2", desc: I18n.t("Now, how it feels and the next hours") },
         { key: "music", label: I18n.t("Music card"), icon: "\uf001", desc: I18n.t("Cover and buttons; opens to the lyrics") },
-        { key: "datepill", label: I18n.t("Date & time"), icon: "\uf017", desc: I18n.t("A slim pill with the date and the time") }
+        { key: "datepill", label: I18n.t("Date & time"), icon: "\uf017", desc: I18n.t("A slim pill with the date and the time") },
+        { key: "wpills", label: I18n.t("Weather pills"), icon: "\uf0c2", desc: I18n.t("The weather as a stack of pills") },
+        { key: "progress", label: I18n.t("Progress"), icon: "\uf252", desc: I18n.t("How much of the day, week, month and year is gone") }
     ]
 
     // widget styles (Settings > Widgets > Theme)
@@ -102,19 +104,19 @@ Item {
             width: flick.width
             spacing: 10
 
-            T { kind: "title"; text: I18n.t("Widgets"); font.pixelSize: 16; font.bold: true }
+            SectionTitle { text: I18n.t("Widgets") }
             // the widget editor on the desktop (Settings closes so you can see it)
             Rectangle {
                 width: parent.width
                 height: 72
-                radius: 14
+                radius: M3.sq ? 0 : (14)
                 color: edMouse.containsMouse ? M3.surfaceHigh : M3.surfaceC
                 border.width: 1
                 border.color: M3.surfaceHighest
                 Behavior on color { ColorAnimation { duration: 140 } }
                 Rectangle {
                     x: 16; anchors.verticalCenter: parent.verticalCenter
-                    width: 42; height: 42; radius: 12
+                    width: 42; height: 42; radius: M3.sq ? 0 : (12)
                     color: "#F6F5F4"
                     T { kind: "icon"; anchors.centerIn: parent; text: "\uf044"; font.pixelSize: 17; color: "#0d0d0d" }
                 }
@@ -169,7 +171,7 @@ Item {
                             id: card
                             width: 172
                             height: 146
-                            radius: 14
+                            radius: M3.sq ? 0 : (14)
                             readonly property bool on: page.wOn(modelData.key)
                             color: cardMouse.containsMouse ? M3.surfaceHigh : M3.surfaceC
                             border.width: 1
@@ -189,7 +191,7 @@ Item {
                                 y: 14
                                 width: 40
                                 height: 40
-                                radius: 12
+                                radius: M3.sq ? 0 : (12)
                                 color: card.on ? M3.primary : M3.surfaceHighest
                                 Behavior on color { ColorAnimation { duration: 200 } }
                                 T { anchors.centerIn: parent; text: modelData.icon; font.pixelSize: 18; color: card.on ? M3.inkPrimary : "#F6F5F4" }
@@ -231,6 +233,17 @@ Item {
                 }
             }
             SliderRow {
+                label: I18n.t("See-through terminal")
+                desc: I18n.t("How much of what is behind the terminal (kitty) shows through. Blur behind it: Settings > Hyprland > Blur. Off in Light mode and in gaming mode without blur")
+                from: 0; to: 70; step: 5; decimals: 0; unit: "%"
+                value: Math.round((1 - (page.ctl.dst.terminalOpacity !== undefined ? Number(page.ctl.dst.terminalOpacity) : 0.6)) * 100)
+                onCommitted: function(x) {
+                    const o = (1 - x / 100).toFixed(2)
+                    const d = JSON.parse(JSON.stringify(page.ctl.dst)); d.terminalOpacity = Number(o); page.ctl.dst = d
+                    Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" terminal-opacity \"$1\"", "_", o])
+                }
+            }
+            SliderRow {
                 label: I18n.t("Transparency of the widgets")
                 desc: I18n.t("How much of the wallpaper shows through the cards (with blur: frosted glass), on Hyprland and niri")
                 from: 0; to: 80; step: 5; decimals: 0; unit: "%"
@@ -245,7 +258,7 @@ Item {
                 label: I18n.t("Frame rate")
                 desc: I18n.t("How smooth the moving parts of the widgets are (turning shapes, the visualizer). Screen: as fast as your monitor (144, 180 Hz ...), a little more work")
                 options: [{ label: "30", value: "30" }, { label: "60", value: "60" }, { label: "120", value: "120" }, { label: I18n.t("Screen"), value: "0" }]
-                current: String(page.ctl.dst.fps !== undefined ? page.ctl.dst.fps : 60)
+                current: String(page.ctl.dst.fps !== undefined ? page.ctl.dst.fps : 30)
                 onChosen: function(v) {
                     const d = JSON.parse(JSON.stringify(page.ctl.dst)); d.fps = Number(v); page.ctl.dst = d
                     Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" widgets-fps \"$1\"", "_", v])
@@ -257,7 +270,7 @@ Item {
             }
 
             // ---------- Task view (rice-taskview) ----------
-            T { kind: "title"; text: I18n.t("Task view"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
+            SectionTitle { text: I18n.t("Task view") }
             T {
                 width: parent.width; wrapMode: Text.WordWrap; kind: "dim"
                 text: I18n.t("Super + Tab shows every workspace with its windows: type to find one, drag a window to another workspace, middle click closes it. Alt + Tab switches windows: hold Alt, press Tab, let go. Other keys: Settings > Keybinds (the pencil).")
@@ -288,7 +301,7 @@ Item {
             }
 
             // ---------- Clipboard (rice-clip, cliphist) ----------
-            T { kind: "title"; text: I18n.t("Clipboard"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
+            SectionTitle { text: I18n.t("Clipboard") }
             T {
                 width: parent.width; wrapMode: Text.WordWrap; kind: "dim"
                 text: I18n.t("Super + V shows everything you copied, texts and pictures. Type to search, Enter puts it back (and pastes it), Del removes it, Ctrl + P pins a text to the top. Float / tile a window moved to Super + Shift + V. Other keys: Settings > Keybinds.")
@@ -330,7 +343,7 @@ Item {
             }
 
             // ---------- Performance (rice-effects lite) ----------
-            T { kind: "title"; text: I18n.t("Performance"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
+            SectionTitle { text: I18n.t("Performance") }
             Item {
                 id: perf
                 width: parent.width; height: perfCol.implicitHeight
@@ -355,7 +368,7 @@ Item {
             }
 
             // ---------- visualizer ----------
-            T { kind: "title"; text: I18n.t("Visualizer"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
+            SectionTitle { text: I18n.t("Visualizer") }
             SegRow {
                 label: I18n.t("Style")
                 desc: I18n.t("Round bars, a mirror, a wave or dots")
@@ -379,7 +392,7 @@ Item {
             }
 
             // ---------- to-do ----------
-            T { kind: "title"; text: I18n.t("To-do list"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
+            SectionTitle { text: I18n.t("To-do list") }
             T { width: parent.width; text: I18n.t("The tasks of the To-do widget. On the desktop, click the widget once to type in it. In a terminal: rice-todo add \"buy milk\"."); color: M3.inkDim; font.pixelSize: 12; wrapMode: Text.WordWrap }
             Field {
                 id: todoField
@@ -392,14 +405,14 @@ Item {
                 delegate: Rectangle {
                     width: col.width
                     height: 44
-                    radius: 12
+                    radius: M3.sq ? 0 : (12)
                     color: M3.surfaceC
                     border.width: 1
                     border.color: M3.outlineVariant
                     Rectangle {
                         id: tbx
                         x: 14; anchors.verticalCenter: parent.verticalCenter
-                        width: 20; height: 20; radius: 10
+                        width: 20; height: 20; radius: M3.sq ? 0 : (10)
                         color: modelData.done ? M3.primary : "transparent"
                         border.width: modelData.done ? 0 : 2
                         border.color: "#6a6a70"
@@ -430,7 +443,7 @@ Item {
                 Pill { label: I18n.t("Clear ticked tasks"); onClicked: page.todoDo(["clear"]) }
             }
 
-            T { kind: "title"; text: I18n.t("Clock"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
+            SectionTitle { text: I18n.t("Clock") }
 
             ToggleRow {
                 label: I18n.t("Enable")
@@ -459,12 +472,12 @@ Item {
                 label: I18n.t("Clock style")
                 desc: I18n.t("Look of the desktop clock")
                 options: [
-                    { label: I18n.t("Digital"), value: "digital" },
-                    { label: I18n.t("Line"), value: "line" },
-                    { label: I18n.t("Cookie"), value: "cookie" },
-                    { label: I18n.t("Pixel"), value: "pixel" }
+                    { label: I18n.t("Expressive"), value: "expressive" },
+                    { label: I18n.t("Stacked"), value: "stacked" },
+                    { label: I18n.t("Shape"), value: "shape" },
+                    { label: I18n.t("Analog"), value: "analog" }
                 ]
-                current: page.cv("style", "digital")
+                current: ({ digital: "stacked", line: "expressive", cookie: "shape", pixel: "expressive" })[page.cv("style", "expressive")] || page.cv("style", "expressive")
                 onChosen: function(v) { page.ctl.dset("clock", "style", v) }
             }
 
@@ -487,7 +500,7 @@ Item {
                             readonly property bool here: page.hasFam(modelData.f)
                             width: (cfGrid.width - 30) / 4
                             height: 92
-                            radius: 14
+                            radius: M3.sq ? 0 : (14)
                             color: fm.containsMouse ? M3.surfaceHigh : M3.surfaceC
                             border.width: on ? 2 : 1
                             border.color: on ? M3.primary : M3.outlineVariant

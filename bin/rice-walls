@@ -357,8 +357,11 @@ def apply_picture(p, live=False):
                 break
         os.makedirs(os.path.dirname(CURRENT), exist_ok=True)
         open(CURRENT, "w").write(p)
-    # the login screen (SDDM) follows the wallpaper, when it is the shell's
-    if os.access("/usr/share/sddm/themes/darkshadow-shell/user", os.W_OK) and os.access(HOME + "/.local/bin/rice-sddm", os.X_OK):
+    # the login screen (SDDM) follows the wallpaper, when it is the shell's (commands.sh does it itself)
+    if os.path.isfile(APPLY):
+        return
+    if any(os.access(d, os.W_OK) for d in ("/usr/share/sddm/themes/darkshadow-shell/user", "/var/lib/darkshadow-shell-sddm")) \
+            and os.access(HOME + "/.local/bin/rice-sddm", os.X_OK):
         try:
             subprocess.Popen([HOME + "/.local/bin/rice-sddm", "sync"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                              start_new_session=True)

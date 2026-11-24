@@ -33,7 +33,6 @@ RK.actions = {
     taskview  = { "SUPER + TAB",       exec(BIN .. "rice-taskview overview") },
     switcher  = { "ALT + TAB",         exec(BIN .. "rice-taskview switch") },
     keys      = { "SUPER + slash",     exec(BIN .. "rice-keymap show") },
-    tools     = { "SUPER + X",         exec(BIN .. "rice-tools toggle") },
     -- minimizing and stacking windows (rice-win)
     minimize  = { "SUPER + H", exec(BIN .. "rice-win minimize"), true },
     restore   = { "SUPER + SHIFT + H", exec(BIN .. "rice-win restore"), true },

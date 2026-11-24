@@ -29,7 +29,7 @@ Item {
             readonly property color txt: page.shown.preview[2]
             width: parent.width
             height: 210
-            radius: 16
+            radius: M3.sq ? 0 : (16)
             clip: true
             border.width: 1
             border.color: M3.outlineVariant
@@ -41,7 +41,7 @@ Item {
             // bar
             Rectangle {
                 x: 10; y: 10
-                width: parent.width - 20; height: 26; radius: 9
+                width: parent.width - 20; height: 26; radius: M3.sq ? 0 : (9)
                 color: Qt.rgba(tprev.surf.r, tprev.surf.g, tprev.surf.b, 0.92)
                 Behavior on color { ColorAnimation { duration: 220 } }
                 Row {
@@ -49,7 +49,7 @@ Item {
                     Repeater {
                         model: 4
                         delegate: Rectangle {
-                            width: index === 0 ? 22 : 14; height: 14; radius: 7
+                            width: index === 0 ? 22 : 14; height: 14; radius: M3.sq ? 0 : (7)
                             color: index === 0 ? tprev.acc : Qt.rgba(tprev.txt.r, tprev.txt.g, tprev.txt.b, 0.25)
                             Behavior on color { ColorAnimation { duration: 220 } }
                         }
@@ -60,7 +60,7 @@ Item {
             // window with accent border
             Rectangle {
                 x: 24; y: 50
-                width: parent.width * 0.52; height: 140; radius: 12
+                width: parent.width * 0.52; height: 140; radius: M3.sq ? 0 : (12)
                 color: Qt.rgba(tprev.surf.r, tprev.surf.g, tprev.surf.b, 0.95)
                 border.width: 2
                 border.color: tprev.acc
@@ -69,10 +69,10 @@ Item {
                 Column {
                     x: 14; y: 14; spacing: 8
                     T { text: page.shown.name; font.pixelSize: 18; font.bold: true; color: tprev.txt }
-                    Rectangle { width: 160; height: 6; radius: 3; color: Qt.rgba(tprev.txt.r, tprev.txt.g, tprev.txt.b, 0.4) }
-                    Rectangle { width: 120; height: 6; radius: 3; color: Qt.rgba(tprev.txt.r, tprev.txt.g, tprev.txt.b, 0.25) }
+                    Rectangle { width: 160; height: 6; radius: M3.sq ? 0 : (3); color: Qt.rgba(tprev.txt.r, tprev.txt.g, tprev.txt.b, 0.4) }
+                    Rectangle { width: 120; height: 6; radius: M3.sq ? 0 : (3); color: Qt.rgba(tprev.txt.r, tprev.txt.g, tprev.txt.b, 0.25) }
                     Rectangle {
-                        width: 92; height: 26; radius: 13
+                        width: 92; height: 26; radius: M3.sq ? 0 : (13)
                         color: tprev.acc
                         T { anchors.centerIn: parent; text: I18n.t("Button"); font.pixelSize: 11; font.bold: true
                             color: (0.299 * tprev.acc.r + 0.587 * tprev.acc.g + 0.114 * tprev.acc.b) > 0.55 ? M3.surfaceLow : "#F6F5F4" }
@@ -83,11 +83,11 @@ Item {
             Rectangle {
                 anchors.right: parent.right; anchors.rightMargin: 18
                 y: 50
-                width: parent.width * 0.36; height: 58; radius: 12
+                width: parent.width * 0.36; height: 58; radius: M3.sq ? 0 : (12)
                 color: Qt.rgba(tprev.surf.r, tprev.surf.g, tprev.surf.b, 0.95)
                 border.width: 1
                 border.color: Qt.rgba(tprev.txt.r, tprev.txt.g, tprev.txt.b, 0.12)
-                Rectangle { x: 10; anchors.verticalCenter: parent.verticalCenter; width: 32; height: 32; radius: 10; color: tprev.acc }
+                Rectangle { x: 10; anchors.verticalCenter: parent.verticalCenter; width: 32; height: 32; radius: M3.sq ? 0 : (10); color: tprev.acc }
                 Column {
                     x: 52; anchors.verticalCenter: parent.verticalCenter; spacing: 3
                     T { text: I18n.t("Theme"); font.pixelSize: 12; font.bold: true; color: tprev.txt }

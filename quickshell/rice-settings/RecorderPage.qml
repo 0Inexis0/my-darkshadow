@@ -78,7 +78,7 @@ Item {
             id: prev
             width: parent.width
             height: 214
-            radius: M3.rL
+            radius: M3.sq ? 0 : (M3.rL)
             clip: true
             border.width: 0
             border.color: M3.outlineVariant
@@ -94,20 +94,20 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 232
                 height: 130
-                radius: 10
+                radius: M3.sq ? 0 : (10)
                 color: "#0d0d10"
                 border.width: 2
                 border.color: page.recording ? "#e5484d" : "#3a3a44"
                 Behavior on border.color { ColorAnimation { duration: 200 } }
                 // pretend windows
-                Rectangle { x: 14; y: 14; width: 104; height: 70; radius: 6; color: "#1b1b22"; border.width: 1; border.color: "#2a2a33" }
-                Rectangle { x: 82; y: 44; width: 120; height: 66; radius: 6; color: "#22222b"; border.width: 1; border.color: "#33333e" }
-                Rectangle { x: 0; y: parent.height - 12; width: parent.width; height: 12; radius: 0; color: "#16161b" }
+                Rectangle { x: 14; y: 14; width: 104; height: 70; radius: M3.sq ? 0 : (6); color: "#1b1b22"; border.width: 1; border.color: "#2a2a33" }
+                Rectangle { x: 82; y: 44; width: 120; height: 66; radius: M3.sq ? 0 : (6); color: "#22222b"; border.width: 1; border.color: "#33333e" }
+                Rectangle { x: 0; y: parent.height - 12; width: parent.width; height: 12; radius: M3.sq ? 0 : (0); color: "#16161b" }
                 // size and speed, the thing this page changes
                 Rectangle {
                     anchors.right: parent.right; anchors.rightMargin: 8
                     anchors.top: parent.top; anchors.topMargin: 8
-                    height: 22; radius: 11
+                    height: 22; radius: M3.sq ? 0 : (11)
                     width: badge.implicitWidth + 18
                     color: Qt.rgba(0, 0, 0, 0.55)
                     T { id: badge; anchors.centerIn: parent; text: page.outH + "p · " + page.fps + I18n.t(" fps"); font.pixelSize: 11; font.bold: true }
@@ -119,7 +119,7 @@ Item {
                     visible: page.recording
                     Rectangle {
                         id: dot
-                        width: 9; height: 9; radius: 5; color: "#e5484d"
+                        width: 9; height: 9; radius: M3.sq ? 0 : (5); color: "#e5484d"
                         anchors.verticalCenter: parent.verticalCenter
                         SequentialAnimation on opacity {
                             running: page.recording && page.visible
@@ -221,7 +221,7 @@ Item {
                     id: rc
                     width: (flow.width - 20) / 3
                     height: 150
-                    radius: 14
+                    radius: M3.sq ? 0 : (14)
                     clip: true
                     color: rcMouse.containsMouse ? M3.surfaceHigh : M3.surfaceC
                     border.width: 1
@@ -243,7 +243,7 @@ Item {
                         T { visible: !modelData.thumb; anchors.centerIn: parent; kind: "icon"; text: ""; font.pixelSize: 22; color: "#555560" }
                         Rectangle {
                             anchors.centerIn: parent
-                            width: 34; height: 34; radius: 17
+                            width: 34; height: 34; radius: M3.sq ? 0 : (17)
                             color: Qt.rgba(0, 0, 0, 0.55)
                             opacity: rcMouse.containsMouse ? 1 : 0
                             Behavior on opacity { NumberAnimation { duration: 140 } }

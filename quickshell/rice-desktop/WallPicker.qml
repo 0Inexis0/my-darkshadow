@@ -30,7 +30,7 @@ PanelWindow {
     visible: open || (t > 0.01 && !closeT.done)
     // if the closing animation ever stalls (the compositor sent no frames for a moment), it still goes away
     Timer { id: closeT; property bool done: false; interval: 600; running: !open; onRunningChanged: if (running) done = false; onTriggered: done = true }
-    NiriBlur { win: wp; items: [bar]; radius: bar.radius; on: wp.open && wp.et > 0.97 }
+    NiriBlur { win: wp; items: [bar]; radius: Look.sq ? 0 : (bar.radius); on: wp.open && wp.et > 0.97 }
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore
@@ -220,7 +220,7 @@ PanelWindow {
                     width: wp.cw(d); height: wp.chh(d)
                     x: car.width / 2 + wp.cx(d) - width / 2
                     y: (car.height - height) / 2 + (1 - it) * 70
-                    radius: Math.min(width / 2, wp.lerp(Math.min(1, Math.abs(d)), 30, 22))
+                    radius: Look.sq ? 0 : (Math.min(width / 2, wp.lerp(Math.min(1, Math.abs(d)), 30, 22)))
                     color: "white"
                 }
             }
@@ -253,14 +253,14 @@ PanelWindow {
                 opacity: it * (1 - wp.clamp01((Math.abs(d) - wp.reach + 1.5) / 2))
 
                 // picking it: a flash of your key color
-                Rectangle { anchors.fill: parent; radius: card.rad; color: pal.primary; opacity: card.focus0 ? flashS.v : 0 }
+                Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (card.rad); color: pal.primary; opacity: card.focus0 ? flashS.v : 0 }
                 // a soft light while the pointer is on a card that is not in focus
-                Rectangle { anchors.fill: parent; radius: card.rad; color: "white"; opacity: cm.containsMouse && !card.focus0 ? 0.1 : 0
+                Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (card.rad); color: "white"; opacity: cm.containsMouse && !card.focus0 ? 0.1 : 0
                     Behavior on opacity { NumberAnimation { duration: 150 } } }
                 // the far ones fade into the dark
-                Rectangle { anchors.fill: parent; radius: card.rad; color: "black"; opacity: 0.38 * wp.clamp01(Math.abs(card.d) - 0.6) }
+                Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (card.rad); color: "black"; opacity: 0.38 * wp.clamp01(Math.abs(card.d) - 0.6) }
                 // the one you have: your key color around it
-                Rectangle { anchors.fill: parent; radius: card.rad; color: "transparent"; border.width: 3; border.color: pal.primary
+                Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (card.rad); color: "transparent"; border.width: 3; border.color: pal.primary
                     opacity: card.cur ? 1 : 0; Behavior on opacity { NumberAnimation { duration: 200 } } }
                 // a video without its preview yet
                 MIcon { anchors.centerIn: parent; visible: card.w !== null && card.w.live === true && !card.w.thumb && card.width > 60
@@ -269,8 +269,8 @@ PanelWindow {
                 Rectangle {
                     visible: card.w !== null && card.w.live === true && card.width > 110
                     anchors.left: parent.left; anchors.top: parent.top; anchors.margins: 14
-                    width: lvT.implicitWidth + 30; height: 26; radius: 13; color: Qt.rgba(0, 0, 0, 0.58)
-                    Rectangle { x: 11; anchors.verticalCenter: parent.verticalCenter; width: 7; height: 7; radius: 3.5; color: "#ff5a5a"
+                    width: lvT.implicitWidth + 30; height: 26; radius: Look.sq ? 0 : (13); color: Qt.rgba(0, 0, 0, 0.58)
+                    Rectangle { x: 11; anchors.verticalCenter: parent.verticalCenter; width: 7; height: 7; radius: Look.sq ? 0 : (3.5); color: "#ff5a5a"
                         SequentialAnimation on opacity { running: wp.open && !Look.lite && card.focus0; loops: Animation.Infinite
                             NumberAnimation { to: 0.25; duration: 700 } NumberAnimation { to: 1; duration: 700 } } }
                     Text { id: lvT; x: 23; anchors.verticalCenter: parent.verticalCenter; text: "LIVE"; color: "white"
@@ -289,7 +289,7 @@ PanelWindow {
                 // the name, on the big one
                 Rectangle {
                     anchors.left: parent.left; anchors.bottom: parent.bottom; anchors.margins: 14
-                    width: Math.min(parent.width - 28, nmT.implicitWidth + 26); height: 30; radius: 15
+                    width: Math.min(parent.width - 28, nmT.implicitWidth + 26); height: 30; radius: Look.sq ? 0 : (15)
                     color: Qt.rgba(0, 0, 0, 0.5)
                     opacity: card.focus0 && Math.abs(card.d) < 0.3 ? 1 : 0
                     Behavior on opacity { NumberAnimation { duration: 200 } }
@@ -327,7 +327,7 @@ PanelWindow {
             visible: !wp.loaded
             Repeater { model: [0.36, 1, 0.36]
                 Rectangle { width: wp.heroW * modelData; height: wp.carH * (modelData === 1 ? 1 : 0.9); anchors.verticalCenter: parent.verticalCenter
-                    radius: 26; color: pal.card
+                    radius: Look.sq ? 0 : (26); color: pal.card
                     SequentialAnimation on opacity { running: !wp.loaded && wp.open; loops: Animation.Infinite
                         NumberAnimation { to: 0.45; duration: 650 } NumberAnimation { to: 1; duration: 650 } } } }
         }
@@ -341,11 +341,12 @@ PanelWindow {
     }
 
     // ---------- the toolbar above: search, All / Pictures / Live, shuffle, close ----------
-    Shadow { anchors.fill: bar; radius: bar.radius; on: Look.shadows && Look.shadowPanels; opacity: bar.opacity; size: Look.shadowSize; strength: Look.shadowStrength }
+    Shadow { anchors.fill: bar; radius: Look.sq ? 0 : (bar.radius); on: Look.shadows && Look.shadowPanels; opacity: bar.opacity; size: Look.shadowSize; strength: Look.shadowStrength }
     Rectangle {
         id: bar
+        Frame { }      // V4.98 Minimal mode
         width: barRow.implicitWidth + 16; height: 60
-        radius: 30
+        radius: Look.sq ? 0 : (30)
         anchors.horizontalCenter: parent.horizontalCenter
         y: car.y - height - 34 - (1 - wp.et) * 40
         color: pal.surface
@@ -357,7 +358,7 @@ PanelWindow {
             spacing: 8
             // search
             Rectangle {
-                width: 260; height: 44; radius: 22; color: pal.card
+                width: 260; height: 44; radius: Look.sq ? 0 : (22); color: pal.card
                 border.width: search.activeFocus && search.text !== "" ? 2 : 0; border.color: pal.primary
                 MIcon { x: 14; anchors.verticalCenter: parent.verticalCenter; size: 18; name: "search"; glyph: ""; color: pal.dim }
                 TextInput {
@@ -395,7 +396,7 @@ PanelWindow {
                         readonly property bool on: wp.kind === modelData.k
                         width: chRow.implicitWidth + 28; height: 44
                         // the chosen one is a full pill, the others a softer square (Material 3 button group)
-                        radius: on ? 22 : 12
+                        radius: Look.sq ? 0 : (on ? 22 : 12)
                         color: on ? pal.primary : (chM.containsMouse ? pal.cardHi : pal.card)
                         Behavior on radius { NumberAnimation { duration: 320; easing.type: Easing.OutBack; easing.overshoot: 1.6 } }
                         Behavior on color { ColorAnimation { duration: 180 } }
@@ -439,7 +440,7 @@ PanelWindow {
             readonly property bool inUse: wp.shown[wp.sel] !== undefined && wp.shown[wp.sel].path === wp.current
             anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
             width: setRow.implicitWidth + 40; height: 52
-            radius: setM.pressed ? 14 : 26
+            radius: Look.sq ? 0 : (setM.pressed ? 14 : 26)
             color: inUse ? pal.container : pal.primary
             Behavior on radius { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
             Behavior on color { ColorAnimation { duration: 220 } }
@@ -463,7 +464,7 @@ PanelWindow {
         property string icon: ""
         signal hit()
         width: 44; height: 44
-        Rectangle { anchors.fill: parent; radius: ibm.pressed ? 14 : 22; color: ibm.containsMouse ? pal.cardHi : pal.card
+        Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (ibm.pressed ? 14 : 22); color: ibm.containsMouse ? pal.cardHi : pal.card
             Behavior on radius { NumberAnimation { duration: 200 } } }
         MIcon { anchors.centerIn: parent; size: 20; filled: true; name: ib.icon; glyph: ""; color: pal.fg }
         MouseArea { id: ibm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: ib.hit() }

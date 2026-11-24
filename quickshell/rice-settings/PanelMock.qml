@@ -34,7 +34,7 @@ Item {
     Rectangle {
         id: panel
         anchors.fill: parent
-        radius: m.pr
+        radius: M3.sq ? 0 : (m.pr)
         color: m.panelC
         border.width: m.look === "google" ? 0 : 1
         border.color: m.light ? Qt.rgba(0, 0, 0, 0.12) : Qt.rgba(1, 1, 1, 0.14)
@@ -49,7 +49,7 @@ Item {
                 model: 4
                 delegate: Rectangle {
                     width: (panel.width - 16 - 12) / 4; height: 14
-                    radius: m.look === "google" ? 7 : 4
+                    radius: M3.sq ? 0 : (m.look === "google" ? 7 : 4)
                     color: index < 2 ? m.acc : m.tileC
                 }
             }
@@ -61,16 +61,16 @@ Item {
                 x: 8; y: 28 + index * (cardH + 5)
                 readonly property real cardH: (panel.height - 28 - 8 - 5) / 2
                 width: panel.width - 16; height: cardH
-                radius: m.cr
+                radius: M3.sq ? 0 : (m.cr)
                 color: m.cardC
                 Rectangle {
                     x: 5; anchors.verticalCenter: parent.verticalCenter
                     width: Math.min(16, parent.height - 8); height: width
-                    radius: m.look === "google" ? width / 2 : 4
+                    radius: M3.sq ? 0 : (m.look === "google" ? width / 2 : 4)
                     color: index === 0 ? m.acc : Qt.rgba(m.ac[0] / 255, m.ac[1] / 255, m.ac[2] / 255, 0.35)
                 }
-                Rectangle { x: 26; y: parent.height / 2 - 6; width: parent.width * 0.45; height: 3; radius: 1.5; color: m.lineC }
-                Rectangle { x: 26; y: parent.height / 2 + 2; width: parent.width * 0.3; height: 3; radius: 1.5; color: m.lineC; opacity: 0.5 }
+                Rectangle { x: 26; y: parent.height / 2 - 6; width: parent.width * 0.45; height: 3; radius: M3.sq ? 0 : (1.5); color: m.lineC }
+                Rectangle { x: 26; y: parent.height / 2 + 2; width: parent.width * 0.3; height: 3; radius: M3.sq ? 0 : (1.5); color: m.lineC; opacity: 0.5 }
             }
         }
     }

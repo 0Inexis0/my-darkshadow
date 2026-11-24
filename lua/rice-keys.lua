@@ -33,8 +33,6 @@ hl.bind("SUPER + V",           hl.dsp.exec_cmd(bin .. "rice-clip toggle"))
 
 -- every key on one sheet (Cheatsheet.qml)
 pcall(hl.bind, "SUPER + slash",     hl.dsp.exec_cmd(bin .. "rice-keymap show"))
--- the toolbox: tasks, a note, a focus timer, a converter, the system, a chat (Tools.qml)
-pcall(hl.bind, "SUPER + X",         hl.dsp.exec_cmd(bin .. "rice-tools toggle"))
 
 -- the Task view (every workspace and its windows) and the window switcher (rice-taskview, TaskView.qml)
 pcall(hl.bind, "SUPER + TAB",       hl.dsp.exec_cmd(bin .. "rice-taskview overview"))

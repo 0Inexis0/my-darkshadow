@@ -146,7 +146,8 @@ FloatingWindow {
         background: ["background", "wallpaper"], top: ["top", "position"], bottom: ["bottom", "position"],
         place: ["position"], where: ["position"], size: ["size", "width", "height", "scale"], big: ["size", "scale"],
         speed: ["speed", "animation"], fast: ["speed"], slow: ["speed", "light", "performance"], lag: ["light", "performance"], laggy: ["light", "performance"], performance: ["light", "performance"], power: ["power", "battery"], wifi: ["wi-fi", "wifi", "network"], vpn: ["vpn", "usa", "riseup"], privacy: ["vpn"], usa: ["vpn", "usa"],
-        launcher: ["launcher", "apps"], rofi: ["launcher"], record: ["record", "recorder", "recording"], recording: ["record", "recorder"], video: ["record", "recorder", "video"], desktop: ["widgets", "widget"], widget: ["widgets", "widget"], hide: ["auto-hide", "hide"], apps: ["apps", "rofi", "dock"], game: ["gaming"], games: ["gaming"], layout: ["layout", "keyboard"], color: ["color", "role", "theme"], switch: ["switch", "icons"], slider: ["slider", "thickness"], wavy: ["wavy", "progress"], spring: ["spring", "motion"]
+        launcher: ["launcher", "apps"], rofi: ["launcher"], record: ["record", "recorder", "recording"], recording: ["record", "recorder"], video: ["record", "recorder", "video"], desktop: ["widgets", "widget"], widget: ["widgets", "widget"], hide: ["auto-hide", "hide"], apps: ["apps", "rofi", "dock"], game: ["gaming"], games: ["gaming"], layout: ["layout", "keyboard"], color: ["color", "role", "theme"], switch: ["switch", "icons"], slider: ["slider", "thickness"], wavy: ["wavy", "progress"], spring: ["spring", "motion"],
+        minimal: ["minimal"], minimalist: ["minimal"], square: ["minimal", "square"], frame: ["minimal", "frame"], border: ["minimal", "frame", "border"], borders: ["minimal", "frame", "border"], dwm: ["minimal"], lilith: ["minimal"], flat: ["minimal", "flat"]
     })
     function buildIndex() {
         const out = []
@@ -246,7 +247,7 @@ FloatingWindow {
                 const y = it.mapToItem(f.contentItem, 0, 0).y
                 f.contentY = Math.max(0, Math.min(f.contentHeight - f.height, y - 30))
             }
-            Qt.createQmlObject('import QtQuick; Rectangle { anchors.fill: parent; anchors.margins: -3; radius: (parent.radius !== undefined ? parent.radius : 8) + 3; color: "transparent"; border.width: 2; border.color: "#F6F5F4"; opacity: 0; z: 50;' +
+            Qt.createQmlObject('import QtQuick; Rectangle { anchors.fill: parent; anchors.margins: -3; radius: M3.sq ? 0 : ((parent.radius !== undefined ? parent.radius : 8) + 3); color: "transparent"; border.width: 2; border.color: "#F6F5F4"; opacity: 0; z: 50;' +
                 ' SequentialAnimation on opacity { running: true; NumberAnimation { to: 1; duration: 220 } PauseAnimation { duration: 500 } NumberAnimation { to: 0.35; duration: 260 } NumberAnimation { to: 1; duration: 260 } PauseAnimation { duration: 500 } NumberAnimation { to: 0; duration: 600 } ScriptAction { script: destroy() } } }', it, "searchFlash")
         }
     }
@@ -283,7 +284,10 @@ FloatingWindow {
         return "\uf17c"
     }
     readonly property string userName: Quickshell.env("USER")
-    readonly property int railW: 92
+    // the profile picture changed (Account and the sidebar read it again)
+    property int faceRev: 0
+    function pickFace() { faceBox.show() }
+    readonly property int railW: 80
     // rice-effects: blur and transparency are off right now
     property bool flat: false
     // Hyprland's blur off (its own setting, not the shell's): the window stays nearly solid, so the desktop's widgets
@@ -411,7 +415,7 @@ FloatingWindow {
         { name: "Update Center", icon: "\uf021" },
         { name: "VPN", icon: "\uf132" },
         { name: "Window rules", icon: "\uf2d2" },
-        { name: "Toolbox", icon: "\uf0ad" }
+        { name: "Account", icon: "\uf007" }
     ]
 
 
@@ -422,10 +426,10 @@ FloatingWindow {
         { group: "wall", name: "Wallpaper", icon: "\uf03e", sym: "wallpaper", pages: [18], caption: I18n.t("Wallpaper and the colors it gives") },
         { group: "look", name: "Appearance", icon: "\udb80\udfd8", sym: "palette", pages: [34, 8, 21, 19, 24, 22, 9, 14], caption: I18n.t("Themes, colors, fonts, shapes, components, cursors and the dock") },
         { group: "motion", name: "Motion", icon: "\uf1e6", sym: "animation", pages: [20], caption: I18n.t("How windows and Settings move") },
-        { group: "desk", name: "Desktop", icon: "\uf108", sym: "desktop_windows", pages: niri ? [29, 38, 12, 25, 37, 4, 11] : [29, 33, 38, 12, 25, 37, 4, 11], caption: I18n.t("Look & feel, widgets, windows, window rules, %1 and the lock screen", wmLabel) },
+        { group: "desk", name: "Desktop", icon: "\uf108", sym: "desktop_windows", pages: niri ? [29, 12, 25, 37, 4, 11] : [29, 33, 12, 25, 37, 4, 11], caption: I18n.t("Look & feel, widgets, windows, window rules, %1 and the lock screen", wmLabel) },
         { group: "bar", name: "Bar & launcher", icon: "\uf0c9", sym: "toolbar", pages: [2, 3, 6, 7], caption: I18n.t("The bar, the dynamic island and the launcher") },
         { group: "snd", name: "Sound & language", icon: "\uf028", sym: "graphic_eq", pages: [1, 10, 26], caption: I18n.t("Sounds, notifications, language and region") },
-        { group: "sys", name: "System", icon: "\uf013", sym: "settings", pages: [30, 31, 28, 5, 23, 15, 36], caption: I18n.t("Keybinds, languages, monitors, recording, keyboard and services") },
+        { group: "sys", name: "System", icon: "\uf013", sym: "settings", pages: [38, 30, 31, 28, 5, 23, 15, 36], caption: I18n.t("Your account, keybinds, languages, monitors, recording, keyboard and services") },
         { group: "game", name: "Gaming", icon: "\uf11b", sym: "sports_esports", pages: [16], caption: I18n.t("Play without distractions") },
         { group: "about", name: "About", icon: "\uf05a", sym: "info", pages: [17], caption: I18n.t("Version, system and credits") },
         { group: "upd", name: "Update Center", icon: "\uf021", sym: "system_update_alt", pages: [35], caption: I18n.t("Get the newest version, right here") }
@@ -515,7 +519,17 @@ FloatingWindow {
             navX = l.indexOf(b) >= l.indexOf(a) ? 1 : -1; navY = 0
         } else { navX = 0; navY = rb >= ra ? 1 : -1 }
     }
-    onPageChanged: { navFrom(prevPage, page); prevPage = page; openFor(page); const n = Object.assign({}, lastIn); n[railOf(page)] = page; lastIn = n }
+    // the back arrow in the header: the pages you came through
+    property var hist: []
+    property int railTip: -1
+    property real railTipY: 0
+    property bool goingBack: false
+    function goBack() {
+        if (hist.length === 0) { page = 0; return }
+        const h = hist.slice(); const p = h.pop(); hist = h
+        goingBack = true; page = p; goingBack = false
+    }
+    onPageChanged: { if (!goingBack && prevPage !== page) { const h = hist.concat([prevPage]); hist = h.slice(-30) } navFrom(prevPage, page); prevPage = page; openFor(page); const n = Object.assign({}, lastIn); n[railOf(page)] = page; lastIn = n }
     Component.onCompleted: { openFor(page); Prefs.shown = !startHidden; if (startHidden) park() }
 
     readonly property string hyprTool: home + "/.local/bin/hypr-set"
@@ -680,7 +694,21 @@ FloatingWindow {
             x: 0; y: 0
             width: win.railW
             height: parent.height
-            color: win.flat ? M3.surfaceLow : M3.alpha(M3.surfaceLow, win.noBlur ? 0.96 : 0.72)
+            color: "transparent"
+        }
+
+        // the pages sit on a rounded pane beside the rail (Material 3 on a big screen: the rail on the
+        // window, the content on a lighter container with large corners)
+        Rectangle {
+            id: pane
+            x: win.railW
+            y: 88
+            width: parent.width - x - 14
+            height: parent.height - y - 14
+            radius: M3.sq ? 0 : (Math.round(30 * M3.shapeK))
+            color: win.flat ? M3.surfaceLow : M3.alpha(M3.surfaceLow, win.noBlur ? 0.97 : 0.82)
+            border.width: 1
+            border.color: M3.alpha(M3.outlineVariant, 0.55)
         }
 
         // you: your picture (click: Home, right click: change it)
@@ -705,7 +733,7 @@ FloatingWindow {
             }
             Rectangle {
                 anchors.fill: parent
-                radius: width / 2
+                radius: M3.sq ? 0 : (width / 2)
                 color: Qt.rgba(0, 0, 0, 0.5)
                 opacity: avm.containsMouse ? 1 : 0
                 Behavior on opacity { NumberAnimation { duration: 160 } }
@@ -743,15 +771,20 @@ FloatingWindow {
                     delegate: Item {
                         id: ri
                         readonly property bool on: win.curRailIdx === index
+                        // a thin line after Home and before About (the rail in groups)
+                        readonly property bool gapAfter: index === 0 || (index + 1 < win.rail.length && win.rail[index + 1].gid === "about")
                         width: win.railW
-                        height: 56
-                        // the indicator: a pill that grows out of the middle
+                        height: 52 + (gapAfter ? 13 : 0)
+                        Rectangle { visible: ri.gapAfter; anchors.horizontalCenter: parent.horizontalCenter; y: 57; width: 28; height: 1; color: M3.outlineVariant }
+                        // the indicator: a pill that grows out of the middle; the open one a softer square
                         Rectangle {
                             anchors.horizontalCenter: parent.horizontalCenter
                             y: 4
-                            width: ri.on ? 56 : (rim.containsMouse ? 56 : 24)
-                            height: 32
-                            radius: 16
+                            width: ri.on ? 52 : (rim.containsMouse ? 48 : 24)
+                            height: ri.on ? 44 : 40
+                            radius: M3.sq ? 0 : (ri.on ? 16 * M3.shapeK : 20)
+                            Behavior on radius { NumberAnimation { duration: M3.d(360); easing.type: M3.springy; easing.overshoot: 1.4 * Prefs.bounce } }
+                            Behavior on height { NumberAnimation { duration: M3.d(300); easing.type: Easing.OutCubic } }
                             color: ri.on ? M3.secondaryContainer : M3.surfaceHigh
                             opacity: ri.on || rim.containsMouse ? 1 : 0
                             Behavior on width { NumberAnimation { duration: M3.d(M3.bouncy ? 420 : 320); easing.type: M3.bouncy ? Easing.OutBack : Easing.OutCubic; easing.overshoot: 1.5 * Prefs.bounce } }
@@ -760,53 +793,68 @@ FloatingWindow {
                         }
                         Icon {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            y: 4; height: 32
+                            y: 4; height: ri.on ? 44 : 40
                             name: modelData.sym
                             glyph: modelData.icon
-                            size: 19
+                            size: 21
                             filled: ri.on
                             color: ri.on ? M3.inkSecondaryC : M3.inkDim
                             Behavior on color { ColorAnimation { duration: 200 } }
                         }
-                        T {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            y: 38
-                            width: parent.width - 8
-                            horizontalAlignment: Text.AlignHCenter
-                            elide: Text.ElideRight
-                            text: I18n.lang === "en" && modelData.name === "Bar & launcher" ? I18n.t("Bar") : I18n.t(modelData.name)
-                            font.pixelSize: 11
-                            font.weight: ri.on ? Font.DemiBold : Font.Medium
-                            color: ri.on ? M3.ink : M3.inkDim
-                        }
-                        MouseArea { id: rim; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: win.goRail(index) }
+                        MouseArea { id: rim; width: parent.width; height: 52; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: win.goRail(index)
+                            onContainsMouseChanged: if (containsMouse) { win.railTip = index; win.railTipY = ri.mapToItem(card, 0, 4).y } else if (win.railTip === index) win.railTip = -1 }
                     }
                 }
             }
         }
 
+        // the name of a rail item, beside it while the pointer is on it
+        Rectangle {
+            readonly property var it: win.railTip >= 0 && win.railTip < win.rail.length ? win.rail[win.railTip] : null
+            visible: it !== null
+            x: win.railW - 4
+            y: win.railTipY + 4
+            z: 50
+            height: 36
+            width: tipT.implicitWidth + 28
+            radius: M3.sq ? 0 : (18)
+            color: M3.inverseSurface
+            T { id: tipT; anchors.centerIn: parent; text: parent.it ? I18n.t(parent.it.name) : ""; font.pixelSize: 13; font.weight: Font.Medium
+                color: "#1b1c1d" }
+        }
+
         // ================= header: where you are, search, close =================
-        T {
+        Rectangle {
+            id: backBtn
+            x: win.railW + 14
+            y: 24
+            width: 48; height: 48; radius: M3.sq ? 0 : (bkm.pressed ? 16 : 24)
+            Behavior on radius { NumberAnimation { duration: 160 } }
+            color: bkm.containsMouse ? M3.surfaceHighest : M3.surfaceHigh
+            opacity: win.page === 0 && win.hist.length === 0 ? 0.35 : 1
+            Icon { anchors.centerIn: parent; name: "arrow_back"; glyph: "\uf060"; size: 20; color: M3.ink }
+            MouseArea { id: bkm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: win.goBack() }
+        }
+        // where you are: Home > the group (a click on Home goes there)
+        Row {
             id: overline
-            x: win.railW + 28
-            y: 20
-            text: (I18n.t("DarkShadow's Shell  ·  ") + win.curRail.caption).toUpperCase()
-            font.pixelSize: 11
-            font.weight: Font.DemiBold
-            font.letterSpacing: 1.1
-            color: M3.primary
-            width: Math.max(80, searchBox.x - x - 20)
-            elide: Text.ElideRight
+            x: backBtn.x + backBtn.width + 16
+            y: 18
+            spacing: 6
+            T { text: I18n.t("Home").toUpperCase(); font.pixelSize: 12; font.weight: Font.Bold; font.letterSpacing: 1.2; color: hm1.containsMouse ? M3.primary : M3.ink
+                MouseArea { id: hm1; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: win.page = 0 } }
+            T { visible: win.curRailIdx > 0; text: "\u203a"; font.pixelSize: 13; font.weight: Font.Bold; color: M3.inkDim }
+            T { visible: win.curRailIdx > 0; text: I18n.t(win.curRail.name).toUpperCase(); font.pixelSize: 12; font.weight: Font.Bold; font.letterSpacing: 1.2; color: M3.ink }
         }
         T {
             id: pageTitle
             kind: "title"
-            x: win.railW + 26
-            y: 38
+            x: overline.x - 2
+            y: 34
             text: win.pages[win.page] ? I18n.t(win.pages[win.page].name) : ""
-            font.pixelSize: 30
+            font.pixelSize: 36
             font.weight: Font.Medium
-            width: Math.max(80, searchBox.x - x - 20)
+            width: Math.max(80, motionSeg.x - x - 20)
             elide: Text.ElideRight
         }
 
@@ -814,7 +862,7 @@ FloatingWindow {
             id: closeBtn
             width: 40
             height: 40
-            radius: 20
+            radius: M3.sq ? 0 : (20)
             anchors.right: parent.right
             anchors.rightMargin: 18
             y: 22
@@ -830,15 +878,53 @@ FloatingWindow {
             }
         }
 
+        // Expressive or Standard motion, right here (Motion > Feel)
+        Rectangle {
+            id: motionSeg
+            visible: parent.width > 980
+            anchors.right: searchBox.left
+            anchors.rightMargin: 10
+            y: 22
+            height: 40
+            width: msRow.implicitWidth + 8
+            radius: M3.sq ? 0 : (20)
+            color: M3.surfaceHigh
+            Row {
+                id: msRow
+                x: 4; anchors.verticalCenter: parent.verticalCenter
+                spacing: 2
+                Repeater {
+                    model: [{ v: "expressive", t: "Expressive", s: "bolt", g: "\uf0e7" }, { v: "standard", t: "Standard", s: "", g: "" }]
+                    Rectangle {
+                        id: mo
+                        required property var modelData
+                        readonly property bool on: Prefs.motion === modelData.v
+                        height: 32; radius: M3.sq ? 0 : (16)
+                        width: moR.implicitWidth + 24
+                        color: on ? M3.primary : (mom.containsMouse ? M3.surfaceHighest : "transparent")
+                        Behavior on color { ColorAnimation { duration: 160 } }
+                        Row {
+                            id: moR
+                            anchors.centerIn: parent
+                            spacing: 6
+                            Icon { visible: mo.modelData.s !== ""; anchors.verticalCenter: parent.verticalCenter; name: mo.modelData.s; glyph: mo.modelData.g; size: 15; color: mo.on ? M3.inkPrimary : M3.inkDim }
+                            T { anchors.verticalCenter: parent.verticalCenter; text: I18n.t(mo.modelData.t); font.pixelSize: 13; font.weight: Font.Medium; color: mo.on ? M3.inkPrimary : M3.ink }
+                        }
+                        MouseArea { id: mom; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Prefs.setMotion(mo.modelData.v) }
+                    }
+                }
+            }
+        }
+
         // ---------- search anything (a search bar; results drop down under it) ----------
         Rectangle {
             id: searchBox
             anchors.right: closeBtn.left
             anchors.rightMargin: 10
             y: 22
-            width: Math.min(280, Math.max(170, parent.width * 0.27))
+            width: Math.min(250, Math.max(160, parent.width * 0.22))
             height: 40
-            radius: 20
+            radius: M3.sq ? 0 : (20)
             color: searchIn.activeFocus ? M3.surfaceHighest : M3.surfaceHigh
             Behavior on color { ColorAnimation { duration: 160 } }
             Icon { name: "search"; glyph: "\uf002"; size: 17; x: 12; anchors.verticalCenter: parent.verticalCenter; color: searchIn.activeFocus ? M3.primary : M3.inkDim }
@@ -867,7 +953,7 @@ FloatingWindow {
             }
             Rectangle {
                 visible: searchIn.text.length > 0
-                width: 24; height: 24; radius: 12
+                width: 24; height: 24; radius: M3.sq ? 0 : (12)
                 anchors.right: parent.right; anchors.rightMargin: 9
                 anchors.verticalCenter: parent.verticalCenter
                 color: clrM.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : "transparent"
@@ -882,23 +968,56 @@ FloatingWindow {
             id: tabs
             readonly property var list: win.curRail.pages
             visible: list.length > 1
-            x: win.railW + 20
-            y: 84
-            width: parent.width - x - 20
-            height: visible ? 46 : 0
+            x: pane.x + 14
+            y: pane.y + 12
+            width: pane.width - 28
+            height: visible ? 44 : 0
+            // many tabs (or a narrow window): they scroll sideways, the open one is kept in view
+            Flickable {
+                id: tabFlick
+                anchors.fill: parent
+                clip: true
+                contentWidth: tabRow.width
+                contentHeight: height
+                flickableDirection: Flickable.HorizontalFlick
+                boundsBehavior: Flickable.StopAtBounds
+                Behavior on contentX { NumberAnimation { duration: M3.d(320); easing.type: Easing.OutCubic } }
+                onWidthChanged: Qt.callLater(function() { tabFlick.keep(tabPill.it) })
+                function keep(it) {
+                    if (!it || contentWidth <= width) { contentX = 0; return }
+                    contentX = Math.max(0, Math.min(contentWidth - width, it.x - (width - it.width) / 2))
+                }
+            // the pill under the open tab slides to it and stretches on the way
+            Rectangle {
+                id: tabPill
+                // (the width of the row changes when its tabs are made: look again then)
+                readonly property var it: {
+                    const k = tabs.list.indexOf(win.page)
+                    return tabRow.width >= 0 && k >= 0 && k < tabRow.children.length ? tabRow.children[k] : null
+                }
+                x: tabRow.x + (it ? it.x : 0)
+                width: it ? it.width : 0
+                y: 4
+                height: 36
+                radius: M3.sq ? 0 : (18)
+                color: M3.secondaryContainer
+                onItChanged: Qt.callLater(function() { tabFlick.keep(tabPill.it) })
+                Behavior on x { NumberAnimation { duration: M3.d(M3.bouncy ? 440 : 340); easing.type: M3.bouncy ? Easing.OutBack : Easing.OutCubic; easing.overshoot: 1.2 * Prefs.bounce } }
+                Behavior on width { NumberAnimation { duration: M3.d(M3.bouncy ? 440 : 340); easing.type: M3.bouncy ? Easing.OutBack : Easing.OutCubic; easing.overshoot: 1.2 * Prefs.bounce } }
+            }
             Row {
                 id: tabRow
-                x: 6
+                x: 0
                 height: 44
-                spacing: 4
+                spacing: 2
                 Repeater {
                     model: tabs.list
                     delegate: Item {
                         id: tb
                         readonly property bool on: win.page === modelData
-                        width: tbt.implicitWidth + 28
+                        width: tbt.implicitWidth + 36
                         height: 44
-                        Rectangle { anchors.fill: parent; anchors.margins: 4; radius: 12; color: tbm.containsMouse && !tb.on ? M3.surfaceHigh : "transparent"
+                        Rectangle { x: 0; y: 4; width: parent.width; height: 36; radius: M3.sq ? 0 : (18); color: tbm.containsMouse && !tb.on ? M3.surfaceHigh : "transparent"
                             Behavior on color { ColorAnimation { duration: 140 } } }
                         T {
                             id: tbt
@@ -906,37 +1025,22 @@ FloatingWindow {
                             text: I18n.t(win.pages[modelData].name)
                             font.pixelSize: 14
                             font.weight: tb.on ? Font.DemiBold : Font.Medium
-                            color: tb.on ? M3.primary : M3.inkDim
+                            color: tb.on ? M3.inkSecondaryC : M3.inkDim
                             Behavior on color { ColorAnimation { duration: 180 } }
                         }
                         MouseArea { id: tbm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: win.page = modelData }
                     }
                 }
             }
-            // the line under the open tab slides to it
-            Rectangle {
-                readonly property var it: {
-                    const k = tabs.list.indexOf(win.page)
-                    return k >= 0 && k < tabRow.children.length ? tabRow.children[k] : null
-                }
-                x: tabRow.x + (it ? it.x + 14 : 0)
-                width: it ? it.width - 28 : 0
-                y: 41
-                height: 3
-                radius: 1.5
-                color: M3.primary
-                Behavior on x { NumberAnimation { duration: M3.d(M3.bouncy ? 420 : 320); easing.type: M3.bouncy ? Easing.OutBack : Easing.OutCubic; easing.overshoot: 1.2 * Prefs.bounce } }
-                Behavior on width { NumberAnimation { duration: M3.d(M3.bouncy ? 420 : 320); easing.type: M3.bouncy ? Easing.OutBack : Easing.OutCubic; easing.overshoot: 1.2 * Prefs.bounce } }
             }
-            Rectangle { x: 0; y: 44; width: parent.width; height: 1; color: M3.outlineVariant }
         }
 
         Item {
             id: pagesHolder
-            x: win.railW + 4
-            y: tabs.visible ? 136 : 92
-            width: parent.width - x
-            height: parent.height - y
+            x: pane.x
+            y: tabs.visible ? pane.y + 62 : pane.y + 10
+            width: pane.width
+            height: pane.y + pane.height - y - 8
             clip: true
 
 
@@ -977,7 +1081,7 @@ FloatingWindow {
             PageSlot { nav: win; idx: 35; cur: win.page; page: Component { UpdatePage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 36; cur: win.page; page: Component { VpnPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 37; cur: win.page; page: Component { WindowRulesPage { anchors.fill: parent; ctl: win } } }
-            PageSlot { nav: win; idx: 38; cur: win.page; page: Component { ToolboxPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 38; cur: win.page; page: Component { AccountPage { anchors.fill: parent; ctl: win } } }
         }
 
         // results: the setting, and where it is (page > section)
@@ -989,7 +1093,7 @@ FloatingWindow {
             y: searchBox.y + searchBox.height + 8
             width: 380
             height: Math.min(parent.height - y - 20, Math.max(64, resultList.contentHeight + 16))
-            radius: M3.rL
+            radius: M3.sq ? 0 : (M3.rL)
             color: M3.surfaceHigh
             border.width: 1
             border.color: M3.outlineVariant
@@ -1007,7 +1111,7 @@ FloatingWindow {
             delegate: Rectangle {
                 width: resultList.width
                 height: 50
-                radius: 11
+                radius: M3.sq ? 0 : (11)
                 color: index === win.searchSel ? Qt.rgba(1, 1, 1, 0.09) : (rm.containsMouse ? Qt.rgba(1, 1, 1, 0.05) : "transparent")
                 Column {
                     x: 12; width: parent.width - 20
@@ -1034,7 +1138,7 @@ FloatingWindow {
 
 
         // ---------- your profile picture (click it in the sidebar) ----------
-        FacePicker { id: faceBox; onChanged: faceReload.restart() }
+        FacePicker { id: faceBox; onChanged: { faceReload.restart(); win.faceRev++ } }
 
         // ---------- the tour (after the welcome intro, or rice-welcome tour) ----------
         Tour {
@@ -1196,7 +1300,7 @@ PanelWindow {
         property real pulse: 1
         opacity: dimWin.k * dimWin.sk * pulse
         x: dimWin.ix - 4; y: dimWin.iy - 4; width: dimWin.iw + 8; height: dimWin.ih + 8
-        radius: height / 2
+        radius: M3.sq ? 0 : (height / 2)
         color: "transparent"
         border.width: 3
         border.color: M3.primary

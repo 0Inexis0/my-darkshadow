@@ -13,7 +13,8 @@ Item {
     property int count: 12
     property real thick: 22              // the room across the bar the bars may use
     property var levels: []
-    readonly property bool listening: active && !Look.flat && Mpris.players.values.some(function(p) { return p.isPlaying })
+    // V5.01: not in Lite mode (it was off with "no blur & transparency" too, so Minimal mode with solid windows lost it)
+    readonly property bool listening: active && !Look.lite && Mpris.players.values.some(function(p) { return p.isPlaying })
     implicitWidth: vertical ? thick : count * 4 + (count - 1) * 2
     implicitHeight: vertical ? count * 4 + (count - 1) * 2 : thick
 
@@ -54,7 +55,7 @@ Item {
             y: bv.vertical ? index * 6 : (bv.thick - len) / 2
             width: bv.vertical ? len : 4
             height: bv.vertical ? 4 : len
-            radius: 2
+            radius: Look.sq ? 0 : (2)
             color: bv.color
             opacity: 0.45 + 0.55 * v
             Behavior on width { enabled: bv.vertical; NumberAnimation { duration: 90; easing.type: Easing.OutQuad } }

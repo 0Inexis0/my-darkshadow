@@ -30,7 +30,7 @@ Item {
                     anchors.fill: parent
                     kind: modelData.s
                     color: parent.mid ? (tw.pal ? tw.pal.tertiary : "#e8a28c") : (tw.pal ? (tw.bg > 0.02 ? tw.pal.shapeFill : "transparent") : "#22262a")
-                    SlowSpin { turn: 360; period: 60000; running: (tw.running && !Look.lite && !parent.mid) && !Look.covered }
+                    SlowSpin { turn: 360; period: 60000; running: tw.running && !Look.lite && !parent.mid }
                 }
                 Column {
                     anchors.centerIn: parent

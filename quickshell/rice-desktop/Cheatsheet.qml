@@ -58,7 +58,7 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "rice-keys"
     WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-    NiriBlur { win: cs; items: [card]; radius: card.radius; on: cs.open && cs.t > 0.95 }
+    NiriBlur { win: cs; items: [card]; radius: Look.sq ? 0 : (card.radius); on: cs.open && cs.t > 0.95 }
 
     Rectangle { anchors.fill: parent; color: Qt.rgba(0, 0, 0, 0.38 * cs.t) }
     MouseArea { anchors.fill: parent; onClicked: cs.open = false }
@@ -71,7 +71,7 @@ PanelWindow {
         property bool sign: false
         property bool lit: false               // it has what you typed in it
         width: sign ? ct.implicitWidth : Math.max(28, ct.implicitWidth + 16)
-        height: 26; radius: lit ? 13 : 8
+        height: 26; radius: Look.sq ? 0 : (lit ? 13 : 8)
         Behavior on radius { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
         color: sign ? "transparent" : (lit ? pal.primary : (yours ? pal.container : pal.cardHi))
         Behavior on color { ColorAnimation { duration: 180 } }
@@ -88,9 +88,10 @@ PanelWindow {
             font.family: Fonts.main; font.pixelSize: 12; font.weight: Font.Medium }
     }
 
-    Shadow { anchors.fill: card; radius: card.radius; opacity: card.opacity; on: Look.shadows }
+    Shadow { anchors.fill: card; radius: Look.sq ? 0 : (card.radius); opacity: card.opacity; on: Look.shadows }
     Rectangle {
         id: card
+        Frame { }      // V4.98 Minimal mode
         readonly property int cols: cs.width >= 1500 ? 3 : (cs.width >= 1000 ? 2 : 1)
         readonly property real colW: 420
         width: Math.min(cs.width - 48, cols * colW + (cols - 1) * 16 + 48)
@@ -98,7 +99,7 @@ PanelWindow {
         Behavior on height { enabled: cs.settled; NumberAnimation { duration: 320; easing.type: Easing.OutCubic } }
         anchors.horizontalCenter: parent.horizontalCenter
         y: (cs.height - height) / 2 + (1 - cs.t) * 30
-        radius: 32
+        radius: Look.sq ? 0 : (32)
         color: pal.surface
         border.width: 1; border.color: pal.line
         opacity: cs.t
@@ -110,7 +111,7 @@ PanelWindow {
             x: 24; y: 20; width: parent.width - 48; height: 48
             Row {
                 anchors.verticalCenter: parent.verticalCenter; spacing: 12
-                Rectangle { width: 40; height: 40; radius: 14; color: pal.container
+                Rectangle { width: 40; height: 40; radius: Look.sq ? 0 : (14); color: pal.container
                     MIcon { anchors.centerIn: parent; size: 21; name: "keyboard"; glyph: String.fromCodePoint(0xF030C); color: pal.inkContainer } }
                 Text { anchors.verticalCenter: parent.verticalCenter; text: Tr.t("Keys"); color: pal.fg
                     font.family: Fonts.main; font.pixelSize: 20; font.weight: Font.DemiBold }
@@ -120,7 +121,7 @@ PanelWindow {
                 id: findBox
                 anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
                 readonly property bool busy: find.text !== ""
-                width: Math.min(busy ? 380 : 300, parent.width * 0.6); height: 42; radius: busy ? 16 : 21
+                width: Math.min(busy ? 380 : 300, parent.width * 0.6); height: 42; radius: Look.sq ? 0 : (busy ? 16 : 21)
                 Behavior on width { NumberAnimation { duration: 360; easing.type: Easing.OutBack; easing.overshoot: 1.4 } }
                 Behavior on radius { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
                 color: busy ? pal.cardHi : pal.card
@@ -141,7 +142,7 @@ PanelWindow {
                     color: pal.fg; selectionColor: pal.primary; selectedTextColor: pal.inkPrimary
                     font.family: Fonts.main; font.pixelSize: 14; clip: true
                     cursorDelegate: Rectangle {
-                        width: 2; radius: 1; color: pal.primary
+                        width: 2; radius: Look.sq ? 0 : (1); color: pal.primary
                         SequentialAnimation on opacity { loops: Animation.Infinite; running: find.activeFocus
                             NumberAnimation { to: 1; duration: 80 } PauseAnimation { duration: 480 }
                             NumberAnimation { to: 0.15; duration: 260 } PauseAnimation { duration: 180 } }
@@ -159,7 +160,7 @@ PanelWindow {
                     visible: scale > 0.01
                     scale: findBox.busy ? 1 : 0
                     Behavior on scale { NumberAnimation { duration: 280; easing.type: Easing.OutBack; easing.overshoot: 2 } }
-                    width: Math.max(28, countT.implicitWidth + 16); height: 26; radius: 13
+                    width: Math.max(28, countT.implicitWidth + 16); height: 26; radius: Look.sq ? 0 : (13)
                     color: cs.hitsAll > 0 ? pal.primary : pal.card
                     Behavior on color { ColorAnimation { duration: 180 } }
                     Text { id: countT; anchors.centerIn: parent; text: cs.hitsAll; color: cs.hitsAll > 0 ? pal.inkPrimary : pal.dim
@@ -225,7 +226,7 @@ PanelWindow {
                         width: flow.w
                         height: wantH
                         Behavior on height { enabled: cs.settled; NumberAnimation { duration: 280; easing.type: Easing.OutCubic } }
-                        radius: 22
+                        radius: Look.sq ? 0 : (22)
                         color: pal.card
                         clip: true
                         visible: opacity > 0.01
@@ -253,7 +254,7 @@ PanelWindow {
                                     visible: scale > 0.01
                                     scale: cs.q !== "" && grp.hits > 0 ? 1 : 0
                                     Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 2 } }
-                                    width: Math.max(20, nt.implicitWidth + 12); height: 20; radius: 10; color: pal.container
+                                    width: Math.max(20, nt.implicitWidth + 12); height: 20; radius: Look.sq ? 0 : (10); color: pal.container
                                     Text { id: nt; anchors.centerIn: parent; text: grp.hits; color: pal.inkContainer
                                         font.family: Fonts.numbers; font.pixelSize: 11; font.weight: Font.DemiBold }
                                 }

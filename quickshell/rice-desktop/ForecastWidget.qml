@@ -62,7 +62,7 @@ Item {
         Repeater {
             model: hrs.list
             delegate: Rectangle {
-                width: hrs.cw; height: 70; radius: 18
+                width: hrs.cw; height: 70; radius: Look.sq ? 0 : (18)
                 color: index === 0 ? Qt.rgba(fw.acc.r, fw.acc.g, fw.acc.b, 0.22) : (fw.pal ? fw.pal.chip : Qt.rgba(1, 1, 1, 0.08))
                 Column {
                     anchors.centerIn: parent; spacing: 2

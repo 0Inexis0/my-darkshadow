@@ -160,65 +160,63 @@ def mon_rate(x):
     return (("%.3f" if NIRI else "%.2f") % float(x)).rstrip("0").rstrip(".")
 
 
-# Motion styles (Settings > Motion). calm = the curves of hyprland.lua; the spring ones use Hyprland's spring curves.
-#   name: (curve definitions, {leaf: (speed, curve kind, curve name, style)})
+# Motion styles (Settings > Motion). calm = the curves of hyprland.lua; the others are Material 3 motion (V5.02):
+#   name: {leaf: (speed, curve kind, curve name, style)}
 SPRINGS = {
     "ds-soft": (1, 150, 19),        # mass, stiffness, dampening: settles without a wobble
-    "ds-lively": (1, 190, 15),      # a small overshoot
     "ds-expr": (1, 320, 27),        # Material 3 expressive, spatial: quick, a hint of overshoot (damping ~0.75)
     "ds-expr-soft": (1, 240, 28),   # Material 3 expressive, slower parts: no overshoot to speak of
+    "ds-pop": (1, 280, 21),         # a springy pop: one small bounce, then still
 }
-# Material 3's easing curves (the public motion tokens): emphasized decelerate / accelerate, standard, and a long
-# soft landing for menus
+# Material 3's easing curves (the public motion tokens)
 BEZIERS = {
-    "md-emph": ((0.05, 0.7), (0.1, 1.0)),
-    "md-accel": ((0.3, 0.0), (0.8, 0.15)),
-    "md-std": ((0.2, 0.0), (0.0, 1.0)),
-    "md-menu": ((0.1, 1.0), (0.0, 1.0)),
+    "md-emph": ((0.05, 0.7), (0.1, 1.0)),       # emphasized decelerate
+    "md-accel": ((0.3, 0.0), (0.8, 0.15)),      # emphasized accelerate
+    "md-std": ((0.2, 0.0), (0.0, 1.0)),         # standard
+    "md-menu": ((0.1, 1.0), (0.0, 1.0)),        # a long soft landing for menus
+    "md-xfast": ((0.42, 1.67), (0.21, 0.9)),    # expressive fast spatial
+    "md-xdef": ((0.38, 1.21), (0.22, 1.0)),     # expressive default spatial
+    "md-xfx": ((0.34, 0.8), (0.34, 1.0)),       # expressive effects
 }
 MOTION = {
     "calm": None,
-    "lively": {
-        "windows": (6, "spring", "ds-lively", "popin 88%"), "windowsIn": (6, "spring", "ds-lively", "popin 82%"),
-        "windowsOut": (5, "bezier", "quick", "popin 92%"), "windowsMove": (6, "spring", "ds-soft", None),
-        "workspaces": (7, "spring", "ds-soft", "slidefade 18%"), "specialWorkspace": (5, "spring", "ds-soft", "slidefadevert 8%"),
-        "layersIn": (5, "spring", "ds-lively", "popin 92%"), "layersOut": (3, "bezier", "quick", "popin 95%"),
-        "fade": (4, "bezier", "smooth", None),
+    # Emphasized: Material 3 emphasized motion. Windows grow out of a smaller size on a long, soft landing and
+    # leave quickly; workspaces slide; menus land softly. No bounce
+    "emphasized": {
+        "windows": (4.5, "bezier", "md-emph", "popin 60%"), "windowsIn": (4.5, "bezier", "md-emph", "popin 60%"),
+        "windowsOut": (2.5, "bezier", "md-accel", "popin 80%"), "windowsMove": (4, "bezier", "md-emph", None),
+        "workspaces": (5, "bezier", "md-emph", "slide"), "specialWorkspace": (5, "bezier", "md-emph", "slidefadevert 15%"),
+        "layers": (3, "bezier", "md-emph", "fade"), "layersIn": (3, "bezier", "md-menu", "popin 93%"),
+        "layersOut": (2, "bezier", "md-accel", "popin 94%"), "fadeLayersIn": (2.5, "bezier", "md-std", None),
+        "fadeLayersOut": (2, "bezier", "md-accel", None), "fade": (3, "bezier", "md-std", None),
     },
-    # Fluid: Material 3 emphasized motion. Windows grow out of themselves on a long, soft landing and leave quickly;
-    # workspaces glide with a fade; menus and panels slide in like M3 menus. No bounce
-    "fluid": {
-        "windows": (5, "bezier", "md-emph", "popin 84%"), "windowsIn": (5, "bezier", "md-emph", "popin 80%"),
-        "windowsOut": (2.5, "bezier", "md-accel", "popin 90%"), "windowsMove": (5, "bezier", "md-emph", None),
-        "workspaces": (6, "bezier", "md-emph", "slidefade 24%"), "specialWorkspace": (5, "bezier", "md-emph", "slidefadevert 14%"),
-        "layers": (4, "bezier", "md-emph", "fade"), "layersIn": (4, "bezier", "md-menu", "popin 92%"),
-        "layersOut": (2, "bezier", "md-accel", "popin 94%"), "fadeLayersIn": (3, "bezier", "md-std", None),
-        "fadeLayersOut": (2, "bezier", "md-accel", None), "fade": (4, "bezier", "md-std", None),
-    },
-    # Expressive: Material 3 expressive springs. Windows pop open with a hint of overshoot, things you move follow
-    # like they have weight, workspaces slide; closing stays short and calm
+    # Expressive: Material 3 expressive spatial curves: windows open with a little overshoot, things you move follow
+    # quickly and land with life, workspaces slide; closing stays short
     "expressive": {
-        "windows": (6, "spring", "ds-expr", "popin 76%"), "windowsIn": (6, "spring", "ds-expr", "popin 72%"),
-        "windowsOut": (2.5, "bezier", "md-accel", "popin 88%"), "windowsMove": (6, "spring", "ds-expr-soft", None),
-        "workspaces": (7, "spring", "ds-expr-soft", "slide"), "specialWorkspace": (5, "spring", "ds-expr-soft", "slidevert"),
-        "layers": (4, "bezier", "md-emph", "fade"), "layersIn": (5, "spring", "ds-expr", "popin 90%"),
-        "layersOut": (2, "bezier", "md-accel", "popin 94%"), "fadeLayersIn": (3, "bezier", "md-std", None),
+        "windows": (5, "bezier", "md-xdef", "popin 80%"), "windowsIn": (5, "bezier", "md-xdef", "popin 80%"),
+        "windowsOut": (2.5, "bezier", "md-accel", "popin 90%"), "windowsMove": (4.5, "bezier", "md-xfast", None),
+        "workspaces": (5.5, "bezier", "md-xdef", "slide"), "specialWorkspace": (5, "bezier", "md-xdef", "slidevert"),
+        "layers": (3, "bezier", "md-xfx", "fade"), "layersIn": (4, "bezier", "md-xdef", "popin 90%"),
+        "layersOut": (2, "bezier", "md-accel", "popin 95%"), "fadeLayersIn": (3, "bezier", "md-xfx", None),
+        "fadeLayersOut": (2, "bezier", "md-accel", None), "fade": (3, "bezier", "md-xfx", None),
+    },
+    # Glide: windows slide in from the nearest edge and back out, workspaces glide up and down, panels slide in
+    "glide": {
+        "windows": (5, "bezier", "md-emph", "slide"), "windowsIn": (5, "bezier", "md-emph", "slide"),
+        "windowsOut": (3, "bezier", "md-accel", "slide"), "windowsMove": (5, "spring", "ds-soft", None),
+        "workspaces": (6, "bezier", "md-emph", "slidefadevert 30%"), "specialWorkspace": (5, "bezier", "md-emph", "slidevert"),
+        "layers": (4, "bezier", "md-emph", "slide"), "layersIn": (4, "bezier", "md-emph", "slide"),
+        "layersOut": (2.5, "bezier", "md-accel", "slide"), "fadeLayersIn": (3, "bezier", "md-std", None),
         "fadeLayersOut": (2, "bezier", "md-accel", None), "fade": (4, "bezier", "md-std", None),
     },
-    "snappy": {
-        "windows": (2.5, "bezier", "quick", "popin 95%"), "windowsIn": (2.5, "bezier", "quick", "popin 92%"),
-        "windowsOut": (2, "bezier", "quick", "popin 95%"), "windowsMove": (2, "bezier", "quick", None),
-        "workspaces": (3, "bezier", "easeOutQuint", "slide"), "specialWorkspace": (2.5, "bezier", "quick", "slidevert"),
-        "layersIn": (2, "bezier", "quick", "fade"), "layersOut": (2, "bezier", "quick", "fade"),
-        "fade": (2.5, "bezier", "quick", None),
-    },
-    "minimal": {
-        # windows have no "fade" style in Hyprland: popin at 100% does not grow, so only the fade is left
-        "windows": (3, "bezier", "linearish", "popin 100%"), "windowsIn": (3, "bezier", "linearish", "popin 100%"),
-        "windowsOut": (3, "bezier", "linearish", "popin 100%"), "windowsMove": (3, "bezier", "quick", None),
-        "workspaces": (3, "bezier", "linearish", "fade"), "specialWorkspace": (3, "bezier", "linearish", "fade"),
-        "layersIn": (2, "bezier", "linearish", "fade"), "layersOut": (2, "bezier", "linearish", "fade"),
-        "fade": (3, "bezier", "linearish", None),
+    # Pop: windows spring up from small with one soft bounce, workspaces slide on a spring; quick and playful
+    "pop": {
+        "windows": (6, "spring", "ds-pop", "popin 45%"), "windowsIn": (6, "spring", "ds-pop", "popin 45%"),
+        "windowsOut": (2, "bezier", "md-accel", "popin 70%"), "windowsMove": (6, "spring", "ds-expr", None),
+        "workspaces": (7, "spring", "ds-expr-soft", "slidefade 12%"), "specialWorkspace": (5, "spring", "ds-expr-soft", "slidefadevert 10%"),
+        "layers": (3, "bezier", "md-std", "fade"), "layersIn": (5, "spring", "ds-pop", "popin 85%"),
+        "layersOut": (2, "bezier", "md-accel", "popin 92%"), "fadeLayersIn": (2.5, "bezier", "md-std", None),
+        "fadeLayersOut": (2, "bezier", "md-accel", None), "fade": (3, "bezier", "md-std", None),
     },
 }
 
@@ -230,8 +228,8 @@ def spring_lines():
                % (n, lua(float(a[0])), lua(float(a[1])), lua(float(b[0])), lua(float(b[1]))) for n, (a, b) in BEZIERS.items()])
 
 
-# Bouncy (V3.97 and older) is now Expressive
-OLD_STYLES = {"bouncy": "expressive"}
+# styles that are gone: Bouncy (V3.97 and older), and Lively, Fluid, Snappy and Minimal (V5.01 and older)
+OLD_STYLES = {"bouncy": "expressive", "lively": "pop", "fluid": "emphasized", "snappy": "calm", "minimal": "calm"}
 
 
 def anim_lines(pct, style="calm"):
@@ -380,6 +378,21 @@ def cmd_state():
     }))
 
 
+def minimal_keys():
+    """the settings Minimal mode (rice-minimal) sets while it is on"""
+    try:
+        m = json.load(open(DIR + "/minimal.json"))
+    except Exception:
+        return ()
+    if m.get("on") is not True:
+        return ()
+    k = ["decoration.rounding", "general.border_size", "decoration.shadow.enabled", "decoration.shadow.range",
+         "decoration.shadow.render_power"]
+    if m.get("solid") is True and m.get("v", 1) >= 2:
+        k += ["decoration.blur.enabled", "decoration.active_opacity", "decoration.inactive_opacity"]
+    return tuple(k)
+
+
 def cmd_set(key, raw):
     spec = SPEC.get(key)
     if not spec:
@@ -398,6 +411,11 @@ def cmd_set(key, raw):
     s = load()
     s["opts"][key] = v
     save(s)
+    m = minimal_keys()
+    if key in m:
+        # Minimal mode decides this one now: saved for when it is off, not sent (it would undo Minimal mode)
+        print("Saved. Minimal mode decides this while it is on (Settings > Look & Feel > Minimal mode)")
+        return
     if not ev("hl.config(%s)" % nest(key, v)):
         sys.exit(1)
 
@@ -455,6 +473,7 @@ def cmd_anim_speed(v):
 
 
 def cmd_anim_style(v):
+    v = OLD_STYLES.get(v, v)
     if v not in MOTION:
         die("anim-style: " + "|".join(MOTION))
     s = load()
@@ -993,6 +1012,15 @@ def cmd_kbd_state():
                       "all": [{"id": a, "name": b, "n": cnt.get(a, 0)} for a, b in xkb_layouts()]}))
 
 
+def kbd_remember(layout):
+    """the layouts for the programs that are not the window manager: a new kitty terminal reads them too."""
+    try:
+        os.makedirs(DIR, exist_ok=True)
+        write_atomic(DIR + "/kbd.json", json.dumps({"layout": layout}))
+    except OSError:
+        pass
+
+
 def cmd_kbd_set(layouts):
     """LAYOUTS: us,pl or us:intl,pl (layout:variant)"""
     lays, vars_ = [], []
@@ -1011,6 +1039,7 @@ def cmd_kbd_set(layouts):
         s["kbd"]["options"] = "grp:alt_shift_toggle"
     save(s)
     ev("hl.config(%s)" % kbd_lua(s["kbd"]))
+    kbd_remember(",".join(lays))
     print("Keyboard: " + ", ".join(lays))
 
 

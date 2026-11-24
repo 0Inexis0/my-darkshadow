@@ -818,7 +818,8 @@ step_apps() {
     d="$(basename "$d")"
     case "$d" in
       rice-settings) n="Settings app" ;; rice-desktop) n="Desktop widgets and dock" ;;
-      rice-welcome) n="Welcome screen" ;; hyprquickpaper) n="Wallpaper picker" ;; *) n="$d" ;;
+      rice-welcome) n="Welcome screen" ;; hyprquickpaper) n="Wallpaper picker" ;;
+      rice-apps) n="Files, Photos, Music and Videos (our apps)" ;; *) n="$d" ;;
     esac
     task "$n  ->  ~/.config/quickshell/$d" copy_tree "$ROOT/quickshell/$d" "$HOME/.config/quickshell/$d"
   done
@@ -828,6 +829,10 @@ step_apps() {
     rm -f "$HOME/.config/quickshell/rice-desktop/$old.qml"
   done
   rm -f "$HOME/.config/quickshell/rice-settings/DashboardPage.qml" "$HOME/.config/quickshell/rice-settings/DashMini.qml"
+  # V4.85: our own apps in the app menu (Files, Photos, Music, Videos), their icons in the wallpaper's colors
+  [ "$DRY_RUN" = 1 ] || { [ -x "$BIN/rice-app" ] && task "Files, Photos, Music and Videos in the app menu" "$BIN/rice-app" install
+    # our Files is the file manager (picked, or nothing picked yet): the old one leaves the app menu
+    case "$(cat "$HOME/.config/rice/files" 2>/dev/null)" in ""|darkshadow) "$BIN/rice-app" hide-old on >/dev/null 2>&1 ;; esac; }
   if ! printf '%s' ":$PATH:" | grep -q ":$HOME/.local/bin:"; then
     warn "\$HOME/.local/bin is not in your PATH. Add it in your shell config (fish: fish_add_path \$HOME/.local/bin)"
   fi
@@ -1029,6 +1034,7 @@ step_finish() {
   task "Theme colors for the wallpaper picker" patch_colors
   # last: it must stay the last module Hyprland loads
   [ -x "$BIN/rice-effects" ] && task "Blur, transparency and gaming mode" t "$BIN/rice-effects" apply --no-reload
+  [ -x "$BIN/rice-minimal" ] && task "Minimal mode" t "$BIN/rice-minimal" apply --no-reload
   task "my-darkshadow: bundled fonts and wallpaper defaults" t python3 "$ROOT/personal/apply.py" --extras
   [ -x "$BIN/rice-fonts" ] && T=400 task "Fonts: Google Sans Flex & Code, Material Symbols, Nerd Font icons (skips what you have)" t "$BIN/rice-fonts"
   [ -x "$BIN/font-set" ] && task "Google Sans Flex as the interface font" t "$BIN/font-set" migrate

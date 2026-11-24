@@ -93,7 +93,8 @@ PanelWindow {
     }
     function hit(w) { const q = query.toLowerCase(); return q === "" || (w.title + " " + w.cls).toLowerCase().indexOf(q) >= 0 }
     readonly property var found: query === "" ? [] : mru.filter(hit)
-    function iconOf(cls) {
+    function iconOf(cls, title) {
+        cls = Icons.appKey(cls, title)
         const e = cls ? DesktopEntries.heuristicLookup(cls) : null
         const n = e && e.icon ? e.icon : (cls || "").toLowerCase()
         const p = n !== "" ? Icons.get(n, true) : ""
@@ -150,7 +151,7 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "rice-taskview"
     WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-    NiriBlur { win: tv; items: [tv.mode === "overview" ? sheet : strip]; radius: 30; on: tv.open && tv.t > 0.98 }
+    NiriBlur { win: tv; items: [tv.mode === "overview" ? sheet : strip]; radius: Look.sq ? 0 : (30); on: tv.open && tv.t > 0.98 }
 
     // a dim veil over everything; a click on it closes
     Rectangle { anchors.fill: parent; color: Qt.rgba(0, 0, 0, 0.38 * tv.t) }
@@ -199,12 +200,12 @@ PanelWindow {
         anchors.horizontalCenter: parent.horizontalCenter
         y: sheet.y - height - 16 + (1 - tv.t) * -20
         opacity: tv.t
-        width: 460; height: 50; radius: 25
+        width: 460; height: 50; radius: Look.sq ? 0 : (25)
         color: pal.surface
         border.width: 1; border.color: pal.line
         Row {
             anchors.verticalCenter: parent.verticalCenter; x: 8; spacing: 10
-            Rectangle { width: 34; height: 34; radius: 17; color: pal.container
+            Rectangle { width: 34; height: 34; radius: Look.sq ? 0 : (17); color: pal.container
                 MIcon { anchors.centerIn: parent; size: 18; name: "search"; glyph: String.fromCodePoint(0xF0349); color: pal.inkContainer } }
             Text {
                 anchors.verticalCenter: parent.verticalCenter
@@ -216,7 +217,7 @@ PanelWindow {
         }
         Rectangle {
             anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter
-            height: 30; width: cnt.implicitWidth + 20; radius: 15; color: pal.card
+            height: 30; width: cnt.implicitWidth + 20; radius: Look.sq ? 0 : (15); color: pal.card
             Text { id: cnt; anchors.centerIn: parent; color: pal.dim; font.family: Fonts.main; font.pixelSize: 11
                 text: tv.query !== "" ? tv.found.length + " " + Tr.t("found") : tv.wins.length + " " + Tr.t("windows") }
         }
@@ -225,11 +226,12 @@ PanelWindow {
     // the sheet with the workspaces
     Rectangle {
         id: sheet
+        Frame { }      // V4.98 Minimal mode
         visible: tv.mode === "overview"
         width: grid.width + 32; height: grid.height + 32
         anchors.horizontalCenter: parent.horizontalCenter
         y: (parent.height - height) / 2 + 20
-        radius: 30
+        radius: Look.sq ? 0 : (30)
         color: Qt.rgba(pal.surface.r, pal.surface.g, pal.surface.b, 0.72)
         border.width: 1; border.color: pal.line
         opacity: Math.min(1, tv.t * 1.5)
@@ -255,7 +257,7 @@ PanelWindow {
                     transform: Translate { y: (1 - card.k) * 18 }
                     Rectangle {
                         anchors.fill: parent
-                        radius: 18
+                        radius: Look.sq ? 0 : (18)
                         color: tv.hoverWs === card.ws || cm.containsMouse ? Qt.rgba(pal.card.r, pal.card.g, pal.card.b, 0.95) : Qt.rgba(pal.card.r, pal.card.g, pal.card.b, 0.6)
                         border.width: card.active || card.picked || tv.hoverWs === card.ws ? 2 : 1
                         border.color: card.active ? pal.primary : (card.picked ? Qt.rgba(pal.primary.r, pal.primary.g, pal.primary.b, 0.5) : pal.line)
@@ -313,7 +315,7 @@ PanelWindow {
                                 Rectangle {
                                     id: tile
                                     anchors.fill: parent
-                                    radius: 10
+                                    radius: Look.sq ? 0 : (10)
                                     color: pal.surface
                                     border.width: wv.lit || wm2.containsMouse ? 2 : 1
                                     border.color: wv.lit || wm2.containsMouse ? pal.primary : pal.line
@@ -340,18 +342,18 @@ PanelWindow {
                                         anchors.centerIn: parent
                                         readonly property real sz: Math.min(parent.width, parent.height) * 0.42
                                         width: sz; height: sz; sourceSize.width: 96; sourceSize.height: 96
-                                        source: tv.iconOf(wv.w.cls)
+                                        source: tv.iconOf(wv.w.cls, wv.w.title)
                                         visible: !live.obj || !live.obj.hasContent
                                         smooth: true; mipmap: true
                                     }
                                 }
                                 // the app on top of its picture, small
                                 Image { visible: live.obj !== null && wv.width > 70; x: 6; y: wv.height - height - 6; width: 18; height: 18
-                                    sourceSize.width: 36; sourceSize.height: 36; source: tv.iconOf(wv.w.cls) }
+                                    sourceSize.width: 36; sourceSize.height: 36; source: tv.iconOf(wv.w.cls, wv.w.title) }
                                 // close
                                 Rectangle {
                                     visible: wm2.containsMouse && !wm2.drag.active && wv.width > 50
-                                    width: 22; height: 22; radius: 11; x: wv.width - 26; y: 4; z: 3
+                                    width: 22; height: 22; radius: Look.sq ? 0 : (11); x: wv.width - 26; y: 4; z: 3
                                     color: xm.containsMouse ? "#e06c75" : Qt.rgba(0, 0, 0, 0.6)
                                     MIcon { anchors.centerIn: parent; size: 13; name: "close"; glyph: String.fromCodePoint(0xF0156); color: "white" }
                                     MouseArea { id: xm; anchors.fill: parent; hoverEnabled: true; onClicked: { tv.run(["close", String(wv.w.id)]); reload.restart() } }
@@ -377,7 +379,7 @@ PanelWindow {
                     Rectangle {
                         visible: card.mine.length > 0 || card.active
                         x: 8; y: 8; z: 5
-                        height: 24; width: Math.max(24, wsn.implicitWidth + 14); radius: 12
+                        height: 24; width: Math.max(24, wsn.implicitWidth + 14); radius: Look.sq ? 0 : (12)
                         color: card.active ? pal.primary : Qt.rgba(0, 0, 0, 0.55)
                         Text { id: wsn; anchors.centerIn: parent; text: card.ws; color: card.active ? pal.inkPrimary : "white"
                             font.family: Fonts.numbers; font.pixelSize: 12; font.weight: Font.Bold }
@@ -396,7 +398,7 @@ PanelWindow {
         Repeater {
             model: [["Enter", Tr.t("go")], [Tr.t("Drag"), Tr.t("move to a workspace")], [Tr.t("Middle click"), Tr.t("close")], ["Esc", Tr.t("back")]]
             delegate: Rectangle {
-                height: 28; width: hr.implicitWidth + 20; radius: 14; color: Qt.rgba(pal.surface.r, pal.surface.g, pal.surface.b, 0.8)
+                height: 28; width: hr.implicitWidth + 20; radius: Look.sq ? 0 : (14); color: Qt.rgba(pal.surface.r, pal.surface.g, pal.surface.b, 0.8)
                 Row { id: hr; anchors.centerIn: parent; spacing: 6
                     Text { text: modelData[0]; color: pal.primary; font.family: Fonts.main; font.pixelSize: 11; font.weight: Font.Bold }
                     Text { text: modelData[1]; color: pal.dim; font.family: Fonts.main; font.pixelSize: 11 } }
@@ -408,10 +410,11 @@ PanelWindow {
     readonly property real tileW: Math.min(250, (width * 0.9 - 24 - 10 * Math.max(0, mru.length - 1)) / Math.max(1, mru.length))
     Rectangle {
         id: strip
+        Frame { }      // V4.98 Minimal mode
         visible: tv.mode !== "overview"
         anchors.centerIn: parent
         width: srow.width + 24; height: srow.height + 24
-        radius: 30
+        radius: Look.sq ? 0 : (30)
         color: Qt.rgba(pal.surface.r, pal.surface.g, pal.surface.b, 0.8)
         border.width: 1; border.color: pal.line
         opacity: Math.min(1, tv.t * 1.5)
@@ -429,7 +432,7 @@ PanelWindow {
                     Rectangle {
                         id: sbox
                         width: parent.width; height: parent.width / tv.aspect
-                        radius: 16
+                        radius: Look.sq ? 0 : (16)
                         color: pal.card
                         border.width: sw.on ? 3 : 1
                         border.color: sw.on ? pal.primary : pal.line
@@ -452,13 +455,13 @@ PanelWindow {
                             }
                         }
                         Image { anchors.centerIn: parent; width: parent.height * 0.4; height: width; sourceSize.width: 128; sourceSize.height: 128
-                            source: tv.iconOf(sw.w.cls); visible: !slive.obj || !slive.obj.hasContent; mipmap: true }
+                            source: tv.iconOf(sw.w.cls, sw.w.title); visible: !slive.obj || !slive.obj.hasContent; mipmap: true }
                         MouseArea { anchors.fill: parent; hoverEnabled: true; onEntered: tv.sel = index; onClicked: { tv.sel = index; tv.commit() } }
                     }
                     Row {
                         anchors.horizontalCenter: parent.horizontalCenter
                         y: sbox.height + 8; spacing: 6
-                        Image { width: 18; height: 18; sourceSize.width: 36; sourceSize.height: 36; source: tv.iconOf(sw.w.cls); anchors.verticalCenter: parent.verticalCenter }
+                        Image { width: 18; height: 18; sourceSize.width: 36; sourceSize.height: 36; source: tv.iconOf(sw.w.cls, sw.w.title); anchors.verticalCenter: parent.verticalCenter }
                         Text { width: Math.min(implicitWidth, sw.width - 26); elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter
                             text: sw.w.title !== "" ? sw.w.title : tv.nameOf(sw.w.cls)
                             color: sw.on ? pal.fg : pal.dim; font.family: Fonts.main; font.pixelSize: 12; font.weight: sw.on ? Font.DemiBold : Font.Normal }

@@ -20,11 +20,11 @@ class UpstreamIntegration(unittest.TestCase):
 
     def test_settings_preserves_existing_route_indices(self):
         shell = (ROOT / "quickshell/rice-settings/shell.qml").read_text()
-        for route, component in [(36, "VpnPage"), (37, "WindowRulesPage"), (38, "ToolboxPage")]:
+        for route, component in [(36, "VpnPage"), (37, "WindowRulesPage")]:
             self.assertRegex(shell, rf"idx: {route};[^\n]*\b{component}\b")
             self.assertEqual(shell.count(f"idx: {route};"), 1)
-        self.assertIn("pages: niri ? [29, 38, 12, 25, 37", shell)
-        self.assertIn("pages: [30, 31, 28, 5, 23, 15, 36]", shell)
+        self.assertIn("pages: niri ? [29, 12, 25, 37", shell)
+        self.assertIn("pages: [38, 30, 31, 28, 5, 23, 15, 36]", shell)
 
     def test_niri_focused_monitor_uses_logical_offset(self):
         shot = load("rice-hotcorner")

@@ -84,7 +84,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width - 60
             spacing: 2
-            T { kind: "title"; text: parent.parent.title; font.pixelSize: 17; font.weight: Font.DemiBold }
+            T { kind: "title"; text: parent.parent.title; font.pixelSize: 15; font.weight: Font.DemiBold; color: M3.primary; leftPadding: 6 }
             T { kind: "reading"; text: parent.parent.sub; font.pixelSize: 12; color: M3.inkDim; width: parent.width; wrapMode: Text.WordWrap }
         }
     }
@@ -94,7 +94,7 @@ Item {
         property string text: ""
         property bool on: false
         signal toggled(bool v)
-        height: 36; width: ot.implicitWidth + (o.on ? 50 : 32); radius: o.on ? 12 * M3.shapeK : 18 * M3.shapeK
+        height: 36; width: ot.implicitWidth + (o.on ? 50 : 32); radius: M3.sq ? 0 : (o.on ? 12 * M3.shapeK : 18 * M3.shapeK)
         color: o.on ? M3.secondaryContainer : (om.containsMouse ? M3.surfaceHighest : "transparent")
         border.width: o.on ? 0 : 1; border.color: M3.outlineVariant
         Behavior on radius { NumberAnimation { duration: 180 } }
@@ -112,16 +112,16 @@ Item {
 
         // ---------- hero ----------
         Rectangle {
-            width: parent.width; height: 132; radius: M3.rXL; clip: true
+            width: parent.width; height: 132; radius: M3.sq ? 0 : (M3.rXL); clip: true
             gradient: Gradient { GradientStop { position: 0; color: M3.stageTop } GradientStop { position: 1; color: M3.stageBottom } }
             // three little windows: one floating, two tiled, in your colors
             Item {
                 anchors.right: parent.right; anchors.rightMargin: 26; anchors.verticalCenter: parent.verticalCenter
                 width: 170; height: 92
-                Rectangle { x: 0; y: 0; width: 80; height: 92; radius: 10; color: M3.surfaceHigh; border.width: 2; border.color: M3.outlineVariant }
-                Rectangle { x: 86; y: 0; width: 84; height: 92; radius: 10; color: M3.surfaceHigh; border.width: 2; border.color: M3.outlineVariant }
+                Rectangle { x: 0; y: 0; width: 80; height: 92; radius: M3.sq ? 0 : (10); color: M3.surfaceHigh; border.width: 2; border.color: M3.outlineVariant }
+                Rectangle { x: 86; y: 0; width: 84; height: 92; radius: M3.sq ? 0 : (10); color: M3.surfaceHigh; border.width: 2; border.color: M3.outlineVariant }
                 Rectangle {
-                    id: fl; x: 44; y: 18; width: 86; height: 56; radius: 12; color: M3.primaryContainer; border.width: 2; border.color: M3.primary
+                    id: fl; x: 44; y: 18; width: 86; height: 56; radius: M3.sq ? 0 : (12); color: M3.primaryContainer; border.width: 2; border.color: M3.primary
                     Icon { anchors.centerIn: parent; name: "picture_in_picture"; glyph: ""; size: 20; color: M3.inkPrimaryC }
                     SequentialAnimation on y {
                         running: page.visible; loops: Animation.Infinite
@@ -178,12 +178,12 @@ Item {
         Repeater {
             model: page.rules
             delegate: Rectangle {
-                width: parent ? parent.width : 400; height: 72; radius: M3.rL
+                width: parent ? parent.width : 400; height: 72; radius: M3.sq ? 0 : (M3.rL)
                 color: rh.hovered ? M3.surfaceHigh : M3.surfaceC
                 opacity: modelData.on ? 1 : 0.6
                 HoverHandler { id: rh }
                 Rectangle {
-                    x: 16; anchors.verticalCenter: parent.verticalCenter; width: 40; height: 40; radius: 14
+                    x: 16; anchors.verticalCenter: parent.verticalCenter; width: 40; height: 40; radius: M3.sq ? 0 : (14)
                     color: modelData.on ? M3.primaryContainer : M3.surfaceHighest
                     Icon { anchors.centerIn: parent; name: modelData.by === "title" ? "title" : "apps"; glyph: ""; size: 18
                            color: modelData.on ? M3.inkPrimaryC : M3.inkDim }
@@ -220,7 +220,7 @@ Item {
         // ---------- the editor ----------
         Rectangle {
             visible: page.editIdx !== -2
-            width: parent.width; radius: M3.rXL; color: M3.surfaceC
+            width: parent.width; radius: M3.sq ? 0 : (M3.rXL); color: M3.surfaceC
             border.width: 2; border.color: M3.alpha(M3.primary, 0.5)
             height: ed.implicitHeight + 40
             Column {
@@ -313,7 +313,7 @@ Item {
 
         // ---------- the rest ----------
         Rectangle {
-            width: parent.width; height: hint.implicitHeight + 32; radius: M3.rL; color: M3.alpha(M3.tertiary, 0.12)
+            width: parent.width; height: hint.implicitHeight + 32; radius: M3.sq ? 0 : (M3.rL); color: M3.alpha(M3.tertiary, 0.12)
             T {
                 id: hint
                 x: 18; y: 16; width: parent.width - 36; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.ink

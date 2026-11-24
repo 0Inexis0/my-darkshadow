@@ -15,6 +15,10 @@ Canvas {
     property color color: "#33363a"
     property color line: "transparent"
     property real lineWidth: 0
+    // V4.98 Minimal mode: every shape is a plain square (keepShape: a preview of the shapes themselves)
+    property bool keepShape: false
+    readonly property bool sqr: M3.sq && !keepShape
+    onSqrChanged: requestPaint()
     property real corner: 0.22          // polygons: how round the corners are (0 .. 0.5 of the side)
     readonly property var kinds: ["circle", "square", "slanted", "arch", "fan", "arrow", "semicircle", "oval", "pill",
         "triangle", "diamond", "clamshell", "pentagon", "hexagon", "gem", "sun", "verysunny", "cookie4", "cookie6",
@@ -90,6 +94,7 @@ Canvas {
         const cx = w / 2, cy = h / 2, R = Math.min(w, h) / 2 - inset
         const W = w - 2 * inset, H = h - 2 * inset, x0 = inset, y0 = inset
         c.beginPath()
+        if (sqr) { c.rect(cx - R, cy - R, 2 * R, 2 * R); c.closePath(); return }
         const k = kind
         if (radial(k, 0) !== null) {
             const steps = 240

@@ -27,6 +27,9 @@ Singleton {
         for (let k = 0; k < langs.length; k++) if (langs[k][0] === code) return langs[k][1]
         return "English"
     }
+    // the English text of a translated one (section icons pick their symbol from the English words)
+    readonly property var back: { const r = {}; const k = Object.keys(table); for (let i = 0; i < k.length; i++) r[table[k[i]]] = k[i]; return r }
+    function en(s) { return lang === "en" ? s : (back[s] !== undefined ? back[s] : s) }
     // text in the chosen language; "%1" in the text is replaced by a
     function t(s, a, b) {
         const v = table[s]

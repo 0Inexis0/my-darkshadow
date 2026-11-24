@@ -20,7 +20,7 @@ Item {
     Timer { interval: 60000; running: sw.running; repeat: true; triggeredOnStart: true; onTriggered: df.running = true }
     Rectangle {
         anchors.fill: parent
-        radius: height / 2
+        radius: Look.sq ? 0 : (height / 2)
         color: sw.pal ? (sw.bg > 0.02 ? sw.pal.shapeFill : "transparent") : "#22262a"
         border.width: sw.pal ? sw.pal.edgeWidth : 0; border.color: sw.pal ? sw.pal.edge : "transparent"
     }

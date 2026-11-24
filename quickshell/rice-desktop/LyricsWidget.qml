@@ -114,7 +114,7 @@ Item {
         anchors.bottom: parent.bottom; anchors.bottomMargin: 12
         x: 16; width: parent.width - 32; height: 16
         value: Player.frac
-        moving: Player.playing && ly.running && !Look.covered
+        moving: Player.playing && ly.running
         seekable: true
         color: ly.pal ? ly.pal.primary : "#9ec9bd"
         track: ly.pal ? ly.pal.track : Qt.rgba(1, 1, 1, 0.14)

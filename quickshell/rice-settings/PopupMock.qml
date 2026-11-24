@@ -47,7 +47,7 @@ Item {
         anchors.fill: card
         anchors.topMargin: 2
         anchors.bottomMargin: -2
-        radius: card.radius
+        radius: M3.sq ? 0 : (card.radius)
         color: "black"
         opacity: 0.22
     }
@@ -56,7 +56,7 @@ Item {
         visible: m.look === "glow"
         anchors.fill: card
         anchors.margins: -5
-        radius: card.radius + 5
+        radius: M3.sq ? 0 : (card.radius + 5)
         color: m.acc
         opacity: 0.22
     }
@@ -64,7 +64,7 @@ Item {
     Rectangle {
         id: card
         anchors.fill: parent
-        radius: m.r
+        radius: M3.sq ? 0 : (m.r)
         color: m.look === "island" ? "#000000"
              : m.look === "light" ? Qt.rgba(0.965, 0.96, 0.957, Math.max(m.pop, 0.9))
              : m.look === "solid" ? m.bgc(1)
@@ -81,7 +81,7 @@ Item {
         Rectangle {
             visible: m.look === "accent"
             width: 4; height: parent.height
-            radius: 2
+            radius: M3.sq ? 0 : (2)
             color: m.acc
         }
         Rectangle {
@@ -89,7 +89,7 @@ Item {
             x: (m.look === "pill" || m.look === "island") ? parent.height * 0.18 : 10 * m.fs + (m.look === "accent" ? 4 : 0)
             anchors.verticalCenter: parent.verticalCenter
             width: Math.min(m.iconSize, parent.height - 12); height: width
-            radius: (m.look === "pill" || m.look === "island") ? width / 2 : Math.max(5, width * 0.3)
+            radius: M3.sq ? 0 : ((m.look === "pill" || m.look === "island") ? width / 2 : Math.max(5, width * 0.3))
             color: m.acc
             T { scaled: false; kind: "icon"; anchors.centerIn: parent; text: ""; font.pixelSize: ico.width * 0.45; color: m.accFg }
         }

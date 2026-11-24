@@ -78,7 +78,7 @@ Item {
                     height: width * 0.62 + 64
                     Rectangle {
                         anchors.fill: parent
-                        radius: M3.rL
+                        radius: M3.sq ? 0 : (M3.rL)
                         color: cm.containsMouse ? M3.surfaceHigh : M3.surfaceC
                         border.width: card.on ? 2 : 0
                         border.color: M3.primary
@@ -88,7 +88,7 @@ Item {
                     Rectangle {
                         id: mock
                         x: 10; y: 10; width: parent.width - 20; height: parent.width * 0.62 - 10
-                        radius: Math.max(4, card.r)
+                        radius: M3.sq ? 0 : (Math.max(4, card.r))
                         clip: true
                         gradient: Gradient {
                             orientation: Gradient.Horizontal
@@ -102,36 +102,36 @@ Item {
                             Rectangle {
                                 visible: modelData.bar === "flat" || modelData.bar === "dynamic" || modelData.bar === "island" || modelData.bar === "edge"
                                 anchors.fill: parent
-                                radius: modelData.bar === "flat" ? 0 : (modelData.bar === "island" ? Math.min(9, card.r) : 9)
+                                radius: M3.sq ? 0 : (modelData.bar === "flat" ? 0 : (modelData.bar === "island" ? Math.min(9, card.r) : 9))
                                 color: Qt.rgba(card.bg.r, card.bg.g, card.bg.b, modelData.bar_opacity)
                             }
                             Row {
                                 visible: modelData.bar === "islands" || modelData.bar === "pills"
                                 anchors.fill: parent; spacing: 6
                                 Repeater { model: [0.28, 0.3, 0.3]
-                                    delegate: Rectangle { width: (parent.width - 12) * modelData; height: 18; radius: 9
+                                    delegate: Rectangle { width: (parent.width - 12) * modelData; height: 18; radius: M3.sq ? 0 : (9)
                                         color: Qt.rgba(card.bg.r, card.bg.g, card.bg.b, Math.max(0.35, card.bo)) } }
                             }
                             Row {
                                 x: 8; anchors.verticalCenter: parent.verticalCenter; spacing: 4
                                 Repeater { model: 4
-                                    delegate: Rectangle { width: index === 0 ? 14 : 7; height: 7; radius: Math.min(3.5, card.r / 3)
+                                    delegate: Rectangle { width: index === 0 ? 14 : 7; height: 7; radius: M3.sq ? 0 : (Math.min(3.5, card.r / 3))
                                         color: index === 0 ? card.acc : Qt.rgba(card.ink.r, card.ink.g, card.ink.b, 0.3) } }
                             }
                             Rectangle { anchors.horizontalCenter: parent.horizontalCenter; anchors.verticalCenter: parent.verticalCenter
-                                width: 34; height: 7; radius: Math.min(3.5, card.r / 3); color: Qt.rgba(card.ink.r, card.ink.g, card.ink.b, 0.7) }
+                                width: 34; height: 7; radius: M3.sq ? 0 : (Math.min(3.5, card.r / 3)); color: Qt.rgba(card.ink.r, card.ink.g, card.ink.b, 0.7) }
                         }
                         // two windows with the theme's corners and gaps
                         Rectangle {
                             x: 8 + modelData.gaps_out * 0.6; y: 34
                             width: parent.width * 0.55; height: parent.height - 44
-                            radius: modelData.rounding * 0.6
+                            radius: M3.sq ? 0 : (modelData.rounding * 0.6)
                             color: Qt.rgba(card.bg.r, card.bg.g, card.bg.b, 0.92)
                             border.width: Math.max(1, modelData.border * 0.6); border.color: card.acc
                             Column {
                                 x: 8; y: 8; spacing: 4
                                 Repeater { model: [0.7, 0.5, 0.62, 0.4]
-                                    delegate: Rectangle { width: mock.width * 0.4 * modelData; height: 4; radius: 2
+                                    delegate: Rectangle { width: mock.width * 0.4 * modelData; height: 4; radius: M3.sq ? 0 : (2)
                                         color: Qt.rgba(card.ink.r, card.ink.g, card.ink.b, index === 0 ? 0.8 : 0.35) } }
                             }
                             T { anchors.left: parent.left; anchors.bottom: parent.bottom; anchors.margins: 7; text: I18n.t("Aa")
@@ -140,7 +140,7 @@ Item {
                         Rectangle {
                             x: mock.width * 0.55 + 8 + modelData.gaps_out * 0.6 + modelData.gaps_in; y: 34
                             width: mock.width - x - 8 - modelData.gaps_out * 0.6; height: parent.height - 44
-                            radius: modelData.rounding * 0.6
+                            radius: M3.sq ? 0 : (modelData.rounding * 0.6)
                             color: Qt.rgba(card.bg.r, card.bg.g, card.bg.b, 0.85)
                             border.width: modelData.widgets === "outline" ? 1 : 0; border.color: Qt.rgba(card.ink.r, card.ink.g, card.ink.b, 0.3)
                             Blob { anchors.centerIn: parent; width: Math.min(parent.width, parent.height) * 0.5; height: width; kind: modelData.shape; color: card.acc }
@@ -153,7 +153,7 @@ Item {
                         Row {
                             spacing: 8
                             T { text: modelData.name; font.pixelSize: 15; font.weight: Font.DemiBold }
-                            Rectangle { visible: card.on; anchors.verticalCenter: parent.verticalCenter; width: 18; height: 18; radius: 9; color: M3.primary
+                            Rectangle { visible: card.on; anchors.verticalCenter: parent.verticalCenter; width: 18; height: 18; radius: M3.sq ? 0 : (9); color: M3.primary
                                 Icon { anchors.centerIn: parent; name: "check"; glyph: ""; size: 12; color: M3.inkPrimary } }
                             T { visible: page.busyKey === modelData.key; anchors.verticalCenter: parent.verticalCenter; text: I18n.t("Applying..."); font.pixelSize: 11; color: M3.primary }
                         }
@@ -164,13 +164,13 @@ Item {
                     // your own theme: a small badge, and a button that takes it away
                     Rectangle {
                         visible: modelData.user === true
-                        x: parent.width - width - 18; y: mock.y + mock.height - height - 8; height: 22; width: ub.implicitWidth + 16; radius: 11; color: M3.primaryContainer
+                        x: parent.width - width - 18; y: mock.y + mock.height - height - 8; height: 22; width: ub.implicitWidth + 16; radius: M3.sq ? 0 : (11); color: M3.primaryContainer
                         T { id: ub; anchors.centerIn: parent; text: I18n.t("Yours"); font.pixelSize: 11; font.weight: Font.DemiBold; color: M3.inkPrimaryC }
                     }
                     Rectangle {
                         visible: modelData.user === true && (cm.containsMouse || dm.containsMouse)
                         anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 18; anchors.topMargin: 36
-                        width: 32; height: 32; radius: 16
+                        width: 32; height: 32; radius: M3.sq ? 0 : (16)
                         color: dm.containsMouse ? M3.errorContainer : M3.surfaceHighest
                         Icon { anchors.centerIn: parent; name: "delete"; glyph: ""; size: 16; color: M3.ink }
                         MouseArea { id: dm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor

@@ -87,7 +87,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: Math.min(parent.width, 620)
                 height: Math.round(width * 9 / 16)
-                radius: M3.rL; clip: true
+                radius: M3.sq ? 0 : (M3.rL); clip: true
                 color: "#0c0c0e"
                 border.width: 1; border.color: M3.surfaceHighest
                 readonly property real s: height / 1080
@@ -118,7 +118,7 @@ Item {
                     spacing: 19 * frame.s
                     // the month
                     Rectangle {
-                        width: 270 * frame.s; height: 540 * frame.s; radius: 32 * frame.s; clip: true
+                        width: 270 * frame.s; height: 540 * frame.s; radius: M3.sq ? 0 : (32 * frame.s); clip: true
                         gradient: Gradient { GradientStop { position: 0; color: Qt.rgba(frame.acc.r * 0.45, frame.acc.g * 0.45, frame.acc.b * 0.45, 0.85) } GradientStop { position: 1; color: Qt.rgba(0.06, 0.06, 0.07, 0.8) } }
                         Text { x: 24 * frame.s; y: 10 * frame.s; text: page.now.toLocaleDateString(I18n.loc, "MMM").replace(".", "").toUpperCase(); color: frame.acc
                             font.family: page.clockFam(); font.pixelSize: 104 * frame.s; font.weight: Font.Black }
@@ -131,12 +131,12 @@ Item {
                                 delegate: Item { width: (270 - 36) / 7 * frame.s; height: 18 * frame.s
                                     readonly property bool today: index === page.now.getDate() + 2
                                     Blob { anchors.centerIn: parent; visible: parent.today; width: 24 * frame.s; height: width; kind: "cookie"; color: frame.acc }
-                                    Rectangle { anchors.centerIn: parent; visible: !parent.today && index > 2 && index < 33; width: 8 * frame.s; height: 3 * frame.s; radius: height / 2; color: "#F6F5F4"; opacity: 0.5 } } }
+                                    Rectangle { anchors.centerIn: parent; visible: !parent.today && index > 2 && index < 33; width: 8 * frame.s; height: 3 * frame.s; radius: M3.sq ? 0 : (height / 2); color: "#F6F5F4"; opacity: 0.5 } } }
                         }
                     }
                     // the time
                     Rectangle {
-                        width: 270 * frame.s; height: 540 * frame.s; radius: 32 * frame.s; clip: true
+                        width: 270 * frame.s; height: 540 * frame.s; radius: M3.sq ? 0 : (32 * frame.s); clip: true
                         gradient: Gradient { GradientStop { position: 0; color: Qt.rgba(frame.acc.r * 0.45, frame.acc.g * 0.45, frame.acc.b * 0.45, 0.85) } GradientStop { position: 1; color: Qt.rgba(0.06, 0.06, 0.07, 0.8) } }
                         Column {
                             anchors.horizontalCenter: parent.horizontalCenter; y: 40 * frame.s; spacing: -66 * frame.s
@@ -151,14 +151,14 @@ Item {
                     // the music
                     Rectangle {
                         visible: page.v("media", true) === true
-                        width: 270 * frame.s; height: 540 * frame.s; radius: 32 * frame.s; clip: true
+                        width: 270 * frame.s; height: 540 * frame.s; radius: M3.sq ? 0 : (32 * frame.s); clip: true
                         gradient: Gradient { GradientStop { position: 0; color: Qt.rgba(frame.acc.r * 0.45, frame.acc.g * 0.45, frame.acc.b * 0.45, 0.85) } GradientStop { position: 1; color: Qt.rgba(0.06, 0.06, 0.07, 0.8) } }
                         Text { x: 24 * frame.s; y: 18 * frame.s; text: I18n.t("Song"); color: "#F6F5F4"; font.family: Fonts.family("main"); font.pixelSize: 32 * frame.s; font.weight: Font.Black }
-                        Rectangle { x: 22 * frame.s; y: 150 * frame.s; width: 110 * frame.s; height: 28 * frame.s; radius: height / 2; color: frame.acc }
-                        Rectangle { x: 11 * frame.s; y: 195 * frame.s; width: parent.width - 22 * frame.s; height: parent.height - 195 * frame.s - 90 * frame.s; radius: 20 * frame.s; color: Qt.rgba(1, 1, 1, 0.08) }
+                        Rectangle { x: 22 * frame.s; y: 150 * frame.s; width: 110 * frame.s; height: 28 * frame.s; radius: M3.sq ? 0 : (height / 2); color: frame.acc }
+                        Rectangle { x: 11 * frame.s; y: 195 * frame.s; width: parent.width - 22 * frame.s; height: parent.height - 195 * frame.s - 90 * frame.s; radius: M3.sq ? 0 : (20 * frame.s); color: Qt.rgba(1, 1, 1, 0.08) }
                         Row { anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.bottom; anchors.bottomMargin: 16 * frame.s; spacing: 9 * frame.s
                             Repeater { model: [58, 76, 58]
-                                delegate: Rectangle { width: modelData * frame.s; height: 50 * frame.s; radius: height / 2; color: index === 1 ? frame.acc : Qt.rgba(frame.acc.r, frame.acc.g, frame.acc.b, 0.28) } } }
+                                delegate: Rectangle { width: modelData * frame.s; height: 50 * frame.s; radius: M3.sq ? 0 : (height / 2); color: index === 1 ? frame.acc : Qt.rgba(frame.acc.r, frame.acc.g, frame.acc.b, 0.28) } } }
                     }
                 }
                 Row {
@@ -166,11 +166,11 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottom: parent.bottom; anchors.bottomMargin: 36 * frame.s
                     spacing: 11 * frame.s
-                    Rectangle { width: 120 * frame.s; height: 56 * frame.s; radius: height / 2; color: M3.surfaceC }
-                    Rectangle { width: 430 * frame.s; height: 56 * frame.s; radius: height / 2; color: M3.surfaceC; border.width: 2; border.color: frame.acc
+                    Rectangle { width: 120 * frame.s; height: 56 * frame.s; radius: M3.sq ? 0 : (height / 2); color: M3.surfaceC }
+                    Rectangle { width: 430 * frame.s; height: 56 * frame.s; radius: M3.sq ? 0 : (height / 2); color: M3.surfaceC; border.width: 2; border.color: frame.acc
                         Blob { x: 8 * frame.s; anchors.verticalCenter: parent.verticalCenter; width: 40 * frame.s; height: width; kind: Prefs.accentShape; color: frame.acc } }
-                    Rectangle { visible: page.v("power", true) === true; width: 150 * frame.s; height: 56 * frame.s; radius: height / 2; color: M3.surfaceC
-                        Rectangle { anchors.right: parent.right; anchors.rightMargin: 9 * frame.s; anchors.verticalCenter: parent.verticalCenter; width: 40 * frame.s; height: width; radius: width / 2; color: Qt.rgba(1, 0.42, 0.42, 0.3) } }
+                    Rectangle { visible: page.v("power", true) === true; width: 150 * frame.s; height: 56 * frame.s; radius: M3.sq ? 0 : (height / 2); color: M3.surfaceC
+                        Rectangle { anchors.right: parent.right; anchors.rightMargin: 9 * frame.s; anchors.verticalCenter: parent.verticalCenter; width: 40 * frame.s; height: width; radius: M3.sq ? 0 : (width / 2); color: Qt.rgba(1, 0.42, 0.42, 0.3) } }
                 }
 
                 // ---- Classic: one column (the clock in your style, the greeting, the password)
@@ -209,7 +209,7 @@ Item {
                     width: 380 * frame.s; height: 56 * frame.s
                     x: isLeft ? frame.width * 0.08 : (frame.width - width) / 2
                     y: frame.height * 0.66
-                    radius: kind === "pill" ? height / 2 : (kind === "box" ? 18 * frame.s : 0)
+                    radius: M3.sq ? 0 : (kind === "pill" ? height / 2 : (kind === "box" ? 18 * frame.s : 0))
                     color: kind === "line" ? "transparent" : M3.surfaceHigh
                     border.width: kind === "line" ? 0 : 2; border.color: frame.acc
                     Rectangle { visible: parent.kind === "line"; anchors.bottom: parent.bottom; width: parent.width; height: 2; color: frame.acc }
@@ -300,7 +300,7 @@ Item {
                         readonly property bool here: page.hasFam(modelData.f)
                         width: (cfGrid.width - 30) / 4
                         height: 92
-                        radius: 14
+                        radius: M3.sq ? 0 : (14)
                         color: fm.containsMouse ? M3.surfaceHigh : M3.surfaceC
                         border.width: on ? 2 : 1
                         border.color: on ? M3.primary : M3.outlineVariant

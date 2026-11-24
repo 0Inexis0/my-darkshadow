@@ -8,6 +8,8 @@ import QtQuick
 PanelWindow {
     screen: Mon.screen
     id: osd
+    // Minimal mode: the bar's own tinted surface, so the menu matches the bar (V5.02: it was near black)
+    NPal { id: sqPal; theme: "shell"; alpha: 0.94 }
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property var source: Pipewire.defaultAudioSource
     PwObjectTracker { objects: [osd.sink, osd.source] }
@@ -33,7 +35,7 @@ PanelWindow {
 
     visible: shown || t > 0.01
     // niri: blur behind it (Hyprland blurs this layer with its own rule)
-    NiriBlur { win: osd; items: [osdBg]; radius: osdBg.radius; on: osd.t > 0.98 }
+    NiriBlur { win: osd; items: [osdBg]; radius: Look.sq ? 0 : (osdBg.radius); on: osd.t > 0.98 }
     color: "transparent"
     anchors { bottom: true }
     margins { bottom: 110 }
@@ -47,9 +49,10 @@ PanelWindow {
 
     Rectangle {
         id: osdBg
+        Frame { }      // V4.98 Minimal mode
         anchors.fill: parent
-        radius: height / 2
-        color: Qt.rgba(0.05, 0.05, 0.05, Look.flat ? 1 : 0.62)
+        radius: Look.sq ? 0 : (height / 2)
+        color: Look.sq ? sqPal.minSurface : Qt.rgba(0.05, 0.05, 0.05, Look.flat ? 1 : 0.62)
         border.width: 1; border.color: Qt.rgba(1, 1, 1, 0.09)
         opacity: osd.t
         scale: 0.9 + 0.1 * osd.t
@@ -62,8 +65,8 @@ PanelWindow {
         Item {
             visible: !osd.mic
             x: 56; width: parent.width - 56 - 70; height: parent.height
-            Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: 6; radius: 3; color: Qt.rgba(1, 1, 1, 0.14) }
-            Rectangle { anchors.verticalCenter: parent.verticalCenter; width: Math.max(6, parent.width * Math.min(1, osd.vol)); height: 6; radius: 3
+            Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: 6; radius: Look.sq ? 0 : (3); color: Qt.rgba(1, 1, 1, 0.14) }
+            Rectangle { anchors.verticalCenter: parent.verticalCenter; width: Math.max(6, parent.width * Math.min(1, osd.vol)); height: 6; radius: Look.sq ? 0 : (3)
                 color: osd.muted ? Qt.rgba(1, 1, 1, 0.35) : "#F6F5F4"
                 Behavior on width { NumberAnimation { duration: 110; easing.type: Easing.OutCubic } } }
         }

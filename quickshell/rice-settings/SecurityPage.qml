@@ -70,10 +70,10 @@ Item {
         signal clicked()
         width: parent ? parent.width : 400
         height: Math.max(60, tcol.implicitHeight + 20)
-        radius: M3.rM
+        radius: M3.sq ? 0 : (M3.rM)
         color: hov.hovered ? M3.surfaceHigh : M3.surfaceC
         HoverHandler { id: hov }
-        Rectangle { x: 14; anchors.verticalCenter: parent.verticalCenter; width: 36; height: 36; radius: 18
+        Rectangle { x: 14; anchors.verticalCenter: parent.verticalCenter; width: 36; height: 36; radius: M3.sq ? 0 : (18)
             color: r.warn ? M3.errorContainer : M3.secondaryContainer
             Icon { anchors.centerIn: parent; name: r.sym; glyph: r.glyph; size: 18; color: r.warn ? M3.inkErrorC : M3.inkSecondaryC } }
         Column {
@@ -95,7 +95,7 @@ Item {
         Rectangle {
             width: parent.width
             height: 150
-            radius: M3.rXL
+            radius: M3.sq ? 0 : (M3.rXL)
             color: page.attention > 0 ? M3.errorContainer : M3.primaryContainer
             clip: true
             Blob { width: 240; height: 240; x: parent.width - 170; y: -60; kind: "flower"; color: M3.alpha(page.attention > 0 ? M3.inkErrorC : M3.inkPrimaryC, 0.06) }
@@ -151,7 +151,7 @@ Item {
         }
         Rectangle {
             visible: page.scanning
-            width: parent.width; height: 76; radius: M3.rM; color: M3.surfaceC
+            width: parent.width; height: 76; radius: M3.sq ? 0 : (M3.rM); color: M3.surfaceC
             WavyBar { id: wb; x: 18; y: 16; width: parent.width - 36 - stopBtn.width - 12; height: 10
                 SequentialAnimation on value { loops: Animation.Infinite; running: page.scanning
                     NumberAnimation { from: 0.05; to: 0.95; duration: 1800; easing.type: Easing.InOutSine }
@@ -265,7 +265,7 @@ Item {
                 onToggled: function(v) { page.term(v ? page.sec.hardening.on_cmd : page.sec.hardening.off_cmd) }
             }
             Rectangle {
-                width: parent.width; height: note.implicitHeight + 24; radius: M3.rM; color: M3.alpha(M3.error, 0.1)
+                width: parent.width; height: note.implicitHeight + 24; radius: M3.sq ? 0 : (M3.rM); color: M3.alpha(M3.error, 0.1)
                 T { id: note; x: 16; anchors.verticalCenter: parent.verticalCenter; width: parent.width - 32; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.inkDim
                     text: I18n.t("Nothing can stop someone who already has root on your computer. These switches make it harder to get there and easier to notice, they do not make you safe from everything.") }
             }

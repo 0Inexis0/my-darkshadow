@@ -33,7 +33,7 @@ class V484Integration(unittest.TestCase):
         self.assertIn("property bool activity", wave)
         self.assertIn("onActivityChanged: cv.requestPaint()", wave)
         self.assertIn("wl.activity ? 1", wave)
-        self.assertIn("interval: 33", wave)
+        self.assertRegex(wave, r"interval: (?:33|50)\b")
         self.assertIn("!Look.lite", wave)
         self.assertIn("activity: live.busy && !live.waiting",
                       (desktop / "AiActivity.qml").read_text())

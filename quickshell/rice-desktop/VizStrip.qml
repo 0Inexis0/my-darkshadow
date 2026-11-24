@@ -53,7 +53,7 @@ PanelWindow {
                 Rectangle {
                     width: parent.width
                     height: Math.max(3, vz.reach * parent.v / 100)
-                    radius: Math.min(width / 2, 3)
+                    radius: Look.sq ? 0 : (Math.min(width / 2, 3))
                     color: "#F6F5F4"
                     opacity: 0.3 + 0.5 * parent.v / 100
                     // top bar: waves fall down from its lower edge; bottom bar: they rise from its upper edge

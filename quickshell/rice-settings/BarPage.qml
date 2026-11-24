@@ -76,7 +76,7 @@ Item {
                 visible: Prefs.previews
                 width: parent.width
                 height: 128
-                radius: M3.rL
+                radius: M3.sq ? 0 : (M3.rL)
                 clip: true
                 border.width: 0
                 border.color: M3.outlineVariant
@@ -90,7 +90,7 @@ Item {
                 readonly property real h: 30 + (page.v("height", 38) - 38) * 0.5
                 readonly property color pill: Qt.rgba(0.05, 0.05, 0.05, Math.min(1, alpha + 0.12))
 
-                Rectangle { x: 60; y: prev.atTop ? 60 : 18; width: prev.width - 120; height: 50; radius: 10; color: Qt.rgba(1, 1, 1, 0.05) }
+                Rectangle { x: 60; y: prev.atTop ? 60 : 18; width: prev.width - 120; height: 50; radius: M3.sq ? 0 : (10); color: Qt.rgba(1, 1, 1, 0.05) }
 
                 // a zone: chips in a row, with or without a pill behind
                 component PZone: Rectangle {
@@ -101,7 +101,7 @@ Item {
                     height: prev.h
                     implicitWidth: pr.width + (soft ? 18 : 0)
                     width: implicitWidth
-                    radius: height / 2
+                    radius: M3.sq ? 0 : (height / 2)
                     color: soft ? prev.pill : "transparent"
                     border.width: soft ? 1 : 0
                     border.color: Qt.rgba(1, 1, 1, 0.1)
@@ -113,7 +113,7 @@ Item {
                             model: pz.mods
                             delegate: Rectangle {
                                 readonly property bool pl: prev.sty === "pills"
-                                height: prev.h; width: pg.implicitWidth + (pl ? 18 : 0); radius: height / 2
+                                height: prev.h; width: pg.implicitWidth + (pl ? 18 : 0); radius: M3.sq ? 0 : (height / 2)
                                 color: pl ? prev.pill : "transparent"
                                 border.width: pl ? 1 : 0; border.color: Qt.rgba(1, 1, 1, 0.1)
                                 T { id: pg; anchors.centerIn: parent; kind: modelData === "clock" || modelData === "battery" || modelData === "workspaces" ? "" : "icon"
@@ -134,7 +134,7 @@ Item {
                     Rectangle {
                         anchors.fill: parent
                         visible: prev.sty === "flat" || prev.sty === "island"
-                        radius: prev.sty === "island" ? height / 2 : 0
+                        radius: M3.sq ? 0 : (prev.sty === "island" ? height / 2 : 0)
                         color: prev.pill
                         border.width: 1; border.color: Qt.rgba(1, 1, 1, 0.1)
                     }
@@ -149,7 +149,7 @@ Item {
                             x: index === 0 ? -12 : modelData.x - 8
                             width: index === 0 ? modelData.x + modelData.width + 20 : (index === 2 ? pbar.width - modelData.x + 20 : modelData.width + 16)
                             y: prev.atTop ? -10 : -4; height: prev.h + 14
-                            radius: 12
+                            radius: M3.sq ? 0 : (12)
                             color: Qt.darker(prev.pill, 1.4)
                         }
                     }
@@ -160,7 +160,7 @@ Item {
                         y: notch ? (prev.atTop ? -10 : 0) : 0
                         height: notch ? prev.h + 10 : prev.h
                         width: implicitWidth + (notch ? 30 : 0)
-                        radius: notch ? 14 : height / 2 }
+                        radius: M3.sq ? 0 : (notch ? 14 : height / 2) }
                     PZone { id: pr0; x: pbar.width - width - pbar.edge; mods: page.lay.right || []; soft: prev.sty === "islands" || prev.sty === "notch" || prev.sty === "dynamic" || prev.sty === "edge" }
                 }
                 T { text: I18n.t("Preview"); font.pixelSize: 10; color: M3.inkDim; anchors.right: parent.right; anchors.rightMargin: 12; anchors.bottom: parent.bottom; anchors.bottomMargin: 8 }
@@ -168,7 +168,7 @@ Item {
 
             // ---------- bar layout shortcut ----------
             Rectangle {
-                width: parent.width; height: 62; radius: 14
+                width: parent.width; height: 62; radius: M3.sq ? 0 : (14)
                 color: blMouse.containsMouse ? M3.surfaceHigh : M3.surfaceHigh
                 border.width: 1; border.color: M3.outlineVariant
                 Behavior on color { ColorAnimation { duration: 120 } }
@@ -181,7 +181,7 @@ Item {
                 MouseArea { id: blMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.ctl.page = 3 }
             }
 
-            T { kind: "title"; text: I18n.t("Style"); font.pixelSize: 16; font.bold: true; topPadding: 10 }
+            SectionTitle { text: I18n.t("Style") }
             SegRow {
                 label: I18n.t("Bar style")
                 desc: prev.sty === "edge" ? I18n.t("Edge: like Dynamic, but every part of the bar is one piece with the screen edge") : I18n.t("Dynamic: tonal pills in your theme color and an island in the middle that grows")
@@ -191,7 +191,7 @@ Item {
             }
             // the island has a page of its own now
             Rectangle {
-                width: parent.width; height: 62; radius: 14
+                width: parent.width; height: 62; radius: M3.sq ? 0 : (14)
                 color: ilm.containsMouse ? M3.surfaceHigh : M3.surfaceC
                 Behavior on color { ColorAnimation { duration: 120 } }
                 Column {
@@ -265,7 +265,7 @@ Item {
             }
 
             // ---------- launcher icon ----------
-            T { kind: "title"; text: I18n.t("Launcher icon"); font.pixelSize: 16; font.bold: true; topPadding: 10 }
+            SectionTitle { text: I18n.t("Launcher icon") }
             T { kind: "reading"; text: I18n.t("The button that opens the launcher. Auto picks the logo of the system you run."); color: M3.inkDim; font.pixelSize: 12 }
             Flow {
                 width: parent.width
@@ -274,7 +274,7 @@ Item {
                     model: page.logos
                     delegate: Rectangle {
                         readonly property bool sel: page.v("logo", "auto") === modelData[0]
-                        width: 78; height: 72; radius: 14
+                        width: 78; height: 72; radius: M3.sq ? 0 : (14)
                         color: sel ? M3.primary : (lgm.containsMouse ? M3.surfaceHigh : M3.surfaceC)
                         border.width: 1; border.color: sel ? M3.primary : M3.outlineVariant
                         scale: lgm.pressed ? 0.94 : 1
@@ -311,10 +311,10 @@ Item {
                                 ["theme", "Theme", M3.primary, M3.primaryContainer]]
                         delegate: Rectangle {
                             readonly property bool sel: page.v("logo_color", "default") === modelData[0]
-                            width: lc.implicitWidth + 48; height: 36; radius: 18
+                            width: lc.implicitWidth + 48; height: 36; radius: M3.sq ? 0 : (18)
                             color: sel ? M3.primary : (lcm.containsMouse ? M3.surfaceHigh : M3.surfaceC)
                             border.width: 1; border.color: sel ? M3.primary : M3.outlineVariant
-                            Rectangle { x: 10; anchors.verticalCenter: parent.verticalCenter; width: 18; height: 18; radius: 9
+                            Rectangle { x: 10; anchors.verticalCenter: parent.verticalCenter; width: 18; height: 18; radius: M3.sq ? 0 : (9)
                                 gradient: Gradient { GradientStop { position: 0; color: modelData[2] } GradientStop { position: 1; color: modelData[3] } } }
                             T { id: lc; x: 36; anchors.verticalCenter: parent.verticalCenter; text: I18n.t(modelData[1]); font.pixelSize: 12
                                 color: parent.sel ? M3.inkPrimary : M3.ink }
@@ -324,7 +324,7 @@ Item {
                 }
             }
 
-            T { kind: "title"; text: I18n.t("Content"); font.pixelSize: 16; font.bold: true; topPadding: 10 }
+            SectionTitle { text: I18n.t("Content") }
             SegRow {
                 label: I18n.t("Workspaces")
                 desc: I18n.t("How many dots are always shown (more appear when you use them)")
@@ -346,7 +346,7 @@ Item {
                 onToggled: function(x) { page.setv("seconds", x ? "on" : "off") }
             }
 
-            T { kind: "title"; text: I18n.t("Old bar"); font.pixelSize: 16; font.bold: true; topPadding: 10 }
+            SectionTitle { text: I18n.t("Old bar") }
             ToggleRow {
                 label: I18n.t("Use Waybar instead")
                 desc: I18n.t("Go back to the old Waybar if the DarkShadow bar gives you trouble. Waybar needs to be installed")

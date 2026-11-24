@@ -11,6 +11,8 @@ PanelWindow {
     property var dock: null
     property bool open: false
     property real t: 0
+    // the pointer is on the menu's card: the dock waits to slide away while that is true
+    property bool overPanel: false
     Behavior on t { NumberAnimation { duration: am.open ? 560 : 200; easing.type: Easing.Linear } }
     readonly property real et: 1 - Math.pow(1 - t, 4)
     onOpenChanged: { t = open ? 1 : 0; if (open) { search.text = ""; search.forceActiveFocus() } }
@@ -51,7 +53,7 @@ PanelWindow {
     // if the closing animation ever stalls (the compositor sent no frames for a moment), it still goes away
     Timer { id: closeT; property bool done: false; interval: 600; running: !open; onRunningChanged: if (running) done = false; onTriggered: done = true }
     // niri: blur behind the card (Hyprland blurs this layer with its own rule)
-    NiriBlur { win: am; items: [panel]; radius: panel.radius; on: am.open && am.et > 0.94 }
+    NiriBlur { win: am; items: [panel]; radius: Look.sq ? 0 : (panel.radius); on: am.open && am.et > 0.94 }
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore
@@ -60,15 +62,16 @@ PanelWindow {
     WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     MouseArea { anchors.fill: parent; onClicked: am.open = false }
 
-    Shadow { x: panel.x; y: panel.y; width: panel.width; height: panel.height; radius: panel.radius; opacity: panel.opacity; scale: panel.scale
+    Shadow { x: panel.x; y: panel.y; width: panel.width; height: panel.height; radius: Look.sq ? 0 : (panel.radius); opacity: panel.opacity; scale: panel.scale
         transformOrigin: panel.transformOrigin; on: Look.shadows && Look.shadowPanels }
     Rectangle {
         id: panel
+        Frame { }      // V4.98 Minimal mode
         width: Math.min(parent.width - 40, 640)
         height: Math.min(parent.height - 140, 560)
         x: am.edge === "left" ? 92 : (am.edge === "right" ? parent.width - width - 92 : (parent.width - width) / 2)
         y: am.edge === "bottom" ? parent.height - height - 92 : (parent.height - height) / 2
-        radius: 32
+        radius: Look.sq ? 0 : (32)
         color: pal.surface
         border.width: 1; border.color: pal.line
         opacity: Math.min(1, am.et * 1.5)
@@ -76,12 +79,13 @@ PanelWindow {
         transformOrigin: am.edge === "left" ? Item.Left : (am.edge === "right" ? Item.Right : Item.Bottom)
         transform: Translate { y: am.edge === "bottom" ? (1 - am.et) * 40 : 0; x: am.edge === "left" ? (1 - am.et) * -40 : (am.edge === "right" ? (1 - am.et) * 40 : 0) }
         clip: true
+        HoverHandler { onHoveredChanged: am.overPanel = hovered }
         MouseArea { anchors.fill: parent }
 
         // search
         Rectangle {
             id: sbox
-            x: 18; y: 18; width: parent.width - 36; height: 48; radius: 24
+            x: 18; y: 18; width: parent.width - 36; height: 48; radius: Look.sq ? 0 : (24)
             color: pal.card
             MIcon { x: 16; anchors.verticalCenter: parent.verticalCenter; size: 20; name: "search"; glyph: "\uf002"; color: pal.dim }
             TextInput {
@@ -105,24 +109,26 @@ PanelWindow {
             cellWidth: width / Math.max(4, Math.floor(width / 120)); cellHeight: 112
             clip: true
             boundsBehavior: Flickable.StopAtBounds
-            model: am.apps
+            // V4.96: the app icons only exist while the menu is out (they were made at start and kept)
+            model: am.visible ? am.apps : []
             delegate: Item {
                 id: cellIt
                 width: grid.cellWidth; height: grid.cellHeight
                 readonly property bool pin: am.isPinned(modelData)
                 opacity: am.stg(index); transform: Translate { y: (1 - am.stg(index)) * 18 }
                 Rectangle {
-                    anchors.fill: parent; anchors.margins: 4; radius: 22
+                    anchors.fill: parent; anchors.margins: 4; radius: Look.sq ? 0 : (22)
                     color: cm.containsMouse ? pal.card : "transparent"
                     Behavior on color { ColorAnimation { duration: 140 } }
                 }
                 Item {
                     anchors.horizontalCenter: parent.horizontalCenter; y: 14
                     width: 56; height: 56
-                    Blob { anchors.fill: parent; kind: Look.shape; color: cellIt.pin ? pal.container : "transparent"; visible: cellIt.pin }
-                    IconImage { anchors.centerIn: parent; implicitSize: 40; source: Icons.get(modelData.icon || "application-x-executable", "application-x-executable")
-                        scale: cm.pressed ? 0.9 : (cm.containsMouse ? 1.08 : 1)
-                        Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 1.6 } } }
+                    // V4.89: drawn like the dock draws its apps (Edit mode > Icons)
+                    AppIcon { anchors.centerIn: parent; size: am.dock && am.dock.shape !== "" ? 56 : 44
+                        name: modelData.icon || ""; keys: [modelData.id, modelData.name]
+                        look: am.dock ? am.dock.look : "original"; shape: am.dock ? am.dock.shape : ""; colors: pal
+                        hover: cm.containsMouse; pressed: cm.pressed }
                 }
                 Text { anchors.horizontalCenter: parent.horizontalCenter; y: 76; width: parent.width - 14; horizontalAlignment: Text.AlignHCenter
                     elide: Text.ElideRight; text: modelData.name; color: pal.fg; font.family: Fonts.main; font.pixelSize: 12 }
@@ -131,7 +137,7 @@ PanelWindow {
                 // the pin
                 Rectangle {
                     anchors.right: parent.right; anchors.rightMargin: 10; y: 10
-                    width: 28; height: 28; radius: 14
+                    width: 28; height: 28; radius: Look.sq ? 0 : (14)
                     visible: cellIt.pin || cm.containsMouse || pm.containsMouse
                     color: cellIt.pin ? pal.primary : (pm.containsMouse ? pal.cardHi : pal.card)
                     MIcon { anchors.centerIn: parent; size: 15; name: "keep"; glyph: "\uf08d"; filled: cellIt.pin; color: cellIt.pin ? pal.inkPrimary : pal.fg }

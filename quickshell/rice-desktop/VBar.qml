@@ -53,7 +53,7 @@ PanelWindow {
     NPal { id: gp; theme: "shell"; alpha: Math.min(1, vb.alpha + 0.14) }
     readonly property color fg: goo ? gp.fg : "#F6F5F4"
     readonly property color dim: goo ? gp.dim : Qt.rgba(0.965, 0.961, 0.957, 0.66)
-    readonly property color bg: goo ? gp.surface : Qt.rgba(0.05, 0.05, 0.05, alpha)
+    readonly property color bg: Look.sq ? gp.minSurface : (goo ? gp.surface : Qt.rgba(0.05, 0.05, 0.05, alpha))
     readonly property color line: goo ? "transparent" : Qt.rgba(1, 1, 1, 0.07)
     readonly property int nws: bc.workspaces ? bc.workspaces : 5
     function noClock(l) { return (l || []).map(function(m) { return m === "clock" ? "island" : m }) }
@@ -133,7 +133,7 @@ PanelWindow {
     // niri: blur behind every background of the bar (Hyprland: a layer rule). Only once it has slid into place
     property var pillBgs: []
     readonly property var blurItems: flat || sty === "island" ? [panel] : (pills ? pillBgs.slice(0, 8) : [zTop.bgItem, zMid.bgItem, zBot.bgItem])
-    NiriBlur { win: vb; items: vb.blurItems; radius: vb.flat ? 0 : vb.barW / 2; on: vb.on && vb.t > 0.98 && !moveAnim.running }
+    NiriBlur { win: vb; items: vb.blurItems; radius: Look.sq ? 0 : (vb.flat ? 0 : vb.barW / 2); on: vb.on && vb.t > 0.98 && !moveAnim.running }
 
     // the tray, without the network and Bluetooth applets when the bar shows Wi-Fi and Bluetooth itself (niri and
     // some distros start nm-applet and blueman on their own: a second, odd Wi-Fi icon)
@@ -181,7 +181,7 @@ PanelWindow {
             id: zbg
             anchors.fill: parent
             visible: vb.zoned && z.mods.length > 0
-            radius: vb.barW / 2
+            radius: Look.sq ? 0 : (vb.barW / 2)
             color: vb.bg
             border.width: vb.goo ? 0 : 1
             border.color: vb.line
@@ -203,7 +203,7 @@ PanelWindow {
                         id: pbg
                         anchors.fill: parent
                         visible: vb.pills
-                        radius: vb.barW / 2
+                        radius: Look.sq ? 0 : (vb.barW / 2)
                         color: vb.bg
                         border.width: 1
                         border.color: vb.line
@@ -227,9 +227,10 @@ PanelWindow {
         // island / flat: one background behind everything
         Rectangle {
             id: panel
+            Frame { }      // V4.98 Minimal mode
             anchors.fill: parent
             visible: vb.flat || vb.sty === "island"
-            radius: vb.flat ? 0 : vb.barW / 2
+            radius: Look.sq ? 0 : (vb.flat ? 0 : vb.barW / 2)
             color: vb.bg
             border.width: vb.flat ? 0 : 1
             border.color: vb.line
@@ -275,7 +276,7 @@ PanelWindow {
         signal hit(var mouse)
         signal wheel(var e)
         width: vb.barW - 10; height: width
-        Rectangle { anchors.fill: parent; radius: width / 2; color: vb.fg; opacity: bm.containsMouse ? 0.1 : 0
+        Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (width / 2); color: vb.fg; opacity: bm.containsMouse ? 0.1 : 0
             Behavior on opacity { NumberAnimation { duration: 140 } } }
         MIcon { anchors.centerIn: parent; size: b.isz; name: b.icon; glyph: b.glyph; color: b.tint }
         MouseArea { id: bm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -286,7 +287,7 @@ PanelWindow {
     Component { id: cLauncher
         Item { width: vb.barW - 6; height: width
             readonly property bool ink: vb.goo
-            Rectangle { anchors.fill: parent; radius: lm.pressed ? width * 0.3 : width / 2; visible: vb.goo
+            Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (lm.pressed ? width * 0.3 : width / 2); visible: vb.goo
                 color: gp.mono ? gp.container : gp.primary; scale: lm.containsMouse ? 1.06 : 1
                 Behavior on radius { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
                 Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutBack } } }
@@ -321,7 +322,7 @@ PanelWindow {
                     Behavior on height { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
                     Rectangle {
                         anchors.centerIn: parent
-                        width: act ? 10 : (occ ? 9 : 6); height: act ? parent.height - 6 : width; radius: width / 2
+                        width: act ? 10 : (occ ? 9 : 6); height: act ? parent.height - 6 : width; radius: Look.sq ? 0 : (width / 2)
                         color: act ? (vb.goo ? gp.primary : vb.fg) : (occ ? vb.fg : vb.dim)
                         opacity: act ? 1 : (occ ? 0.75 : 0.35)
                         Behavior on height { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
@@ -337,7 +338,7 @@ PanelWindow {
 
     Component { id: cClock
         Rectangle {
-            width: vb.barW - 8; height: cc.implicitHeight + 16; radius: width / 2
+            width: vb.barW - 8; height: cc.implicitHeight + 16; radius: Look.sq ? 0 : (width / 2)
             color: vb.goo ? gp.container : "transparent"
             Column { id: cc; anchors.centerIn: parent; spacing: -2
                 Text { anchors.horizontalCenter: parent.horizontalCenter; text: vb.h12 ? String((vb.now.getHours() + 11) % 12 + 1) : vb.two(vb.now.getHours())

@@ -20,6 +20,29 @@ Item {
     }
     property string busy: ""                 // what is being changed (its card shows a spinner)
 
+    // V4.98 Minimal mode (rice-minimal)
+    property var mn: ({ on: false, frame: "double", width: 3, solid: false, bar: true })
+    function setMin(args) {
+        const m = Object.assign({}, mn)
+        if (args[0] === "on" || args[0] === "off") m.on = args[0] === "on"
+        else if (args[0] === "set") m[args[1]] = args[1] === "width" ? Number(args[2]) : (args[1] === "frame" ? args[2] : args[2] === "on")
+        mn = m
+        if (args[0] === "on" || args[0] === "off") { M3.sq = m.on }      // Settings turns square at once
+        minSet.command = ["bash", "-c", "\"$HOME/.local/bin/rice-minimal\" \"$@\" 2>&1 | tail -1", "_"].concat(args.map(a => String(a)))
+        minSet.running = true
+    }
+    Process {
+        id: minState
+        command: ["bash", "-c", "\"$HOME/.local/bin/rice-minimal\" state"]
+        running: true
+        stdout: StdioCollector { onStreamFinished: { try { page.mn = JSON.parse(text) } catch (e) { } } }
+    }
+    Process {
+        id: minSet
+        onExited: minState.running = true
+        stdout: StdioCollector { onStreamFinished: if (text.trim()) page.ctl.status = text.trim() }
+    }
+
     function look(args, what) {
         busy = what || ""
         setProc.command = ["bash", "-c", "\"$HOME/.local/bin/rice-look\" \"$@\" 2>&1", "_"].concat(args.map(a => String(a)))
@@ -72,7 +95,7 @@ Item {
         signal install()
         width: (parent.width - 2 * 10) / 3
         height: 132
-        radius: on ? 28 * M3.shapeK : 18 * M3.shapeK
+        radius: M3.sq ? 0 : (on ? 28 * M3.shapeK : 18 * M3.shapeK)
         Behavior on radius { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
         color: on ? M3.primaryContainer : (tm.containsMouse ? M3.surfaceHigh : M3.surfaceC)
         Behavior on color { ColorAnimation { duration: 160 } }
@@ -93,7 +116,7 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 visible: !im.visible
-                radius: 12 * M3.shapeK
+                radius: M3.sq ? 0 : (12 * M3.shapeK)
                 color: tl.on ? M3.primary : M3.surfaceHighest
                 T { anchors.centerIn: parent; text: tl.glyph !== "" ? tl.glyph : tl.name.charAt(0).toUpperCase()
                     font.family: tl.glyph !== "" ? Fonts.icons : Fonts.title; font.pixelSize: 20; font.weight: Font.Bold
@@ -103,7 +126,7 @@ Item {
         // in use / install
         Rectangle {
             anchors.right: parent.right; anchors.rightMargin: 12; y: 18
-            height: 26; radius: 13
+            height: 26; radius: M3.sq ? 0 : (13)
             width: chip.implicitWidth + 20
             visible: tl.on || !tl.installed
             color: tl.on ? M3.primary : (im2.containsMouse ? M3.surfaceBright : M3.surfaceHighest)
@@ -133,7 +156,7 @@ Item {
             id: hero
             width: parent.width
             height: Math.max(240, Math.min(470, out.contentHeight + 96))
-            radius: M3.rXL
+            radius: M3.sq ? 0 : (M3.rXL)
             color: M3.primaryContainer
             clip: true
             Blob { width: 260; height: 260; x: parent.width - 190; y: -70; kind: "cookie"; color: M3.alpha(M3.inkPrimaryC, 0.06) }
@@ -149,13 +172,13 @@ Item {
                 id: twin
                 x: 18; y: 50
                 width: parent.width - 36; height: parent.height - 68
-                radius: 14
+                radius: M3.sq ? 0 : (14)
                 color: page.pv.bg || "#101014"
                 border.width: 1; border.color: M3.alpha("#ffffff", 0.08)
                 clip: true
                 Row {
                     x: 14; y: 11; spacing: 7
-                    Repeater { model: ["#ff5f57", "#febc2e", "#28c840"]; Rectangle { width: 11; height: 11; radius: 6; color: modelData; opacity: 0.85 } }
+                    Repeater { model: ["#ff5f57", "#febc2e", "#28c840"]; Rectangle { width: 11; height: 11; radius: M3.sq ? 0 : (6); color: modelData; opacity: 0.85 } }
                 }
                 T { anchors.horizontalCenter: parent.horizontalCenter; y: 8; font.pixelSize: 12; color: M3.alpha(page.pv.fg || "#e5e3e3", 0.6)
                     text: (page.termInfo ? page.termInfo.name : page.termNow) + "  ·  " + page.shellNow }
@@ -173,7 +196,7 @@ Item {
                     spacing: 18
                     Rectangle {
                         visible: page.pv.logo !== ""
-                        width: visible ? 150 : 0; height: 150; radius: 16; clip: true; color: "transparent"
+                        width: visible ? 150 : 0; height: 150; radius: M3.sq ? 0 : (16); clip: true; color: "transparent"
                         Image { anchors.fill: parent; source: page.pv.logo !== "" ? "file://" + page.pv.logo : ""; cache: false
                             fillMode: Image.PreserveAspectCrop; sourceSize.width: 300 }
                     }
@@ -199,11 +222,52 @@ Item {
             }
         }
 
+        // ---------- Minimal mode (V4.98) ----------
+        SectionTitle { text: I18n.t("Minimal mode"); sub: I18n.t("Square corners everywhere and plain window frames, like a classic floating window manager.") }
+        ToggleRow {
+            label: I18n.t("Minimal mode")
+            desc: I18n.t("Square windows, bar, dock, panels, menus, widgets and apps, without shadows")
+            sym: "crop_square"; lit: page.mn.on === true
+            checked: page.mn.on === true
+            onToggled: function(v) { page.setMin([v ? "on" : "off"]) }
+        }
+        SegRow {
+            visible: page.mn.on === true
+            label: I18n.t("Window frame")
+            desc: page.mn.frame === "double" ? I18n.t("Your theme color with a dark line outside it")
+                : (page.mn.frame === "single" ? I18n.t("Your theme color only") : I18n.t("One quiet line"))
+            options: [{ label: I18n.t("Double"), value: "double" }, { label: I18n.t("Single"), value: "single" }, { label: I18n.t("Thin"), value: "thin" }]
+            current: page.mn.frame || "double"
+            onChosen: function(v) { page.setMin(["set", "frame", v]) }
+        }
+        SliderRow {
+            visible: page.mn.on === true && page.mn.frame !== "thin"
+            label: I18n.t("Frame width")
+            desc: I18n.t("How thick the color frame of the windows is")
+            from: 1; to: 8; step: 1; unit: " px"
+            value: page.mn.width || 3
+            onCommitted: function(v) { page.setMin(["set", "width", Math.round(v)]) }
+        }
+        ToggleRow {
+            visible: page.mn.on === true
+            label: I18n.t("Solid windows")
+            desc: I18n.t("No transparency and no blur anywhere (the terminal too); the blur settings wait until it is off")
+            checked: page.mn.solid === true
+            onToggled: function(v) { page.setMin(["set", "solid", v ? "on" : "off"]) }
+        }
+        ToggleRow {
+            visible: page.mn.on === true
+            label: I18n.t("Flat bar")
+            desc: I18n.t("A flat bar along the edge with numbered workspaces; your bar comes back when Minimal mode is off")
+            checked: page.mn.bar !== false
+            onToggled: function(v) { page.setMin(["set", "bar", v ? "on" : "off"]) }
+        }
+
         // ---------- fastfetch ----------
         SectionTitle { text: I18n.t("Fastfetch"); sub: I18n.t("The logo and the facts about your computer that a terminal shows.") }
         Rectangle {
             visible: page.ff.installed === false
-            width: parent.width; height: 60; radius: M3.rL
+            width: parent.width; height: 60; radius: M3.sq ? 0 : (M3.rL)
             color: M3.surfaceC
             T { x: 18; anchors.verticalCenter: parent.verticalCenter; text: I18n.t("fastfetch is not installed"); font.pixelSize: 14 }
             Btn { anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
@@ -211,7 +275,7 @@ Item {
         }
         Rectangle {
             visible: page.ff.own === true
-            width: parent.width; height: 68; radius: M3.rL
+            width: parent.width; height: 68; radius: M3.sq ? 0 : (M3.rL)
             color: M3.tertiaryContainer
             T { x: 18; width: parent.width - 220; anchors.verticalCenter: parent.verticalCenter; wrapMode: Text.WordWrap
                 text: I18n.t("You use your own fastfetch config: the choices below are saved but not used.")
@@ -327,6 +391,15 @@ Item {
                     onPicked: if (!on) page.look(["files", modelData.id], "files-" + modelData.id)
                     onInstall: { page.waiting = true; page.look(["install", modelData.id], "files-" + modelData.id) }
                 }
+            }
+        }
+        ToggleRow {
+            label: I18n.t("Our Photos, Music and Videos for your files")
+            desc: I18n.t("Pictures open in Photos, music in Music and videos in Videos (off: the apps you had before)")
+            checked: !!page.st.files && page.st.files.apps === true
+            onToggled: function(v) {
+                const s2 = Object.assign({}, page.st); s2.files = Object.assign({}, page.st.files || {}); s2.files.apps = v; page.st = s2
+                page.look(["apps-default", v ? "on" : "off"])
             }
         }
         ToggleRow {

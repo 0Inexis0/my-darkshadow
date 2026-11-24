@@ -168,6 +168,8 @@ CORES = os.cpu_count() or 1
 rx0, tx0 = net_bytes()
 t0 = time.time()
 idle0, tot0 = cpu_times()
+# V4.95: nvidia-smi is a heavy program (and wakes the card): with NVIDIA it is asked every third time only
+tick, g, gt = 0, 0, 0
 while True:
     time.sleep(every)
     idle1, tot1 = cpu_times()
@@ -175,7 +177,9 @@ while True:
     c = round(100 * (1 - (idle1 - idle0) / dt)) if dt > 0 else 0
     idle0, tot0 = idle1, tot1
     r, ru, rt = ram()
-    g, gt = gpu()
+    if not NV or tick % 3 == 0:
+        g, gt = gpu()
+    tick += 1
     s, su, stt = swap()
     dk, du, dt2 = disk()
     rx1, tx1 = net_bytes()

@@ -50,7 +50,8 @@ PanelWindow {
         Component.onCompleted: if (src !== "") { loadedSrc = src; loadImage(src) }
         onImageLoaded: requestPaint()
         onPaint: {
-            if (src === "" || !isImageLoaded(src)) return
+            if (src === "") return
+            if (!isImageLoaded(src)) { loadImage(src); return }
             const c = getContext("2d")
             c.reset()
             const W = Look.lumW, H = Look.lumH
@@ -65,6 +66,9 @@ PanelWindow {
             const g = new Array(W * H)
             for (let i = 0; i < g.length; i++) g[i] = (0.2126 * px[i * 4] + 0.7152 * px[i * 4 + 1] + 0.0722 * px[i * 4 + 2]) / 255
             Look.lumGrid = g
+            // V4.96: the whole wallpaper picture (a 4K one is 33 MB, 8K 130 MB) stayed in memory after this one
+            // measurement; it is dropped now and loaded again only for the next one
+            unloadImage(src)
         }
     }
 }

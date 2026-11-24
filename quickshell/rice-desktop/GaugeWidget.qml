@@ -60,7 +60,7 @@ Item {
             property real lv: gw.val
             property real ph: 0
             Behavior on lv { NumberAnimation { duration: 900; easing.type: Easing.OutCubic } }
-            Timer { interval: 33; repeat: true; running: gw.running && gw.water && !Look.lite && !Look.covered; onTriggered: liquid.ph = (Date.now() % 3000) / 3000 * Math.PI * 2 }  // ~30 a second (V4.84)
+            Timer { interval: 50; repeat: true; running: gw.running && gw.water && !Look.lite; onTriggered: liquid.ph = (Date.now() % 3000) / 3000 * Math.PI * 2 }  // 20 a second (V4.96; 30 since V4.84)
             onLvChanged: requestPaint(); onPhChanged: requestPaint()
             renderStrategy: Canvas.Cooperative
             onPaint: {
@@ -88,7 +88,7 @@ Item {
         color: gw.pal ? (gw.bg > 0.02 ? gw.pal.cardColor : "transparent") : "#2b2d31"
         line: gw.pal ? gw.pal.edge : "transparent"
         lineWidth: gw.pal && gw.pal.edgeWidth > 0 ? gw.pal.edgeWidth : 0
-        SlowSpin { turn: 360; period: 120000; running: (gw.running && !Look.lite && gw.shape !== "circle") && !Look.covered }
+        SlowSpin { turn: 360; period: 120000; running: gw.running && !Look.lite && gw.shape !== "circle" }
     }
     // the ring
     Canvas {
@@ -99,7 +99,7 @@ Item {
         property real v: gw.val
         property real ph: 0
         Behavior on v { NumberAnimation { duration: 700; easing.type: Easing.OutCubic } }
-        Timer { interval: 33; repeat: true; running: gw.running && !Look.lite && !Look.covered; onTriggered: ring.ph = (Date.now() % 2400) / 2400 * Math.PI * 2 }  // ~30 a second (V4.84)
+        Timer { interval: 50; repeat: true; running: gw.running && !Look.lite; onTriggered: ring.ph = (Date.now() % 2400) / 2400 * Math.PI * 2 }  // 20 a second (V4.96; 30 since V4.84)
         onVChanged: requestPaint()
         onPhChanged: requestPaint()
         renderStrategy: Canvas.Cooperative

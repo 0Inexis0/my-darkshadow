@@ -1,4 +1,5 @@
 import Quickshell
+import Quickshell.Io
 import QtQuick
 
 Item {
@@ -15,9 +16,10 @@ Item {
         "decoration.active_opacity", "decoration.inactive_opacity", "decoration.shadow.enabled", "decoration.shadow.range",
         "decoration.blur.enabled", "decoration.blur.size", "decoration.blur.passes", "decoration.blur.noise", "decoration.blur.vibrancy"]
     function fit(specs) { return niri ? specs.filter(x => niriKeys.indexOf(x.key) >= 0) : specs }
-    readonly property var tabs: niri ? ["Gaps", "Borders", "Rounding & Opacity", "Blur", "Keybinds", "Monitors"]
-                                     : ["Gaps", "Borders", "Layout", "Rounding & Opacity", "Blur", "Keybinds", "Monitors"]
-    readonly property var comps: niri ? [gapsC, bordersC, roundC, blurC, bindsC, monC] : [gapsC, bordersC, layoutC, roundC, blurC, bindsC, monC]
+    // screens are in Settings > System > Monitors only
+    readonly property var tabs: niri ? ["Gaps", "Borders", "Rounding & Opacity", "Blur", "Keybinds"]
+                                     : ["Gaps", "Borders", "Layout", "Rounding & Opacity", "Blur", "Keybinds"]
+    readonly property var comps: niri ? [gapsC, bordersC, roundC, blurC, bindsC] : [gapsC, bordersC, layoutC, roundC, blurC, bindsC]
 
     readonly property var gapsSpec: [
         { key: "general.gaps_in", type: "slider", label: I18n.t("Inner gaps"), desc: I18n.t("Gaps between windows"), min: 0, max: 40, step: 1, unit: " px", def: 5 },
@@ -76,7 +78,7 @@ Item {
             delegate: Rectangle {
                 width: tabText.implicitWidth + 24
                 height: 30
-                radius: 9
+                radius: M3.sq ? 0 : (9)
                 color: page.tab === index ? M3.primary : (tabMouse.containsMouse ? M3.surfaceHighest : M3.surfaceHigh)
                 border.width: 1
                 border.color: M3.surfaceHighest
@@ -99,10 +101,41 @@ Item {
         }
     }
 
+    // V5.00: Minimal mode sets the corners, the frames and the shadows (and with Solid windows the blur and the
+    // transparency): said here, so a slider that seems to do nothing is not a mystery
+    Rectangle {
+        id: minNote
+        visible: M3.sq
+        x: 24; y: tabsFlow.y + tabsFlow.height + 12
+        width: parent.width - 48
+        height: visible ? minText.implicitHeight + 24 : 0
+        radius: M3.sq ? 0 : 14
+        color: M3.surfaceHigh
+        border.width: 1; border.color: M3.primary
+        T {
+            id: minText
+            x: 14; y: 12
+            width: parent.width - 28 - minOff.width - 12
+            wrapMode: Text.WordWrap
+            font.pixelSize: 13
+            color: "#F6F5F4"
+            text: I18n.t("Minimal mode is on: it decides the corners, the border width and the shadows")
+                + (M3.minSolid ? I18n.t(", and with Solid windows the blur and the transparency too") : "")
+                + I18n.t(". What you change here is saved and comes back when Minimal mode is off.")
+        }
+        Pill {
+            id: minOff
+            anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
+            label: I18n.t("Turn off Minimal mode")
+            onClicked: { M3.sq = false; M3.minSolid = false; minOffP.running = true }
+        }
+        Process { id: minOffP; command: ["bash", "-c", "\"$HOME/.local/bin/rice-minimal\" off"] }
+    }
+
     Flickable {
         id: flick
         x: 0
-        y: tabsFlow.y + tabsFlow.height + 14
+        y: tabsFlow.y + tabsFlow.height + 14 + (minNote.visible ? minNote.height + 10 : 0)
         width: parent.width
         height: parent.height - y - 52
         contentWidth: width
@@ -159,7 +192,7 @@ Item {
         Column {
             spacing: 10
             OptionsList { width: parent.width; ctl: page.ctl; specs: page.fit(page.bordersSpec) }
-            T { kind: "title"; text: I18n.t("Border colors"); font.pixelSize: 16; font.bold: true; topPadding: 8 }
+            SectionTitle { text: I18n.t("Border colors") }
             SegRow {
                 width: parent.width
                 label: I18n.t("Color source")
@@ -225,5 +258,4 @@ Item {
     }
 
     Component { id: bindsC; BindsPage { ctl: page.ctl } }
-    Component { id: monC; MonitorsPage { ctl: page.ctl } }
 }

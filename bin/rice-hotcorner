@@ -15,6 +15,7 @@ it also ran the hot corner panel, which was removed in V4.52; the name stays so 
   rice-hotcorner rec-info                   recorder status + recent recordings (with thumbnails) as JSON
   rice-hotcorner shot full|region|window     region and window: the screen is frozen and the shell's screenshot
                                             tool opens (Snip.qml); without the shell: slurp
+  rice-hotcorner shot-crop FILE ACTION X Y W H VIEW_W VIEW_H
   rice-hotcorner shot-done FILE save|copy|edit|ocr|translate|search|color
                                             what the shell's tool hands back: keeps, copies or edits the crop, reads
                                             the text in it (tesseract), translates that text, looks the picture up
@@ -24,12 +25,15 @@ it also ran the hot corner panel, which was removed in V4.52; the name stays so 
 import fcntl
 import glob
 import json
+import math
 import os
 import re
 import shutil
 import signal
+import struct
 import subprocess
 import sys
+import tempfile
 import time
 
 HOME = os.path.expanduser("~")
@@ -711,9 +715,9 @@ def lens(src):
 
 def png_pixel(src):
     """the first pixel of a small PNG as (r, g, b), without any library (the shell hands over a 1 x 1 crop)"""
-    import struct
     import zlib
-    d = open(src, "rb").read()
+    with open(src, "rb") as f:
+        d = f.read()
     if d[:8] != b"\x89PNG\r\n\x1a\n":
         return None
     pos, idat, ctype, depth = 8, b"", 6, 8
@@ -729,6 +733,77 @@ def png_pixel(src):
     if depth != 8 or ctype not in (2, 6) or len(raw) < 4:
         return None
     return raw[1], raw[2], raw[3]      # the first pixel of the first row has no neighbors: every filter leaves it as it is
+
+
+def png_size(src):
+    with open(src, "rb") as f:
+        h = f.read(24)
+    if len(h) != 24 or h[:16] != b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR":
+        raise ValueError("not a PNG")
+    w, h = struct.unpack(">II", h[16:])
+    if not w or not h:
+        raise ValueError("empty PNG")
+    return w, h
+
+
+def snip_box(image_size, view_size, rect, color=False):
+    """Map panel-local logical edges to a frozen output's native pixel bounds.
+
+    Round both edges, not the size, so adjacent selections share an edge.
+    The monitor's desktop origin has already been removed by the GUI.
+    """
+    iw, ih = image_size
+    vw, vh = view_size
+    x, y, w, h = rect
+    if not all(math.isfinite(v) for v in (vw, vh, x, y, w, h)) or vw <= 0 or vh <= 0:
+        raise ValueError("invalid Snip geometry")
+    if color:
+        return (min(iw - 1, math.floor(clamp(x, 0, vw) * iw / vw)),
+                min(ih - 1, math.floor(clamp(y, 0, vh) * ih / vh)), 1, 1)
+
+    def edge(value, logical, pixels):
+        return math.floor(clamp(value, 0, logical) * pixels / logical + 0.5)
+
+    left, top = edge(x, vw, iw), edge(y, vh, ih)
+    right, bottom = edge(x + w, vw, iw), edge(y + h, vh, ih)
+    if right <= left or bottom <= top:
+        raise ValueError("Snip selection has no pixels")
+    return left, top, right - left, bottom - top
+
+
+def shot_crop(src, what, geometry):
+    """Use actual input pixels, not a Qt grab that would apply window DPR again."""
+    runtime = os.path.realpath(os.environ.get("XDG_RUNTIME_DIR") or "/tmp")
+    if (what not in ("save", "copy", "edit", "ocr", "translate", "search", "color")
+            or not re.fullmatch(r"rice-snip-[0-9]+[.]png", os.path.basename(src))
+            or os.path.islink(src) or os.path.dirname(os.path.realpath(src)) != runtime):
+        return False
+    try:
+        x, y, w, h, vw, vh = map(float, geometry)
+        native = png_size(src)
+        left, top, pw, ph = snip_box(native, (vw, vh), (x, y, w, h), what == "color")
+        with tempfile.TemporaryDirectory(prefix="rice-crop-", dir=runtime) as tmp:
+            out = os.path.join(tmp, "capture.png")
+            if (left, top, pw, ph) == (0, 0, *native) and what != "color":
+                shutil.copyfile(src, out)  # Preserve the full output exactly.
+            else:
+                cmd = shutil.which("magick") or shutil.which("convert")
+                if not cmd:
+                    raise ValueError("Install ImageMagick to crop screenshots")
+                code, _ = q([cmd, src, "-crop", f"{pw}x{ph}+{left}+{top}",
+                             "+repage", "PNG32:" + out], timeout=15)
+                if code or png_size(out) != (pw, ph):
+                    raise ValueError("Could not crop the frozen screenshot")
+            shot_done(out, what)
+        return True
+    except (OSError, ValueError, OverflowError) as exc:
+        notify("Screenshot failed", str(exc), "dialog-warning")
+        return False
+    finally:
+        try:
+            os.remove(src)
+        except OSError:
+            pass
 
 
 def shot_done(src, what):
@@ -899,6 +974,8 @@ def main(argv):
         rec_info()
     elif cmd == "shot":
         shot(arg or "full")
+    elif cmd == "shot-crop":
+        return 0 if shot_crop(arg, argv[3] if len(argv) > 3 else "", argv[4:]) else 1
     elif cmd == "shot-done":
         shot_done(arg, argv[3] if len(argv) > 3 else "save")
     elif cmd == "scheme":
@@ -924,4 +1001,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    sys.exit(main(sys.argv))

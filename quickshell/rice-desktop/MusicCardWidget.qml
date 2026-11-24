@@ -70,7 +70,7 @@ Item {
         x: cov.x + cov.width + 14; y: 62
         width: mc.width - x - 18; height: 16
         value: Player.frac
-        moving: Player.playing && mc.running && !Look.covered
+        moving: Player.playing && mc.running
         seekable: true
         color: mc.acc
         track: mc.pal ? mc.pal.track : Qt.rgba(1, 1, 1, 0.14)
@@ -89,7 +89,7 @@ Item {
             property bool on: false
             signal hit()
             width: 36; height: 36; anchors.verticalCenter: parent.verticalCenter
-            Rectangle { anchors.fill: parent; radius: rb.on ? 12 : width / 2; color: rb.on ? Qt.rgba(mc.acc.r, mc.acc.g, mc.acc.b, 0.28) : (mc.pal ? mc.pal.chip : Qt.rgba(1, 1, 1, 0.08))
+            Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (rb.on ? 12 : width / 2); color: rb.on ? Qt.rgba(mc.acc.r, mc.acc.g, mc.acc.b, 0.28) : (mc.pal ? mc.pal.chip : Qt.rgba(1, 1, 1, 0.08))
                 scale: rm.pressed ? 0.9 : (rm.containsMouse ? 1.06 : 1)
                 Behavior on radius { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
                 Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } } }
@@ -104,7 +104,7 @@ Item {
                 anchors.fill: parent; kind: "cookie"; color: mc.acc
                 scale: pm.pressed ? 0.9 : 1
                 Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack; easing.overshoot: 2 } }
-                SlowSpin { turn: 360; period: 14000; running: mc.running && Player.playing && !Look.lite && !Look.covered }
+                SlowSpin { turn: 360; period: 14000; running: mc.running && Player.playing && !Look.lite }
             }
             MIcon { anchors.centerIn: parent; size: 22; name: Player.playing ? "pause" : "play_arrow"; glyph: String.fromCodePoint(Player.playing ? 0xF03E4 : 0xF040A); color: mc.pal ? mc.pal.inkOn : "#10201c" }
             MouseArea { id: pm; anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Player.toggle() }

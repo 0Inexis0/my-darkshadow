@@ -7,19 +7,21 @@ Item {
     id: page
     property var ctl
     readonly property var ha: ctl ? ctl.ha : ({})
-    readonly property string style: ha.style === "bouncy" ? "expressive" : (ha.style || "calm")
+    // styles that are gone (V5.02) show as the one that took their place
+    readonly property var oldStyles: ({ bouncy: "expressive", lively: "pop", fluid: "emphasized", snappy: "calm", minimal: "calm" })
+    readonly property string style: oldStyles[ha.style] || ha.style || "calm"
 
     // a little stage that plays the chosen feeling: a shape that travels, grows and changes its corners
     property bool flip: false
     Timer { interval: 1500; running: page.visible; repeat: true; onTriggered: page.flip = !page.flip }
 
+    // bz: the curve the little previews play (x1, y1, x2, y2 of a cubic Bezier), dur: how long
     readonly property var styles: [
-        { k: "calm", n: "Calm", d: "Smooth curves, no bounce", sym: "waves", g: "", over: 0, dur: 520 },
-        { k: "lively", n: "Lively", d: "Springs with a small overshoot", sym: "airwave", g: "", over: 1.3, dur: 560 },
-        { k: "fluid", n: "Fluid", d: "Material 3 emphasized: a long, soft landing, no bounce", sym: "water", g: "", over: 0, dur: 640 },
-        { k: "expressive", n: "Expressive", d: "Material 3 springs: a soft pop with a hint of overshoot", sym: "auto_awesome", g: "", over: 1.4, dur: 620 },
-        { k: "snappy", n: "Snappy", d: "Short and quick", sym: "bolt", g: "", over: 0, dur: 260 },
-        { k: "minimal", n: "Minimal", d: "Fades only", sym: "blur_on", g: "", over: 0, dur: 360 }
+        { k: "calm", n: "Calm", d: "Smooth curves, no bounce", sym: "waves", g: "", bz: [0.65, 0, 0.35, 1], dur: 520 },
+        { k: "emphasized", n: "Emphasized", d: "Material 3: windows grow in on a long, soft landing", sym: "trending_flat", g: "", bz: [0.05, 0.7, 0.1, 1], dur: 560 },
+        { k: "expressive", n: "Expressive", d: "Material 3 expressive: a lively landing with a little overshoot", sym: "auto_awesome", g: "", bz: [0.38, 1.21, 0.22, 1], dur: 600 },
+        { k: "glide", n: "Glide", d: "Windows and panels slide in from the edge", sym: "swipe_right", g: "", bz: [0.2, 0, 0, 1], dur: 680 },
+        { k: "pop", n: "Pop", d: "Windows spring up from small with one soft bounce", sym: "bubble_chart", g: "", bz: [0.34, 1.56, 0.64, 1], dur: 460 }
     ]
     // Material 3 motion tokens (expressive springs, the standard ones when Settings > Feel is Standard)
     readonly property var springs: M3.bouncy ? [
@@ -54,7 +56,7 @@ Item {
             id: stage
             width: parent.width
             height: 170
-            radius: M3.rXL
+            radius: M3.sq ? 0 : (M3.rXL)
             color: M3.primaryContainer
             clip: true
             readonly property var st: page.cur()
@@ -63,30 +65,30 @@ Item {
                 width: parent.width * 0.45
                 spacing: 6
                 T { text: I18n.t("MOTION"); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.2; color: M3.alpha(M3.inkPrimaryC, 0.75) }
-                T { kind: "title"; text: stage.st.n; font.pixelSize: 30; font.weight: Font.Medium; color: M3.inkPrimaryC }
-                T { kind: "reading"; text: stage.st.d + I18n.t(". Windows, workspaces and pop-ups move like this."); width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.alpha(M3.inkPrimaryC, 0.85) }
+                T { kind: "title"; text: I18n.t(stage.st.n); font.pixelSize: 30; font.weight: Font.Medium; color: M3.inkPrimaryC }
+                T { kind: "reading"; text: I18n.t(stage.st.d) + I18n.t(". Windows, workspaces and pop-ups move like this."); width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.alpha(M3.inkPrimaryC, 0.85) }
             }
             // the track the shape runs on
             Item {
                 id: track
                 x: parent.width * 0.5; width: parent.width * 0.5 - 30
                 height: parent.height
-                Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: 6; radius: 3; color: M3.alpha(M3.inkPrimaryC, 0.12) }
+                Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: 6; radius: M3.sq ? 0 : (3); color: M3.alpha(M3.inkPrimaryC, 0.12) }
                 Rectangle {
                     id: ball
                     readonly property real big: page.flip ? 64 : 44
                     width: big; height: big
-                    radius: page.flip ? big / 2 : 14
+                    radius: M3.sq ? 0 : (page.flip ? big / 2 : 14)
                     anchors.verticalCenter: parent.verticalCenter
                     x: page.flip ? track.width - width : 0
                     color: M3.primary
-                    opacity: stage.st.k === "minimal" ? (page.flip ? 1 : 0.35) : 1
-                    Behavior on x { enabled: stage.st.k !== "minimal"
-                        NumberAnimation { duration: stage.st.dur; easing.type: stage.st.over > 0 ? Easing.OutBack : (stage.st.k === "snappy" ? Easing.OutQuart : Easing.InOutCubic); easing.overshoot: stage.st.over } }
-                    Behavior on width { NumberAnimation { duration: stage.st.dur; easing.type: stage.st.over > 0 ? Easing.OutBack : Easing.OutCubic; easing.overshoot: stage.st.over } }
-                    Behavior on height { NumberAnimation { duration: stage.st.dur; easing.type: stage.st.over > 0 ? Easing.OutBack : Easing.OutCubic; easing.overshoot: stage.st.over } }
+                    // it travels and grows on the style's own curve (Pop also grows from small)
+                    scale: stage.st.k === "pop" ? (page.flip ? 1 : 0.55) : 1
+                    Behavior on x { NumberAnimation { duration: stage.st.dur; easing.type: Easing.BezierSpline; easing.bezierCurve: stage.st.bz.concat([1, 1]) } }
+                    Behavior on width { NumberAnimation { duration: stage.st.dur; easing.type: Easing.BezierSpline; easing.bezierCurve: stage.st.bz.concat([1, 1]) } }
+                    Behavior on height { NumberAnimation { duration: stage.st.dur; easing.type: Easing.BezierSpline; easing.bezierCurve: stage.st.bz.concat([1, 1]) } }
+                    Behavior on scale { NumberAnimation { duration: stage.st.dur; easing.type: Easing.BezierSpline; easing.bezierCurve: stage.st.bz.concat([1, 1]) } }
                     Behavior on radius { NumberAnimation { duration: stage.st.dur; easing.type: Easing.OutCubic } }
-                    Behavior on opacity { NumberAnimation { duration: stage.st.dur } }
                 }
             }
         }
@@ -110,7 +112,7 @@ Item {
                     readonly property bool on: page.style === modelData.k
                     width: (flow.width - 40) / 5 < 120 ? (flow.width - 20) / 3 : (flow.width - 40) / 5
                     height: 124
-                    radius: tm.pressed ? M3.rM : M3.rL
+                    radius: M3.sq ? 0 : (tm.pressed ? M3.rM : M3.rL)
                     color: on ? M3.secondaryContainer : (tm.containsMouse ? M3.surfaceHigh : M3.surfaceC)
                     border.width: on ? 2 : 0
                     border.color: M3.primary
@@ -119,21 +121,18 @@ Item {
                     // a small dot that plays this style while you point at it
                     Item {
                         x: 14; y: 16; width: parent.width - 28; height: 26
-                        Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: 4; radius: 2; color: M3.alpha(M3.ink, 0.1) }
+                        Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: 4; radius: M3.sq ? 0 : (2); color: M3.alpha(M3.ink, 0.1) }
                         Rectangle {
-                            width: 18; height: 18; radius: 9
+                            width: 18; height: 18; radius: M3.sq ? 0 : (9)
                             anchors.verticalCenter: parent.verticalCenter
                             color: tile.on ? M3.primary : M3.inkDim
                             x: (tm.containsMouse || tile.on) && page.flip ? parent.width - width : 0
-                            opacity: modelData.k === "minimal" ? ((tm.containsMouse || tile.on) && page.flip ? 1 : 0.3) : 1
-                            Behavior on x { enabled: modelData.k !== "minimal"
-                                NumberAnimation { duration: modelData.dur; easing.type: modelData.over > 0 ? Easing.OutBack : Easing.InOutCubic; easing.overshoot: modelData.over } }
-                            Behavior on opacity { NumberAnimation { duration: modelData.dur } }
+                            Behavior on x { NumberAnimation { duration: modelData.dur; easing.type: Easing.BezierSpline; easing.bezierCurve: modelData.bz.concat([1, 1]) } }
                         }
                     }
                     Icon { x: 14; y: 54; name: modelData.sym; glyph: modelData.g; size: 18; color: tile.on ? M3.primary : M3.inkDim; filled: tile.on }
-                    T { x: 40; y: 55; text: modelData.n; font.pixelSize: 14; font.weight: Font.Medium }
-                    T { x: 14; y: 82; width: parent.width - 28; text: modelData.d; wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight
+                    T { x: 40; y: 55; text: I18n.t(modelData.n); font.pixelSize: 14; font.weight: Font.Medium }
+                    T { x: 14; y: 82; width: parent.width - 28; text: I18n.t(modelData.d); wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight
                         font.pixelSize: 11; color: M3.inkDim }
                     MouseArea { id: tm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.ctl.setAnimStyle(modelData.k) }
                 }
@@ -195,7 +194,7 @@ Item {
                     property bool go: false
                     width: (tryGrid.width - (tryGrid.columns - 1) * 10) / tryGrid.columns
                     height: 120
-                    radius: M3.rL
+                    radius: M3.sq ? 0 : (M3.rL)
                     color: tcm.containsMouse ? M3.surfaceHigh : M3.surfaceC
                     T { x: 16; y: 14; text: modelData.n; font.pixelSize: 14; font.weight: Font.Medium }
                     T { x: 16; y: 34; text: modelData.d; font.pixelSize: 11; color: M3.inkDim }
@@ -203,7 +202,7 @@ Item {
                         readonly property bool b: M3.bouncy
                         width: index === 1 ? (tc.go ? 70 : 30) : 30
                         height: index === 1 ? (tc.go ? 40 : 30) : 30
-                        radius: index === 2 ? (tc.go ? 6 : 15) : 15
+                        radius: M3.sq ? 0 : (index === 2 ? (tc.go ? 6 : 15) : 15)
                         x: index === 0 ? (tc.go ? tc.width - width - 18 : 18) : (tc.width - width) / 2
                         y: 66 + (index === 1 ? (40 - height) / 2 : 5)
                         color: M3.primary
@@ -262,7 +261,7 @@ Item {
         Rectangle {
             width: parent.width
             height: dFlow.implicitHeight + 74
-            radius: M3.rL
+            radius: M3.sq ? 0 : (M3.rL)
             color: M3.surfaceC
             Flow {
                 id: dFlow
@@ -272,7 +271,7 @@ Item {
                     model: page.durations
                     delegate: Rectangle {
                         readonly property bool on: page.durSel === index
-                        width: 76; height: 46; radius: on ? 23 : 12
+                        width: 76; height: 46; radius: M3.sq ? 0 : (on ? 23 : 12)
                         color: on ? M3.primary : (dm.containsMouse ? M3.surfaceHighest : M3.surfaceHigh)
                         Behavior on radius { NumberAnimation { duration: M3.d(200) } }
                         Behavior on color { ColorAnimation { duration: 140 } }
@@ -290,9 +289,9 @@ Item {
                 id: durBar
                 property real p: 0
                 x: 16; anchors.bottom: parent.bottom; anchors.bottomMargin: 20
-                width: parent.width - 32; height: 10; radius: 5
+                width: parent.width - 32; height: 10; radius: M3.sq ? 0 : (5)
                 color: M3.surfaceHighest
-                Rectangle { width: Math.max(10, parent.width * durBar.p); height: parent.height; radius: 5; color: M3.primary }
+                Rectangle { width: Math.max(10, parent.width * durBar.p); height: parent.height; radius: M3.sq ? 0 : (5); color: M3.primary }
                 NumberAnimation { id: durRun; target: durBar; property: "p"; from: 0; to: 1; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.2, 0, 0, 1, 1, 1] }
             }
         }
@@ -303,11 +302,11 @@ Item {
             id: pad
             width: parent.width
             height: 230
-            radius: M3.rXL
+            radius: M3.sq ? 0 : (M3.rXL)
             color: M3.stageTop
             clip: true
             // home
-            Rectangle { anchors.centerIn: parent; width: 84; height: 84; radius: 42; color: "transparent"; border.width: 2; border.color: M3.alpha(M3.primary, 0.35) }
+            Rectangle { anchors.centerIn: parent; width: 84; height: 84; radius: M3.sq ? 0 : (42); color: "transparent"; border.width: 2; border.color: M3.alpha(M3.primary, 0.35) }
             T { anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.bottom; anchors.bottomMargin: 14; text: I18n.t("Drag and let go"); font.pixelSize: 12; color: M3.inkDim }
             Item {
                 id: blob
@@ -328,7 +327,7 @@ Item {
                 Rectangle {
                     anchors.centerIn: parent
                     width: 72 * (1 + blob.sp * 0.35); height: 72 * (1 - blob.sp * 0.22)
-                    radius: blob.held ? 22 : height / 2
+                    radius: M3.sq ? 0 : (blob.held ? 22 : height / 2)
                     color: M3.primary
                     Behavior on radius { NumberAnimation { duration: M3.d(260); easing.type: Easing.OutBack; easing.overshoot: 2 * Prefs.bounce } }
                     Icon { anchors.centerIn: parent; rotation: -blob.rotation; name: "pan_tool"; glyph: ""; size: 24; color: M3.inkPrimary; filled: blob.held }

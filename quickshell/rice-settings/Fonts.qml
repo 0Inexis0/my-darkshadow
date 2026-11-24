@@ -44,24 +44,23 @@ Singleton {
         }
     }
 
-    Process {
-        id: proc
-        command: ["bash", "-c", "cat \"$HOME/.config/rice/fonts.json\" 2>/dev/null"]
-        running: true
-        stdout: StdioCollector {
-            onStreamFinished: {
-                let j = {}
-                try { j = JSON.parse(text) } catch (e) { j = {} }
-                f.v = j.v || (text.trim() === "" ? 2 : 1)
-                f.rMain = j.main || ""; f.rNumbers = j.numbers || ""; f.rTitle = j.title || ""
-                f.rReading = j.reading || ""; f.rMono = j.mono || ""; f.rIcons = j.icons || ""
-            }
-        }
+    function apply(text) {
+        let j = {}
+        try { j = JSON.parse(text) } catch (e) { j = {} }
+        f.v = j.v || (text.trim() === "" ? 2 : 1)
+        f.rMain = j.main || ""; f.rNumbers = j.numbers || ""; f.rTitle = j.title || ""
+        f.rReading = j.reading || ""; f.rMono = j.mono || ""; f.rIcons = j.icons || ""
     }
-    Timer {
-        interval: 4000
-        running: Prefs.shown
-        repeat: true
-        onTriggered: { if (!proc.running) proc.running = true }
+    // V4.95: the file is watched (inotify) instead of a bash + cat started every 4000 ms for as long as the shell ran
+    FileView {
+        id: fv
+        path: Quickshell.env("HOME") + "/.config/rice/fonts.json"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: f.apply(text())
+        onLoadFailed: f.apply("")
     }
+    // font-set writes a new file in its place: the slow re-read catches that too
+    Timer { interval: 5000; running: Prefs.shown; repeat: true; onTriggered: fv.reload() }
 }

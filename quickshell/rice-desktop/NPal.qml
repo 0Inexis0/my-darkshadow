@@ -19,16 +19,24 @@ QtObject {
     readonly property color container: light ? Qt.hsla(hue, sat * 0.5, 0.86, 1) : Qt.hsla(hue, sat * (theme === "tinted" ? 0.55 : 0.35), 0.25, 1)
     readonly property color inkContainer: light ? Qt.hsla(hue, sat, 0.2, 1) : Qt.hsla(hue, sat * 0.6, 0.88, 1)
     // the surface and the cards on it
-    readonly property color surface: {
+    // V5.02 Minimal mode: the shell theme takes the bar's surface (menus, the control center and pop-ups were near
+    // black next to a tinted bar); a theme you picked (graphite, black ...) stays as it is
+    readonly property color surface: theme === "shell" && Look.sq ? minSurface : baseSurface
+    readonly property color baseSurface: {
         switch (theme) {
-        case "black": return Qt.rgba(0.02, 0.02, 0.025, a)
-        case "graphite": return Qt.rgba(0.075, 0.075, 0.085, a)
-        case "slate": return Qt.rgba(0.09, 0.105, 0.135, a)
+        // V5.02: the themes are set further apart (they were all nearly the same black, so picking one seemed to
+        // do nothing)
+        case "black": return Qt.rgba(0, 0, 0, a)
+        case "graphite": return Qt.rgba(0.16, 0.16, 0.17, a)
+        case "slate": return Qt.hsla(0.6, 0.22, 0.17, a)
         case "white": return Qt.rgba(0.96, 0.96, 0.965, a)
-        case "tinted": return Qt.hsla(hue, sat * 0.4, 0.11, a)
-        default: return Qt.hsla(hue, 0.08, 0.085, a)
+        case "tinted": return Qt.hsla(hue, mono ? 0 : sat * 0.55, 0.17, a)
+        default: return Qt.hsla(hue, mono ? 0 : 0.12, 0.1, a)
         }
     }
+    // V5.00 Minimal mode: the surface of the bar, tinted with your wallpaper's color and lighter than black (a grey
+    // wallpaper gives graphite), so the square bar matches the wallpaper instead of being a black slab
+    readonly property color minSurface: light ? baseSurface : Qt.hsla(hue, mono ? 0 : sat * 0.42, 0.17, a)
     // how solid the cards are (1: solid, as everywhere; the toolbox lets its own Transparency through them too)
     property real cardAlpha: 1
     readonly property color cardBase: light ? Qt.rgba(1, 1, 1, 1) : Qt.lighter(Qt.rgba(surface.r, surface.g, surface.b, 1), theme === "black" ? 2.6 : 1.75)

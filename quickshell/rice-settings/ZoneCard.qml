@@ -14,7 +14,7 @@ Rectangle {
 
     width: parent ? parent.width : 400
     height: inner.implicitHeight + 28
-    radius: 12
+    radius: M3.sq ? 0 : (12)
     color: M3.surfaceC
     border.width: 1
     border.color: M3.outlineVariant
@@ -79,7 +79,7 @@ Rectangle {
             Rectangle {
                 width: 32
                 height: 32
-                radius: 9
+                radius: M3.sq ? 0 : (9)
                 color: zc.adding ? M3.primary : (plusMouse.containsMouse ? M3.surfaceHighest : M3.surfaceHigh)
                 border.width: 1
                 border.color: M3.surfaceHighest
@@ -111,7 +111,7 @@ Rectangle {
                     id: opt
                     height: 32
                     width: addText.implicitWidth + 26
-                    radius: 9
+                    radius: M3.sq ? 0 : (9)
                     opacity: 0
                     color: addMouse.containsMouse ? M3.surfaceHighest : M3.surfaceLow
                     border.width: 1

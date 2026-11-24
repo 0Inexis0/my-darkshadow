@@ -1,5 +1,152 @@
 # Changelog
 
+> These releases describe official upstream history. This fork preserves its own behavior and retains data from retired upstream Toolbox. See [the fork integration notes](docs/SYNC-2026-11-24.md).
+
+## V5.02: fonts to download, new Material 3 motion, more colors, fixes
+- **New: Get more fonts** (Settings > Appearance > Fonts): 32 free fonts from Google Fonts (Inter, Geist, Outfit, Manrope, Plus Jakarta Sans, Lexend, Unbounded, JetBrains Mono, Fira Code, Geist Mono and more). Download one, then **Use for text**, **Use everywhere** or **Use in the terminal**; a downloaded one can be removed again (`font-set get|use|remove`)
+- **New motion styles** (Settings > Motion): Calm stays, and four new Material 3 ones: **Emphasized** (windows grow in on a long, soft landing), **Expressive** (a lively landing with a little overshoot), **Glide** (windows and panels slide in from the edge) and **Pop** (windows spring up with one soft bounce). Lively, Fluid, Snappy and Minimal are gone (they turn into the closest new one)
+- **18 more color schemes** (Settings > Appearance > Colors): Arctic, Cobalt, Indigo, Lavender, Plum, Cherry, Blush, Coral, Peach, Amber, Sand, Mocha, Olive, Sage, Moss, Aqua, Neon and Rainbow
+- **Minimal mode**: the sound, Wi-Fi, Bluetooth and power menus, the volume pop-up, the bar's cards and the control center take the bar's own tinted color (they were near black next to it)
+- Fixed: **Infinite Desktop (SUPER + F) took every workspace**. It is on the workspace where you turn it on again (Settings > Infinite Desktop > Screens: This workspace is the default); "Every screen" only takes the workspace each screen shows
+- Fixed: **Settings > About showed a dash everywhere** (one quote too many in V5.01 broke the whole line)
+- Fixed: **the Update Center's icon in Minimal mode** (a round check in a square) and the empty squares next to some section titles
+- **Notification themes** are set further apart (DarkShadow, Graphite, Black, Slate and Tinted looked nearly the same), and the Google look of swaync follows the theme too
+- **Notification sound**: quieter (the volume now follows your ears; 45 % by default, 70 % from before becomes 45 % once), and its sound and volume are on Settings > Notifications too
+- Cursors: no more Update button on every installed pack, just Installed
+
+## V5.01: pull requests merged, the visualizer, notification sounds and the login screen fixed
+- Merged: **Infinite Desktop on every screen** (#28 by notwafel): Settings > Infinite Desktop > Screens: "Every screen" makes all your screens one canvas side by side (a window dragged off one screen goes on the next, the moving wallpaper is on every screen); "This workspace" keeps it on the workspace where you turned it on
+- Merged: **picking an entry in the clipboard panel** now really changes the clipboard (#22 by w4nnnn)
+- Merged: **a round of fixes** (#26 by notwafel): a dock that hides no longer keeps a strip of the screen for itself; pins of apps that are not installed are listed (Remove them drops them); a fresh install pins only apps you have; the keyboard and kitty settings are written safely; the language is only set when you pick one (System leaves it to your system)
+- The dock's **pin button** and **Pinned on startup** stay (#26 took them out)
+- Fixed: **the dock closed and opened again and again** when the pointer went from an empty part of it onto an icon
+- Fixed: **Settings > Bar layout**: the page scrolls now, so "Not on the bar" can be reached in a small window, the box grows with its modules (they spilled out of it), dragging near the top or bottom scrolls, and the modules in the bar preview no longer stand in one column
+- Fixed: **no sound for notifications** since V4.84 (the volume curve had taken the place of the notification sounds; the sound preview in Settings was silent too). Both are back
+- Fixed: **the visualizer**: the one on the bar was off in Minimal mode with Solid windows and with "no blur & transparency"; the visualizer widget and the music widgets stopped behind a see-through terminal. They only stop in Lite mode now (and when widgets hide behind windows)
+- Fixed: **the login screen (SDDM) kept the old wallpaper** when the wallpaper was picked in the wallpaper picker, Files or Photos. Every way of changing the wallpaper or the colors updates it now
+- Polish translations for the new Settings texts
+- Thanks to notwafel and w4nnnn for the pull requests
+
+## V5.00: Files fixed, a bar that matches the wallpaper, blur works again
+- Fixed: **Files showed two folders at once**. After opening a folder (or showing hidden files), the files of the folder you left stayed on screen under the new ones, with two names in one place. Files and Music no longer reuse old tiles
+- **Minimal mode bar**: the square bar (Notch, Edge, Flat, Islands, Pills) is tinted with your wallpaper's color and lighter than black (a grey wallpaper gives graphite). It is no longer a black slab
+- Fixed: **blur seemed broken** (Blur size 20 did nothing). Minimal mode's "Solid windows" was on by default and turned the blur off everywhere. It is off by default now (also for everyone who turned Minimal mode on in V4.98-V4.99), and only turns the blur off when you switch it on
+- **Settings > Hyprland says when Minimal mode decides** the corners, the border width and the shadows (and with Solid windows the blur and the transparency), with a button to turn it off. A change there is saved and comes back when Minimal mode is off; it no longer undoes Minimal mode halfway
+- Fixed: an update could turn the bar flat again when Minimal mode was on. The flat bar now only comes when Minimal mode turns on, and a bar style you choose afterwards stays
+- Checked: the whole shell in Minimal mode with every widget on, Edit mode and every panel; every Settings page; Files with fast folder changes and hidden files
+
+## V4.99: Minimal mode for every bar style
+- **Notch and Edge bars in Minimal mode**: they turn into plain square blocks with the same frame as the windows (a dark line with your theme color inside it). Before, they kept their rounded ears and corners and their soft shadow
+- **Islands and Pills bars** get the frame too, round each island and each pill
+
+## V4.98: Minimal mode
+- **New: Minimal mode** (Settings > Desktop > Look & Feel > Minimal mode, `rice-minimal on`): square corners everywhere, like a classic floating window manager. Windows, the bar, the dock, the control center, the launcher, menus, notifications, widgets, Settings, Files, Music and the lock screen all turn square. Soft shadows go, and turning shapes stand still as plain squares
+- **Window frames** in three kinds: **Double** (a frame in your theme color with a dark line outside it), **Single** (the color frame only) and **Thin** (one quiet line). Frame width goes from 1 to 8 px. The windows use one plain color taken from your wallpaper (no gradient), and the panels, menus, the dock and the widget cards get the same frame
+- **Solid windows** (on by default): no transparency and no blur, the terminal too
+- **Flat bar** (on by default): the bar turns flat along the edge with numbered workspaces; your own bar comes back when Minimal mode is off
+- **The terminal** (kitty) gets room around the text, a still block cursor and simple tabs
+- Works on Hyprland and niri. Gaming mode and Lite still win over it
+- Thanks to Sarods2D and lilith for the ideas; the designs and the code are our own
+
+## V4.97: Edit mode works again
+- Fixed: **Edit widgets did nothing** (from Settings, the desktop menu or SUPER + ALT + W) since V4.96: the widget editor, now made only when Edit mode starts, could not find the desktop it edits
+- Fixed: a clock that changed its style could go round in a circle working out its size and place (a binding loop)
+- Fixed: a warning in the control center while its state was still loading; the Icons tab no longer fails when the dock has not listed its apps yet
+- Checked: the whole desktop shell was run with every widget on, every style of every widget, Edit mode in and out and every panel opened (control center, launcher, session, Wi-Fi, Bluetooth, volume, desktop menu, keys, wallpapers, clipboard, task view, game bar), and every Settings page: no more errors
+
+## V4.96: a much lighter shell (less memory, almost nothing in the background)
+- **The bar, the side bar and the dock** ask for Wi-Fi, Bluetooth and Do not disturb with two small asks every 10 seconds. Before, they asked for everything the control center shows every 8 seconds: about 18 programs each time (nmcli three times, bluetoothctl, wpctl twice, systemctl six times ...)
+- **Auto-hide and the widgets' pausing** (rice-busy) ask Hyprland over its own socket. Before, they started hyprctl twice for every window change and every 4 seconds, all day
+- **Settings from desktop.json, the Lite and flat switches and the theme color** are read inside the shell. Before, a bash, a cat and a sed were started every 10 seconds
+- **A memory leak is fixed**: the cover of every song you played stayed in memory (all day long with music on). The Music app kept every cover too
+- **The wallpaper** (33 MB for a 4K picture, 130 MB for 8K) no longer stays in memory after the shell measures how bright it is
+- **Made only when needed**: the widget editor and its side panel (only in Edit mode), the side bar (only when the bar is on the left or right) and the icons of the dock's app menu (only while it is open)
+- **While windows cover the desktop**: no music position ticks and no visualizer (cava) for the widgets behind them. The island asks for the music position only while its card is open
+- The drawn waves (Gauge, wavy progress lines) move at 20 frames a second instead of 30. Infinite Desktop's listener runs only while Infinite Desktop is on. The check for another notification program runs once a minute instead of every 15 seconds. The wallpaper safety check runs every 3 minutes instead of every 30 seconds
+
+## V4.95: widgets work again, three new widgets, menus above the dock, sounds every time, a lighter shell
+- Fixed: **widgets of Music, Weather, System and Date could not be added** (and adding one could crash the shell): a widget whose name is also the name of its family called itself without end. Gauge, Progress and the rest come back too
+- **New widgets** (Edit mode > Widgets): **Analog**, a new clock style (a soft cookie face, round hands that spring to the minute, a dot that runs round the rim with the seconds), **Weather > Pills** (the weather as a stack of pills: the temperature big in your theme color, the sky and the place, wind, humidity, high and low) and **Progress** (how much of the day, the week, the month and the year is gone, as thick pills that fill)
+- **A widget is always all on the screen**: one saved near an edge that got bigger (another style, the stacked clock) or a smaller screen was cut off at the top or the side
+- Fixed: **Settings > Dock > Pinned at startup** did nothing until the next start; it pins or unpins the dock at once now
+- **Settings is in the launcher** (DarkShadow Settings, with its own icon in your colors), so it can be pinned to the dock like any app
+- Fixed: **Settings > Home > Power modes > Turn on** often did nothing: it unmasks power-profiles-daemon, starts a password prompt when none runs, waits until the modes are there, and says why not when tlp, auto-cpufreq or tuned control the power. The modes are read over D-Bus, so tuned-ppd and a broken powerprofilesctl work too
+- **The dock's Session, Wi-Fi, Bluetooth and Volume menus open above the dock** (they opened at the top, by the bar)
+- Fixed: **click sounds played once or twice and then never again** on some systems (a sound that still said "playing" was never played again; if this way of playing fails, they play another way). The control center and the notifications click too now
+- **Lighter**: the fonts file is watched instead of starting a program every 1.5 seconds for as long as the shell runs; the To-do widget reads its list when it changes (it started Python every 2.5 seconds); the clock wakes once a minute (it woke every second); CPU, RAM and GPU are not sampled while windows cover the widgets, and nvidia-smi is asked a third as often; the slow turning shapes move at 30 frames a second by default (Settings > Widgets > Frame rate)
+- Thanks to Sarods2D for the ideas; the designs and the code are our own
+
+## V4.94: the dock in your order, typing a Wi-Fi password works, the shell comes back after a crash, rice-doctor
+- **The dock in your order** (Edit mode > Dock): the pin, your apps, the song, every module and the all-apps button (the 9 dots) are parts of one row. Order: ← → move a part, and past your apps it goes to their other side, so modules can sit on the left, on the right or on both ends. The pin and the all-apps button are modules now: take them off like any other. A part that comes grows in with a little spring, the others slide aside (`desktop-set dock mods clock,pin,apps,music,launcher`)
+- Fixed: **typing a Wi-Fi password was impossible**: the list of networks was made again every 5 seconds, which emptied the field while you typed. The list is only made again when it really changed, never while you type a password, and what you typed is kept. The Bluetooth menu flashed its rows in every 4 seconds for the same reason
+- **The shell comes back by itself after a crash** (at most 4 times in 2 minutes; a stop or a restart does not bring it back). What it says goes to `~/.cache/rice/desktop.log`; after too many crashes a notification points to rice-doctor
+- **rice-doctor**: what is wrong with this computer, in plain words: the graphics card and its driver (NVIDIA: kernel mode setting, its framebuffer, egl-wayland, a driver that does not match its programs, nouveau), Hyprland, Quickshell, its last crash and the last lines of the shell's log. `rice-doctor nvidia-fix` sets what Hyprland needs on NVIDIA (asks first, needs your password, then a restart)
+
+## V4.93: a new clock, fewer and clearer widgets, a smaller desktop menu with shortcuts, Music and Files that move
+- **The clock is new** (Material 3 Expressive), in three styles: Expressive (hours and minutes side by side, big and heavy, the hours in a light tone of your theme color, the date under them), Stacked (the hours over the minutes, the date on a pill) and Shape (the time in a big cookie that turns slowly). A digit that changes rolls up into the new one. The old styles (Digital, Line, Cookie, Pixel) became these
+- **Widgets that were nearly the same are one widget with styles**: Music (Card, Big card, Ring, Player, Button: it was Music, Music card, Now playing, Player and Play button), Weather (Card, Sky, Forecast), System (Bars, Rings: CPU & RAM and CPU · GPU · RAM), Date (its shapes and Pill: Date and Date & time). 15 widgets instead of 23; picking a style swaps the widget in place. Edit mode shows them as tiles with icons, three in a row
+- **The desktop menu** (right click on the desktop) is smaller, and its rows of Settings pages became **Shortcuts**: Files, Terminal, Browser, Music, Photos, a screenshot, Edit widgets and Settings
+- **Files**: a folder you open slides in (deeper from the right, back up from the left) and its files pop in one after another; a file lifts a little under the pointer
+- **Music**: a new page (a tab, an album, an artist) comes in from below, its songs slide in and its covers pop in one after another; a cover lifts under the pointer; a new song makes the cover spring in (Now playing and the small player)
+- Thanks to Sarods2D for the ideas; the designs and the code are our own
+
+## V4.92: icon packs that work, modules and magnifying on the dock, colors at once, no more toolbox
+- **Icon packs** (Edit mode > Icons > Icon pack) now really change the icons: an app's own PNG icon (hicolor) always beat the pack you chose when the pack has SVG icons, which is most of them (Papirus, Tela ...). The pack comes first now
+- **Dock modules** (Edit mode > Dock > Modules), like the icons of a phone's status bar: Music, Clock, Battery, Volume (scroll to change it, right click mutes), Wi-Fi, Bluetooth, Weather, CPU & RAM, App search, Notifications (right click: do not disturb), Control center and Session. They sit on small pills after your apps, in the order you pick them (a number shows it); on a dock at the side they stand upright (`desktop-set dock mods clock,battery,...`)
+- **Magnify under the pointer** (Edit mode > Dock, 0 % = off): the apps near the pointer grow out of the dock, the closer the bigger, on a soft curve, like the dock of macOS; how much is up to you. The dock keeps its size while they grow, and only the dock takes clicks (`desktop-set dock magnify 0-100`)
+- **The colors of a new wallpaper come at once** and flow in over the old ones: the shell read them only every 10 seconds; the wallpaper changes while the colors are made (it waited for them before), and the picture is measured in one go
+- **The launcher** glides to the row you move to with the arrows (it jumped) and scrolls on Material's curve; rows and icons that scroll into view come in at once (they waited their turn)
+- **The toolbox is gone** (SUPER + X, Settings > Desktop > Toolbox): its panels, its program, its key, its Settings page and its settings, the chat's address and key too. The launcher's file search and currency rates live in `rice-find` now
+
+## V4.91: the launcher opens out of its search bar, three new styles
+- **Opening**: the launcher unfolds downward out of its search bar on Material's emphasized curve, the search bar widens a touch, and what is in it comes in after the card, one row after another; closing folds it back up, faster. It starts once its window is on the screen, so no frames are lost
+- **New styles** (Settings > Launcher > Style, and the gear in the launcher): **Drawer** (big icons of the apps you use most, filter chips, all apps A to Z), **Spotlight** (only the search bar and a list under it that grows and shrinks with what it finds; its bar stays put) and **Side sheet** (the drawer as a tall panel that slides in from the left edge). The old List, Grid, Bar, Split and Classic are gone (any of them becomes the Drawer)
+- Settings > Launcher: the Rofi theme, corner and font size are gone (the launcher takes your theme's colors and font); the width, rows, see-through and blur stay
+- Fixed: "Search the web for" was always in English; the see-through setting did nothing below 86 %; old layout code that could still run in the background is removed
+
+## V4.90: a new launcher (Material 3)
+- **The launcher** (ALT + Space, SUPER + R) is new, in Material 3 Expressive and your theme's colors. A big round search bar that stretches out as it opens; before you type, your favorites and most used apps as big icons on shapes, filter chips (All, Favorites, Internet, Media, Games, Development, Graphics, Office, System, Utilities: only those you have apps for; Ctrl + Tab goes through them) and all your apps A to Z in a grid you move through with the arrows. While you type: what it found in groups (Result, Apps, Files, The web), the chosen one on a tonal pill with its buttons (favorite, pin to the dock, Open). Sums show big, Enter copies them. The keys are written at its bottom
+- The app icons follow Edit mode > Icons (Themed, Filled, Mono ... and the shape)
+- It is the List style of Settings > Launcher (now called Material); the old list is Classic there and in the gear's quick settings; Grid, Bar and Split stay as they were
+- Thanks to Sarods2D for the idea; the design and the code are our own
+
+## V4.89: the dock and its icons in Edit mode, a menu that opens where you click
+- **The dock's menu** (right click on the dock) opens right above the dock (beside it on the left or right edge), where you clicked; before, it could end up in the top left corner. It grows out of the dock, its rows coming in one after another
+- **Edit mode > Dock**: the dock's own window is gone; its settings are a tab of Edit mode now, with the dock in sight while you change it: on or off, where it is and its style (a little screen for each), Always or when the pointer comes, sliders for the icon size, the space between apps and how see-through it is (the dock follows while you drag), the song, the pin and the apps button, your pinned apps (move them, take them off) and Add apps (search and pin with +). Right click on the dock > Edit dock or Add apps opens it there
+- **Edit mode > Icons**: how app icons look, on the dock and in its app menu. Styles: Original, Wallpaper (a shade of your wallpaper), Themed (one plain sign in your theme's colors on a soft shape, like the themed icons of Android: Firefox, Chrome, Discord, Spotify, Steam, VS Code, the terminal, Files and many more get their own sign; others, like Brave, keep their picture in your colors), Filled (the sign on your theme color), Mono and Grey. Shapes: none, a soft square, a circle, a cookie, a flower, a clover, a sun ... Icon pack: the icon themes on this computer, each with four of its icons (Papirus, Tela ... once installed)
+- The shape an app sits on takes the icon's own room: the dock no longer grows when you pick one, and there is no empty ring around the icons
+- Settings > Interface: Dock and Icons buttons open Edit mode on those tabs (`desktop-set edit on dock|icons`, `desktop-set icons look|shape|theme`)
+- Thanks to Sarods2D for the idea; the design and the code are our own
+
+## V4.88: Settings look new again
+- The rail shows only icons now (their names come up beside them under the pointer), in groups with thin lines between
+- The header: a back arrow (the pages you came through), where you are (HOME > SYSTEM, a click on Home goes there), a bigger title, and Expressive / Standard motion right next to the search
+- Every section starts with a symbol for it in a tonal circle, a bigger name and a line under it
+- Thanks to Sarods2D for the idea; the design and the code are our own
+
+## V4.87: Account in Settings, a Home for Music, a dock you edit right on it, launcher quick settings
+- **Settings > System > Account**: your picture cut to your shape (click it or drop a picture on it), your name, your password (the current one, the new one twice, how strong it is), and the accounts of this computer: make one an administrator, remove one (with or without its files), make a new one. "Copy my desktop" (recommended) gives the new account this whole desktop: the shell, its bar, widgets, colors, keys and the settings of its apps; your files, wallpapers, recordings and screenshots stay yours. Changes to accounts ask for an administrator password; passwords never go through a command line (`rice-account`)
+- **Music > Home** (where Music opens now): a greeting with your music in numbers and the covers you play most cut to our shapes, Shuffle and Play all, Listen again (the albums you played last), On repeat (your most played songs), Recently added and your artists, each in a shape of its own. What you play is remembered on this computer only
+- **The dock**: right click on it for its menu: pin, unpin and move apps, open or close them, Add apps, Edit dock. The editor sits beside the dock and changes it while you watch: where it is (with a little screen for each choice), its style (Floating, Pills: every app on a tile of its own, Full: the whole edge), Always or Auto-hide, the icon size, the space between apps, how see-through it is and a shape every app sits on (a soft square, a circle, a cookie, a flower, a clover ...). The dock takes your theme's colors now. Settings > Dock has the style too (`desktop-set dock style|iconSize|gap|iconShape`)
+- **The launcher**: the gear next to the search opens its quick settings (layout, position, icons, rows, width, see-through, all its settings); a right click on an app: open, favorite, pin to the dock or unpin it
+- Thanks to Sarods2D: IridiumShell gave the idea for these; the designs and the code here are our own
+
+## V4.86: a new look for Settings (Material 3)
+- **Settings** looks like the settings of a new Android phone (Material 3 Expressive): the pages sit on a large rounded pane beside the rail; the tabs of a group are pills, the open one filled, and they scroll sideways when they do not fit (a narrow window, Polish names); settings that follow each other join into one group, round at its two ends with small corners and a thin gap inside; section names are in your theme's color
+- Home: Light mode, Auto-hide widgets and Falling stars are one group of switches with icons; the icon fills with your color while it is on
+- The cards of Settings are a touch lighter, so they stand out from the pane
+
+## V4.85: our own apps: Files, Photos, Music and Videos, with their own icons
+- **Icons**: Files, Photos, Music and Videos have their own Material 3 icons (a soft square, a flower, a cookie and a clover), in your wallpaper's colors: they change with the wallpaper (`rice-app icons`)
+- **Files** (SUPER + E, `rice-app files`): a file manager in Material 3 and your wallpaper's colors. Your folders, bookmarks, drives (how full they are) and the trash on the left; where you are as pieces you can click (Ctrl + L to type a path); a grid with pictures of your photos, videos and PDFs, or a list with columns; drag a box to choose files, drag files into folders or into other apps; cut, copy and paste (also with other file managers), rename, the trash with Undo, compress and extract, starred files, "Open with" (and the default app), Quick look (Space), the details of a file (camera, size of a picture ...), a terminal here. Typing filters the folder, Enter searches inside it too. Settings > Desktop > Look & Feel > File manager > Files (the first one now); picked, the old file manager (Nautilus ...) leaves the app menu, and comes back when you pick it again (`rice-app hide-old on|off`)
+- **Photos** (`rice-app photos`): your pictures and screen recordings by day (or month, smaller), albums from their folders, favorites, videos. Choose several (the circle, Ctrl + click or a long press) to favorite, copy or move them to the trash. The viewer: zoom where the pointer is, drag a zoomed picture, a strip of the others, a slideshow, turn it, the details (camera, exposure), set as wallpaper, edit (satty, swappy, GIMP ...)
+- **Music** and **Videos** (`rice-app music`, `rice-app videos`: one player): your music from the tags (songs, albums, artists) and your videos. A queue (play next, add to it, take out), shuffle and repeat, a wavy line while it plays, the album cover's colors over the whole app, it starts where you stopped. Videos fill the window (F). The bar, the island, the lock screen and the media keys see it and control it (MPRIS, `rice-player-mpris`)
+- Settings > Desktop > Look & Feel: "Our Photos, Music and Videos for your files" opens pictures, music and videos in them (off: the apps you had before; `rice-app defaults on|off`)
+- The dock, the bar's window title and Task view show them with their own icons and names (not as Quickshell)
+- Fixed: the shell could crash when the launcher opened after the app list changed (an app installed or removed): it kept apps that were already gone
+- `rice-perf` shows them by name
+- Thanks to Sarods2D: IridiumShell's own apps gave the idea; the designs and the code here are our own
+
 ## V4.84: much lighter and quicker; minimize and stack windows; your own keys; a gentler volume; login screen clocks
 - **Performance**
   - Task view: closed, it lets every window picture go. Before, after the first SUPER + Tab every window was captured live, every frame, behind everything until the shell restarted: lag and a lot of memory

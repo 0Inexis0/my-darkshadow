@@ -20,7 +20,7 @@ Rectangle {
     readonly property real gap: floating ? Math.max(4, v("margin", 10) * k * 1.6) : 0
 
     height: width * 9 / 16
-    radius: 14
+    radius: M3.sq ? 0 : (14)
     clip: true
     // the desktop
     gradient: Gradient {
@@ -29,14 +29,14 @@ Rectangle {
         GradientStop { position: 0.55; color: M3.surfaceC }
         GradientStop { position: 1; color: M3.stageBottom }
     }
-    Rectangle { x: m.width * 0.08; y: m.height * 0.62; width: m.width * 0.5; height: m.width * 0.5; radius: width / 2; color: "#3a2f63"; opacity: 0.35 }
-    Rectangle { x: m.width * 0.55; y: -m.height * 0.3; width: m.width * 0.45; height: width; radius: width / 2; color: "#1f5050"; opacity: 0.3 }
+    Rectangle { x: m.width * 0.08; y: m.height * 0.62; width: m.width * 0.5; height: m.width * 0.5; radius: M3.sq ? 0 : (width / 2); color: "#3a2f63"; opacity: 0.35 }
+    Rectangle { x: m.width * 0.55; y: -m.height * 0.3; width: m.width * 0.45; height: width; radius: M3.sq ? 0 : (width / 2); color: "#1f5050"; opacity: 0.3 }
     // a window, so the panel sits over something
     Rectangle {
         x: m.atRight ? m.width * 0.06 : m.width * 0.42
         y: m.height * 0.16
         width: m.width * 0.5; height: m.height * 0.66
-        radius: 8
+        radius: M3.sq ? 0 : (8)
         color: "#16161a"; opacity: 0.85
         border.width: 1; border.color: Qt.rgba(1, 1, 1, 0.06)
         Behavior on x { NumberAnimation { duration: 360; easing.type: Easing.OutCubic } }
@@ -50,7 +50,7 @@ Rectangle {
         height: (m.v("fit", false) || !m.floating) ? full : Math.min(full, m.v("panel_height", 820) * m.k * 1.25)
         x: m.atRight ? m.width - width - m.gap : m.gap
         y: m.gap
-        radius: m.floating ? Math.max(6, m.v("radius", 18) * 0.6) : 0
+        radius: M3.sq ? 0 : (m.floating ? Math.max(6, m.v("radius", 18) * 0.6) : 0)
         color: Qt.rgba(m.base.r, m.base.g, m.base.b, m.op)
         border.width: 1
         border.color: m.light ? Qt.rgba(0, 0, 0, 0.08) : Qt.rgba(1, 1, 1, 0.09)
@@ -80,9 +80,9 @@ Rectangle {
                     model: 5
                     Rectangle {
                         width: (pnl.width - 12 * pnl.u - 4 * 2.4 * pnl.u) / 5; height: width * 0.86
-                        radius: width * 0.3
+                        radius: M3.sq ? 0 : (width * 0.3)
                         color: index === 0 || index === 1 ? m.acc : m.tile
-                        Rectangle { anchors.centerIn: parent; width: parent.width * 0.32; height: width; radius: width / 2
+                        Rectangle { anchors.centerIn: parent; width: parent.width * 0.32; height: width; radius: M3.sq ? 0 : (width / 2)
                             color: index === 0 || index === 1 ? m.accFg : m.fg; opacity: 0.8 }
                     }
                 }
@@ -91,27 +91,27 @@ Rectangle {
             Rectangle {
                 visible: m.v("w_power", true) === true
                 width: parent.width; height: 8 * pnl.u
-                radius: height / 2
+                radius: M3.sq ? 0 : (height / 2)
                 color: m.tile
-                Rectangle { x: parent.width / 3 + 0.8 * pnl.u; y: 0.8 * pnl.u; width: parent.width / 3 - 1.6 * pnl.u; height: parent.height - 1.6 * pnl.u; radius: height / 2; color: m.acc }
+                Rectangle { x: parent.width / 3 + 0.8 * pnl.u; y: 0.8 * pnl.u; width: parent.width / 3 - 1.6 * pnl.u; height: parent.height - 1.6 * pnl.u; radius: M3.sq ? 0 : (height / 2); color: m.acc }
                 Repeater {
                     model: 3
                     Rectangle { x: (index + 0.5) * parent.width / 3 - width / 2; anchors.verticalCenter: parent.verticalCenter
-                        width: parent.width * 0.16; height: 1.4 * pnl.u; radius: height / 2
+                        width: parent.width * 0.16; height: 1.4 * pnl.u; radius: M3.sq ? 0 : (height / 2)
                         color: index === 1 ? m.accFg : m.fg; opacity: index === 1 ? 0.85 : 0.4 }
                 }
             }
             // notifications
-            Rectangle { width: parent.width * 0.36; height: 1.6 * pnl.u; radius: height / 2; color: m.fg; opacity: 0.45 }
+            Rectangle { width: parent.width * 0.36; height: 1.6 * pnl.u; radius: M3.sq ? 0 : (height / 2); color: m.fg; opacity: 0.45 }
             Repeater {
                 model: 3
                 Rectangle {
                     width: parent.width; height: 13 * pnl.u
-                    radius: 3.5 * pnl.u
+                    radius: M3.sq ? 0 : (3.5 * pnl.u)
                     color: m.tile
-                    Rectangle { x: 3 * pnl.u; anchors.verticalCenter: parent.verticalCenter; width: 7 * pnl.u; height: width; radius: 2 * pnl.u; color: index === 0 ? m.acc : Qt.rgba(0.5, 0.5, 0.5, 0.4) }
-                    Rectangle { x: 13 * pnl.u; y: 3.6 * pnl.u; width: parent.width * (0.5 - index * 0.08); height: 1.6 * pnl.u; radius: height / 2; color: m.fg; opacity: 0.8 }
-                    Rectangle { x: 13 * pnl.u; y: 7.4 * pnl.u; width: parent.width * (0.68 - index * 0.1); height: 1.3 * pnl.u; radius: height / 2; color: m.fg; opacity: 0.35 }
+                    Rectangle { x: 3 * pnl.u; anchors.verticalCenter: parent.verticalCenter; width: 7 * pnl.u; height: width; radius: M3.sq ? 0 : (2 * pnl.u); color: index === 0 ? m.acc : Qt.rgba(0.5, 0.5, 0.5, 0.4) }
+                    Rectangle { x: 13 * pnl.u; y: 3.6 * pnl.u; width: parent.width * (0.5 - index * 0.08); height: 1.6 * pnl.u; radius: M3.sq ? 0 : (height / 2); color: m.fg; opacity: 0.8 }
+                    Rectangle { x: 13 * pnl.u; y: 7.4 * pnl.u; width: parent.width * (0.68 - index * 0.1); height: 1.3 * pnl.u; radius: M3.sq ? 0 : (height / 2); color: m.fg; opacity: 0.35 }
                 }
             }
         }
@@ -127,14 +127,14 @@ Rectangle {
                 Rectangle {
                     visible: modelData >= 0
                     width: parent.width; height: 8 * pnl.u
-                    radius: 3 * pnl.u
+                    radius: M3.sq ? 0 : (3 * pnl.u)
                     color: m.tile
-                    Rectangle { x: 3 * pnl.u; anchors.verticalCenter: parent.verticalCenter; width: 2.6 * pnl.u; height: width; radius: width / 2; color: m.fg; opacity: 0.8 }
+                    Rectangle { x: 3 * pnl.u; anchors.verticalCenter: parent.verticalCenter; width: 2.6 * pnl.u; height: width; radius: M3.sq ? 0 : (width / 2); color: m.fg; opacity: 0.8 }
                     Rectangle {
                         x: 9 * pnl.u; anchors.verticalCenter: parent.verticalCenter
-                        width: parent.width - 12 * pnl.u; height: 2.6 * pnl.u; radius: height / 2
+                        width: parent.width - 12 * pnl.u; height: 2.6 * pnl.u; radius: M3.sq ? 0 : (height / 2)
                         color: m.light ? Qt.rgba(0, 0, 0, 0.1) : Qt.rgba(1, 1, 1, 0.1)
-                        Rectangle { width: parent.width * Math.max(0, modelData); height: parent.height; radius: height / 2; color: m.acc }
+                        Rectangle { width: parent.width * Math.max(0, modelData); height: parent.height; radius: M3.sq ? 0 : (height / 2); color: m.acc }
                     }
                 }
             }
@@ -145,9 +145,9 @@ Rectangle {
                     model: 5
                     Rectangle {
                         width: (pnl.width - 12 * pnl.u - 4 * 2.4 * pnl.u) / 5; height: 8.5 * pnl.u
-                        radius: 2.6 * pnl.u
+                        radius: M3.sq ? 0 : (2.6 * pnl.u)
                         color: m.tile
-                        Rectangle { anchors.centerIn: parent; width: 2.6 * pnl.u; height: width; radius: width / 2
+                        Rectangle { anchors.centerIn: parent; width: 2.6 * pnl.u; height: width; radius: M3.sq ? 0 : (width / 2)
                             color: index === 4 ? "#e0505a" : m.fg; opacity: 0.75 }
                     }
                 }

@@ -46,6 +46,25 @@ SCHEMES = [
     ("rose",   "Rose",    "color",  "scheme-tonal-spot", "#ec6a8c", A, ["#1a0e12", "#f48fa8", "#ffe4ea"]),
     ("orchid", "Orchid",  "color",  "scheme-tonal-spot", "#9b8cff", A, ["#100e1c", "#b5a9ff", "#ece9ff"]),
     ("violet", "Violet",  "color",  "scheme-tonal-spot", "#7e57c2", A, ["#120d1c", "#a58bdc", "#ece4f7"]),
+    # V5.02: more colors
+    ("arctic",   "Arctic",   "color", "scheme-tonal-spot", "#88c0d0", A, ["#0e1418", "#9fd3e3", "#e6f4f8"]),
+    ("cobalt",   "Cobalt",   "color", "scheme-fidelity",   "#2f5bea", A, ["#0a0f20", "#7f9cff", "#e5eaff"]),
+    ("indigo",   "Indigo",   "color", "scheme-tonal-spot", "#3f51b5", A, ["#0e1020", "#9aa5f0", "#e7e9fb"]),
+    ("lavender", "Lavender", "color", "scheme-tonal-spot", "#b4a7f5", A, ["#13111c", "#cbbfff", "#efebff"]),
+    ("plum",     "Plum",     "color", "scheme-tonal-spot", "#8e4585", A, ["#170c16", "#e0a3d6", "#fbe6f7"]),
+    ("cherry",   "Cherry",   "color", "scheme-fidelity",   "#c2185b", A, ["#1a0910", "#ff8fb4", "#ffe2ec"]),
+    ("blush",    "Blush",    "color", "scheme-tonal-spot", "#f2b8c6", A, ["#1a1215", "#ffc1d0", "#fff0f3"]),
+    ("coral",    "Coral",    "color", "scheme-fidelity",   "#ff6f61", A, ["#1a0d0b", "#ff9a8f", "#ffe7e4"]),
+    ("peach",    "Peach",    "color", "scheme-tonal-spot", "#fab387", A, ["#1a130e", "#ffbf96", "#fff0e6"]),
+    ("amber",    "Amber",    "color", "scheme-fidelity",   "#ffa000", A, ["#181005", "#ffc25a", "#fff1d6"]),
+    ("sand",     "Sand",     "color", "scheme-neutral",    "#c2a878", A, ["#17140e", "#d9c398", "#f6efe2"]),
+    ("mocha",    "Mocha",    "color", "scheme-tonal-spot", "#8d6e63", A, ["#161110", "#cfa99a", "#f5e9e4"]),
+    ("olive",    "Olive",    "color", "scheme-tonal-spot", "#808000", A, ["#13140a", "#c3c46a", "#f2f2dc"]),
+    ("sage",     "Sage",     "color", "scheme-neutral",    "#87a96b", A, ["#10140d", "#adc896", "#ebf2e4"]),
+    ("moss",     "Moss",     "color", "scheme-tonal-spot", "#4a6b3a", A, ["#0d120a", "#9cbf86", "#e5f0dd"]),
+    ("aqua",     "Aqua",     "color", "scheme-fidelity",   "#00bcd4", A, ["#06161a", "#5fe0f0", "#dcf8fc"]),
+    ("neon",     "Neon",     "color", "scheme-fruit-salad", "#c51162", A, ["#14091a", "#ff7ad9", "#ffe3f6"]),
+    ("rainbow",  "Rainbow",  "color", "scheme-rainbow",    "#5c6bc0", A, ["#0f1018", "#ffb86b", "#e9eaff"]),
 ]
 BY_KEY = {s[0]: s for s in SCHEMES}
 

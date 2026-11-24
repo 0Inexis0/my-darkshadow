@@ -52,7 +52,11 @@ Item {
             }
         }
     }
-    Timer { interval: 2500; running: td.running && td.visible; repeat: true; triggeredOnStart: true; onTriggered: if (!proc.running) proc.running = true }
+    // V4.95: read when todo.json changes (inotify) instead of starting Python every 2.5 seconds
+    Trigger { path: td.running ? Quickshell.env("HOME") + "/.config/rice/todo.json" : ""; every: 20000
+        onContent: function(t) { if (!td.quiet && !proc.running) proc.running = true } }
+    Component.onCompleted: proc.running = true
+    onRunningChanged: if (running && !proc.running) proc.running = true
     Timer { id: settle; interval: 1200; onTriggered: { td.quiet = false; proc.running = true } }
 
     Card { anchors.fill: parent; k: td.bg; pal: td.pal }
@@ -63,7 +67,7 @@ Item {
         x: 22; y: 18
         spacing: 10
         Rectangle {
-            width: 30; height: 30; radius: 15
+            width: 30; height: 30; radius: Look.sq ? 0 : (15)
             color: td.pal ? td.pal.chip : Qt.rgba(1, 1, 1, 0.08)
             T { kind: "icon"; anchors.centerIn: parent; text: "\uf14a"; font.pixelSize: 14; color: td.cMain }
         }
@@ -99,14 +103,14 @@ Item {
                     Rectangle {
                         anchors.fill: parent
                         anchors.topMargin: 1; anchors.bottomMargin: 1
-                        radius: 10
+                        radius: Look.sq ? 0 : (10)
                         color: rowHover.containsMouse ? (td.pal ? td.pal.chip : Qt.rgba(1, 1, 1, 0.06)) : "transparent"
                     }
                     Rectangle {
                         id: box
                         x: 8
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 20; height: 20; radius: 10
+                        width: 20; height: 20; radius: Look.sq ? 0 : (10)
                         color: row.done ? td.cMain : "transparent"
                         border.width: row.done ? 0 : 2
                         border.color: td.cFg3
@@ -161,7 +165,7 @@ Item {
         y: parent.height - 14 - 38
         width: parent.width - 28
         height: 38
-        radius: 12
+        radius: Look.sq ? 0 : (12)
         color: td.pal ? td.pal.chip : Qt.rgba(1, 1, 1, 0.08)
         border.width: input.activeFocus ? 1.5 : 0
         border.color: td.cMain

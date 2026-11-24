@@ -18,7 +18,9 @@ Item {
             "v=$(\"$HOME/.local/bin/rice-wm\" version 2>/dev/null); echo \"wm=${v%% *}\"; echo \"hypr=${v#* }\"",
             "echo \"qs=$(qs --version 2>/dev/null | head -1 | sed 's/^quickshell *//I')\"",
             "echo \"cpu=$(sed -n 's/^model name[[:space:]]*: //p' /proc/cpuinfo | head -1)\"",
-            "echo \"gpu=$(lspci 2>/dev/null | grep -iE 'vga|3d|display' | head -1 | sed 's/.*: //; s/ (rev.*//')\"",
+            // the graphics card you play on: the dedicated one when there are two (a laptop lists its CPU graphics first)
+            // (V5.02: one quote too many here made the whole script fail, so every line showed a dash)
+            "echo \"gpu=$(lspci 2>/dev/null | grep -iE 'vga|3d|display' | grep -i nvidia | head -1 | sed 's/.*: //; s/ (rev.*//')\"; gpu_other=\"$(lspci 2>/dev/null | grep -iE 'vga|3d|display' | head -1 | sed 's/.*: //; s/ (rev.*//')\"; echo \"gpu_other=${gpu_other}\"",
             "echo \"mem=$(awk '/MemTotal/ {printf \"%.1f GB\", $2/1048576}' /proc/meminfo)\"",
             "echo \"up=$(uptime -p 2>/dev/null | sed 's/^up //')\"",
             "echo \"host=$(cat /etc/hostname 2>/dev/null || hostname)\""
@@ -27,6 +29,9 @@ Item {
             onStreamFinished: {
                 const o = {}
                 text.split("\n").forEach(function(l) { const i = l.indexOf("="); if (i > 0) o[l.substring(0, i)] = l.substring(i + 1).trim() })
+                // no NVIDIA card: the one line lspci listed
+                if (!o.gpu) o.gpu = o.gpu_other || ""
+                delete o.gpu_other
                 page.info = o
             }
         }
@@ -46,11 +51,11 @@ Item {
         Rectangle {
             width: parent.width
             height: 200
-            radius: M3.rXL
+            radius: M3.sq ? 0 : (M3.rXL)
             color: M3.primaryContainer
             clip: true
-            Rectangle { width: 220; height: 220; radius: 110; x: parent.width - 280; y: -80; color: M3.alpha(M3.primary, 0.16) }
-            Rectangle { width: 110; height: 110; radius: 36; rotation: 18; x: parent.width - 170; y: 120; color: M3.alpha(M3.primary, 0.12) }
+            Rectangle { width: 220; height: 220; radius: M3.sq ? 0 : (110); x: parent.width - 280; y: -80; color: M3.alpha(M3.primary, 0.16) }
+            Rectangle { width: 110; height: 110; radius: M3.sq ? 0 : (36); rotation: 18; x: parent.width - 170; y: 120; color: M3.alpha(M3.primary, 0.12) }
             MoonLogo { x: 18; anchors.verticalCenter: parent.verticalCenter; size: 190; running: page.visible }
             Column {
                 x: 212; anchors.verticalCenter: parent.verticalCenter
@@ -59,9 +64,9 @@ Item {
                 T { kind: "title"; text: I18n.t("DarkShadow's Shell"); font.pixelSize: 28; font.weight: Font.Medium; color: M3.inkPrimaryC }
                 Row {
                     spacing: 8
-                    Rectangle { width: vt.implicitWidth + 20; height: 26; radius: 13; color: M3.primary
+                    Rectangle { width: vt.implicitWidth + 20; height: 26; radius: M3.sq ? 0 : (13); color: M3.primary
                         T { id: vt; anchors.centerIn: parent; text: "V" + (page.info.version || "?"); font.pixelSize: 12; font.bold: true; color: M3.inkPrimary } }
-                    Rectangle { width: lt.implicitWidth + 20; height: 26; radius: 13; color: M3.alpha(M3.ink, 0.1)
+                    Rectangle { width: lt.implicitWidth + 20; height: 26; radius: M3.sq ? 0 : (13); color: M3.alpha(M3.ink, 0.1)
                         T { id: lt; anchors.centerIn: parent; text: I18n.t("MIT license"); font.pixelSize: 12; color: M3.inkPrimaryC } }
                 }
                 T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.inkPrimaryC
@@ -93,11 +98,11 @@ Item {
                 delegate: Rectangle {
                     width: (grid.width - (grid.columns - 1) * 10) / grid.columns
                     height: 64
-                    radius: M3.rM
+                    radius: M3.sq ? 0 : (M3.rM)
                     color: M3.surfaceC
                     Rectangle {
                         x: 14; anchors.verticalCenter: parent.verticalCenter
-                        width: 38; height: 38; radius: 19; color: M3.secondaryContainer
+                        width: 38; height: 38; radius: M3.sq ? 0 : (19); color: M3.secondaryContainer
                         T { kind: "icon"; anchors.centerIn: parent; text: modelData.g; font.pixelSize: 15; color: M3.inkSecondaryC }
                     }
                     Column {
@@ -126,7 +131,7 @@ Item {
                     { n: "fedyaqq34356: hyprdots", u: "https://github.com/fedyaqq34356/hyprdots" }
                 ]
                 delegate: Rectangle {
-                    width: mt.implicitWidth + 34; height: 38; radius: 19
+                    width: mt.implicitWidth + 34; height: 38; radius: M3.sq ? 0 : (19)
                     color: mm.containsMouse ? M3.surfaceHigh : "transparent"
                     border.width: 1; border.color: M3.outlineVariant
                     Behavior on color { ColorAnimation { duration: 140 } }

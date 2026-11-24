@@ -52,9 +52,9 @@ Item {
         property real frac: -1
         width: parent ? parent.width : 300
         height: frac >= 0 ? 76 : 62
-        radius: M3.rM
+        radius: M3.sq ? 0 : (M3.rM)
         color: M3.surfaceC
-        Rectangle { x: 14; y: 13; width: 36; height: 36; radius: 18; color: M3.secondaryContainer
+        Rectangle { x: 14; y: 13; width: 36; height: 36; radius: M3.sq ? 0 : (18); color: M3.secondaryContainer
             Icon { anchors.centerIn: parent; name: parent.parent.icon; glyph: parent.parent.glyph; size: 17; color: M3.inkSecondaryC } }
         Column {
             x: 62; y: 12; width: parent.width - 62 - 14
@@ -78,7 +78,7 @@ Item {
 
         // ---------- the shell and your system ----------
         Rectangle {
-            width: parent.width; height: 160; radius: M3.rXL; color: M3.surfaceC
+            width: parent.width; height: 160; radius: M3.sq ? 0 : (M3.rXL); color: M3.surfaceC
             clip: true
             Item {
                 x: 24; anchors.verticalCenter: parent.verticalCenter
@@ -116,7 +116,7 @@ Item {
                 delegate: Rectangle {
                     readonly property bool on: page.info.pp === modelData.k
                     width: (parent.width - 12) / 3; height: 52
-                    radius: on ? 26 : M3.rM
+                    radius: M3.sq ? 0 : (on ? 26 : M3.rM)
                     color: on ? M3.primary : (pm.containsMouse ? M3.surfaceHigh : M3.surfaceC)
                     Behavior on radius { NumberAnimation { duration: M3.d(240); easing.type: M3.springy; easing.overshoot: 1.6 * Prefs.bounce } }
                     Behavior on color { ColorAnimation { duration: 160 } }

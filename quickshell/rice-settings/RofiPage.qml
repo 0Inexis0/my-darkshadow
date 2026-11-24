@@ -55,10 +55,11 @@ Item {
             // ---------- live preview ----------
             Rectangle {
                 id: rprev
-                visible: Prefs.previews
+                // V4.91: this drew the old (Rofi-like) layouts; the launcher is Material now, "Open it" shows it
+                visible: false
                 width: parent.width
                 height: 230
-                radius: M3.rL
+                radius: M3.sq ? 0 : (M3.rL)
                 clip: true
                 border.width: 0
                 border.color: M3.outlineVariant
@@ -69,7 +70,8 @@ Item {
                 readonly property var th: (page.rs.themes && page.rs.themes[page.v("theme", "wallpaper")]) ? page.rs.themes[page.v("theme", "wallpaper")]
                                           : ({ bg: "#0d0d0d", alt: M3.surfaceHigh, sel: "#F6F5F4", fg: "#F6F5F4" })
                 readonly property real sc: width / 1920 * 1.35
-                readonly property string lay: page.v("layout", "list")
+                // V4.91: the preview of the launcher's styles: Spotlight a list, Drawer a grid, Side sheet the split one
+                readonly property string lay: ({ spotlight: "list", side: "split" })[page.v("layout", "drawer")] || "grid"
                 readonly property string pos: page.v("position", "center")
                 readonly property real alpha: page.v("transparency", true) === true ? page.v("opacity", 0.82) : 1
                 function withAlpha(c, a) { const q = Qt.color(c); return Qt.rgba(q.r, q.g, q.b, a) }
@@ -77,7 +79,7 @@ Item {
                 readonly property color selFg: lum(th.sel) > 0.55 ? M3.surfaceLow : "#F6F5F4"
                 readonly property int rows: Math.min(5, page.v("lines", 8))
 
-                Rectangle { x: 50; y: 30; width: 220; height: 120; radius: 10; color: Qt.rgba(1, 1, 1, 0.05) }
+                Rectangle { x: 50; y: 30; width: 220; height: 120; radius: M3.sq ? 0 : (10); color: Qt.rgba(1, 1, 1, 0.05) }
 
                 Rectangle {
                     id: win
@@ -85,14 +87,14 @@ Item {
                     readonly property real leftw: rprev.lay === "split" ? width * 0.36 : 0
                     Rectangle {   // split: the wallpaper side
                         visible: rprev.lay === "split"
-                        width: win.leftw; height: parent.height; radius: win.radius
+                        width: win.leftw; height: parent.height; radius: M3.sq ? 0 : (win.radius)
                         gradient: Gradient { GradientStop { position: 0; color: "#e2a0a0" } GradientStop { position: 1; color: "#7a86b8" } }
                     }
                     width: bar ? rprev.width : Math.min(rprev.width - 40, Math.max(rprev.lay === "split" ? 860 : (rprev.lay === "grid" ? 720 : 360), page.v("width", 620)) * rprev.sc)
                     height: bar ? 34 : body.implicitHeight + 20
                     x: (rprev.width - width) / 2
                     y: rprev.pos === "top" ? (bar ? 0 : 16) : rprev.pos === "bottom" ? rprev.height - height - (bar ? 0 : 16) : (rprev.height - height) / 2
-                    radius: bar ? 0 : page.v("radius", 18) * 0.7
+                    radius: M3.sq ? 0 : (bar ? 0 : page.v("radius", 18) * 0.7)
                     color: rprev.withAlpha(rprev.th.bg, rprev.alpha)
                     border.width: 1
                     border.color: Qt.rgba(1, 1, 1, 0.1)
@@ -106,14 +108,14 @@ Item {
                         anchors.margins: 6
                         spacing: 8
                         Rectangle {
-                            width: parent.width * 0.22; height: parent.height; radius: 7
+                            width: parent.width * 0.22; height: parent.height; radius: M3.sq ? 0 : (7)
                             color: rprev.withAlpha(rprev.th.alt, Math.min(1, rprev.alpha + 0.08))
                             T { x: 8; anchors.verticalCenter: parent.verticalCenter; text: I18n.t("Search"); font.pixelSize: 10; color: rprev.th.fg; opacity: 0.5 }
                         }
                         Repeater {
                             model: ["Firefox", "Kitty", "Files", "Spotify", "Discord"]
                             delegate: Rectangle {
-                                height: parent.height; width: bl.implicitWidth + 16; radius: 6
+                                height: parent.height; width: bl.implicitWidth + 16; radius: M3.sq ? 0 : (6)
                                 color: index === 0 ? rprev.th.sel : "transparent"
                                 T { id: bl; anchors.centerIn: parent; text: modelData; font.pixelSize: 10; color: index === 0 ? rprev.selFg : rprev.th.fg }
                             }
@@ -127,20 +129,20 @@ Item {
                         width: parent.width - 20 - win.leftw
                         spacing: 6
                         Rectangle {
-                            width: parent.width; height: 26; radius: Math.max(4, win.radius - 4)
+                            width: parent.width; height: 26; radius: M3.sq ? 0 : (Math.max(4, win.radius - 4))
                             color: rprev.withAlpha(rprev.th.alt, Math.min(1, rprev.alpha + 0.08))
                             T { kind: "icon"; x: 9; anchors.verticalCenter: parent.verticalCenter; text: "󰍉"; font.pixelSize: 11; color: rprev.th.fg; opacity: 0.6 }
                             T { x: 26; anchors.verticalCenter: parent.verticalCenter; text: I18n.t("Search"); font.pixelSize: 10; color: rprev.th.fg; opacity: 0.5 }
                         }
                         // list
                         Repeater {
-                            model: rprev.lay === "list" ? ["Firefox", "Kitty", "Files", "Spotify", "Discord"].slice(0, rprev.rows) : []
+                            model: rprev.lay === "list" || rprev.lay === "classic" ? ["Firefox", "Kitty", "Files", "Spotify", "Discord"].slice(0, rprev.rows) : []
                             delegate: Rectangle {
-                                width: body.width; height: 20; radius: Math.max(3, win.radius - 6)
+                                width: body.width; height: 20; radius: M3.sq ? 0 : (Math.max(3, win.radius - 6))
                                 color: index === 0 ? rprev.th.sel : "transparent"
                                 Row {
                                     x: 8; anchors.verticalCenter: parent.verticalCenter; spacing: 7
-                                    Rectangle { visible: page.v("icons", true) === true; width: 11; height: 11; radius: 3; color: ["#e06c75", "#61afef", "#e5c07b", "#98c379", "#c678dd"][index]; anchors.verticalCenter: parent.verticalCenter }
+                                    Rectangle { visible: page.v("icons", true) === true; width: 11; height: 11; radius: M3.sq ? 0 : (3); color: ["#e06c75", "#61afef", "#e5c07b", "#98c379", "#c678dd"][index]; anchors.verticalCenter: parent.verticalCenter }
                                     T { text: modelData; font.pixelSize: 10; color: index === 0 ? rprev.selFg : rprev.th.fg; anchors.verticalCenter: parent.verticalCenter }
                                 }
                             }
@@ -153,10 +155,10 @@ Item {
                             Repeater {
                                 model: rprev.lay === "grid" ? 8 : 0
                                 delegate: Rectangle {
-                                    width: (body.width - 18) / 4; height: 40; radius: Math.max(3, win.radius - 6)
+                                    width: (body.width - 18) / 4; height: 40; radius: M3.sq ? 0 : (Math.max(3, win.radius - 6))
                                     color: index === 0 ? rprev.th.sel : "transparent"
-                                    Rectangle { anchors.horizontalCenter: parent.horizontalCenter; y: 6; width: 16; height: 16; radius: 4; color: ["#e06c75", "#61afef", "#e5c07b", "#98c379", "#c678dd", "#56b6c2", "#d19a66", "#abb2bf"][index] }
-                                    Rectangle { anchors.horizontalCenter: parent.horizontalCenter; y: 28; width: parent.width * 0.5; height: 4; radius: 2; color: index === 0 ? rprev.selFg : rprev.th.fg; opacity: 0.6 }
+                                    Rectangle { anchors.horizontalCenter: parent.horizontalCenter; y: 6; width: 16; height: 16; radius: M3.sq ? 0 : (4); color: ["#e06c75", "#61afef", "#e5c07b", "#98c379", "#c678dd", "#56b6c2", "#d19a66", "#abb2bf"][index] }
+                                    Rectangle { anchors.horizontalCenter: parent.horizontalCenter; y: 28; width: parent.width * 0.5; height: 4; radius: M3.sq ? 0 : (2); color: index === 0 ? rprev.selFg : rprev.th.fg; opacity: 0.6 }
                                 }
                             }
                         }
@@ -170,9 +172,11 @@ Item {
                 }
             }
 
-            T { kind: "title"; text: I18n.t("Theme"); font.pixelSize: 16; font.bold: true }
+            // V4.91: the launcher takes your theme's colors now (no Rofi theme, corners or font size of its own)
+            SectionTitle { visible: false; text: I18n.t("Theme") }
 
             Flow {
+                visible: false
                 width: parent.width
                 spacing: 10
                 Repeater {
@@ -182,7 +186,7 @@ Item {
                         readonly property bool on: page.v("theme", "wallpaper") === modelData
                         width: 124
                         height: 84
-                        radius: 14
+                        radius: M3.sq ? 0 : (14)
                         color: M3.surfaceC
                         border.width: on ? 2 : 1
                         border.color: on ? M3.primary : (tMouse.containsMouse ? M3.outline : M3.surfaceHighest)
@@ -191,12 +195,12 @@ Item {
                         Rectangle {
                             x: 10; y: 10
                             width: parent.width - 20; height: 34
-                            radius: 8
+                            radius: M3.sq ? 0 : (8)
                             color: th.bg
                             border.width: 1
                             border.color: Qt.rgba(1, 1, 1, 0.12)
-                            Rectangle { x: 6; y: 6; width: 34; height: 8; radius: 4; color: th.alt }
-                            Rectangle { x: 6; y: 18; width: parent.width - 12; height: 10; radius: 5; color: th.sel }
+                            Rectangle { x: 6; y: 6; width: 34; height: 8; radius: M3.sq ? 0 : (4); color: th.alt }
+                            Rectangle { x: 6; y: 18; width: parent.width - 12; height: 10; radius: M3.sq ? 0 : (5); color: th.sel }
                         }
                         T {
                             anchors.horizontalCenter: parent.horizontalCenter
@@ -216,18 +220,17 @@ Item {
                 }
             }
 
-            T { kind: "title"; text: I18n.t("Layout"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
+            SectionTitle { text: I18n.t("Layout") }
 
             SegRow {
                 label: I18n.t("Style")
-                desc: I18n.t("List, icon grid, full-width bar, or split (wallpaper on the left)")
+                desc: I18n.t("Drawer: big icons, filter chips and all apps; Spotlight: a search bar with a list that grows; Side sheet: a tall panel at the left edge")
                 options: [
-                    { label: I18n.t("List"), value: "list" },
-                    { label: I18n.t("Grid"), value: "grid" },
-                    { label: I18n.t("Bar"), value: "bar" },
-                    { label: I18n.t("Split"), value: "split" }
+                    { label: I18n.t("Drawer"), value: "drawer" },
+                    { label: I18n.t("Spotlight"), value: "spotlight" },
+                    { label: I18n.t("Side sheet"), value: "side" }
                 ]
-                current: page.v("layout", "list")
+                current: ["drawer", "spotlight", "side"].indexOf(page.v("layout", "drawer")) >= 0 ? page.v("layout", "drawer") : "drawer"
                 onChosen: function(x) { page.setv("layout", x) }
             }
             SegRow {
@@ -243,7 +246,7 @@ Item {
             }
             SliderRow {
                 label: I18n.t("Width")
-                desc: I18n.t("Not used by the bar style")
+                desc: I18n.t("How wide the launcher is (the side sheet keeps close to its own width)")
                 from: 360; to: 1200; step: 20
                 value: page.v("width", 620)
                 unit: " px"
@@ -257,7 +260,7 @@ Item {
                 onCommitted: function(x) { page.setv("lines", Math.round(x)) }
             }
 
-            T { kind: "title"; text: I18n.t("Appearance"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
+            SectionTitle { text: I18n.t("Appearance") }
 
             ToggleRow {
                 label: I18n.t("Transparency")
@@ -280,6 +283,7 @@ Item {
                 onToggled: function(x) { page.setv("blur", x ? "on" : "off") }
             }
             SliderRow {
+                visible: false
                 label: I18n.t("Corner radius")
                 desc: I18n.t("Roundness of the window")
                 from: 0; to: 32; step: 1
@@ -288,9 +292,10 @@ Item {
                 onCommitted: function(x) { page.setv("radius", Math.round(x)) }
             }
 
-            T { kind: "title"; text: I18n.t("Text"); font.pixelSize: 16; font.bold: true; topPadding: 14 }
+            SectionTitle { text: I18n.t("Icons") }
 
             SliderRow {
+                visible: false
                 label: I18n.t("Font size")
                 desc: I18n.t("The font comes from Services > Fonts (monospace)")
                 from: 9; to: 20; step: 1
@@ -300,7 +305,7 @@ Item {
             }
             ToggleRow {
                 label: I18n.t("App icons")
-                desc: I18n.t("Show icons next to the results")
+                desc: I18n.t("Icons next to what it finds; their style and shape: Edit mode > Icons")
                 checked: page.v("icons", true) === true
                 onToggled: function(x) { page.setv("icons", x ? "on" : "off") }
             }
@@ -309,7 +314,7 @@ Item {
                 spacing: 10
                 topPadding: 8
                 Rectangle {
-                    width: 150; height: 38; radius: 12
+                    width: 150; height: 38; radius: M3.sq ? 0 : (12)
                     color: pMouse.containsMouse ? "#ffffff" : "#F6F5F4"
                     Behavior on color { ColorAnimation { duration: 120 } }
                     T { anchors.centerIn: parent; text: I18n.t("Open it"); font.pixelSize: 13; font.bold: true; color: "#0d0d0d" }
@@ -322,7 +327,7 @@ Item {
                     }
                 }
                 Rectangle {
-                    width: 150; height: 38; radius: 12
+                    width: 150; height: 38; radius: M3.sq ? 0 : (12)
                     color: rMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.06)
                     Behavior on color { ColorAnimation { duration: 120 } }
                     T { anchors.centerIn: parent; text: I18n.t("Reset"); font.pixelSize: 13 }

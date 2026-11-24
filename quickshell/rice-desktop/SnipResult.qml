@@ -59,14 +59,14 @@ PanelWindow {
     WlrLayershell.namespace: "rice-snip-result"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     mask: Region { item: card }
-    NiriBlur { win: sr; items: [card]; radius: card.radius; on: sr.open && sr.t > 0.95 }
+    NiriBlur { win: sr; items: [card]; radius: Look.sq ? 0 : (card.radius); on: sr.open && sr.t > 0.95 }
 
     component Btn: Rectangle {
         id: b
         property string label: ""
         property bool filled: false
         signal clicked()
-        height: 36; radius: 18
+        height: 36; radius: Look.sq ? 0 : (18)
         width: bt.implicitWidth + 28
         color: filled ? (bm.containsMouse ? Qt.lighter(pal.primary, 1.06) : pal.primary) : (bm.containsMouse ? pal.cardHi : pal.card)
         Behavior on color { ColorAnimation { duration: 140 } }
@@ -75,13 +75,14 @@ PanelWindow {
         MouseArea { id: bm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: b.clicked() }
     }
 
-    Shadow { anchors.fill: card; radius: card.radius; opacity: card.opacity; on: Look.shadows }
+    Shadow { anchors.fill: card; radius: Look.sq ? 0 : (card.radius); opacity: card.opacity; on: Look.shadows }
     Rectangle {
         id: card
+        Frame { }      // V4.98 Minimal mode
         x: 20; width: 420
         y: 20 + (1 - sr.t) * 24
         height: col.height + 32
-        radius: 28
+        radius: Look.sq ? 0 : (28)
         color: pal.surface
         border.width: 1; border.color: pal.line
         opacity: sr.t
@@ -96,7 +97,7 @@ PanelWindow {
                 width: parent.width; height: 36
                 Rectangle {
                     id: badge
-                    width: 36; height: 36; radius: sr.kind === "color" ? 18 : 12
+                    width: 36; height: 36; radius: Look.sq ? 0 : (sr.kind === "color" ? 18 : 12)
                     color: sr.kind === "color" ? sr.body : pal.container
                     border.width: sr.kind === "color" ? 2 : 0; border.color: pal.line
                     MIcon { visible: sr.kind !== "color"; anchors.centerIn: parent; size: 19; color: pal.inkContainer
@@ -112,7 +113,7 @@ PanelWindow {
                 }
                 Rectangle {
                     anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-                    width: 32; height: 32; radius: 16; color: xm.containsMouse ? pal.cardHi : "transparent"
+                    width: 32; height: 32; radius: Look.sq ? 0 : (16); color: xm.containsMouse ? pal.cardHi : "transparent"
                     MIcon { anchors.centerIn: parent; size: 17; name: "close"; glyph: String.fromCodePoint(0xF0156); color: pal.dim }
                     MouseArea { id: xm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: sr.open = false }
                 }
@@ -122,7 +123,7 @@ PanelWindow {
                 visible: sr.kind !== "color"
                 width: parent.width
                 height: Math.min(220, txt.implicitHeight + 24)
-                radius: 16; color: pal.card; clip: true
+                radius: Look.sq ? 0 : (16); color: pal.card; clip: true
                 Flickable {
                     id: fl
                     anchors.fill: parent; anchors.margins: 12

@@ -144,23 +144,24 @@ Item {
         Rectangle {
             width: parent.width
             height: heroCol.implicitHeight + 44
-            radius: M3.rXL
+            radius: M3.sq ? 0 : (M3.rXL)
             color: page.failed ? M3.alpha(M3.error, 0.16) : M3.primaryContainer
             clip: true
             Behavior on color { ColorAnimation { duration: 300 } }
-            Rectangle { width: 240; height: 240; radius: 120; x: parent.width - 260; y: -110; color: M3.alpha(M3.primary, 0.14) }
-            Rectangle { width: 120; height: 120; radius: 40; rotation: 22; x: parent.width - 150; y: parent.height - 70; color: M3.alpha(M3.primary, 0.10) }
+            Rectangle { width: 240; height: 240; radius: M3.sq ? 0 : (120); x: parent.width - 260; y: -110; color: M3.alpha(M3.primary, 0.14) }
+            Rectangle { width: 120; height: 120; radius: M3.sq ? 0 : (40); rotation: 22; x: parent.width - 150; y: parent.height - 70; color: M3.alpha(M3.primary, 0.10) }
 
             // the big round icon: turns while it updates
             Rectangle {
                 id: badge
                 x: 24; y: 22
-                width: 76; height: 76; radius: 38
+                width: 76; height: 76; radius: M3.sq ? 0 : (38)
                 color: M3.primary
                 Icon {
                     anchors.centerIn: parent
                     size: 34
-                    name: page.running ? "sync" : (page.failed ? "error" : (page.finished && !page.hasUpdate ? "check_circle" : (page.hasUpdate ? "system_update_alt" : "verified")))
+                    // Minimal mode: a plain mark in the square (a round check in a square looked broken)
+                    name: page.running ? "sync" : (page.failed ? (M3.sq ? "priority_high" : "error") : (page.finished && !page.hasUpdate ? (M3.sq ? "check" : "check_circle") : (page.hasUpdate ? "system_update_alt" : (M3.sq ? "done_all" : "verified"))))
                     glyph: page.running ? "" : (page.failed ? "" : (page.hasUpdate ? "" : ""))
                     color: M3.inkPrimary
                     RotationAnimation on rotation { running: page.running; from: 0; to: -360; duration: 1400; loops: Animation.Infinite
@@ -174,8 +175,26 @@ Item {
                     property real p: page.progress
                     Behavior on p { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
                     onPChanged: requestPaint()
+                    Connections { target: M3; function onSqChanged() { ring.requestPaint() } }
                     onPaint: {
                         const c = getContext("2d"), r = width / 2 - 2
+                        if (M3.sq) {
+                            // Minimal mode: a square frame that fills clockwise from the top left
+                            c.reset(); c.lineWidth = 3; c.lineCap = "butt"
+                            const a = 2, s = width - 4, per = s * 4
+                            c.strokeStyle = M3.alpha(M3.primary, 0.22); c.strokeRect(a, a, s, s)
+                            let left = per * p
+                            c.strokeStyle = M3.primary; c.beginPath(); c.moveTo(a, a)
+                            const pts = [[a + s, a], [a + s, a + s], [a, a + s], [a, a]]
+                            let x0 = a, y0 = a
+                            for (let i = 0; i < 4 && left > 0; i++) {
+                                const d = Math.min(s, left), t = d / s
+                                c.lineTo(x0 + (pts[i][0] - x0) * t, y0 + (pts[i][1] - y0) * t)
+                                left -= d; x0 = pts[i][0]; y0 = pts[i][1]
+                            }
+                            c.stroke()
+                            return
+                        }
                         c.reset(); c.lineWidth = 3.5; c.lineCap = "round"
                         c.strokeStyle = M3.alpha(M3.primary, 0.22); c.beginPath(); c.arc(width / 2, height / 2, r, 0, Math.PI * 2); c.stroke()
                         c.strokeStyle = M3.primary; c.beginPath(); c.arc(width / 2, height / 2, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * p); c.stroke()
@@ -206,8 +225,8 @@ Item {
                     width: parent.width; height: page.running ? 22 : 0
                     visible: page.running
                     Rectangle {
-                        y: 8; width: parent.width; height: 6; radius: 3; color: M3.alpha(M3.primary, 0.2)
-                        Rectangle { width: Math.max(12, parent.width * page.progress); height: parent.height; radius: 3; color: M3.primary
+                        y: 8; width: parent.width; height: 6; radius: M3.sq ? 0 : (3); color: M3.alpha(M3.primary, 0.2)
+                        Rectangle { width: Math.max(12, parent.width * page.progress); height: parent.height; radius: M3.sq ? 0 : (3); color: M3.primary
                             Behavior on width { NumberAnimation { duration: 500; easing.type: Easing.OutCubic } } }
                     }
                     T { anchors.right: parent.right; y: -10; font.pixelSize: 11; color: M3.inkPrimaryC; opacity: 0.7
@@ -241,7 +260,7 @@ Item {
             visible: page.running || page.steps.length > 0
             width: parent.width
             height: Math.min(420, Math.max(80, stepList.contentHeight + 24))
-            radius: M3.rL
+            radius: M3.sq ? 0 : (M3.rL)
             color: M3.surfaceC
             border.width: 1; border.color: M3.outlineVariant
             clip: true
@@ -269,7 +288,7 @@ Item {
                         Rectangle {
                             id: dot
                             x: 2; anchors.verticalCenter: parent.verticalCenter
-                            width: 20; height: 20; radius: 10
+                            width: 20; height: 20; radius: M3.sq ? 0 : (10)
                             color: modelData.k === "ok" ? M3.alpha(M3.primary, 0.18)
                                 : modelData.k === "fail" ? M3.alpha(M3.error, 0.2)
                                 : modelData.k === "warn" ? M3.alpha("#E8B04A", 0.2) : "transparent"
@@ -323,9 +342,9 @@ Item {
                 delegate: Rectangle {
                     width: parent.width
                     height: nw.implicitHeight + 22
-                    radius: M3.rM
+                    radius: M3.sq ? 0 : (M3.rM)
                     color: M3.surfaceC
-                    Rectangle { x: 14; anchors.verticalCenter: parent.verticalCenter; width: 8; height: 8; radius: 4; color: M3.primary }
+                    Rectangle { x: 14; anchors.verticalCenter: parent.verticalCenter; width: 8; height: 8; radius: M3.sq ? 0 : (4); color: M3.primary }
                     T { id: nw; x: 34; anchors.verticalCenter: parent.verticalCenter; width: parent.width - 48; wrapMode: Text.WordWrap
                         font.pixelSize: 13; text: modelData.replace(/\*\*/g, "") }
                 }
@@ -339,9 +358,9 @@ Item {
         Rectangle {
             width: parent.width
             height: 70
-            radius: M3.rM
+            radius: M3.sq ? 0 : (M3.rM)
             color: M3.surfaceC
-            Rectangle { x: 14; anchors.verticalCenter: parent.verticalCenter; width: 40; height: 40; radius: 20; color: M3.secondaryContainer
+            Rectangle { x: 14; anchors.verticalCenter: parent.verticalCenter; width: 40; height: 40; radius: M3.sq ? 0 : (20); color: M3.secondaryContainer
                 Icon { anchors.centerIn: parent; name: "terminal"; glyph: ""; size: 18; color: M3.inkSecondaryC } }
             Column {
                 x: 68; anchors.verticalCenter: parent.verticalCenter

@@ -33,7 +33,7 @@ Item {
         x: 22; y: 18
         spacing: 10
         Rectangle {
-            width: 30; height: 30; radius: 15
+            width: 30; height: 30; radius: Look.sq ? 0 : (15)
             color: nt.pal ? nt.pal.chip : Qt.rgba(1, 1, 1, 0.08)
             T { kind: "icon"; anchors.centerIn: parent; text: ""; font.pixelSize: 14; color: nt.cMain }
         }

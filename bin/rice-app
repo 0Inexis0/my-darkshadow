@@ -1,0 +1,167 @@
+#!/usr/bin/env bash
+# DarkShadow's own apps, in Material 3 and your wallpaper's colors (Quickshell, ~/.config/quickshell/rice-apps):
+#   rice-app files [FOLDER]           Files
+#   rice-app photos [PICTURE|FOLDER]  Photos
+#   rice-app music [FILE...]          Music (the player); one player: a new file goes to the one that is open
+#   rice-app videos [FILE...]         Videos (the same player, on your videos)
+#   rice-app install                  their entries and icons in the app menu (the icons take the wallpaper's colors)
+#   rice-app icons                    color the icons again (the wallpaper changed)
+#   rice-app defaults on|off|state    open folders, pictures, music and videos in them (off: what you had before)
+#   rice-app hide-old on|off          take the old file manager (Nautilus ...) out of the app menu, or put it back
+APPS="$HOME/.config/quickshell/rice-apps"
+C="$HOME/.cache/rice"
+BIN="$HOME/.local/bin"
+LA="$HOME/.local/share/applications"
+mkdir -p "$C"
+
+IMAGES="image/jpeg image/png image/webp image/gif image/bmp image/avif image/tiff image/svg+xml image/x-icon image/jxl image/heif"
+AUDIO="audio/mpeg audio/flac audio/x-flac audio/ogg audio/x-vorbis+ogg audio/opus audio/wav audio/x-wav audio/mp4 audio/x-m4a audio/aac audio/x-aiff"
+VIDEO="video/mp4 video/x-matroska video/webm video/quicktime video/x-msvideo video/x-m4v video/ogg video/x-flv"
+
+entry() {   # id name generic app mimes categories keywords polish-name
+  local f="$LA/darkshadow-$1.desktop"
+  mkdir -p "$LA"
+  {
+    echo "[Desktop Entry]"
+    echo "Type=Application"
+    echo "Name=$2"
+    echo "Name[pl]=$8"
+    echo "GenericName=$3"
+    echo "Comment=$3 of DarkShadow's Shell"
+    echo "Icon=darkshadow-$1"
+    echo "Exec=$BIN/rice-app $4 %U"
+    echo "Terminal=false"
+    echo "StartupNotify=false"
+    echo "Categories=$6"
+    echo "Keywords=$7"
+    # shellcheck disable=SC2086  # the list is split on purpose
+    echo "MimeType=$(printf '%s;' $5)"
+  } >"$f"
+}
+
+icons() {
+  python3 "$BIN/rice-apps-helper" icons >/dev/null 2>&1
+  # the icon caches see them (when the tools are there)
+  command -v gtk-update-icon-cache >/dev/null 2>&1 && gtk-update-icon-cache -q -t -f "$HOME/.local/share/icons/hicolor" >/dev/null 2>&1
+  return 0
+}
+
+install_entries() {
+  icons
+  entry files "Files" "File manager" files "inode/directory" "System;FileManager;Utility;" "folder;explorer;manager;" "Pliki"
+  entry photos "Photos" "Photo viewer" photos "$IMAGES" "Graphics;Viewer;Photography;" "pictures;gallery;images;" "Zdjęcia"
+  entry music "Music" "Music player" music "$AUDIO" "AudioVideo;Audio;Player;" "songs;albums;player;" "Muzyka"
+  entry videos "Videos" "Video player" videos "$VIDEO" "AudioVideo;Video;Player;" "movies;player;" "Filmy"
+  # V4.95: Settings in the launcher (and so it can be pinned to the dock)
+  {
+    echo "[Desktop Entry]"
+    echo "Type=Application"
+    echo "Name=DarkShadow Settings"
+    echo "Name[pl]=Ustawienia DarkShadow"
+    echo "GenericName=Settings"
+    echo "Comment=Settings of DarkShadow's Shell"
+    echo "Icon=darkshadow-settings"
+    echo "Exec=$BIN/rice-settings"
+    echo "Terminal=false"
+    echo "StartupNotify=false"
+    echo "Categories=Settings;System;"
+    echo "Keywords=settings;preferences;control;config;ustawienia;"
+  } >"$LA/darkshadow-settings.desktop"
+  # V4.85's first names
+  rm -f "$LA/darkshadow-player.desktop"
+  command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database -q "$LA" 2>/dev/null
+  return 0
+}
+
+# the old file manager out of the app menu: a copy of its entry here with NoDisplay (it still opens folders when
+# something asks for it); "off" takes only our copies away
+OLDFM="org.gnome.Nautilus.desktop thunar.desktop nemo.desktop org.kde.dolphin.desktop pcmanfm.desktop"
+hide_old() {
+  local d src x
+  for d in $OLDFM; do
+    if [ "$1" = on ]; then
+      [ -f "$LA/$d" ] && ! grep -q '^X-DarkShadow-Hidden=true' "$LA/$d" && continue   # your own copy: left alone
+      src=""
+      for x in /usr/share/applications /usr/local/share/applications /run/current-system/sw/share/applications /var/lib/flatpak/exports/share/applications; do
+        [ -f "$x/$d" ] && { src="$x/$d"; break; }
+      done
+      [ -n "$src" ] || continue
+      mkdir -p "$LA"
+      awk 'BEGIN { d = 0 }
+           /^\[/ { if (d == 1 && !done) { print "NoDisplay=true"; print "X-DarkShadow-Hidden=true"; done = 1 } d = ($0 == "[Desktop Entry]") }
+           d == 1 && /^NoDisplay=/ { next }
+           { print }
+           END { if (d == 1 && !done) { print "NoDisplay=true"; print "X-DarkShadow-Hidden=true" } }' "$src" >"$LA/$d"
+    else
+      [ -f "$LA/$d" ] && grep -q '^X-DarkShadow-Hidden=true' "$LA/$d" && rm -f "$LA/$d"
+    fi
+  done
+  command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database -q "$LA" 2>/dev/null
+  echo "$1"
+}
+
+OLD="$HOME/.config/rice/apps/defaults-before.txt"
+defaults() {
+  command -v xdg-mime >/dev/null 2>&1 || { echo "xdg-mime is missing (xdg-utils)"; exit 1; }
+  case "$1" in
+    on)
+      install_entries
+      mkdir -p "$(dirname "$OLD")"
+      if [ ! -s "$OLD" ]; then
+        for m in inode/directory $IMAGES $AUDIO $VIDEO; do printf '%s %s\n' "$m" "$(xdg-mime query default "$m" 2>/dev/null)"; done >"$OLD"
+      fi
+      xdg-mime default darkshadow-files.desktop inode/directory
+      for m in $IMAGES; do xdg-mime default darkshadow-photos.desktop "$m"; done
+      for m in $AUDIO; do xdg-mime default darkshadow-music.desktop "$m"; done
+      for m in $VIDEO; do xdg-mime default darkshadow-videos.desktop "$m"; done
+      mkdir -p "$HOME/.config/rice"; echo darkshadow >"$HOME/.config/rice/files"
+      echo on ;;
+    off)
+      if [ -s "$OLD" ]; then
+        while read -r m d; do
+          [ -n "$d" ] && case "$d" in darkshadow-*) ;; *) xdg-mime default "$d" "$m" ;; esac
+        done <"$OLD"
+        rm -f "$OLD"
+      fi
+      [ "$(cat "$HOME/.config/rice/files" 2>/dev/null)" = darkshadow ] && rm -f "$HOME/.config/rice/files"
+      echo off ;;
+    *)
+      [ "$(xdg-mime query default image/png 2>/dev/null)" = darkshadow-photos.desktop ] && echo on || echo off ;;
+  esac
+}
+
+run_app() {   # app tab arg...
+  command -v qs >/dev/null 2>&1 || { echo "Quickshell (qs) is missing"; exit 1; }
+  [ -f "$APPS/shell.qml" ] || { echo "rice-app: $APPS is missing (run rice-update)"; exit 1; }
+  local app="$1" tab="$2"; shift 2
+  local args="" a p
+  for a in "$@"; do
+    case "$a" in file://*) a="$(python3 -c 'import sys,urllib.parse;print(urllib.parse.unquote(sys.argv[1][7:]))' "$a")" ;; esac
+    p="$(realpath -m -- "$a" 2>/dev/null || printf '%s' "$a")"
+    args="$args$p"$'\n'
+  done
+  # one player: what you open goes to the one that is open
+  if [ "$app" = player ]; then
+    local pid; pid="$(cat "$C/player-pid" 2>/dev/null)"
+    if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null && tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null | grep -q rice-apps; then
+      printf '%s %s\n%s' "$(date +%s.%N)" "$tab" "$args" >"$C/player-open"
+      exit 0
+    fi
+  fi
+  # the window's app id (newer Quickshell): docks and launchers match it to our entry and icon
+  local aid="darkshadow-$app"
+  [ "$app" = player ] && aid="darkshadow-${tab/songs/music}"
+  QS_APP_ID="$aid" RICE_APP="$app" RICE_TAB="$tab" RICE_ARGS="$args" exec qs -p "$APPS" >/dev/null 2>&1
+}
+
+need_entries() { [ -f "$LA/darkshadow-$1.desktop" ] || install_entries >/dev/null 2>&1; }
+case "${1:-}" in
+  files|photos) app="$1"; shift; need_entries "$app"; run_app "$app" "" "$@" ;;
+  music|player) shift; need_entries music; run_app player home "$@" ;;
+  videos) shift; need_entries videos; run_app player videos "$@" ;;
+  install) install_entries; echo "Files, Photos, Music and Videos are in the app menu" ;;
+  icons) icons; echo "icons colored" ;;
+  defaults) defaults "${2:-state}" ;;
+  hide-old) hide_old "${2:-on}" ;;
+  *) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac

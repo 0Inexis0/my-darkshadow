@@ -23,14 +23,14 @@ Item {
         color: "transparent"
         line: nr.pal ? nr.pal.track : Qt.rgba(1, 1, 1, 0.14)
         lineWidth: 2
-        SlowSpin { turn: 360; period: 30000; running: (nr.running && Player.playing && !Look.lite) && !Look.covered }
+        SlowSpin { turn: 360; period: 30000; running: nr.running && Player.playing && !Look.lite }
     }
     // the time: a dot on the outer edge
     Item {
         anchors.fill: parent
         rotation: Player.frac * 360
         Behavior on rotation { enabled: Player.playing; NumberAnimation { duration: 900 } }
-        Rectangle { anchors.horizontalCenter: parent.horizontalCenter; y: 4; width: 16; height: 6; radius: 3; color: nr.pal ? nr.pal.primary : "#9ec9bd" }
+        Rectangle { anchors.horizontalCenter: parent.horizontalCenter; y: 4; width: 16; height: 6; radius: Look.sq ? 0 : (3); color: nr.pal ? nr.pal.primary : "#9ec9bd" }
     }
     T {
         anchors.centerIn: parent

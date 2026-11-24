@@ -63,7 +63,7 @@ Item {
             ["Alt + ]  /  [", "Louder / quieter"], ["Brightness keys", "Screen brighter / darker"],
             ["Play / Next / Previous", "Music"] ] },
         { name: "Desktop", sym: "desktop_windows", keys: [
-            ["Super + Alt + W", "Edit the desktop widgets", "widgets"], ["Super + /", "Every key on one sheet", "keys"], ["Super + X", "Toolbox: tasks, note, timer, converter, system, chat", "tools"], ["Super + Shift + /", "niri's own list of keys"],
+            ["Super + Alt + W", "Edit the desktop widgets", "widgets"], ["Super + /", "Every key on one sheet", "keys"], ["Super + Shift + /", "niri's own list of keys"],
             ["Super + Shift + P", "Screens off"], ["Super + Shift + E", "Log out"] ] }
     ] : [
         { name: "Apps and menus", sym: "apps", keys: [
@@ -99,7 +99,7 @@ Item {
             ["Alt + ]  /  [", "Louder / quieter"], ["Brightness keys", "Screen brighter / darker"],
             ["Play / Next / Previous", "Music"] ] },
         { name: "Desktop", sym: "desktop_windows", keys: [
-            ["Super + Alt + W", "Edit the desktop widgets", "widgets"], ["Super + /", "Every key on one sheet", "keys"], ["Super + X", "Toolbox: tasks, note, timer, converter, system, chat", "tools"], ["Super + M", "Log out"] ] }
+            ["Super + Alt + W", "Edit the desktop widgets", "widgets"], ["Super + /", "Every key on one sheet", "keys"], ["Super + M", "Log out"] ] }
     ]
     function match(k) {
         if (q === "") return true
@@ -113,13 +113,13 @@ Item {
         readonly property bool plus: label === "+"
         width: plus ? lt.implicitWidth : Math.max(30, lt.implicitWidth + 18)
         height: 30
-        radius: 9 * M3.shapeK
+        radius: M3.sq ? 0 : (9 * M3.shapeK)
         color: plus ? "transparent" : M3.surfaceHighest
         border.width: plus ? 0 : 1
         border.color: M3.outlineVariant
         // the edge under a key
         Rectangle { visible: !parent.plus; anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
-            anchors.leftMargin: 4; anchors.rightMargin: 4; height: 2; radius: 1; color: M3.alpha(M3.ink, 0.12) }
+            anchors.leftMargin: 4; anchors.rightMargin: 4; height: 2; radius: M3.sq ? 0 : (1); color: M3.alpha(M3.ink, 0.12) }
         T { id: lt; anchors.centerIn: parent; text: parent.label; font.pixelSize: 12; font.weight: parent.plus ? Font.Normal : Font.DemiBold
             color: parent.plus ? M3.inkDim : M3.ink }
     }
@@ -140,7 +140,7 @@ Item {
         Rectangle {
             width: parent.width
             height: 196
-            radius: M3.rXL
+            radius: M3.sq ? 0 : (M3.rXL)
             color: M3.primaryContainer
             clip: true
             Blob { width: 240; height: 240; x: parent.width - 170; y: -60; kind: "flower"; color: M3.alpha(M3.inkPrimaryC, 0.06) }
@@ -159,7 +159,7 @@ Item {
                     delegate: Rectangle {
                         width: (page.width - 48 - 2 * 24 - 36) / 4
                         height: 82
-                        radius: M3.rL
+                        radius: M3.sq ? 0 : (M3.rL)
                         color: M3.alpha(M3.surface, 0.55)
                         Row {
                             x: 14; y: 12; spacing: 8
@@ -205,7 +205,7 @@ Item {
                 Row {
                     spacing: 10
                     Rectangle {
-                        width: 32; height: 32; radius: 16; color: M3.secondaryContainer
+                        width: 32; height: 32; radius: M3.sq ? 0 : (16); color: M3.secondaryContainer
                         Icon { anchors.centerIn: parent; name: grp.modelData.sym; glyph: ""; size: 18; color: M3.inkSecondaryC }
                     }
                     T { text: grp.modelData.name; font.pixelSize: 16; font.weight: Font.DemiBold; anchors.verticalCenter: parent.verticalCenter }
@@ -213,7 +213,7 @@ Item {
                 Rectangle {
                     width: parent.width
                     height: list.implicitHeight
-                    radius: M3.rL
+                    radius: M3.sq ? 0 : (M3.rL)
                     color: M3.surfaceC
                     clip: true
                     Column {
@@ -235,14 +235,14 @@ Item {
                                 Caps { id: caps; keys: page.keysOf(modelData); anchors.right: pen.visible ? pen.left : parent.right; anchors.rightMargin: pen.visible ? 8 : 14
                                     anchors.verticalCenter: parent.verticalCenter; opacity: page.changed(modelData) ? 1 : 0.95 }
                                 Rectangle {
-                                    visible: page.changed(modelData); width: 6; height: 6; radius: 3; color: M3.primary
+                                    visible: page.changed(modelData); width: 6; height: 6; radius: M3.sq ? 0 : (3); color: M3.primary
                                     anchors.right: caps.left; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter
                                 }
                                 // change the keys
                                 Rectangle {
                                     id: pen
                                     visible: parent.editable
-                                    width: 34; height: 34; radius: 17
+                                    width: 34; height: 34; radius: M3.sq ? 0 : (17)
                                     anchors.right: parent.right; anchors.rightMargin: 10; anchors.verticalCenter: parent.verticalCenter
                                     color: penH.hovered ? M3.secondaryContainer : (rh.hovered ? M3.surfaceHighest : "transparent")
                                     HoverHandler { id: penH; cursorShape: Qt.PointingHandCursor }
@@ -310,7 +310,7 @@ Item {
             width: Math.min(560, parent.width - 48)
             height: col.implicitHeight + 48
             anchors.centerIn: parent
-            radius: M3.rXL
+            radius: M3.sq ? 0 : (M3.rXL)
             color: M3.surfaceHigh
             MouseArea { anchors.fill: parent }
             Column {
@@ -327,7 +327,7 @@ Item {
                         model: ["Super", "Ctrl", "Alt", "Shift"]
                         Rectangle {
                             readonly property bool on: !!ed.mods[modelData]
-                            width: ml.implicitWidth + (on ? 40 : 28); height: 36; radius: on ? 18 : 10
+                            width: ml.implicitWidth + (on ? 40 : 28); height: 36; radius: M3.sq ? 0 : (on ? 18 : 10)
                             color: on ? M3.primary : M3.surfaceHighest
                             Behavior on color { ColorAnimation { duration: 140 } }
                             Row { anchors.centerIn: parent; spacing: 6
@@ -341,7 +341,7 @@ Item {
                 // press the key
                 Rectangle {
                     id: cap
-                    width: parent.width; height: 64; radius: M3.rL
+                    width: parent.width; height: 64; radius: M3.sq ? 0 : (M3.rL)
                     color: activeFocus ? M3.alpha(M3.primary, 0.10) : M3.surfaceC
                     border.width: activeFocus ? 2 : 1; border.color: activeFocus ? M3.primary : M3.outlineVariant
                     focus: true

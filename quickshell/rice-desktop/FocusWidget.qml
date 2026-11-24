@@ -60,7 +60,7 @@ Item {
         Repeater {
             model: [{ k: "focus", n: "Focus" }, { k: "break", n: "Break" }]
             delegate: Rectangle {
-                width: 76; height: 28; radius: 14
+                width: 76; height: 28; radius: Look.sq ? 0 : (14)
                 color: fo.mode === modelData.k ? fo.cMain : (fo.pal ? fo.pal.chip : Qt.rgba(1, 1, 1, 0.08))
                 Behavior on color { ColorAnimation { duration: 160 } }
                 T { anchors.centerIn: parent; text: modelData.n; font.pixelSize: 12; font.bold: fo.mode === modelData.k
@@ -96,14 +96,14 @@ Item {
         y: 208
         spacing: 14
         Rectangle {
-            width: 36; height: 36; radius: 18
+            width: 36; height: 36; radius: Look.sq ? 0 : (18)
             anchors.verticalCenter: parent.verticalCenter
             color: rm.containsMouse ? (fo.pal ? fo.pal.chipHover : Qt.rgba(1, 1, 1, 0.16)) : (fo.pal ? fo.pal.chip : Qt.rgba(1, 1, 1, 0.08))
             T { kind: "icon"; anchors.centerIn: parent; text: ""; font.pixelSize: 13; color: fo.cFg }
             MouseArea { id: rm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: fo.reset() }
         }
         Rectangle {
-            width: 54; height: 54; radius: 27
+            width: 54; height: 54; radius: Look.sq ? 0 : (27)
             color: fo.cMain
             scale: pm.pressed ? 0.94 : 1
             Behavior on scale { NumberAnimation { duration: 90 } }
@@ -111,7 +111,7 @@ Item {
             MouseArea { id: pm; anchors.fill: parent; cursorShape: Qt.PointingHandCursor; property bool sfxOwn: true; onClicked: { Sfx.play(fo.going ? "switch-off" : "switch-on"); if (fo.going) fo.pause(); else fo.start() } }
         }
         Rectangle {
-            width: 36; height: 36; radius: 18
+            width: 36; height: 36; radius: Look.sq ? 0 : (18)
             anchors.verticalCenter: parent.verticalCenter
             color: sm.containsMouse ? (fo.pal ? fo.pal.chipHover : Qt.rgba(1, 1, 1, 0.16)) : (fo.pal ? fo.pal.chip : Qt.rgba(1, 1, 1, 0.08))
             T { kind: "icon"; anchors.centerIn: parent; text: ""; font.pixelSize: 13; color: fo.cFg }
@@ -129,7 +129,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             Repeater {
                 model: 4
-                delegate: Rectangle { width: 8; height: 8; radius: 4; color: index < fo.sessions % 4 || (fo.sessions > 0 && fo.sessions % 4 === 0) ? fo.cMain : (fo.pal ? fo.pal.track : Qt.rgba(1, 1, 1, 0.13)) }
+                delegate: Rectangle { width: 8; height: 8; radius: Look.sq ? 0 : (4); color: index < fo.sessions % 4 || (fo.sessions > 0 && fo.sessions % 4 === 0) ? fo.cMain : (fo.pal ? fo.pal.track : Qt.rgba(1, 1, 1, 0.13)) }
             }
         }
         Row {

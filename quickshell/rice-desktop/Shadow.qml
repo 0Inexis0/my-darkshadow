@@ -19,7 +19,7 @@ Item {
             readonly property real k: (index + 1) / 6
             x: -sh.size * k; y: -sh.size * k + sh.offsetY
             width: sh.width + 2 * sh.size * k; height: sh.height + 2 * sh.size * k
-            radius: sh.radius + sh.size * k
+            radius: Look.sq ? 0 : (sh.radius + sh.size * k)
             color: Qt.rgba(0, 0, 0, sh.amp * (1 - k * 0.8))
         }
     }

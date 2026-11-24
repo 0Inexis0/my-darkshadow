@@ -72,7 +72,8 @@ Scope {
             }
         }
     }
-    Timer { interval: 15000; repeat: true; running: nfy.srvOn; onTriggered: if (!ownerProc.running) ownerProc.running = true }
+    // V4.96: once a minute (it was every 15 s, three programs each time, for as long as the shell ran)
+    Timer { interval: 60000; repeat: true; running: nfy.srvOn; onTriggered: if (!ownerProc.running) ownerProc.running = true }
     Loader {
         id: srvLoader
         active: nfy.srvOn
@@ -155,7 +156,7 @@ Scope {
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "rice-notify-popup"
         // niri: blur behind each pop-up (Hyprland blurs this layer with its own rule)
-        NiriBlur { win: popWin; radius: nfy.radius; on: popWin.visible
+        NiriBlur { win: popWin; radius: Look.sq ? 0 : (nfy.radius); on: popWin.visible
             items: Array.prototype.filter.call(popCol.children, function(c) { return c.popup === true && !c.out }) }
         Column {
             id: popCol

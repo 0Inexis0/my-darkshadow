@@ -14,7 +14,7 @@ Rectangle {
 
     height: 36
     width: compact ? 38 : row.implicitWidth + 26
-    radius: 11
+    radius: M3.sq ? 0 : (11)
     color: m.containsMouse ? M3.surfaceHighest : "#1b1b1b"
     border.width: 1
     border.color: m.containsMouse ? M3.outline : M3.surfaceHighest
@@ -37,7 +37,7 @@ Rectangle {
         z: 50
         width: tip.implicitWidth + 16
         height: 24
-        radius: 8
+        radius: M3.sq ? 0 : (8)
         color: "#F6F5F4"
         T { id: tip; anchors.centerIn: parent; text: c.label; font.pixelSize: 11; font.bold: true; color: "#0d0d0d" }
     }

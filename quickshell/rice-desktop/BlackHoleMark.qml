@@ -179,7 +179,7 @@ Item {
             anchors.centerIn: parent
             width: logo.shadowR * 2 * (0.2 + 0.8 * logo.reveal)
             height: width
-            radius: width / 2
+            radius: Look.sq ? 0 : (width / 2)
             color: "#000000"
             border.width: Math.max(1, logo.size * 0.012)
             border.color: Qt.rgba(logo.hot.r, logo.hot.g, logo.hot.b, 0.9)
@@ -208,7 +208,7 @@ Item {
                 readonly property real a: (f * 2.4 + index * 1.3) * Math.PI * 2
                 readonly property real r: logo.diskR * (0.95 - 0.72 * f)
                 Rectangle {
-                    width: Math.max(1.5, logo.size * 0.022 * (1 - bit.f * 0.6)); height: width; radius: width / 2
+                    width: Math.max(1.5, logo.size * 0.022 * (1 - bit.f * 0.6)); height: width; radius: Look.sq ? 0 : (width / 2)
                     color: logo.hot
                     x: logo.size / 2 + Math.cos(bit.a) * bit.r - width / 2
                     y: logo.size / 2 + Math.sin(bit.a) * bit.r * logo.tilt - height / 2

@@ -67,14 +67,14 @@ Item {
             id: now
             width: parent.width
             height: Math.max(230, Math.min(300, width * 0.32))
-            radius: M3.rXL
+            radius: M3.sq ? 0 : (M3.rXL)
             color: M3.surfaceC
             Rectangle {
                 id: frame
                 x: 12; y: 12
                 width: Math.min(parent.width * 0.56, (parent.height - 24) * 16 / 9)
                 height: parent.height - 24
-                radius: M3.rL
+                radius: M3.sq ? 0 : (M3.rL)
                 color: M3.surfaceHigh
                 RoundImage {
                     anchors.fill: parent
@@ -85,7 +85,7 @@ Item {
                 }
                 Rectangle {
                     anchors.left: parent.left; anchors.bottom: parent.bottom; anchors.margins: 10
-                    width: nt.implicitWidth + 20; height: 26; radius: 13
+                    width: nt.implicitWidth + 20; height: 26; radius: M3.sq ? 0 : (13)
                     color: Qt.rgba(0, 0, 0, 0.55)
                     visible: page.w.current !== ""
                     T { id: nt; anchors.centerIn: parent; text: (page.w.current || "").split("/").pop(); font.pixelSize: 11; color: "#ffffff"
@@ -103,11 +103,11 @@ Item {
                     spacing: 6
                     Repeater {
                         model: [M3.primary, M3.tertiary, M3.primaryContainer, M3.secondaryContainer, M3.surfaceHighest, M3.surfaceHigh, M3.surfaceC, M3.inkPrimaryC]
-                        delegate: Rectangle { width: 30; height: 30; radius: 15; color: modelData; border.width: 1; border.color: M3.alpha("#ffffff", 0.08) }
+                        delegate: Rectangle { width: 30; height: 30; radius: M3.sq ? 0 : (15); color: modelData; border.width: 1; border.color: M3.alpha("#ffffff", 0.08) }
                     }
                 }
                 Rectangle {
-                    width: tn.implicitWidth + 26; height: 30; radius: 15; color: M3.secondaryContainer
+                    width: tn.implicitWidth + 26; height: 30; radius: M3.sq ? 0 : (15); color: M3.secondaryContainer
                     T { id: tn; anchors.centerIn: parent; text: I18n.t("Theme · ") + page.themeName(); font.pixelSize: 12; color: M3.inkSecondaryC }
                 }
                 Flow {
@@ -122,8 +122,8 @@ Item {
             Rectangle {
                 visible: page.liveOn
                 x: frame.x + 10; y: frame.y + 10
-                width: lvn.implicitWidth + 30; height: 26; radius: 13; color: Qt.rgba(0, 0, 0, 0.6)
-                Rectangle { x: 10; anchors.verticalCenter: parent.verticalCenter; width: 8; height: 8; radius: 4; color: "#ff5a5a" }
+                width: lvn.implicitWidth + 30; height: 26; radius: M3.sq ? 0 : (13); color: Qt.rgba(0, 0, 0, 0.6)
+                Rectangle { x: 10; anchors.verticalCenter: parent.verticalCenter; width: 8; height: 8; radius: M3.sq ? 0 : (4); color: "#ff5a5a" }
                 T { id: lvn; x: 23; anchors.verticalCenter: parent.verticalCenter; text: "LIVE"; font.pixelSize: 11; font.weight: Font.Bold; color: "#ffffff" }
             }
         }
@@ -167,7 +167,7 @@ Item {
                     height: width * 0.62
                     Rectangle {
                         anchors.fill: parent
-                        radius: wm.pressed ? M3.rS : M3.rL
+                        radius: M3.sq ? 0 : (wm.pressed ? M3.rS : M3.rL)
                         color: M3.surfaceHigh
                         border.width: wt.on ? 3 : 0
                         border.color: M3.primary
@@ -186,15 +186,15 @@ Item {
                     Rectangle {
                         visible: wt.on
                         anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 12
-                        width: 26; height: 26; radius: 13; color: M3.primary
+                        width: 26; height: 26; radius: M3.sq ? 0 : (13); color: M3.primary
                         Icon { anchors.centerIn: parent; name: "check"; glyph: ""; size: 15; color: M3.inkPrimary }
                     }
                     Icon { visible: modelData.live && !modelData.thumb; anchors.centerIn: parent; name: "movie"; glyph: ""; size: 28; color: M3.inkDim }
                     Rectangle {
                         visible: modelData.live === true
                         anchors.left: parent.left; anchors.top: parent.top; anchors.margins: 12
-                        width: lvt.implicitWidth + 28; height: 22; radius: 11; color: Qt.rgba(0, 0, 0, 0.6)
-                        Rectangle { x: 9; anchors.verticalCenter: parent.verticalCenter; width: 7; height: 7; radius: 3.5; color: "#ff5a5a" }
+                        width: lvt.implicitWidth + 28; height: 22; radius: M3.sq ? 0 : (11); color: Qt.rgba(0, 0, 0, 0.6)
+                        Rectangle { x: 9; anchors.verticalCenter: parent.verticalCenter; width: 7; height: 7; radius: M3.sq ? 0 : (3.5); color: "#ff5a5a" }
                         T { id: lvt; x: 21; anchors.verticalCenter: parent.verticalCenter; text: "LIVE"; font.pixelSize: 10; font.weight: Font.Bold; color: "#ffffff" }
                     }
                     MouseArea { id: wm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.setWall(modelData.path) }
@@ -217,7 +217,7 @@ Item {
                 delegate: Rectangle {
                     id: tc
                     readonly property bool on: ((page.st.transition || {}).style || "ripple") === modelData.k
-                    width: tcr.implicitWidth + 28; height: 40; radius: on ? 12 * M3.shapeK : 20 * M3.shapeK
+                    width: tcr.implicitWidth + 28; height: 40; radius: M3.sq ? 0 : (on ? 12 * M3.shapeK : 20 * M3.shapeK)
                     color: on ? M3.secondaryContainer : (tcm.containsMouse ? M3.surfaceHigh : "transparent")
                     border.width: on ? 0 : 1; border.color: M3.outlineVariant
                     Behavior on radius { NumberAnimation { duration: 200 } }
@@ -291,7 +291,7 @@ Item {
         SectionTitle { text: I18n.t("Live wallpapers"); sub: I18n.t("Put videos (.mp4, .webm, .mkv) in a wallpaper folder: they show LIVE in your wallpapers. Pick one and it plays as your wallpaper; it pauses under full-screen apps.") }
         Rectangle {
             visible: page.st.have !== undefined && page.st.have.mpvpaper === false
-            width: parent.width; height: miss.implicitHeight + 26; radius: M3.rM; color: M3.alpha(M3.tertiary, 0.12)
+            width: parent.width; height: miss.implicitHeight + 26; radius: M3.sq ? 0 : (M3.rM); color: M3.alpha(M3.tertiary, 0.12)
             T { id: miss; x: 18; y: 13; width: parent.width - 36; wrapMode: Text.WordWrap; font.pixelSize: 13
                 text: I18n.t("Live wallpapers need mpvpaper (and ffmpeg for the previews). Install them with your package manager (NixOS: pkgs.mpvpaper, pkgs.ffmpeg).") }
         }

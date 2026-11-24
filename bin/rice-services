@@ -7,6 +7,8 @@
   rice-services is KEY                    "true" / "false" (KEY, or profile:NAME), for the notification center
   rice-services toggle KEY                flip a switch (the notification center buttons use this)
   rice-services profile power-saver|balanced|performance|get
+  rice-services bar                       {network, wifi, bluetooth, dnd}: the little the bar shows, cheap (V4.96)
+  rice-services pp state|start            power modes: JSON {installed, running, profiles, active, why}; start the daemon
   rice-services session lock|suspend|logout|reboot|poweroff   (the last three ask first)
 """
 import json
@@ -129,7 +131,8 @@ def state():
         "nightlight": night_on(),
     }
     s["profile"] = profile_get()
-    s["have"]["powerprofilesctl"] = shutil.which("powerprofilesctl") is not None
+    # "powerprofilesctl": power modes work (over D-Bus too, so tuned-ppd counts)
+    s["have"]["powerprofilesctl"] = bool(s["profile"])
     s["airplane"] = have["nmcli"] and not s["wifi"] and not s["bluetooth"] and out(["nmcli", "radio", "wwan"]) != "enabled"
     try:
         s["night_temp"] = int(open(NIGHT).read().strip() or 4500)
@@ -140,6 +143,34 @@ def state():
         u = unit_state(name, scope) if have["systemctl"] else {"installed": False, "active": False, "enabled": False}
         if u["installed"]:
             s["units"].append(dict(u, name=name, scope=scope, label=label, desc=desc))
+    print(json.dumps(s))
+
+
+def bar_state():
+    """V4.96: what the bar, the side bar and the dock show (Wi-Fi, Bluetooth, Do not disturb), with two small asks
+    at most. The bar asked for the whole state every 8 seconds: about 18 programs (nmcli three times, bluetoothctl,
+    wpctl twice, systemctl six times, pgrep, busctl, rice-hotcorner ...)"""
+    s = {"network": False, "wifi": False, "bluetooth": False, "dnd": False}
+    if shutil.which("nmcli"):
+        g = out(["nmcli", "-t", "-f", "NETWORKING,WIFI", "general"], 4).split(":")
+        s["network"] = len(g) > 0 and g[0] == "enabled"
+        s["wifi"] = len(g) > 1 and g[1] == "enabled"
+    # Bluetooth: the adapter's Powered over D-Bus (bluetoothctl starts a whole session for it)
+    bt = ""
+    if shutil.which("busctl"):
+        try:
+            hcis = sorted(d for d in os.listdir("/sys/class/bluetooth") if d.startswith("hci") and ":" not in d)
+        except OSError:
+            hcis = []
+        if hcis:
+            bt = out(["busctl", "--system", "get-property", "org.bluez", "/org/bluez/" + hcis[0], "org.bluez.Adapter1", "Powered"], 3)
+            s["bluetooth"] = bt.strip() == "b true"
+    elif shutil.which("bluetoothctl"):
+        s["bluetooth"] = bt_on()
+    if shell_notify():
+        s["dnd"] = dnd_on()
+    elif shutil.which("swaync-client"):
+        s["dnd"] = dnd_on()
     print(json.dumps(s))
 
 
@@ -199,19 +230,137 @@ def is_on(key):
         return False
 
 
+# power-profiles-daemon (or tuned-ppd, which answers the same way) over D-Bus with busctl: powerprofilesctl is a
+# Python script that breaks when python-gobject is missing, and tuned-ppd has none (V4.94: then Settings > Home
+# said "not running" and "Turn on" did nothing)
+PP_BUS = [("net.hadess.PowerProfiles", "/net/hadess/PowerProfiles", "net.hadess.PowerProfiles"),
+          ("org.freedesktop.UPower.PowerProfiles", "/org/freedesktop/UPower/PowerProfiles",
+           "org.freedesktop.UPower.PowerProfiles")]
+PP_NAMES = ("power-saver", "balanced", "performance")
+
+
+def pp_bus(prop):
+    for name, path, iface in PP_BUS:
+        r = out(["busctl", "--system", "get-property", name, path, iface, prop], 4)
+        if r:
+            return r, (name, path, iface)
+    return "", None
+
+
+def pp_state():
+    import re
+    active, where = pp_bus("ActiveProfile")
+    profiles = []
+    if where:
+        allp, _ = pp_bus("Profiles")
+        profiles = [p for p in re.findall(r'"Profile" s "([a-z-]+)"', allp) if p in PP_NAMES]
+        m = re.search(r'"([a-z-]+)"', active)
+        active = m.group(1) if m else ""
+    elif shutil.which("powerprofilesctl"):
+        lst = out(["powerprofilesctl", "list"], 4)
+        profiles = re.findall(r"^[*\s]*(power-saver|balanced|performance):\s*$", lst, re.M)
+        active = out(["powerprofilesctl", "get"], 4) if profiles else ""
+    profiles = [p for p in PP_NAMES if p in profiles]
+    installed = bool(where or profiles or shutil.which("powerprofilesctl") or any(os.path.exists(f) for f in (
+        "/usr/lib/systemd/system/power-profiles-daemon.service", "/etc/systemd/system/power-profiles-daemon.service",
+        "/usr/libexec/power-profiles-daemon", "/usr/lib/power-profiles-daemon")))
+    why = ""
+    if installed and not profiles and os.path.isdir("/run/systemd/system"):
+        r = run(["systemctl", "is-enabled", "power-profiles-daemon.service"])
+        if r and r.stdout.strip() == "masked":
+            why = "masked"
+        for c in ("tlp", "auto-cpufreq", "tuned"):
+            r = run(["systemctl", "is-active", c + ".service"])
+            if r and r.stdout.strip() == "active":
+                why = c
+    return {"installed": installed, "running": bool(profiles), "profiles": profiles, "active": active, "why": why}
+
+
+def system_executable(name):
+    """Resolve tools for an administrative request independently of user PATH."""
+    for base in ("/usr/bin", "/usr/sbin", "/bin", "/sbin", "/run/current-system/sw/bin"):
+        path = os.path.realpath(os.path.join(base, name))
+        try:
+            st = os.stat(path)
+            if (st.st_uid == 0 and not st.st_mode & 0o022 and os.path.isfile(path)
+                    and os.access(path, os.X_OK)
+                    and path.startswith(("/usr/bin/", "/usr/sbin/", "/bin/", "/sbin/", "/nix/store/"))):
+                return path
+        except OSError:
+            continue
+    return None
+
+
+def pp_start():
+    """Enable the one named power daemon with fixed native administrative commands."""
+    import time
+    st = pp_state()
+    if st["running"]:
+        print("ok")
+        return
+    if st["why"] in ("tlp", "auto-cpufreq", "tuned"):
+        print("conflict:" + st["why"])
+        sys.exit(3)
+
+    name = "power-profiles-daemon"
+    unit = name + ".service"
+    pk = system_executable("pkexec")
+    ctl = system_executable("systemctl")
+    if os.path.isdir("/run/systemd/system") and ctl:
+        # Separate, fixed arguments. Never elevate a shell or a user-writable helper.
+        actions = ([[ctl, "unmask", unit]] if st["why"] == "masked" else [])
+        actions.append([ctl, "enable", "--now", unit])
+    else:
+        service, update = system_executable("rc-service"), system_executable("rc-update")
+        actions = [[service, name, "start"], [update, "add", name, "default"]] if service and update else []
+    if not pk or not actions:
+        print("fail:No supported administrator tool; enable the power daemon with your system's service manager")
+        sys.exit(1)
+
+    # A graphical Polkit agent handles the consent; nothing asks for a password in our script.
+    if subprocess.run(["pgrep", "-u", str(os.getuid()), "-f", "polkit.*agent|hyprpolkitagent|polkit-gnome-authentication"],
+                      capture_output=True).returncode != 0:
+        r = run(["systemctl", "--user", "start", "hyprpolkitagent.service"], 8)
+        if r is None or r.returncode != 0:
+            for a in ("/usr/lib/hyprpolkitagent/hyprpolkitagent", "/usr/libexec/hyprpolkitagent",
+                      "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1",
+                      "/usr/libexec/polkit-gnome-authentication-agent-1", "/usr/libexec/polkit-kde-authentication-agent-1"):
+                if os.access(a, os.X_OK):
+                    bg([a])
+                    break
+        time.sleep(0.8)
+    for action in actions:
+        r = run([pk, *action], 120)
+        if r is None or r.returncode != 0:
+            print("fail:" + ((r.stderr.strip().splitlines() or ["Administrator authorization failed"])[-1]
+                             if r else "Administrator tool did not run"))
+            sys.exit(1)
+    for _ in range(25):
+        if pp_state()["running"]:
+            print("ok")
+            return
+        time.sleep(0.2)
+    print("fail:the service started but gives no power modes")
+    sys.exit(1)
+
+
 def profile_get():
-    if shutil.which("powerprofilesctl"):
-        return out(["powerprofilesctl", "get"]) or "balanced"
-    return ""
+    st = pp_state()
+    return st["active"] or ("balanced" if st["running"] else "")
 
 
 def profile_set(name):
     if name not in ("power-saver", "balanced", "performance"):
         sys.exit("profile: power-saver|balanced|performance")
-    if not shutil.which("powerprofilesctl"):
+    if not pp_state()["running"]:
         bg(["notify-send", "-a", "DarkShadow's Shell", "Power modes need power-profiles-daemon",
             "Install it (Arch: power-profiles-daemon, NixOS: services.power-profiles-daemon.enable)"])
         return
+    _, where = pp_bus("ActiveProfile")
+    if where:
+        r = run(["busctl", "--system", "set-property", where[0], where[1], where[2], "ActiveProfile", "s", name], 10)
+        if r and r.returncode == 0:
+            return
     r = run(["powerprofilesctl", "set", name], 10)
     if r is None or r.returncode != 0:
         bg(["notify-send", "-a", "DarkShadow's Shell", "Could not switch the power mode",
@@ -277,6 +426,12 @@ def main(a):
             print(profile_get())
         else:
             profile_set(a[2])
+    elif cmd == "bar":
+        bar_state()
+    elif cmd == "pp" and len(a) > 2 and a[2] == "state":
+        print(json.dumps(pp_state()))
+    elif cmd == "pp" and len(a) > 2 and a[2] == "start":
+        pp_start()
     elif cmd == "session" and len(a) > 2:
         session(a[2])
     elif cmd == "night-temp" and len(a) > 2:

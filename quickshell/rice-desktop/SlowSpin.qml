@@ -15,7 +15,7 @@ Item {
     Timer {
         interval: Look.fps > 0 ? Math.round(1000 / Look.fps) : 1000
         repeat: true
-        running: sp.running && sp.parent !== null && Look.fps > 0
+        running: sp.running && sp.parent !== null && Look.fps > 0 && !Look.sq
         onTriggered: sp.parent.rotation = (sp.parent.rotation + sp.turn * interval / sp.period) % 360
     }
     // as fast as the screen: an animator turns it on every frame the screen shows
@@ -25,6 +25,6 @@ Item {
         to: (sp.parent ? sp.parent.rotation : 0) + sp.turn
         duration: sp.period
         loops: Animation.Infinite
-        running: sp.running && sp.parent !== null && Look.fps === 0
+        running: sp.running && sp.parent !== null && Look.fps === 0 && !Look.sq
     }
 }

@@ -55,7 +55,7 @@ Item {
             visible: Prefs.previews
             width: parent.width
             height: 210
-            radius: M3.rL
+            radius: M3.sq ? 0 : (M3.rL)
             clip: true
             border.width: 0
             border.color: M3.outlineVariant
@@ -89,7 +89,7 @@ Item {
                         Item {
                             width: 64; height: 64
                             anchors.horizontalCenter: parent.horizontalCenter
-                            Rectangle { anchors.fill: parent; radius: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+                            Rectangle { anchors.fill: parent; radius: M3.sq ? 0 : (16); color: Qt.rgba(1, 1, 1, 0.05) }
                             Image {
                                 anchors.centerIn: parent
                                 width: Math.min(56, page.cs.size * 1.4); height: width
@@ -129,7 +129,7 @@ Item {
                     readonly property bool on: page.cs.theme === modelData.id
                     width: (grid.width - 20) / 3
                     height: 92
-                    radius: 14
+                    radius: M3.sq ? 0 : (14)
                     color: tm.containsMouse ? M3.surfaceHigh : M3.surfaceC
                     border.width: on ? 2 : 1
                     border.color: on ? M3.primary : (tm.containsMouse ? M3.outline : M3.surfaceHighest)
@@ -145,7 +145,7 @@ Item {
                         visible: modelData.kind === "hyprcursor" || modelData.kind === "both"
                         anchors.right: parent.right; anchors.rightMargin: on ? 34 : 10
                         y: 10
-                        width: hb.implicitWidth + 12; height: 18; radius: 9
+                        width: hb.implicitWidth + 12; height: 18; radius: M3.sq ? 0 : (9)
                         color: Qt.rgba(1, 1, 1, 0.08)
                         T { id: hb; anchors.centerIn: parent; text: I18n.t("Hyprcursor"); font.pixelSize: 9; color: "#cfcfcf" }
                     }
@@ -162,7 +162,7 @@ Item {
                     Rectangle {
                         visible: on
                         anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 10
-                        width: 18; height: 18; radius: 9
+                        width: 18; height: 18; radius: M3.sq ? 0 : (9)
                         color: "#F6F5F4"
                         T { anchors.centerIn: parent; text: "✓"; font.pixelSize: 11; font.bold: true; color: "#0d0d0d" }
                     }
@@ -184,22 +184,33 @@ Item {
             delegate: Rectangle {
                 width: parent ? parent.width : 400
                 height: 64
-                radius: 14
+                radius: M3.sq ? 0 : (14)
                 color: M3.surfaceC
                 border.width: 1
                 border.color: M3.outlineVariant
                 Column {
                     x: 18; anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width - 18 - 170
                     spacing: 3
-                    T { text: modelData.name; font.pixelSize: 14; font.bold: true }
-                    T { kind: "reading"; text: modelData.installed ? I18n.t("Installed  ·  ") + modelData.themes.join(", ") : modelData.desc; font.pixelSize: 11; color: M3.inkDim }
+                    T { text: modelData.name; font.pixelSize: 14; font.bold: true; width: parent.width; elide: Text.ElideRight }
+                    T { kind: "reading"; text: modelData.installed ? modelData.themes.join(", ") : modelData.desc; font.pixelSize: 11; color: M3.inkDim; width: parent.width; elide: Text.ElideRight }
                 }
+                // installed: a quiet mark (V5.02: an Update button sat on every installed pack)
                 Btn {
+                    visible: !modelData.installed
                     anchors.right: parent.right; anchors.rightMargin: 14
                     anchors.verticalCenter: parent.verticalCenter
-                    primary: !modelData.installed && page.getting === ""
-                    text: page.getting === modelData.id ? I18n.t("Downloading...") : (modelData.installed ? I18n.t("Update") : I18n.t("Install"))
+                    primary: page.getting === ""
+                    text: page.getting === modelData.id ? I18n.t("Downloading...") : I18n.t("Install")
                     onClicked: if (page.getting === "") page.getPack(modelData.id)
+                }
+                Row {
+                    visible: modelData.installed
+                    anchors.right: parent.right; anchors.rightMargin: 20
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 6
+                    Icon { anchors.verticalCenter: parent.verticalCenter; name: "check_circle"; glyph: ""; size: 16; color: M3.primary }
+                    T { anchors.verticalCenter: parent.verticalCenter; text: I18n.t("Installed"); font.pixelSize: 13; font.weight: Font.Medium; color: M3.primary }
                 }
             }
         }

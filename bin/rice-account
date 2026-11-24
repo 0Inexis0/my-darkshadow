@@ -1,0 +1,412 @@
+#!/usr/bin/env python3
+"""Your account and the other accounts of this computer, for Settings > System > Account (V4.87).
+
+As you:
+  rice-account info                 JSON: you (name, user name, admin ...) and the accounts of this computer
+  rice-account passwd               your password: reads "current\\nnew\\n" on stdin and answers JSON
+  rice-account add                  a new account: reads JSON on stdin (name, user, password, admin, copy)
+  rice-account admin USER on|off    make an account an administrator or a standard one
+  rice-account name "Full name"     your full name
+  rice-account remove USER keep|delete   remove an account (keep: its home folder stays)
+Changes to accounts ask for an administrator password (pkexec; sudo in a terminal).
+Passwords only ever go through stdin, never through the command line.
+"""
+import grp
+import io
+import json
+import os
+import pty
+import pwd
+import re
+import select
+import signal
+import stat
+import socket
+import subprocess
+import sys
+import tarfile
+import time
+
+USER_RE = re.compile(r"^[a-z_][a-z0-9_-]{0,30}$")
+ADMIN_GROUPS = ("wheel", "sudo", "admin")
+SYSTEM_DIRS = ("/run/wrappers/bin", "/usr/sbin", "/usr/bin", "/sbin", "/bin", "/run/current-system/sw/bin")
+ADMIN_COMMANDS = {"useradd", "chpasswd", "gpasswd", "usermod", "userdel", "runuser"}
+
+
+def trusted_binary(name):
+    """Use a fixed system path with a root-controlled resolved path, never PATH."""
+    for directory in SYSTEM_DIRS:
+        candidate = os.path.join(directory, name)
+        try:
+            paths = [candidate, os.path.realpath(candidate)]
+            while paths:
+                path = paths.pop()
+                st = os.stat(path)
+                if st.st_uid != 0 or st.st_mode & 0o022:
+                    raise PermissionError
+                if path != "/":
+                    paths.append(os.path.dirname(path))
+            st = os.stat(candidate)
+            if stat.S_ISREG(st.st_mode) and os.access(candidate, os.X_OK):
+                return os.path.realpath(candidate)
+        except OSError:
+            continue
+    return None
+
+
+def out(obj, code=0):
+    print(json.dumps(obj))
+    sys.exit(code)
+
+
+def admin_group():
+    for g in ADMIN_GROUPS:
+        try:
+            grp.getgrnam(g)
+            return g
+        except KeyError:
+            pass
+    return ""
+
+
+def is_admin(user, gid):
+    for g in ADMIN_GROUPS:
+        try:
+            e = grp.getgrnam(g)
+        except KeyError:
+            continue
+        if user in e.gr_mem or e.gr_gid == gid:
+            return True
+    return False
+
+
+def face_of(p):
+    for f in ("/var/lib/AccountsService/icons/" + p.pw_name, os.path.join(p.pw_dir, ".face")):
+        try:
+            if os.path.isfile(f) and os.access(f, os.R_OK):
+                return f
+        except OSError:
+            pass
+    return ""
+
+
+def human(p):
+    return 1000 <= p.pw_uid < 60000 and not p.pw_shell.endswith(("nologin", "/false")) and p.pw_name != "nobody"
+
+
+def full_name(p):
+    return p.pw_gecos.split(",")[0].strip()
+
+
+def info():
+    me = pwd.getpwuid(os.getuid())
+    users = []
+    for p in sorted(pwd.getpwall(), key=lambda x: x.pw_uid):
+        if not human(p):
+            continue
+        users.append({"user": p.pw_name, "name": full_name(p), "uid": p.pw_uid, "admin": is_admin(p.pw_name, p.pw_gid),
+                      "me": p.pw_uid == me.pw_uid, "face": face_of(p)})
+    out({"user": me.pw_name, "name": full_name(me), "uid": me.pw_uid, "home": me.pw_dir,
+         "shell": os.path.basename(me.pw_shell), "host": socket.gethostname(),
+         "admin": is_admin(me.pw_name, me.pw_gid), "group": admin_group(), "users": users,
+         "pkexec": trusted_binary("pkexec") is not None})
+
+
+def passwd():
+    """Runs passwd in a terminal of its own and answers its questions (in English, LC_ALL=C)."""
+    lines = sys.stdin.read(8192).split("\n")
+    if len(lines) < 2 or not lines[1]:
+        out({"ok": False, "error": "empty"}, 1)
+    cur, new = lines[0], lines[1]
+    if any(len(p) > 1024 or any(c in p for c in "\r\0") for p in (cur, new)):
+        out({"ok": False, "error": "password"}, 1)
+    passwd_bin = trusted_binary("passwd")
+    if not passwd_bin or os.getuid() == 0:
+        out({"ok": False, "error": "unsupported"}, 1)
+    pid, fd = pty.fork()
+    if pid == 0:
+        os.environ["LC_ALL"] = "C"
+        os.execv(passwd_bin, [passwd_bin])
+    buf, sent, reaped, deadline = "", 0, None, time.monotonic() + 25
+    answers = [cur, new, new]
+    while time.monotonic() < deadline:
+        r, _, _ = select.select([fd], [], [], 0.5)
+        if fd in r:
+            try:
+                chunk = os.read(fd, 1024).decode(errors="replace")
+            except OSError:
+                break
+            if not chunk:
+                break
+            buf += chunk
+            tail = buf.lower().rstrip()
+            if tail.endswith(":") and sent >= len(answers):
+                break    # it asks again (a weak password): stop here, the answer comes from what it said
+            if tail.endswith(":") and sent < len(answers):
+                # the first question may already be the new password (no current one asked)
+                if sent == 0 and "new" in tail.splitlines()[-1]:
+                    answers = [new, new]
+                os.write(fd, (answers[sent] + "\n").encode())
+                sent += 1
+                buf += "\n"
+        else:
+            try:
+                done, status = os.waitpid(pid, os.WNOHANG)
+            except ChildProcessError:
+                break
+            if done:
+                reaped = status
+                break
+    code = 1 if reaped is None else os.waitstatus_to_exitcode(reaped)
+    os.close(fd)
+    try:
+        done, status = os.waitpid(pid, os.WNOHANG)
+        if done == 0:
+            time.sleep(0.5)
+            done, status = os.waitpid(pid, os.WNOHANG)
+        if done == 0:
+            os.kill(pid, signal.SIGTERM)
+            os.waitpid(pid, 0)
+        else:
+            code = os.waitstatus_to_exitcode(status)
+    except (ChildProcessError, ProcessLookupError):
+        pass
+    low = buf.lower()
+    if code == 0 and ("success" in low or "updated" in low or "changed" in low or sent >= len(answers)):
+        out({"ok": True})
+    why = "wrong" if ("authentication" in low or "incorrect" in low or "failure" in low) else "weak" if (
+        "bad password" in low or "short" in low or "simple" in low or "dictionary" in low or "palindrome" in low) else "other"
+    out({"ok": False, "error": why}, 1)
+
+
+def privileged(name, args, data=None):
+    """Only run fixed account-management binaries, never an elevated shell or this script."""
+    if name not in ADMIN_COMMANDS:
+        raise ValueError("not an account management command")
+    if os.getuid() == 0:
+        return "unsupported"
+    binary = trusted_binary(name)
+    pkexec = trusted_binary("pkexec")
+    sudo = trusted_binary("sudo") if sys.stdin.isatty() else None
+    if not binary:
+        return "unsupported"
+    if sudo:
+        cmd = [sudo, "--", binary, *args]
+    elif pkexec:
+        cmd = [pkexec, binary, *args]
+    else:
+        return "nopkexec"
+    try:
+        p = subprocess.run(cmd, input=data, text=not isinstance(data, bytes), capture_output=True, check=False, timeout=180)
+    except (OSError, subprocess.TimeoutExpired):
+        return "other"
+    # Never surface subprocess text: a failed password tool could echo stdin.
+    if p.returncode == 0:
+        return ""
+    return "cancelled" if pkexec and p.returncode in (126, 127) else "other"
+
+
+def answer(error, **extra):
+    if error:
+        out({"ok": False, "error": error, **extra}, 1)
+    out({"ok": True, **extra})
+
+
+def clean_name(s):
+    return re.sub(r"[:,=\x00-\x1f\x7f]", " ", str(s or "")).strip()[:80]
+
+
+APPEARANCE_CHOICES = {
+    "style": {"flat", "island", "islands", "pills", "notch", "dynamic", "edge"},
+    "position": {"top", "bottom", "left", "right"},
+    "ws_style": {"dots", "pacman", "letters", "numbers"},
+}
+APPEARANCE_MODULES = set("launcher workspaces title media island tray volume network bluetooth battery notifications power visualizer weather sysmon date music".split())
+
+
+def open_directory_chain(path):
+    """No symlinks at any stage; leave the caller's home open by descriptor."""
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    fd = os.open("/", flags)
+    try:
+        for name in path.strip("/").split("/"):
+            child = os.open(name, flags, dir_fd=fd)
+            os.close(fd)
+            fd = child
+        return os.dup(fd)
+    finally:
+        os.close(fd)
+
+
+def read_appearance(directory, name):
+    try:
+        fd = os.open(name, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW, dir_fd=directory)
+        with os.fdopen(fd, "rb") as stream:
+            st = os.fstat(stream.fileno())
+            if not stat.S_ISREG(st.st_mode) or st.st_uid != os.getuid() or st.st_size > 16384:
+                return b""
+            data = stream.read(16385)
+            return data if len(data) <= 16384 else b""
+    except OSError:
+        return b""
+
+
+def sanitize_bar(data):
+    try:
+        raw = json.loads(data)
+    except (ValueError, UnicodeError):
+        return {}
+    if not isinstance(raw, dict):
+        return {}
+    safe = {}
+    for k, allowed in APPEARANCE_CHOICES.items():
+        if isinstance(raw.get(k), str) and raw[k] in allowed:
+            safe[k] = raw[k]
+    for k, bounds in {"height": (28, 56), "opacity": (0.3, 1), "tray_size": (12, 28)}.items():
+        if type(raw.get(k)) in (int, float) and bounds[0] <= raw[k] <= bounds[1]:
+            safe[k] = raw[k]
+    for k in ("shadow", "autohide", "seconds", "edge_frame", "island_date"):
+        if isinstance(raw.get(k), bool):
+            safe[k] = raw[k]
+    if isinstance(raw.get("layout"), dict):
+        safe["layout"] = {}
+        seen = set()
+        for col in ("left", "center", "right"):
+            safe["layout"][col] = []
+            modules = raw["layout"].get(col)
+            for module in modules if isinstance(modules, list) else []:
+                if isinstance(module, str) and module in APPEARANCE_MODULES and module not in seen:
+                    seen.add(module)
+                    safe["layout"][col].append(module)
+        safe["music_added"] = True
+    return safe
+
+
+def appearance_archive(home):
+    try:
+        fd = open_directory_chain(os.path.join(home, ".config", "rice"))
+    except OSError:
+        return b""
+    try:
+        bar = sanitize_bar(read_appearance(fd, "bar.json"))
+        mode = read_appearance(fd, "color-mode").strip()
+    finally:
+        os.close(fd)
+    files = {}
+    if bar:
+        files["bar.json"] = json.dumps(bar, allow_nan=False).encode() + b"\n"
+    if re.fullmatch(rb"(?:[a-z][a-z0-9-]{0,23}|#[0-9a-fA-F]{6})", mode):
+        files["color-mode"] = mode + b"\n"
+    if not files:
+        return b""
+    output = io.BytesIO()
+    with tarfile.open(fileobj=output, mode="w", format=tarfile.USTAR_FORMAT) as tar:
+        for name, data in files.items():
+            item = tarfile.TarInfo(".config/rice/" + name)
+            item.size, item.mode = len(data), 0o600
+            tar.addfile(item, io.BytesIO(data))
+    return output.getvalue()
+
+
+def copy_appearance(user, archive):
+    if not archive:
+        return ""
+    try:
+        target = pwd.getpwnam(user)
+    except KeyError:
+        return "unsupported"
+    home = "/home/" + user
+    binary = trusted_binary("tar")
+    if not binary or not human(target) or target.pw_uid == os.getuid() or target.pw_dir != home:
+        return "unsupported"
+    try:
+        st = os.lstat(home)
+        if not stat.S_ISDIR(st.st_mode) or st.st_uid != target.pw_uid:
+            return "unsupported"
+    except OSError:
+        return "unsupported"
+    # tar receives bytes already read by the caller, and runs as the new user, not root.
+    return privileged("runuser", ["-u", user, "--", binary, "-x", "-f", "-", "-C", home,
+                                  "--no-same-owner", "--no-same-permissions", "--keep-old-files"], archive)
+
+
+def account_add(d):
+    user, name, pw = str(d.get("user", "")), clean_name(d.get("name")), d.get("password")
+    if not USER_RE.fullmatch(user):
+        answer("user name")
+    archive = appearance_archive(pwd.getpwuid(os.getuid()).pw_dir) if d.get("copy") is True else b""
+    if not isinstance(pw, str) or not pw or len(pw) > 1024 or any(c in pw for c in "\n\r\0"):
+        answer("password")
+    try:
+        pwd.getpwnam(user)
+    except KeyError:
+        pass
+    else:
+        answer("taken")
+    group = admin_group() if d.get("admin") is True else ""
+    if d.get("admin") is True and not group:
+        answer("no admin group")
+    error = privileged("useradd", ["-m", "-c", name, "--", user])
+    if error:
+        answer(error)
+    copy_error = copy_appearance(user, archive) if archive else ""
+    error = privileged("chpasswd", [], "%s:%s\n" % (user, pw))
+    if error:
+        answer(error, detail="Account created but password setup did not complete. It may still be locked.")
+    if group:
+        error = privileged("gpasswd", ["-a", user, group])
+        if error:
+            answer(error, detail="Account created, but administrator access was not granted.")
+    if copy_error:
+        answer(copy_error, detail="Account created, but the appearance settings could not be copied.")
+    answer("", user=user)
+
+
+def account_target(user):
+    try:
+        target = pwd.getpwnam(user)
+    except KeyError:
+        answer("other")
+    if not human(target) or target.pw_uid == os.getuid():
+        answer("self")
+    return target
+
+
+def main():
+    a = sys.argv[1:]
+    c = a[0] if a else "info"
+    if c == "info":
+        info()
+    elif c == "passwd":
+        passwd()
+    elif c == "add" and len(a) == 1:
+        try:
+            d = json.loads(sys.stdin.read(8192))
+            if not isinstance(d, dict):
+                raise ValueError
+        except ValueError:
+            answer("other")
+        account_add(d)
+    elif c == "admin" and len(a) == 3 and USER_RE.fullmatch(a[1]) and a[2] in ("on", "off"):
+        account_target(a[1])
+        group = admin_group()
+        if not group:
+            answer("no admin group")
+        answer(privileged("gpasswd", ["-a" if a[2] == "on" else "-d", a[1], group]))
+    elif c == "name" and len(a) == 2:
+        me = pwd.getpwuid(os.getuid())
+        if not human(me):
+            answer("unsupported")
+        answer(privileged("usermod", ["-c", clean_name(a[1]), "--", me.pw_name]))
+    elif c == "remove" and len(a) == 3 and USER_RE.fullmatch(a[1]) and a[2] in ("keep", "delete"):
+        target = account_target(a[1])
+        if a[2] == "delete" and os.path.realpath(target.pw_dir) != "/home/" + target.pw_name:
+            answer("Keep files for a nonstandard home directory.")
+        # userdel itself refuses to remove logged-in accounts.
+        answer(privileged("userdel", (["-r"] if a[2] == "delete" else []) + ["--", a[1]]))
+    else:
+        out({"ok": False, "error": "invalid command"}, 2)
+
+
+if __name__ == "__main__":
+    main()

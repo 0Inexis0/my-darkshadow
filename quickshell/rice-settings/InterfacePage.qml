@@ -10,16 +10,27 @@ Item {
         return c && c[k] !== undefined ? c[k] : d
     }
     // ---------- pinned apps (the dock shows them first, in this order) ----------
-    readonly property var pins: page.ctl && page.ctl.dst.dock && page.ctl.dst.dock.apps ? page.ctl.dst.dock.apps : []
+    readonly property var pins: {
+        const l = page.ctl && page.ctl.dst.dock && page.ctl.dst.dock.apps ? page.ctl.dst.dock.apps : []
+        return l.filter(function(id) { return DesktopEntries.heuristicLookup(id) !== null })
+    }
+    // pins whose app is gone: they take no row from the dock, they only wait here
+    readonly property var gone: {
+        const l = page.ctl && page.ctl.dst.dock && page.ctl.dst.dock.apps ? page.ctl.dst.dock.apps : []
+        return l.filter(function(id) { return DesktopEntries.heuristicLookup(id) === null })
+    }
     property string q: ""
     function idOf(e) { return (e.id || "").replace(/\.desktop$/, "") }
     function entry(id) { return DesktopEntries.heuristicLookup(id) }
-    function setPins(l) {
-        const d = JSON.parse(JSON.stringify(page.ctl.dst)); d.dock = d.dock || {}; d.dock.apps = l; page.ctl.dst = d
-        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" dock-apps \"$1\"", "_", JSON.stringify(l)])
+    // dropGone: "Remove them" writes the list as it is; everything else keeps the pins of apps that are not
+    // installed in the file (an app you reinstall keeps its place, the dock skips it)
+    function setPins(l, dropGone) {
+        const all = dropGone ? l : l.concat(gone)
+        const d = JSON.parse(JSON.stringify(page.ctl.dst)); d.dock = d.dock || {}; d.dock.apps = all; page.ctl.dst = d
+        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" dock-apps \"$1\"", "_", JSON.stringify(all)])
         page.ctl.status = I18n.t("Dock: ") + l.length + I18n.t(" pinned apps")
     }
-    function pin(id) { if (pins.indexOf(id) < 0) setPins(pins.concat([id])) }
+    function pin(id) { if (pins.indexOf(id) < 0 && gone.indexOf(id) < 0) setPins(pins.concat([id])) }
     function unpin(id) { setPins(pins.filter(function(x) { return x !== id })) }
     function move(i, d) { const l = pins.slice(); const j = i + d; if (j < 0 || j >= l.length) return; const t = l[i]; l[i] = l[j]; l[j] = t; setPins(l) }
     readonly property var found: {
@@ -54,13 +65,13 @@ Item {
             width: flick.width
             spacing: 10
 
-            T { kind: "title"; text: I18n.t("Dock"); font.pixelSize: 16; font.bold: true }
+            SectionTitle { text: I18n.t("Dock") }
 
             // live preview of the dock
             Rectangle {
                 width: parent.width
                 height: 150
-                radius: M3.rL
+                radius: M3.sq ? 0 : (M3.rL)
                 clip: true
                 border.width: 0
                 border.color: M3.outlineVariant
@@ -68,8 +79,8 @@ Item {
                     GradientStop { position: 0; color: M3.stageTop }
                     GradientStop { position: 1; color: M3.stageBottom }
                 }
-                Rectangle { x: 40; y: 26; width: 180; height: 60; radius: 10; color: Qt.rgba(1, 1, 1, 0.07) }
-                Rectangle { x: parent.width - 260; y: 18; width: 200; height: 76; radius: 10; color: Qt.rgba(1, 1, 1, 0.05) }
+                Rectangle { x: 40; y: 26; width: 180; height: 60; radius: M3.sq ? 0 : (10); color: Qt.rgba(1, 1, 1, 0.07) }
+                Rectangle { x: parent.width - 260; y: 18; width: 200; height: 76; radius: M3.sq ? 0 : (10); color: Qt.rgba(1, 1, 1, 0.05) }
                 Rectangle {
                     id: mockDock
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -77,7 +88,7 @@ Item {
                     anchors.bottomMargin: 14
                     width: icons.width + 20
                     height: 52
-                    radius: 20
+                    radius: M3.sq ? 0 : (20)
                     visible: page.dv("enabled", false) === true
                     color: page.dv("background", true) === false ? "transparent"
                          : Qt.rgba(0.1, 0.1, 0.11, Number(page.dv("opacity", 0.78)))
@@ -91,7 +102,7 @@ Item {
                         Repeater {
                             model: ["#e06c75", "#61afef", "#e5c07b", "#98c379", "#c678dd", "#56b6c2"]
                             delegate: Rectangle {
-                                width: 34; height: 34; radius: 10
+                                width: 34; height: 34; radius: M3.sq ? 0 : (10)
                                 color: page.dv("tint", false) === true ? M3.inkDim : (page.dv("shade", true) !== false ? Qt.tint(modelData, Qt.rgba(M3.primary.r, M3.primary.g, M3.primary.b, 0.62)) : modelData)
                                 opacity: 0.9
                             }
@@ -127,6 +138,13 @@ Item {
                 current: page.dv("position", "bottom") === "top" ? "bottom" : page.dv("position", "bottom")
                 onChosen: function(x) { page.ctl.dset("dock", "position", x) }
             }
+            SegRow {
+                label: I18n.t("Style")
+                desc: I18n.t("Sizes, spacing and icons: Edit mode, Dock and Icons tabs (right click on the dock)")
+                options: [{ label: I18n.t("Floating"), value: "floating" }, { label: I18n.t("Pills"), value: "pills" }, { label: I18n.t("Full"), value: "full" }]
+                current: page.dv("style", "floating")
+                onChosen: function(x) { page.ctl.dset("dock", "style", x) }
+            }
             ToggleRow {
                 label: I18n.t("Background")
                 desc: I18n.t("Draw a panel behind the icons")
@@ -153,6 +171,8 @@ Item {
                 onToggled: function(v) { page.ctl.dset("dock", "hover", v ? "on" : "off") }
             }
             ToggleRow {
+                // only a dock that stays out can keep room: one that hides on hover is over the windows when it shows
+                visible: page.dv("hover", true) !== true || page.dv("pinnedStartup", false) === true
                 label: I18n.t("Keep room for it")
                 desc: I18n.t("While the dock stays out, windows end next to it instead of under it (like the bar)")
                 checked: page.dv("reserve", true) === true
@@ -165,7 +185,7 @@ Item {
                 onToggled: function(v) { page.ctl.dset("dock", "pinnedStartup", v ? "on" : "off") }
             }
 
-            T { kind: "title"; text: I18n.t("Buttons"); font.pixelSize: 16; font.bold: true; topPadding: 8 }
+            SectionTitle { text: I18n.t("Buttons") }
 
             ToggleRow {
                 label: I18n.t("Media player")
@@ -210,7 +230,7 @@ Item {
                         readonly property var e: page.entry(modelData)
                         readonly property int pi: index
                         readonly property string pid: modelData
-                        height: 52; width: pr.implicitWidth + 24; radius: 26
+                        height: 52; width: pr.implicitWidth + 24; radius: M3.sq ? 0 : (26)
                         color: M3.secondaryContainer
                         Row {
                             id: pr
@@ -223,7 +243,7 @@ Item {
                             Repeater {
                                 model: [{ s: "chevron_left", g: "‹", d: -1 }, { s: "chevron_right", g: "›", d: 1 }, { s: "close", g: "×", d: 0 }]
                                 delegate: Rectangle {
-                                    width: 26; height: 26; radius: 13; anchors.verticalCenter: parent.verticalCenter
+                                    width: 26; height: 26; radius: M3.sq ? 0 : (13); anchors.verticalCenter: parent.verticalCenter
                                     color: bm.containsMouse ? M3.alpha(M3.ink, 0.12) : "transparent"
                                     Icon { anchors.centerIn: parent; name: modelData.s; glyph: modelData.g; size: 15; color: M3.inkSecondaryC }
                                     MouseArea { id: bm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
@@ -247,7 +267,7 @@ Item {
                     delegate: Rectangle {
                         readonly property string aid: page.idOf(modelData)
                         readonly property bool on: page.pins.indexOf(aid) >= 0
-                        width: ar.implicitWidth + 24; height: 44; radius: on ? 22 : 12
+                        width: ar.implicitWidth + 24; height: 44; radius: M3.sq ? 0 : (on ? 22 : 12)
                         color: on ? M3.primary : (am.containsMouse ? M3.surfaceHigh : M3.surfaceC)
                         Behavior on radius { NumberAnimation { duration: M3.d(240); easing.type: M3.springy; easing.overshoot: 1.6 * Prefs.bounce } }
                         Behavior on color { ColorAnimation { duration: 160 } }
@@ -263,18 +283,41 @@ Item {
                 }
             }
 
+            // V4.89: the dock's own tab and its icons live in Edit mode now (these two switches still work: they
+            // hand the icons back to them)
+            SettingRow {
+                label: I18n.t("Dock and icons in Edit mode")
+                desc: I18n.t("Its look, sizes and pinned apps, and icon styles, shapes and packs, with the dock in sight")
+                reserved: 230
+                Row {
+                    anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
+                    spacing: 8
+                    Btn { text: I18n.t("Dock"); variant: "tonal"; onClicked: Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" edit on dock"]) }
+                    Btn { text: I18n.t("Icons"); variant: "tonal"; onClicked: Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/desktop-set\" edit on icons"]) }
+                }
+            }
+            // pins whose app is gone: they stay in the file, but the dock cannot show or start them
+            SettingRow {
+                visible: page.gone.length > 0
+                label: page.gone.length + I18n.t(" pinned apps are not installed")
+                desc: I18n.t("They take no row on the dock. Install the app and it shows up, or take the pin away")
+                reserved: 190
+                Btn { anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
+                    text: I18n.t("Remove them"); sym: "delete"; icon: ""; variant: "tonal"
+                    onClicked: page.setPins(page.pins, true) }
+            }
             ToggleRow {
                 label: I18n.t("Tint app icons")
                 desc: I18n.t("Paint icons in a single neutral tone")
                 checked: page.dv("tint", false) === true
-                onToggled: function(v) { page.ctl.dset("dock", "tint", v ? "on" : "off") }
+                onToggled: function(v) { page.ctl.dset("dock", "tint", v ? "on" : "off"); page.ctl.dset("icons", "look", "auto") }
             }
             ToggleRow {
                 visible: page.dv("tint", false) !== true
                 label: I18n.t("Match the wallpaper")
                 desc: I18n.t("App icons take a shade of your wallpaper's color")
                 checked: page.dv("shade", true) !== false
-                onToggled: function(v) { page.ctl.dset("dock", "shade", v ? "on" : "off") }
+                onToggled: function(v) { page.ctl.dset("dock", "shade", v ? "on" : "off"); page.ctl.dset("icons", "look", "auto") }
             }
 
             T {

@@ -43,22 +43,22 @@ Column {
     Rectangle {
         width: parent.width
         height: Math.max(150, info.implicitHeight + 36)
-        radius: M3.rXL
+        radius: M3.sq ? 0 : (M3.rXL)
         clip: true
         color: M3.surfaceC
         // a little drawing of it: a big clock, a card in the middle
         Rectangle {
             id: mini
             x: 16; anchors.verticalCenter: parent.verticalCenter
-            width: 192; height: 118; radius: 16; clip: true
+            width: 192; height: 118; radius: M3.sq ? 0 : (16); clip: true
             gradient: Gradient { GradientStop { position: 0; color: M3.primaryContainer } GradientStop { position: 1; color: M3.surfaceHigh } }
             T { x: 12; y: 10; text: Qt.formatTime(new Date(), "HH:mm"); font.pixelSize: 15; font.weight: Font.DemiBold; color: M3.inkPrimaryC }
             Rectangle {
                 anchors.centerIn: parent; anchors.verticalCenterOffset: 10
-                width: 84; height: 64; radius: 14; color: M3.alpha(M3.surface, 0.85)
-                Rectangle { anchors.horizontalCenter: parent.horizontalCenter; y: 8; width: 22; height: 22; radius: 11; color: M3.primary }
-                Rectangle { anchors.horizontalCenter: parent.horizontalCenter; y: 38; width: 64; height: 14; radius: 7; color: M3.surfaceHighest
-                    Rectangle { anchors.right: parent.right; anchors.rightMargin: 2; anchors.verticalCenter: parent.verticalCenter; width: 10; height: 10; radius: 5; color: M3.primary } }
+                width: 84; height: 64; radius: M3.sq ? 0 : (14); color: M3.alpha(M3.surface, 0.85)
+                Rectangle { anchors.horizontalCenter: parent.horizontalCenter; y: 8; width: 22; height: 22; radius: M3.sq ? 0 : (11); color: M3.primary }
+                Rectangle { anchors.horizontalCenter: parent.horizontalCenter; y: 38; width: 64; height: 14; radius: M3.sq ? 0 : (7); color: M3.surfaceHighest
+                    Rectangle { anchors.right: parent.right; anchors.rightMargin: 2; anchors.verticalCenter: parent.verticalCenter; width: 10; height: 10; radius: M3.sq ? 0 : (5); color: M3.primary } }
             }
         }
         Column {
@@ -133,13 +133,13 @@ Column {
                 id: ck
                 required property var modelData
                 readonly property bool on: card.clock === modelData.v
-                width: 150; height: 112; radius: 18
+                width: 150; height: 112; radius: M3.sq ? 0 : (18)
                 color: on ? M3.primaryContainer : (cm.containsMouse ? M3.surfaceHigh : M3.surfaceC)
                 border.width: on ? 2 : 0; border.color: M3.primary
                 Behavior on color { ColorAnimation { duration: 160 } }
                 // the little picture
                 Rectangle {
-                    x: 10; y: 10; width: parent.width - 20; height: 66; radius: 10; clip: true
+                    x: 10; y: 10; width: parent.width - 20; height: 66; radius: M3.sq ? 0 : (10); clip: true
                     gradient: Gradient { GradientStop { position: 0; color: M3.alpha(M3.primary, 0.35) } GradientStop { position: 1; color: M3.surfaceLowest } }
                     readonly property string hm: Qt.formatTime(new Date(), "HH:mm")
                     T { visible: ck.modelData.v === "classic"; x: 8; anchors.bottom: parent.bottom; anchors.bottomMargin: 6; text: parent.hm; font.pixelSize: 22; font.weight: Font.DemiBold; color: M3.ink }
@@ -148,12 +148,12 @@ Column {
                         T { text: Qt.formatTime(new Date(), "mm"); font.pixelSize: 22; font.weight: Font.Black; color: M3.primary } }
                     T { visible: ck.modelData.v === "center"; anchors.centerIn: parent; text: parent.hm; font.pixelSize: 26; font.weight: Font.Light; color: M3.ink }
                     Rectangle { visible: ck.modelData.v === "pill"; anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.bottom; anchors.bottomMargin: 8
-                        width: 76; height: 24; radius: 12; color: M3.primaryContainer
+                        width: 76; height: 24; radius: M3.sq ? 0 : (12); color: M3.primaryContainer
                         T { anchors.centerIn: parent; text: parent.parent.hm; font.pixelSize: 13; font.weight: Font.DemiBold; color: M3.inkPrimaryC } }
                     Row { visible: ck.modelData.v === "shapes"; anchors.centerIn: parent; spacing: 4
-                        Rectangle { width: 34; height: 34; radius: 10; color: M3.primaryContainer
+                        Rectangle { width: 34; height: 34; radius: M3.sq ? 0 : (10); color: M3.primaryContainer
                             T { anchors.centerIn: parent; text: Qt.formatTime(new Date(), "HH"); font.pixelSize: 15; font.weight: Font.Bold; color: M3.inkPrimaryC } }
-                        Rectangle { width: 34; height: 34; radius: 17; color: M3.primary
+                        Rectangle { width: 34; height: 34; radius: M3.sq ? 0 : (17); color: M3.primary
                             T { anchors.centerIn: parent; text: Qt.formatTime(new Date(), "mm"); font.pixelSize: 15; font.weight: Font.Bold; color: M3.inkPrimary } } }
                 }
                 T { anchors.horizontalCenter: parent.horizontalCenter; y: 84; text: I18n.t(ck.modelData.n); font.pixelSize: 13; font.weight: ck.on ? Font.DemiBold : Font.Normal

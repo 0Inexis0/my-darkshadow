@@ -19,6 +19,7 @@ Column {
             id: cell
             width: list.width
             property var spec: modelData
+            readonly property bool joinable: true
             opacity: 0
             Component.onCompleted: appear.start()
             SequentialAnimation {
@@ -30,6 +31,7 @@ Column {
 
             SliderRow {
                 id: sl
+                host: cell
                 visible: cell.spec.type === "slider"
                 width: parent.width
                 label: cell.spec.label
@@ -44,6 +46,7 @@ Column {
             }
             ToggleRow {
                 id: tg
+                host: cell
                 visible: cell.spec.type === "toggle"
                 width: parent.width
                 label: cell.spec.label
@@ -53,6 +56,7 @@ Column {
             }
             SegRow {
                 id: sg
+                host: cell
                 visible: cell.spec.type === "seg"
                 width: parent.width
                 label: cell.spec.label

@@ -1,0 +1,192 @@
+#!/usr/bin/env bash
+# rice-doctor: what is wrong with this computer for DarkShadow's Shell, in plain words (V4.94).
+#   rice-doctor              a report: the graphics card and its driver (NVIDIA most of all), Hyprland, Quickshell,
+#                            and crash counts; add --logs to include potentially private local log excerpts
+#   rice-doctor nvidia-fix   NVIDIA: the settings Hyprland needs (kernel mode setting and its framebuffer, the
+#                            Wayland part of the driver), then the boot image again. Asks first; needs your password
+# Repair requires interactive confirmation and uses fixed system programs under sudo.
+set -u
+B=$'\e[1m'; G=$'\e[32m'; Y=$'\e[33m'; R=$'\e[31m'; D=$'\e[2m'; Z=$'\e[0m'
+[ -t 1 ] || { B=; G=; Y=; R=; D=; Z=; }
+ok() { printf '  %s✔%s %s\n' "$G" "$Z" "$*"; }
+warn() { printf '  %s!%s %s\n' "$Y" "$Z" "$*"; }
+bad() { printf '  %s✘%s %s\n' "$R" "$Z" "$*"; }
+fixes=()
+
+
+gpu_devices_class() {
+  local gpu class vendor
+  for gpu in /sys/bus/pci/devices/*; do
+    if [ ! -r "$gpu/class" ] || [ ! -r "$gpu/vendor" ]; then continue; fi
+    read -r class < "$gpu/class" || continue
+    read -r vendor < "$gpu/vendor" || continue
+    if [[ "$class" == 0x03* && "$vendor" == 0x10de ]]; then return 0; fi
+  done
+  return 1
+}
+nv_card() {
+  gpu_devices_class || lspci 2>/dev/null | grep -iE 'vga|3d|display' | grep -qi nvidia
+}
+param() { cat "/sys/module/nvidia_drm/parameters/$1" 2>/dev/null; }
+egl_wl() {
+  local f
+  for f in /usr/share/egl/egl_external_platform.d/*nvidia_wayland*.json /usr/lib/libnvidia-egl-wayland.so* /usr/lib64/libnvidia-egl-wayland.so* \
+           /usr/lib/x86_64-linux-gnu/libnvidia-egl-wayland.so*; do
+    [ -e "$f" ] && return 0
+  done
+  return 1
+}
+
+gpu_report() {
+  printf '\n%sGraphics%s\n' "$B" "$Z"
+  lspci 2>/dev/null | grep -iE 'vga|3d|display' | sed 's/^[0-9a-f:.]* /  /'
+  if ! nv_card; then ok "no NVIDIA display device detected"; return; fi
+  if [ -r /proc/driver/nvidia/version ]; then
+    local v; v="$(head -1 /proc/driver/nvidia/version | sed 's/.*Module *//; s/  .*//')"
+    if grep -qi "open kernel" /proc/driver/nvidia/version; then ok "NVIDIA driver (open): $v"; else ok "NVIDIA driver: $v"; fi
+  elif lsmod 2>/dev/null | grep -q '^nouveau'; then
+    warn "nouveau (the free driver) is in use: games are slow. For games install nvidia-open (Arch: sudo pacman -S nvidia-open nvidia-utils)"
+    return
+  else
+    bad "the NVIDIA driver is not loaded (installed, but no reboot since? Then reboot)"
+    fixes+=("reboot after installing the driver")
+    return
+  fi
+  if command -v nvidia-smi >/dev/null && ! nvidia-smi >/dev/null 2>&1; then
+    bad "nvidia-smi fails: the driver and its programs are of different versions (update both, then reboot)"
+    fixes+=("sudo pacman -Syu, then reboot")
+  fi
+  case "$(param modeset)" in
+    Y|1) ok "kernel mode setting is on (nvidia_drm modeset)" ;;
+    *) bad "kernel mode setting is off: Hyprland freezes or shows nothing usable"; fixes+=("rice-doctor nvidia-fix") ;;
+  esac
+  case "$(param fbdev)" in
+    Y|1) ok "the framebuffer is on (nvidia_drm fbdev)" ;;
+    "") warn "this driver does not say whether fbdev is on" ;;
+    *) warn "the framebuffer is off (nvidia_drm fbdev): a black screen or a flickering TTY is possible"; fixes+=("rice-doctor nvidia-fix") ;;
+  esac
+  if egl_wl; then ok "the Wayland part of the driver (egl-wayland) is there"
+  else bad "egl-wayland is missing: Wayland apps and the shell itself can crash or stay black"; fixes+=("rice-doctor nvidia-fix"); fi
+  if [ -e "$HOME/.config/hypr/rice-gpu.lua" ]; then ok "Hyprland draws the cursor itself (no invisible cursor)"; fi
+}
+
+shell_report() {
+  printf '\n%sDesktop%s\n' "$B" "$Z"
+  printf '  DarkShadow'\''s Shell V%s\n' "$(cat "$(cat "$HOME/.config/rice/repo" 2>/dev/null || echo "$HOME/shadows-shell")/VERSION" 2>/dev/null || echo '?')"
+  command -v Hyprland >/dev/null && printf '  %s\n' "$(Hyprland --version 2>/dev/null | head -1)"
+  command -v qs >/dev/null && printf '  %s\n' "$(qs --version 2>/dev/null | head -1)"
+  printf '  session: %s\n' "${XDG_SESSION_TYPE:-?} ${XDG_CURRENT_DESKTOP:-}"
+  if "$HOME/.local/bin/rice-desktop" status >/dev/null 2>&1; then ok "the shell is running"; else bad "the shell is not running (start it: rice-desktop start)"; fi
+  local cr="$HOME/.cache/quickshell/crashes" last n
+  n="$(find "$cr" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)"
+  if [ "$n" -gt 0 ]; then
+    # shellcheck disable=SC2012  # crash folders have plain names
+    last="$(ls -td "$cr"/*/ 2>/dev/null | head -1)"
+    warn "Quickshell crashed $n time(s); the last one: $(date -r "$last" '+%Y-%m-%d %H:%M' 2>/dev/null)"
+    [ "${include_logs:-0}" = 1 ] && [ -f "$last/report.txt" ] && { printf '%s' "$D"; grep -vE '^\s*$' "$last/report.txt" | head -25 | sed 's/^/    /'; printf '%s' "$Z"; }
+  else
+    ok "no Quickshell crashes"
+  fi
+  if [ "${include_logs:-0}" = 1 ] && [ -s "$HOME/.cache/rice/desktop.log" ]; then
+    printf '  the last lines of the shell'\''s log (~/.cache/rice/desktop.log):\n%s' "$D"
+    grep -vE 'FileView|Read of .* failed' "$HOME/.cache/rice/desktop.log" | tail -15 | sed 's/^/    /'
+    printf '%s' "$Z"
+  fi
+}
+
+# Resolve only fixed system paths, not caller PATH. Verify the executable and
+# its canonical parent chain are root-owned and not group/other-writable.
+system_bin() {
+  local op="$1" base exe node meta mode
+  for base in /usr/bin /usr/sbin /bin /sbin; do
+    if [ ! -f "$base/$op" ] || [ ! -x "$base/$op" ]; then continue; fi
+    exe="$(/usr/bin/readlink -f -- "$base/$op")" || continue
+    node="$exe"
+    while :; do
+      meta="$(/usr/bin/stat -c '%u %a' -- "$node")" || break
+      mode="${meta#* }"
+      [[ "$meta" == '0 '* && "$mode" =~ ^[0-7]+$ ]] || break
+      (( (8#$mode & 8#022) == 0 )) || break
+      if [ "$node" = / ]; then printf '%s\n' "$exe"; return 0; fi
+      node="${node%/*}"; node="${node:-/}"
+    done
+  done
+  return 1
+}
+
+nvidia_fix() {
+  if [ ! -t 0 ] || [ "$EUID" = 0 ]; then
+    echo "Run rice-doctor nvidia-fix as your normal user in an interactive terminal. Nothing changed." >&2
+    return 1
+  fi
+  if [ -e /etc/NIXOS ] || [ -e /run/current-system ] || [ -e /run/ostree-booted ]; then
+    echo "This system manages its boot image declaratively. Configure NVIDIA in its system configuration and rebuild. Nothing changed." >&2
+    return 1
+  fi
+  nv_card || { echo "No NVIDIA card here: nothing to do."; return 0; }
+
+  local sudo_bin install_bin init_bin pkg_bin a step=0
+  local conf=/etc/modprobe.d/darkshadow-nvidia.conf options='options nvidia_drm modeset=1 fbdev=1'
+  local -a init=() pkg=()
+  if ! sudo_bin="$(system_bin sudo)" || ! install_bin="$(system_bin install)"; then
+    echo "Trusted system sudo and install are required. Nothing changed." >&2; return 1
+  fi
+  if init_bin="$(system_bin mkinitcpio)"; then init=("$init_bin" -P)
+  elif init_bin="$(system_bin dracut)"; then init=("$init_bin" --regenerate-all --force)
+  elif init_bin="$(system_bin update-initramfs)"; then init=("$init_bin" -u)
+  else echo "No supported system initramfs tool found. Nothing changed." >&2; return 1
+  fi
+  if ! egl_wl; then
+    if pkg_bin="$(system_bin pacman)"; then pkg=("$pkg_bin" -S --needed egl-wayland)
+    elif pkg_bin="$(system_bin dnf)"; then pkg=("$pkg_bin" install egl-wayland)
+    elif pkg_bin="$(system_bin apt-get)"; then pkg=("$pkg_bin" install libnvidia-egl-wayland1)
+    else echo "Install the NVIDIA EGL Wayland package using your distribution's package manager first. Nothing changed." >&2; return 1
+    fi
+  fi
+
+  printf 'Planned NVIDIA changes:\n  %s: %s\n' "$conf" "$options"
+  [ "${#pkg[@]}" -eq 0 ] || printf '  Package: %s\n' "${pkg[*]}"
+  printf '  Rebuild the boot image: %s\n' "${init[*]}"
+  [ ! -e "$conf" ] || echo "  An existing configuration at this path will be backed up."
+  printf 'Go on? [y/N] '; read -r a || a=
+  case "$a" in y|Y|yes) ;; *) echo "Nothing changed."; return 0 ;; esac
+  if [ "${#pkg[@]}" -gt 0 ]; then
+    "$sudo_bin" -- "${pkg[@]}" || { echo "Package step failed; boot configuration not changed by this tool." >&2; return 1; }
+    step=1
+  fi
+  # install reads literal stdin; no elevated shell or user-writable script/path.
+  # GNU install backs up an existing destination and does not follow its symlink.
+  if ! printf '%s\n' "$options" | "$sudo_bin" -- "$install_bin" -T --backup=numbered -m 0644 -- /dev/stdin "$conf"; then
+    echo "Configuration write failed; the boot image was not rebuilt." >&2
+    [ "$step" = 0 ] || echo "The Wayland package may already be installed." >&2
+    return 1
+  fi
+  "$sudo_bin" -- "${init[@]}" || {
+    echo "The configuration was written, but the boot-image rebuild failed. Check the error and repair before restarting." >&2; return 1; }
+  echo "NVIDIA configuration and boot image updated. Restart when ready."
+}
+
+usage() {
+  printf '%s\n' 'Usage: rice-doctor [report [--logs] | nvidia-fix]'
+}
+case "${1:-}" in
+  nvidia-fix) [ "$#" = 1 ] || { usage >&2; exit 2; }; nvidia_fix ;;
+  ""|report|--logs)
+    include_logs=0
+    case "$*" in
+      ""|report) ;;
+      --logs|"report --logs") include_logs=1 ;;
+      *) usage >&2; exit 2 ;;
+    esac
+    [ "$include_logs" = 0 ] || echo "This report includes local log excerpts. Review them before sharing."
+    printf '%sDarkShadow'\''s Shell: what this computer looks like%s\n' "$B" "$Z"
+    gpu_report
+    shell_report
+    if [ "${#fixes[@]}" -gt 0 ]; then
+      printf '\n%sTo do%s\n' "$B" "$Z"
+      printf '%s\n' "${fixes[@]}" | sort -u | sed 's/^/  → /'
+    fi
+    echo ;;
+  -h|--help) usage ;;
+  *) usage >&2; exit 2 ;;
+esac

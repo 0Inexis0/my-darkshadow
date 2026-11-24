@@ -13,12 +13,13 @@ Item {
     function norm(value) { return value === "on" ? true : value === "off" ? false : value }
     function setv(key, value) {
         const n = Object.assign({}, ns)
-        n[key] = page.norm(value)
+        n[key] = key === "sound" ? value : page.norm(value)      // "off" is a sound name there, not a switch
         ns = n
         Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-notify\" set \"$1\" \"$2\"", "_", key, String(value)])
         page.ctl.status = I18n.t("Applied")
         refresh.restart()
     }
+    function hear(name, vol) { Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-sound\" play \"$1\" \"$2\"", "_", name, String(vol)]) }
     function tool(arg) { Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-notify\" \"$1\"", "_", arg]) }
 
     Process {
@@ -58,12 +59,12 @@ Item {
         const light = k === "white"
         let s
         switch (k) {
-        case "black": s = Qt.rgba(0.02, 0.02, 0.025, a); break
-        case "graphite": s = Qt.rgba(0.075, 0.075, 0.085, a); break
-        case "slate": s = Qt.rgba(0.09, 0.105, 0.135, a); break
+        case "black": s = Qt.rgba(0, 0, 0, a); break
+        case "graphite": s = Qt.rgba(0.16, 0.16, 0.17, a); break
+        case "slate": s = Qt.hsla(0.6, 0.22, 0.17, a); break
         case "white": s = Qt.rgba(0.96, 0.96, 0.965, a); break
-        case "tinted": s = Qt.hsla(hue, sat * 0.4, 0.11, a); break
-        default: s = Qt.hsla(hue, 0.08, 0.085, a)
+        case "tinted": s = Qt.hsla(hue, sat === 0 ? 0 : sat * 0.55, 0.17, a); break
+        default: s = Qt.hsla(hue, sat === 0 ? 0 : 0.12, 0.1, a)
         }
         return {
             surface: s,
@@ -81,7 +82,7 @@ Item {
         id: sp
         property var p: page.cur
         property bool small: false
-        radius: page.v("radius", 22) + 4
+        radius: M3.sq ? 0 : (page.v("radius", 22) + 4)
         color: p.surface
         border.width: 1; border.color: p.line
         Item {
@@ -97,13 +98,13 @@ Item {
             T { scaled: false; width: parent.width; elide: Text.ElideRight; visible: !sp.small; text: I18n.t("Did you see the new notifications?"); font.pixelSize: page.v("font_size", 13) - 1; color: sp.p.dim }
             Row {
                 visible: !sp.small; spacing: 6; topPadding: 6
-                Rectangle { width: r1.implicitWidth + 22; height: 28; radius: 14; color: sp.p.container
+                Rectangle { width: r1.implicitWidth + 22; height: 28; radius: M3.sq ? 0 : (14); color: sp.p.container
                     T { id: r1; scaled: false; anchors.centerIn: parent; text: I18n.t("Reply"); font.pixelSize: 11; color: sp.p.inkContainer } }
-                Rectangle { width: r2.implicitWidth + 22; height: 28; radius: 14; color: sp.p.container
+                Rectangle { width: r2.implicitWidth + 22; height: 28; radius: M3.sq ? 0 : (14); color: sp.p.container
                     T { id: r2; scaled: false; anchors.centerIn: parent; text: I18n.t("Mark as read"); font.pixelSize: 11; color: sp.p.inkContainer } }
             }
         }
-        Rectangle { visible: !sp.small; anchors.bottom: parent.bottom; anchors.bottomMargin: 6; x: 18; width: (parent.width - 36) * 0.6; height: 3; radius: 2
+        Rectangle { visible: !sp.small; anchors.bottom: parent.bottom; anchors.bottomMargin: 6; x: 18; width: (parent.width - 36) * 0.6; height: 3; radius: M3.sq ? 0 : (2)
             color: Qt.rgba(sp.p.primary.r, sp.p.primary.g, sp.p.primary.b, 0.55) }
     }
 
@@ -123,10 +124,10 @@ Item {
             id: stage
             width: parent.width
             height: 210
-            radius: M3.rXL
+            radius: M3.sq ? 0 : (M3.rXL)
             clip: true
             gradient: Gradient { GradientStop { position: 0; color: M3.stageTop } GradientStop { position: 1; color: M3.stageBottom } }
-            Rectangle { x: 16; y: 10; width: parent.width - 32; height: 18; radius: 9; color: Qt.rgba(0, 0, 0, 0.35) }
+            Rectangle { x: 16; y: 10; width: parent.width - 32; height: 18; radius: M3.sq ? 0 : (9); color: Qt.rgba(0, 0, 0, 0.35) }
             Sample {
                 width: Math.min(stage.width - 40, page.v("popup_width", 380) * 0.95)
                 height: 112
@@ -194,19 +195,19 @@ Item {
                     readonly property bool on: page.v("colors", "shell") === modelData.k
                     width: (tgrid.width - (tgrid.columns - 1) * 10) / tgrid.columns
                     height: 132
-                    radius: tm.pressed ? M3.rM : M3.rL
+                    radius: M3.sq ? 0 : (tm.pressed ? M3.rM : M3.rL)
                     color: on ? M3.secondaryContainer : (tm.containsMouse ? M3.surfaceHigh : M3.surfaceC)
                     border.width: on ? 2 : 0; border.color: M3.primary
                     Behavior on color { ColorAnimation { duration: 160 } }
                     Behavior on radius { NumberAnimation { duration: M3.d(220) } }
                     Rectangle {
-                        x: 10; y: 10; width: parent.width - 20; height: 74; radius: M3.rM
+                        x: 10; y: 10; width: parent.width - 20; height: 74; radius: M3.sq ? 0 : (M3.rM)
                         gradient: Gradient { GradientStop { position: 0; color: M3.stageTop } GradientStop { position: 1; color: M3.stageBottom } }
                         Sample { small: true; p: page.pal(modelData.k, 0.92); x: 8; y: 8; width: parent.width - 16; height: 58 }
                     }
                     T { x: 14; y: 92; text: modelData.n; font.pixelSize: 13; font.weight: Font.Medium; color: tt.on ? M3.inkSecondaryC : M3.ink }
                     T { x: 14; y: 110; text: modelData.d; font.pixelSize: 11; color: M3.inkDim; width: parent.width - 28; elide: Text.ElideRight }
-                    Rectangle { visible: tt.on; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 16; width: 22; height: 22; radius: 11; color: M3.primary
+                    Rectangle { visible: tt.on; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 16; width: 22; height: 22; radius: M3.sq ? 0 : (11); color: M3.primary
                         Icon { anchors.centerIn: parent; name: "check"; glyph: ""; size: 13; color: M3.inkPrimary } }
                     MouseArea { id: tm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.setv("colors", modelData.k) }
                 }
@@ -259,7 +260,34 @@ Item {
             checked: page.v("keep_clicked", true)
             onToggled: function(x) { page.setv("keep_clicked", x ? "on" : "off") }
         }
-        T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 11; color: M3.inkDim; topPadding: 6
-            text: I18n.t("The sound for new notifications is in Sound & language > Sfx & sounds.") }
+
+        // ---------- the sound (V5.02: here too, with its volume) ----------
+        SectionTitle { text: I18n.t("Sound"); sym: "notifications_active"; sub: I18n.t("For new notifications. Click one to hear it.") }
+        Flow {
+            width: parent.width
+            spacing: 8
+            Repeater {
+                model: ["glass", "droplet", "chime", "bubble", "marimba", "aurora", "ping", "harp", "keys", "ripple", "off"]
+                delegate: Rectangle {
+                    readonly property bool on: page.v("sound", "glass") === modelData
+                    width: sl.implicitWidth + 30; height: 36; radius: M3.sq ? 0 : (on ? 18 : 10)
+                    color: on ? M3.secondaryContainer : (sdm.containsMouse ? M3.surfaceHigh : M3.surfaceC)
+                    border.width: on ? 0 : 1; border.color: M3.outlineVariant
+                    Behavior on radius { NumberAnimation { duration: M3.d(200) } }
+                    T { id: sl; anchors.centerIn: parent; font.pixelSize: 13; font.weight: Font.Medium; color: parent.on ? M3.inkSecondaryC : M3.ink
+                        text: modelData === "off" ? I18n.t("Off") : I18n.t(modelData.charAt(0).toUpperCase() + modelData.slice(1)) }
+                    MouseArea { id: sdm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                        onClicked: { if (modelData !== "off") page.hear(modelData, page.v("sound_volume", 45)); page.setv("sound", modelData) } }
+                }
+            }
+        }
+        SliderRow {
+            visible: page.v("sound", "glass") !== "off"
+            label: I18n.t("Notification sound volume")
+            desc: I18n.t("How loud the notification sound is, on top of your system volume")
+            from: 0; to: 100; step: 5; unit: " %"
+            value: page.v("sound_volume", 45)
+            onCommitted: function(x) { page.setv("sound_volume", Math.round(x)); page.hear(page.v("sound", "glass"), Math.round(x)) }
+        }
     }
 }

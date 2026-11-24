@@ -1,0 +1,1171 @@
+#!/usr/bin/env python3
+"""The DarkShadow apps' helper (Files, Photos, Player): what QML cannot do on its own. Every command prints JSON.
+
+  rice-apps-helper places                     the side bar of Files: your folders, bookmarks, drives, the trash
+  rice-apps-helper recent                     files you opened lately (~/.local/share/recently-used.xbel)
+  rice-apps-helper copy|move DEST SRC...      copy / move (a name that is taken gets " (2)"); "P 0.42" lines while busy
+  rice-apps-helper paste DEST                 paste what was copied or cut (here or in another file manager)
+  rice-apps-helper clip copy|cut SRC...       copy / cut: the clipboard holds them as a list of files
+  rice-apps-helper trash SRC... | delete SRC...
+  rice-apps-helper trash-list | restore NAME... | empty-trash
+  rice-apps-helper mkdir DIR NAME | newfile DIR NAME | rename PATH NEWNAME
+  rice-apps-helper extract ARCHIVE | compress OUT.zip SRC...
+  rice-apps-helper search DIR TEXT            names with TEXT in them, in DIR and below (400 at most)
+  rice-apps-helper stat PATH...               what Files shows of these (the starred ones)
+  rice-apps-helper info PATH                  size of a folder, the free space, the type
+  rice-apps-helper thumbs FILE...             pictures of videos and PDFs (~/.cache/rice/thumbs)
+  rice-apps-helper apps PATH | launch DESKTOP-FILE PATH... | default DESKTOP-ID PATH   "Open with"
+  rice-apps-helper photos | music | videos    the Photos and Player libraries
+  rice-apps-helper tracks FILE...             a song's or a video's title, artist, album, length and cover
+  rice-apps-helper exif FILE                  a picture's size, camera and the time it was taken
+  rice-apps-helper icons [DIR]                the apps' icons in the wallpaper's colors (~/.local/share/icons/hicolor)
+  rice-apps-helper prefs APP get | prefs APP set JSON
+"""
+import concurrent.futures as cf
+import configparser
+import hashlib
+import json
+import mimetypes
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+import urllib.parse
+
+HOME = os.path.expanduser("~")
+CACHE = os.path.join(os.environ.get("XDG_CACHE_HOME", HOME + "/.cache"), "rice")
+CONF = os.path.join(os.environ.get("XDG_CONFIG_HOME", HOME + "/.config"), "rice")
+DATA = os.environ.get("XDG_DATA_HOME", HOME + "/.local/share")
+TRASH = DATA + "/Trash"
+THUMBS = CACHE + "/thumbs"
+COVERS = CACHE + "/covers"
+
+IMG = {"jpg", "jpeg", "png", "webp", "gif", "bmp", "avif", "heic", "tif", "tiff", "jxl", "svg"}
+VID = {"mp4", "mkv", "webm", "mov", "avi", "m4v", "flv", "wmv", "ogv"}
+AUD = {"mp3", "flac", "ogg", "opus", "wav", "m4a", "aac", "wma", "aiff", "aif", "alac"}
+
+
+def out(x):
+    sys.stdout.write(json.dumps(x) + "\n")
+    sys.stdout.flush()
+
+
+def ext(p):
+    return os.path.splitext(p)[1][1:].lower()
+
+
+def run(cmd, timeout=20, inp=None):
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, input=inp)
+        return r.returncode, r.stdout, r.stderr
+    except Exception as e:
+        return 127, "", str(e)
+
+
+def entry(p, st=None):
+    try:
+        st = st or os.stat(p)
+        d = os.path.isdir(p)
+        return {"fileName": os.path.basename(p) or p, "filePath": p, "fileIsDir": d, "fileSize": 0 if d else st.st_size,
+                "fileModified": int(st.st_mtime * 1000), "fileSuffix": "" if d else ext(p)}
+    except OSError:
+        return None
+
+
+def unique(dest_dir, name):
+    if not os.path.lexists(os.path.join(dest_dir, name)):
+        return os.path.join(dest_dir, name)
+    base, e = (name, "") if os.path.isdir(os.path.join(dest_dir, name)) or "." not in name[1:] else (name[:name.rfind(".")], name[name.rfind("."):])
+    if base.endswith(".tar"):
+        base, e = base[:-4], ".tar" + e
+    m = re.match(r"^(.*) \((\d+)\)$", base)
+    if m:
+        base = m.group(1)
+    n = 2
+    while os.path.lexists(os.path.join(dest_dir, "%s (%d)%s" % (base, n, e))):
+        n += 1
+    return os.path.join(dest_dir, "%s (%d)%s" % (base, n, e))
+
+
+# ---------------------------------------------------------------- places
+
+def user_dirs():
+    d = {}
+    try:
+        for line in open(os.path.join(os.environ.get("XDG_CONFIG_HOME", HOME + "/.config"), "user-dirs.dirs")):
+            m = re.match(r'^XDG_(\w+)_DIR="(.*)"', line.strip())
+            if m:
+                d[m.group(1)] = m.group(2).replace("$HOME", HOME)
+    except OSError:
+        pass
+    return d
+
+
+def places():
+    ud = user_dirs()
+    names = [("DESKTOP", "Desktop", "desktop_windows"), ("DOCUMENTS", "Documents", "description"), ("DOWNLOAD", "Downloads", "download"),
+             ("MUSIC", "Music", "music_note"), ("PICTURES", "Pictures", "image"), ("VIDEOS", "Videos", "movie")]
+    dirs = []
+    for k, n, ic in names:
+        p = ud.get(k) or os.path.join(HOME, n)
+        if os.path.isdir(p) and os.path.realpath(p) != os.path.realpath(HOME):
+            dirs.append({"name": os.path.basename(p.rstrip("/")) or n, "path": p, "icon": ic})
+    marks = []
+    for bf in (HOME + "/.config/gtk-3.0/bookmarks", HOME + "/.config/gtk-4.0/bookmarks"):
+        try:
+            for line in open(bf):
+                u, _, label = line.strip().partition(" ")
+                if u.startswith("file://"):
+                    p = urllib.parse.unquote(u[7:])
+                    if os.path.isdir(p) and all(x["path"] != p for x in dirs + marks):
+                        marks.append({"name": label or os.path.basename(p.rstrip("/")), "path": p, "icon": "bookmark"})
+        except OSError:
+            pass
+    drives = []
+    seen = set()
+
+    def drive(name, path, icon, removable):
+        try:
+            s = os.statvfs(path)
+        except OSError:
+            return
+        key = (s.f_blocks, s.f_bfree)
+        if key in seen and not removable:
+            return
+        seen.add(key)
+        total = s.f_blocks * s.f_frsize
+        if total <= 0:
+            return
+        drives.append({"name": name, "path": path, "icon": icon, "removable": removable,
+                       "total": total, "free": s.f_bavail * s.f_frsize})
+    drive("Computer", "/", "computer", False)
+    try:
+        for line in open("/proc/mounts"):
+            dev, mp = line.split()[:2]
+            mp = mp.replace("\\040", " ")
+            if not dev.startswith("/dev/"):
+                continue
+            if mp.startswith(("/run/media/", "/media/", "/mnt/")):
+                drive(os.path.basename(mp), mp, "usb" if mp.startswith(("/run/media/", "/media/")) else "hard_drive", True)
+    except OSError:
+        pass
+    n = 0
+    try:
+        n = len(os.listdir(TRASH + "/files"))
+    except OSError:
+        pass
+    out({"home": HOME, "dirs": dirs, "bookmarks": marks, "drives": drives, "trash": n, "trashPath": TRASH + "/files"})
+
+
+def recent():
+    import xml.etree.ElementTree as ET
+    res = []
+    try:
+        root = ET.parse(DATA + "/recently-used.xbel").getroot()
+        items = []
+        for b in root.iter("bookmark"):
+            h = b.get("href", "")
+            if not h.startswith("file://"):
+                continue
+            p = urllib.parse.unquote(h[7:])
+            items.append((b.get("visited") or b.get("modified") or "", p))
+        items.sort(reverse=True)
+        for _, p in items:
+            if os.path.exists(p):
+                e = entry(p)
+                if e and all(x["filePath"] != p for x in res):
+                    res.append(e)
+            if len(res) >= 120:
+                break
+    except Exception:
+        pass
+    out(res)
+
+
+# ---------------------------------------------------------------- copy, move, paste
+
+def total_size(paths):
+    t = 0
+    for p in paths:
+        if os.path.isdir(p) and not os.path.islink(p):
+            for r, _, fs in os.walk(p):
+                for f in fs:
+                    try:
+                        t += os.lstat(os.path.join(r, f)).st_size
+                    except OSError:
+                        pass
+        else:
+            try:
+                t += os.lstat(p).st_size
+            except OSError:
+                pass
+    return max(t, 1)
+
+
+class Prog:
+    def __init__(self, total):
+        self.total, self.done, self.last = total, 0, 0
+
+    def add(self, n):
+        self.done += n
+        now = time.time()
+        if now - self.last > 0.15:
+            self.last = now
+            sys.stdout.write("P %.3f\n" % min(1, self.done / self.total))
+            sys.stdout.flush()
+
+
+def copy_file(s, d, pr):
+    if os.path.islink(s):
+        os.symlink(os.readlink(s), d)
+        return
+    with open(s, "rb") as a, open(d, "wb") as b:
+        while True:
+            buf = a.read(1 << 20)
+            if not buf:
+                break
+            b.write(buf)
+            pr.add(len(buf))
+    try:
+        shutil.copystat(s, d)
+    except OSError:
+        pass
+
+
+def copy_any(s, d, pr):
+    if os.path.isdir(s) and not os.path.islink(s):
+        os.makedirs(d)
+        for e in os.scandir(s):
+            copy_any(e.path, os.path.join(d, e.name), pr)
+        try:
+            shutil.copystat(s, d)
+        except OSError:
+            pass
+    else:
+        copy_file(s, d, pr)
+
+
+def transfer(op, dest, srcs):
+    srcs = [os.path.abspath(s) for s in srcs if os.path.lexists(s)]
+    if not os.path.isdir(dest):
+        return out({"ok": False, "error": "Not a folder: " + dest})
+    made, errs = [], []
+    dreal = os.path.realpath(dest)
+    pr = Prog(total_size(srcs) if op == "copy" else 1)
+    for s in srcs:
+        sreal = os.path.realpath(s)
+        if os.path.isdir(s) and (dreal == sreal or dreal.startswith(sreal + "/")):
+            errs.append("A folder cannot go into itself: " + os.path.basename(s))
+            continue
+        if op == "move" and os.path.dirname(sreal) == dreal:
+            continue
+        d = unique(dest, os.path.basename(s))
+        try:
+            if op == "move":
+                try:
+                    os.rename(s, d)
+                except OSError:
+                    pr.total = total_size([s])
+                    copy_any(s, d, pr)
+                    shutil.rmtree(s) if os.path.isdir(s) and not os.path.islink(s) else os.remove(s)
+            else:
+                copy_any(s, d, pr)
+            made.append(d)
+        except Exception as e:
+            errs.append("%s: %s" % (os.path.basename(s), e.strerror if hasattr(e, "strerror") and e.strerror else e))
+    out({"ok": not errs, "made": made, "error": "; ".join(errs)})
+
+
+CLIPF = CACHE + "/files-clip.json"
+
+
+def clip(op, srcs):
+    srcs = [os.path.abspath(s) for s in srcs]
+    uris = "\r\n".join("file://" + urllib.parse.quote(s) for s in srcs) + "\r\n"
+    os.makedirs(CACHE, exist_ok=True)
+    json.dump({"op": op, "paths": srcs, "uris": uris}, open(CLIPF, "w"))
+    if shutil.which("wl-copy"):
+        try:
+            subprocess.Popen(["wl-copy", "-t", "text/uri-list"], stdin=subprocess.PIPE, stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL, start_new_session=True).communicate(uris.encode(), timeout=3)
+        except Exception:
+            pass
+    out({"ok": True, "op": op, "n": len(srcs)})
+
+
+def clip_read():
+    """what paste would take: (op, paths)"""
+    mine = {}
+    try:
+        mine = json.load(open(CLIPF))
+    except Exception:
+        pass
+    if shutil.which("wl-paste"):
+        rc, types, _ = run(["wl-paste", "-l"], 3)
+        types = types.split()
+        if "x-special/gnome-copied-files" in types:
+            rc, t, _ = run(["wl-paste", "-n", "-t", "x-special/gnome-copied-files"], 3)
+            lines = [x for x in t.splitlines() if x]
+            if lines:
+                op = "move" if lines[0] == "cut" else "copy"
+                return op, [urllib.parse.unquote(x[7:]) for x in lines[1:] if x.startswith("file://")]
+        if "text/uri-list" in types:
+            rc, t, _ = run(["wl-paste", "-n", "-t", "text/uri-list"], 3)
+            ps = [urllib.parse.unquote(x.strip()[7:]) for x in t.splitlines() if x.strip().startswith("file://")]
+            if ps:
+                op = "move" if mine.get("op") == "cut" and sorted(ps) == sorted(mine.get("paths", [])) else "copy"
+                return op, ps
+        if types:
+            return "copy", []
+    if mine:
+        return ("move" if mine.get("op") == "cut" else "copy"), mine.get("paths", [])
+    return "copy", []
+
+
+def paste(dest):
+    op, ps = clip_read()
+    ps = [p for p in ps if os.path.lexists(p)]
+    if not ps:
+        return out({"ok": False, "error": "Nothing to paste"})
+    transfer(op, dest, ps)
+    if op == "move":
+        try:
+            os.remove(CLIPF)
+        except OSError:
+            pass
+        if shutil.which("wl-copy"):
+            run(["wl-copy", "--clear"], 3)
+
+
+# ---------------------------------------------------------------- trash
+
+def trash(srcs):
+    os.makedirs(TRASH + "/files", exist_ok=True)
+    os.makedirs(TRASH + "/info", exist_ok=True)
+    tdev = os.stat(TRASH).st_dev
+    done, errs, names = [], [], []
+    for s in srcs:
+        s = os.path.abspath(s)
+        if not os.path.lexists(s):
+            continue
+        try:
+            if os.lstat(s).st_dev != tdev:
+                rc, _, er = run(["gio", "trash", "--", s], 30) if shutil.which("gio") else (1, "", "")
+                if rc != 0:
+                    errs.append(os.path.basename(s) + ": its drive has no trash")
+                else:
+                    done.append(s)
+                continue
+            name = os.path.basename(unique(TRASH + "/files", os.path.basename(s)))
+            with open(TRASH + "/info/" + name + ".trashinfo", "w") as f:
+                f.write("[Trash Info]\nPath=%s\nDeletionDate=%s\n" % (urllib.parse.quote(s), time.strftime("%Y-%m-%dT%H:%M:%S")))
+            os.rename(s, TRASH + "/files/" + name)
+            done.append(s)
+            names.append(name)
+        except Exception as e:
+            errs.append("%s: %s" % (os.path.basename(s), e))
+    out({"ok": not errs, "n": len(done), "names": names, "error": "; ".join(errs)})
+
+
+def trash_info(name):
+    c = configparser.ConfigParser(interpolation=None)
+    try:
+        c.read(TRASH + "/info/" + name + ".trashinfo")
+        return urllib.parse.unquote(c["Trash Info"]["Path"]), c["Trash Info"].get("DeletionDate", "")
+    except Exception:
+        return "", ""
+
+
+def trash_list():
+    res = []
+    try:
+        for e in os.scandir(TRASH + "/files"):
+            x = entry(e.path)
+            if not x:
+                continue
+            orig, when = trash_info(e.name)
+            x["orig"] = orig
+            x["fileName"] = os.path.basename(orig) or e.name
+            x["trashName"] = e.name
+            try:
+                x["fileModified"] = int(time.mktime(time.strptime(when, "%Y-%m-%dT%H:%M:%S")) * 1000)
+            except Exception:
+                pass
+            res.append(x)
+    except OSError:
+        pass
+    res.sort(key=lambda x: -x["fileModified"])
+    out(res)
+
+
+def restore(names):
+    errs, n = [], 0
+    for nm in names:
+        nm = os.path.basename(nm)
+        orig, _ = trash_info(nm)
+        if not orig:
+            errs.append(nm + ": where it came from is not known")
+            continue
+        os.makedirs(os.path.dirname(orig), exist_ok=True)
+        d = orig if not os.path.lexists(orig) else unique(os.path.dirname(orig), os.path.basename(orig))
+        try:
+            shutil.move(TRASH + "/files/" + nm, d)
+            os.remove(TRASH + "/info/" + nm + ".trashinfo")
+            n += 1
+        except Exception as e:
+            errs.append("%s: %s" % (nm, e))
+    out({"ok": not errs, "n": n, "error": "; ".join(errs)})
+
+
+def rm(p):
+    if os.path.isdir(p) and not os.path.islink(p):
+        shutil.rmtree(p)
+    else:
+        os.remove(p)
+
+
+def delete(srcs):
+    errs = []
+    for s in srcs:
+        try:
+            rm(s)
+        except Exception as e:
+            errs.append("%s: %s" % (os.path.basename(s), e))
+    out({"ok": not errs, "error": "; ".join(errs)})
+
+
+def empty_trash():
+    for sub in ("files", "info", "expunged"):
+        d = TRASH + "/" + sub
+        if os.path.isdir(d):
+            for e in os.scandir(d):
+                try:
+                    rm(e.path)
+                except Exception:
+                    pass
+    out({"ok": True})
+
+
+# ---------------------------------------------------------------- new, rename, archives
+
+def bad_name(n):
+    return not n or "/" in n or n in (".", "..") or "\0" in n
+
+
+def mkdir(d, name, file=False):
+    if bad_name(name):
+        return out({"ok": False, "error": "That name cannot be used"})
+    p = unique(d, name)
+    try:
+        if file:
+            open(p, "x").close()
+        else:
+            os.mkdir(p)
+        out({"ok": True, "path": p})
+    except Exception as e:
+        out({"ok": False, "error": str(e)})
+
+
+def rename(p, name):
+    if bad_name(name):
+        return out({"ok": False, "error": "That name cannot be used"})
+    d = os.path.join(os.path.dirname(p), name)
+    if os.path.lexists(d) and os.path.realpath(d) != os.path.realpath(p):
+        return out({"ok": False, "error": "“%s” is already there" % name})
+    try:
+        os.rename(p, d)
+        out({"ok": True, "path": d})
+    except Exception as e:
+        out({"ok": False, "error": str(e)})
+
+
+def strip_arch(name):
+    for e in (".tar.gz", ".tar.xz", ".tar.zst", ".tar.bz2", ".tgz", ".zip", ".7z", ".rar", ".tar", ".gz", ".xz", ".zst", ".bz2", ".iso"):
+        if name.lower().endswith(e):
+            return name[: -len(e)]
+    return os.path.splitext(name)[0]
+
+
+def extract(a):
+    a = os.path.abspath(a)
+    d = os.path.dirname(a)
+    tmp = tempfile.mkdtemp(prefix=".rice-extract-", dir=d)
+    if shutil.which("bsdtar"):
+        cmd = ["bsdtar", "-xf", a, "-C", tmp]
+    elif a.lower().endswith(".zip") and shutil.which("unzip"):
+        cmd = ["unzip", "-q", a, "-d", tmp]
+    elif shutil.which("7z"):
+        cmd = ["7z", "x", "-y", "-o" + tmp, a]
+    else:
+        cmd = ["tar", "-xf", a, "-C", tmp]
+    rc, _, er = run(cmd, 3600)
+    if rc != 0:
+        shutil.rmtree(tmp, ignore_errors=True)
+        return out({"ok": False, "error": (er.strip().splitlines() or ["It could not be opened"])[-1]})
+    items = os.listdir(tmp)
+    if len(items) == 1:
+        dst = unique(d, items[0])
+        os.rename(os.path.join(tmp, items[0]), dst)
+        os.rmdir(tmp)
+    else:
+        dst = unique(d, strip_arch(os.path.basename(a)))
+        os.rename(tmp, dst)
+    out({"ok": True, "path": dst})
+
+
+def compress(o, srcs):
+    srcs = [os.path.abspath(s) for s in srcs]
+    base = os.path.dirname(srcs[0])
+    o = unique(base, os.path.basename(o))
+    names = [os.path.relpath(s, base) for s in srcs]
+    if shutil.which("bsdtar"):
+        cmd = ["bsdtar", "-a", "-cf", o, "-C", base, "--"] + names
+    elif shutil.which("zip"):
+        cmd = ["bash", "-c", 'cd "$1" && shift && o="$1" && shift && zip -qr "$o" -- "$@"', "_", base, o] + names
+    else:
+        o = o[:-4] + ".tar.gz" if o.endswith(".zip") else o
+        cmd = ["tar", "-czf", o, "-C", base, "--"] + names
+    rc, _, er = run(cmd, 3600)
+    out({"ok": rc == 0, "path": o, "error": er.strip()[-200:]})
+
+
+# ---------------------------------------------------------------- search, info
+
+def search(d, text):
+    t = text.lower()
+    res = []
+    if shutil.which("fd"):
+        rc, o, _ = run(["fd", "-i", "-F", "--max-results", "400", "--hidden" if t.startswith(".") else "--no-ignore-vcs", "--", text, d], 20)
+        for line in o.splitlines():
+            e = entry(line.rstrip("/"))
+            if e:
+                res.append(e)
+        return out(res)
+    for r, ds, fs in os.walk(d):
+        if r.count("/") - d.count("/") > 8:
+            ds[:] = []
+        ds[:] = [x for x in ds if not x.startswith(".") or t.startswith(".")]
+        for n in ds + fs:
+            if t in n.lower():
+                e = entry(os.path.join(r, n))
+                if e:
+                    res.append(e)
+                if len(res) >= 400:
+                    return out(res)
+    out(res)
+
+
+def mime_of(p):
+    if os.path.isdir(p):
+        return "inode/directory"
+    if shutil.which("xdg-mime"):
+        rc, o, _ = run(["xdg-mime", "query", "filetype", p], 3)
+        if rc == 0 and "/" in o:
+            return o.strip().split(";")[0]
+    return mimetypes.guess_type(p)[0] or "application/octet-stream"
+
+
+def info(p):
+    r = {"path": p, "mime": mime_of(p)}
+    try:
+        st = os.stat(p)
+        r["modified"] = int(st.st_mtime * 1000)
+        r["mode"] = oct(st.st_mode & 0o777)[2:]
+        sv = os.statvfs(p)
+        r["free"] = sv.f_bavail * sv.f_frsize
+    except OSError:
+        pass
+    if os.path.isdir(p):
+        try:
+            r["items"] = len(os.listdir(p))
+        except OSError:
+            r["items"] = 0
+        rc, o, _ = run(["du", "-sb", p], 4)
+        if rc == 0 and o.split():
+            r["size"] = int(o.split()[0])
+    else:
+        try:
+            r["size"] = os.path.getsize(p)
+        except OSError:
+            pass
+    out(r)
+
+
+# ---------------------------------------------------------------- pictures of videos and PDFs
+
+def thumb_path(p):
+    try:
+        st = os.stat(p)
+    except OSError:
+        return ""
+    return THUMBS + "/" + hashlib.md5(("%s|%d|%d" % (p, st.st_mtime, st.st_size)).encode()).hexdigest() + ".jpg"
+
+
+def make_thumb(p):
+    t = thumb_path(p)
+    if not t:
+        return p, ""
+    if os.path.exists(t):
+        return p, t
+    e = ext(p)
+    if e in VID and shutil.which("ffmpeg"):
+        for ss in ("8", "1", "0"):
+            rc, _, _ = run(["ffmpeg", "-v", "error", "-y", "-ss", ss, "-i", p, "-frames:v", "1", "-vf", "scale=360:-2", "-q:v", "4", t], 30)
+            if rc == 0 and os.path.exists(t) and os.path.getsize(t) > 0:
+                return p, t
+    elif e == "pdf" and shutil.which("pdftoppm"):
+        rc, _, _ = run(["pdftoppm", "-jpeg", "-singlefile", "-scale-to", "360", "-f", "1", "-l", "1", p, t[:-4]], 30)
+        if rc == 0 and os.path.exists(t):
+            return p, t
+    return p, ""
+
+
+def thumbs(files):
+    os.makedirs(THUMBS, exist_ok=True)
+    res = {}
+    with cf.ThreadPoolExecutor(4) as ex:
+        for p, t in ex.map(make_thumb, files):
+            res[p] = t
+    out(res)
+
+
+# ---------------------------------------------------------------- open with
+
+def desktop_dirs():
+    ds = [DATA + "/applications"]
+    for d in os.environ.get("XDG_DATA_DIRS", "/usr/local/share:/usr/share").split(":"):
+        ds.append(d.rstrip("/") + "/applications")
+    ds += ["/var/lib/flatpak/exports/share/applications", HOME + "/.local/share/flatpak/exports/share/applications"]
+    return ds
+
+
+def read_desktop(f):
+    c = configparser.ConfigParser(interpolation=None, strict=False)
+    c.optionxform = str
+    try:
+        c.read(f, encoding="utf-8")
+        return c["Desktop Entry"]
+    except Exception:
+        return None
+
+
+def apps(p):
+    m = mime_of(p)
+    top = m.split("/")[0] + "/*"
+    dflt = ""
+    if shutil.which("xdg-mime"):
+        rc, o, _ = run(["xdg-mime", "query", "default", m], 3)
+        dflt = o.strip()
+    res, seen = [], set()
+    for d in desktop_dirs():
+        try:
+            names = sorted(os.listdir(d))
+        except OSError:
+            continue
+        for n in names:
+            if not n.endswith(".desktop") or n in seen:
+                continue
+            seen.add(n)
+            e = read_desktop(os.path.join(d, n))
+            if not e or e.get("NoDisplay", "false") == "true" and not n.startswith("darkshadow-") or e.get("Hidden") == "true":
+                continue
+            ms = [x for x in e.get("MimeType", "").split(";") if x]
+            if m in ms or top in ms:
+                res.append({"id": n, "file": os.path.join(d, n), "name": e.get("Name", n), "icon": e.get("Icon", ""),
+                            "default": n == dflt})
+    res.sort(key=lambda x: (not x["default"], x["name"].lower()))
+    out({"mime": m, "apps": res})
+
+
+def launch(df, paths):
+    e = read_desktop(df)
+    if not e:
+        return out({"ok": False, "error": "No such app"})
+    ex = e.get("Exec", "")
+    import shlex
+    try:
+        parts = shlex.split(ex)
+    except ValueError:
+        parts = ex.split()
+    cmd, used = [], False
+    for x in parts:
+        if x in ("%f", "%u"):
+            cmd.append(paths[0] if paths else "")
+            used = True
+        elif x in ("%F", "%U"):
+            cmd += paths
+            used = True
+        elif re.fullmatch(r"%[a-zA-Z]", x):
+            continue
+        else:
+            cmd.append(x.replace("%%", "%"))
+    if not used:
+        cmd += paths
+    try:
+        subprocess.Popen(cmd, start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, cwd=HOME)
+        out({"ok": True})
+    except Exception as er:
+        out({"ok": False, "error": str(er)})
+
+
+def set_default(did, p):
+    m = mime_of(p)
+    rc, _, er = run(["xdg-mime", "default", did, m], 5)
+    out({"ok": rc == 0, "mime": m, "error": er.strip()})
+
+
+# ---------------------------------------------------------------- libraries
+
+def walk_media(roots, kinds, depth=7, limit=30000):
+    res = []
+    for root in roots:
+        if not os.path.isdir(root):
+            continue
+        base = root.rstrip("/").count("/")
+        for r, ds, fs in os.walk(root):
+            ds[:] = [x for x in ds if not x.startswith(".")]
+            if r.count("/") - base >= depth:
+                ds[:] = []
+            for f in fs:
+                if f.startswith("."):
+                    continue
+                e = ext(f)
+                if e in kinds:
+                    p = os.path.join(r, f)
+                    try:
+                        st = os.stat(p)
+                    except OSError:
+                        continue
+                    res.append((p, st))
+                    if len(res) >= limit:
+                        return res
+    return res
+
+
+def photos():
+    ud = user_dirs()
+    pics = ud.get("PICTURES") or HOME + "/Pictures"
+    roots = [pics]
+    vids = ud.get("VIDEOS") or HOME + "/Videos"
+    rec = os.path.join(vids, "Recordings")
+    if os.path.isdir(rec):
+        roots.append(rec)
+    seen, res = set(), []
+    for p, st in walk_media(roots, IMG | VID):
+        if p in seen:
+            continue
+        seen.add(p)
+        res.append({"path": p, "t": int(st.st_mtime * 1000), "size": st.st_size, "dir": os.path.dirname(p),
+                    "video": ext(p) in VID})
+    res.sort(key=lambda x: -x["t"])
+    out({"root": pics, "items": res})
+
+
+LIBF = CACHE + "/player-lib.json"
+
+
+def probe(p):
+    if not shutil.which("ffprobe"):
+        return {}
+    rc, o, _ = run(["ffprobe", "-v", "quiet", "-print_format", "json", "-show_entries",
+                    "format=duration:format_tags:stream=codec_type:stream_disposition=attached_pic:stream_tags", p], 20)
+    try:
+        j = json.loads(o)
+    except Exception:
+        return {}
+    f = j.get("format", {})
+    tags = {k.lower(): v for k, v in (f.get("tags") or {}).items()}
+    for s in j.get("streams", []):
+        if s.get("codec_type") == "audio":
+            for k, v in (s.get("tags") or {}).items():
+                tags.setdefault(k.lower(), v)
+    pic = any(s.get("codec_type") == "video" and (s.get("disposition") or {}).get("attached_pic") for s in j.get("streams", []))
+    vid = any(s.get("codec_type") == "video" and not (s.get("disposition") or {}).get("attached_pic") for s in j.get("streams", []))
+    try:
+        dur = float(f.get("duration") or 0)
+    except ValueError:
+        dur = 0
+
+    def num(v):
+        m = re.match(r"\d+", str(v or ""))
+        return int(m.group(0)) if m else 0
+    return {"title": tags.get("title", ""), "artist": tags.get("artist", "") or tags.get("album_artist", ""),
+            "album": tags.get("album", ""), "albumartist": tags.get("album_artist", "") or tags.get("albumartist", ""),
+            "track": num(tags.get("track")), "disc": num(tags.get("disc")), "year": num(tags.get("date") or tags.get("year")),
+            "genre": tags.get("genre", ""), "dur": dur, "pic": pic, "vid": vid}
+
+
+def guess(p):
+    n = os.path.splitext(os.path.basename(p))[0]
+    n = re.sub(r"^\d{1,3}[ ._-]+", "", n)
+    if " - " in n:
+        a, t = n.split(" - ", 1)
+        return a.strip(), t.strip()
+    return "", n.strip()
+
+
+def folder_cover(d):
+    try:
+        fs = os.listdir(d)
+    except OSError:
+        return ""
+    low = {f.lower(): f for f in fs}
+    for n in ("cover.jpg", "cover.png", "folder.jpg", "folder.png", "front.jpg", "front.png", "album.jpg", "albumart.jpg", "cover.webp"):
+        if n in low:
+            return os.path.join(d, low[n])
+    for f in fs:
+        if ext(f) in ("jpg", "jpeg", "png", "webp") and re.search(r"cover|front|folder|art", f, re.I):
+            return os.path.join(d, f)
+    return ""
+
+
+def embedded_cover(p, key):
+    os.makedirs(COVERS, exist_ok=True)
+    t = COVERS + "/" + hashlib.md5(key.encode()).hexdigest() + ".jpg"
+    if os.path.exists(t):
+        return t
+    if shutil.which("ffmpeg"):
+        rc, _, _ = run(["ffmpeg", "-v", "error", "-y", "-i", p, "-an", "-map", "0:v:0", "-frames:v", "1",
+                        "-vf", "scale='min(640,iw)':-2", "-q:v", "3", t], 30)
+        if rc == 0 and os.path.exists(t) and os.path.getsize(t) > 0:
+            return t
+    return ""
+
+
+def library(kind):
+    ud = user_dirs()
+    root = (ud.get("MUSIC") or HOME + "/Music") if kind == "music" else (ud.get("VIDEOS") or HOME + "/Videos")
+    try:
+        cache = json.load(open(LIBF))
+    except Exception:
+        cache = {}
+    files = walk_media([root], AUD if kind == "music" else VID, 9)
+    todo = [p for p, st in files if (cache.get(p) or {}).get("m") != int(st.st_mtime)]
+    mt = {p: int(st.st_mtime) for p, st in files}
+    if todo:
+        with cf.ThreadPoolExecutor(8) as ex:
+            for p, r in zip(todo, ex.map(probe, todo)):
+                r["m"] = mt[p]
+                cache[p] = r
+    res, covers = [], {}
+    for p, st in files:
+        r = dict(cache.get(p) or {})
+        if not r.get("title"):
+            a, t = guess(p)
+            r["title"] = t
+            r["artist"] = r.get("artist") or a
+        r["path"] = p
+        r["t"] = int(st.st_mtime * 1000)
+        if kind == "music":
+            r["album"] = r.get("album") or os.path.basename(os.path.dirname(p))
+            akey = (r.get("albumartist") or r.get("artist") or "") + "|" + r["album"]
+            if akey not in covers:
+                c = folder_cover(os.path.dirname(p))
+                if not c and r.get("pic"):
+                    c = embedded_cover(p, akey)
+                covers[akey] = c
+            elif not covers[akey] and r.get("pic"):
+                covers[akey] = embedded_cover(p, akey)
+            r["cover"] = covers[akey]
+        else:
+            r["cover"] = make_thumb(p)[1]
+        res.append(r)
+    try:
+        os.makedirs(CACHE, exist_ok=True)
+        keep = {p: v for p, v in cache.items() if os.path.exists(p)}
+        json.dump(keep, open(LIBF + ".tmp", "w"))
+        os.replace(LIBF + ".tmp", LIBF)
+    except Exception:
+        pass
+    if kind == "music":
+        res.sort(key=lambda r: ((r.get("albumartist") or r.get("artist") or "").lower(), r["album"].lower(), r.get("disc", 0), r.get("track", 0), r["title"].lower()))
+    else:
+        res.sort(key=lambda r: -r["t"])
+    out({"root": root, "items": res})
+
+
+def tracks(paths):
+    """what the Player shows of files opened on their own (not in the library)"""
+    files = []
+    for p in paths:
+        p = os.path.abspath(p)
+        if os.path.isdir(p):
+            # a folder: everything in it that plays, in name order
+            files += sorted((x for x, _ in walk_media([p], AUD | VID, 4, 3000)), key=lambda x: x.lower())
+        elif os.path.isfile(p):
+            files.append(p)
+    paths = files
+    with cf.ThreadPoolExecutor(6) as ex:
+        infos = list(ex.map(probe, paths))
+    res = []
+    for p, r in zip(paths, infos):
+        if not r.get("title"):
+            a, t = guess(p)
+            r["title"] = t
+            r["artist"] = r.get("artist") or a
+        r["path"] = p
+        try:
+            r["t"] = int(os.path.getmtime(p) * 1000)
+        except OSError:
+            r["t"] = 0
+        if ext(p) in VID:
+            r["vid"] = True
+            r["cover"] = make_thumb(p)[1]
+        else:
+            r["album"] = r.get("album") or os.path.basename(os.path.dirname(p))
+            akey = (r.get("albumartist") or r.get("artist") or "") + "|" + r["album"]
+            r["cover"] = folder_cover(os.path.dirname(p)) or (embedded_cover(p, akey) if r.get("pic") else "")
+        res.append(r)
+    out(res)
+
+
+def exif(p):
+    r = {}
+    if shutil.which("magick") or shutil.which("identify"):
+        cmd = ["magick", "identify"] if shutil.which("magick") else ["identify"]
+        fmt = "%w|%h|%[EXIF:Make]|%[EXIF:Model]|%[EXIF:DateTimeOriginal]|%[EXIF:FNumber]|%[EXIF:ExposureTime]|%[EXIF:PhotographicSensitivity]|%[EXIF:FocalLength]"
+        rc, o, _ = run(cmd + ["-format", fmt + "\n", p + "[0]"], 10)
+        f = (o.splitlines() or [""])[0].split("|")
+        if rc == 0 and len(f) >= 9:
+            def frac(v):
+                try:
+                    a, b = v.split("/")
+                    return float(a) / float(b)
+                except Exception:
+                    try:
+                        return float(v)
+                    except Exception:
+                        return 0
+            r = {"w": int(f[0] or 0), "h": int(f[1] or 0), "camera": (f[2] + " " + f[3]).strip() if f[3] and f[2] not in f[3] else f[3],
+                 "taken": f[4], "f": round(frac(f[5]), 1) if f[5] else 0, "exp": f[6], "iso": f[7], "focal": round(frac(f[8])) if f[8] else 0}
+    try:
+        r["size"] = os.path.getsize(p)
+    except OSError:
+        pass
+    out(r)
+
+
+# ---------------------------------------------------------------- the apps' icons
+
+ICON_APPS = ("files", "photos", "music", "videos", "settings")
+
+
+def hexrgb(h):
+    h = h.lstrip("#")
+    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def mixc(a, b, k):
+    x, y = hexrgb(a), hexrgb(b)
+    return "#%02x%02x%02x" % tuple(round(x[i] + (y[i] - x[i]) * k) for i in range(3))
+
+
+def shape_path(kind, c=64.0, R=58.0):
+    """Material 3 shapes: a soft square, a flower, a cookie and a clover"""
+    import math
+    if kind == "square":
+        # a superellipse: rounder than a rounded square
+        pts = []
+        for i in range(240):
+            t = 2 * math.pi * i / 240
+            ct, st = math.cos(t), math.sin(t)
+            x = c + R * (abs(ct) ** 0.5) * (1 if ct >= 0 else -1)
+            y = c + R * (abs(st) ** 0.5) * (1 if st >= 0 else -1)
+            pts.append((x, y))
+    elif kind == "flower":
+        # eight round petals
+        pts = []
+        for i in range(480):
+            t = 2 * math.pi * i / 480
+            r = R * (0.84 + 0.16 * abs(math.cos(4 * t)) ** 0.55)
+            pts.append((c + r * math.cos(t), c + r * math.sin(t)))
+    else:
+        n, depth, rot = {"cookie": (9, 0.055, -math.pi / 2), "clover": (4, 0.075, math.pi / 4)}[kind]
+        pts = []
+        for i in range(360):
+            t = 2 * math.pi * i / 360
+            r = R * (1 - depth + depth * math.cos(n * (t - rot)))
+            pts.append((c + r * math.cos(t), c + r * math.sin(t)))
+    return "M" + " L".join("%.2f %.2f" % p for p in pts) + " Z"
+
+
+def icon_svg(app, pal):
+    p = pal
+    if app == "files":
+        bg, glyph_back, glyph = p["primary_container"], mixc(p["primary"], p["primary_container"], 0.45), p["primary"]
+        shape = "square"
+    elif app == "photos":
+        bg, glyph = mixc(p["tertiary"], p["surface"], 0.62), p["tertiary"]
+        glyph_back = mixc(p["tertiary"], "#ffffff", 0.35)
+        shape = "flower"
+    elif app == "music":
+        bg, glyph, glyph_back = mixc(p["primary"], p["surface"], 0.58), mixc(p["primary"], "#ffffff", 0.45), p["primary"]
+        shape = "cookie"
+    elif app == "settings":
+        bg, glyph, glyph_back = p["secondary_container"], mixc(p["primary"], "#ffffff", 0.3), p["secondary_container"]
+        shape = "square"
+    else:
+        bg, glyph, glyph_back = p["primary"], p["on_primary"], p["on_primary"]
+        shape = "clover"
+    top = mixc(bg, "#ffffff", 0.14)
+    low = mixc(bg, "#000000", 0.12)
+    d = shape_path(shape)
+    if app == "files":
+        g = ('<rect x="27" y="31" width="34" height="18" rx="7" fill="{b}"/>'
+             '<rect x="27" y="38" width="74" height="56" rx="12" fill="{b}"/>'
+             '<rect x="27" y="50" width="74" height="44" rx="12" fill="{f}"/>'
+             '<rect x="41" y="62" width="46" height="5" rx="2.5" fill="{bg}" opacity="0.35"/>')
+    elif app == "photos":
+        g = ('<circle cx="80" cy="45" r="10" fill="{b}"/>'
+             '<path d="M33 88 L54 61 L67 76 L76 66 L95 88 Z" fill="{f}" stroke="{f}" stroke-width="7" stroke-linejoin="round"/>')
+    elif app == "music":
+        g = ('<path d="M58 44 L96 34 L96 46 L58 56 Z" fill="{f}" stroke="{f}" stroke-width="4" stroke-linejoin="round"/>'
+             '<rect x="56" y="44" width="8" height="42" rx="3" fill="{f}"/>'
+             '<rect x="90" y="36" width="8" height="42" rx="3" fill="{f}"/>'
+             '<ellipse cx="49" cy="87" rx="13" ry="10.5" fill="{f}" transform="rotate(-18 49 87)"/>'
+             '<ellipse cx="83" cy="79" rx="13" ry="10.5" fill="{f}" transform="rotate(-18 83 79)"/>')
+    elif app == "settings":
+        import math
+        pts = []
+        for i in range(360):
+            t = 2 * math.pi * i / 360
+            k = (math.cos(8 * t) + 1) / 2
+            r = 30 + 8 * min(1, max(0, (k - 0.25) * 2.2))
+            pts.append((64 + r * math.cos(t), 64 + r * math.sin(t)))
+        gear = "M" + " L".join("%.2f %.2f" % q for q in pts) + " Z"
+        g = '<path d="' + gear + '" fill="{f}"/><circle cx="64" cy="64" r="13" fill="{b}"/>'
+    else:
+        g = '<path d="M54 45 L54 83 L87 64 Z" fill="{f}" stroke="{f}" stroke-width="12" stroke-linejoin="round"/>'
+    g = g.format(b=glyph_back, f=glyph, bg=bg)
+    return ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">'
+            '<defs><linearGradient id="g" x1="0" y1="0" x2="0.4" y2="1">'
+            '<stop offset="0" stop-color="%s"/><stop offset="1" stop-color="%s"/></linearGradient></defs>'
+            '<path d="%s" fill="url(#g)"/>'
+            '<g transform="translate(0 2.5)" opacity="0.22" fill="#000000">%s</g>'
+            '%s</svg>\n') % (top, low, d, g.replace('fill="%s"' % glyph, 'fill="#000"').replace('fill="%s"' % glyph_back, 'fill="#000"').replace('stroke="%s"' % glyph, 'stroke="#000"'), g)
+
+
+def icons(outdir=None):
+    """the icons of Files, Photos, Music and Videos in the wallpaper's colors (hicolor, so every launcher finds them)"""
+    pal = {"primary": "#d0bcff", "on_primary": "#381e72", "primary_container": "#4f378b", "secondary_container": "#4a4458",
+           "tertiary": "#efb8c8", "surface": "#141218"}
+    try:
+        j = json.load(open(CONF + "/palette.json"))
+        for k in pal:
+            v = str(j.get(k, ""))
+            if re.fullmatch(r"#[0-9a-fA-F]{6}", v):
+                pal[k] = v
+    except Exception:
+        pass
+    outdir = outdir or DATA + "/icons/hicolor/scalable/apps"
+    os.makedirs(outdir, exist_ok=True)
+    made = []
+    for a in ICON_APPS:
+        f = os.path.join(outdir, "darkshadow-%s.svg" % a)
+        svg = icon_svg(a, pal)
+        try:
+            if open(f).read() == svg:
+                made.append(f)
+                continue
+        except OSError:
+            pass
+        with open(f + ".tmp", "w") as h:
+            h.write(svg)
+        os.replace(f + ".tmp", f)
+        made.append(f)
+    out({"ok": True, "icons": made})
+
+
+def prefs(app, op, val=None):
+    f = CONF + "/apps/" + re.sub(r"[^a-z]", "", app) + ".json"
+    if op == "get":
+        try:
+            out(json.load(open(f)))
+        except Exception:
+            out({})
+        return
+    try:
+        j = json.loads(val)
+    except Exception:
+        return out({"ok": False})
+    os.makedirs(os.path.dirname(f), exist_ok=True)
+    json.dump(j, open(f + ".tmp", "w"), indent=1)
+    os.replace(f + ".tmp", f)
+    out({"ok": True})
+
+
+def main():
+    a = sys.argv[1:]
+    if not a:
+        print(__doc__)
+        return
+    c = a[0]
+    if c == "places":
+        places()
+    elif c == "recent":
+        recent()
+    elif c in ("copy", "move") and len(a) >= 3:
+        transfer(c, a[1], a[2:])
+    elif c == "paste" and len(a) == 2:
+        paste(a[1])
+    elif c == "clip" and len(a) >= 3 and a[1] in ("copy", "cut"):
+        clip(a[1], a[2:])
+    elif c == "can-paste":
+        op, ps = clip_read()
+        out({"op": op, "n": len([p for p in ps if os.path.lexists(p)])})
+    elif c == "trash" and len(a) >= 2:
+        trash(a[1:])
+    elif c == "delete" and len(a) >= 2:
+        delete(a[1:])
+    elif c == "trash-list":
+        trash_list()
+    elif c == "restore" and len(a) >= 2:
+        restore(a[1:])
+    elif c == "empty-trash":
+        empty_trash()
+    elif c == "mkdir" and len(a) == 3:
+        mkdir(a[1], a[2])
+    elif c == "newfile" and len(a) == 3:
+        mkdir(a[1], a[2], True)
+    elif c == "rename" and len(a) == 3:
+        rename(a[1], a[2])
+    elif c == "extract" and len(a) == 2:
+        extract(a[1])
+    elif c == "compress" and len(a) >= 3:
+        compress(a[1], a[2:])
+    elif c == "search" and len(a) == 3:
+        search(a[1], a[2])
+    elif c == "stat":
+        out([e for e in (entry(x) for x in a[1:]) if e])
+    elif c == "info" and len(a) == 2:
+        info(a[1])
+    elif c == "thumbs":
+        thumbs(a[1:])
+    elif c == "apps" and len(a) == 2:
+        apps(a[1])
+    elif c == "launch" and len(a) >= 2:
+        launch(a[1], a[2:])
+    elif c == "default" and len(a) == 3:
+        set_default(a[1], a[2])
+    elif c == "photos":
+        photos()
+    elif c in ("music", "videos"):
+        library(c)
+    elif c == "tracks":
+        tracks(a[1:])
+    elif c == "exif" and len(a) == 2:
+        exif(a[1])
+    elif c == "icons":
+        icons(a[1] if len(a) > 1 else None)
+    elif c == "prefs" and len(a) >= 3:
+        prefs(a[1], a[2], a[3] if len(a) > 3 else None)
+    else:
+        print(__doc__)
+        sys.exit(2)
+
+
+if __name__ == "__main__":
+    main()

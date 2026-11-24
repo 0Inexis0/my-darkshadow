@@ -16,6 +16,14 @@ Singleton {
     // windows cover the desktop (rice-busy): the widgets' decorative motion pauses (nobody sees it, and the
     // compositor does not have to redraw the desktop under the windows)
     property bool covered: false
+    // V4.98 Minimal mode (Settings > Look & Feel; rice-minimal): square corners everywhere and plain frames.
+    // sq: every corner square. frame: "double" (a color frame with a dark line outside), "single", "thin" (one quiet line)
+    property bool sq: false
+    property string frame: "double"
+    // the frames of panels, menus, the bar, the dock and widgets (Frame.qml): the dark outer line and the color one
+    readonly property real frameOut: sq && frame === "double" ? 1 : 0
+    readonly property real frameIn: sq ? (frame === "thin" ? 1 : 2) : 0
+    readonly property color frameColor: frame === "thin" ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(accentHi.r, accentHi.g, accentHi.b, 0.85)
     // widget style (Settings > Widgets > Theme): shadow (DarkShadow's Shell), google, outline
     property string theme: "google"
     // text and cards turn light or dark with the wallpaper behind each widget (Settings > Widgets)
@@ -28,7 +36,7 @@ Singleton {
     property bool shadowNotif: true
     property real shadowSize: 18
     property real shadowStrength: 0.45
-    readonly property bool shadows: shadowsAll && !flat
+    readonly property bool shadows: shadowsAll && !flat && !sq      // V4.98: none in Minimal mode
     // your shape (Settings > Appearance > Shapes; settings-app.json): icons, loaders and highlights take it
     property string shape: "verysunny"
     // progress lines and rings: wavy or flat, and how thick (Settings > Appearance > Components; settings-app.json)
@@ -40,9 +48,12 @@ Singleton {
     readonly property var emph: [0.2, 0, 0, 1, 1, 1]
     // the accent color of your theme (Waybar colors), used by the Google style and the visualizer
     property color accent: "#9ec9bd"
+    // V4.92: a new wallpaper's colors flow in over 0.7 s (not on the first read at start)
+    property bool accentReady: false
+    Behavior on accent { enabled: look.accentReady; ColorAnimation { duration: 700; easing.type: Easing.InOutCubic } }
     // frames a second for the moving parts of the widgets (turning shapes, the visualizer): Settings > Desktop >
     // Frame rate. 0 = as fast as the screen (180 Hz: 180)
-    property int fps: 60
+    property int fps: 30
     // the same color made bright enough to stand out on the dark menus (a dark wallpaper gives a dark accent,
     // which looked muddy on switches and sliders): the hue stays, it gets light and a little colorful
     readonly property color accentHi: Qt.hsla(accent.hslHue < 0 ? 0 : accent.hslHue,

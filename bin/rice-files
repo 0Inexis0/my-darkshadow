@@ -2,8 +2,13 @@
 # rice-files [PATH]: open the file manager you picked in Settings > Desktop > Look & Feel (~/.config/rice/files),
 # or the first one this computer has. SUPER + E runs this.
 f="$(cat "$HOME/.config/rice/files" 2>/dev/null)"
+# ours (Files): picked, or nothing picked yet (it comes first in Settings too)
+if { [ "$f" = darkshadow ] || [ -z "$f" ]; } && [ -x "$HOME/.local/bin/rice-app" ] && [ -f "$HOME/.config/quickshell/rice-apps/shell.qml" ]; then
+  exec "$HOME/.local/bin/rice-app" files "$@"
+fi
 for t in "$f" nautilus thunar nemo dolphin pcmanfm; do
   [ -n "$t" ] && command -v "$t" >/dev/null 2>&1 && exec "$t" "$@"
 done
+[ -x "$HOME/.local/bin/rice-app" ] && exec "$HOME/.local/bin/rice-app" files "$@"
 command -v notify-send >/dev/null 2>&1 && notify-send -a "DarkShadow's Shell" "No file manager" "Install one in Settings > Desktop > Look & Feel"
 exit 1

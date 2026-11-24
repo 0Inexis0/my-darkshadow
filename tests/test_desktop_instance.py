@@ -104,7 +104,35 @@ import json, os, pathlib, sys
                 self.assertEqual(result.returncode, 0, result.stderr)
                 started = json.loads((self.home / "started.json").read_text())
                 self.assertEqual(started["gc"], override or "0")
-                self.assertEqual(started["args"], ["-f", "qs", "-n", "-p", str(self.home / ".config/quickshell/rice-desktop")])
+                if shutil.which("flock"):
+                    self.assertEqual(started["args"][:3], ["-f", str(self.bin / "rice-desktop"), "keep"])
+                    self.assertEqual(started["args"][3], (self.home / ".cache/rice/desktop-want").read_text().strip())
+                else:
+                    self.assertEqual(started["args"], ["-f", "qs", "-n", "-p", str(self.home / ".config/quickshell/rice-desktop")])
+
+    @unittest.skipUnless(shutil.which("flock"), "flock unavailable")
+    def test_supervisor_retries_crash_not_withdrawn_token(self):
+        cache = self.home / ".cache/rice"
+        cache.mkdir(parents=True)
+        (cache / "desktop-want").write_text("token")
+        self.script("qs", """
+import os, pathlib, sys
+h = pathlib.Path(os.environ["HOME"])
+if sys.argv[1] == "list":
+    print("[]")
+    sys.exit(0)
+assert sys.argv[1:] == ["-n", "-p", str(h / ".config/quickshell/rice-desktop")]
+launch = h / "launch-count"
+n = int(launch.read_text()) + 1 if launch.exists() else 1
+launch.write_text(str(n))
+if n == 2:
+    (h / ".cache/rice/desktop-want").unlink()
+sys.exit(17)
+""")
+        self.assertEqual(self.run_script("rice-desktop", "keep", "token").returncode, 0)
+        self.assertEqual((self.home / "launch-count").read_text(), "2")
+        self.assertEqual(self.run_script("rice-desktop", "keep", "token").returncode, 0)
+        self.assertEqual((self.home / "launch-count").read_text(), "2")
 
 
 if __name__ == "__main__":

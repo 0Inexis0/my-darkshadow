@@ -14,7 +14,7 @@ SettingRow {
         Rectangle {
             width: 24
             height: 24
-            radius: 7
+            radius: M3.sq ? 0 : (7)
             anchors.verticalCenter: parent.verticalCenter
             color: row.valid(hexIn.text) ? hexIn.text : "#000000"
             border.width: 1
@@ -23,7 +23,7 @@ SettingRow {
         Rectangle {
             width: 112
             height: 34
-            radius: 9
+            radius: M3.sq ? 0 : (9)
             anchors.verticalCenter: parent.verticalCenter
             color: M3.surfaceLow
             border.width: 1

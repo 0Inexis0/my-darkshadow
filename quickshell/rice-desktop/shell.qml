@@ -31,12 +31,12 @@ ShellRoot {
 
     // ---------------- widget editor ----------------
     readonly property bool editing: cfg.editing === true
-    // what the editor offers; free = free width and height instead of scaling
-    readonly property var catalog: [
+    // every widget there is (one frame each in Edit mode); free = free width and height instead of scaling
+    readonly property var allWidgets: [
         { id: "visualizer", name: "Visualizer", icon: "\udb85\udc7d", free: true,
           styles: [["bars", "Bars"], ["mirror", "Mirror"], ["wave", "Wave"], ["dots", "Dots"]],
           optKey: "color", opts: [["accent", "Theme color"], ["gradient", "Gradient"], ["rainbow", "Rainbow"], ["mono", "White / black"]], optDefault: "accent" },
-        { id: "clock", name: "Clock", icon: "\uf017", styles: [["digital", "Digital"], ["line", "Line"], ["cookie", "Cookie"], ["pixel", "Pixel"]],
+        { id: "clock", name: "Clock", icon: "\uf017", styles: [["expressive", "Expressive"], ["stacked", "Stacked"], ["shape", "Shape"], ["analog", "Analog"]],
           optKey: "font", opts: [["default", "Font: Default"], ["bebas", "Bebas Neue"], ["orbitron", "Orbitron"], ["outfit", "Outfit"],
                                  ["grotesk", "Space Grotesk"], ["unbounded", "Unbounded"], ["shoulders", "Big Shoulders"]], optDefault: "default" },
         { id: "media", name: "Music", icon: "\uf001", card: true },
@@ -59,21 +59,49 @@ ShellRoot {
         { id: "storage", name: "Storage", icon: "\uf0a0", card: true },
         { id: "trio", name: "CPU · GPU · RAM", icon: "\uf2db", card: true },
         { id: "forecast", name: "Forecast", icon: "\uf0c2", card: true },
+        { id: "wpills", name: "Weather pills", icon: "\uf0c2", card: true },
+        { id: "progress", name: "Progress", icon: "\uf252", card: true },
         { id: "music", name: "Music card", icon: "\uf001", card: true },
         { id: "datepill", name: "Date & time", icon: "\uf017", card: true },
         { id: "date", name: "Date", icon: "\uf073", card: true,
           styles: [["flower", "Flower"], ["cookie", "Cookie"], ["clover", "Clover"], ["sun", "Sun"], ["square", "Square"], ["circle", "Circle"]] }
     ]
+    // V4.93: widgets that were nearly the same are one widget with styles now (its style is which of them shows):
+    // [style, widget, name]. A widget of a family that was on stays on; changing the style swaps it in place.
+    readonly property var families: ({
+        media: [["card", "media", "Card"], ["big", "music", "Big card"], ["ring", "nowring", "Ring"], ["player", "player", "Player"], ["button", "playpill", "Button"]],
+        weather: [["card", "weather", "Card"], ["sky", "sky", "Sky"], ["forecast", "forecast", "Forecast"], ["pills", "wpills", "Pills"]],
+        resources: [["bars", "resources", "Bars"], ["rings", "trio", "Rings"]],
+        date: [["flower", "date", "Flower"], ["cookie", "date", "Cookie"], ["clover", "date", "Clover"], ["sun", "date", "Sun"], ["square", "date", "Square"],
+               ["circle", "date", "Circle"], ["pill", "datepill", "Pill"]]
+    })
+    function famOf(id) { for (const k in families) for (let i = 0; i < families[k].length; i++) if (families[k][i][1] === id || k === id) return k; return "" }
+    function rawInfo(id) { for (let i = 0; i < allWidgets.length; i++) if (allWidgets[i].id === id) return allWidgets[i]; return null }
+    function famEntry(k, name, icon) { return { id: k, name: name, icon: icon, card: true, styles: families[k].map(function(f) { return [f[0], f[2]] }) } }
+    // what the editor's list offers (15 instead of 23)
+    readonly property var catalog: [rawInfo("visualizer"), rawInfo("clock"), famEntry("media", "Music", "\uf001"), rawInfo("lyrics"),
+        famEntry("weather", "Weather", "\uf0c2"), rawInfo("calendar"), famEntry("date", "Date", "\uf073"), famEntry("resources", "System", "\uf2db"),
+        rawInfo("gauge"), rawInfo("progress"), rawInfo("storage"), rawInfo("battery"), rawInfo("todo"), rawInfo("focus"), rawInfo("notes"), rawInfo("usercard")]
+    // what a widget is in the editor (a member of a family: the family, with its styles)
+    function infoOf(id) { const f = famOf(id); if (f !== "") return catalog.filter(function(c) { return c.id === f })[0]; return rawInfo(id) }
+    // the widget of a family that is on ("" when none)
+    function memberOn(k) { const l = families[k] || []; for (let i = 0; i < l.length; i++) if (on(l[i][1])) return l[i][1]; return "" }
     property var wins: ({})
     function reg(id, w) { const n = Object.assign({}, wins); n[id] = w; wins = n }
     function unreg(id) { if (!wins[id]) return; const n = Object.assign({}, wins); delete n[id]; wins = n }
     function ds(args) { Quickshell.execDetached([home + "/.local/bin/desktop-set"].concat(args.map(function(a) { return String(a) }))) }
-    function enabledOf(id) { return id === "clock" ? !!(cfg.clock && cfg.clock.enabled === true) : on(id) }
+    function enabledOf(id) { return id === "clock" ? !!(cfg.clock && cfg.clock.enabled === true) : (families[id] ? memberOn(id) !== "" : on(id)) }
     function styleOf(id) {
+        const f = famOf(id)
+        if (f !== "") {
+            const mid = families[id] ? memberOn(id) : id
+            if (mid !== "date") { const m = families[f].filter(function(x) { return x[1] === mid })[0]; return m ? m[0] : families[f][0][0] }
+            id = "date"                 // the date: its shape is its own style
+        }
         const w = wins[id]
         if (w && w.sty) return w.sty
         if (id !== "clock" && wc(id).style) return wc(id).style
-        return id === "clock" ? (cfg.clock && cfg.clock.style ? cfg.clock.style : "digital") : (id === "visualizer" ? "bars" : (id === "gauge" ? "pentagon" : (id === "date" ? "flower" : "")))
+        return id === "clock" ? (cfg.clock && cfg.clock.style ? cfg.clock.style : "expressive") : (id === "visualizer" ? "bars" : (id === "gauge" ? "pentagon" : (id === "date" ? "flower" : "")))
     }
     // the second choice of a widget (visualizer color, clock font)
     function optOf(id, key, dflt) {
@@ -105,12 +133,33 @@ ShellRoot {
     }
     function wset(id, key, val) { ds(["wset", id, key, val]) }
     function setStyle(id, v) {
+        // a family: the widget of that style takes the place of the one that was there; its id comes back
+        const f = famOf(id)
+        if (f !== "") {
+            const to = families[f].filter(function(x) { return x[0] === v })[0]
+            if (!to) return id
+            const cur = families[id] ? memberOn(id) : id
+            if (to[1] !== cur && cur !== "") {
+                const cw = wins[cur], g = wc(cur)
+                const x = cw ? Math.round(cw.px) : g.x, y = cw ? Math.round(cw.py) : g.y
+                removeWidget(cur, true)
+                patch(to[1], { enabled: true, x: x, y: y })
+                ds(["widget", to[1], "on"])
+                if (x !== undefined) ds(["geom", to[1], x, y])
+            } else if (cur === "") addWidget(to[1], true)
+            if (to[1] === "date") { const dw = wins.date; if (dw) dw.sty = v; patch("date", { style: v }); wset("date", "style", v) }
+            return to[1]
+        }
         const w = wins[id]
         if (w) w.sty = v
         if (id === "clock") { patch("clock", { style: v }); ds(["clock", "style", v]) }
         else { patch(id, { style: v }); wset(id, "style", v) }
+        return id
     }
-    function addWidget(id) {
+    // raw: that very widget (a family's key is also the id of one of its widgets: "media", "weather", "resources",
+    // "date"; without raw that one called itself without end and no widget of those families could be added)
+    function addWidget(id, raw) {
+        if (!raw && families[id]) { if (memberOn(id) === "") addWidget(families[id][0][1], true); return }
         const w = wins[id]
         let geo = {}
         if (w && id !== "visualizer" && !(id === "clock" ? (cfg.clock && cfg.clock.x !== undefined) : (wc(id).x !== undefined))) {
@@ -121,7 +170,8 @@ ShellRoot {
         else { patch(id, Object.assign({ enabled: true }, geo)); ds(["widget", id, "on"]) }
         if (geo.x !== undefined) ds(["geom", id, geo.x, geo.y])
     }
-    function removeWidget(id) {
+    function removeWidget(id, raw) {
+        if (!raw && families[id]) { families[id].forEach(function(m) { if (on(m[1])) removeWidget(m[1], true) }); return }
         if (id === "clock") { patch("clock", { enabled: false }); ds(["clock", "enabled", "off"]) }
         else { patch(id, { enabled: false }); ds(["widget", id, "off"]) }
     }
@@ -131,49 +181,74 @@ ShellRoot {
         if (w) { w.sc = 1; w.op = 1; w.bgv = 1; w.flp = false; w.px = w.defX; w.py = w.defY; w.fw = w.defW; w.fh = w.defH }
     }
     function resetAll() { ds(["reset-pos"]) }
-    function finishEditing() { const c = JSON.parse(JSON.stringify(cfg)); c.editing = false; cfg = c; ds(["edit", "off"]) }
-
-    Process {
-        id: cfgProc
-        // desktop.json, then "@@flat" while rice-effects has blur and transparency off
-        command: ["bash", "-c", "cat \"$HOME/.config/rice/desktop.json\" 2>/dev/null; [ -e \"$HOME/.cache/rice/flat\" ] && printf '@@flat'; [ -e \"$HOME/.cache/rice/lite\" ] && printf '@@lite'; printf '@@accent'; sed -n 's/^@define-color accent *\\(#[0-9a-fA-F]\\{6\\}\\).*/\\1/p' \"$HOME/.config/waybar/colors.css\" 2>/dev/null | head -1"]
-        running: true
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const fl = text.indexOf("@@flat") >= 0
-                if (fl !== Look.flat) Look.flat = fl
-                const lt = text.indexOf("@@lite") >= 0
-                if (lt !== Look.lite) Look.lite = lt
-                const ai = text.indexOf("@@accent")
-                if (ai >= 0) {
-                    const ac = text.substring(ai + 8).trim()
-                    if (/^#[0-9a-fA-F]{6}$/.test(ac) && Look.accent.toString() !== ac.toLowerCase()) Look.accent = ac
-                }
-                const t = (ai >= 0 ? text.substring(0, ai) : text).replace("@@flat", "").replace("@@lite", "")
-                if (t.trim().length === 0 || t === root.cfgText) return
-                try {
-                    const j = JSON.parse(t)
-                    root.cfgText = t
-                    root.cfg = j
-                    Look.blur = j.widgetBlur !== false
-                    Look.widgetAlpha = j.widgetOpacity !== undefined ? Math.max(0.2, Math.min(1, Number(j.widgetOpacity))) : 1
-                    // one widget style now: Google (Material You cards in your theme color)
-                    Look.theme = "google"
-                    Look.fps = j.fps !== undefined ? Math.max(0, Number(j.fps)) : 60
-                    Look.adapt = j.widgetAdapt !== false
-                } catch (e) { }
-            }
-        }
+    function finishEditing() { const c = JSON.parse(JSON.stringify(cfg)); c.editing = false; cfg = c; editSec = ""; ds(["edit", "off"]) }
+    // V4.89: Edit mode on one of its tabs (the dock's menu: Edit dock, Add apps, Icons): "dock", "dock-add", "icons"
+    property string editSec: ""
+    function startEditing(sec) {
+        editSec = ""; editSec = sec || ""
+        if (!editing) { const c = JSON.parse(JSON.stringify(cfg)); c.editing = true; cfg = c; ds(["edit", "on"]) }
     }
+    // desktop-set edit on TAB (Settings > Interface: Dock, Icons): the same, from outside
+    readonly property string editTab: cfg.editTab || ""
+    onEditingChanged: if (editing && editTab !== "") { editSec = ""; editSec = editTab }
+    onEditTabChanged: if (editing && editTab !== "") { editSec = ""; editSec = editTab }
+    readonly property var dockRef: dockObj
+    // how app icons look (Edit mode > Icons): the icon pack goes to Icons, the rest to the dock
+    readonly property var iconCfg: cfg.icons ? cfg.icons : ({})
+    Binding { target: Icons; property: "theme"; value: root.iconCfg.theme || "" }
+
+    // V4.96: desktop.json, the flat / lite flags and the theme color are read inside the shell (inotify, plus a slow
+    // re-read); before, a bash, a cat and a sed were started every 10 seconds and on every change
+    function applyCfg(t) {
+        if (t.trim().length === 0 || t === root.cfgText) return
+        try {
+            const j = JSON.parse(t)
+            root.cfgText = t
+            root.cfg = j
+            Look.blur = j.widgetBlur !== false
+            Look.widgetAlpha = j.widgetOpacity !== undefined ? Math.max(0.2, Math.min(1, Number(j.widgetOpacity))) : 1
+            // one widget style now: Google (Material You cards in your theme color)
+            Look.theme = "google"
+            Look.fps = j.fps !== undefined ? Math.max(0, Number(j.fps)) : 30   // V4.95: 30 by default (the slow decorative turns look the same, half the redraws)
+            Look.adapt = j.widgetAdapt !== false
+        } catch (e) { }
+    }
+    // a flag file there or not (rice-effects writes them): no program needed to look
+    FileView { id: flatF; path: root.home + "/.cache/rice/flat"; printErrors: false; watchChanges: true
+        onFileChanged: reload(); onLoaded: root.flatFile = true; onLoadFailed: root.flatFile = false }
+    // no blur and no transparency: Lite / gaming mode (the flag file), or Minimal mode with solid windows
+    property bool flatFile: false
+    property bool minSolid: false
+    Binding { target: Look; property: "flat"; value: root.flatFile || root.minSolid }
+    FileView { id: liteF; path: root.home + "/.cache/rice/lite"; printErrors: false; watchChanges: true
+        onFileChanged: reload(); onLoaded: if (!Look.lite) Look.lite = true; onLoadFailed: if (Look.lite) Look.lite = false }
+    // V4.92: the theme color is taken the moment the new wallpaper's colors are written (it was read every 10 s with
+    // the rest, so the colors came long after the wallpaper); it flows in (Look.qml)
+    function setAccent(ac) {
+        if (!/^#[0-9a-fA-F]{6}$/.test(ac)) return
+        if (Look.accent.toString() !== ac.toLowerCase()) Look.accent = ac
+        Look.accentReady = true
+    }
+    Trigger { path: root.home + "/.config/waybar/colors.css"; every: 2000
+        onContent: function(t) { const r = /@define-color accent *(#[0-9a-fA-F]{6})/.exec(t); if (r) root.setAccent(r[1]) } }
     // desktop.json is read as soon as it changes (no more starting a program 5 times a second to look at it);
     // the flags (flat, lite) and the accent color every 3 seconds
+    // V4.98 Minimal mode (rice-minimal): square corners and plain frames
+    Trigger { path: root.home + "/.config/rice/minimal.json"; every: 3000
+        onContent: function(t) {
+            let j = {}
+            try { j = JSON.parse(t) } catch (e) { j = {} }
+            Look.sq = j.on === true
+            Look.frame = j.frame === "single" || j.frame === "thin" ? j.frame : "double"
+            root.minSolid = j.on === true && j.solid === true && (j.v || 1) >= 2
+        } }
     Trigger { path: root.home + "/.config/rice/desktop.json"; every: 1500
-        onContent: function(t) { if (!cfgProc.running) cfgProc.running = true } }
+        onContent: function(t) { root.applyCfg(t) } }
     Timer {
         interval: 10000
         running: true
         repeat: true
-        onTriggered: { if (!cfgProc.running) cfgProc.running = true }
+        onTriggered: { flatF.reload(); liteF.reload() }
     }
 
     // wavy progress (Settings > Appearance > Components keeps it in settings-app.json)
@@ -217,7 +292,7 @@ ShellRoot {
         stdout: StdioCollector { onStreamFinished: root.wallpaper = text.trim() }
     }
     Timer {
-        interval: 30000
+        interval: 180000     // V4.96: 3 minutes (the file above tells at once; this is only for other wallpaper tools)
         running: Look.adapt || Wm.niri || !!(root.placement !== "draggable" && root.cfg.clock && root.cfg.clock.enabled === true)
         repeat: true
         triggeredOnStart: true
@@ -278,7 +353,7 @@ ShellRoot {
             ClockWidget {
                 id: clk
                 anchors.fill: parent
-                clockStyle: clockWin.sty !== "" ? clockWin.sty : (root.cfg.clock && root.cfg.clock.style ? root.cfg.clock.style : "digital")
+                clockStyle: clockWin.sty !== "" ? clockWin.sty : (root.cfg.clock && root.cfg.clock.style ? root.cfg.clock.style : "expressive")
                 mode: root.placement
                 wallpaper: root.wallpaper
                 bw: root.sw
@@ -492,6 +567,30 @@ ShellRoot {
         }
     }
     // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("wpills")
+        WidgetWindow {
+            id: wpillsWin
+            wid: "wpills"; wc: root.wc("wpills"); active: root.on("wpills"); editing: root.editing; hidden: root.hideWidgets
+            bw: root.sw; bh: root.sh; cw: 260; ch: 290; defX: 80; defY: 420
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, wpillsWin)
+            Component.onDestruction: root.unreg(wid)
+            WeatherPillsWidget { anchors.fill: parent; pal: wpillsWin.pal; bg: wpillsWin.bgv; running: root.on("wpills") && !root.hideWidgets }
+        }
+    }
+    // made only while it is on (an off widget takes no memory)
+    LazyLoader { active: root.on("progress")
+        WidgetWindow {
+            id: progressWin
+            wid: "progress"; wc: root.wc("progress"); active: root.on("progress"); editing: root.editing; hidden: root.hideWidgets
+            bw: root.sw; bh: root.sh; cw: 300; ch: 214; defX: 1500; defY: 420
+            onMoved: function(id, x, y) { root.savePos(id, x, y) }
+            Component.onCompleted: root.reg(wid, progressWin)
+            Component.onDestruction: root.unreg(wid)
+            ProgressWidget { anchors.fill: parent; pal: progressWin.pal; bg: progressWin.bgv; running: root.on("progress") && !root.hideWidgets }
+        }
+    }
+    // made only while it is on (an off widget takes no memory)
     LazyLoader { active: root.on("storage")
         WidgetWindow {
             id: storageWin
@@ -573,10 +672,19 @@ ShellRoot {
     WallLum { path: root.wallpaper; sw: root.sw; sh: root.sh }
     // niri: the blurred wallpaper behind the workspaces in the overview (SUPER + Tab)
     NiriBackdrop { path: root.wallpaper }
-    // Infinite Desktop: the wallpaper moves with the canvas (Hyprland)
+    // Infinite Desktop: the wallpaper moves with the canvas (Hyprland); every screen is a part of it
     WallCanvas { path: root.wallpaper }
+    Variants {
+        model: Mon.others
+        WallCanvas { required property var modelData; scr: modelData; path: root.wallpaper }
+    }
 
-    EditorWindow { root: root }
+    // V4.96: the widget editor (and its big side panel) is made when Edit mode starts and let go when it ends; it sat
+    // in memory all the time before
+    // (deskRoot, not "root: root": made by the loader, that bound EditorWindow's own root to itself, so it was empty
+    // and Edit mode showed nothing)
+    readonly property var deskRoot: root
+    LazyLoader { active: root.editing; EditorWindow { root: deskRoot } }
 
     // ---- dashboard (middle of the bar edge, SUPER + W for wallpapers)
     // made when it is first opened, let go after 10 minutes closed (V4.84: it held every app's icon from the start)
@@ -588,7 +696,12 @@ ShellRoot {
     LazyPanel { name: "walls-open"; WallPicker { } }
     Bar { id: mainBar; nf: notifs }
     // the bar on the left or right edge (Settings > DarkShadow bar > Position)
-    VBar { }
+    // V4.96: the side bar only while the bar is on the left or right (and a moment after, for its way out)
+    property bool vbAlive: false
+    readonly property bool vbWant: mainBar.vertical && mainBar.bc.enabled !== false
+    onVbWantChanged: { if (vbWant) { vbOff.stop(); vbAlive = true } else vbOff.restart() }
+    Timer { id: vbOff; interval: 2500; onTriggered: root.vbAlive = false }
+    LazyLoader { active: root.vbAlive; VBar { } }
     // Settings > System > Monitors > Bar on every screen: the same bar on the other screens too
     Variants {
         model: Mon.everywhere ? Mon.others : []
@@ -614,8 +727,6 @@ ShellRoot {
     LazyPanel { name: "snip-result"; SnipResult { } }
     // SUPER + /: every key on one sheet
     LazyPanel { name: "keys-open"; Cheatsheet { } }
-    // SUPER + X: the toolbox (tasks, a note, a focus timer, a converter, the system, a chat)
-    LazyPanel { name: "tools-open"; Tools { } }
     LazyPanel { name: "volume-open"; VolumeMenu { } }
     VolumeOsd { islandTakes: mainBar.islandVolume }
     LazyPanel { name: "gamebar-open"; GamePanel { gb: root.cfg.gamebar ? root.cfg.gamebar : ({}) } }
@@ -623,7 +734,7 @@ ShellRoot {
     // made only when opened, let go two minutes after it closed (less memory from the start)
     LazyPanel { name: "cc-open"; ControlCenter { nf: notifs } }
 
-    Dock { dc: root.cfg.dock ? root.cfg.dock : ({}) }
+    Dock { id: dockObj; dc: root.cfg.dock ? root.cfg.dock : ({}); ic: root.iconCfg; desk: root; editing: root.editing }
 
 
 }

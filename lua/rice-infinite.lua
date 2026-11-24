@@ -12,6 +12,9 @@
 -- A new window does not land on top of the others: it gets its own place next to the one you were in, and the
 -- canvas glides to it (the pointer follows), so there is always room.
 -- Turning it off puts every window back where it was and tiles again the ones that were tiled.
+-- Every screen is a part of the same canvas (Settings > Desktop > Infinite Desktop > Screens): the windows of every
+-- screen float side by side as the screens are, and a new window gets its room on its own screen. "This workspace"
+-- (screens = 1) keeps the canvas on the workspace you turned it on.
 -- Everything is guarded: if something is missing in this Hyprland, the rest of the config still loads.
 
 local RI = {}
@@ -27,10 +30,15 @@ RI.ws = nil
 RI.z, RI.ox, RI.oy = 1.0, 0, 0
 RI.world = {}      -- address -> { x, y, w, h } on the canvas (screen = offset + canvas * zoom)
 RI.tiled = {}      -- address -> true: it was tiled before, tile it again when turned off
-RI.cfg = { step = 0.12, min = 0.2, max = 1.0, pan = 180 }
+RI.cfg = { step = 0.12, min = 0.2, max = 1.0, pan = 180, screens = 1 }   -- V5.02: this workspace by default
 
 local function run(d)
     if d then pcall(hl.dispatch, d) end
+end
+
+-- every screen is one canvas (screens = 0), or only the workspace it was turned on (screens = 1, the default)
+local function shared()
+    return tonumber(RI.cfg.screens) ~= 1
 end
 
 local function sel(w)
@@ -60,7 +68,7 @@ end
 local function save()
     local f = io.open(STATE, "w")
     if not f then return end
-    f:write(string.format("on=%d\nws=%s\nz=%.5f\nox=%.2f\noy=%.2f\nsig=%s\n", RI.on and 1 or 0, tostring(RI.ws or ""), RI.z, RI.ox, RI.oy,
+    f:write(string.format("on=%d\nws=%s\nz=%.5f\nox=%.2f\noy=%.2f\nsig=%s\n", RI.on and 1 or 0, shared() and "all" or tostring(RI.ws or ""), RI.z, RI.ox, RI.oy,
         os.getenv("HYPRLAND_INSTANCE_SIGNATURE") or ""))
     for a in pairs(RI.tiled) do f:write("tiled=" .. a .. "\n") end
     f:close()
@@ -83,13 +91,28 @@ local function overlay(w)
     return false
 end
 
+local function each_window(fn)
+    local ok, list = pcall(hl.get_windows)
+    if ok and type(list) == "table" then for _, w in ipairs(list) do fn(w) end end
+end
+
+-- every screen: only the workspace each screen shows (V5.02: the windows of every other workspace were taken too)
+local function shown(w, wsid)
+    local m = w.monitor
+    local aw = type(m) == "table" and (m.active_workspace or m.activeWorkspace) or nil
+    local id = type(aw) == "table" and aw.id or aw
+    if id == nil then return true end
+    return tonumber(id) == tonumber(wsid)
+end
+
 local function wins()
     local out = {}
     local ok, list = pcall(hl.get_windows)
     if not ok or type(list) ~= "table" then return out end
+    local all = shared()
     for _, w in pairs(list) do
         local wsid = w.workspace and w.workspace.id
-        if wsid ~= nil and wsid == RI.ws and w.mapped ~= false and not w.hidden and (tonumber(w.fullscreen) or 0) == 0
+        if wsid ~= nil and ((all and shown(w, wsid)) or wsid == RI.ws) and w.mapped ~= false and not w.hidden and (tonumber(w.fullscreen) or 0) == 0
             and not w.pinned and not overlay(w) and w.at and w.size then
             out[#out + 1] = w
         end
@@ -121,7 +144,7 @@ local function place(w, s, resize)
 end
 
 local function here()
-    return RI.on and active_ws() == RI.ws
+    return RI.on and (shared() or active_ws() == RI.ws)
 end
 
 function RI.zoom_to(nz, cx, cy)
@@ -191,7 +214,9 @@ end
 
 -- the middle of the usable part of the screen (logical pixels, without the bar)
 local function middle()
-    local m = hl.get_active_monitor()
+    -- the screen the pointer is on (a window opens where the mouse is), or else the one you are working on
+    local c = hl.get_cursor_pos()
+    local m = c and hl.get_monitor_at(c.x, c.y) or hl.get_active_monitor()
     if not m then return 960, 540, 1920, 1080 end
     local sc = (tonumber(m.scale) or 1)
     if sc <= 0 then sc = 1 end
@@ -199,6 +224,24 @@ local function middle()
     local r = m.reserved or {}
     local l, t, rr, b = tonumber(r.left) or 0, tonumber(r.top) or 0, tonumber(r.right) or 0, tonumber(r.bottom) or 0
     return (m.x or 0) + l + (W - l - rr) / 2, (m.y or 0) + t + (H - t - b) / 2, W - l - rr, H - t - b
+end
+
+-- on every screen: move the canvas only as far as the new window needs to be in sight of its own screen
+local function reveal(s, m)
+    if not (s and m) then return end
+    local sc = tonumber(m.scale) or 1
+    if sc <= 0 then sc = 1 end
+    local W, H = (m.width or 1920) / sc, (m.height or 1080) / sc
+    local r = m.reserved or {}
+    local l, t = (m.x or 0) + (tonumber(r.left) or 0), (m.y or 0) + (tonumber(r.top) or 0)
+    local rr, b = (m.x or 0) + W - (tonumber(r.right) or 0), (m.y or 0) + H - (tonumber(r.bottom) or 0)
+    local x, y = RI.ox + s.x * RI.z, RI.oy + s.y * RI.z
+    local x2, y2 = x + s.w * RI.z, y + s.h * RI.z
+    local dx = 0
+    if x < l then dx = l - x elseif x2 > rr then dx = rr - x2 end
+    local dy = 0
+    if y < t then dy = t - y elseif y2 > b then dy = b - y2 end
+    if dx ~= 0 or dy ~= 0 then RI.pan(math.floor(dx + 0.5), math.floor(dy + 0.5)) end
 end
 
 -- glide the canvas so that this canvas point is in the middle of the screen (Hyprland animates the moves)
@@ -252,7 +295,7 @@ function RI.go(dir)
     local list = wins()
     local a = hl.get_active_window()
     local cx, cy
-    if a and a.at and a.size and a.workspace and a.workspace.id == RI.ws then
+    if a and a.at and a.size and a.workspace and (shared() or a.workspace.id == RI.ws) then
         cx, cy = a.at.x + a.size.x / 2, a.at.y + a.size.y / 2
     else
         cx, cy = middle()
@@ -281,7 +324,8 @@ end
 
 -- a window that opened on the canvas: float it, give it its own room next to the last one, glide there
 function RI.opened(w)
-    if not (RI.on and w and w.workspace and w.workspace.id == RI.ws) then return end
+    if not RI.on then return end
+    if not (w and w.workspace and (shared() or w.workspace.id == RI.ws)) then return end
     if overlay(w) then return end
     if not w.floating then
         -- it would have been tiled: it tiles again when Infinite Desktop is turned off
@@ -295,6 +339,13 @@ function RI.opened(w)
         if o.address ~= w.address then canvas(o) end
     end
     if lastAddr and not RI.world[lastAddr] then from = nil end
+    -- on every screen: the last window only when it is on the same screen, else the middle of this one
+    if shared() and from and w.monitor then
+        local lw
+        for _, o in ipairs(list) do if o.address == lastAddr then lw = o end end
+        local lm = lw and lw.monitor
+        if not (lm and lm.name and lm.name == w.monitor.name) then from = nil end
+    end
     local _, _, W, H = middle()
     local nw = from and from.w or (W * 0.6) / RI.z
     local nh = from and from.h or (H * 0.7) / RI.z
@@ -305,7 +356,11 @@ function RI.opened(w)
     for _, o in ipairs(fresh) do
         if o.address == w.address then place(o, RI.world[o.address], true) end
     end
-    center_on(x + nw / 2, y + nh / 2, fresh)
+    if shared() and w.monitor then
+        reveal(RI.world[w.address], w.monitor)
+    else
+        center_on(x + nw / 2, y + nh / 2, fresh)
+    end
     focus(w)
     if RI.last ~= w.address then RI.prev = RI.last end
     RI.last = w.address
@@ -403,9 +458,22 @@ end
 -- after Settings changed something
 function RI.reload()
     if RI.on then for _, key in ipairs(KEYS) do pcall(hl.unbind, key) end end
+    local was = shared()
     pcall(RI.load_cfg)
     pcall(bind_toggle)
     if RI.on then bind_keys() end
+    -- every screen <-> this workspace: the windows of a screen that joins float too (the ones that leave are still
+    -- tiled again when it is turned off)
+    if RI.on and shared() ~= was and RI.ws ~= nil then
+        for _, w in ipairs(wins()) do
+            canvas(w)
+            if not w.floating then
+                RI.tiled[w.address] = true
+                run(hl.dsp.window.float({ action = "set", window = sel(w) }))
+            end
+        end
+        save()
+    end
 end
 
 -- ---------- the canvas of each workspace is remembered (turn it off and on: everything is where you left it) ----------
@@ -451,23 +519,28 @@ local function class_of(w)
     return clean(w.class or w.initialClass or w.initial_class or "")
 end
 
--- before turning off: where every window of this workspace is on the canvas
+-- before turning off: where every window of the canvas is on it
+local function key()
+    return shared() and "all" or RI.ws
+end
+
 local function remember()
-    if RI.ws == nil then return end
+    local k = key()
+    if k == nil then return end
     local l = { z = RI.z, ox = RI.ox, oy = RI.oy, wins = {} }
     for _, w in ipairs(wins()) do
         local s = canvas(w)
         l.wins[#l.wins + 1] = { a = w.address, c = class_of(w), x = s.x, y = s.y, w = s.w, h = s.h }
     end
     if #l.wins > 0 then
-        RI.layouts[RI.ws] = l
+        RI.layouts[k] = l
         write_layouts()
     end
 end
 
 -- after turning on: the windows go back to their places (the same window, or else one of the same app)
 local function bring_back()
-    local l = RI.layouts[RI.ws]
+    local l = RI.layouts[key()]
     if not l then return false end
     RI.z, RI.ox, RI.oy = l.z, l.ox, l.oy
     local used = {}
@@ -522,7 +595,7 @@ function RI.set(on)
             end
         end
         RI.on = true
-        -- this workspace had a canvas before: everything back where you left it
+        -- it had a canvas before (every screen, or this workspace): everything back where you left it
         if not bring_back() then
             -- floating gives a window another size: put each one back where it was
             for _, w in ipairs(wins()) do
@@ -542,11 +615,11 @@ function RI.set(on)
             pcall(remember)
             -- back to 100 % where everything started
             RI.z, RI.ox, RI.oy = 1.0, 0, 0
-            for _, w in ipairs(wins()) do
+            each_window(function(w)
                 local s = RI.world[w.address]
-                if s then place(w, s, true) end
+                if s and (shared() or (w.workspace and w.workspace.id == RI.ws)) then place(w, s, true) end
                 if RI.tiled[w.address] then run(hl.dsp.window.float({ action = "unset", window = sel(w) })) end
-            end
+            end)
         end
         RI.on = false
         unbind_keys()
@@ -576,7 +649,7 @@ local function restore()
         return
     end
     RI.on = true
-    RI.ws = tonumber(st.ws) or st.ws
+    RI.ws = st.ws ~= "all" and (tonumber(st.ws) or st.ws) or active_ws()
     RI.z, RI.ox, RI.oy = tonumber(st.z) or 1.0, tonumber(st.ox) or 0, tonumber(st.oy) or 0
     RI.tiled = st.tiled
     RI.world = {}
@@ -599,7 +672,7 @@ pcall(hl.on, "window.open", function(w) pcall(RI.opened, w) end)
 pcall(hl.on, "window.close", function(w) if w and RI.world[w.address] then RI.world[w.address] = nil end end)
 -- the window you are in: new windows get their place next to it
 pcall(hl.on, "window.active", function(w)
-    if RI.on and w and w.address and w.workspace and w.workspace.id == RI.ws and w.address ~= RI.last then
+    if RI.on and w and w.address and w.workspace and (shared() or w.workspace.id == RI.ws) and w.address ~= RI.last then
         RI.prev = RI.last
         RI.last = w.address
     end

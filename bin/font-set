@@ -92,8 +92,11 @@ def families():
 
 def apply_waybar():
     run([BIN + "/waybar-set", "fonts-apply"], 15)
-    subprocess.Popen([BIN + "/waybar-reload"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                     start_new_session=True)
+    try:
+        subprocess.Popen([BIN + "/waybar-reload"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                         start_new_session=True)
+    except OSError:
+        pass
 
 
 def apply_kitty(fam):
@@ -136,17 +139,147 @@ def cmd_set(key, val):
     print("Font set: %s" % fam)
 
 
+# ---------------------------------------------------------------- more fonts (V5.02: Settings > Appearance > Fonts >
+# Get more fonts). All from Google Fonts (SIL Open Font License), straight from github.com/google/fonts, into
+# ~/.local/share/fonts/shadows-shell/more/<name>/. name, kind (sans, display, mono), files under google/fonts/main
+GF = "https://raw.githubusercontent.com/google/fonts/main/"
+MORE_DIR = HOME + "/.local/share/fonts/shadows-shell/more"
+CATALOG = [
+    ("Inter", "sans", ["ofl/inter/Inter%5Bopsz%2Cwght%5D.ttf"]),
+    ("Geist", "sans", ["ofl/geist/Geist%5Bwght%5D.ttf"]),
+    ("Outfit", "sans", ["ofl/outfit/Outfit%5Bwght%5D.ttf"]),
+    ("Manrope", "sans", ["ofl/manrope/Manrope%5Bwght%5D.ttf"]),
+    ("Plus Jakarta Sans", "sans", ["ofl/plusjakartasans/PlusJakartaSans%5Bwght%5D.ttf"]),
+    ("Figtree", "sans", ["ofl/figtree/Figtree%5Bwght%5D.ttf"]),
+    ("Lexend", "sans", ["ofl/lexend/Lexend%5Bwght%5D.ttf"]),
+    ("DM Sans", "sans", ["ofl/dmsans/DMSans%5Bopsz%2Cwght%5D.ttf"]),
+    ("Sora", "sans", ["ofl/sora/Sora%5Bwght%5D.ttf"]),
+    ("Onest", "sans", ["ofl/onest/Onest%5Bwght%5D.ttf"]),
+    ("Urbanist", "sans", ["ofl/urbanist/Urbanist%5Bwght%5D.ttf"]),
+    ("Work Sans", "sans", ["ofl/worksans/WorkSans%5Bwght%5D.ttf"]),
+    ("Nunito", "sans", ["ofl/nunito/Nunito%5Bwght%5D.ttf"]),
+    ("Quicksand", "sans", ["ofl/quicksand/Quicksand%5Bwght%5D.ttf"]),
+    ("Montserrat", "sans", ["ofl/montserrat/Montserrat%5Bwght%5D.ttf"]),
+    ("Raleway", "sans", ["ofl/raleway/Raleway%5Bwght%5D.ttf"]),
+    ("Gabarito", "sans", ["ofl/gabarito/Gabarito%5Bwght%5D.ttf"]),
+    ("Readex Pro", "sans", ["ofl/readexpro/ReadexPro%5BHEXP%2Cwght%5D.ttf"]),
+    ("Rubik", "sans", ["ofl/rubik/Rubik%5Bwght%5D.ttf"]),
+    ("Space Grotesk", "sans", ["ofl/spacegrotesk/SpaceGrotesk%5Bwght%5D.ttf"]),
+    ("Unbounded", "display", ["ofl/unbounded/Unbounded%5Bwght%5D.ttf"]),
+    ("Orbitron", "display", ["ofl/orbitron/Orbitron%5Bwght%5D.ttf"]),
+    ("Comfortaa", "display", ["ofl/comfortaa/Comfortaa%5Bwght%5D.ttf"]),
+    ("Poppins", "sans", ["ofl/poppins/Poppins-Regular.ttf", "ofl/poppins/Poppins-Medium.ttf", "ofl/poppins/Poppins-SemiBold.ttf", "ofl/poppins/Poppins-Bold.ttf"]),
+    ("JetBrains Mono", "mono", ["ofl/jetbrainsmono/JetBrainsMono%5Bwght%5D.ttf"]),
+    ("Geist Mono", "mono", ["ofl/geistmono/GeistMono%5Bwght%5D.ttf"]),
+    ("Fira Code", "mono", ["ofl/firacode/FiraCode%5Bwght%5D.ttf"]),
+    ("Source Code Pro", "mono", ["ofl/sourcecodepro/SourceCodePro%5Bwght%5D.ttf"]),
+    ("IBM Plex Mono", "mono", ["ofl/ibmplexmono/IBMPlexMono-Regular.ttf", "ofl/ibmplexmono/IBMPlexMono-Medium.ttf", "ofl/ibmplexmono/IBMPlexMono-Bold.ttf"]),
+    ("Space Mono", "mono", ["ofl/spacemono/SpaceMono-Regular.ttf", "ofl/spacemono/SpaceMono-Bold.ttf"]),
+    ("Red Hat Mono", "mono", ["ofl/redhatmono/RedHatMono%5Bwght%5D.ttf"]),
+    ("Martian Mono", "mono", ["ofl/martianmono/MartianMono%5Bwdth%2Cwght%5D.ttf"]),
+]
+
+
+def slug(name):
+    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+
+
+def cmd_catalog():
+    fams = [f.lower() for f in (families() or [])]
+    out = []
+    for name, kind, files in CATALOG:
+        d = MORE_DIR + "/" + slug(name)
+        mine = os.path.isdir(d) and any(f.endswith((".ttf", ".otf")) for f in os.listdir(d))
+        # the first file, for a preview in Settings before it can see the new font
+        first = ""
+        if mine:
+            fs = sorted((f for f in os.listdir(d) if f.endswith((".ttf", ".otf"))), key=lambda f: ("Regular" not in f and "[" not in f, f))
+            first = d + "/" + fs[0] if fs else ""
+        out.append({"name": name, "kind": kind, "installed": name.lower() in fams or mine, "mine": mine, "file": first})
+    print(json.dumps(out))
+
+
+def cmd_get(name):
+    """download one font of the catalog (exit 0: done, 2: it was there, 1: could not)"""
+    import urllib.request
+    row = next((r for r in CATALOG if r[0].lower() == name.lower()), None)
+    if not row:
+        sys.exit("not in the list: " + name)
+    d = MORE_DIR + "/" + slug(row[0])
+    if os.path.isdir(d) and any(f.endswith(".ttf") for f in os.listdir(d)):
+        print("%s is installed" % row[0])
+        sys.exit(2)
+    tmp = d + ".part"
+    os.makedirs(tmp, exist_ok=True)
+    try:
+        for f in row[2]:
+            fn = urllib.request.unquote(f.rsplit("/", 1)[1])
+            with urllib.request.urlopen(GF + f, timeout=60) as r:
+                data = r.read()
+            if len(data) < 1000 or data[:4] not in (b"\x00\x01\x00\x00", b"OTTO", b"true"):
+                raise ValueError("not a font file: " + fn)
+            open(tmp + "/" + fn, "wb").write(data)
+    except Exception as e:
+        for f in os.listdir(tmp):
+            os.remove(tmp + "/" + f)
+        os.rmdir(tmp)
+        sys.exit("Could not download %s: %s" % (row[0], e))
+    if os.path.isdir(d):
+        for f in os.listdir(d):
+            os.remove(d + "/" + f)
+        os.rmdir(d)
+    os.replace(tmp, d)
+    run(["fc-cache", "-f", MORE_DIR], 60)
+    print("%s installed" % row[0])
+
+
+def cmd_remove(name):
+    row = next((r for r in CATALOG if r[0].lower() == name.lower()), None)
+    d = MORE_DIR + "/" + slug(row[0] if row else name)
+    if not row or not os.path.isdir(d):
+        sys.exit("not one of the fonts Settings downloaded: " + name)
+    for f in os.listdir(d):
+        os.remove(d + "/" + f)
+    os.rmdir(d)
+    run(["fc-cache", "-f", MORE_DIR], 60)
+    print("%s removed" % row[0])
+
+
+def cmd_use(name, where):
+    """where: text (the interface text), all (every interface role), mono (terminal and code)"""
+    keys = {"text": ["main"], "all": UI_KEYS, "mono": ["mono"]}.get(where)
+    if not keys:
+        sys.exit("use NAME text|all|mono")
+    for k in keys:
+        try:
+            cmd_set(k, name)
+        except SystemExit as e:
+            if e.code not in (None, 0):
+                raise
+
+
 def main(a):
     if len(a) < 2:
-        sys.exit("usage: font-set state|list|set ROLE FAMILY|reset|migrate")
+        sys.exit("usage: font-set state|list|set ROLE FAMILY|reset|migrate|mono")
     if a[1] == "state":
         print(json.dumps(load()))
     elif a[1] == "list":
         print("\n".join(families() or []))
     elif a[1] == "set" and len(a) >= 4:
         cmd_set(a[2], " ".join(a[3:]))
+    elif a[1] == "catalog":
+        cmd_catalog()
+    elif a[1] == "get" and len(a) >= 3:
+        cmd_get(" ".join(a[2:]))
+    elif a[1] == "remove" and len(a) >= 3:
+        cmd_remove(" ".join(a[2:]))
+    elif a[1] == "use" and len(a) >= 4:
+        cmd_use(" ".join(a[2:-1]), a[-1])
     elif a[1] == "migrate":
         cmd_migrate()
+    elif a[1] == "mono":
+        # the terminal font follows the Monospace font of Settings > Appearance > Fonts (kitty reads it again)
+        apply_kitty(load()["mono"])
     elif a[1] == "reset":
         if os.path.exists(CFG):
             os.remove(CFG)
@@ -154,7 +287,7 @@ def main(a):
         apply_kitty(DEF)
         print("Fonts reset")
     else:
-        sys.exit("usage: font-set state|list|set ROLE FAMILY|reset")
+        sys.exit("usage: font-set state|list|set ROLE FAMILY|reset|catalog|get NAME|remove NAME|use NAME text|all|mono")
 
 
 main(sys.argv)

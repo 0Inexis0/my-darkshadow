@@ -36,11 +36,11 @@ Item {
         Translate { y: (1 - tmu.t) * (tmu.down ? -10 : 10) }
     ]
 
-    Shadow { anchors.fill: bg; radius: bg.radius; on: Look.shadows && Look.shadowPanels; size: Look.shadowSize * 0.8; strength: Look.shadowStrength }
+    Shadow { anchors.fill: bg; radius: Look.sq ? 0 : (bg.radius); on: Look.shadows && Look.shadowPanels; size: Look.shadowSize * 0.8; strength: Look.shadowStrength }
     Rectangle {
         id: bg
         anchors.fill: parent
-        radius: 24
+        radius: Look.sq ? 0 : (24)
         color: tmu.pal ? tmu.pal.surface : "#141414"
     }
     Column {
@@ -92,7 +92,7 @@ Item {
                 Rectangle { visible: en.e.isSeparator; anchors.centerIn: parent; width: parent.width - 24; height: 1; color: tmu.pal ? tmu.pal.line : "#333" }
                 Rectangle {
                     visible: !en.e.isSeparator
-                    anchors.fill: parent; radius: 14
+                    anchors.fill: parent; radius: Look.sq ? 0 : (14)
                     color: tmu.pal ? tmu.pal.fg : "white"
                     opacity: em.containsMouse && en.e.enabled ? 0.08 : 0
                     Behavior on opacity { NumberAnimation { duration: 140 } }
@@ -130,7 +130,7 @@ Item {
         // end the app
         Item {
             width: parent.width; height: 44
-            Rectangle { anchors.fill: parent; radius: 14; color: "#ff8a80"; opacity: qm.containsMouse ? 0.16 : 0
+            Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (14); color: "#ff8a80"; opacity: qm.containsMouse ? 0.16 : 0
                 Behavior on opacity { NumberAnimation { duration: 140 } } }
             Row { x: 14; anchors.verticalCenter: parent.verticalCenter; spacing: 10
                 MIcon { anchors.verticalCenter: parent.verticalCenter; size: 18; name: "close"; glyph: ""; color: "#ffb4ab" }

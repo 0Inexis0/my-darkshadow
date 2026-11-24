@@ -116,6 +116,19 @@ def hex6(c, d):
     return d
 
 
+def minimal():
+    """Minimal mode (rice-minimal): square windows with a plain frame; None while it is off"""
+    m = jload(RICE + "/minimal.json", {})
+    if m.get("on") is not True:
+        return None
+    fr = m.get("frame") if m.get("frame") in ("double", "single", "thin") else "double"
+    try:
+        w = int(max(1, min(8, int(m.get("width", 3)))))
+    except (TypeError, ValueError):
+        w = 3
+    return {"frame": fr, "width": 1 if fr == "thin" else w, "solid": m.get("solid", True) is not False}
+
+
 def effects():
     c = {"lite": False, "keep_blur": False, "keep_anim": False, "keep_gaps": False, "keep_shadows": False}
     raw = jload(RICE + "/effects.json", {})
@@ -295,7 +308,6 @@ def default_binds(f, term, files):
         ("Alt+Shift+Tab", "hotkey-overlay-title=null", run(b + "rice-taskview", "back")),
         ("Mod+O", 'repeat=false hotkey-overlay-title="niri overview"', "toggle-overview;"),
         ("Mod+Slash", 'hotkey-overlay-title="Every key of the shell"', run(b + "rice-keymap", "show")),
-        ("Mod+X", 'hotkey-overlay-title="Toolbox"', run(b + "rice-tools", "toggle")),
         ("Mod+Shift+Slash", 'hotkey-overlay-title="These keys"', "show-hotkey-overlay;"),
         ("Mod+Escape", "allow-inhibiting=false", "toggle-keyboard-shortcuts-inhibit;"),
         ("Mod+Shift+P", "", "power-off-monitors;"),
@@ -332,7 +344,7 @@ ACTION_KEYS = {
     "terminal": "Mod+Return", "launcher": "Mod+D", "launcher2": "Alt+Space", "settings": "Mod+U", "wallpaper": "Mod+W",
     "quick": "Mod+A", "cc": "Mod+N", "gamebar": "Mod+G", "dashboard": "Mod+Alt+D", "lock": "Mod+L", "close": "Mod+Q",
     "float": "Mod+Shift+V", "clipboard": "Mod+V", "shot": "Print", "shotfull": "Shift+Print", "record": "Mod+Shift+R", "widgets": "Mod+Alt+W",
-    "taskview": "Mod+Tab", "switcher": "Alt+Tab", "keys": "Mod+Slash", "tools": "Mod+X",
+    "taskview": "Mod+Tab", "switcher": "Alt+Tab", "keys": "Mod+Slash",
 }
 
 
@@ -418,19 +430,21 @@ MOTION = {
     # name: (open, close, springs {workspace, view, move, resize, overview})
     "calm": (("cubic", 320, (0.05, 0.7, 0.1, 1.0)), ("cubic", 200, (0.3, 0.0, 0.8, 0.15)),
              {"ws": (1.0, 700), "view": (1.0, 700), "move": (1.0, 700), "resize": (1.0, 700), "ov": (1.0, 700)}),
-    "lively": (("cubic", 360, (0.05, 0.7, 0.1, 1.0)), ("cubic", 200, (0.3, 0.0, 0.8, 0.15)),
-               {"ws": (0.85, 800), "view": (0.85, 800), "move": (0.8, 800), "resize": (0.85, 800), "ov": (0.85, 800)}),
-    # Fluid: Material 3 emphasized decelerate in, accelerate out, unhurried springs that never overshoot
-    "fluid": (("cubic", 440, (0.05, 0.7, 0.1, 1.0)), ("cubic", 180, (0.3, 0.0, 0.8, 0.15)),
-              {"ws": (1.0, 520), "view": (1.0, 520), "move": (1.0, 560), "resize": (1.0, 560), "ov": (1.0, 520)}),
-    # Expressive: Material 3 expressive springs: a hint of overshoot where things move, a soft pop when they open
-    "expressive": (("cubic", 480, (0.2, 1.22, 0.4, 1.0)), ("cubic", 180, (0.3, 0.0, 0.8, 0.15)),
-                   {"ws": (0.8, 700), "view": (0.8, 700), "move": (0.75, 640), "resize": (0.8, 700), "ov": (0.85, 640)}),
-    "snappy": (("ease-out-expo", 160, None), ("ease-out-quad", 120, None),
-               {"ws": (1.0, 1200), "view": (1.0, 1200), "move": (1.0, 1200), "resize": (1.0, 1200), "ov": (1.0, 1200)}),
-    "minimal": (("ease-out-quad", 150, None), ("ease-out-quad", 120, None),
-                {"ws": (1.0, 1000), "view": (1.0, 1000), "move": (1.0, 1000), "resize": (1.0, 1000), "ov": (1.0, 1000)}),
+    # Emphasized: Material 3 emphasized decelerate in, accelerate out, springs that never overshoot (V5.02)
+    "emphasized": (("cubic", 420, (0.05, 0.7, 0.1, 1.0)), ("cubic", 180, (0.3, 0.0, 0.8, 0.15)),
+                   {"ws": (1.0, 600), "view": (1.0, 600), "move": (1.0, 640), "resize": (1.0, 640), "ov": (1.0, 600)}),
+    # Expressive: Material 3 expressive spatial curve, a hint of overshoot where things move
+    "expressive": (("cubic", 460, (0.38, 1.21, 0.22, 1.0)), ("cubic", 180, (0.3, 0.0, 0.8, 0.15)),
+                   {"ws": (0.78, 650), "view": (0.78, 650), "move": (0.75, 700), "resize": (0.8, 650), "ov": (0.82, 620)}),
+    # Glide: long and unhurried, everything glides to its place
+    "glide": (("cubic", 520, (0.2, 0.0, 0.0, 1.0)), ("cubic", 240, (0.3, 0.0, 0.8, 0.15)),
+              {"ws": (1.0, 380), "view": (1.0, 380), "move": (1.0, 420), "resize": (1.0, 420), "ov": (1.0, 400)}),
+    # Pop: a quick spring with one small bounce
+    "pop": (("cubic", 380, (0.34, 1.56, 0.64, 1.0)), ("cubic", 160, (0.3, 0.0, 0.8, 0.15)),
+            {"ws": (0.7, 800), "view": (0.7, 800), "move": (0.68, 850), "resize": (0.72, 800), "ov": (0.75, 780)}),
 }
+# styles that are gone: Bouncy (V3.97 and older), and Lively, Fluid, Snappy and Minimal (V5.01 and older)
+OLD_STYLES = {"bouncy": "expressive", "lively": "pop", "fluid": "emphasized", "snappy": "calm", "minimal": "calm"}
 
 
 def easing(f, kind, ms, pts):
@@ -450,7 +464,7 @@ def animations(f, s, gaming, fx):
     if a.get("enabled") is False or (gaming and not fx["keep_anim"]):
         return block("animations", ["off"])
     style = a.get("style", "calm")
-    style = {"bouncy": "expressive"}.get(style, style)      # Bouncy (V3.97 and older) is now Expressive
+    style = OLD_STYLES.get(style, style)
     op, cl, sp = MOTION.get(style, MOTION["calm"])
     pct = clampf(a.get("speed", 100), 50, 200, 100)
     L = []
@@ -488,6 +502,17 @@ def layout(f, s, gaming, fx, flat, colors):
     L += block("preset-column-widths", ["proportion 0.33333", "proportion 0.5", "proportion 0.66667", "proportion 1.0"])
     L += block("default-column-width", ["proportion 0.5"])
     L += block("focus-ring", ["off"])
+    mn = minimal()
+    if mn:
+        # one plain color (no gradient), and for "double" a dark line outside it (a hard shadow)
+        L += block("border", ["width %d" % mn["width"],
+                              "active-color %s" % q(c1 + ("b0" if mn["frame"] == "thin" else "")),
+                              'inactive-color "#2e2e2e"', 'urgent-color "#ff8a80"'])
+        if mn["frame"] == "double":
+            L += block("shadow", ["on", "softness 0", "spread 2", "offset x=0 y=0", 'color "#0b0b0bff"'])
+        if strut:
+            L += block("struts", ["left %d" % strut, "right %d" % strut, "top %d" % strut, "bottom %d" % strut])
+        return block("layout", L)
     if bw > 0:
         L += block("border", ["width %d" % bw,
                               'active-gradient from=%s to=%s angle=45 relative-to="workspace-view"' % (q(c1), q(c2)),
@@ -636,6 +661,11 @@ def outputs(s):
 
 def window_rules(f, s, flat):
     rad = int(clampf(opt(s, "decoration.rounding", 9), 0, 40, 9))
+    mn = minimal()
+    if mn:
+        rad = 0
+        if mn["solid"]:
+            flat = True
     L = []
     # every window: your corner radius, clipped so nothing sticks out
     L += block("window-rule", ["geometry-corner-radius %d" % rad, "clip-to-geometry true",
@@ -798,14 +828,28 @@ def startup(f, s):
     return L
 
 
+def langenv():
+    """KEY=VALUE lines of rice-region env (the language and keyboard in Settings), "" when it cannot tell"""
+    try:
+        return subprocess.run([BIN + "/rice-region", "env"], capture_output=True, text=True, timeout=8).stdout
+    except Exception:
+        return ""
+
+
 def misc(f, gaming, fx, flat):
     theme, size = cursor()
     L = ["prefer-no-csd", 'screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"']
     L += block("hotkey-overlay", ["skip-at-startup"] + (["hide-not-bound"] if f.overlay_hide else []))
     L += block("cursor", ["xcursor-theme %s" % q(theme), "xcursor-size %d" % size, "hide-when-typing"])
-    L += block("environment", ['ELECTRON_OZONE_PLATFORM_HINT "auto"', 'QT_QPA_PLATFORM "wayland;xcb"',
-                               'QT_WAYLAND_DISABLE_WINDOWDECORATION "1"', 'MOZ_ENABLE_WAYLAND "1"',
-                               'XDG_CURRENT_DESKTOP "niri"', 'XDG_SESSION_TYPE "wayland"'])
+    env = ['ELECTRON_OZONE_PLATFORM_HINT "auto"', 'QT_QPA_PLATFORM "wayland;xcb"',
+           'QT_WAYLAND_DISABLE_WINDOWDECORATION "1"', 'MOZ_ENABLE_WAYLAND "1"',
+           'XDG_CURRENT_DESKTOP "niri"', 'XDG_SESSION_TYPE "wayland"']
+    # the language and keyboard from Settings (rice-region): niri puts those in the programs it starts
+    for line in langenv().splitlines():
+        k, _, v = line.partition("=")
+        if k and v:
+            env.append('%s %s' % (k, q(v.strip('"'))))
+    L += block("environment", env)
     if f.overview:
         L += block("overview", ["zoom 0.5", 'backdrop-color "#101114"'] +
                    block("workspace-shadow", ["softness 40", "spread 10", "offset x=0 y=10", 'color "#00000050"']))

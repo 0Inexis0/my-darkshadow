@@ -14,7 +14,7 @@ import QtQuick
 // The same tool is the record menu (SUPER + SHIFT + R, purpose "rec"): nothing is frozen, you choose a region, a
 // window or the screen, sound and microphone, and Record starts it (rice-hotcorner record geo).
 // rice-hotcorner takes the frozen picture with grim and writes "TIME PICTURE OUTPUT SCALE MODE PURPOSE X Y" to
-// ~/.cache/rice/snip-open; the crop is made here at full resolution and handed back to it (shot-done) to keep.
+// ~/.cache/rice/snip-open; the panel sends its local selection back for an exact crop of those pixels.
 PanelWindow {
     id: sn
     property bool open: false
@@ -75,7 +75,6 @@ PanelWindow {
 
     NPal { id: pal; theme: "shell"; alpha: 0.94 }
     readonly property string home: Quickshell.env("HOME")
-    readonly property string outFile: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/rice-snip-out.png"
 
     Trigger {
         name: "snip-open"; fresh: true
@@ -181,47 +180,23 @@ PanelWindow {
         open = false; t = 0
         Quickshell.execDetached(["bash", "-c", "sleep 0.35; exec \"$HOME/.local/bin/rice-hotcorner\" record geo \"$1\"", "rec", g])
     }
-    // the color of the pixel under the pointer: a crop of that one pixel, rice-hotcorner reads and copies it
-    function pickColor() {
-        if (busy || rec || mx < 0) return
+    // The frozen image is already per-output. These coordinates stay local
+    // even when that output has a negative or nonzero compositor origin.
+    function sendCrop(what, x, y, w, h) {
         busy = true
         Sfx.play("select")
-        crop.cx = Math.floor(mx); crop.cy = Math.floor(my); crop.width = 1; crop.height = 1
-        crop.grabToImage(function(r) {
-            const ok = r.saveToFile(sn.outFile)
-            sn.open = false; sn.t = 0
-            Quickshell.execDetached(["bash", "-c", "rm -f \"$1\"; " + (ok ? "\"$HOME/.local/bin/rice-hotcorner\" shot-done \"$2\" color" : "true"), "snip", sn.pic, sn.outFile])
-        }, Qt.size(1, 1))
+        Quickshell.execDetached([home + "/.local/bin/rice-hotcorner", "shot-crop", pic, what,
+                                 String(x), String(y), String(w), String(h), String(width), String(height)])
+        open = false; t = 0
     }
-    // the crop at full resolution, handed to rice-hotcorner: save | copy | edit
+    function pickColor() {
+        if (busy || rec || mx < 0 || my < 0) return
+        sendCrop("color", mx, my, 0, 0)
+    }
     function finish(what) {
         if (rec) { startRec(); return }
         if (busy || !hasSel) return
-        busy = true
-        Sfx.play("select")
-        const pw = Math.max(1, Math.round(sw * dpr)), ph = Math.max(1, Math.round(sh * dpr))
-        crop.cx = sx; crop.cy = sy; crop.width = sw; crop.height = sh
-        crop.grabToImage(function(r) {
-            const ok = r.saveToFile(sn.outFile)
-            sn.open = false; sn.t = 0
-            Quickshell.execDetached(["bash", "-c", "rm -f \"$1\"; " + (ok ? "\"$HOME/.local/bin/rice-hotcorner\" shot-done \"$2\" \"$3\""
-                : "notify-send -a \"DarkShadow's Shell\" 'Screenshot failed' 'The picture could not be written'"), "snip", sn.pic, sn.outFile, what])
-        }, Qt.size(pw, ph))
-    }
-
-    // ---------------- the crop (drawn under everything, only ever grabbed) ----------------
-    Item {
-        id: crop
-        property real cx: 0
-        property real cy: 0
-        z: -10
-        clip: true
-        Image {
-            x: -crop.cx; y: -crop.cy
-            width: sn.width; height: sn.height
-            source: frozen.source
-            smooth: true
-        }
+        sendCrop(what, sx, sy, sw, sh)
     }
 
     // ---------------- the frozen screen ----------------
@@ -308,14 +283,14 @@ PanelWindow {
         opacity: sn.t
         Rectangle {
             anchors.fill: parent; anchors.margins: -2
-            color: "transparent"; radius: 3
+            color: "transparent"; radius: Look.sq ? 0 : (3)
             border.width: 2; border.color: pal.primary
         }
         // corner handles (region): a ring in your key color
         Repeater {
             model: sn.mode === "region" && !sn.busy ? 4 : 0
             delegate: Rectangle {
-                width: 14; height: 14; radius: 7
+                width: 14; height: 14; radius: Look.sq ? 0 : (7)
                 x: (index % 2 === 0 ? 0 : sn.aw) - 7
                 y: (index < 2 ? 0 : sn.ah) - 7
                 color: pal.primary
@@ -329,7 +304,7 @@ PanelWindow {
             readonly property bool above: sn.ay > 44
             x: Math.max(-sn.ax, Math.min(0, sn.width - sn.ax - width))
             y: above ? -height - 10 : 10
-            width: sizeRow.implicitWidth + 24; height: 30; radius: 15
+            width: sizeRow.implicitWidth + 24; height: 30; radius: Look.sq ? 0 : (15)
             color: pal.surface
             Row {
                 id: sizeRow
@@ -356,7 +331,7 @@ PanelWindow {
         // the few pixels around the pointer: the frozen picture again (the same texture, nothing is loaded twice),
         // drawn six times bigger and cut to the frame. Plain clipping, which every graphics driver does the same way
         // (V4.75 used a shader mask here, which could come out empty)
-        Rectangle { anchors.fill: parent; radius: 12; color: "black" }
+        Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (12); color: "black" }
         Item {
             anchors.fill: parent; anchors.margins: 3
             clip: true
@@ -368,12 +343,12 @@ PanelWindow {
                 y: parent.height / 2 - (sn.my + 0.5) * loupe.zoom
             }
         }
-        Rectangle { anchors.fill: parent; radius: 12; color: "transparent"; border.width: 3; border.color: pal.primary }
+        Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (12); color: "transparent"; border.width: 3; border.color: pal.primary }
         // the pixel under the pointer
         Rectangle { anchors.centerIn: parent; width: loupe.zoom + 4; height: loupe.zoom + 4; color: "transparent"; border.width: 2; border.color: "white" }
         Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter; anchors.top: parent.bottom; anchors.topMargin: 8
-            width: posT.implicitWidth + 18; height: 24; radius: 12; color: pal.surface
+            width: posT.implicitWidth + 18; height: 24; radius: Look.sq ? 0 : (12); color: pal.surface
             Text { id: posT; anchors.centerIn: parent; text: Math.round(sn.mx * sn.dpr) + ", " + Math.round(sn.my * sn.dpr)
                 color: pal.fg; font.family: Fonts.numbers; font.pixelSize: 11 }
         }
@@ -389,7 +364,7 @@ PanelWindow {
         readonly property bool on: sn.mode === m
         enabled: m !== "window" || Wm.hypr
         opacity: enabled ? 1 : 0.35
-        height: 44; radius: 22
+        height: 44; radius: Look.sq ? 0 : (22)
         width: on ? mbRow.implicitWidth + 32 : 48
         Behavior on width { NumberAnimation { duration: 240; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
         color: on ? pal.container : (mbM.containsMouse ? pal.cardHi : "transparent")
@@ -412,7 +387,7 @@ PanelWindow {
         property string tip: ""
         property bool on: false               // a switch that is on (sound, microphone)
         signal clicked()
-        width: 44; height: 44; radius: on ? 14 : 22
+        width: 44; height: 44; radius: Look.sq ? 0 : (on ? 14 : 22)
         Behavior on radius { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
         color: on ? (ibM.containsMouse ? Qt.lighter(pal.container, 1.15) : pal.container) : (ibM.containsMouse ? pal.cardHi : "transparent")
         Behavior on color { ColorAnimation { duration: 160 } }
@@ -421,18 +396,18 @@ PanelWindow {
         Rectangle {
             visible: ibM.containsMouse && ib.tip !== ""
             anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.top; anchors.bottomMargin: 10
-            width: tipT.implicitWidth + 18; height: 26; radius: 8; color: pal.fg
+            width: tipT.implicitWidth + 18; height: 26; radius: Look.sq ? 0 : (8); color: pal.fg
             Text { id: tipT; anchors.centerIn: parent; text: ib.tip; color: pal.surface; font.family: Fonts.main; font.pixelSize: 12 }
         }
     }
 
-    Shadow { anchors.fill: bar; radius: bar.radius; opacity: bar.opacity; on: Look.shadows }
+    Shadow { anchors.fill: bar; radius: Look.sq ? 0 : (bar.radius); opacity: bar.opacity; on: Look.shadows }
     Rectangle {
         id: bar
         anchors.horizontalCenter: parent.horizontalCenter
         y: parent.height - height - 36 + (1 - sn.t) * 40
         opacity: sn.t
-        width: barRow.implicitWidth + 16; height: 60; radius: 30
+        width: barRow.implicitWidth + 16; height: 60; radius: Look.sq ? 0 : (30)
         color: pal.surface
         border.width: 1; border.color: pal.line
         // over the selection: it moves up out of the way
@@ -465,7 +440,7 @@ PanelWindow {
             Rectangle {
                 id: shoot
                 anchors.verticalCenter: parent.verticalCenter
-                height: 44; radius: 22
+                height: 44; radius: Look.sq ? 0 : (22)
                 width: shootRow.implicitWidth + 36
                 opacity: sn.hasSel ? 1 : 0.4
                 readonly property color base: sn.rec ? "#ff6b6b" : pal.primary

@@ -104,7 +104,7 @@ PanelWindow {
     // ---------- the window ----------
     visible: open || (t > 0.01 && !closeT.done)
     Timer { id: closeT; property bool done: false; interval: 600; running: !cb.open; onRunningChanged: if (running) done = false; onTriggered: done = true }
-    NiriBlur { win: cb; items: [card]; radius: card.radius; on: cb.open && cb.t > 0.98 }
+    NiriBlur { win: cb; items: [card]; radius: Look.sq ? 0 : (card.radius); on: cb.open && cb.t > 0.98 }
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore
@@ -113,9 +113,10 @@ PanelWindow {
     WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     MouseArea { anchors.fill: parent; onClicked: cb.open = false }
 
-    Shadow { anchors.fill: card; radius: card.radius; opacity: card.opacity; scale: card.scale; on: Look.shadows && Look.shadowPanels }
+    Shadow { anchors.fill: card; radius: Look.sq ? 0 : (card.radius); opacity: card.opacity; scale: card.scale; on: Look.shadows && Look.shadowPanels }
     Rectangle {
         id: card
+        Frame { }      // V4.98 Minimal mode
         width: Math.min(560, cb.width - 32)
         // as tall as what it shows (up to 620)
         height: Math.min(cb.height - 120, 620, Math.max(340, list.y + list.contentHeight + 16))
@@ -123,7 +124,7 @@ PanelWindow {
         x: Math.round((cb.width - width) / 2)
         // it rises from the bottom edge with a soft landing
         y: cb.height - height - 40 + (1 - cb.et) * 80
-        radius: 30
+        radius: Look.sq ? 0 : (30)
         color: pal.surface
         border.width: 1; border.color: pal.line
         opacity: Math.min(1, cb.t * 2.2)
@@ -152,7 +153,7 @@ PanelWindow {
             }
             Rectangle {
                 anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-                height: 36; radius: 18; width: binRow.implicitWidth + 24
+                height: 36; radius: Look.sq ? 0 : (18); width: binRow.implicitWidth + 24
                 color: cb.armed ? "#e06c75" : (binM.containsMouse ? pal.cardHi : pal.card)
                 Behavior on color { ColorAnimation { duration: 150 } }
                 Behavior on width { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
@@ -166,7 +167,7 @@ PanelWindow {
         // ---- the search
         Rectangle {
             id: search
-            x: 16; y: head.y + head.height + 14; width: parent.width - 32; height: 46; radius: 23
+            x: 16; y: head.y + head.height + 14; width: parent.width - 32; height: 46; radius: Look.sq ? 0 : (23)
             color: pal.card
             border.width: field.activeFocus ? 2 : 0; border.color: cb.acc
             MIcon { x: 16; anchors.verticalCenter: parent.verticalCenter; size: 19; name: "search"; glyph: String.fromCodePoint(0xF0349); color: cb.dim }
@@ -204,7 +205,7 @@ PanelWindow {
                 model: cb.filters
                 delegate: Rectangle {
                     readonly property bool on: cb.filter === modelData.k
-                    height: 32; radius: on ? 12 : 16; width: chR.implicitWidth + 24
+                    height: 32; radius: Look.sq ? 0 : (on ? 12 : 16); width: chR.implicitWidth + 24
                     color: on ? cb.acc : (chM.containsMouse ? pal.cardHi : pal.card)
                     Behavior on radius { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
                     Behavior on color { ColorAnimation { duration: 150 } }
@@ -244,7 +245,7 @@ PanelWindow {
                 transform: Translate { y: (1 - row.k) * 24 }
                 Rectangle {
                     anchors.fill: parent
-                    radius: row.sel ? 22 : 18
+                    radius: Look.sq ? 0 : (row.sel ? 22 : 18)
                     color: row.sel ? Qt.rgba(cb.acc.r, cb.acc.g, cb.acc.b, 0.16) : (rm.containsMouse ? pal.cardHi : pal.card)
                     border.width: row.sel ? 2 : 0; border.color: cb.acc
                     Behavior on radius { NumberAnimation { duration: 200 } }
@@ -255,7 +256,7 @@ PanelWindow {
                 // what kind it is
                 Rectangle {
                     x: 12; y: row.img ? 12 : (row.height - height) / 2
-                    width: 30; height: 30; radius: row.modelData.kind === "pin" ? 10 : 15
+                    width: 30; height: 30; radius: Look.sq ? 0 : (row.modelData.kind === "pin" ? 10 : 15)
                     color: row.modelData.kind === "pin" ? cb.acc : pal.container
                     MIcon { anchors.centerIn: parent; size: 15
                         name: row.modelData.kind === "pin" ? "keep" : (row.img ? "image" : "notes")
@@ -315,7 +316,7 @@ PanelWindow {
         property string icon: ""
         property int g: 0
         signal hit()
-        width: 34; height: 34; radius: am.pressed ? 10 : 17
+        width: 34; height: 34; radius: Look.sq ? 0 : (am.pressed ? 10 : 17)
         color: am.containsMouse ? pal.cardHi : Qt.rgba(1, 1, 1, 0.06)
         Behavior on radius { NumberAnimation { duration: 160 } }
         MIcon { anchors.centerIn: parent; size: 16; name: a.icon; glyph: String.fromCodePoint(a.g); color: cb.fg }

@@ -43,11 +43,12 @@ Item {
     onWaitsChanged: { if (waits) { lifeAnim.duration = Math.max(400, nc.life * remain); lifeAnim.restart() } else lifeAnim.stop() }
     onRemainChanged: if (remain <= 0.001 && nc.waits) nc.timedOut()
 
-    Shadow { anchors.fill: bg; radius: bg.radius; on: nc.popup && Look.shadows && Look.shadowNotif; size: Look.shadowSize * 0.75; strength: Look.shadowStrength * 0.9 }
+    Shadow { anchors.fill: bg; radius: Look.sq ? 0 : (bg.radius); on: nc.popup && Look.shadows && Look.shadowNotif; size: Look.shadowSize * 0.75; strength: Look.shadowStrength * 0.9 }
     Rectangle {
         id: bg
+        Frame { }      // V4.98 Minimal mode
         anchors.fill: parent
-        radius: nc.nf ? nc.nf.radius : 26
+        radius: Look.sq ? 0 : (nc.nf ? nc.nf.radius : 26)
         color: nc.popup ? nc.pal.surface : nc.pal.card
         border.width: nc.urgent ? 1.5 : (nc.popup ? 1 : 0)
         border.color: nc.urgent ? "#FFB4AB" : nc.pal.line
@@ -56,7 +57,7 @@ Item {
         Rectangle {
             visible: nc.popup && !(nc.urgent && (!nc.nf || nc.nf.sticky))
             anchors.bottom: parent.bottom; anchors.bottomMargin: 6
-            x: 18; height: 3; radius: 2
+            x: 18; height: 3; radius: Look.sq ? 0 : (2)
             width: Math.max(0, (parent.width - 36) * nc.remain)
             color: Qt.rgba(nc.pal.primary.r, nc.pal.primary.g, nc.pal.primary.b, 0.55)
         }
@@ -127,21 +128,21 @@ Item {
             Repeater {
                 model: nc.n && nc.n.actions ? nc.n.actions : []
                 delegate: Rectangle {
-                    width: at.implicitWidth + 26; height: 32; radius: am.pressed ? 10 : 16
+                    width: at.implicitWidth + 26; height: 32; radius: Look.sq ? 0 : (am.pressed ? 10 : 16)
                     color: am.containsMouse ? nc.pal.primary : nc.pal.container
                     Behavior on radius { NumberAnimation { duration: 200 } }
                     Behavior on color { ColorAnimation { duration: 140 } }
                     Text { id: at; anchors.centerIn: parent; text: modelData.text; color: am.containsMouse ? nc.pal.inkPrimary : nc.pal.inkContainer; font.family: Fonts.main; font.pixelSize: nc.fs - 1; font.weight: Font.Medium }
-                    MouseArea { id: am; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { modelData.invoke(); nc.closed() } }
+                    MouseArea { id: am; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("select"); modelData.invoke(); nc.closed() } }
                 }
             }
         }
     }
     Rectangle {
         anchors.right: parent.right; anchors.rightMargin: 12; y: 12
-        width: 30; height: 30; radius: 15
+        width: 30; height: 30; radius: Look.sq ? 0 : (15)
         color: xm.containsMouse ? nc.pal.cardHi : "transparent"
         MIcon { anchors.centerIn: parent; size: 16; name: "close"; glyph: ""; color: nc.pal.dim }
-        MouseArea { id: xm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: nc.closed() }
+        MouseArea { id: xm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Sfx.play("remove"); nc.closed() } }
     }
 }

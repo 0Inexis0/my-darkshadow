@@ -19,7 +19,7 @@ Item {
         WavyArc {
             anchors.fill: parent
             value: Player.frac
-            moving: Player.playing && pw.running && !Look.covered
+            moving: Player.playing && pw.running
             color: pw.pal ? pw.pal.primary : "#9ec9bd"
             track: pw.pal ? pw.pal.track : Qt.rgba(1, 1, 1, 0.14)
         }
@@ -30,7 +30,7 @@ Item {
             source: Player.art
             empty: pw.pal ? pw.pal.chip : "#2a2c30"
             fallbackColor: pw.pal ? pw.pal.fg3 : "#8a8a8f"
-            SlowSpin { turn: 360; period: 24000; running: (pw.running && Player.playing && !Look.lite) && !Look.covered }
+            SlowSpin { turn: 360; period: 24000; running: pw.running && Player.playing && !Look.lite }
         }
     }
     T {
@@ -47,7 +47,7 @@ Item {
         anchors.top: tt.bottom; anchors.topMargin: 10
         x: 20; width: parent.width - 40; height: 20
         value: Player.frac
-        moving: Player.playing && pw.running && !Look.covered
+        moving: Player.playing && pw.running
         seekable: true
         color: pw.pal ? pw.pal.primary : "#9ec9bd"
         track: pw.pal ? pw.pal.track : Qt.rgba(1, 1, 1, 0.14)
@@ -66,7 +66,7 @@ Item {
             delegate: Rectangle {
                 readonly property bool big: modelData.a === "toggle"
                 width: big ? 64 : 38; height: 42
-                radius: bm.pressed ? 12 : (big ? 21 : 19)
+                radius: Look.sq ? 0 : (bm.pressed ? 12 : (big ? 21 : 19))
                 color: big ? (pw.pal ? pw.pal.primary : "#9ec9bd") : (bm.containsMouse ? (pw.pal ? pw.pal.chipHover : Qt.rgba(1, 1, 1, 0.16)) : (pw.pal ? pw.pal.chip : Qt.rgba(1, 1, 1, 0.08)))
                 Behavior on radius { NumberAnimation { duration: 200; easing.type: Easing.OutBack; easing.overshoot: 2 } }
                 MIcon {

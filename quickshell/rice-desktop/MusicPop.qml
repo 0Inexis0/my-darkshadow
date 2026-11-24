@@ -80,14 +80,14 @@ Item {
         transform: Translate { x: (1 - mp.st(1)) * 26 }
         Rectangle {
             visible: Player.has
-            height: 22; radius: 11; width: idt.implicitWidth + 30
+            height: 22; radius: Look.sq ? 0 : (11); width: idt.implicitWidth + 30
             color: Qt.rgba(mp.acc.r, mp.acc.g, mp.acc.b, 0.18)
             Row { anchors.centerIn: parent; spacing: 5
                 Item { width: 12; height: 12; anchors.verticalCenter: parent.verticalCenter
                     // three small bars that dance while it plays
                     Row { anchors.centerIn: parent; spacing: 1.5
                         Repeater { model: 3
-                            Rectangle { width: 2.5; radius: 1.25; anchors.bottom: parent.bottom; color: mp.acc
+                            Rectangle { width: 2.5; radius: Look.sq ? 0 : (1.25); anchors.bottom: parent.bottom; color: mp.acc
                                 property real h: 4
                                 height: h
                                 SequentialAnimation on h { running: mp.on && Player.playing && !Look.lite; loops: Animation.Infinite
@@ -106,7 +106,7 @@ Item {
     Rectangle {
         id: words
         x: 0; y: cov.y + cov.height + 12; width: mp.width; height: 112
-        radius: 22; color: mp.chip; clip: true
+        radius: Look.sq ? 0 : (22); color: mp.chip; clip: true
         opacity: mp.st(2)
         transform: Translate { y: (1 - mp.st(2)) * 22 }
         ListView {
@@ -154,9 +154,9 @@ Item {
                 text: !Player.has ? Tr.t("Nothing playing") : (mp.loading ? Tr.t("Looking for the lyrics...") : (mp.lyOff ? Tr.t("Lyrics are off: Settings > Language & region") : Tr.t("No lyrics for this song"))) }
         }
         // soft edges, the lines fade in and out
-        Rectangle { anchors.top: parent.top; width: parent.width; height: 30; radius: words.radius; gradient: Gradient {
+        Rectangle { anchors.top: parent.top; width: parent.width; height: 30; radius: Look.sq ? 0 : (words.radius); gradient: Gradient {
             GradientStop { position: 0; color: mp.chip } GradientStop { position: 1; color: Qt.rgba(mp.chip.r, mp.chip.g, mp.chip.b, 0) } } }
-        Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 30; radius: words.radius; gradient: Gradient {
+        Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 30; radius: Look.sq ? 0 : (words.radius); gradient: Gradient {
             GradientStop { position: 0; color: Qt.rgba(mp.chip.r, mp.chip.g, mp.chip.b, 0) } GradientStop { position: 1; color: mp.chip } } }
     }
 
@@ -198,10 +198,10 @@ Item {
     // the volume, as a thin line under the buttons
     Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
-        y: btns.y + 56; width: 150; height: 4; radius: 2
+        y: btns.y + 56; width: 150; height: 4; radius: Look.sq ? 0 : (2)
         color: Qt.rgba(mp.acc.r, mp.acc.g, mp.acc.b, 0.18)
         opacity: mp.st(5)
-        Rectangle { width: Math.max(4, parent.width * Math.min(1, btns.vol)); height: 4; radius: 2; color: mp.acc
+        Rectangle { width: Math.max(4, parent.width * Math.min(1, btns.vol)); height: 4; radius: Look.sq ? 0 : (2); color: mp.acc
             Behavior on width { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } } }
     }
 
@@ -216,7 +216,7 @@ Item {
         Rectangle {
             anchors.fill: parent
             // pressed: the corners tighten; the play button is a pill that turns into a rounder square while it plays
-            radius: bm.pressed ? 12 : (b.strong && Player.playing ? 16 : height / 2)
+            radius: Look.sq ? 0 : (bm.pressed ? 12 : (b.strong && Player.playing ? 16 : height / 2))
             Behavior on radius { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
             color: b.strong ? mp.acc : (bm.containsMouse ? Qt.rgba(mp.acc.r, mp.acc.g, mp.acc.b, 0.3) : Qt.rgba(mp.acc.r, mp.acc.g, mp.acc.b, 0.16))
             Behavior on color { ColorAnimation { duration: 140 } }

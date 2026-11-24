@@ -9,7 +9,7 @@ Item {
     id: page
     property var ctl
     readonly property bool niri: !!Quickshell.env("NIRI_SOCKET")
-    property var st: ({ keys: { key_toggle: "SUPER + F", mod_hold: "SUPER + ALT", mod_go: "SUPER + CTRL", mod_zoom: "CTRL" }, on: false, zoom: 1, step: 0.12, min: 0.2, pan: 180, speed: 1.0, dir: 1, push: 1, input: true, daemon: true, devices: null, loaded: true })
+    property var st: ({ keys: { key_toggle: "SUPER + F", mod_hold: "SUPER + ALT", mod_go: "SUPER + CTRL", mod_zoom: "CTRL" }, on: false, zoom: 1, step: 0.12, min: 0.2, pan: 180, speed: 1.0, dir: 1, push: 1, screens: 1, input: true, daemon: true, devices: null, loaded: true })
 
     function sh(args) { runner.command = ["bash", "-c", "\"$HOME/.local/bin/rice-infinite\" \"$@\" 2>&1", "_"].concat(args); runner.running = true }
     function fmt(n) { return String(Math.round(n * 100) / 100) }
@@ -29,14 +29,15 @@ Item {
     onVisibleChanged: if (visible) stateProc.running = true
 
     component KeyPick: SettingRow {
+        id: kp
         property string key: ""
         property var choices: []
         reserved: 520
         Seg {
             anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
-            options: parent.choices.map(function(c) { return { value: c, label: page.nice(c) } })
-            current: page.kv(parent.key, parent.choices[0])
-            onChosen: v => page.setKey(parent.key, v)
+            options: kp.choices.map(function(c) { return { value: c, label: page.nice(c) } })
+            current: page.kv(kp.key, kp.choices[0])
+            onChosen: v => page.setKey(kp.key, v)
         }
     }
     component Key: Rectangle {
@@ -56,7 +57,7 @@ Item {
                 Rectangle {
                     readonly property bool plus: modelData === "+"
                     width: plus ? pl.implicitWidth : Math.max(30, pl.implicitWidth + 18); height: 30
-                    radius: 9 * M3.shapeK
+                    radius: M3.sq ? 0 : (9 * M3.shapeK)
                     color: plus ? "transparent" : M3.surfaceHighest
                     border.width: plus ? 0 : 1; border.color: M3.outlineVariant
                     anchors.verticalCenter: parent.verticalCenter
@@ -74,7 +75,7 @@ Item {
         Rectangle {
             width: parent.width
             height: 210
-            radius: M3.rXL
+            radius: M3.sq ? 0 : (M3.rXL)
             color: page.st.on ? M3.primaryContainer : M3.surfaceC
             clip: true
             Behavior on color { ColorAnimation { duration: 220 } }
@@ -97,10 +98,10 @@ Item {
                         readonly property var g: modelData
                         width: g[2] * art.k; height: g[3] * art.k
                         x: art.width / 2 + g[0] * art.k - width / 2; y: art.height / 2 + g[1] * art.k - height / 2
-                        radius: 10 * art.k
+                        radius: M3.sq ? 0 : (10 * art.k)
                         color: index === 0 ? M3.primary : M3.alpha(page.st.on ? M3.inkPrimaryC : M3.ink, 0.10 + 0.05 * (index % 3))
                         border.width: 1; border.color: M3.alpha(M3.ink, 0.12)
-                        Rectangle { x: 6 * art.k; y: 6 * art.k; width: parent.width * 0.4; height: 4 * art.k; radius: 2; color: M3.alpha(M3.ink, 0.18) }
+                        Rectangle { x: 6 * art.k; y: 6 * art.k; width: parent.width * 0.4; height: 4 * art.k; radius: M3.sq ? 0 : (2); color: M3.alpha(M3.ink, 0.18) }
                     }
                 }
             }
@@ -132,10 +133,10 @@ Item {
             readonly property bool denied: !!dv && dv.denied > 0 && (dv.keyboards === 0 || dv.mice === 0)
             readonly property bool ready: page.st.daemon === true && !!dv && dv.keyboards > 0 && dv.mice > 0
             visible: page.niri || page.st.hypr !== false
-            width: parent.width; height: Math.max(72, ic.implicitHeight + 28); radius: M3.rL
+            width: parent.width; height: Math.max(72, ic.implicitHeight + 28); radius: M3.sq ? 0 : (M3.rL)
             color: ready ? M3.surfaceC : M3.alpha(M3.primary, 0.10)
             border.width: ready ? 0 : 1; border.color: M3.alpha(M3.primary, 0.35)
-            Rectangle { x: 18; anchors.verticalCenter: parent.verticalCenter; width: 36; height: 36; radius: 18
+            Rectangle { x: 18; anchors.verticalCenter: parent.verticalCenter; width: 36; height: 36; radius: M3.sq ? 0 : (18)
                 color: cv.ready ? M3.secondaryContainer : M3.primaryContainer
                 Icon { anchors.centerIn: parent; name: cv.ready ? "mouse" : "info"; glyph: cv.ready ? "\uf8cc" : "\uf05a"; size: 18
                     color: cv.ready ? M3.inkSecondaryC : M3.inkPrimaryC } }
@@ -184,7 +185,7 @@ Item {
         KeyPick { visible: !page.niri; label: I18n.t("Zoom") + " (+ " + I18n.t("Mouse wheel") + ")"; desc: I18n.t("Zoom out (down) and in (up) around the pointer"); key: "mod_zoom"
             choices: ["CTRL", "SUPER + CTRL", "ALT"] }
         Rectangle {
-            width: parent.width; height: keys.implicitHeight; radius: M3.rL; color: M3.surfaceC; clip: true
+            width: parent.width; height: keys.implicitHeight; radius: M3.sq ? 0 : (M3.rL); color: M3.surfaceC; clip: true
             Column {
                 id: keys
                 width: parent.width
@@ -219,6 +220,18 @@ Item {
             from: 0.3; to: 3; step: 0.05; decimals: 2; unit: "x"
             value: page.st.speed || 1.0
             onCommitted: function(v) { page.sh(["set", "speed", String(Math.round(v * 100) / 100)]); const n = Object.assign({}, page.st); n.speed = v; page.st = n }
+        }
+        SettingRow {
+            visible: !page.niri
+            label: I18n.t("Screens")
+            desc: page.st.screens === 1 ? I18n.t("The canvas is the workspace you turn it on: the screens on either side keep their own windows, which stay where they are") : I18n.t("Every screen is one canvas, side by side as the screens are: a drag that leaves a screen goes on the other one, and a new window gets its room on its own screen")
+            reserved: 420
+            Seg {
+                anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
+                options: [{ value: "1", label: I18n.t("This workspace") }, { value: "0", label: I18n.t("Every screen") }]
+                current: page.st.screens === 1 ? "1" : "0"
+                onChosen: v => { page.sh(["set", "screens", v]); const n = Object.assign({}, page.st); n.screens = Number(v); page.st = n }
+            }
         }
         ToggleRow {
             visible: !page.niri
@@ -285,7 +298,7 @@ Item {
             }
         }
         Rectangle {
-            width: parent.width; height: note.implicitHeight + 24; radius: M3.rM; color: M3.alpha(M3.primary, 0.08)
+            width: parent.width; height: note.implicitHeight + 24; radius: M3.sq ? 0 : (M3.rM); color: M3.alpha(M3.primary, 0.08)
             T { id: note; x: 16; anchors.verticalCenter: parent.verticalCenter; width: parent.width - 32; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.inkDim
                 text: I18n.t("A new window gets its own room next to the one you were in, and the canvas glides to it, so there is always space. Zooming really makes the windows smaller (apps may keep a smallest size). Turning it off tiles the windows again, and the canvas is remembered: turn it on again (also after a restart) and every window is where you left it.") }
         }

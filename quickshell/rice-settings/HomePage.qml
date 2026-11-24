@@ -25,7 +25,7 @@ Item {
         "Click your picture in the sidebar to change it. It is also shown on the lock screen.",
         "Gaming mode turns off animations, blur and gaps. Click it again to bring them back.",
         "Notifications has nine popup styles. Try Island or Accent bar.",
-        "Theme has 21 color schemes, from pure Mono to Ocean and Rose.",
+        "Theme has 39 color schemes, from pure Mono to Ocean, Lavender and Rainbow.",
         "The launcher can open as a full-width bar, or Split with your wallpaper on the left.",
         "Lock screen clocks come in Big, Stacked and Minimal. Preview them in Idle & Lockscreen.",
         "Run rice-notify test in a terminal to see a sample notification.",
@@ -62,7 +62,7 @@ Item {
     function setProfile(k) {
         profile = k
         wanted = k
-        setProc.command = ["bash", "-c", "\"$HOME/.local/bin/rice-services\" profile \"$1\" 2>&1; powerprofilesctl get 2>/dev/null", "_", k]
+        setProc.command = ["bash", "-c", "\"$HOME/.local/bin/rice-services\" profile \"$1\" >/dev/null 2>&1; \"$HOME/.local/bin/rice-services\" profile get", "_", k]
         setProc.running = true
     }
     function pname(k) { return k === "power-saver" ? I18n.t("Power saver") : (k === "balanced" ? I18n.t("Balanced") : I18n.t("Performance")) }
@@ -78,24 +78,41 @@ Item {
             }
         }
     }
-    // power-profiles-daemon is installed but not running: start it (asks for your password)
+    // power-profiles-daemon is installed but not running: turn it on now and at every start (asks for your password).
+    // V4.95: rice-services pp start unmasks it, starts a password agent when none runs, waits until the modes are
+    // there and says why not (tlp / auto-cpufreq / tuned take its place); before, it often said nothing and did nothing
+    property bool ppBusy: false
+    property string ppWhy: ""
     Process {
         id: startPP
-        command: ["bash", "-c", "if [ -d /run/systemd/system ]; then systemctl start power-profiles-daemon.service 2>&1 || pkexec systemctl enable --now power-profiles-daemon.service 2>&1; else pkexec \"$HOME/.local/bin/rice-sys\" service-enable power-profiles-daemon 2>&1; fi"]
-        onExited: function(code) { page.ctl.status = code === 0 ? I18n.t("Power modes are on") : I18n.t("Could not start power-profiles-daemon"); page.readProfile() }
+        command: ["bash", "-c", "\"$HOME/.local/bin/rice-services\" pp start 2>&1 | tail -1"]
+        onRunningChanged: if (running) { page.ppBusy = true; page.ctl.status = I18n.t("Turning on power modes…") }
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const r = text.trim()
+                page.ppBusy = false
+                if (r === "ok") page.ctl.status = I18n.t("Power modes are on")
+                else if (r.indexOf("conflict:") === 0) page.ctl.status = I18n.t("Power modes are off because this app controls power: ") + r.substring(9)
+                else page.ctl.status = I18n.t("Could not start power-profiles-daemon") + (r.indexOf("fail:") === 0 && r.length > 5 ? " (" + r.substring(5) + ")" : "")
+                page.readProfile()
+            }
+        }
     }
     property bool ppInstalled: false
     Process {
         id: profProc
-        // every mode this computer has (a "* " marks the one on), then the one on now
-        command: ["bash", "-c", "command -v powerprofilesctl >/dev/null || { echo NONE; exit 0; }; powerprofilesctl list 2>/dev/null | sed -nE 's/^[*[:space:]]*(power-saver|balanced|performance):[[:space:]]*$/\\1/p'; echo CUR; powerprofilesctl get 2>/dev/null"]
+        // every mode this computer has and the one on now (over D-Bus, so tuned-ppd and a broken powerprofilesctl work too)
+        command: ["bash", "-c", "\"$HOME/.local/bin/rice-services\" pp state 2>/dev/null"]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
-                page.ppInstalled = text.indexOf("NONE") < 0
-                const parts = text.split("CUR")
-                page.profiles = page.ppInstalled ? parts[0].split("\n").map(function(x) { return x.trim() }).filter(function(x) { return x.length > 0 && x !== "NONE" }) : []
-                page.profile = parts.length > 1 ? parts[1].trim() : ""
+                try {
+                    const j = JSON.parse(text)
+                    page.ppInstalled = j.installed === true
+                    page.profiles = j.profiles || []
+                    page.profile = j.active || ""
+                    page.ppWhy = j.why || ""
+                } catch (e) { }
             }
         }
     }
@@ -143,7 +160,7 @@ Item {
                 id: hero
                 width: parent.width
                 height: 214
-                radius: M3.rXL
+                radius: M3.sq ? 0 : (M3.rXL)
                 color: M3.primaryContainer
                 clip: true
                 // calm shapes in the corner, they turn slowly
@@ -152,7 +169,7 @@ Item {
                     id: shapeA
                     width: 200; height: 200; x: parent.width - 300; y: -70
                     color: M3.alpha(M3.primary, 0.14)
-                    radius: 40
+                    radius: M3.sq ? 0 : (40)
                     SequentialAnimation on radius {
                         running: page.visible; loops: Animation.Infinite
                         NumberAnimation { to: 100; duration: 4200; easing.type: Easing.InOutSine }
@@ -173,7 +190,7 @@ Item {
                     }
                 }
                 Rectangle {
-                    width: 150; height: 64; radius: 32; x: parent.width - 360; y: 140; rotation: -24
+                    width: 150; height: 64; radius: M3.sq ? 0 : (32); x: parent.width - 360; y: 140; rotation: -24
                     color: M3.alpha(M3.tertiary, 0.22)
                     SequentialAnimation on scale {
                         running: page.visible; loops: Animation.Infinite
@@ -212,7 +229,7 @@ Item {
                                 visible: modelData.t.length > 3
                                 height: 28
                                 width: chip.implicitWidth + 24
-                                radius: 14
+                                radius: M3.sq ? 0 : (14)
                                 color: M3.alpha(M3.inkPrimaryC, 0.12)
                                 Row {
                                     id: chip
@@ -233,125 +250,31 @@ Item {
                 }
             }
 
-            // Light mode: one switch for slower computers, right on Home
-            Rectangle {
-                // found by the search in the sidebar
-                property string label: I18n.t("Light mode")
-                property string desc: I18n.t("Running slow? Turn off blur, transparency and shadows, animations stay; performance")
-                property real reserved: 80
-                width: parent.width
-                height: 76
-                radius: 14
-                color: M3.surfaceC
-                border.width: 1
-                border.color: page.lite ? M3.primary : M3.outlineVariant
-                Behavior on border.color { ColorAnimation { duration: 160 } }
-                Rectangle {
-                    id: litei
-                    x: 14
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 40; height: 40; radius: 12
-                    color: Qt.rgba(1, 1, 1, page.lite ? 0.14 : 0.06)
-                    T { kind: "icon"; anchors.centerIn: parent; text: "\uf0e7"; font.pixelSize: 17 }
-                }
-                Column {
-                    anchors.left: litei.right
-                    anchors.leftMargin: 12
-                    anchors.right: litetog.left
-                    anchors.rightMargin: 12
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
-                    T { text: I18n.t("Light mode"); font.pixelSize: 13; font.bold: true }
-                    T { kind: "reading"; text: I18n.t("Running slow? No blur or shadows, widgets rest when a window covers them. Animations stay"); color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
-                }
-                Tog {
-                    id: litetog
-                    anchors.right: parent.right; anchors.rightMargin: 16
-                    anchors.verticalCenter: parent.verticalCenter
-                    checked: page.lite
-                    onToggled: function(v) { page.setLite(v) }
-                }
+            // Light mode, auto-hide and the stars: one group of switches right on Home
+            ToggleRow {
+                label: I18n.t("Light mode")
+                desc: I18n.t("Running slow? No blur or shadows, widgets rest when a window covers them. Animations stay")
+                icon: "\uf0e7"; sym: "bolt"; lit: page.lite
+                checked: page.lite
+                onToggled: function(v) { page.setLite(v) }
             }
-
-            // Auto-hide widgets: the desktop widgets rest while a window covers the screen
-            Rectangle {
-                property string label: I18n.t("Auto-hide widgets")
-                property string desc: I18n.t("Hide the desktop widgets while a window covers the screen; floating windows leave them alone")
-                property real reserved: 80
+            ToggleRow {
                 readonly property bool on: page.ctl.dst.autoHide === true || page.lite
-                width: parent.width
-                height: 76
-                radius: 14
-                color: M3.surfaceC
-                border.width: 1
-                border.color: on ? M3.primary : M3.outlineVariant
-                Behavior on border.color { ColorAnimation { duration: 160 } }
-                Rectangle {
-                    id: ahi
-                    x: 14
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 40; height: 40; radius: 12
-                    color: Qt.rgba(1, 1, 1, parent.on ? 0.14 : 0.06)
-                    T { kind: "icon"; anchors.centerIn: parent; text: parent.parent.on ? "\uf070" : "\uf06e"; font.pixelSize: 17 }
-                }
-                Column {
-                    anchors.left: ahi.right
-                    anchors.leftMargin: 12
-                    anchors.right: ahtog.left
-                    anchors.rightMargin: 12
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
-                    T { text: I18n.t("Auto-hide widgets"); font.pixelSize: 13; font.bold: true }
-                    T { kind: "reading"; text: page.lite ? I18n.t("On while Light mode is on") : I18n.t("Widgets hide while a window covers the screen, and come back on an empty desktop"); color: M3.inkDim; font.pixelSize: 11; width: parent.width; wrapMode: Text.WordWrap }
-                }
-                Tog {
-                    id: ahtog
-                    anchors.right: parent.right; anchors.rightMargin: 16
-                    anchors.verticalCenter: parent.verticalCenter
-                    checked: parent.on
-                    onToggled: function(v) { page.ctl.setAutoHide(v) }
-                }
+                label: I18n.t("Auto-hide widgets")
+                desc: page.lite ? I18n.t("On while Light mode is on") : I18n.t("Widgets hide while a window covers the screen, and come back on an empty desktop")
+                icon: on ? "\uf070" : "\uf06e"; sym: on ? "visibility_off" : "visibility"; lit: on
+                checked: on
+                onToggled: function(v) { page.ctl.setAutoHide(v) }
+            }
+            ToggleRow {
+                label: I18n.t("Falling stars")
+                desc: I18n.t("Comets falling across this window")
+                icon: "\uf005"; sym: "auto_awesome"; lit: page.ctl.stars
+                checked: page.ctl.stars
+                onToggled: function(v) { page.ctl.setStars(v) }
             }
 
-            // the falling stars across this window
-            Rectangle {
-                property string label: I18n.t("Falling stars")
-                property string desc: I18n.t("Comets falling across this window; turn them off for a calm look")
-                property real reserved: 80
-                width: parent.width
-                height: 64
-                radius: 14
-                color: M3.surfaceC
-                border.width: 1
-                border.color: M3.outlineVariant
-                Rectangle {
-                    id: starsi
-                    x: 14
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 36; height: 36; radius: 11
-                    color: Qt.rgba(1, 1, 1, page.ctl.stars ? 0.12 : 0.06)
-                    T { kind: "icon"; anchors.centerIn: parent; text: "\uf005"; font.pixelSize: 15 }
-                }
-                Column {
-                    anchors.left: starsi.right
-                    anchors.leftMargin: 12
-                    anchors.right: starstog.left
-                    anchors.rightMargin: 12
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
-                    T { text: I18n.t("Falling stars"); font.pixelSize: 13; font.bold: true }
-                    T { kind: "reading"; text: I18n.t("Comets falling across this window"); color: M3.inkDim; font.pixelSize: 11; width: parent.width; elide: Text.ElideRight }
-                }
-                Tog {
-                    id: starstog
-                    anchors.right: parent.right; anchors.rightMargin: 16
-                    anchors.verticalCenter: parent.verticalCenter
-                    checked: page.ctl.stars
-                    onToggled: function(v) { page.ctl.setStars(v) }
-                }
-            }
-
-            T { kind: "title"; text: I18n.t("Make it yours"); font.pixelSize: 16; font.bold: true; topPadding: 10 }
+            SectionTitle { text: I18n.t("Make it yours") }
 
             Flow {
                 id: quick
@@ -369,7 +292,7 @@ Item {
                     delegate: Rectangle {
                         width: (quick.width - 20) / 3
                         height: 80
-                        radius: qMouse.pressed ? M3.rM : M3.rL
+                        radius: M3.sq ? 0 : (qMouse.pressed ? M3.rM : M3.rL)
                         color: qMouse.containsMouse ? M3.surfaceHigh : M3.surfaceC
                         Behavior on color { ColorAnimation { duration: 140 } }
                         Behavior on radius { NumberAnimation { duration: 160 } }
@@ -377,7 +300,7 @@ Item {
                             id: qi
                             x: 16
                             anchors.verticalCenter: parent.verticalCenter
-                            width: 44; height: 44; radius: qMouse.containsMouse ? 14 : 22
+                            width: 44; height: 44; radius: M3.sq ? 0 : (qMouse.containsMouse ? 14 : 22)
                             color: M3.secondaryContainer
                             Behavior on radius { NumberAnimation { duration: 260; easing.type: Easing.OutBack } }
                             Icon { anchors.centerIn: parent; name: modelData.s || ""; glyph: modelData.i; size: 20; color: M3.inkSecondaryC }
@@ -435,7 +358,7 @@ Item {
                             readonly property bool on: page.profile === modelData.k
                             width: (profBox.width - 10 * (page.profiles.length - 1)) / Math.max(1, page.profiles.length)
                             height: 84
-                            radius: 14
+                            radius: M3.sq ? 0 : (14)
                             color: on ? M3.primary : (pMouse.containsMouse ? "#1b1b1d" : M3.surfaceC)
                             border.width: 1
                             border.color: on ? M3.primary : (pMouse.containsMouse ? M3.outline : M3.outlineVariant)
@@ -444,7 +367,7 @@ Item {
                                 id: pi
                                 x: 14
                                 anchors.verticalCenter: parent.verticalCenter
-                                width: 42; height: 42; radius: 13
+                                width: 42; height: 42; radius: M3.sq ? 0 : (13)
                                 color: pc.on ? Qt.rgba(0, 0, 0, 0.10) : Qt.rgba(1, 1, 1, 0.06)
                                 T { kind: "icon"; anchors.centerIn: parent; text: modelData.i; font.pixelSize: 19; color: pc.on ? M3.inkPrimary : "#F6F5F4" }
                             }
@@ -476,16 +399,18 @@ Item {
                     kind: "reading"
                     font.pixelSize: 12
                     color: M3.inkDim
-                    text: page.ppInstalled
+                    text: page.ppWhy === "tlp" || page.ppWhy === "auto-cpufreq" || page.ppWhy === "tuned"
+                        ? I18n.t("Power modes are off because this app controls power: ") + page.ppWhy
+                        : page.ppInstalled
                         ? I18n.t("power-profiles-daemon is installed but not running. Turn it on (it asks for your password); on NixOS: services.power-profiles-daemon.enable = true.")
                         : I18n.t("Power modes need power-profiles-daemon, and it is not running on this computer. Install it and turn it on: sudo systemctl enable --now power-profiles-daemon (on NixOS: services.power-profiles-daemon.enable = true).")
                 }
                 Btn {
                     id: startBtn
-                    visible: page.profiles.length === 0 && page.ppInstalled
+                    visible: page.profiles.length === 0 && page.ppInstalled && page.ppWhy !== "tlp" && page.ppWhy !== "auto-cpufreq" && page.ppWhy !== "tuned"
                     anchors.right: parent.right; y: 26
-                    text: I18n.t("Turn on"); sym: "bolt"; icon: ""; primary: true
-                    onClicked: startPP.running = true
+                    text: page.ppBusy ? I18n.t("Turning on…") : I18n.t("Turn on"); sym: "bolt"; icon: ""; primary: true
+                    onClicked: if (!startPP.running) startPP.running = true
                 }
             }
 
@@ -503,7 +428,7 @@ Item {
                 id: szPrev
                 width: parent.width
                 height: 168
-                radius: 12
+                radius: M3.sq ? 0 : (12)
                 color: M3.surfaceC
                 border.width: 1
                 border.color: M3.outlineVariant
@@ -520,7 +445,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     height: 136
                     width: Math.min(260, Math.round(height * szPrev.sw / szPrev.sh))
-                    radius: 6
+                    radius: M3.sq ? 0 : (6)
                     color: "#0b0b0d"
                     border.width: 2
                     border.color: "#3a3a40"
@@ -538,17 +463,17 @@ Item {
                         height: Math.round(mon.height * szPrev.wh / szPrev.sh)
                         x: Math.round((mon.width - width) / 2)
                         y: Math.round((mon.height - height) / 2)
-                        radius: 4
+                        radius: M3.sq ? 0 : (4)
                         color: M3.surfaceC
                         border.width: 1
                         border.color: M3.inkDim
-                        Rectangle { x: 0; y: 0; width: Math.round(parent.width * 0.26); height: parent.height; color: "#1c1c1f"; radius: 4 }
+                        Rectangle { x: 0; y: 0; width: Math.round(parent.width * 0.26); height: parent.height; color: "#1c1c1f"; radius: M3.sq ? 0 : (4) }
                         Repeater {
                             model: 5
                             Rectangle {
                                 x: 4; y: 8 + index * 9
                                 width: Math.round(miniWin.width * 0.26) - 8
-                                height: 4; radius: 2
+                                height: 4; radius: M3.sq ? 0 : (2)
                                 color: index === 0 ? M3.primary : "#3a3a40"
                             }
                         }
@@ -558,7 +483,7 @@ Item {
                                 x: Math.round(miniWin.width * 0.26) + 6
                                 y: 8 + index * Math.round(miniWin.height * 0.2)
                                 width: Math.round(miniWin.width * 0.74) - 12
-                                height: Math.max(6, Math.round(miniWin.height * 0.14)); radius: 3
+                                height: Math.max(6, Math.round(miniWin.height * 0.14)); radius: M3.sq ? 0 : (3)
                                 color: "#202024"
                             }
                         }
@@ -622,7 +547,7 @@ Item {
             Rectangle {
                 width: parent.width
                 height: 128
-                radius: 12
+                radius: M3.sq ? 0 : (12)
                 color: M3.surfaceC
                 border.width: 1
                 border.color: M3.outlineVariant
@@ -637,7 +562,7 @@ Item {
                     x: 226; y: 12
                     width: parent.width - 226 - 14
                     height: parent.height - 24
-                    radius: 9
+                    radius: M3.sq ? 0 : (9)
                     color: "#0e0e0f"
                     border.width: 1
                     border.color: M3.outlineVariant
@@ -658,7 +583,7 @@ Item {
                             Repeater {
                                 model: 40
                                 delegate: Rectangle {
-                                    width: tryCol.width; height: 26; radius: 6
+                                    width: tryCol.width; height: 26; radius: M3.sq ? 0 : (6)
                                     color: index % 2 === 0 ? Qt.rgba(1, 1, 1, 0.035) : "transparent"
                                     T { x: 8; anchors.verticalCenter: parent.verticalCenter; text: I18n.t("Line ") + (index + 1); font.pixelSize: 12; color: "#9a9aa2" }
                                 }
@@ -667,7 +592,7 @@ Item {
                     }
                     // where you are
                     Rectangle {
-                        x: parent.width - 6; width: 3; radius: 1.5
+                        x: parent.width - 6; width: 3; radius: M3.sq ? 0 : (1.5)
                         y: 4 + (parent.height - 8 - height) * (tryFlick.contentHeight > tryFlick.height ? tryFlick.contentY / (tryFlick.contentHeight - tryFlick.height) : 0)
                         height: Math.max(16, (parent.height - 8) * tryFlick.height / Math.max(1, tryFlick.contentHeight))
                         color: "#5a5a60"

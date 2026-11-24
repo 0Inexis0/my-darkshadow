@@ -8,6 +8,8 @@ import QtQuick
 PanelWindow {
     screen: Mon.screen
     id: wm
+    // Minimal mode: the bar's own tinted surface, so the menu matches the bar (V5.02: it was near black)
+    NPal { id: sqPal; theme: "shell"; alpha: 0.94 }
     property bool open: false
     property real t: 0
     // t runs evenly; the menu eases on its own: it grows out of the bar (quick start, soft landing) and
@@ -22,16 +24,19 @@ PanelWindow {
     readonly property color line: Qt.rgba(1, 1, 1, 0.09)
     readonly property color hot: Qt.rgba(1, 1, 1, 0.07)
     readonly property real alpha: Look.flat ? 1 : 0.62
-    readonly property color bg: Qt.rgba(0.05, 0.05, 0.05, alpha)
+    readonly property color bg: Look.sq ? sqPal.minSurface : Qt.rgba(0.05, 0.05, 0.05, alpha)
     property var bc: ({})
-    readonly property bool atBottom: bc.position === "bottom"
-    readonly property real barSpace: (bc.enabled === false ? 34 : (bc.height ? bc.height : 38)) + (bc.style === "flat" ? 0 : 16) + 8
+    // V4.95: opened from the dock ("dock:SPACE" after the place): it opens above the dock, not by the bar
+    property real dockSpace: -1
+    readonly property bool fromDock: dockSpace >= 0
+    readonly property bool atBottom: fromDock || bc.position === "bottom"
+    readonly property real barSpace: fromDock ? dockSpace : ((bc.enabled === false ? 34 : (bc.height ? bc.height : 38)) + (bc.style === "flat" ? 0 : 16) + 8)
 
     // ---------- data ----------
     property real cx: 0
     // the bar on the left or right edge (VBar.qml): the menu opens beside the bar, level with the icon (cy)
     property real cy: -1
-    readonly property bool side: bc.position === "left" || bc.position === "right"
+    readonly property bool side: !fromDock && (bc.position === "left" || bc.position === "right")
     readonly property bool atRight: bc.position === "right"
     readonly property real sideSpace: (bc.enabled === false ? 34 : (bc.height ? bc.height + 4 : 42)) + (bc.style === "flat" ? 0 : 16) + 8
     property bool radio: true
@@ -83,8 +88,16 @@ PanelWindow {
         // for a few reads instead of showing "no networks" (that was the list that sometimes went blank)
         if (list.length === 0 && nets.length > 0 && radio && emptyN < 3) { emptyN++; return }
         emptyN = 0
+        // V4.94: the list is made again only when something in it changed, and never while you type a password:
+        // every read (each 5 s) made all the rows again, which emptied the password field while you typed
+        if (askFor !== "") return
+        const js = JSON.stringify(list)
+        if (js === netsJs) return
+        netsJs = js
         nets = list
     }
+    property string netsJs: ""
+    property string pw: ""              // the password you type (kept here, not in a row that could be made again)
 
     Process {
         id: stateProc
@@ -152,7 +165,8 @@ PanelWindow {
     Trigger {
         name: "wifi-open"; fresh: true
         onFired: function(o) {
-            const x = parseFloat(o.split(" ")[1]), yv = parseFloat(o.split(" ")[2])
+            const x = parseFloat(o.split(" ")[1]), y2 = o.split(" ")[2] || "", yv = parseFloat(y2)
+            wm.dockSpace = y2.indexOf("dock:") === 0 ? (parseFloat(y2.substring(5)) || 80) : -1
             if (wm.open) wm.hide(); else wm.show(isNaN(x) ? wm.width - 200 : x, yv)
         }
     }
@@ -162,7 +176,7 @@ PanelWindow {
     // if the closing animation ever stalls (the compositor sent no frames for a moment), it still goes away
     Timer { id: closeT; property bool done: false; interval: 600; running: !open; onRunningChanged: if (running) done = false; onTriggered: done = true }
     // niri: blur behind the card (Hyprland blurs this layer with its own rule)
-    NiriBlur { win: wm; items: [card]; radius: card.radius; on: wm.open && wm.et > 0.94 }
+    NiriBlur { win: wm; items: [card]; radius: Look.sq ? 0 : (card.radius); on: wm.open && wm.et > 0.94 }
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore
@@ -175,6 +189,7 @@ PanelWindow {
     readonly property real listH: shown * rowH + (askFor !== "" && nets.length <= maxRows ? 52 : 0)
     Rectangle {
         id: card
+        Frame { }      // V4.98 Minimal mode
         width: wm.cardW
         height: head.height + 14 + wm.listH + (wm.msg !== "" ? 34 : 0) + 14 + vpnSection.height
         Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
@@ -182,7 +197,7 @@ PanelWindow {
                      : Math.max(12, Math.min(wm.width - width - 12, wm.cx - width / 2))
         y: wm.side ? Math.max(12, Math.min(wm.height - height - 12, (wm.cy < 0 ? wm.height / 2 : wm.cy) - 30))
                      : (wm.atBottom ? wm.height - wm.barSpace - height : wm.barSpace)
-        radius: 20
+        radius: Look.sq ? 0 : (20)
         color: wm.bg
         border.width: 1; border.color: wm.line
         opacity: Math.min(1, wm.et * 1.6)
@@ -212,10 +227,10 @@ PanelWindow {
             Rectangle {   // the switch
                 id: sw
                 anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-                width: 42; height: 24; radius: 12
+                width: 42; height: 24; radius: Look.sq ? 0 : (12)
                 color: wm.radio ? Look.accentHi : Qt.rgba(1, 1, 1, 0.14)
                 Behavior on color { ColorAnimation { duration: 160 } }
-                Rectangle { y: 3; x: wm.radio ? 21 : 3; width: 18; height: 18; radius: 9; color: wm.radio ? "#0d0d0d" : "#F6F5F4"
+                Rectangle { y: 3; x: wm.radio ? 21 : 3; width: 18; height: 18; radius: Look.sq ? 0 : (9); color: wm.radio ? "#0d0d0d" : "#F6F5F4"
                     Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutBack } } }
                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                     onClicked: { Sfx.play(wm.radio ? "switch-off" : "switch-on"); wm.radio = !wm.radio; wm.nm(["radio", "wifi", wm.radio ? "on" : "off"], ""); if (wm.radio) wm.rescan() } }
@@ -269,7 +284,7 @@ PanelWindow {
                             }
                         }
                         Rectangle {
-                            x: 0; y: 2; width: parent.width; height: parent.height - 4; radius: 14
+                            x: 0; y: 2; width: parent.width; height: parent.height - 4; radius: Look.sq ? 0 : (14)
                             color: modelData.active ? Qt.rgba(1, 1, 1, 0.1) : (rm.containsMouse ? wm.hot : "transparent")
                             Behavior on color { ColorAnimation { duration: 120 } }
                         }
@@ -299,7 +314,7 @@ PanelWindow {
                         // the password
                         Rectangle {
                             visible: row.asking
-                            x: 14; y: wm.rowH - 2; width: parent.width - 28; height: 40; radius: 12
+                            x: 14; y: wm.rowH - 2; width: parent.width - 28; height: 40; radius: Look.sq ? 0 : (12)
                             color: Qt.rgba(1, 1, 1, 0.07)
                             TextInput {
                                 id: pwField
@@ -307,7 +322,9 @@ PanelWindow {
                                 echoMode: showPw.checked ? TextInput.Normal : TextInput.Password
                                 color: wm.fg; font.family: Fonts.main; font.pixelSize: 14; clip: true
                                 passwordCharacter: "•"
-                                onVisibleChanged: if (visible) { text = ""; forceActiveFocus() }
+                                text: wm.pw
+                                onTextChanged: if (text !== wm.pw) wm.pw = text
+                                onVisibleChanged: if (visible) { wm.pw = ""; forceActiveFocus() }
                                 Keys.onReturnPressed: if (text.length >= 8) wm.connect(modelData, text)
                                 Keys.onEnterPressed: if (text.length >= 8) wm.connect(modelData, text)
                                 Keys.onEscapePressed: wm.askFor = ""
@@ -316,7 +333,7 @@ PanelWindow {
                             Item { id: showPw; property bool checked: false; anchors.right: parent.right; anchors.rightMargin: 44; anchors.verticalCenter: parent.verticalCenter; width: 24; height: 24
                                 MIcon { anchors.centerIn: parent; name: showPw.checked ? "visibility_off" : "visibility"; glyph: String.fromCodePoint(showPw.checked ? 0xF0209 : 0xF0208); size: 16; color: wm.dim }
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: showPw.checked = !showPw.checked } }
-                            Rectangle { anchors.right: parent.right; anchors.rightMargin: 6; anchors.verticalCenter: parent.verticalCenter; width: 32; height: 28; radius: 9
+                            Rectangle { anchors.right: parent.right; anchors.rightMargin: 6; anchors.verticalCenter: parent.verticalCenter; width: 32; height: 28; radius: Look.sq ? 0 : (9)
                                 color: pwField.text.length >= 8 ? Look.accentHi : Qt.rgba(1, 1, 1, 0.1)
                                 MIcon { anchors.centerIn: parent; name: "arrow_forward"; glyph: String.fromCodePoint(0xF0054); size: 16; color: pwField.text.length >= 8 ? "#0d0d0d" : wm.dim }
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: if (pwField.text.length >= 8) wm.connect(modelData, pwField.text) } }

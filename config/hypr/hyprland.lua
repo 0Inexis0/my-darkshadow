@@ -250,7 +250,7 @@ hl.config({
         kb_layout  = "de",
         kb_variant = "",
         kb_model   = "",
-        kb_options = "",
+        -- no kb_options here: the layouts of Settings > System > Keyboard (rice-region env, XKB_DEFAULT_*) win
         kb_rules   = "",
 
         follow_mouse = 1,
@@ -268,6 +268,19 @@ hl.gesture({
     direction = "horizontal",
     action = "workspace"
 })
+
+----------------------------
+---- SEE-THROUGH WINDOWS ----
+----------------------------
+
+-- See-through windows: a transparent app (a terminal, an editor) sets its own alpha and Hyprland blurs what is
+-- behind it (decoration.blur below). Kitty: background_opacity 0.6 in ~/.config/kitty/kitty.conf. Every other
+-- window is opaque unless it asks for less.
+-- A window you want see-through: add a rule here (your own file, loaded last: ~/.config/hypr/user.lua, so no
+-- update overwrites it), with the window's app_id:
+--   hl.window_rule({ name = "my-editor-glass", match = { class = "^code$" }, opacity = "0.85 0.85" })
+--   hl.window_rule({ name = "my-browser-glass", match = { class = "^(firefox|zen)$" }, opacity = "0.9 0.75" })
+-- (opacity = "active inactive", 0.8 = 80 %). Blur behind them: already on for every window (decoration.blur)
 
 ---------------------
 ---- KEYBINDINGS ----

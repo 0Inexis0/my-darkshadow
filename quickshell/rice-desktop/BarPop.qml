@@ -77,8 +77,8 @@ Item {
         y: bp.down ? y0 * (1 - bp.k) : y0 + (bp.height - height - y0) * bp.k
         opacity: Math.min(1, bp.t * 3)
         clip: true
-        Shadow { anchors.fill: bg; radius: bg.radius; on: Look.shadows && Look.shadowPanels; size: Look.shadowSize * 0.8; strength: Look.shadowStrength * bp.k1 }
-        Rectangle { id: bg; anchors.fill: parent; radius: Math.min(height / 2, 24 + (1 - bp.k1) * 30); color: bp.pal ? bp.pal.surface : "#141414"; border.width: 1; border.color: bp.pal ? bp.pal.line : Qt.rgba(1, 1, 1, 0.06) }
+        Shadow { anchors.fill: bg; radius: Look.sq ? 0 : (bg.radius); on: Look.shadows && Look.shadowPanels; size: Look.shadowSize * 0.8; strength: Look.shadowStrength * bp.k1 }
+        Rectangle { id: bg; anchors.fill: parent; radius: Look.sq ? 0 : (Math.min(height / 2, 24 + (1 - bp.k1) * 30)); color: bp.pal ? bp.pal.surface : "#141414"; border.width: 1; border.color: bp.pal ? bp.pal.line : Qt.rgba(1, 1, 1, 0.06) }
         MouseArea { anchors.fill: parent }        // clicks inside do not fall through to the desktop
         // the content stays where it belongs while the shape opens over it
         Item {
@@ -128,7 +128,7 @@ Item {
                 model: [["arrow_upward", 0xF005D, bp.wx ? bp.wx.hi + "°" : "--"], ["arrow_downward", 0xF0045, bp.wx ? bp.wx.lo + "°" : "--"],
                         ["humidity_percentage", 0xF058E, bp.wx ? bp.wx.hum + "%" : "--"], ["air", 0xF059D, bp.wx ? bp.wx.wind + (bp.wx.unit === "F" ? " mph" : " km/h") : "--"]]
                 delegate: Rectangle {
-                    width: (wxCol.width - 18) / 4; height: 30; radius: 15; color: bp.chip
+                    width: (wxCol.width - 18) / 4; height: 30; radius: Look.sq ? 0 : (15); color: bp.chip
                     Row { anchors.centerIn: parent; spacing: 3
                         MIcon { anchors.verticalCenter: parent.verticalCenter; size: 13; name: modelData[0]; glyph: String.fromCodePoint(modelData[1]); color: bp.acc }
                         Text { anchors.verticalCenter: parent.verticalCenter; text: modelData[2]; color: bp.fg; font.family: Fonts.main; font.pixelSize: 11 } }
@@ -142,7 +142,7 @@ Item {
             Repeater {
                 model: wxh.list
                 delegate: Rectangle {
-                    width: (wxCol.width - 6 * Math.max(0, wxh.list.length - 1)) / Math.max(1, wxh.list.length); height: 66; radius: 18
+                    width: (wxCol.width - 6 * Math.max(0, wxh.list.length - 1)) / Math.max(1, wxh.list.length); height: 66; radius: Look.sq ? 0 : (18)
                     color: index === 0 ? bp.pal.container : bp.chip
                     Column { anchors.centerIn: parent; spacing: 2
                         Text { anchors.horizontalCenter: parent.horizontalCenter; text: (modelData.h < 10 ? "0" : "") + modelData.h + ":00"; color: bp.dim; font.family: Fonts.main; font.pixelSize: 10 }
@@ -163,17 +163,17 @@ Item {
             delegate: Rectangle {
                 readonly property var md: bp.sys[index]
                 width: (bp.width - 28 - 8) / 2; height: (228 - 8) / 2
-                radius: 20; color: bp.chip
+                radius: Look.sq ? 0 : (20); color: bp.chip
                 MIcon { x: 14; y: 12; size: 18; name: md.icon; glyph: String.fromCodePoint(md.g); color: bp.acc }
                 Text { anchors.right: parent.right; anchors.rightMargin: 14; y: 9; text: md.v + "%"; color: bp.fg; font.family: Fonts.numbers; font.pixelSize: 19; font.weight: Font.DemiBold }
                 Column { x: 14; y: 42; width: parent.width - 28; spacing: 1
                     Text { text: md.n; color: bp.fg; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.DemiBold }
                     Text { width: parent.width; elide: Text.ElideRight; text: md.d; color: bp.dim; font.family: Fonts.main; font.pixelSize: 10 } }
                 Rectangle {
-                    x: 14; width: parent.width - 28; height: 6; radius: 3
+                    x: 14; width: parent.width - 28; height: 6; radius: Look.sq ? 0 : (3)
                     anchors.bottom: parent.bottom; anchors.bottomMargin: 13
                     color: Qt.rgba(bp.acc.r, bp.acc.g, bp.acc.b, 0.2)
-                    Rectangle { width: Math.max(6, parent.width * Math.min(1, md.v / 100)); height: 6; radius: 3; color: md.v >= 90 ? "#e06c75" : bp.acc
+                    Rectangle { width: Math.max(6, parent.width * Math.min(1, md.v / 100)); height: 6; radius: Look.sq ? 0 : (3); color: md.v >= 90 ? "#e06c75" : bp.acc
                         Behavior on width { NumberAnimation { duration: 500; easing.type: Easing.OutCubic } } }
                 }
             }
@@ -199,7 +199,7 @@ Item {
                 model: bp.week
                 delegate: Rectangle {
                     readonly property bool today: modelData.toDateString() === bp.now.toDateString()
-                    width: (calCol.width - 24) / 7; height: 56; radius: 16
+                    width: (calCol.width - 24) / 7; height: 56; radius: Look.sq ? 0 : (16)
                     color: today ? bp.acc : "transparent"
                     Column { anchors.centerIn: parent; spacing: 4
                         Text { anchors.horizontalCenter: parent.horizontalCenter; text: Qt.locale().dayName(modelData.getDay(), Locale.ShortFormat).slice(0, 2)
@@ -212,8 +212,8 @@ Item {
         }
         // your to-do tasks (the To-do widget's list)
         Rectangle {
-            width: parent.width; height: 62; radius: 18; color: bp.chip
-            Rectangle { x: 10; anchors.verticalCenter: parent.verticalCenter; width: 42; height: 42; radius: 14; color: bp.pal ? bp.pal.container : "#333"
+            width: parent.width; height: 62; radius: Look.sq ? 0 : (18); color: bp.chip
+            Rectangle { x: 10; anchors.verticalCenter: parent.verticalCenter; width: 42; height: 42; radius: Look.sq ? 0 : (14); color: bp.pal ? bp.pal.container : "#333"
                 Column { anchors.centerIn: parent; spacing: -2
                     MIcon { anchors.horizontalCenter: parent.horizontalCenter; size: 13; name: "checklist"; glyph: String.fromCodePoint(0xF0AB8); color: bp.acc }
                     Text { anchors.horizontalCenter: parent.horizontalCenter; text: bp.todos.length; color: bp.fg; font.family: Fonts.numbers; font.pixelSize: 15; font.weight: Font.Bold } } }

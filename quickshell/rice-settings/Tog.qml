@@ -8,7 +8,7 @@ Rectangle {
     readonly property bool sfxOwn: true     // its own on/off sound, not the click
     width: 52
     height: 32
-    radius: 16
+    radius: M3.sq ? 0 : (16)
     color: sw.checked ? M3.primary : M3.surfaceHighest
     border.width: sw.checked ? 0 : 2
     border.color: M3.outline
@@ -17,7 +17,7 @@ Rectangle {
     Rectangle {
         id: knob
         readonly property real d: tm.pressed ? 28 : (sw.checked || Prefs.switchIcons ? 24 : 16)
-        width: d; height: d; radius: d / 2
+        width: d; height: d; radius: M3.sq ? 0 : (d / 2)
         anchors.verticalCenter: parent.verticalCenter
         x: sw.checked ? sw.width - d - 4 : (tm.pressed ? 2 : (Prefs.switchIcons ? 4 : 8))
         color: sw.checked ? M3.inkPrimary : M3.outline

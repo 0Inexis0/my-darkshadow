@@ -73,12 +73,27 @@ PanelWindow {
         sty = wc.style !== undefined ? wc.style : ""
         flp = wc.flip === true
         vcolor = wc.color !== undefined ? wc.color : ""
+        fit()
     }
+    // V4.95: always all on the screen. A widget saved near an edge that got bigger (another style, a bigger clock)
+    // or a smaller screen put part of it off the screen (a clock cut at the top, a card cut at the left)
+    function fit() {
+        if (dragging || bw <= 0 || bh <= 0) return
+        if (dispW < bw) px = Math.max(0, Math.min(bw - dispW, px))
+        if (dispH < bh) py = Math.max(0, Math.min(bh - dispH, py))
+    }
+    onDispWChanged: fitT.restart()
+    onDispHChanged: fitT.restart()
+    onBwChanged: fitT.restart()
+    onBhChanged: fitT.restart()
+    Timer { id: fitT; interval: 60; onTriggered: w.fit() }
     onWcChanged: adopt()
-    onDefXChanged: adopt()
-    onDefYChanged: adopt()
-    onDefWChanged: adopt()
-    onDefHChanged: adopt()
+    // V4.97: a moment later (a clock that changed its style changed its size, so its default place, which read its
+    // style again in the same breath: a binding loop)
+    onDefXChanged: Qt.callLater(adopt)
+    onDefYChanged: Qt.callLater(adopt)
+    onDefWChanged: Qt.callLater(adopt)
+    onDefHChanged: Qt.callLater(adopt)
     Component.onCompleted: {
         adopt()
         // Hyprland tells us when you click outside this widget. Made on the fly, so a Quickshell without Hyprland
@@ -117,7 +132,7 @@ PanelWindow {
     // only behind the widget's cards (Card.qml): widgets drawn as a shape (the clock, the gauges ...) get no square
     // of blur around them, and a widget made of a few cards gets it behind each card
     readonly property var blurCards: holder.cards.filter(c => c && c.visible && c.color.a > 0.02)
-    NiriBlur { win: w; items: w.blurCards; radius: w.pal.radius
+    NiriBlur { win: w; items: w.blurCards; radius: Look.sq ? 0 : (w.pal.radius)
         radii: w.blurCards.map(c => c.blurRadius !== undefined ? c.blurRadius : w.pal.radius)
         on: Look.blur && !w.passive && w.bgv * Look.widgetAlpha > 0.05 && w.fk > 0.99 && !w.editing }
     Item { id: nothing; width: 0; height: 0 }

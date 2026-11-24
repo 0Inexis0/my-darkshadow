@@ -30,11 +30,12 @@ HLUA = HYPR + "/hyprland.lua"
 MARK = "/* rice-rofi */"
 
 DEFAULTS = {
-    "theme": "wallpaper", "layout": "list", "position": "center", "width": 620, "radius": 18,
+    "theme": "wallpaper", "layout": "drawer", "position": "center", "width": 620, "radius": 18,
     "transparency": True, "opacity": 0.82, "blur": True, "icons": True, "font_size": 13, "lines": 8,
 }
 RANGES = {"width": (360, 1200), "radius": (0, 32), "opacity": (0.3, 1.0), "font_size": (9, 20), "lines": (3, 14)}
-CHOICES = {"layout": ["list", "grid", "bar", "split"], "position": ["top", "center", "bottom"]}
+# V4.91: the launcher's styles (the old list, grid, bar, split and classic become the drawer)
+CHOICES = {"layout": ["drawer", "spotlight", "side"], "position": ["top", "center", "bottom"]}
 BOOLS = ("transparency", "blur", "icons")
 
 # bg = window, alt = input/field, sel = selected row, fg = text, dim = secondary text
