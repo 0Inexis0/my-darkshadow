@@ -44,6 +44,34 @@ class CheckoutTests(unittest.TestCase):
                  "commit", "-m", content)
         return self.git(self.source, "rev-parse", "HEAD")
 
+    def test_qml_update_with_stale_upstream_checksum(self):
+        src = self.source / "quickshell/rice-desktop"
+        src.mkdir(parents=True)
+        dst = self.home / ".config/quickshell/rice-desktop"
+        dst.mkdir(parents=True)
+        old = "fork file for @USER@"
+        for name in ("shell.qml", "DynIsland.qml", "Custom.qml"):
+            (src / name).write_text(old)
+            (dst / name).write_text("local edit" if name == "Custom.qml" else "fork file for tester")
+        self.git(self.source, "add", "quickshell")
+        revision = self.commit("fork baseline")
+        sums = self.home / ".config/rice/installed.sums"
+        sums.parent.mkdir(parents=True)
+        sums.write_text("".join(f"{'0' * 64}  .config/quickshell/rice-desktop/{p.name}\n"
+                                for p in src.iterdir()))
+        for p in src.iterdir():
+            p.write_text("updated")
+        script = (ROOT / "install.sh").read_text()
+        helpers = script[script.index("SUMS="):script.index("missing_cmds()")]
+        subprocess.run(["bash", "-euo", "pipefail", "-c", helpers +
+                        '\nPREV_REV="$1"; copy_tree "$2" "$3"', "_", revision, str(src), str(dst)],
+                       env=dict(os.environ, ROOT=str(self.source), HOME=str(self.home), USER="tester",
+                                BK=str(self.home / "backup"), DRY_RUN="0"), check=True)
+        for name in ("DynIsland.qml", "shell.qml"):
+            self.assertEqual((dst / name).read_text(), "updated")
+        self.assertEqual((dst / "Custom.qml").read_text(), "local edit")
+        self.assertEqual((dst / "Custom.qml.rice-update").read_text(), "updated")
+
     def test_checkout_clones_main_and_fast_forwards_without_losing_history(self):
         checkout = updater.managed_checkout()
         old = self.git(checkout, "rev-parse", "HEAD")

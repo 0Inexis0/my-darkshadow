@@ -121,18 +121,28 @@ rec_sum() { # rec_sum DST: what is in DST now is ours
   mkdir -p "$(dirname "$SUMS")"
   printf '%s  %s\n' "$(sum_of <"$1")" "${1#"$HOME"/}" >>"$SUMS"
 }
+matches_revision() { # Compare the installed bytes with the rendered file from this checkout.
+  local rev="$1" src="$2" dst="$3"
+  [ -n "$rev" ] || return 1
+  git -C "$ROOT" cat-file blob "$rev:${src#"$ROOT"/}" 2>/dev/null |
+    sed -e "s|@HOME@|$HOME|g" -e "s|@USER@|$USER|g" | cmp -s - "$dst"
+}
 user_edited() { # user_edited SRC DST: true when you changed DST after the installer wrote it
-  local src="$1" dst="$2" rel cur rec old
+  local src="$1" dst="$2" rel cur rec
   [ "${RICE_OVERWRITE:-0}" = 1 ] && return 1
   case "$dst" in "$HOME"/.config/quickshell/*.qml|"$HOME"/.config/quickshell/*.js) ;; *) return 1 ;; esac
   rel="${dst#"$HOME"/}"
   cur="$(sum_of <"$dst")"
   rec="$(grep -F "  $rel" "$SUMS" 2>/dev/null | awk -v r="$rel" '$2 == r { s = $1 } END { print s }')"
-  if [ -n "$rec" ]; then [ "$cur" != "$rec" ]; return; fi
-  [ -n "$PREV_REV" ] || return 1
-  git -C "$ROOT" cat-file -e "$PREV_REV:${src#"$ROOT"/}" 2>/dev/null || return 1      # not in that version
-  old="$(git -C "$ROOT" show "$PREV_REV:${src#"$ROOT"/}" 2>/dev/null | sed -e "s|@HOME@|$HOME|g" -e "s|@USER@|$USER|g" | sum_of)"
-  [ -n "$old" ] && [ "$cur" != "$old" ]
+  [ "$cur" = "$rec" ] && return 1
+  matches_revision "$PREV_REV" "$src" "$dst" && return 1
+  # V5.02 could leave stock V4.35 fork files beside .rice-update files when the
+  # checksum manifest still described upstream. Repair previously failed upgrades.
+  if [ -f "$dst.rice-update" ] && matches_revision 06a93c0524d680750137edda5f753e619ab5cea4 "$src" "$dst"; then
+    return 1
+  fi
+  [ -n "$rec" ] && return 0
+  [ -n "$PREV_REV" ] && git -C "$ROOT" cat-file -e "$PREV_REV:${src#"$ROOT"/}" 2>/dev/null
 }
 keep_edit() { # keep_edit SRC DST: your file stays, the new one goes next to it
   put "$1" "$2.rice-update"
@@ -192,12 +202,12 @@ copy_tree() { # copy_tree SRC_DIR DST_DIR
     d="$dst/shell.qml"
     if [ -e "$d" ]; then
       put "$src/shell.qml" "$d.rice-new"
-      if cmp -s "$d.rice-new" "$d"; then rm -f "$d.rice-new"; rec_sum "$d"
+      if cmp -s "$d.rice-new" "$d"; then rm -f "$d.rice-new" "$d.rice-update"; rec_sum "$d"
       elif user_edited "$src/shell.qml" "$d"; then rm -f "$d.rice-new"; keep_edit "$src/shell.qml" "$d"
       else
         rel2="${d#"$HOME"/}"; mkdir -p "$BK/$(dirname "$rel2")"; cp -aL "$d" "$BK/$rel2" 2>/dev/null || warn "could not back up ~/$rel2 (it is replaced anyway)"
         [ -L "$d" ] && rm -f "$d"
-        mv -f "$d.rice-new" "$d"; rec_sum "$d"
+        mv -f "$d.rice-new" "$d"; rm -f "$d.rice-update"; rec_sum "$d"
       fi
     else
       put "$src/shell.qml" "$d"; rec_sum "$d"
@@ -1157,8 +1167,8 @@ fi
 
 # the version you have, as the repo had it (its tag, or the commit before the pull): your edits are told apart from it
 if [ "$MODE" = update ] && [ -e "$ROOT/.git" ] && command -v git >/dev/null 2>&1; then
-  PREV_REV="$(git -C "$ROOT" rev-parse -q --verify "v${HAVE_VERSION:-0}^{commit}" 2>/dev/null || true)"
-  [ -n "$PREV_REV" ] || PREV_REV="${RICE_PREV_REV:-}"
+  PREV_REV="${RICE_PREV_REV:-}"
+  [ -n "$PREV_REV" ] || PREV_REV="$(git -C "$ROOT" rev-parse -q --verify "v${HAVE_VERSION:-0}^{commit}" 2>/dev/null || true)"
 fi
 rm -f "$KEPTF"
 
